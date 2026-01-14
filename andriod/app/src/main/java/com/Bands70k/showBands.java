@@ -24,7 +24,9 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
 import android.os.StrictMode;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 
@@ -100,6 +102,12 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
     private SwipeMenuListView bandNamesList;
     private SwipeRefreshLayout bandNamesPullRefresh;
+    
+    // Track scroll state to prevent accidental clicks when stopping scroll
+    private int currentScrollState = AbsListView.OnScrollListener.SCROLL_STATE_IDLE;
+    private long lastScrollTime = 0;
+    private static final long SCROLL_STOP_DELAY_MS = 50; // Reduced delay - only block clicks during active scrolling, not after
+    private boolean isRefreshing = false; // Track if a refresh is in progress
 
     private ArrayList<String> rankedBandNames;
 
@@ -139,6 +147,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     private File zipFile;
 
     private Dialog dialog;
+    
+    // Data change detection to prevent unnecessary refreshes
+    private static final String PREFS_DATA_TIMESTAMPS = "DataTimestamps";
+    private SharedPreferences dataTimestampPrefs;
 
     // inside my class
     private static final String[] INITIAL_PERMS = {
@@ -176,6 +188,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         StrictMode.setThreadPolicy(policy);
 
         setContentView(R.layout.activity_show_bands);
+        
+        // Initialize data timestamp preferences for change detection
+        dataTimestampPrefs = getSharedPreferences(PREFS_DATA_TIMESTAMPS, MODE_PRIVATE);
         mRegistrationBroadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -281,7 +296,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                         CustomerDescriptionHandler descHandler = CustomerDescriptionHandler.getInstance();
                         descHandler.getDescriptionMap();
                         
-                        refreshNewData();
+                        // PULL-TO-REFRESH FIX: Force refresh even if data hasn't changed (user-initiated action)
+                        refreshNewData(true);  // forceRefresh = true
                         reloadData();
 
                     }
@@ -651,6 +667,17 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 // argument position gives the index of item which is clicked
                 public void onItemClick(AdapterView<?> arg0, View v, int position, long arg3) {
                     try {
+                        // CLICK FIX: Only ignore clicks during active scrolling, not after it stops
+                        // This prevents accidental detail screen opens when user touches screen to stop scrolling
+                        // But allows legitimate clicks shortly after scrolling stops
+                        boolean isScrolling = currentScrollState != AbsListView.OnScrollListener.SCROLL_STATE_IDLE;
+                        
+                        // Only block clicks if actively scrolling OR if refresh is in progress (which might trigger scroll state changes)
+                        if (isScrolling || isRefreshing) {
+                            Log.d("CLICK_LISTENER_FIX", "⏭️ Ignoring click - scroll active (state: " + currentScrollState + ") or refreshing: " + isRefreshing);
+                            return;
+                        }
+                        
                         Log.d("CLICK_LISTENER_FIX", "✅ Click detected at position: " + position);
                         showClickChoices(position);
                     } catch (Exception error) {
@@ -755,8 +782,14 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         bandNamesList.setOnScrollListener(new AbsListView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(AbsListView view, int scrollState) {
-                // TODO Auto-generated method stub
-
+                // CLICK FIX: Track scroll state to prevent accidental clicks when stopping scroll
+                currentScrollState = scrollState;
+                if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_IDLE) {
+                    lastScrollTime = System.currentTimeMillis();
+                    Log.d("ScrollState", "Scroll stopped at " + lastScrollTime);
+                } else {
+                    Log.d("ScrollState", "Scroll state changed to: " + scrollState);
+                }
             }
 
             @Override
@@ -1701,12 +1734,16 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
 
     public void refreshNewData() {
+        refreshNewData(false);  // Default: check for data changes
+    }
+    
+    public void refreshNewData(boolean forceRefresh) {
 
         RelativeLayout showBandLayout = (RelativeLayout) findViewById(R.id.showBandsView);
         showBandLayout.invalidate();
         showBandLayout.requestLayout();
 
-        Log.d("refreshNewData", "refreshNewData - 1");
+        Log.d("refreshNewData", "refreshNewData - 1 (forceRefresh: " + forceRefresh + ")");
 
         executeAsyncListViewLoader();
 
@@ -1730,13 +1767,14 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         Log.d("refreshNewData", "refreshNewData - 4");
         if (headerText.equals(FestivalConfig.getInstance().festivalName)) {
             Log.d("DisplayListData", "running extra refresh");
-            // UNIVERSAL SCROLL PRESERVATION: Save position before extra refresh
+            
+            // UNIVERSAL SCROLL PRESERVATION: Save position before refresh to make it transparent
             if (bandNamesList != null && staticVariables.savedScrollPosition < 0) {
                 saveScrollPosition();
                 Log.d("ScrollPosition", "Universal scroll preservation activated for extra refresh");
             }
             displayBandData();
-            // Restore position after extra refresh
+            // Restore position after refresh to make it transparent
             restoreScrollPosition();
         }
         Log.d("refreshNewData", "refreshNewData - 5");
@@ -1915,9 +1953,38 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
     private void displayBandDataWithoutSchedule() {
         
+        // CLICK FIX: Mark refresh as in progress to prevent clicks during adapter updates
+        isRefreshing = true;
+        
         Log.d("VIEW_MODE_DEBUG", "🎵 displayBandDataWithoutSchedule: Starting bands-only display");
         
-        adapter = new bandListView(getApplicationContext(), R.layout.bandlist70k);
+        // TRANSPARENT REFRESH: Save center item (band name) for position preservation
+        String centerBandName = null;
+        if (bandNamesList != null && adapter != null && adapter.getCount() > 0) {
+            int firstVisible = bandNamesList.getFirstVisiblePosition();
+            int lastVisible = bandNamesList.getLastVisiblePosition();
+            int centerIndex = (firstVisible + lastVisible) / 2;
+            if (centerIndex >= 0 && centerIndex < adapter.getCount()) {
+                try {
+                    bandListItem centerItem = adapter.getItem(centerIndex);
+                    if (centerItem != null) {
+                        centerBandName = centerItem.getBandName();
+                        Log.d("TransparentRefresh", "Saved center band for position: " + centerBandName + " at index " + centerIndex);
+                    }
+                } catch (Exception e) {
+                    Log.w("TransparentRefresh", "Error getting center item: " + e.getMessage());
+                }
+            }
+        }
+        
+        // TRANSPARENT REFRESH: Reuse existing adapter instead of creating new one
+        if (adapter == null) {
+            adapter = new bandListView(getApplicationContext(), R.layout.bandlist70k);
+            Log.d("VIEW_MODE_DEBUG", "🎵 Created new adapter");
+        } else {
+            adapter.clearAll();
+            Log.d("VIEW_MODE_DEBUG", "🎵 Cleared existing adapter for refresh");
+        }
         
         BandInfo bandInfoNames = new BandInfo();
         bandNames = bandInfoNames.getBandNames();
@@ -1964,11 +2031,103 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             }
         }
         
-        // Set the adapter after processing all data
-        Log.d("VIEW_MODE_DEBUG", "🎵 displayBandDataWithoutSchedule: Setting adapter with " + adapter.getCount() + " items");
+        // TRANSPARENT REFRESH: Use notifyDataSetChanged() instead of setAdapter() to preserve scroll position
+        Log.d("VIEW_MODE_DEBUG", "🎵 displayBandDataWithoutSchedule: Notifying adapter of data change with " + adapter.getCount() + " items");
         if (bandNamesList != null) {
-            bandNamesList.setAdapter(adapter);
-            Log.d("VIEW_MODE_DEBUG", "🎵 SUCCESS: Adapter set successfully");
+            // FLASHING FIX: Temporarily disable animations during update to reduce visual flashing
+            boolean animationsEnabled = bandNamesList.getLayoutAnimation() != null;
+            if (animationsEnabled) {
+                bandNamesList.setLayoutAnimation(null);
+            }
+            
+            // Only set adapter if it's not already set (first time)
+            if (bandNamesList.getAdapter() != adapter) {
+                bandNamesList.setAdapter(adapter);
+                Log.d("VIEW_MODE_DEBUG", "🎵 SUCCESS: Adapter set for first time");
+            } else {
+                // Adapter already set, just notify of data change - Android preserves scroll position automatically
+                adapter.notifyDataSetChanged();
+                Log.d("VIEW_MODE_DEBUG", "🎵 SUCCESS: Adapter data updated, scroll position preserved automatically");
+            }
+            
+            // FLASHING FIX: Re-enable animations after update completes
+            if (animationsEnabled) {
+                bandNamesList.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        // Animations will be restored naturally if needed
+                    }
+                });
+            }
+            
+            // TRANSPARENT REFRESH: Restore to center item if we saved one
+            if (centerBandName != null) {
+                final String targetBandName = centerBandName;
+                final int savedScrollPosition = staticVariables.savedScrollPosition;
+                final int savedScrollOffset = staticVariables.savedScrollOffset;
+                bandNamesList.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        boolean found = false;
+                        // Find the band in the new adapter and scroll to it
+                        for (int i = 0; i < adapter.getCount(); i++) {
+                            try {
+                                bandListItem item = adapter.getItem(i);
+                                if (item != null && targetBandName.equals(item.getBandName())) {
+                                    // Scroll to center this item on screen
+                                    int screenHeight = bandNamesList.getHeight();
+                                    int itemHeight = (screenHeight > 0) ? screenHeight / 3 : 0; // Approximate item height
+                                    bandNamesList.setSelectionFromTop(i, itemHeight);
+                                    Log.d("TransparentRefresh", "Restored center band: " + targetBandName + " at index " + i);
+                                    found = true;
+                                    break;
+                                }
+                            } catch (Exception e) {
+                                Log.w("TransparentRefresh", "Error finding band: " + e.getMessage());
+                            }
+                        }
+                        // FALLBACK: If center band not found, use saved scroll position
+                        if (!found && savedScrollPosition >= 0 && savedScrollPosition < adapter.getCount()) {
+                            bandNamesList.setSelectionFromTop(savedScrollPosition, savedScrollOffset);
+                            Log.d("TransparentRefresh", "Center band not found, using fallback scroll position: " + savedScrollPosition);
+                        }
+                        // Reset returningFromDetailsScreen flag after position restoration completes
+                        if (returningFromDetailsScreen) {
+                            returningFromDetailsScreen = false;
+                            Log.d("ListPosition", "Reset returningFromDetailsScreen flag after position restoration");
+                        }
+                    }
+                });
+            } else if (staticVariables.savedScrollPosition >= 0) {
+                // FALLBACK: If no center band was saved, use saved scroll position directly
+                final int savedScrollPosition = staticVariables.savedScrollPosition;
+                final int savedScrollOffset = staticVariables.savedScrollOffset;
+                bandNamesList.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (adapter != null && savedScrollPosition < adapter.getCount()) {
+                            bandNamesList.setSelectionFromTop(savedScrollPosition, savedScrollOffset);
+                            Log.d("TransparentRefresh", "Using saved scroll position (no center band): " + savedScrollPosition);
+                        }
+                        // Reset returningFromDetailsScreen flag after position restoration completes
+                        if (returningFromDetailsScreen) {
+                            returningFromDetailsScreen = false;
+                            Log.d("ListPosition", "Reset returningFromDetailsScreen flag after position restoration");
+                        }
+                    }
+                });
+            } else {
+                // No position to restore, but still reset flag
+                if (returningFromDetailsScreen) {
+                    bandNamesList.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            returningFromDetailsScreen = false;
+                            Log.d("ListPosition", "Reset returningFromDetailsScreen flag (no position to restore)");
+                        }
+                    });
+                }
+            }
         } else {
             Log.w("VIEW_MODE_DEBUG", "🚨 WARNING: bandNamesList is null, deferring adapter setup");
             // Store adapter for later when UI is initialized
@@ -1984,26 +2143,51 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         TextView bandCount = (TextView) this.findViewById(R.id.headerBandCount);
         String headerText = String.valueOf(bandCount.getText());
         Log.d("VIEW_MODE_DEBUG", "🎵 displayBandDataWithoutSchedule: Finished display " + adapter.getCount() + " bands");
+        
+        // CLICK FIX: Mark refresh as complete after a short delay to allow UI to settle
+        bandNamesList.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                isRefreshing = false;
+                Log.d("CLICK_LISTENER_FIX", "Refresh complete, clicks enabled");
+            }
+        }, 100); // Small delay to ensure adapter update is complete
     }
 
     private void displayBandDataWithSchedule() {
 
+        // CLICK FIX: Mark refresh as in progress to prevent clicks during adapter updates
+        isRefreshing = true;
+
         Log.d("ListPosition", "displayBandDataWithSchedule called - returningFromDetailsScreen: " + returningFromDetailsScreen + ", savedPosition: " + staticVariables.listPosition);
-        //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 1");
         
-        // ANIMATION FIX: Disable layout animations during swipe menu refresh
-        if (staticVariables.disableListAnimations) {
-            Log.d("AnimationFix", "Disabling list animations for smooth refresh");
-            // Disable layout animations completely
-            bandNamesList.setLayoutAnimation(null);
-            // Disable list selector animations
-            bandNamesList.setLayoutAnimationListener(null);
-            // Ensure no transition animations
-            bandNamesList.setItemsCanFocus(false);
+        // TRANSPARENT REFRESH: Save center item (band name) for position preservation
+        String centerBandName = null;
+        if (bandNamesList != null && adapter != null && adapter.getCount() > 0) {
+            int firstVisible = bandNamesList.getFirstVisiblePosition();
+            int lastVisible = bandNamesList.getLastVisiblePosition();
+            int centerIndex = (firstVisible + lastVisible) / 2;
+            if (centerIndex >= 0 && centerIndex < adapter.getCount()) {
+                try {
+                    bandListItem centerItem = adapter.getItem(centerIndex);
+                    if (centerItem != null) {
+                        centerBandName = centerItem.getBandName();
+                        Log.d("TransparentRefresh", "Saved center band for position: " + centerBandName + " at index " + centerIndex);
+                    }
+                } catch (Exception e) {
+                    Log.w("TransparentRefresh", "Error getting center item: " + e.getMessage());
+                }
+            }
         }
         
-        adapter = new bandListView(getApplicationContext(), R.layout.bandlist70k);
-        // Note: setAdapter() moved to after the loop that populates the adapter
+        // TRANSPARENT REFRESH: Reuse existing adapter instead of creating new one
+        if (adapter == null) {
+            adapter = new bandListView(getApplicationContext(), R.layout.bandlist70k);
+            Log.d("DisplayListData", "🔧 Created new adapter");
+        } else {
+            adapter.clearAll();
+            Log.d("DisplayListData", "🔧 Cleared existing adapter for refresh");
+        }
 
         //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 2");
         BandInfo bandInfoNames = new BandInfo();
@@ -2206,11 +2390,103 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             adapter.add(bandItem);
         }
         
-        // CRITICAL FIX: Set the adapter after processing all data
-        Log.d("DisplayListData", "🔧 CRITICAL: Setting adapter with " + adapter.getCount() + " items");
+        // TRANSPARENT REFRESH: Use notifyDataSetChanged() instead of setAdapter() to preserve scroll position
+        Log.d("DisplayListData", "🔧 CRITICAL: Notifying adapter of data change with " + adapter.getCount() + " items");
         if (bandNamesList != null) {
-            bandNamesList.setAdapter(adapter);
-            Log.d("DisplayListData", "🔧 SUCCESS: Adapter set successfully");
+            // FLASHING FIX: Temporarily disable animations during update to reduce visual flashing
+            boolean animationsEnabled = bandNamesList.getLayoutAnimation() != null;
+            if (animationsEnabled) {
+                bandNamesList.setLayoutAnimation(null);
+            }
+            
+            // Only set adapter if it's not already set (first time)
+            if (bandNamesList.getAdapter() != adapter) {
+                bandNamesList.setAdapter(adapter);
+                Log.d("DisplayListData", "🔧 SUCCESS: Adapter set for first time");
+            } else {
+                // Adapter already set, just notify of data change - Android preserves scroll position automatically
+                adapter.notifyDataSetChanged();
+                Log.d("DisplayListData", "🔧 SUCCESS: Adapter data updated, scroll position preserved automatically");
+            }
+            
+            // FLASHING FIX: Re-enable animations after update completes
+            if (animationsEnabled) {
+                bandNamesList.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        // Animations will be restored naturally if needed
+                    }
+                });
+            }
+            
+            // TRANSPARENT REFRESH: Restore to center item if we saved one
+            if (centerBandName != null) {
+                final String targetBandName = centerBandName;
+                final int savedScrollPosition = staticVariables.savedScrollPosition;
+                final int savedScrollOffset = staticVariables.savedScrollOffset;
+                bandNamesList.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        boolean found = false;
+                        // Find the band in the new adapter and scroll to it
+                        for (int i = 0; i < adapter.getCount(); i++) {
+                            try {
+                                bandListItem item = adapter.getItem(i);
+                                if (item != null && targetBandName.equals(item.getBandName())) {
+                                    // Scroll to center this item on screen
+                                    int screenHeight = bandNamesList.getHeight();
+                                    int itemHeight = (screenHeight > 0) ? screenHeight / 3 : 0; // Approximate item height
+                                    bandNamesList.setSelectionFromTop(i, itemHeight);
+                                    Log.d("TransparentRefresh", "Restored center band: " + targetBandName + " at index " + i);
+                                    found = true;
+                                    break;
+                                }
+                            } catch (Exception e) {
+                                Log.w("TransparentRefresh", "Error finding band: " + e.getMessage());
+                            }
+                        }
+                        // FALLBACK: If center band not found, use saved scroll position
+                        if (!found && savedScrollPosition >= 0 && savedScrollPosition < adapter.getCount()) {
+                            bandNamesList.setSelectionFromTop(savedScrollPosition, savedScrollOffset);
+                            Log.d("TransparentRefresh", "Center band not found, using fallback scroll position: " + savedScrollPosition);
+                        }
+                        // Reset returningFromDetailsScreen flag after position restoration completes
+                        if (returningFromDetailsScreen) {
+                            returningFromDetailsScreen = false;
+                            Log.d("ListPosition", "Reset returningFromDetailsScreen flag after position restoration");
+                        }
+                    }
+                });
+            } else if (staticVariables.savedScrollPosition >= 0) {
+                // FALLBACK: If no center band was saved, use saved scroll position directly
+                final int savedScrollPosition = staticVariables.savedScrollPosition;
+                final int savedScrollOffset = staticVariables.savedScrollOffset;
+                bandNamesList.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (adapter != null && savedScrollPosition < adapter.getCount()) {
+                            bandNamesList.setSelectionFromTop(savedScrollPosition, savedScrollOffset);
+                            Log.d("TransparentRefresh", "Using saved scroll position (no center band): " + savedScrollPosition);
+                        }
+                        // Reset returningFromDetailsScreen flag after position restoration completes
+                        if (returningFromDetailsScreen) {
+                            returningFromDetailsScreen = false;
+                            Log.d("ListPosition", "Reset returningFromDetailsScreen flag after position restoration");
+                        }
+                    }
+                });
+            } else {
+                // No position to restore, but still reset flag
+                if (returningFromDetailsScreen) {
+                    bandNamesList.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            returningFromDetailsScreen = false;
+                            Log.d("ListPosition", "Reset returningFromDetailsScreen flag (no position to restore)");
+                        }
+                    });
+                }
+            }
         } else {
             Log.w("DisplayListData", "🚨 WARNING: bandNamesList is null, deferring adapter setup");
             // Store adapter for later when UI is initialized
@@ -2229,6 +2505,19 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         String headerText = String.valueOf(bandCount.getText());
         Log.d("DisplayListData", "finished display " + String.valueOf(counter) + '-' + headerText);
         
+        // CLICK FIX: Mark refresh as complete after a short delay to allow UI to settle
+        if (bandNamesList != null) {
+            bandNamesList.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    isRefreshing = false;
+                    Log.d("CLICK_LISTENER_FIX", "Refresh complete, clicks enabled");
+                }
+            }, 100); // Small delay to ensure adapter update is complete
+        } else {
+            isRefreshing = false; // Reset immediately if list not available
+        }
+        
         // JUMPING FIX: Position restoration is no longer needed here
         // We now prevent the refresh entirely when returning from details screen
         // This eliminates the jumping because the list never gets rebuilt
@@ -2237,7 +2526,317 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
 
     /**
+     * Check if data files have changed since last refresh
+     * Uses OR logic: returns true if ANY data source has changed
+     * @return true if any data file, profile, or filters have changed, false if all unchanged
+     */
+    private boolean hasDataChanged() {
+        boolean changed = false;
+        boolean isFirstCheck = !dataTimestampPrefs.contains("data_initialized");
+        
+        // PROFILE CHANGE CHECK: Check if active profile has changed (OR operation)
+        String currentProfile = SharedPreferencesManager.getInstance().getActivePreferenceSource();
+        String lastProfile = dataTimestampPrefs.getString("active_profile", null);
+        if (isFirstCheck || lastProfile == null || !currentProfile.equals(lastProfile)) {
+            Log.d("DataChangeCheck", "Active profile " + (isFirstCheck ? "initialized" : "changed") + ": '" + (lastProfile != null ? lastProfile : "null") + "' → '" + currentProfile + "'");
+            changed = true;  // OR operation: any change sets changed=true
+            dataTimestampPrefs.edit().putString("active_profile", currentProfile).apply();
+        }
+        
+        // FILTER CHANGE CHECK: Check if any filter preferences have changed (OR operation)
+        if (staticVariables.preferences != null) {
+            // Build a filter state string to compare
+            String currentFilterState = buildFilterStateString();
+            String lastFilterState = dataTimestampPrefs.getString("filter_state", null);
+            
+            if (isFirstCheck || lastFilterState == null || !currentFilterState.equals(lastFilterState)) {
+                Log.d("DataChangeCheck", "Filters " + (isFirstCheck ? "initialized" : "changed") + 
+                      (lastFilterState != null ? ": '" + lastFilterState.substring(0, Math.min(50, lastFilterState.length())) + "...' → '" + currentFilterState.substring(0, Math.min(50, currentFilterState.length())) + "...'" : ""));
+                changed = true;  // OR operation: any change sets changed=true
+                dataTimestampPrefs.edit().putString("filter_state", currentFilterState).apply();
+            }
+        }
+        
+        // Check bandInfo CSV using content hash (OR operation: any change sets changed=true)
+        if (FileHandler70k.bandInfo.exists()) {
+            CacheHashManager hashManager = CacheHashManager.getInstance();
+            String currentHash = hashManager.calculateFileHash(FileHandler70k.bandInfo);
+            String lastHash = dataTimestampPrefs.getString("bandInfo_hash", null);
+            
+            if (currentHash != null) {
+                if (isFirstCheck || lastHash == null || !currentHash.equals(lastHash)) {
+                    Log.d("DataChangeCheck", "bandInfo.csv " + (isFirstCheck ? "initialized" : "content changed") + 
+                          (lastHash != null ? " (hash: " + currentHash.substring(0, 8) + " vs " + lastHash.substring(0, 8) + ")" : ""));
+                    changed = true;  // OR operation: any change sets changed=true
+                    dataTimestampPrefs.edit().putString("bandInfo_hash", currentHash).apply();
+                } else {
+                    Log.d("DataChangeCheck", "bandInfo.csv content unchanged (hash: " + currentHash.substring(0, 8) + ")");
+                }
+            } else {
+                // Fallback to timestamp if hash calculation fails
+                long currentTime = FileHandler70k.bandInfo.lastModified();
+                long lastTime = dataTimestampPrefs.getLong("bandInfo_timestamp", 0);
+                if (isFirstCheck || currentTime != lastTime) {
+                    Log.d("DataChangeCheck", "bandInfo.csv " + (isFirstCheck ? "initialized" : "changed") + " (using timestamp fallback): " + currentTime + " vs " + lastTime);
+                    changed = true;
+                    dataTimestampPrefs.edit().putLong("bandInfo_timestamp", currentTime).apply();
+                }
+            }
+        } else {
+            if (dataTimestampPrefs.contains("bandInfo_hash") || dataTimestampPrefs.contains("bandInfo_timestamp")) {
+                Log.d("DataChangeCheck", "bandInfo.csv deleted");
+                changed = true;
+                dataTimestampPrefs.edit().remove("bandInfo_hash").remove("bandInfo_timestamp").apply();
+            }
+        }
+        
+        // Check schedule CSV using content hash (OR operation: any change sets changed=true)
+        if (FileHandler70k.schedule.exists()) {
+            CacheHashManager hashManager = CacheHashManager.getInstance();
+            String currentHash = hashManager.calculateFileHash(FileHandler70k.schedule);
+            String lastHash = dataTimestampPrefs.getString("schedule_hash", null);
+            
+            if (currentHash != null) {
+                if (isFirstCheck || lastHash == null || !currentHash.equals(lastHash)) {
+                    Log.d("DataChangeCheck", "schedule.csv " + (isFirstCheck ? "initialized" : "content changed") + 
+                          (lastHash != null ? " (hash: " + currentHash.substring(0, 8) + " vs " + lastHash.substring(0, 8) + ")" : ""));
+                    changed = true;  // OR operation: any change sets changed=true
+                    dataTimestampPrefs.edit().putString("schedule_hash", currentHash).apply();
+                } else {
+                    Log.d("DataChangeCheck", "schedule.csv content unchanged (hash: " + currentHash.substring(0, 8) + ")");
+                }
+            } else {
+                // Fallback to timestamp if hash calculation fails
+                long currentTime = FileHandler70k.schedule.lastModified();
+                long lastTime = dataTimestampPrefs.getLong("schedule_timestamp", 0);
+                if (isFirstCheck || currentTime != lastTime) {
+                    Log.d("DataChangeCheck", "schedule.csv " + (isFirstCheck ? "initialized" : "changed") + " (using timestamp fallback): " + currentTime + " vs " + lastTime);
+                    changed = true;
+                    dataTimestampPrefs.edit().putLong("schedule_timestamp", currentTime).apply();
+                }
+            }
+        } else {
+            if (dataTimestampPrefs.contains("schedule_hash") || dataTimestampPrefs.contains("schedule_timestamp")) {
+                Log.d("DataChangeCheck", "schedule.csv deleted");
+                changed = true;  // OR operation: any change sets changed=true
+                dataTimestampPrefs.edit().remove("schedule_hash").remove("schedule_timestamp").apply();
+            }
+        }
+        
+        // Check band rankings using content hash (OR operation: any change sets changed=true)
+        if (FileHandler70k.bandRankings.exists()) {
+            CacheHashManager hashManager = CacheHashManager.getInstance();
+            String currentHash = hashManager.calculateFileHash(FileHandler70k.bandRankings);
+            String lastHash = dataTimestampPrefs.getString("bandRankings_hash", null);
+            
+            if (currentHash != null) {
+                if (isFirstCheck || lastHash == null || !currentHash.equals(lastHash)) {
+                    Log.d("DataChangeCheck", "bandRankings.txt " + (isFirstCheck ? "initialized" : "content changed") + 
+                          (lastHash != null ? " (hash: " + currentHash.substring(0, 8) + " vs " + lastHash.substring(0, 8) + ")" : ""));
+                    changed = true;  // OR operation: any change sets changed=true
+                    dataTimestampPrefs.edit().putString("bandRankings_hash", currentHash).apply();
+                } else {
+                    Log.d("DataChangeCheck", "bandRankings.txt content unchanged (hash: " + currentHash.substring(0, 8) + ")");
+                }
+            } else {
+                // Fallback to timestamp if hash calculation fails
+                long currentTime = FileHandler70k.bandRankings.lastModified();
+                long lastTime = dataTimestampPrefs.getLong("bandRankings_timestamp", 0);
+                if (isFirstCheck || currentTime != lastTime) {
+                    Log.d("DataChangeCheck", "bandRankings.txt " + (isFirstCheck ? "initialized" : "changed") + " (using timestamp fallback): " + currentTime + " vs " + lastTime);
+                    changed = true;
+                    dataTimestampPrefs.edit().putLong("bandRankings_timestamp", currentTime).apply();
+                }
+            }
+        } else {
+            if (dataTimestampPrefs.contains("bandRankings_hash") || dataTimestampPrefs.contains("bandRankings_timestamp")) {
+                Log.d("DataChangeCheck", "bandRankings.txt deleted");
+                changed = true;  // OR operation: any change sets changed=true
+                dataTimestampPrefs.edit().remove("bandRankings_hash").remove("bandRankings_timestamp").apply();
+            }
+        }
+        
+        // Check attendance data using content hash (not timestamp) to avoid false positives
+        // The file gets rewritten with same content, causing timestamp changes without content changes
+        if (FileHandler70k.showsAttendedFile.exists()) {
+            CacheHashManager hashManager = CacheHashManager.getInstance();
+            String currentHash = hashManager.calculateFileHash(FileHandler70k.showsAttendedFile);
+            String lastHash = dataTimestampPrefs.getString("showsAttended_hash", null);
+            
+            if (currentHash != null) {
+                if (isFirstCheck || lastHash == null || !currentHash.equals(lastHash)) {
+                    Log.d("DataChangeCheck", "showsAttended.data " + (isFirstCheck ? "initialized" : "content changed") + 
+                          (lastHash != null ? " (hash: " + currentHash.substring(0, 8) + " vs " + lastHash.substring(0, 8) + ")" : ""));
+                    changed = true;  // OR operation: any change sets changed=true
+                    dataTimestampPrefs.edit().putString("showsAttended_hash", currentHash).apply();
+                } else {
+                    Log.d("DataChangeCheck", "showsAttended.data content unchanged (hash: " + currentHash.substring(0, 8) + ")");
+                }
+            } else {
+                // Fallback to timestamp if hash calculation fails
+                long currentTime = FileHandler70k.showsAttendedFile.lastModified();
+                long lastTime = dataTimestampPrefs.getLong("showsAttended_timestamp", 0);
+                if (isFirstCheck || currentTime != lastTime) {
+                    Log.d("DataChangeCheck", "showsAttended.data " + (isFirstCheck ? "initialized" : "changed") + " (using timestamp fallback): " + currentTime + " vs " + lastTime);
+                    changed = true;
+                    dataTimestampPrefs.edit().putLong("showsAttended_timestamp", currentTime).apply();
+                }
+            }
+        } else {
+            if (dataTimestampPrefs.contains("showsAttended_hash") || dataTimestampPrefs.contains("showsAttended_timestamp")) {
+                Log.d("DataChangeCheck", "showsAttended.data deleted");
+                changed = true;  // OR operation: any change sets changed=true
+                dataTimestampPrefs.edit().remove("showsAttended_hash").remove("showsAttended_timestamp").apply();
+            }
+        }
+        
+        // Mark as initialized after first check
+        if (isFirstCheck && changed) {
+            dataTimestampPrefs.edit().putBoolean("data_initialized", true).apply();
+            Log.d("DataChangeCheck", "Data timestamps initialized");
+        }
+        
+        // OR LOGIC: Returns true if ANY data source changed (profile, filters, CSV files, rankings, or attendance)
+        // Returns false only if ALL data sources are unchanged
+        if (!changed) {
+            Log.d("DataChangeCheck", "No data changes detected (all sources unchanged: profile, filters, files) - skipping refresh");
+        } else {
+            Log.d("DataChangeCheck", "Data change detected (OR operation: at least one source changed - profile, filters, or files) - refresh will occur");
+        }
+        
+        return changed;
+    }
+    
+    /**
+     * Build a string representation of all filter states for change detection
+     * @return A string containing all filter preference values
+     */
+    private String buildFilterStateString() {
+        if (staticVariables.preferences == null) {
+            return "";
+        }
+        
+        StringBuilder filterState = new StringBuilder();
+        filterState.append("must:").append(staticVariables.preferences.getShowMust());
+        filterState.append("|might:").append(staticVariables.preferences.getShowMight());
+        filterState.append("|wont:").append(staticVariables.preferences.getShowWont());
+        filterState.append("|unknown:").append(staticVariables.preferences.getShowUnknown());
+        filterState.append("|willAttend:").append(staticVariables.preferences.getShowWillAttend());
+        filterState.append("|hideExpired:").append(staticVariables.preferences.getHideExpiredEvents());
+        filterState.append("|pool:").append(staticVariables.preferences.getShowPoolShows());
+        filterState.append("|theater:").append(staticVariables.preferences.getShowTheaterShows());
+        filterState.append("|rink:").append(staticVariables.preferences.getShowRinkShows());
+        filterState.append("|lounge:").append(staticVariables.preferences.getShowLoungeShows());
+        filterState.append("|other:").append(staticVariables.preferences.getShowOtherShows());
+        filterState.append("|special:").append(staticVariables.preferences.getShowSpecialEvents());
+        filterState.append("|meetGreet:").append(staticVariables.preferences.getShowMeetAndGreet());
+        filterState.append("|clinic:").append(staticVariables.preferences.getShowClinicEvents());
+        filterState.append("|albumListen:").append(staticVariables.preferences.getShowAlbumListen());
+        filterState.append("|unofficial:").append(staticVariables.preferences.getShowUnofficalEvents());
+        filterState.append("|sortByTime:").append(staticVariables.preferences.getSortByTime());
+        filterState.append("|scheduleView:").append(staticVariables.preferences.getShowScheduleView());
+        
+        return filterState.toString();
+    }
+    
+    /**
+     * Check if data is currently displayed in the list
+     * Returns true if adapter has items (and not just "waiting for data" message)
+     * Returns false if no adapter, empty adapter, or only "waiting for data" is shown
+     */
+    private boolean hasDataDisplayed() {
+        // Check if adapter exists and has real data (not just "waiting for data")
+        if (adapter != null && adapter.getCount() > 0) {
+            // Check if the first item is not "waiting for data"
+            try {
+                bandListItem firstItem = adapter.getItem(0);
+                if (firstItem != null) {
+                    String firstBandName = firstItem.getBandName();
+                    String waitingMessage = getResources().getString(R.string.waiting_for_data);
+                    if (firstBandName != null && !firstBandName.equals(waitingMessage)) {
+                        Log.d("DataDisplayCheck", "Data is displayed: adapter has " + adapter.getCount() + " items, first item: " + firstBandName);
+                        return true;
+                    }
+                }
+            } catch (Exception e) {
+                Log.w("DataDisplayCheck", "Error checking adapter item: " + e.getMessage());
+            }
+        }
+        
+        // Check if listHandler has data (more reliable than ListView count)
+        if (listHandler != null && listHandler.bandNamesIndex != null && listHandler.bandNamesIndex.size() > 0) {
+            Log.d("DataDisplayCheck", "Data is displayed: listHandler has " + listHandler.bandNamesIndex.size() + " bands");
+            return true;
+        }
+        
+        // Don't check ListView count - it might have "waiting for data" items
+        Log.d("DataDisplayCheck", "No data displayed - adapter: " + (adapter != null ? adapter.getCount() : "null") + 
+              ", listHandler: " + (listHandler != null && listHandler.bandNamesIndex != null ? listHandler.bandNamesIndex.size() : "null"));
+        return false;
+    }
+    
+    /**
+     * Update all data timestamps to current values without checking for changes
+     * Used when forcing a refresh (e.g., pull-to-refresh) to prevent false positives on next check
+     */
+    private void updateDataTimestamps() {
+        // Update profile timestamp
+        String currentProfile = SharedPreferencesManager.getInstance().getActivePreferenceSource();
+        dataTimestampPrefs.edit().putString("active_profile", currentProfile).apply();
+        
+        // Update filter state to prevent false positives on next check
+        if (staticVariables.preferences != null) {
+            String currentFilterState = buildFilterStateString();
+            dataTimestampPrefs.edit().putString("filter_state", currentFilterState).apply();
+        }
+        
+        // Update file hashes if files exist (using content hashing for all files)
+        CacheHashManager hashManager = CacheHashManager.getInstance();
+        
+        if (FileHandler70k.bandInfo.exists()) {
+            String currentHash = hashManager.calculateFileHash(FileHandler70k.bandInfo);
+            if (currentHash != null) {
+                dataTimestampPrefs.edit().putString("bandInfo_hash", currentHash).apply();
+            } else {
+                // Fallback to timestamp if hash calculation fails
+                dataTimestampPrefs.edit().putLong("bandInfo_timestamp", FileHandler70k.bandInfo.lastModified()).apply();
+            }
+        }
+        if (FileHandler70k.schedule.exists()) {
+            String currentHash = hashManager.calculateFileHash(FileHandler70k.schedule);
+            if (currentHash != null) {
+                dataTimestampPrefs.edit().putString("schedule_hash", currentHash).apply();
+            } else {
+                // Fallback to timestamp if hash calculation fails
+                dataTimestampPrefs.edit().putLong("schedule_timestamp", FileHandler70k.schedule.lastModified()).apply();
+            }
+        }
+        if (FileHandler70k.bandRankings.exists()) {
+            String currentHash = hashManager.calculateFileHash(FileHandler70k.bandRankings);
+            if (currentHash != null) {
+                dataTimestampPrefs.edit().putString("bandRankings_hash", currentHash).apply();
+            } else {
+                // Fallback to timestamp if hash calculation fails
+                dataTimestampPrefs.edit().putLong("bandRankings_timestamp", FileHandler70k.bandRankings.lastModified()).apply();
+            }
+        }
+        if (FileHandler70k.showsAttendedFile.exists()) {
+            String currentHash = hashManager.calculateFileHash(FileHandler70k.showsAttendedFile);
+            if (currentHash != null) {
+                dataTimestampPrefs.edit().putString("showsAttended_hash", currentHash).apply();
+            } else {
+                // Fallback to timestamp if hash calculation fails
+                dataTimestampPrefs.edit().putLong("showsAttended_timestamp", FileHandler70k.showsAttendedFile.lastModified()).apply();
+            }
+        }
+        
+        Log.d("DataChangeCheck", "Updated all data hashes after forced refresh");
+    }
+    
+    /**
      * Save the current scroll position of the list
+     * NOTE: This is now primarily for legacy support. With notifyDataSetChanged(),
+     * Android automatically preserves scroll position, so this is less critical.
      */
     private void saveScrollPosition() {
         if (bandNamesList != null) {
@@ -2245,28 +2844,14 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             View firstView = bandNamesList.getChildAt(0);
             staticVariables.savedScrollOffset = (firstView == null) ? 0 : firstView.getTop();
             Log.d("ScrollPosition", "Saved scroll position: " + staticVariables.savedScrollPosition + ", offset: " + staticVariables.savedScrollOffset);
-            
-            // ANIMATION FIX: Disable list animations and briefly hide list for smoother refresh
-            staticVariables.disableListAnimations = true;
-            bandNamesList.setVisibility(View.INVISIBLE);
-        }
-    }
-    
-    /**
-     * Restore list animations to default state
-     */
-    private void restoreListAnimations() {
-        if (bandNamesList != null) {
-            Log.d("AnimationFix", "Restoring list animations to default state");
-            // Restore default list behavior
-            bandNamesList.setItemsCanFocus(true);
-            // Note: Layout animations are typically null by default, so we leave them disabled
-            // to prevent unwanted animations during normal operation
+            // REMOVED: List visibility hiding - not needed with notifyDataSetChanged()
         }
     }
     
     /**
      * Restore the saved scroll position of the list
+     * NOTE: With notifyDataSetChanged(), Android preserves scroll position automatically.
+     * This method is now primarily for legacy support or edge cases.
      */
     private void restoreScrollPosition() {
         if (bandNamesList != null && staticVariables.savedScrollPosition >= 0) {
@@ -2276,14 +2861,11 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             bandNamesList.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    if (staticVariables.savedScrollPosition < adapter.getCount()) {
+                    if (adapter != null && staticVariables.savedScrollPosition < adapter.getCount()) {
                         bandNamesList.setSelectionFromTop(staticVariables.savedScrollPosition, staticVariables.savedScrollOffset);
                         Log.d("ScrollPosition", "Restored scroll position: " + staticVariables.savedScrollPosition + ", offset: " + staticVariables.savedScrollOffset);
                         
-                        // ANIMATION FIX: Re-enable animations and show list after position is restored
-                        restoreListAnimations();
-                        bandNamesList.setVisibility(View.VISIBLE);
-                        staticVariables.disableListAnimations = false;
+                        // REMOVED: List visibility and animation handling - not needed with notifyDataSetChanged()
                         
                         // Clear saved position after restore
                         staticVariables.savedScrollPosition = -1;
@@ -2295,10 +2877,14 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     }
 
     public void refreshData() {
+        refreshData(false);  // Default: check for data changes
+    }
+    
+    public void refreshData(boolean forceRefresh) {
 
-        Log.d("DisplayListData", "called from refreshData");
+        Log.d("DisplayListData", "called from refreshData (forceRefresh: " + forceRefresh + ")");
         
-        // UNIVERSAL SCROLL PRESERVATION: Always save position before any refresh
+        // UNIVERSAL SCROLL PRESERVATION: Always save position before any refresh to make it transparent
         if (bandNamesList != null && staticVariables.savedScrollPosition < 0) {
             // Only save if we don't already have a saved position
             saveScrollPosition();
@@ -2337,13 +2923,18 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 if (bandNamesList.getVisibility() != View.VISIBLE) {
                     Log.d("AnimationFix", "Safety fallback: Making list visible");
                     bandNamesList.setVisibility(View.VISIBLE);
-                    staticVariables.disableListAnimations = false;
                 }
                 
                 // BLANK LIST FIX: Additional safety check for adapter
+                // TRANSPARENT REFRESH FIX: Use notifyDataSetChanged() instead of setAdapter() to preserve scroll position
                 if (adapter != null && adapter.getCount() > 0 && bandNamesList.getCount() == 0) {
                     Log.d("BlankListFix", "Detected blank list with valid adapter data - refreshing adapter");
-                    bandNamesList.setAdapter(adapter);
+                    // TRANSPARENT REFRESH: Only set adapter if not already set, otherwise use notifyDataSetChanged()
+                    if (bandNamesList.getAdapter() != adapter) {
+                        bandNamesList.setAdapter(adapter);
+                    } else {
+                        adapter.notifyDataSetChanged();
+                    }
                     bandNamesList.invalidateViews();
                 }
             }
@@ -2376,6 +2967,68 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         onPause();
         super.onDestroy();
 
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        
+        // Save scroll position for lifecycle events (orientation change, system kill, etc.)
+        if (bandNamesList != null) {
+            int scrollPosition = bandNamesList.getFirstVisiblePosition();
+            View firstView = bandNamesList.getChildAt(0);
+            int scrollOffset = (firstView == null) ? 0 : firstView.getTop();
+            
+            outState.putInt("scroll_position", scrollPosition);
+            outState.putInt("scroll_offset", scrollOffset);
+            outState.putInt("list_position", staticVariables.listPosition);
+            
+            // Also save list state
+            listState = bandNamesList.onSaveInstanceState();
+            if (listState != null) {
+                outState.putParcelable("list_state", listState);
+            }
+            
+            Log.d("ScrollPosition", "Saved scroll position in Bundle: " + scrollPosition + ", offset: " + scrollOffset);
+        }
+    }
+    
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        
+        // Restore scroll position from Bundle
+        if (savedInstanceState != null && bandNamesList != null) {
+            int scrollPosition = savedInstanceState.getInt("scroll_position", -1);
+            int scrollOffset = savedInstanceState.getInt("scroll_offset", 0);
+            int listPosition = savedInstanceState.getInt("list_position", 0);
+            
+            if (scrollPosition >= 0) {
+                staticVariables.savedScrollPosition = scrollPosition;
+                staticVariables.savedScrollOffset = scrollOffset;
+                staticVariables.listPosition = listPosition;
+                
+                // Restore list state if available
+                Parcelable savedListState = savedInstanceState.getParcelable("list_state");
+                if (savedListState != null) {
+                    listState = savedListState;
+                }
+                
+                Log.d("ScrollPosition", "Restored scroll position from Bundle: " + scrollPosition + ", offset: " + scrollOffset);
+                
+                // Restore position after layout is complete
+                bandNamesList.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (staticVariables.savedScrollPosition >= 0 && adapter != null && 
+                            staticVariables.savedScrollPosition < adapter.getCount()) {
+                            bandNamesList.setSelectionFromTop(staticVariables.savedScrollPosition, staticVariables.savedScrollOffset);
+                            Log.d("ScrollPosition", "Applied restored scroll position: " + staticVariables.savedScrollPosition);
+                        }
+                    }
+                });
+            }
+        }
     }
 
     @Override
@@ -2603,18 +3256,15 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 returningFromDetailsScreen = true;
                 Log.d("ListPosition", "Detected return from details screen - refreshing with smooth animation control");
                 
-                // ANIMATION FIX: Enable smooth refresh for details return
-                staticVariables.disableListAnimations = true;
-                
                 // Save current scroll position before refresh (AsyncTask will also save if needed)
                 saveScrollPosition();
                 
                 // Refresh data to show updated rankings
                 refreshNewData();
                 
-                // Reset flags after refresh
+                // Reset flags after refresh completes (not immediately, as refreshNewData is async)
+                // The flag will be reset after displayBandData completes in displayBandDataWithSchedule
                 staticVariables.listPosition = 0;
-                returningFromDetailsScreen = false;
                 
                 // Restore progress indicator if downloads are still running
                 if (ForegroundDownloadManager.isDownloading()) {
@@ -2646,6 +3296,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         Log.d(TAG, notificationTag + " In onResume - 3");
         
         // BLANK LIST FIX: Final safety check to ensure list is populated after resume
+        // TRANSPARENT REFRESH FIX: Use notifyDataSetChanged() instead of setAdapter() to preserve scroll position
         bandNamesList.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -2656,7 +3307,12 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                     }
                     if (adapter.getCount() > 0 && bandNamesList.getCount() == 0) {
                         Log.d("BlankListFix", "onResume safety: Adapter has data but list is empty, refreshing");
-                        bandNamesList.setAdapter(adapter);
+                        // TRANSPARENT REFRESH: Only set adapter if not already set, otherwise use notifyDataSetChanged()
+                        if (bandNamesList.getAdapter() != adapter) {
+                            bandNamesList.setAdapter(adapter);
+                        } else {
+                            adapter.notifyDataSetChanged();
+                        }
                         bandNamesList.invalidateViews();
                     }
                 }
