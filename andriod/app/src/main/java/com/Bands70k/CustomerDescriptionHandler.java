@@ -206,14 +206,6 @@ public class CustomerDescriptionHandler {
 
         if (OnlineStatus.isOnline() == true && Looper.myLooper() != Looper.getMainLooper()) {
             
-            // TEMPORARY DEBUG: Force fresh download by clearing cache
-            Log.d("70K_NOTE_DEBUG", "Clearing description map cache to force fresh download");
-            cacheManager.clearHash("descriptionMap");
-            if (FileHandler70k.descriptionMapFile.exists()) {
-                FileHandler70k.descriptionMapFile.delete();
-                Log.d("70K_NOTE_DEBUG", "Deleted existing description map file");
-            }
-            
             // Create temp file for hash comparison
             File tempDescriptionMap = new File(showBands.newRootDir + FileHandler70k.directoryName + "70kbandDescriptionMap.csv.temp");
             boolean downloadSuccessful = false;
@@ -304,14 +296,6 @@ public class CustomerDescriptionHandler {
         CacheHashManager cacheManager = CacheHashManager.getInstance();
 
         if (OnlineStatus.isOnline() == true) {
-            
-            // TEMPORARY DEBUG: Force fresh download by clearing cache
-            Log.d("70K_NOTE_DEBUG", "Clearing description map cache to force fresh download");
-            cacheManager.clearHash("descriptionMap");
-            if (FileHandler70k.descriptionMapFile.exists()) {
-                FileHandler70k.descriptionMapFile.delete();
-                Log.d("70K_NOTE_DEBUG", "Deleted existing description map file");
-            }
             
             // Create temp file for hash comparison
             File tempDescriptionMap = new File(showBands.newRootDir + FileHandler70k.directoryName + "70kbandDescriptionMap.csv.temp");

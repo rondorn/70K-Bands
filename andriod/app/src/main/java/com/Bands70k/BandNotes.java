@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class BandNotes {
 
     private String bandName;
+    private String normalizedBandName;
     private File bandNoteFile;
     private File oldBandNoteFile;
     private File bandCustNoteFile;
@@ -32,10 +33,48 @@ public class BandNotes {
     public BandNotes(String bandValue){
 
         bandName = bandValue;
+        normalizedBandName = normalizeBandName(bandName);
         oldBandNoteFile = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + ".note");
         // Use date-based filename for cache invalidation (like iOS)
         bandNoteFile = new File(showBands.newRootDir + FileHandler70k.directoryName + getNoteFileName());
         bandCustNoteFile = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + ".note_cust");
+    }
+
+    /**
+     * Recomputes the target note file based on the current descriptionMap date.
+     *
+     * IMPORTANT: The details screen may construct BandNotes before the descriptionMap has been refreshed.
+     * Recomputing here ensures that if the date changes later, we start using BandName.note-NEW_DATE
+     * and the old cache becomes obsolete.
+     */
+    private void refreshNoteFileReference() {
+        normalizedBandName = normalizeBandName(bandName);
+        bandNoteFile = new File(showBands.newRootDir + FileHandler70k.directoryName + getNoteFileName());
+    }
+
+    /**
+     * Normalizes a band name by removing invisible Unicode characters and trimming whitespace.
+     * IMPORTANT: Must match the normalization used when populating descriptionMapModData.
+     */
+    private String normalizeBandName(String bandName) {
+        if (bandName == null) {
+            return "";
+        }
+
+        return bandName.trim()
+                .replace("⁦", "") // Remove left-to-right mark
+                .replace("⁧", "") // Remove right-to-left mark
+                .replace("\u200E", "") // Remove left-to-right mark
+                .replace("\u200F", "") // Remove right-to-left mark
+                .replace("\u202A", "") // Remove left-to-right embedding
+                .replace("\u202B", "") // Remove right-to-left embedding
+                .replace("\u202C", "") // Remove pop directional formatting
+                .replace("\u202D", "") // Remove left-to-right override
+                .replace("\u202E", "") // Remove right-to-left override
+                .replace("\u2066", "") // Remove left-to-right isolate
+                .replace("\u2067", "") // Remove right-to-left isolate
+                .replace("\u2068", "") // Remove first strong isolate
+                .replace("\u2069", ""); // Remove pop directional isolate
     }
     
     /**
@@ -48,7 +87,7 @@ public class BandNotes {
         String custCommentFileName = bandName + ".note_cust";
         
         // Check if we have a date for this band in the descriptionMap
-        String dateModified = String.valueOf(staticVariables.descriptionMapModData.get(bandName));
+        String dateModified = String.valueOf(staticVariables.descriptionMapModData.get(normalizedBandName));
         
         if (dateModified != null && !dateModified.equals("null") && !dateModified.isEmpty()) {
             // Date available - use date-based filename for cache invalidation
@@ -66,9 +105,10 @@ public class BandNotes {
                 Log.d("70K_NOTE_DEBUG", "Using date-based default filename: " + approvedFileName);
             }
         } else {
-            // No date available - fall back to custom filename
-            approvedFileName = custCommentFileName;
-            Log.d("70K_NOTE_DEBUG", "No date available, using custom filename: " + approvedFileName);
+            // No date available - DO NOT fall back to .note_cust (that file must remain user-controlled).
+            // Use the legacy default filename to avoid accidentally overwriting a custom note.
+            approvedFileName = bandName + ".note_new";
+            Log.d("70K_NOTE_DEBUG", "No date available, using legacy default filename: " + approvedFileName);
         }
         
         return approvedFileName;
@@ -81,7 +121,7 @@ public class BandNotes {
      */
     private void cleanupObsoleteCache() {
         try {
-            String currentDate = String.valueOf(staticVariables.descriptionMapModData.get(bandName));
+            String currentDate = String.valueOf(staticVariables.descriptionMapModData.get(normalizedBandName));
             
             if (currentDate == null || currentDate.equals("null") || currentDate.isEmpty()) {
                 return; // No date info available, nothing to clean up
@@ -129,8 +169,55 @@ public class BandNotes {
      * @return True if the note file exists, false otherwise.
      */
     public boolean fileExists(){
+        refreshNoteFileReference();
         cleanupObsoleteCache();
         return bandNoteFile.exists();
+    }
+
+    /**
+     * Clears the user-provided custom note so default note behavior resumes.
+     *
+     * IMPORTANT:
+     * Custom notes are stored in TWO places:
+     * - BandName.note_cust (fixed filename)
+     * - BandName.note-DATE (date-based cache file) where customDescription may also be written
+     *
+     * To fully "clear" the custom note and allow re-download of the default note, we must delete BOTH.
+     */
+    public void clearCustomNote() {
+        try {
+            if (bandCustNoteFile != null && bandCustNoteFile.exists()) {
+                boolean deleted = bandCustNoteFile.delete();
+                Log.d("70K_NOTE_DEBUG", "clearCustomNote: deleted .note_cust for " + bandName + ": " + deleted);
+            }
+
+            // Delete the date-based cache file for the current descriptionMap date.
+            // Otherwise, a previously-saved customDescription inside BandName.note-DATE will keep "winning"
+            // even after .note_cust is removed.
+            String currentDate = String.valueOf(staticVariables.descriptionMapModData.get(normalizedBandName));
+            if (currentDate != null && !currentDate.equals("null") && !currentDate.trim().isEmpty()) {
+                File dateBasedFile = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + ".note-" + currentDate.trim());
+                if (dateBasedFile.exists()) {
+                    boolean deletedDateFile = dateBasedFile.delete();
+                    Log.d("70K_NOTE_DEBUG", "clearCustomNote: deleted date-based note file for " + bandName + " (" + dateBasedFile.getName() + "): " + deletedDateFile);
+                }
+            }
+
+            // Legacy fallback: also remove the old static cache file if present.
+            File legacyDefaultFile = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + ".note_new");
+            if (legacyDefaultFile.exists()) {
+                boolean deletedLegacy = legacyDefaultFile.delete();
+                Log.d("70K_NOTE_DEBUG", "clearCustomNote: deleted legacy note file for " + bandName + " (" + legacyDefaultFile.getName() + "): " + deletedLegacy);
+            }
+
+            // Recompute note file path now that custom file is gone (should switch back to date-based default)
+            refreshNoteFileReference();
+
+            // Remove any stale cache files with old dates
+            cleanupObsoleteCache();
+        } catch (Exception e) {
+            Log.e("70K_NOTE_DEBUG", "clearCustomNote error for " + bandName + ": " + e.getMessage());
+        }
     }
 
     /**
@@ -238,12 +325,33 @@ public class BandNotes {
             convertOldBandNote();
         }
 
+        // Ensure we are reading from the correct date-based file for the CURRENT descriptionMap date
+        refreshNoteFileReference();
+        cleanupObsoleteCache();
+
         Map<String, String> notesData = FileHandler70k.readObject(bandNoteFile);
 
         Log.d("70K_NOTE_DEBUG","Loading note from file for band: " + bandName + ", notesData: " + notesData);
         if (notesData.containsKey("customDescription")){
             note = notesData.get("customDescription");
             Log.d("70K_NOTE_DEBUG", "Returning customDescription for " + bandName + ": " + note);
+
+            // If a custom note exists but is blank, treat it as cleared so default behavior resumes.
+            // This prevents an empty .note_cust from blocking default downloads/reads.
+            if (note == null || note.trim().isEmpty()) {
+                Log.d("70K_NOTE_DEBUG", "Custom note is blank for " + bandName + " - clearing custom note and falling back to default");
+                clearCustomNote();
+
+                // Re-read from the (now default) note file if it exists
+                Map<String, String> refreshedData = FileHandler70k.readObject(bandNoteFile);
+                if (refreshedData != null) {
+                    String defaultNote = refreshedData.get("defaultNote");
+                    if (defaultNote != null) {
+                        return defaultNote;
+                    }
+                }
+                return "";
+            }
         } else {
             note = notesData.get("defaultNote");
             Log.d("70K_NOTE_DEBUG", "Returning defaultNote for " + bandName + ": " + note);
@@ -263,6 +371,9 @@ public class BandNotes {
         if (!FestivalConfig.getInstance().isDefaultDescriptionText(notesData) &&
                 notesData.length() > 2 && bandCustNoteFile.exists() == false) {
 
+            // Ensure we write to the correct date-based file for the CURRENT descriptionMap date
+            refreshNoteFileReference();
+
             // Preserve line breaks for native TextView display instead of converting to HTML
             // notesData = notesData.replaceAll("\\n", "<br>");  // Removed - no longer needed for native TextViews
             // notesData = notesData.replaceAll("<br><br><br><br>", "<br><br>");  // Removed - no longer needed
@@ -271,7 +382,7 @@ public class BandNotes {
 
             Time today = new Time(Time.getCurrentTimezone());
             today.setToNow();
-            String dateModified = String.valueOf(staticVariables.descriptionMapModData.get(bandName));
+            String dateModified = String.valueOf(staticVariables.descriptionMapModData.get(normalizedBandName));
             Map<String, String> bandNameDataHash = new HashMap<String, String>();
             bandNameDataHash.put("defaultNote", notesData);
             bandNameDataHash.put("dateModified", dateModified);
@@ -299,6 +410,10 @@ public class BandNotes {
     public void saveCustomBandNote(String notesData){
 
         Log.d("70K_NOTE_DEBUG", "saveCustomBandNote called for " + bandName + ", data: " + notesData);
+
+        // Ensure we write to the correct date-based file for the CURRENT descriptionMap date
+        // (and always mirror custom data into the fixed .note_cust file)
+        refreshNoteFileReference();
 
         Map<String, String> defaultNotesData = FileHandler70k.readObject(bandNoteFile);
         String defaultNote = defaultNotesData.get("defaultNote");
@@ -332,7 +447,7 @@ public class BandNotes {
 
             Map<String, String> bandNameDataHash = new HashMap<String, String>();
             bandNameDataHash.put("defaultNote", "");
-            bandNameDataHash.put("dateModified", String.valueOf(staticVariables.descriptionMapModData.get(bandName)));
+            bandNameDataHash.put("dateModified", String.valueOf(staticVariables.descriptionMapModData.get(normalizedBandName)));
             bandNameDataHash.put("dateWritten", String.valueOf(today));
             bandNameDataHash.put("customDescription", notesData);
 
