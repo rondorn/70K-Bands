@@ -280,13 +280,6 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                     @Override
                     public void onRefresh() {
                         checkForEasterEgg();
-                        new Handler().postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                bandNamesPullRefresh.setRefreshing(false);
-                            }
-                        }, 5000);
-
                         Log.i("AsyncList refresh", "onRefresh called from SwipeRefreshLayout");
 
                         //start spinner and stop after 5 seconds
@@ -294,16 +287,13 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                         bandInfo = new BandInfo();
                         staticVariables.loadingNotes = false;
                         SynchronizationManager.signalNotesLoadingComplete();
-                        
-                        // Refresh description map cache on pull to refresh
-                        // This updates the cache with band names and description URLs (not actual descriptions)
-                        Log.d("DescriptionMap", "Refreshing description map cache on pull to refresh");
-                        CustomerDescriptionHandler descHandler = CustomerDescriptionHandler.getInstance();
-                        descHandler.getDescriptionMap();
-                        
-                        // PULL-TO-REFRESH FIX: Force refresh even if data hasn't changed (user-initiated action)
-                        refreshNewData(true);  // forceRefresh = true
-                        reloadData();
+
+                        // Pull-to-refresh should download all major config files in the background (non-blocking UI):
+                        // - bandInfo.csv
+                        // - schedule.csv
+                        // - descriptionMap.csv
+                        // Then refresh the UI only after all downloads complete.
+                        performPullToRefreshDownload();
 
                     }
 
@@ -484,6 +474,96 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         super.onConfigurationChanged(newConfig);
         Log.d("orientation", "orientation DONE!");
         setSearchBarWidth();
+    }
+
+    /**
+     * Pull-to-refresh behavior:
+     * - Shows spinner briefly (2s max) without blocking UI
+     * - Downloads ALL major config files in background:
+     *   1) bandInfo.csv
+     *   2) schedule.csv
+     *   3) descriptionMap.csv
+     * - Refreshes UI only after background downloads complete
+     *
+     * Uses existing enhanced connectivity detection via OnlineStatus.isOnline().
+     */
+    private void performPullToRefreshDownload() {
+        // Spinner should be visible briefly but must not block UI.
+        // Stop after 2 seconds regardless of download completion.
+        try {
+            new Handler().postDelayed(() -> {
+                try {
+                    if (bandNamesPullRefresh != null) {
+                        bandNamesPullRefresh.setRefreshing(false);
+                    }
+                } catch (Exception e) {
+                    Log.w("PullToRefresh", "Error stopping refresh spinner", e);
+                }
+            }, 2000);
+        } catch (Exception e) {
+            Log.w("PullToRefresh", "Unable to schedule spinner stop", e);
+        }
+
+        ThreadManager.getInstance().executeGeneralWithCallbacks(
+                // Background task: download/update all config files
+                () -> {
+                    Log.d("PullToRefresh", "Starting background pull-to-refresh download (bandInfo, schedule, descriptionMap)");
+
+                    // Ensure we don't overlap with other band loading work
+                    if (!SynchronizationManager.waitForBandLoadingComplete(10)) {
+                        Log.w("PullToRefresh", "Timeout waiting for existing band loading to complete");
+                        return;
+                    }
+
+                    SynchronizationManager.signalBandLoadingStarted();
+                    staticVariables.loadingBands = true;
+
+                    try {
+                        boolean online = OnlineStatus.isOnline(); // existing enhanced network detection
+                        boolean hasCachedData = FileHandler70k.bandInfo.exists() && FileHandler70k.schedule.exists();
+
+                        if (!online) {
+                            Log.d("PullToRefresh", "Offline detected (enhanced check). Using cached data if present: " + hasCachedData);
+                        }
+
+                        // 1) bandInfo.csv + 2) schedule.csv (DownloadBandFile triggers schedule download)
+                        try {
+                            BandInfo bandInfo = new BandInfo();
+                            bandInfo.DownloadBandFile();
+                        } catch (Exception e) {
+                            Log.e("PullToRefresh", "Error downloading band/schedule data", e);
+                        }
+
+                        // 3) descriptionMap.csv (hash-checked; only replaces file if content changed)
+                        try {
+                            CustomerDescriptionHandler descHandler = CustomerDescriptionHandler.getInstance();
+                            descHandler.getDescriptionMapFile();
+                        } catch (Exception e) {
+                            Log.e("PullToRefresh", "Error downloading descriptionMap", e);
+                        }
+                    } finally {
+                        staticVariables.loadingBands = false;
+                        SynchronizationManager.signalBandLoadingComplete();
+                        Log.d("PullToRefresh", "Background pull-to-refresh download finished");
+                    }
+                },
+                // Pre-execute (UI thread): nothing extra; spinner already started in onRefresh
+                null,
+                // Post-execute (UI thread): refresh UI only after downloads complete
+                () -> {
+                    try {
+                        Log.d("PullToRefresh", "Refreshing UI after pull-to-refresh downloads completed");
+                        reloadData();
+                        refreshData(true);
+
+                        // Keep alerts consistent with refreshNewData()
+                        scheduleAlertHandler alerts = new scheduleAlertHandler();
+                        alerts.execute();
+                    } catch (Exception e) {
+                        Log.e("PullToRefresh", "Error refreshing UI after pull-to-refresh downloads", e);
+                    }
+                }
+        );
     }
 
     private void setSearchBarWidth(){
@@ -3677,6 +3757,16 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 try {
                     BandInfo bandInfo = new BandInfo();
                     bandInfo.DownloadBandFile();
+
+                    // Keep descriptionMap in sync with band/schedule on startup/foreground refresh:
+                    // Download (hash-checked) and then parse to populate descriptionMapData + descriptionMapModData.
+                    try {
+                        CustomerDescriptionHandler descHandler = CustomerDescriptionHandler.getInstance();
+                        descHandler.getDescriptionMapFile();   // content-hash checked
+                        descHandler.getDescriptionMap();       // parse into in-memory maps (incl. mod dates)
+                    } catch (Exception e) {
+                        Log.e("bandInfo", "Error downloading/parsing descriptionMap: " + e.getMessage(), e);
+                    }
                 } catch (Exception error) {
                     Log.e("bandInfo", "Error downloading band data: " + error.getMessage(), error);
                 } finally {
