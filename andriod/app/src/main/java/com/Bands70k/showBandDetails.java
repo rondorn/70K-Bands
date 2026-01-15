@@ -2386,6 +2386,9 @@ public class showBandDetails extends Activity {
      * Shows dialog for editing notes with improved styling
      */
     private void showEditNoteDialog(String bandName) {
+        // Always operate on a handler for the band passed in (not any potentially stale activity field)
+        final BandNotes noteHandlerForBand = new BandNotes(bandName);
+
         // Create custom dialog using our new layout
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         
@@ -2407,10 +2410,15 @@ public class showBandDetails extends Activity {
         titleView.setText("Edit Note for " + bandName);
         
         // Set current note content
-        String currentNote = bandNote;
-        if (bandHandler.getNoteIsBlank() == true) {
-            currentNote = "";
+        // IMPORTANT: Populate from disk-backed note state (custom if present, else default),
+        // not from the in-memory `bandNote` field which can be blank during progressive loading
+        // or after clearing a custom note.
+        String currentNote = noteHandlerForBand.getBandNoteFromFile();
+        if (currentNote == null || currentNote.trim().isEmpty()) {
+            // Fallback to whatever is currently displayed in-memory (best-effort) to avoid showing a blank editor
+            currentNote = bandNote == null ? "" : bandNote;
         }
+
         currentNote = currentNote.replaceAll("<br>", "\n");
         currentNote = currentNote.replaceAll("<[^>]*>", ""); // Remove HTML tags
         input.setText(currentNote);
@@ -2484,24 +2492,53 @@ public class showBandDetails extends Activity {
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String noteText = input.getText().toString().trim();
+                String noteTextRaw = input.getText().toString();
+                String noteText = noteTextRaw == null ? "" : noteTextRaw.trim();
                 
-                // If note is empty or whitespace only, revert to original default content
-                if (noteText.isEmpty()) {
-                    // Get the original default note (not custom note) by checking the default note file directly
-                    String originalDefaultNote = getOriginalDefaultNote(bandName);
-                    
-                    if (originalDefaultNote != null && !originalDefaultNote.trim().isEmpty() && 
-                        !FestivalConfig.getInstance().isDefaultDescriptionText(originalDefaultNote)) {
-                        // Use the original default comment
-                        noteText = originalDefaultNote;
-                    } else {
-                        // Use the exact same waiting message as CustomerDescriptionHandler
-                        noteText = FestivalConfig.getInstance().getDefaultDescriptionText(context);
+                // Treat invisible/zero-width characters as empty too (trim() won't remove these).
+                // This matters for "Select All" + "Cut" flows that can sometimes leave hidden chars behind.
+                String noteTextStripped = (noteTextRaw == null) ? "" : noteTextRaw.replaceAll("[\\s\\u200B\\uFEFF]", "");
+                
+                // If note is empty or whitespace only, user is clearing their custom note.
+                // Delete the custom note file so default note behavior resumes.
+                if (noteText.isEmpty() || noteTextStripped.isEmpty()) {
+                    Log.d("EditNote", "Clearing custom note for " + bandName + " (rawLen=" + (noteTextRaw == null ? 0 : noteTextRaw.length()) + ")");
+                    noteHandlerForBand.clearCustomNote();
+
+                    // Refresh from disk if a default note is already cached.
+                    // If not cached yet, kick off a background fetch so the UI falls back to the built-in note.
+                    String refreshed = noteHandlerForBand.getBandNoteFromFile();
+                    bandNote = refreshed == null ? "" : refreshed;
+                    setupExtraDataSection(); // Refresh note display without affecting image
+
+                    if (bandNote.trim().isEmpty()) {
+                        new Thread(() -> {
+                            try {
+                                // Download default note now that the custom override is removed.
+                                CustomerDescriptionHandler.getInstance().loadNoteFromURLImmediate(bandName);
+                            } catch (Exception e) {
+                                Log.e("EditNote", "Error reloading default note after clearing custom note for " + bandName, e);
+                            }
+
+                            runOnUiThread(() -> {
+                                try {
+                                    String refreshedAfterDownload = noteHandlerForBand.getBandNoteFromFile();
+                                    if (refreshedAfterDownload != null) {
+                                        bandNote = refreshedAfterDownload;
+                                    }
+                                    setupExtraDataSection();
+                                } catch (Exception uiError) {
+                                    Log.e("EditNote", "Error updating UI after reloading default note for " + bandName, uiError);
+                                }
+                            });
+                        }).start();
                     }
+
+                    dialog.dismiss();
+                    return;
                 }
                 
-                bandHandler.saveCustomBandNote(noteText);
+                noteHandlerForBand.saveCustomBandNote(noteText);
                 
                 // Update the note content and refresh display without restarting activity
                 bandNote = noteText;
@@ -2584,14 +2621,43 @@ public class showBandDetails extends Activity {
      */
     private String getOriginalDefaultNote(String bandName) {
         try {
-            // Read directly from the .note_new file to get the original default note
-            File defaultNoteFile = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + ".note_new");
-            
-            if (!defaultNoteFile.exists()) {
-                Log.d("OriginalDefaultNote", "No default note file exists for " + bandName);
-                return null;
+            // Prefer the current date-based default note file (BandName.note-DATE).
+            // Fall back to the legacy .note_new file for backward compatibility.
+            String normalizedBandName = bandName == null ? "" : bandName.trim()
+                    .replace("⁦", "")
+                    .replace("⁧", "")
+                    .replace("\u200E", "")
+                    .replace("\u200F", "")
+                    .replace("\u202A", "")
+                    .replace("\u202B", "")
+                    .replace("\u202C", "")
+                    .replace("\u202D", "")
+                    .replace("\u202E", "")
+                    .replace("\u2066", "")
+                    .replace("\u2067", "")
+                    .replace("\u2068", "")
+                    .replace("\u2069", "");
+
+            String dateModified = String.valueOf(staticVariables.descriptionMapModData.get(normalizedBandName));
+
+            File defaultNoteFile;
+            if (dateModified != null && !dateModified.equals("null") && !dateModified.trim().isEmpty()) {
+                defaultNoteFile = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + ".note-" + dateModified.trim());
+            } else {
+                defaultNoteFile = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + ".note_new");
             }
             
+            if (!defaultNoteFile.exists()) {
+                // Backward-compatible fallback: try legacy .note_new if date-based file missing
+                File legacyDefaultNoteFile = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + ".note_new");
+                if (legacyDefaultNoteFile.exists()) {
+                    defaultNoteFile = legacyDefaultNoteFile;
+                } else {
+                    Log.d("OriginalDefaultNote", "No default note file exists for " + bandName);
+                    return null;
+                }
+            }
+
             // Read the note file (it's a serialized HashMap)
             Map<String, String> noteData = (Map<String, String>) FileHandler70k.readObject(defaultNoteFile);
             if (noteData != null && noteData.containsKey("defaultNote")) {
