@@ -8,6 +8,7 @@
 
     <string name="Ok">Ja</string>
     <string name="Cancel">Ingen</string>
+    <string name="outdated_app_version_message">Du bruger en ældre version af appen. Opdater venligst til den nyeste version i dag</string>
 
     <string name="AlertOnMustSeeBands">Notifikation ved bands der skal ses</string>
     <string name="AlertOnMightSeeBands">Notifikation ved bands der mÂske skal ses</string>

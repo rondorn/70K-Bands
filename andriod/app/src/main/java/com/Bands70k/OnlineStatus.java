@@ -4,6 +4,10 @@ package com.Bands70k;
  * Created by rdorn on 6/3/16.
  */
 import android.os.AsyncTask;
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
@@ -19,6 +23,9 @@ import java.util.ArrayList;
 public class OnlineStatus {
 
     public static URL dnsResolveCache = null;
+    private static volatile long lastValidatedAtMs = 0L;
+    private static volatile boolean lastValidatedResult = false;
+    private static final long VALIDATION_TTL_MS = 15_000L;
 
     /**
      * Smart network status refresh for device wake-up scenarios
@@ -100,7 +107,7 @@ public class OnlineStatus {
 
         Log.d("Internet Found", "Internet Found Checking Internet");
         OnlineStatus statusCheckHandler = new OnlineStatus();
-        Boolean onlineCheck = statusCheckHandler.isInternetAvailableTest();
+        boolean onlineCheck = statusCheckHandler.isInternetAvailableTest();
 
         Log.d("Internet Found", "Internet Found Checking Internet Done - onlineCheck is " + onlineCheck);
         return onlineCheck;
@@ -108,40 +115,43 @@ public class OnlineStatus {
 
     public Boolean isInternetAvailableTest() {
 
-        Boolean returnState = false;
+        boolean returnState;
 
-        Long currentEpoc = System.currentTimeMillis() / 1000L;
-
+        long currentEpoc = System.currentTimeMillis() / 1000L;
         Log.d("Internet Found", "Internet Found " + currentEpoc + " < " + staticVariables.internetCheckCacheDate);
-        String previousValue = staticVariables.internetCheckCache;
-        if (currentEpoc > staticVariables.internetCheckCacheDate){
-            Log.d("Internet Found", "Internet Found Clearing cache");
-            currentEpoc = System.currentTimeMillis() / 1000L;
-            staticVariables.internetCheckCacheDate = currentEpoc + 15;
 
+        String previousValue = staticVariables.internetCheckCache;
+
+        // Expire cache after 15 seconds
+        if (currentEpoc > staticVariables.internetCheckCacheDate) {
+            Log.d("Internet Found", "Internet Found Clearing cache");
+            staticVariables.internetCheckCacheDate = currentEpoc + 15;
             staticVariables.internetCheckCache = "Unknown";
         }
-        if (staticVariables.internetCheckCache.equals("Unknown") == false){
-            if (staticVariables.internetCheckCache == "false") {
-                returnState = false;
-            } else {
-                returnState = true;
-            }
-            Log.d("Internet Found", "Internet Found Return state is cached  " + returnState);
 
-        } else {
-
-            if (previousValue == "false") {
-                returnState = false;
-            } else {
-                returnState = true;
-            }
-
-            Log.d("Internet Found", "Internet Found Return state is cached, but refreshing " + returnState);
-
-            executeInternetAvailabilityCheck();
-
+        // If we have a definitive cached value and it's still fresh, use it.
+        long nowMs = System.currentTimeMillis();
+        if (!"Unknown".equals(staticVariables.internetCheckCache) && (nowMs - lastValidatedAtMs) <= VALIDATION_TTL_MS) {
+            returnState = Boolean.parseBoolean(staticVariables.internetCheckCache);
+            Log.d("Internet Found", "Internet Found Return state is cached " + returnState);
+            return returnState;
         }
+
+        // If we're on a background thread, do a real (blocking) validation now.
+        // This is required to detect cruise-ship mode: connected to WiFi but no usable internet (timeouts).
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            returnState = testInternetAvailableSynchronous();
+            staticVariables.internetCheckCache = String.valueOf(returnState);
+            lastValidatedAtMs = nowMs;
+            lastValidatedResult = returnState;
+            return returnState;
+        }
+
+        // Main thread: never block. Use a conservative fast check.
+        // We return "connected" as a hint, but schedule an async validation to get the truth.
+        returnState = isNetworkConnected();
+        Log.d("Internet Found", "Main thread: returning connected=" + returnState + " and scheduling async validation");
+        executeInternetAvailabilityCheck();
 
         staticVariables.internetCheckCache = String.valueOf(returnState);
         return returnState;
@@ -149,57 +159,71 @@ public class OnlineStatus {
 
     public static Boolean testInternetAvailableSynchronous() {
 
-        Boolean returnState = false;
+        boolean returnState = false;
 
-        Long currentEpoc = System.currentTimeMillis() / 1000L;
+        long currentEpoc = System.currentTimeMillis() / 1000L;
 
-        //Get the IP of the Host
-        URL url = null;
+        // Validate internet by fetching the POINTER file and verifying its format.
+        // This directly detects:
+        // - airplane mode (no network)
+        // - really bad network (timeouts)
+        // - cruise ship captive/limited internet (request times out or returns non-pointer HTML)
+        String pointerUrl = staticVariables.getDefaultUrls();
         try {
-            url = ResolveHostIP(staticVariables.networkTestingUrl,5000);
-            dnsResolveCache = url;
-
-        } catch (MalformedURLException e) {
-
+            if (staticVariables.preferences != null && "Testing".equals(staticVariables.preferences.getPointerUrl())) {
+                pointerUrl = staticVariables.getDefaultUrlTest();
+            }
+        } catch (Exception ignored) {
         }
 
-        Log.d("Internet Found", "Internet Found using URL of " + url);
-        if(url != null) {
+        HttpURLConnection connection = null;
+        try {
+            URL url = new URL(pointerUrl);
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setInstanceFollowRedirects(true);
+            connection.setConnectTimeout(5000);
+            connection.setReadTimeout(7000);
+            connection.setRequestMethod("GET");
 
-            try {
-
-                Log.d("Internet Found", "Internet Found using URL of " + url);
-
-                HttpURLConnection.setFollowRedirects(true);
-                HttpURLConnection connection = (HttpURLConnection) new URL(staticVariables.networkTestingUrl).openConnection();
-                connection.setRequestMethod("HEAD");
-
-                connection.setConnectTimeout(5000);
-                connection.setReadTimeout(5000);
-                Log.d("Internet Found", "Internet Found https called returned " + connection.toString());
-
-                if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                    Log.d("Internet Found", "Internet Found true ");
-                    returnState = true;
-                    staticVariables.internetCheckCache = "true";
-                    connection.disconnect();
-                } else {
-                    returnState = false;
-                    Log.d("Internet Found", "Internet Found false " + connection.getResponseCode());
-                }
-
-
-            } catch (Exception generalError) {
-                Log.d("Internet Found", "Internet Found false 1 " + generalError.getMessage());
+            int responseCode = connection.getResponseCode();
+            if (responseCode < 200 || responseCode >= 400) {
+                Log.d("Internet Found", "Internet Found false - HTTP " + responseCode);
                 returnState = false;
+            } else {
+                // Read a small portion of the response and validate pointer format.
+                int validLineCount = 0;
+                int linesChecked = 0;
+                BufferedReader in = new BufferedReader(new java.io.InputStreamReader(connection.getInputStream()));
+                String line;
+                while ((line = in.readLine()) != null && linesChecked < 20) {
+                    linesChecked++;
+                    if (line.contains("::")) {
+                        String[] parts = line.split("::");
+                        if (parts.length >= 3) {
+                            validLineCount++;
+                            if (validLineCount >= 2) {
+                                break;
+                            }
+                        }
+                    }
+                }
+                in.close();
+                returnState = validLineCount >= 2;
+                Log.d("Internet Found", "Internet Found pointer validation validLineCount=" + validLineCount + " => " + returnState);
             }
-        } else {
-            Log.d("Internet Found", "Internet Found false 2 ");
+        } catch (Exception e) {
+            Log.d("Internet Found", "Internet Found false - exception " + e.getMessage());
             returnState = false;
+        } finally {
+            if (connection != null) {
+                try { connection.disconnect(); } catch (Exception ignored) {}
+            }
         }
 
         staticVariables.internetCheckCacheDate = currentEpoc + 15;
         staticVariables.internetCheckCache = String.valueOf(returnState);
+        lastValidatedAtMs = System.currentTimeMillis();
+        lastValidatedResult = returnState;
 
         Log.d("Internet Found", "Internet Found results are " + returnState);
         return returnState;
@@ -216,6 +240,8 @@ public class OnlineStatus {
                 // Background task
                 Boolean onlineCheck = testInternetAvailableSynchronous();
                 staticVariables.internetCheckCache = onlineCheck ? "true" : "false";
+                lastValidatedAtMs = System.currentTimeMillis();
+                lastValidatedResult = onlineCheck;
             },
             null, // No pre-execute needed - let the background task set the actual result
             null // No post-execute needed
@@ -276,6 +302,24 @@ public class OnlineStatus {
         }
         public synchronized InetAddress get() {
             return inetAddr;
+        }
+    }
+
+    private static boolean isNetworkConnected() {
+        Context context = Bands70k.getAppContext();
+        if (context == null) {
+            return false;
+        }
+        try {
+            ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (cm == null) return false;
+            Network active = cm.getActiveNetwork();
+            if (active == null) return false;
+            NetworkCapabilities caps = cm.getNetworkCapabilities(active);
+            if (caps == null) return false;
+            return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
+        } catch (Exception e) {
+            return false;
         }
     }
 }

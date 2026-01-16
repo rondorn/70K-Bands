@@ -4421,6 +4421,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // This observer is triggered when pointer data is updated on launch.
         // It will force a refresh of the band list to ensure the UI is updated.
         print("Pointer data updated, forcing refresh of band list.")
+        MinimumVersionWarningManager.checkAndShowIfNeeded(reason: "PointerDataUpdated (launch pointer refresh)")
         refreshBandList(reason: "Pointer data updated")
     }
     
@@ -5214,6 +5215,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             } else {
                 print("⚠️ [UNIFIED_REFRESH] Pointer file update failed, continuing with cached pointer data")
             }
+
+            // Version warning: check after pointer refresh attempt (fresh if download succeeded; cached otherwise).
+            // Requirement: check on app launch and when returning from background; both flows use unified refresh.
+            MinimumVersionWarningManager.checkAndShowIfNeeded(reason: "UnifiedRefresh(\(reason)) pointerUpdated=\(pointerUpdated)")
             
             // STEP 3: Launch 3 parallel CSV download threads
             print("🔄 [UNIFIED_REFRESH] Step 3 - Launching 3 parallel CSV download threads")
