@@ -14,6 +14,7 @@
     <string name="unknown">No lo sé</string>
     <string name="Ok">Sí</string>
     <string name="Cancel">Cancelar</string>
+    <string name="outdated_app_version_message">Estás usando una versión anterior de la app. Por favor actualiza a la última versión hoy</string>
     <string name="AlertOnMustSeeBands">Alerta para bandas que quiero ver</string>
     <string name="AlertOnMightSeeBands">Alerta para bandas que quizás vea</string>
     <string name="OnlyAlertForShowsYouWillAttend">Alertas solo para eventos a los que asistiré</string>

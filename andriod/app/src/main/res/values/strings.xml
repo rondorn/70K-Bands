@@ -9,6 +9,8 @@
     <string name="Ok">OK</string>
     <string name="Cancel">Cancel</string>
 
+    <string name="outdated_app_version_message">You are running an older version of the app. Please update to the latest version today</string>
+
     <string name="AlertOnMustSeeBands">Alert On Must See Bands</string>
     <string name="AlertOnMightSeeBands">Alert On Might See Bands</string>
 

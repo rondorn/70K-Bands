@@ -12,6 +12,8 @@
 
 "SelectBandMessage"="Sélectionnez un groupe dans la liste pour voir les détails";
 
+"OutdatedAppVersionMessage"="Vous utilisez une ancienne version de l’application. Veuillez la mettre à jour vers la dernière version dès aujourd’hui";
+
 "Must" = "Oui";
 "Might" = "Peut Être";
 "Wont" = "Non";

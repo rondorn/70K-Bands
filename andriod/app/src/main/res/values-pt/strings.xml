@@ -8,6 +8,7 @@
 
     <string name="Ok">Ok</string>
     <string name="Cancel">Cancelar</string>
+    <string name="outdated_app_version_message">Você está usando uma versão antiga do app. Atualize para a versão mais recente hoje</string>
 
     <string name="AlertOnMustSeeBands">Alerta de Shows Obrigatórios</string>
     <string name="AlertOnMightSeeBands">Alerta de Shows Interessantes</string>

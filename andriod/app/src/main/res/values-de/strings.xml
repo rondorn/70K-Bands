@@ -8,6 +8,7 @@
 
     <string name="Ok">Ja</string>
     <string name="Cancel">Nein</string>
+    <string name="outdated_app_version_message">Du verwendest eine ältere Version der App. Bitte aktualisiere noch heute auf die neueste Version</string>
 
     <string name="AlertOnMustSeeBands">Alarm für \'Ja\' Bands</string>
     <string name="AlertOnMightSeeBands">Alarm für \'Vielleicht\' Bands</string>
