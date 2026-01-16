@@ -8,6 +8,7 @@
 
     <string name="Ok">Oui</string>
     <string name="Cancel">Non</string>
+    <string name="outdated_app_version_message">Vous utilisez une ancienne version de l’application. Veuillez la mettre à jour vers la dernière version dès aujourd’hui</string>
 
     <string name="AlertOnMustSeeBands">Alerte Pour OUI Salons</string>
     <string name="AlertOnMightSeeBands">Alerte pour peut-être Shows</string>

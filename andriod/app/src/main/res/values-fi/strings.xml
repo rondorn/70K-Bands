@@ -9,6 +9,7 @@
 
     <string name="Ok">Kyllä</string>
     <string name="Cancel">Ei</string>
+    <string name="outdated_app_version_message">Käytät sovelluksen vanhempaa versiota. Päivitä uusimpaan versioon tänään</string>
 
     <string name="AlertOnMustSeeBands">Hälytä Kyllä-listan yhtyeistä</string>
     <string name="AlertOnMightSeeBands">Hälytä Ehkä-listan yhtyeistä</string>

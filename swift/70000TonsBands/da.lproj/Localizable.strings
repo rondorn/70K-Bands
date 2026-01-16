@@ -11,6 +11,8 @@
 
 "SelectBandMessage"="Vælg et band fra listen for at se detaljer";
 
+"OutdatedAppVersionMessage"="Du bruger en ældre version af appen. Opdater venligst til den nyeste version i dag";
+
 "Must"="Skal";
 "Might"="MÂske";
 "Wont"="Skal ikke";

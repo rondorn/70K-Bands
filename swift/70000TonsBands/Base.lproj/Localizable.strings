@@ -16,6 +16,8 @@
 
 "SelectBandMessage"="Select a band from the list to view details";
 
+"OutdatedAppVersionMessage"="You are running an older version of the app. Please update to the latest version today";
+
 "Ok"="Ok";
 "Cancel"="Cancel";
 

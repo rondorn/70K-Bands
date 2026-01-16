@@ -15,6 +15,8 @@
 
 "SelectBandMessage"="Valitse bändi listasta nähdäksesi tiedot";
 
+"OutdatedAppVersionMessage"="Käytät sovelluksen vanhempaa versiota. Päivitä uusimpaan versioon tänään";
+
 "Must"="Kyllä";
 "Might"="Ehkä";
 "Wont"="Ei";
