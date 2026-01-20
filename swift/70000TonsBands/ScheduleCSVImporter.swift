@@ -10,7 +10,8 @@ import Foundation
 
 class ScheduleCSVImporter {
     
-    private let dataManager = DataManager.shared
+    // SQLite-only importer (use the concrete manager so we can use transactions)
+    private let dataManager = SQLiteDataManager.shared
     
     /// Imports schedule data from CSV string into SQLite
     /// Uses smart import logic: updates existing events, adds new ones
@@ -63,99 +64,101 @@ class ScheduleCSVImporter {
             return false
         }
         
-        // STEP 1: DELETE ALL old events for this year (CSV validation passed - has records)
-        // This removes events that are NOT in the downloaded CSV file
-        // Only runs when CSV has valid records (safety check passed above)
-        print("🗑️ [EVENT_CLEANUP] STEP 1: Removing events for year \(eventYear) that are NOT in CSV")
-        print("🗑️ [EVENT_CLEANUP] CSV has \(csvData.rows.count) events - will keep only these events")
-        let existingEvents = dataManager.fetchEvents(forYear: eventYear)
-        print("🗑️ [EVENT_CLEANUP] Found \(existingEvents.count) existing events in database for year \(eventYear)")
-        
-        var deletedCount = 0
-        for event in existingEvents {
-            dataManager.deleteEvent(bandName: event.bandName, timeIndex: event.timeIndex, eventYear: eventYear)
-            deletedCount += 1
-        }
-        print("🗑️ [EVENT_CLEANUP] Deleted \(deletedCount) old events for year \(eventYear) (not in CSV)")
-        
-        // STEP 2: Import new events from CSV
-        print("🚀 [EVENT_IMPORT] STEP 2: Importing \(csvData.rows.count) events from CSV")
-        
+        // IMPORTANT: Import must be atomic to readers.
+        // Without a transaction, the delete-then-insert pattern causes readers (async event counters/UI)
+        // to observe partial states (e.g., 75/189/199 events), which appears as counts changing "randomly".
         var successCount = 0
         var errorCount = 0
         var skippedUnofficialCount = 0
         
-        // CSV rows are dictionaries with string keys matching the header names
-        for (rowIndex, lineData) in csvData.rows.enumerated() {
-            guard let bandName = lineData[bandField],
-                  let location = lineData[locationField],
-                  let date = lineData[dateField],
-                  let day = lineData[dayField],
-                  let startTime = lineData[startTimeField],
-                  let endTime = lineData[endTimeField],
-                  let eventType = lineData[typeField] else {
-                print("DEBUG_MARKER: Skipping row with missing required fields")
-                errorCount += 1
-                continue
-            }
+        let didCommit = dataManager.withImmediateTransaction("ScheduleCSVImporter year=\(eventYear)") {
+            // STEP 1: Delete all events for this year (single statement)
+            print("🗑️ [EVENT_CLEANUP] STEP 1: Replacing all events for year \(eventYear) (transactional)")
+            print("🗑️ [EVENT_CLEANUP] CSV has \(csvData.rows.count) events - will replace the year's events atomically")
+            let deletedCount = dataManager.deleteAllEvents(forYear: eventYear)
+            print("🗑️ [EVENT_CLEANUP] Deleted \(deletedCount) existing events for year \(eventYear)")
             
-            // Check if this is an unofficial event
-            let isUnofficialEvent = (eventType == "Unofficial Event" || eventType == "Cruiser Organized")
+            // STEP 2: Import new events from CSV
+            print("🚀 [EVENT_IMPORT] STEP 2: Importing \(csvData.rows.count) events from CSV (transactional)")
             
-            if isUnofficialEvent || rowIndex < 3 {
-                print("🔍 [CSV_ROW_DEBUG] Row \(rowIndex + 1):")
-                print("  - bandName: '\(bandName)'")
-                print("  - location: '\(location)'")
-                print("  - date: '\(date)'")
-                print("  - day: '\(day)'")
-                print("  - startTime: '\(startTime)'")
-                print("  - endTime: '\(endTime)'")
-                print("  - eventType: '\(eventType)'")
-            }
-            
-            // Calculate time indices
-            let startTimeIndex = calculateTimeIndex(date: date, time: startTime)
-            let endTimeIndex = calculateTimeIndex(date: date, time: endTime)
-            
-            // CRITICAL: Skip events with invalid timeIndex
-            if startTimeIndex == -1 || endTimeIndex == -1 || startTimeIndex <= 0 {
-                if isUnofficialEvent {
-                    print("🔧 [UNOFFICIAL_DEBUG] ❌ UNOFFICIAL event REJECTED due to invalid timeIndex!")
-                    skippedUnofficialCount += 1
+            // CSV rows are dictionaries with string keys matching the header names
+            for (rowIndex, lineData) in csvData.rows.enumerated() {
+                guard let bandName = lineData[bandField],
+                      let location = lineData[locationField],
+                      let date = lineData[dateField],
+                      let day = lineData[dayField],
+                      let startTime = lineData[startTimeField],
+                      let endTime = lineData[endTimeField],
+                      let eventType = lineData[typeField] else {
+                    print("DEBUG_MARKER: Skipping row with missing required fields")
+                    errorCount += 1
+                    continue
                 }
-                continue
+                
+                // Check if this is an unofficial event
+                let isUnofficialEvent = (eventType == "Unofficial Event" || eventType == "Cruiser Organized")
+                
+                if isUnofficialEvent || rowIndex < 3 {
+                    print("🔍 [CSV_ROW_DEBUG] Row \(rowIndex + 1):")
+                    print("  - bandName: '\(bandName)'")
+                    print("  - location: '\(location)'")
+                    print("  - date: '\(date)'")
+                    print("  - day: '\(day)'")
+                    print("  - startTime: '\(startTime)'")
+                    print("  - endTime: '\(endTime)'")
+                    print("  - eventType: '\(eventType)'")
+                }
+                
+                // Calculate time indices
+                let startTimeIndex = calculateTimeIndex(date: date, time: startTime)
+                let endTimeIndex = calculateTimeIndex(date: date, time: endTime)
+                
+                // CRITICAL: Skip events with invalid timeIndex
+                if startTimeIndex == -1 || endTimeIndex == -1 || startTimeIndex <= 0 {
+                    if isUnofficialEvent {
+                        print("🔧 [UNOFFICIAL_DEBUG] ❌ UNOFFICIAL event REJECTED due to invalid timeIndex!")
+                        skippedUnofficialCount += 1
+                    }
+                    continue
+                }
+                
+                // Ensure band exists in SQLite WITHOUT overwriting existing data
+                // This won't destroy imageUrl and other metadata from the bands CSV import
+                _ = dataManager.createBandIfNotExists(name: bandName, eventYear: eventYear)
+                
+                // Create event in SQLite
+                _ = dataManager.createOrUpdateEvent(
+                    bandName: bandName,
+                    timeIndex: startTimeIndex,
+                    endTimeIndex: endTimeIndex,
+                    location: location,
+                    date: date,
+                    day: day,
+                    startTime: startTime,
+                    endTime: endTime,
+                    eventType: eventType,
+                    eventYear: eventYear,
+                    notes: lineData[notesField],
+                    descriptionUrl: lineData[descriptionUrlField],
+                    eventImageUrl: lineData[imageUrlField]
+                )
+                
+                if isUnofficialEvent {
+                    print("🔧 [UNOFFICIAL_DEBUG] ✅ Imported unofficial event to SQLite: '\(bandName)' at '\(location)'")
+                }
+                
+                successCount += 1
             }
             
-            // Ensure band exists in SQLite WITHOUT overwriting existing data
-            // This won't destroy imageUrl and other metadata from the bands CSV import
-            _ = dataManager.createBandIfNotExists(name: bandName, eventYear: eventYear)
-            
-            // Create event in SQLite
-            _ = dataManager.createOrUpdateEvent(
-                bandName: bandName,
-                timeIndex: startTimeIndex,
-                endTimeIndex: endTimeIndex,
-                location: location,
-                date: date,
-                day: day,
-                startTime: startTime,
-                endTime: endTime,
-                eventType: eventType,
-                eventYear: eventYear,
-                notes: lineData[notesField],
-                descriptionUrl: lineData[descriptionUrlField],
-                eventImageUrl: lineData[imageUrlField]
-            )
-            
-            if isUnofficialEvent {
-                print("🔧 [UNOFFICIAL_DEBUG] ✅ Imported unofficial event to SQLite: '\(bandName)' at '\(location)'")
-            }
-            
-            successCount += 1
+            return successCount > 0
         }
         
         print("DEBUG_MARKER: Processed \(csvData.rows.count) CSV rows: \(successCount) successful, \(errorCount) errors")
         print("🔧 [UNOFFICIAL_DEBUG] Skipped \(skippedUnofficialCount) unofficial events due to invalid timeIndex")
+        if !didCommit {
+            print("❌ [EVENT_IMPORT] Transaction failed/rolled back - keeping previous schedule data")
+            return false
+        }
         
         // Verify events were written to SQLite
         let eventsInSQLite = dataManager.fetchEvents(forYear: eventYear)

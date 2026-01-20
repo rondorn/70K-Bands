@@ -17,6 +17,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     private static var currentDataRefreshOperationId: UUID = UUID()
     static var isYearChangeInProgress: Bool = false
     static var isCsvDownloadInProgress: Bool = false
+    static var isRefreshingAlerts: Bool = false
     static let backgroundRefreshLock = NSLock()
     
     // MARK: - Year Change Data Readiness (Race Condition Fix)
@@ -1329,6 +1330,37 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @objc func refreshAlerts(){
 
+        // REENTRANCY GUARD:
+        // getPointerUrlData(...) can clear data and synchronously trigger observers that call refreshAlerts again.
+        // Without this guard we can infinite-recurse on startup and stack-overflow.
+        if MasterViewController.isRefreshingAlerts {
+            print("🚫 [ALERTS] refreshAlerts: Skipping - refresh already in progress")
+            return
+        }
+
+        // YEAR CHANGE / CSV DOWNLOAD GUARD:
+        // Alert generation iterates schedule data heavily and can contend with year-change imports/refresh.
+        // During year changes we prefer correctness and avoiding deadlocks over regenerating alerts.
+        if MasterViewController.isYearChangeInProgress {
+            print("🚫 [YEAR_CHANGE] refreshAlerts: Skipping alert regeneration - year change in progress")
+            return
+        }
+        if MasterViewController.isCsvDownloadInProgress {
+            print("🚫 [YEAR_CHANGE] refreshAlerts: Skipping alert regeneration - CSV download in progress")
+            return
+        }
+
+        MasterViewController.isRefreshingAlerts = true
+        defer { MasterViewController.isRefreshingAlerts = false }
+        
+        // CURRENT YEAR ONLY:
+        // If the user is browsing a past year, skip notification generation.
+        let currentYearFromPointer = Int(getPointerUrlData(keyValue: "eventYear")) ?? eventYear
+        if eventYear != currentYearFromPointer {
+            print("🚫 [ALERTS] refreshAlerts: Skipping alert regeneration - non-current year selected (eventYear=\(eventYear), current=\(currentYearFromPointer))")
+            return
+        }
+
         DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
             //if #available(iOS 10.0, *) {
             print ("FCM alert")
@@ -1797,15 +1829,30 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
         }
         
-        // STEP 4: Launch unified data refresh (3 parallel threads)
-        // Force download if we're in waiting state
-        print("🔄 PULL-TO-REFRESH: Step 4 - Launching unified data refresh (3 parallel threads)")
-        if isWaitingForData {
-            print("🔄 PULL-TO-REFRESH: ⚠️ Forcing full data refresh due to empty state")
-            // Use refreshData with forceDownload for waiting state
-            refreshData(isUserInitiated: true, forceDownload: true)
+        // STEP 4: Refresh pointer file, then launch unified data refresh.
+        // POLICY: Pointer file downloads are allowed ONLY on startup and pull-to-refresh.
+        print("🔄 PULL-TO-REFRESH: Step 4 - Refreshing pointer file before data refresh")
+        
+        if let appDelegate = appDelegate {
+            appDelegate.refreshPointerFileForUserInitiatedRefresh { [weak self] _ in
+                guard let self = self else { return }
+                
+                print("🔄 PULL-TO-REFRESH: Pointer refresh complete - launching unified data refresh (3 parallel threads)")
+                if isWaitingForData {
+                    print("🔄 PULL-TO-REFRESH: ⚠️ Forcing full data refresh due to empty state")
+                    self.refreshData(isUserInitiated: true, forceDownload: true)
+                } else {
+                    self.performUnifiedDataRefresh(reason: "Pull-to-refresh")
+                }
+            }
         } else {
-            performUnifiedDataRefresh(reason: "Pull-to-refresh")
+            // Fallback: should never happen, but keep existing behavior.
+            print("🔄 PULL-TO-REFRESH: ⚠️ No AppDelegate instance - proceeding without pointer refresh")
+            if isWaitingForData {
+                refreshData(isUserInitiated: true, forceDownload: true)
+            } else {
+                performUnifiedDataRefresh(reason: "Pull-to-refresh")
+            }
         }
     }
     
@@ -1901,34 +1948,17 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
         }
         
-        // STEP 2: Clean up orphaned bands (fake band entries for special events)
-        // CRITICAL FIX: This MUST run AFTER both bands AND events are imported
-        // Otherwise it will delete all bands because events haven't been imported yet
-        // This cleanup is now deferred until after performUnifiedDataRefresh completes
-        // See performUnifiedDataRefresh for where cleanupOrphanedBands() is actually called
-        
-        // STEP 3: Clear image list cache before unified refresh
-        // This ensures the image map will be rebuilt with the new year's data
-        print("🖼️ [YEAR_CHANGE] Step 3a - Clearing combined image list cache before refresh")
-        CombinedImageListHandler.shared.clearCache()
-        
-        // STEP 4: Launch unified data refresh (3 parallel threads) for new year
-        // Thread 3 will rebuild the image map with fresh data
-        // RACE FIX: Ensure data is ready before starting unified refresh
-        print("🎛️ [YEAR_CHANGE] Step 3b - Launching unified data refresh for new year")
-        if MasterViewController.isYearChangeDataReady() {
-            performUnifiedDataRefresh(reason: "Year change to \(eventYear)")
-        } else {
-            // Wait briefly for data to be ready (edge case)
-            DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 0.2) { [weak self] in
-                guard let self = self else { return }
-                if MasterViewController.isYearChangeDataReady() {
-                    self.performUnifiedDataRefresh(reason: "Year change to \(eventYear)")
-                } else {
-                    self.performUnifiedDataRefresh(reason: "Year change to \(eventYear)")
-                }
-            }
-        }
+        // IMPORTANT:
+        // Do NOT kick off another unified refresh here.
+        // The year-change flow (PreferencesViewModel -> performBackgroundDataRefresh(reason contains "year change"))
+        // already downloads/imports:
+        // - bands CSV
+        // - schedule CSV
+        // - descriptionMap
+        // - consolidated image list
+        //
+        // Starting performUnifiedDataRefresh() again after dismiss can mutate caches while the main list is rendering,
+        // which matches the "counts changing / hangs" symptom.
     }
     
     
@@ -4872,9 +4902,40 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                             self.shouldSnapToTopAfterRefresh = true
                         }
                         
-                        // Final GUI refresh with all new data and consolidated images
-                        // The bands array will be safely repopulated in refreshBandList
-                        self.refreshBandList(reason: "\(reason) - final refresh", scrollToTop: false, isPullToRefresh: shouldScrollToTop)
+                        // YEAR CHANGE SEQUENCING:
+                        // For year changes, we must only proceed once ALL year data is ready:
+                        // - Bands (SQLite imported)
+                        // - Schedule (SQLite imported)
+                        // - Description map (downloaded + parsed)
+                        //
+                        // Also: Clear the year-change-in-progress flag BEFORE loading caches so bandNamesHandler
+                        // doesn't defer cache loads indefinitely (this was causing the refreshBandList loop).
+                        if isYearChangeOperation {
+                            print("🎯 [YEAR_CHANGE] Step FINAL-PRE-UI: Loading bands + schedule + descriptionMap for selected year before UI/Preferences dismissal")
+                            
+                            // Load description map (it may have been cleared during cache reset).
+                            self.bandDescriptions.getDescriptionMapFile()
+                            self.bandDescriptions.getDescriptionMap()
+                            
+                            // Mark year-change data as ready and end year-change mode.
+                            MasterViewController.markYearChangeDataReady()
+                            MasterViewController.notifyYearChangeCompleted()
+                            
+                            // Now that year-change mode is cleared, force-load SQLite caches so UI can render.
+                            self.bandNameHandle.loadCachedDataImmediately()
+                            self.schedule.loadCachedDataImmediately()
+                        }
+                        
+                        // For year changes, do NOT try to refresh the main list while the Preferences screen
+                        // may still be presented. That UI refresh can spam retries / appear hung.
+                        // The Preferences year-change flow will dismiss and then trigger the final list refresh.
+                        if !isYearChangeOperation {
+                            // Final GUI refresh with all new data and consolidated images
+                            // The bands array will be safely repopulated in refreshBandList
+                            self.refreshBandList(reason: "\(reason) - final refresh", scrollToTop: false, isPullToRefresh: shouldScrollToTop)
+                        } else {
+                            print("🎯 [YEAR_CHANGE] Skipping refreshBandList from performBackgroundDataRefresh; will refresh after Preferences flow completes")
+                        }
                         
                         print("Full data refresh (\(reason)): Complete with consolidated images!")
                         
@@ -5337,8 +5398,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         var downloadSuccess = false
         
         let configuration = URLSessionConfiguration.default
-        configuration.timeoutIntervalForRequest = 30.0
-        configuration.timeoutIntervalForResource = 60.0
+        // Android parity: 10s on GUI thread, 60s in background.
+        let timeout = NetworkTimeoutPolicy.timeoutIntervalForCurrentThread()
+        configuration.timeoutIntervalForRequest = timeout
+        configuration.timeoutIntervalForResource = timeout
         let session = URLSession(configuration: configuration)
         
         let task = session.dataTask(with: url) { (data, response, error) in

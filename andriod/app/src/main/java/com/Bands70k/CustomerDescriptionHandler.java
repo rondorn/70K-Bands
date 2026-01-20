@@ -728,16 +728,19 @@ public class CustomerDescriptionHandler {
             getDescriptionMapFile();
         }
 
-        // Always download description map to check for updates
-        boolean mapFileWasDownloaded = false;
-        Log.d("70K_NOTE_DEBUG", "Downloading description map to check for updates");
-        getDescriptionMapFileImmediate();
-        mapFileWasDownloaded = true;
+        // IMPORTANT: Do NOT download/refresh the descriptionMap just because the user opened details.
+        // The descriptionMap is one of the 4 startup/refresh files and should only be downloaded on:
+        // - pull-to-refresh
+        // - true background -> foreground transitions (app resume)
+        //
+        // Here we use the cached file if present, and only download if the file is missing (fresh install / cache cleared).
+        if (descriptionMapData.isEmpty()) {
+            if (!FileHandler70k.descriptionMapFile.exists()) {
+                Log.d("70K_NOTE_DEBUG", "Description map file missing in details; downloading it (immediate)");
+                getDescriptionMapFileImmediate();
+            }
 
-        // If no custom note, try to load from description map
-        // Read the map file directly without triggering bulk downloads
-        if (descriptionMapData.isEmpty() || mapFileWasDownloaded) {
-            Log.d("70K_NOTE_DEBUG", "Reading description map from file (empty: " + descriptionMapData.isEmpty() + ", downloaded: " + mapFileWasDownloaded + ")");
+            Log.d("70K_NOTE_DEBUG", "Reading description map from cached file for details screen");
             readDescriptionMapFileOnly();
         }
 
