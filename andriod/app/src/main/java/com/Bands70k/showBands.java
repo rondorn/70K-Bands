@@ -48,12 +48,14 @@ import android.view.ContextThemeWrapper;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Choreographer;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -152,6 +154,14 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
     // Easter egg trigger state for search
     private boolean hasTriggeredCowbellEasterEgg = false;
+
+    // "Pupa Party" easter egg state (visual overlay; tap anywhere to dismiss)
+    private View pupaPartyOverlay = null;
+    private ImageView pupaPartyImageView = null;
+    private Choreographer.FrameCallback pupaPartyFrameCallback = null;
+    private long pupaPartyLastFrameNanos = 0L;
+    private float pupaPartyVx = 0f;
+    private float pupaPartyVy = 0f;
 
     private Boolean sharedZipFile = false;
     private File zipFile;
@@ -635,8 +645,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                     public boolean onQueryTextSubmit(String query) {
                         Log.d("searchCriteria", "onQueryTextChange - 1 " + searchCriteria);
                         searchCriteria = searchCriteriaObject.getQuery().toString();
-                        // Easter egg trigger for 'More Cow Bell'
-                        if (searchCriteria.equalsIgnoreCase("More Cow Bell")) {
+                        
+                        // Easter egg trigger for 'More Cow Bell' / 'More Cowbell' (any case, optional whitespace)
+                        if (shouldTriggerCowbellEasterEgg(searchCriteria)) {
                             if (!hasTriggeredCowbellEasterEgg) {
                                 triggerEasterEgg();
                                 hasTriggeredCowbellEasterEgg = true;
@@ -644,6 +655,12 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                         } else {
                             hasTriggeredCowbellEasterEgg = false;
                         }
+                        
+                        // "pupa party" easter egg: bounce an image around the screen until the user taps anywhere.
+                        if (shouldTriggerPupaPartyEasterEgg(searchCriteria) && pupaPartyOverlay == null) {
+                            startPupaPartyEasterEgg();
+                        }
+                        
                         searchCriteriaObject.clearFocus();
                         listHandler.sortableBandNames = new ArrayList<String>();
                         listHandler.sortableBandNames = listHandler.getSortableBandNames();
@@ -655,8 +672,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                     public boolean onQueryTextChange(String newText) {
                         searchCriteria = searchCriteriaObject.getQuery().toString();
                         Log.d("searchCriteria", "onQueryTextChange - 2 " + searchCriteria);
-                        // Easter egg trigger for 'More Cow Bell'
-                        if (searchCriteria.equalsIgnoreCase("More Cow Bell")) {
+                        
+                        // Easter egg trigger for 'More Cow Bell' / 'More Cowbell' (any case, optional whitespace)
+                        if (shouldTriggerCowbellEasterEgg(searchCriteria)) {
                             if (!hasTriggeredCowbellEasterEgg) {
                                 triggerEasterEgg();
                                 hasTriggeredCowbellEasterEgg = true;
@@ -664,6 +682,12 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                         } else {
                             hasTriggeredCowbellEasterEgg = false;
                         }
+                        
+                        // "pupa party" easter egg: bounce an image around the screen until the user taps anywhere.
+                        if (shouldTriggerPupaPartyEasterEgg(searchCriteria) && pupaPartyOverlay == null) {
+                            startPupaPartyEasterEgg();
+                        }
+                        
                         listHandler.sortableBandNames = new ArrayList<String>();
                         listHandler.sortableBandNames = listHandler.getSortableBandNames();
                         refreshData();
@@ -672,6 +696,216 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 }
 
         );
+    }
+
+    private String normalizeEasterEggSearchText(String text) {
+        if (text == null) {
+            return "";
+        }
+        String trimmed = text.trim().toLowerCase(Locale.US);
+        // Collapse whitespace so users can type "pupa   party"
+        return trimmed.replaceAll("\\s+", " ");
+    }
+
+    private boolean shouldTriggerCowbellEasterEgg(String text) {
+        String normalized = normalizeEasterEggSearchText(text);
+        String compact = normalized.replace(" ", "");
+        return compact.contains("morecowbell");
+    }
+
+    private boolean shouldTriggerPupaPartyEasterEgg(String text) {
+        return normalizeEasterEggSearchText(text).equals("pupa party");
+    }
+
+    private int dpToPx(float dp) {
+        return Math.round(dp * getResources().getDisplayMetrics().density);
+    }
+
+    private Drawable loadPupaPartyDrawable() {
+        // Preferred: drawable resource named "pupa_party" (user-provided transparent PNG)
+        int resId = getResources().getIdentifier("pupa_party", "drawable", getPackageName());
+        if (resId != 0) {
+            try {
+                return ResourcesCompat.getDrawable(getResources(), resId, getTheme());
+            } catch (Exception ignored) {
+                // Fall through to fallback.
+            }
+        }
+        // Fallback: existing search icon so the app still works even if the resource isn't added yet.
+        return ResourcesCompat.getDrawable(getResources(), R.drawable.search_icon, getTheme());
+    }
+
+    private void startPupaPartyEasterEgg() {
+        try {
+            stopPupaPartyEasterEgg(); // defensive
+            
+            ViewGroup root = (ViewGroup) findViewById(R.id.showBandsView);
+            if (root == null) {
+                return;
+            }
+            
+            FrameLayout overlay = new FrameLayout(this);
+            overlay.setLayoutParams(new RelativeLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+            ));
+            overlay.setBackgroundColor(Color.TRANSPARENT);
+            overlay.setClickable(true);
+            overlay.setOnClickListener(v -> stopPupaPartyEasterEgg());
+            
+            ImageView imageView = new ImageView(this);
+            imageView.setImageDrawable(loadPupaPartyDrawable());
+            imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            imageView.setClickable(false);
+            
+            overlay.addView(imageView);
+            root.addView(overlay);
+            
+            pupaPartyOverlay = overlay;
+            pupaPartyImageView = imageView;
+            
+            // Defer sizing/positioning until layout is ready.
+            overlay.post(() -> {
+                if (pupaPartyOverlay == null || pupaPartyImageView == null) {
+                    return;
+                }
+                
+                int screenW = pupaPartyOverlay.getWidth();
+                int screenH = pupaPartyOverlay.getHeight();
+                if (screenW <= 0 || screenH <= 0) {
+                    return;
+                }
+                
+                Drawable d = pupaPartyImageView.getDrawable();
+                int dw = d != null ? d.getIntrinsicWidth() : 1;
+                int dh = d != null ? d.getIntrinsicHeight() : 1;
+                float aspect = dw / (float) Math.max(dh, 1);
+                
+                // Requirement: at least 20% of screen height (e.g., iPhone 17 equivalent sizing intent).
+                int minHeightPx = Math.max((int) (screenH * 0.20f), dpToPx(120));
+                int imgH = minHeightPx;
+                int imgW = (int) (imgH * Math.max(aspect, 0.05f));
+                
+                int maxWidthPx = (int) (screenW * 0.92f);
+                if (imgW > maxWidthPx) {
+                    float scale = maxWidthPx / (float) imgW;
+                    imgW = (int) (imgW * scale);
+                    imgH = (int) (imgH * scale);
+                }
+                
+                FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(imgW, imgH);
+                pupaPartyImageView.setLayoutParams(lp);
+                
+                float maxX = Math.max(0f, screenW - imgW);
+                float maxY = Math.max(0f, screenH - imgH);
+                float startX = (float) (Math.random() * Math.max(1f, maxX));
+                float startY = (float) (Math.random() * Math.max(1f, maxY));
+                pupaPartyImageView.setX(startX);
+                pupaPartyImageView.setY(startY);
+                
+                float minDim = Math.min(screenW, screenH);
+                float speed = (float) (minDim * (0.25 + Math.random() * 0.25)); // px/sec
+                double angle = Math.random() * Math.PI * 2;
+                pupaPartyVx = (float) (Math.cos(angle) * speed);
+                pupaPartyVy = (float) (Math.sin(angle) * speed);
+                pupaPartyLastFrameNanos = 0L;
+                
+                pupaPartyFrameCallback = frameTimeNanos -> {
+                    if (pupaPartyOverlay == null || pupaPartyImageView == null || pupaPartyFrameCallback == null) {
+                        return;
+                    }
+                    
+                    if (pupaPartyLastFrameNanos == 0L) {
+                        pupaPartyLastFrameNanos = frameTimeNanos;
+                        Choreographer.getInstance().postFrameCallback(pupaPartyFrameCallback);
+                        return;
+                    }
+                    
+                    float dt = (frameTimeNanos - pupaPartyLastFrameNanos) / 1_000_000_000f;
+                    pupaPartyLastFrameNanos = frameTimeNanos;
+                    if (dt <= 0f) {
+                        Choreographer.getInstance().postFrameCallback(pupaPartyFrameCallback);
+                        return;
+                    }
+                    
+                    int w = pupaPartyOverlay.getWidth();
+                    int h = pupaPartyOverlay.getHeight();
+                    int iw = pupaPartyImageView.getWidth();
+                    int ih = pupaPartyImageView.getHeight();
+                    float maxPosX = Math.max(0f, w - iw);
+                    float maxPosY = Math.max(0f, h - ih);
+                    
+                    float nextX = pupaPartyImageView.getX() + pupaPartyVx * dt;
+                    float nextY = pupaPartyImageView.getY() + pupaPartyVy * dt;
+                    boolean bounced = false;
+                    
+                    if (nextX <= 0f) {
+                        nextX = 0f;
+                        pupaPartyVx = Math.abs(pupaPartyVx);
+                        bounced = true;
+                    } else if (nextX >= maxPosX) {
+                        nextX = maxPosX;
+                        pupaPartyVx = -Math.abs(pupaPartyVx);
+                        bounced = true;
+                    }
+                    
+                    if (nextY <= 0f) {
+                        nextY = 0f;
+                        pupaPartyVy = Math.abs(pupaPartyVy);
+                        bounced = true;
+                    } else if (nextY >= maxPosY) {
+                        nextY = maxPosY;
+                        pupaPartyVy = -Math.abs(pupaPartyVy);
+                        bounced = true;
+                    }
+                    
+                    if (bounced) {
+                        float jitter = (float) (0.92 + Math.random() * 0.16); // 0.92...1.08
+                        pupaPartyVx *= jitter;
+                        pupaPartyVy *= jitter;
+                    }
+                    
+                    pupaPartyImageView.setX(nextX);
+                    pupaPartyImageView.setY(nextY);
+                    
+                    Choreographer.getInstance().postFrameCallback(pupaPartyFrameCallback);
+                };
+                
+                Choreographer.getInstance().postFrameCallback(pupaPartyFrameCallback);
+            });
+        } catch (Exception e) {
+            Log.e("PupaParty", "Error starting Pupa Party easter egg", e);
+            stopPupaPartyEasterEgg();
+        }
+    }
+
+    private void stopPupaPartyEasterEgg() {
+        try {
+            if (pupaPartyFrameCallback != null) {
+                Choreographer.getInstance().removeFrameCallback(pupaPartyFrameCallback);
+            }
+        } catch (Exception ignored) {
+            // Ignore cleanup errors
+        }
+        
+        pupaPartyFrameCallback = null;
+        pupaPartyLastFrameNanos = 0L;
+        pupaPartyVx = 0f;
+        pupaPartyVy = 0f;
+        
+        if (pupaPartyOverlay != null) {
+            try {
+                ViewGroup parent = (ViewGroup) pupaPartyOverlay.getParent();
+                if (parent != null) {
+                    parent.removeView(pupaPartyOverlay);
+                }
+            } catch (Exception ignored) {
+                // Ignore cleanup errors
+            }
+        }
+        
+        pupaPartyOverlay = null;
+        pupaPartyImageView = null;
     }
 
     private void checkForNotifcationPermMissions() {
@@ -3222,6 +3456,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
     @Override
     public void onPause() {
+        stopPupaPartyEasterEgg();
         if (dialog != null){
             if (dialog.isShowing()){
                 dialog.dismiss();

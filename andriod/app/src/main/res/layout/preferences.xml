@@ -930,15 +930,12 @@
                         android:textColor="#FFFFFF"
                         android:paddingBottom="4dp" />
 
-                    <EditText
+                    <Spinner
                         android:id="@+id/pointerUrl"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:textSize="15sp"
-                        android:textColor="#FFFFFF"
-                        android:textColorHint="#8E8E93"
                         android:background="@android:color/transparent"
-                        android:inputType="textNoSuggestions" />
+                        android:spinnerMode="dropdown" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
