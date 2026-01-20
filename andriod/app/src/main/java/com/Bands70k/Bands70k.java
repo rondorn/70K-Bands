@@ -169,6 +169,10 @@ public class Bands70k extends Application implements Application.ActivityLifecyc
             
             // Start 30-second timer for foreground downloads
             ForegroundDownloadManager.onAppForegrounded();
+
+            // Core data refresh (pointer -> band -> schedule -> descriptionMap).
+            // Runs ONLY on true background -> foreground transitions.
+            CoreDataRefreshManager.startCoreRefreshFromBackground();
         }
         Log.d("AppLifecycle", "Activity started: " + activity.getClass().getSimpleName() + " (active count: " + activityCount + ")");
     }

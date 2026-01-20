@@ -11,6 +11,10 @@ import SwiftUI
 
 class PreferencesHostingController: UIHostingController<AnyView> {
     
+    // Tracks whether this dismissal was triggered by a year-change flow.
+    // If true, we must not start extra background downloads on dismiss.
+    private var dismissedAfterYearChange: Bool = false
+    
     init() {
         // Determine if we need NavigationView based on device and presentation
         let rootView: AnyView
@@ -81,7 +85,7 @@ class PreferencesHostingController: UIHostingController<AnyView> {
         
         NotificationCenter.default.addObserver(
             self,
-            selector: #selector(dismissPreferences),
+            selector: #selector(dismissPreferencesAfterYearChange),
             name: Notification.Name("DismissPreferencesScreenAfterYearChange"),
             object: nil
         )
@@ -100,6 +104,12 @@ class PreferencesHostingController: UIHostingController<AnyView> {
         }
     }
     
+    @objc private func dismissPreferencesAfterYearChange() {
+        dismissedAfterYearChange = true
+        print("🎯 Dismissing preferences screen after year change (skip extra refresh)")
+        dismissPreferences()
+    }
+    
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
@@ -107,6 +117,21 @@ class PreferencesHostingController: UIHostingController<AnyView> {
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         
+        // If this dismissal came from the year-change flow, do not start any extra refresh/download work.
+        // The year-change pipeline already performed downloads/imports and will refresh the main UI safely.
+        if dismissedAfterYearChange {
+            print("🚫 [YEAR_CHANGE] PreferencesHostingController.viewWillDisappear: Skipping extra refresh (dismissedAfterYearChange=true)")
+            return
+        }
+        
+        // If we're dismissing due to a year change, the year-change pipeline already performs the
+        // required downloads/imports and will refresh the main UI at the right time.
+        // Avoid kicking off extra downloads here (can cause contention / hangs).
+        if MasterViewController.isYearChangeInProgress || MasterViewController.isCsvDownloadInProgress {
+            print("🚫 [YEAR_CHANGE] PreferencesHostingController.viewWillDisappear: Skipping extra refresh (year change or CSV download in progress)")
+            return
+        }
+
         // Trigger data refresh when preferences are closed
         DispatchQueue.global(qos: .background).async {
             // CRITICAL: Use protected CSV download to prevent race conditions

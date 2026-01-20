@@ -822,6 +822,14 @@ public class staticVariables {
             }
             in.close();
 
+            // Persist the pointer contents so year changes can re-parse without re-downloading.
+            try {
+                FileHandler70k.saveData(data.trim(), FileHandler70k.pointerCacheFile);
+                Log.d("lookupUrls", "Saved pointer cache to " + FileHandler70k.pointerCacheFile.getAbsolutePath());
+            } catch (Exception e) {
+                Log.w("lookupUrls", "Failed to save pointer cache: " + e.getMessage());
+            }
+
             Log.d("defaultUrls", data);
 
             String[] records = data.split("\\n");
@@ -835,6 +843,63 @@ public class staticVariables {
             Log.d("pointerUrl Error", String.valueOf(error.getCause()));
             Log.d("pointerUrl Error", String.valueOf(error.getStackTrace()));
             return null;
+        }
+    }
+
+    /**
+     * Refreshes the on-disk pointer cache from the network.
+     *
+     * IMPORTANT:
+     * - This should ONLY be called from the prescribed times (startup, pull-to-refresh, app background->foreground).
+     * - All other code should read from the cached file via {@link #loadUrlsFromCachedPointerFile(String)}.
+     * - Must be called from a background thread.
+     */
+    public static boolean refreshPointerCacheFromNetwork() {
+        boolean isMainThread = Looper.myLooper() == Looper.getMainLooper();
+        if (isMainThread) {
+            Log.w("lookupUrls", "refreshPointerCacheFromNetwork called on UI thread - refusing to block");
+            return false;
+        }
+
+        Log.d("lookupUrls", "Refreshing pointer cache from network (prescribed refresh)");
+        Map<String, String> downloadUrls = fetchFromNetwork(); // also writes FileHandler70k.pointerCacheFile
+        return downloadUrls != null && !downloadUrls.isEmpty();
+    }
+
+    /**
+     * Loads URLs for a specific year index by parsing the cached pointer file on disk.
+     *
+     * This is used during year changes to avoid re-downloading the pointer file.
+     *
+     * @param yearIndex The year index ("Current", "2025", etc.)
+     * @return True if cache existed and variables were updated, false otherwise.
+     */
+    public static boolean loadUrlsFromCachedPointerFile(String yearIndex) {
+        try {
+            if (!FileHandler70k.pointerCacheFile.exists()) {
+                Log.w("lookupUrls", "Pointer cache file missing: " + FileHandler70k.pointerCacheFile.getAbsolutePath());
+                return false;
+            }
+
+            String cached = FileHandler70k.loadData(FileHandler70k.pointerCacheFile);
+            if (cached == null || cached.trim().isEmpty()) {
+                Log.w("lookupUrls", "Pointer cache file empty");
+                return false;
+            }
+
+            String[] records = cached.split("\\n");
+            Map<String, String> downloadUrls = readPointData(records, yearIndex);
+            if (downloadUrls == null || downloadUrls.isEmpty()) {
+                Log.w("lookupUrls", "Pointer cache parse returned no URLs for yearIndex=" + yearIndex);
+                return false;
+            }
+
+            updateCacheAndVariables(downloadUrls);
+            Log.d("lookupUrls", "Loaded URLs from cached pointer file for yearIndex=" + yearIndex);
+            return true;
+        } catch (Exception e) {
+            Log.e("lookupUrls", "Failed to load URLs from cached pointer file: " + e.getMessage(), e);
+            return false;
         }
     }
     
@@ -938,43 +1003,8 @@ public class staticVariables {
      * Background version of lookupUrls that updates cache and triggers refresh if data changed.
      * This should only be called from a background thread.
      */
-    private static void lookupUrlsInBackground() {
-        // Prevent duplicate background lookups
-        if (backgroundLookupInProgress) {
-            Log.d("lookupUrls", "Background lookup already in progress, skipping");
-            return;
-        }
-        
-        backgroundLookupInProgress = true;
-        try {
-            Log.d("lookupUrls", "Starting background URL lookup");
-            
-            // Fetch new data from network
-            Map<String, String> newUrls = fetchFromNetwork();
-            
-            if (newUrls == null || newUrls.isEmpty()) {
-                Log.w("lookupUrls", "Background fetch returned no data");
-                return;
-            }
-            
-            // Compare with cached data
-            boolean dataChanged = compareUrls(newUrls);
-            
-            if (dataChanged) {
-                Log.d("lookupUrls", "Pointer data changed - updating cache and triggering refresh");
-                // Update cache and variables
-                updateCacheAndVariables(newUrls);
-                // Trigger UI refresh
-                triggerUIRefresh();
-            } else {
-                Log.d("lookupUrls", "Pointer data unchanged - no refresh needed");
-                // Still update cache to ensure it's fresh (even if values are same)
-                updateCacheAndVariables(newUrls);
-            }
-        } finally {
-            backgroundLookupInProgress = false;
-        }
-    }
+    // NOTE: Automatic background pointer refresh has been removed.
+    // Pointer downloads must only happen at prescribed times; all other usage is cache-file-only.
 
     /**
      * Looks up and sets URLs for artist and schedule data.
@@ -983,52 +1013,58 @@ public class staticVariables {
      * from network synchronously (should only be called from background threads).
      * 
      * CRITICAL: This method should NOT be called from the main/UI thread if it
-     * needs to make a network call. Use lookupUrlsInBackground() via ThreadManager
-     * for background updates.
+     * needs to make a network call. Pointer downloads are restricted to prescribed refresh times;
+     * this method is cache-only and should not be used to trigger downloads.
      */
     public static void lookupUrls(){
-        // CRITICAL: Check if we're on main thread and cache is available
+        // Cache-only pointer usage: read from the cached pointer file and set artistURL/scheduleURL/descriptionMap.
+        String yearIndex = preferences != null ? preferences.getEventYearToLoad() : "Current";
+        if (yearIndex == null || yearIndex.isEmpty() || yearIndex.equals("true") || yearIndex.equals("false")) {
+            yearIndex = "Current";
+        }
+
+        if (!loadUrlsFromCachedPointerFile(yearIndex)) {
+            // Fall back to in-memory cache if already populated, but NEVER download here.
+            if (hasCachedPointerData()) {
+                Log.d("lookupUrls", "Pointer cache file missing; using in-memory pointer data");
+                loadFromCache();
+            } else {
+                Log.w("lookupUrls", "No pointer cache available (file or memory). Not downloading here.");
+            }
+        }
+    }
+
+    /**
+     * Forces a pointer refresh from network, even if cached pointer data exists.
+     *
+     * This is intended for the "core data refresh" path (background -> foreground),
+     * where we explicitly want to re-download the pointer file as 1 of the 4 expected callouts.
+     *
+     * IMPORTANT:
+     * - Must be called from a background thread (network I/O).
+     * - Does NOT automatically trigger a UI refresh; callers should decide if/when to update UI.
+     *
+     * @return True if a network fetch succeeded and cache/variables were updated, false otherwise.
+     */
+    public static boolean forceLookupUrlsFromNetwork() {
         boolean isMainThread = Looper.myLooper() == Looper.getMainLooper();
-        
-        // Check cache first
-        if (hasCachedPointerData()) {
-            Log.d("lookupUrls", "Using cached pointer data");
-            loadFromCache();
-            
-            // Trigger background update to refresh cache (never block UI thread on online checks).
-            // lookupUrlsInBackground() will perform the network attempt and handle offline gracefully.
-            if (!backgroundLookupInProgress) {
-                Log.d("lookupUrls", "Triggering background update to refresh cache");
-                ThreadManager.getInstance().executeNetwork(() -> {
-                    lookupUrlsInBackground();
-                });
-            }
-            return; // Return immediately with cached data
-        }
-        
-        // No cache available - must fetch from network
-        // WARNING: This will block if called on main thread
         if (isMainThread) {
-            Log.w("lookupUrls", "⚠️ WARNING: lookupUrls() called on main thread with no cache - this will block!");
-            Log.w("lookupUrls", "⚠️ Consider using ThreadManager to call this from background thread");
-            // Hard safety: never perform network I/O on UI thread. Schedule a background refresh and return.
-            if (!backgroundLookupInProgress) {
-                Log.d("lookupUrls", "Scheduling background URL lookup (no-cache UI-thread call)");
-                ThreadManager.getInstance().executeNetwork(() -> {
-                    lookupUrlsInBackground();
-                });
-            }
-            return;
+            Log.w("lookupUrls", "forceLookupUrlsFromNetwork called on UI thread - refusing to block");
+            return false;
         }
-        
-        Log.d("lookupUrls", "No cache available - fetching from network");
-        Map<String, String> downloadUrls = fetchFromNetwork();
-        
-        if (downloadUrls != null && !downloadUrls.isEmpty()) {
-            updateCacheAndVariables(downloadUrls);
-        } else {
-            Log.w("lookupUrls", "Failed to fetch URLs from network and no cache available");
+
+        Log.d("lookupUrls", "FORCING pointer fetch from network (prescribed refresh)");
+        if (!refreshPointerCacheFromNetwork()) {
+            Log.w("lookupUrls", "FORCED pointer fetch failed");
+            return false;
         }
+
+        // Always re-load from the cached pointer file to set variables (cache-only usage).
+        String yearIndex = preferences != null ? preferences.getEventYearToLoad() : "Current";
+        if (yearIndex == null || yearIndex.isEmpty() || yearIndex.equals("true") || yearIndex.equals("false")) {
+            yearIndex = "Current";
+        }
+        return loadUrlsFromCachedPointerFile(yearIndex);
     }
 
     /**
@@ -1099,76 +1135,18 @@ public class staticVariables {
             Log.d("getPointerUrlData", "Got cached URL data: " + dataString + " for " + actualKeyValue);
             return dataString; // Return immediately if cached
         }
-        
-        // Only make network call if cache is completely empty (first launch scenario)
-        if (storePointerData == null || storePointerData.isEmpty()) {
-            Log.d("getPointerUrlData", "Cache is empty, making network call for " + actualKeyValue);
-            if (OnlineStatus.isOnline()) {
-                try {
-                    String pointerUrl = getDefaultUrls();
-                    if (preferences.getPointerUrl().equals("Testing")) {
-                        pointerUrl = getDefaultUrlTest();
-                    }
-                    
-                    Log.d("getPointerUrlData", "Fetching pointer data from: " + pointerUrl);
-                    
-                    URL url = new URL(pointerUrl);
-                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                    connection.setRequestMethod("GET");
-                    HttpConnectionHelper.applyTimeouts(connection);
-                    connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Android; Mobile; rv:40.0)");
-                    
-                    try {
-                        int responseCode = connection.getResponseCode();
-                        Log.d("getPointerUrlData", "HTTP Response Code: " + responseCode);
-                        
-                        if (responseCode == HttpURLConnection.HTTP_OK) {
-                            BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()), 8192);
-                            StringBuilder data = new StringBuilder(8192);
-                            char[] buffer = new char[8192];
-                            int bytesRead;
-                            
-                            while ((bytesRead = in.read(buffer)) != -1) {
-                                data.append(buffer, 0, bytesRead);
-                            }
-                            in.close();
-                            
-                            String[] records = data.toString().split("\\n");
-                            Map<String, String> downloadUrls = readPointData(records, pointerIndex);
-                            
-                            // Cache all the data for future use
-                            for (Map.Entry<String, String> entry : downloadUrls.entrySet()) {
-                                storePointerData.put(entry.getKey(), entry.getValue());
-                            }
-                            
-                            dataString = downloadUrls.get(actualKeyValue);
-                            if (dataString == null) {
-                                dataString = "";
-                            }
-                            
-                            Log.d("getPointerUrlData", "Retrieved and cached data: " + dataString + " for key: " + actualKeyValue);
-                            
-                        } else {
-                            Log.e("getPointerUrlData", "HTTP error code: " + responseCode);
-                            dataString = "";
-                        }
-                    } finally {
-                        connection.disconnect();
-                    }
-                    
-                } catch (Exception error) {
-                    Log.e("getPointerUrlData", "Error fetching pointer data: " + error.getMessage());
-                    dataString = "";
-                }
-            } else {
-                Log.d("getPointerUrlData", "No internet available, cache is empty for " + actualKeyValue);
-                dataString = "";
+
+        // Cache-file-only fallback: try to load from cached pointer file for the current yearIndex.
+        // This does NOT download the pointer file; it only parses the saved pointerCache.txt.
+        if (loadUrlsFromCachedPointerFile(pointerIndex)) {
+            if (storePointerData != null && storePointerData.get(actualKeyValue) != null) {
+                dataString = storePointerData.get(actualKeyValue);
             }
-        } else {
-            Log.d("getPointerUrlData", "Cache exists but key not found: " + actualKeyValue);
+        }
+
+        if (dataString == null) {
             dataString = "";
         }
-        
         Log.d("getPointerUrlData", "Final value for " + actualKeyValue + ": " + dataString);
         return dataString;
     }

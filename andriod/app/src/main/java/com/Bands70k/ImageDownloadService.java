@@ -443,8 +443,18 @@ public class ImageDownloadService extends Service {
                 staticVariables.loadingNotes = true;
                 staticVariables.notesLoaded = true;
                 
-                // Get description map
-                descriptionHandler.getDescriptionMapFile();
+                // IMPORTANT: Do NOT download/refresh the descriptionMap here.
+                // - The startup/pull-to-refresh pipeline already downloads it (1 of the 4 expected startup callouts).
+                // - Internal flows like bulk note checks should use the cached file only.
+                // This prevents an extra network call (and temp-file hash check download) during the notes phase.
+                if (!FileHandler70k.descriptionMapFile.exists()) {
+                    Log.d(TAG, "Description map file missing; skipping notes download phase (no network in notes phase)");
+                    staticVariables.loadingNotes = false;
+                    staticVariables.notesLoaded = false;
+                    SynchronizationManager.signalNotesLoadingComplete();
+                    return;
+                }
+
                 Map<String, String> descriptionMapData = descriptionHandler.getDescriptionMap();
                 
                 if (descriptionMapData == null || descriptionMapData.isEmpty()) {

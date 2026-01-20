@@ -121,7 +121,8 @@ open class imageHandler {
         
         // Create a URLRequest with timeout for slow connections
         var request = URLRequest(url: url)
-        request.timeoutInterval = 30.0 // 30 second timeout
+        // Android parity: 10s on GUI thread, 60s in background.
+        request.timeoutInterval = NetworkTimeoutPolicy.timeoutIntervalForCurrentThread()
         // Always reload from server to ensure we get fresh images when ImageDate changes
         // The file-based caching system handles persistent caching with date invalidation
         request.cachePolicy = .reloadIgnoringLocalCacheData
