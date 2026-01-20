@@ -213,8 +213,7 @@ public final class MinimumVersionWarningManager {
             URL url = new URL(pointerUrl);
             connection = (HttpURLConnection) url.openConnection();
             connection.setInstanceFollowRedirects(true);
-            connection.setConnectTimeout(10_000);
-            connection.setReadTimeout(30_000);
+            HttpConnectionHelper.applyTimeouts(connection);
 
             in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
             String line;

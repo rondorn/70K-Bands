@@ -23,7 +23,6 @@ import java.util.Map;
 import static android.app.ActivityManager.isRunningInTestHarness;
 import static com.Bands70k.staticVariables.staticVariablesInitialize;
 
-import com.Bands70k.CombinedImageListHandler;
 
 /**
  * Represents band information and provides methods to retrieve and manage band-related data.
@@ -336,7 +335,12 @@ public class BandInfo {
     }
 
     /**
-     * Downloads the band file and parses it, also downloads the schedule file.
+     * Downloads the band file and parses it.
+     *
+     * NOTE: Schedule download is intentionally NOT done here anymore.
+     * The app's core refresh pipeline requires a strict order:
+     * pointer file -> band data -> schedule data -> descriptionMap
+     * and that pipeline is orchestrated by callers (startup + pull-to-refresh).
      * Uses hash-based caching to only process files when content has changed.
      * @return ArrayList of band names.
      */
@@ -378,7 +382,10 @@ public class BandInfo {
             
             try {
                 URL u = new URL(artistUrl);
-                InputStream is = u.openStream();
+                java.net.HttpURLConnection connection = (java.net.HttpURLConnection) u.openConnection();
+                connection.setInstanceFollowRedirects(true);
+                HttpConnectionHelper.applyTimeouts(connection);
+                InputStream is = connection.getInputStream();
 
                 DataInputStream dis = new DataInputStream(is);
 
@@ -393,6 +400,7 @@ public class BandInfo {
                 fos.close();
                 dis.close();
                 is.close();
+                try { connection.disconnect(); } catch (Exception ignored) {}
                 
                 downloadSuccessful = true;
                 Log.d("BandInfo", "Successfully downloaded band data to temp file");
@@ -424,18 +432,6 @@ public class BandInfo {
         }
 
         ArrayList<String> bandNames = ParseBandCSV();
-
-        scheduleInfo schedule = new scheduleInfo();
-        Log.d("FILTER_DEBUG", "🔍 BANDINFO: About to download schedule from URL: " + downloadUrls.get("scheduleUrl"));
-        scheduleRecords = schedule.DownloadScheduleFile(downloadUrls.get("scheduleUrl"));
-        Log.d("FILTER_DEBUG", "🔍 BANDINFO: Schedule download complete, scheduleRecords has " + 
-              (scheduleRecords != null ? scheduleRecords.size() : "NULL") + " records");
-
-        // Regenerate combined image list after schedule data is loaded (lightweight URL list creation)
-        // This ensures event images from schedule CSV are included for year changes
-        // This is metadata processing only, not actual image downloading
-        CombinedImageListHandler combinedHandler = CombinedImageListHandler.getInstance();
-        combinedHandler.regenerateAfterDataChange(this);
 
         return bandNames;
     }

@@ -217,8 +217,7 @@ public class CustomerDescriptionHandler {
                 // Handle HTTP redirects properly for Dropbox URLs
                 HttpURLConnection connection = (HttpURLConnection) u.openConnection();
                 connection.setInstanceFollowRedirects(true);
-                connection.setConnectTimeout(10000); // 10 seconds
-                connection.setReadTimeout(30000); // 30 seconds
+                HttpConnectionHelper.applyTimeouts(connection);
                 
                 InputStream is = connection.getInputStream();
                 DataInputStream dis = new DataInputStream(is);
@@ -309,8 +308,7 @@ public class CustomerDescriptionHandler {
                 // Handle HTTP redirects properly for Dropbox URLs
                 HttpURLConnection connection = (HttpURLConnection) u.openConnection();
                 connection.setInstanceFollowRedirects(true);
-                connection.setConnectTimeout(10000); // 10 seconds
-                connection.setReadTimeout(30000); // 30 seconds
+                HttpConnectionHelper.applyTimeouts(connection);
                 
                 InputStream is = connection.getInputStream();
                 DataInputStream dis = new DataInputStream(is);
@@ -856,8 +854,7 @@ public class CustomerDescriptionHandler {
             // Handle HTTP redirects properly for Dropbox URLs
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setInstanceFollowRedirects(true);
-            connection.setConnectTimeout(10000); // 10 seconds
-            connection.setReadTimeout(30000); // 30 seconds
+            HttpConnectionHelper.applyTimeouts(connection);
             
             BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
             String line;
@@ -968,8 +965,7 @@ public class CustomerDescriptionHandler {
             // Handle HTTP redirects properly for Dropbox URLs
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setInstanceFollowRedirects(true);
-            connection.setConnectTimeout(10000); // 10 seconds
-            connection.setReadTimeout(30000); // 30 seconds
+            HttpConnectionHelper.applyTimeouts(connection);
             
             BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
             String line;

@@ -433,8 +433,7 @@ public class WebViewActivity extends Activity {
             // Make independent HTTP call
             URL url = new URL(pointerUrl);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setConnectTimeout(5000);
-            connection.setReadTimeout(10000);
+            HttpConnectionHelper.applyTimeouts(connection);
             connection.setRequestMethod("GET");
             
             BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
@@ -468,8 +467,7 @@ public class WebViewActivity extends Activity {
         try {
             URL url = new URL(reportUrl);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setConnectTimeout(10000);
-            connection.setReadTimeout(15000);
+            HttpConnectionHelper.applyTimeouts(connection);
             connection.setRequestMethod("GET");
             
             BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));

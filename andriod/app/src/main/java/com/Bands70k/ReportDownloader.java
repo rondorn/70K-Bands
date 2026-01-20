@@ -210,9 +210,7 @@ public class ReportDownloader {
             URL url = new URL(urlString);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
-            // Reduced timeouts for faster failure detection
-            connection.setConnectTimeout(10000);  // 10 seconds instead of 30
-            connection.setReadTimeout(15000);     // 15 seconds instead of 45
+            HttpConnectionHelper.applyTimeouts(connection);
             connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Android; Mobile; rv:40.0)");
             
             try {
