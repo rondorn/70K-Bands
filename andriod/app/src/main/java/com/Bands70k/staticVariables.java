@@ -290,7 +290,7 @@ public class staticVariables {
 
         preferences.loadData();
 
-        if (Build.HARDWARE.contains("golfdish") || preferences.getPointerUrl() == "Testing") {
+        if (Build.HARDWARE.contains("golfdish") || "Testing".equals(preferences.getPointerUrl())) {
             isTestingEnv = true;
         }
         /*

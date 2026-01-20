@@ -263,10 +263,18 @@ class DetailViewModel: ObservableObject {
             queue: .main
         ) { [weak self] _ in
             guard let self = self else { return }
-            print("🖼️ DetailViewModel: Image list updated, reloading all data for '\(self.bandName)'")
-            // Reload all band data including schedule events to get updated ImageDate values
-            // This ensures ImageDate changes in the CSV trigger proper cache invalidation
-            self.loadBandData()
+            
+            // Loop protection:
+            // Only react if the image list now actually contains an entry for THIS band.
+            // If the list is empty or doesn't contain this band, do nothing (prevents reload loops).
+            let list = CombinedImageListHandler.shared.combinedImageList
+            guard let _ = list[self.bandName] else {
+                print("🖼️ DetailViewModel: ImageListUpdated received but no entry for '\(self.bandName)' (listCount=\(list.count)) - skipping reload")
+                return
+            }
+            
+            print("🖼️ DetailViewModel: Image list updated (has entry) - reloading band image for '\(self.bandName)'")
+            self.loadBandImage()
         }
         
         // Listen for band description updates to refresh the display when new content is downloaded
@@ -1021,6 +1029,7 @@ class DetailViewModel: ObservableObject {
         // Get image info (URL + date) from combined handler
         print("🔍 [IMAGE_DEBUG] About to call CombinedImageListHandler.shared.getImageInfo for '\(bandName)'")
         var imageInfo = CombinedImageListHandler.shared.getImageInfo(for: bandName)
+        print("🧩 [IMAGE_PIPELINE] DetailViewModel.getImageInfo result | year=\(eventYear) combinedImageList=\(CombinedImageListHandler.shared.combinedImageList.count) band='\(bandName)' found=\(imageInfo != nil)")
         
         // FALLBACK LOGIC: If image map is empty OR has invalid URL, try direct SQLite lookups
         let imageURLFromMap = imageInfo?.url ?? ""
@@ -1034,6 +1043,7 @@ class DetailViewModel: ObservableObject {
             } else {
                 print("❌ [IMAGE_DEBUG] Invalid URL in map for '\(bandName)' (URL='\(imageURLFromMap)') - trying fallback lookups")
             }
+            print("🧩 [IMAGE_PIPELINE] Fallback path | year=\(eventYear) combinedImageList=\(CombinedImageListHandler.shared.combinedImageList.count) band='\(bandName)'")
             
             // Try fallback: direct SQLite lookup
             if let fallbackURL = getImageURLFromSQLiteFallback(bandName: bandName) {
@@ -1041,6 +1051,7 @@ class DetailViewModel: ObservableObject {
                 imageInfo = ImageInfo(url: fallbackURL, date: nil)
             } else {
                 print("❌ [IMAGE_FALLBACK] All fallback methods failed for '\(bandName)' - showing default logo")
+                print("🧩 [IMAGE_PIPELINE] DEFAULT LOGO | year=\(eventYear) combinedImageList=\(CombinedImageListHandler.shared.combinedImageList.count) band='\(bandName)'")
                 DispatchQueue.main.async {
                     self.isLoadingImage = false
                     self.bandImage = self.getFestivalDefaultLogo()
