@@ -12,6 +12,8 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
@@ -181,8 +183,7 @@ public class OnlineStatus {
             URL url = new URL(pointerUrl);
             connection = (HttpURLConnection) url.openConnection();
             connection.setInstanceFollowRedirects(true);
-            connection.setConnectTimeout(5000);
-            connection.setReadTimeout(7000);
+            HttpConnectionHelper.applyTimeouts(connection);
             connection.setRequestMethod("GET");
 
             int responseCode = connection.getResponseCode();

@@ -311,8 +311,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
         Log.d("DisplayListData", "show init start - 9");
 
-        BandInfo bandInfo = new BandInfo();
-        bandInfo.DownloadBandFile();
+        // IMPORTANT: Never download on the UI thread during startup.
+        // Cached data (if present) is loaded via populateBandList()/reloadData() immediately.
+        // If cache is missing, refreshNewData() will kick off background downloads.
 
         FirbaseAsyncUserWrite userDataWriteAsync = new FirbaseAsyncUserWrite();
         userDataWriteAsync.execute();
@@ -526,18 +527,44 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                             Log.d("PullToRefresh", "Offline detected (enhanced check). Using cached data if present: " + hasCachedData);
                         }
 
-                        // 1) bandInfo.csv + 2) schedule.csv (DownloadBandFile triggers schedule download)
+                        // Strict ordering requirement:
+                        // 1) pointer file
+                        // 2) bandInfo.csv
+                        // 3) schedule.csv
+                        // 4) descriptionMap.csv
+                        try {
+                            staticVariables.lookupUrls(); // pointer refresh first
+                        } catch (Exception e) {
+                            Log.e("PullToRefresh", "Error refreshing pointer data", e);
+                        }
+
+                        // 2) bandInfo.csv
                         try {
                             BandInfo bandInfo = new BandInfo();
                             bandInfo.DownloadBandFile();
                         } catch (Exception e) {
-                            Log.e("PullToRefresh", "Error downloading band/schedule data", e);
+                            Log.e("PullToRefresh", "Error downloading band data", e);
                         }
 
-                        // 3) descriptionMap.csv (hash-checked; only replaces file if content changed)
+                        // 3) schedule.csv
+                        try {
+                            scheduleInfo schedule = new scheduleInfo();
+                            String scheduleUrl = staticVariables.scheduleURL;
+                            if (scheduleUrl == null || scheduleUrl.trim().isEmpty()) {
+                                scheduleUrl = FestivalConfig.getInstance().scheduleUrlDefault;
+                                Log.d("DownloadUrls", "Using fallback scheduleUrl");
+                            }
+                            Log.d("PullToRefresh", "Downloading schedule from URL: " + scheduleUrl);
+                            BandInfo.scheduleRecords = schedule.DownloadScheduleFile(scheduleUrl);
+                        } catch (Exception e) {
+                            Log.e("PullToRefresh", "Error downloading schedule data", e);
+                        }
+
+                        // 4) descriptionMap.csv (hash-checked; only replaces file if content changed) + parse
                         try {
                             CustomerDescriptionHandler descHandler = CustomerDescriptionHandler.getInstance();
                             descHandler.getDescriptionMapFile();
+                            descHandler.getDescriptionMap();
                         } catch (Exception e) {
                             Log.e("PullToRefresh", "Error downloading descriptionMap", e);
                         }
@@ -2295,6 +2322,47 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         BandInfo bandInfoNames = new BandInfo();
         bandNames = bandInfoNames.getBandNames();
 
+        // OFFLINE/STARTUP ROBUSTNESS:
+        // If the schedule cache exists but scheduleRecords hasn't been populated yet (common on cold start),
+        // load it from disk in the background. While it loads, fall back to bands-only display so cached
+        // content still renders immediately even when network is down.
+        if ((BandInfo.scheduleRecords == null || BandInfo.scheduleRecords.isEmpty()) && FileHandler70k.schedule.exists()) {
+            Log.d("ScheduleCache", "Schedule cache exists but scheduleRecords is empty; parsing cached schedule in background");
+            ThreadManager.getInstance().executeGeneralWithCallbacks(
+                    () -> {
+                        try {
+                            scheduleInfo schedule = new scheduleInfo();
+                            // IMPORTANT: Do NOT call DownloadScheduleFile() here.
+                            // DownloadScheduleFile() evaluates OnlineStatus.isOnline(), which can block for a long
+                            // time on "wifi connected but no internet / 100% packet loss" networks.
+                            // We only want to parse the cached schedule file immediately.
+                            BandInfo.scheduleRecords = schedule.ParseScheduleCSV();
+                        } catch (Exception e) {
+                            Log.e("ScheduleCache", "Error parsing cached schedule", e);
+                        }
+                    },
+                    null,
+                    () -> {
+                        try {
+                            Log.d("ScheduleCache", "Cached schedule parsed; refreshing schedule view");
+                            refreshData(true);
+                        } catch (Exception e) {
+                            Log.e("ScheduleCache", "Error refreshing after cached schedule parse", e);
+                        }
+                    }
+            );
+            Log.d("ScheduleCache", "Falling back to bands-only view while schedule loads");
+
+            // CRITICAL CLICK FIX:
+            // We incremented refreshCounter/isRefreshing at the start of displayBandDataWithSchedule().
+            // This early-return path would leave isRefreshing stuck true, which blocks all clicks.
+            refreshCounter = Math.max(0, refreshCounter - 1);
+            isRefreshing = (refreshCounter > 0);
+
+            displayBandDataWithoutSchedule();
+            return;
+        }
+
         if (bandNames.size() == 0) {
             String emptyDataMessage = "";
             if (unfilteredBandCount > 1) {
@@ -2379,8 +2447,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
                 if (timeIndex > 0) {
 
+                    // Never abort the entire render because of a single bad/missing record.
                     if (bandName == null || timeIndex == null || BandInfo.scheduleRecords == null) {
-                        return;
+                        continue;
                     }
                     if (BandInfo.scheduleRecords.containsKey(bandName) == false) {
                         Log.d("WorkingOnScheduleIndex", "WorkingOnScheduleIndex No bandname " + bandName + " - " + timeIndex);
@@ -2390,10 +2459,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                         }
                     }
                     if (BandInfo.scheduleRecords.get(bandName) == null){
-                        return;
+                        continue;
                     }
                     if (BandInfo.scheduleRecords.get(bandName).scheduleByTime.containsKey(timeIndex) == false) {
-                        return;
+                        continue;
                     }
 
                     Log.d("WorkingOnScheduleIndex", "WorkingOnScheduleIndex No bandname 1 " + bandName + " - " + timeIndex);
@@ -3717,46 +3786,46 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 SynchronizationManager.signalBandLoadingStarted();
                 staticVariables.loadingBands = true;
 
-                // CRITICAL FIX: Check if we have cached data - if so, skip network wait for faster offline loading
+                // Cache-first startup:
+                // - If cache exists, UI is already showing it; we can attempt background refresh without waiting.
+                // - If cache does NOT exist, show "waiting for data" and still attempt downloads in background.
+                //
+                // IMPORTANT: Do NOT busy-wait on OnlineStatus here; on bad networks it adds delay and doesn't help.
                 boolean hasCachedData = FileHandler70k.bandInfo.exists() && FileHandler70k.schedule.exists();
-                
-                if (hasCachedData && !OnlineStatus.isOnline()) {
-                    // We have cached data and we're offline - skip network wait and load from cache immediately
-                    Log.d("AsyncTask", "Offline with cached data - loading from cache immediately (no network wait)");
+                if (hasCachedData) {
+                    Log.d("AsyncTask", "Cache present - attempting background refresh (no network wait)");
                 } else {
-                    // CRITICAL FIX: Wait for network to be available before attempting download
-                    // This is especially important on Android API 30 and below where network detection
-                    // can be delayed on first install
-                    // BUT: Only wait if we don't have cached data (first install scenario)
-                    if (!hasCachedData) {
-                        int maxWaitAttempts = 20; // Wait up to 10 seconds (20 * 500ms)
-                        int waitAttempt = 0;
-                        while (!OnlineStatus.isOnline() && waitAttempt < maxWaitAttempts) {
-                            try {
-                                Thread.sleep(500); // Wait 500ms between checks
-                                waitAttempt++;
-                                if (waitAttempt % 4 == 0) { // Log every 2 seconds
-                                    Log.d("AsyncTask", "Waiting for network connectivity... (attempt " + waitAttempt + "/" + maxWaitAttempts + ")");
-                                }
-                            } catch (InterruptedException e) {
-                                Thread.currentThread().interrupt();
-                                Log.w("AsyncTask", "Interrupted while waiting for network", e);
-                                break;
-                            }
-                        }
-                    }
-                    
-                    if (!OnlineStatus.isOnline()) {
-                        Log.w("AsyncTask", "Network not available, will use cached data if available");
-                    } else {
-                        Log.d("AsyncTask", "Network available, proceeding with download");
-                    }
+                    Log.d("AsyncTask", "No cache present - attempting initial background download (no network wait)");
                 }
 
-                Log.d("AsyncTask", "Downloading data");
+                Log.d("AsyncTask", "Downloading data (background)");
                 try {
+                    // Ensure pointer data is refreshed first (background, non-blocking UI).
+                    // This sets artistURL/scheduleURL/descriptionMap + eventYearRaw.
+                    staticVariables.lookupUrls();
+
                     BandInfo bandInfo = new BandInfo();
                     bandInfo.DownloadBandFile();
+
+                    // Download schedule AFTER band data (strict ordering requirement).
+                    try {
+                        scheduleInfo schedule = new scheduleInfo();
+                        String scheduleUrl = staticVariables.scheduleURL;
+                        if (scheduleUrl == null || scheduleUrl.trim().isEmpty()) {
+                            scheduleUrl = FestivalConfig.getInstance().scheduleUrlDefault;
+                            Log.d("DownloadUrls", "Using fallback scheduleUrl");
+                        }
+                        Log.d("FILTER_DEBUG", "🔍 STARTUP: About to download schedule from URL: " + scheduleUrl);
+                        BandInfo.scheduleRecords = schedule.DownloadScheduleFile(scheduleUrl);
+                        Log.d("FILTER_DEBUG", "🔍 STARTUP: Schedule download complete, scheduleRecords has " +
+                                (BandInfo.scheduleRecords != null ? BandInfo.scheduleRecords.size() : "NULL") + " records");
+
+                        // Regenerate combined image list after schedule data is loaded (metadata only).
+                        CombinedImageListHandler combinedHandler = CombinedImageListHandler.getInstance();
+                        combinedHandler.regenerateAfterDataChange(bandInfo);
+                    } catch (Exception e) {
+                        Log.e("bandInfo", "Error downloading schedule data: " + e.getMessage(), e);
+                    }
 
                     // Keep descriptionMap in sync with band/schedule on startup/foreground refresh:
                     // Download (hash-checked) and then parse to populate descriptionMapData + descriptionMapModData.

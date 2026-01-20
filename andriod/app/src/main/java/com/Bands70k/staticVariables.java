@@ -652,7 +652,9 @@ public class staticVariables {
             }
             
             // Strategy 3: Try online lookup if available
-            if (OnlineStatus.isOnline()) {
+            // Never do a synchronous network lookup from the UI thread (would block launch).
+            boolean isMainThread = Looper.myLooper() == Looper.getMainLooper();
+            if (!isMainThread && OnlineStatus.isOnline()) {
                 try {
                     Log.d("EventYear", "Attempting online lookup...");
                     lookupUrls();
@@ -666,6 +668,8 @@ public class staticVariables {
                 } catch (Exception e) {
                     Log.w("EventYear", "Error during online lookup: " + e.getMessage());
                 }
+            } else if (isMainThread) {
+                Log.d("EventYear", "Skipping online lookup on UI thread; will use default year and refresh later");
             }
             
             // Strategy 4: Default fallback (should be updated annually)
@@ -691,14 +695,23 @@ public class staticVariables {
         String eventYearString = "";
         try {
 
-            lookupUrls();
-            eventYearString = String.valueOf(eventYearRaw);
-            Log.d("EventYear", "Event year read as  " + eventYearString);
+            // Do not force a pointer lookup here. On bad networks that can block app launch if
+            // this is reached on the UI thread. If eventYearRaw is already populated (from
+            // cached pointer data in-memory or a background refresh), use it; otherwise fall
+            // back to a safe default and let the background refresh correct it later.
+            if (eventYearRaw != 0) {
+                eventYearString = String.valueOf(eventYearRaw);
+                Log.d("EventYear", "Event year already resolved (cached/in-memory): " + eventYearString);
+            } else {
+                // Default year if there are issues (This should be updated every year)
+                eventYearString = "2026";
+                Log.w("EventYear", "Event year not available yet; using default year: " + eventYearString);
+            }
 
         } catch (Exception error) {
             Log.e("readEventYearFile", "readEventYearFile error " + error.getMessage());
             //default year if there are issues (This should be updated every year
-            eventYearString = "2024";
+            eventYearString = "2026";
         }
 
         return Integer.valueOf(eventYearString);
@@ -801,8 +814,7 @@ public class staticVariables {
             // Handle HTTP redirects properly for Dropbox URLs
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setInstanceFollowRedirects(true);
-            connection.setConnectTimeout(10000); // 10 seconds
-            connection.setReadTimeout(30000); // 30 seconds
+            HttpConnectionHelper.applyTimeouts(connection);
             
             BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
             while ((line = in.readLine()) != null) {
@@ -983,8 +995,9 @@ public class staticVariables {
             Log.d("lookupUrls", "Using cached pointer data");
             loadFromCache();
             
-            // Trigger background update to refresh cache (if online and not already in progress)
-            if (OnlineStatus.isOnline() && !backgroundLookupInProgress) {
+            // Trigger background update to refresh cache (never block UI thread on online checks).
+            // lookupUrlsInBackground() will perform the network attempt and handle offline gracefully.
+            if (!backgroundLookupInProgress) {
                 Log.d("lookupUrls", "Triggering background update to refresh cache");
                 ThreadManager.getInstance().executeNetwork(() -> {
                     lookupUrlsInBackground();
@@ -998,6 +1011,14 @@ public class staticVariables {
         if (isMainThread) {
             Log.w("lookupUrls", "⚠️ WARNING: lookupUrls() called on main thread with no cache - this will block!");
             Log.w("lookupUrls", "⚠️ Consider using ThreadManager to call this from background thread");
+            // Hard safety: never perform network I/O on UI thread. Schedule a background refresh and return.
+            if (!backgroundLookupInProgress) {
+                Log.d("lookupUrls", "Scheduling background URL lookup (no-cache UI-thread call)");
+                ThreadManager.getInstance().executeNetwork(() -> {
+                    lookupUrlsInBackground();
+                });
+            }
+            return;
         }
         
         Log.d("lookupUrls", "No cache available - fetching from network");
@@ -1094,8 +1115,7 @@ public class staticVariables {
                     URL url = new URL(pointerUrl);
                     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                     connection.setRequestMethod("GET");
-                    connection.setConnectTimeout(5000);  // 5 seconds
-                    connection.setReadTimeout(10000);    // 10 seconds
+                    HttpConnectionHelper.applyTimeouts(connection);
                     connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Android; Mobile; rv:40.0)");
                     
                     try {

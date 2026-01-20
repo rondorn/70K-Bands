@@ -506,7 +506,10 @@ public class ImageHandler {
                 Log.d("loadImageFile", "Downloading image immediately from URL: " + imageUrl);
                 
                 URL url = new URL(imageUrl);
-                InputStream in = new BufferedInputStream(url.openStream());
+                java.net.HttpURLConnection connection = (java.net.HttpURLConnection) url.openConnection();
+                connection.setInstanceFollowRedirects(true);
+                HttpConnectionHelper.applyTimeouts(connection);
+                InputStream in = new BufferedInputStream(connection.getInputStream());
                 FileOutputStream out = new FileOutputStream(bandImageFile);
                 
                 byte[] buffer = new byte[1024];
@@ -517,6 +520,7 @@ public class ImageHandler {
                 
                 in.close();
                 out.close();
+                try { connection.disconnect(); } catch (Exception ignored) {}
                 
                 // Save URL hash for cache validation (only for schedule images with ImageDate)
                 saveUrlHash(bandImageFile, imageUrl, imageDate);
@@ -564,7 +568,10 @@ public class ImageHandler {
             try {
                 Log.d("ImageFile", "Downloading image from URL: " + imageUrl);
                 URL url = new URL(imageUrl);
-                InputStream in = new BufferedInputStream(url.openStream());
+                java.net.HttpURLConnection connection = (java.net.HttpURLConnection) url.openConnection();
+                connection.setInstanceFollowRedirects(true);
+                HttpConnectionHelper.applyTimeouts(connection);
+                InputStream in = new BufferedInputStream(connection.getInputStream());
                 OutputStream out = new BufferedOutputStream(new FileOutputStream(bandImageFile.getAbsoluteFile()));
                 
                 byte[] buffer = new byte[1024];
@@ -575,6 +582,7 @@ public class ImageHandler {
                 
                 in.close();
                 out.close();
+                try { connection.disconnect(); } catch (Exception ignored) {}
                 
                 // Save URL hash for cache validation (only for schedule images with ImageDate)
                 saveUrlHash(bandImageFile, imageUrl, imageDate);

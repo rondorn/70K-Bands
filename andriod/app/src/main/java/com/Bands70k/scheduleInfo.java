@@ -46,7 +46,10 @@ public class scheduleInfo {
             try {
                 Log.d("ScheduleLine", "DownloadScheduleFile - 2 URL=" + scheduleUrl);
                 URL u = new URL(scheduleUrl);
-                InputStream is = u.openStream();
+                java.net.HttpURLConnection connection = (java.net.HttpURLConnection) u.openConnection();
+                connection.setInstanceFollowRedirects(true);
+                HttpConnectionHelper.applyTimeouts(connection);
+                InputStream is = connection.getInputStream();
 
                 DataInputStream dis = new DataInputStream(is);
 
@@ -61,6 +64,7 @@ public class scheduleInfo {
                 fos.close();
                 dis.close();
                 is.close();
+                try { connection.disconnect(); } catch (Exception ignored) {}
                 
                 downloadSuccessful = true;
                 Log.d("ScheduleLine", "DownloadScheduleFile - 3 - Downloaded to temp file");
