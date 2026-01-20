@@ -14,7 +14,34 @@ open class CustomBandDescription {
     var bandDescriptionUrl = [String:String]()
     var bandDescriptionUrlDate = [String:String]()
     
+    // MARK: - Thread safety
+    //
+    // These dictionaries are mutated during background refresh (e.g. getDescriptionMap())
+    // and also read on the main thread when opening band details.
+    // Swift Dictionary is NOT thread-safe for concurrent read/write and can crash inside `lookup()`.
+    private let descriptionMapQueue = DispatchQueue(
+        label: "com.70kBands.CustomBandDescription.descriptionMapQueue",
+        attributes: .concurrent
+    )
+    private let descriptionMapQueueKey = DispatchSpecificKey<Bool>()
+    
+    private func readDescriptionMap<T>(_ block: () -> T) -> T {
+        if DispatchQueue.getSpecific(key: descriptionMapQueueKey) != nil {
+            return block()
+        }
+        return descriptionMapQueue.sync(execute: block)
+    }
+    
+    private func writeDescriptionMapSync(_ block: () -> Void) {
+        if DispatchQueue.getSpecific(key: descriptionMapQueueKey) != nil {
+            block()
+            return
+        }
+        descriptionMapQueue.sync(flags: .barrier, execute: block)
+    }
+    
     init(){
+        descriptionMapQueue.setSpecific(key: descriptionMapQueueKey, value: true)
         refreshCache()
     }
     
@@ -27,9 +54,12 @@ open class CustomBandDescription {
             // Check if we already have cached data
             if (cacheVariables.bandDescriptionUrlCache.isEmpty == false){
                 // Safely copy the cached data
-                bandDescriptionUrl = cacheVariables.bandDescriptionUrlCache
-                bandDescriptionUrlDate = cacheVariables.bandDescriptionUrlDateCache
-                print("commentFile refreshCache: Loaded from cache - \(bandDescriptionUrl.count) bands")
+                writeDescriptionMapSync {
+                    bandDescriptionUrl = cacheVariables.bandDescriptionUrlCache
+                    bandDescriptionUrlDate = cacheVariables.bandDescriptionUrlDateCache
+                }
+                let count = readDescriptionMap { bandDescriptionUrl.count }
+                print("commentFile refreshCache: Loaded from cache - \(count) bands")
                 
             } else {
                 // Always try to load from disk first, regardless of network status
@@ -37,7 +67,8 @@ open class CustomBandDescription {
                 self.getDescriptionMap();
                 
                 // Only attempt network operations if we still don't have data and internet is available
-                if bandDescriptionUrl.isEmpty && isInternetAvailable() {
+                let isEmptyAfterDiskLoad = readDescriptionMap { bandDescriptionUrl.isEmpty }
+                if isEmptyAfterDiskLoad && isInternetAvailable() {
                     if hasPrerequisiteDataAvailable() {
                         print("commentFile refreshCache: Description map still empty after disk load, attempting network refresh")
                         if currentQueueLabel == "com.apple.main-thread" {
@@ -51,10 +82,11 @@ open class CustomBandDescription {
                     } else {
                         print("⚠️ commentFile refreshCache: Prerequisite data not ready yet, skipping network refresh")
                     }
-                } else if bandDescriptionUrl.isEmpty {
+                } else if isEmptyAfterDiskLoad {
                     print("⚠️ commentFile refreshCache: No internet available and no data from disk")
                 } else {
-                    print("commentFile refreshCache: Successfully loaded \(bandDescriptionUrl.count) bands from disk")
+                    let count = readDescriptionMap { bandDescriptionUrl.count }
+                    print("commentFile refreshCache: Successfully loaded \(count) bands from disk")
                 }
             }
         }
@@ -222,7 +254,9 @@ open class CustomBandDescription {
             downloadingAllComments = true
             print ("commentFile looping through bands (background queue)")
             
-            for record in self.bandDescriptionUrl{
+            // Snapshot map so we don't iterate while background refresh mutates it.
+            let snapshot: [String: String] = readDescriptionMap { bandDescriptionUrl }
+            for record in snapshot {
                 let bandName = record.key
                 print ("commentFile working on bandName " + bandName)
                 if (self.doesDescriptionFileExists(bandName: bandName) == false){
@@ -249,8 +283,14 @@ open class CustomBandDescription {
         var matches = false
         let normalizedBandName = normalizeBandName(bandName)
         
-        if bandDescriptionUrlDate.keys.contains(normalizedBandName){
-            var defaultBandNote = getDescriptionFromUrl(bandName: bandName, descriptionUrl: String(describing: bandDescriptionUrl[normalizedBandName]!))
+        let (hasDate, urlForBand): (Bool, String?) = readDescriptionMap {
+            let hasDate = (bandDescriptionUrlDate[normalizedBandName] != nil)
+            let url = bandDescriptionUrl[normalizedBandName]
+            return (hasDate, url)
+        }
+        
+        if hasDate, let urlForBand {
+            var defaultBandNote = getDescriptionFromUrl(bandName: bandName, descriptionUrl: String(describing: urlForBand))
             
             defaultBandNote = defaultBandNote.filter {!$0.isWhitespace}
             
@@ -272,11 +312,14 @@ open class CustomBandDescription {
         let custCommentFileName = bandName + "_comment.note-cust";
         let normalizedBandName = normalizeBandName(bandName)
         
-        if bandDescriptionUrlDate.keys.contains(normalizedBandName){
+        let urlDateValue: String? = readDescriptionMap {
+            return bandDescriptionUrlDate[normalizedBandName]
+        }
+        
+        if urlDateValue != nil {
             // CRASH FIX: Safely unwrap the date value to avoid corrupt cached data
             // If the value is not a proper String, use empty string as fallback
-            let urlDateValue = bandDescriptionUrlDate[normalizedBandName] ?? ""
-            let urlDateString = String(describing: urlDateValue)
+            let urlDateString = String(describing: urlDateValue ?? "")
             let defaultCommentFileName = bandName + "_comment.note-" + urlDateString
             
             
@@ -430,17 +473,19 @@ open class CustomBandDescription {
                 }
             }
             
-            //bandDescriptionLock.sync() {
-            if (bandDescriptionUrl.index(forKey: normalizedBandName) != nil && bandDescriptionUrl[normalizedBandName] != nil){
-                
-                let urlString = String(describing: bandDescriptionUrl[normalizedBandName]!)
+            let urlString: String? = readDescriptionMap {
+                return bandDescriptionUrl[normalizedBandName]
+            }
+            if let urlString, !urlString.isEmpty {
+                let urlString = String(describing: urlString)
                 print ("DEBUG_commentFile: downloading URL \(urlString)")
                 DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
                     
                     self.getDescriptionFromUrl(bandName: bandName, descriptionUrl: urlString)
                 }
             } else {
-                print ("DEBUG_commentFile: No URL for band '\(normalizedBandName)' - \(bandDescriptionUrl)")
+                let mapCount = readDescriptionMap { bandDescriptionUrl.count }
+                print ("DEBUG_commentFile: No URL for band '\(normalizedBandName)' - mapCount=\(mapCount)")
             }
         } else {
             print ("DEBUG_commentFile: No URL for band \(bandName) - \(commentFile)")
@@ -533,17 +578,32 @@ open class CustomBandDescription {
     private static let failureCooldown: TimeInterval = 30 // 30 seconds
     
     func getDescriptionMap(){
-        
-        // Check if we've failed too many times recently
         let currentTime = Date().timeIntervalSince1970
-        if CustomBandDescription.failureCount >= CustomBandDescription.maxFailures {
-            if currentTime - CustomBandDescription.lastFailureTime < CustomBandDescription.failureCooldown {
-                print("⚠️ getDescriptionMap: Too many recent failures (\(CustomBandDescription.failureCount)), cooling down for \(Int(CustomBandDescription.failureCooldown - (currentTime - CustomBandDescription.lastFailureTime))) more seconds")
+        
+        // IMPORTANT:
+        // - We must ALWAYS parse from disk if the file exists (even if prior attempts failed).
+        // - Cooldown/throttling should only prevent repeated *download attempts* when the file is missing,
+        //   not prevent parsing a now-valid file.
+        let fileExistsAtStart = FileManager.default.fileExists(atPath: descriptionMapFile)
+        if !fileExistsAtStart {
+            // If the pointer URL isn't ready yet (startup before pointer download completes), do NOT count this
+            // as a failure and do NOT start a cooldown. Just return and try again later.
+            let mapUrl = getDefaultDescriptionMapUrl()
+            if mapUrl.isEmpty {
+                print("⚠️ getDescriptionMap: descriptionMap pointer URL not ready yet (empty) - skipping without counting failure")
                 return
-            } else {
-                // Reset failure count after cooldown
-                CustomBandDescription.failureCount = 0
-                print("getDescriptionMap: Failure cooldown expired, retrying...")
+            }
+            
+            // Check if we've failed too many times recently (download-related failures only)
+            if CustomBandDescription.failureCount >= CustomBandDescription.maxFailures {
+                if currentTime - CustomBandDescription.lastFailureTime < CustomBandDescription.failureCooldown {
+                    print("⚠️ getDescriptionMap: Too many recent failures (\(CustomBandDescription.failureCount)), cooling down for \(Int(CustomBandDescription.failureCooldown - (currentTime - CustomBandDescription.lastFailureTime))) more seconds")
+                    return
+                } else {
+                    // Reset failure count after cooldown
+                    CustomBandDescription.failureCount = 0
+                    print("getDescriptionMap: Failure cooldown expired, retrying...")
+                }
             }
         }
         
@@ -623,9 +683,12 @@ open class CustomBandDescription {
         // Success! Reset failure count
         CustomBandDescription.failureCount = 0
         
-        // Process each row safely
+        // Process each row safely. Build new maps, then swap atomically to avoid concurrent read/write crashes.
         var processedCount = 0
         var errorCount = 0
+
+        var newUrlMap: [String: String] = [:]
+        var newDateMap: [String: String] = [:]
         
         for (index, lineData) in csvData.rows.enumerated() {
             do {
@@ -657,8 +720,8 @@ open class CustomBandDescription {
                 
                 // Safely update the dictionaries - ensure String type
                 let urlDateString = String(describing: urlDate)
-                bandDescriptionUrl[normalizedBandName] = String(describing: urlString)
-                bandDescriptionUrlDate[normalizedBandName] = urlDateString
+                newUrlMap[normalizedBandName] = String(describing: urlString)
+                newDateMap[normalizedBandName] = urlDateString
                 
                 // Update cache variables safely
                 bandDescriptionLock.async(flags: .barrier) {
@@ -673,6 +736,11 @@ open class CustomBandDescription {
                 errorCount += 1
                 continue
             }
+        }
+
+        writeDescriptionMapSync {
+            bandDescriptionUrl = newUrlMap
+            bandDescriptionUrlDate = newDateMap
         }
         
         print("commentFile getDescriptionMap: Processed \(processedCount) bands successfully, \(errorCount) errors")
@@ -695,7 +763,10 @@ open class CustomBandDescription {
     /// - Returns: The description URL string for the band.
     func getDescriptionUrl(_ band: String) -> String {
         let normalizedBand = normalizeBandName(band)
-        if let urlValue = bandDescriptionUrl[normalizedBand] {
+        let urlValue: String? = readDescriptionMap {
+            return bandDescriptionUrl[normalizedBand]
+        }
+        if let urlValue {
             return String(describing: urlValue)
         }
         return ""
@@ -706,7 +777,10 @@ open class CustomBandDescription {
     /// - Returns: The date string for the band's description.
     func getDescriptionDate(_ band: String) -> String {
         let normalizedBand = normalizeBandName(band)
-        if let dateValue = bandDescriptionUrlDate[normalizedBand] {
+        let dateValue: String? = readDescriptionMap {
+            return bandDescriptionUrlDate[normalizedBand]
+        }
+        if let dateValue {
             return String(describing: dateValue)
         }
         return ""
@@ -715,7 +789,7 @@ open class CustomBandDescription {
     /// Check if band data is available before attempting to load descriptions
     private func hasBandDataAvailable() -> Bool {
         // Check if we already have any band data loaded
-        if !bandDescriptionUrl.isEmpty {
+        if readDescriptionMap({ !bandDescriptionUrl.isEmpty }) {
             return true
         }
         
@@ -785,16 +859,19 @@ open class CustomBandDescription {
         print("DEBUG_commentFile: Starting background download of all descriptions on app exit")
         
         // Ensure we have the description map first
-        if bandDescriptionUrl.isEmpty {
+        if readDescriptionMap({ bandDescriptionUrl.isEmpty }) {
             print("DEBUG_commentFile: Description map is empty, downloading it first")
             getDescriptionMapFile()
             getDescriptionMap()
             return
         }
         
+        // Snapshot so we don't iterate while background refresh mutates the map.
+        let descriptionMapSnapshot: [String: String] = readDescriptionMap { bandDescriptionUrl }
+        
         // Download all missing descriptions in the background
         DispatchQueue.global(qos: .utility).async {
-            for (bandName, descriptionUrl) in self.bandDescriptionUrl {
+            for (bandName, descriptionUrl) in descriptionMapSnapshot {
                 // Check if we need to download this description
                 let commentFileName = self.getNoteFileName(bandName: bandName)
                 let commentFile = directoryPath.appendingPathComponent(commentFileName)
@@ -833,8 +910,10 @@ open class CustomBandDescription {
             print("DEBUG_commentFile: Year change detected, clearing cached description data")
             
             // Clear the cached description map data
-            bandDescriptionUrl.removeAll()
-            bandDescriptionUrlDate.removeAll()
+            writeDescriptionMapSync {
+                bandDescriptionUrl.removeAll()
+                bandDescriptionUrlDate.removeAll()
+            }
             
             // Clear the static cache variables
             bandDescriptionLock.async(flags: .barrier) {

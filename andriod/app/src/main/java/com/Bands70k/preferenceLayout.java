@@ -159,12 +159,12 @@ public class preferenceLayout  extends Activity {
                 //get id of the clicked item
                 String selectedEventYear = String.valueOf(menuItem.getTitle());
                 //handle clicks
-                buildRebootDialog();
                 String eventYearValue = selectedEventYear;
                 if (selectedEventYear == localCurrentEventYear){
                     eventYearValue = "Current";
                 }
                 eventYearButton.setText(eventYearValue);
+                buildRebootDialog(eventYearValue);
                 return true;
             }
         });
@@ -438,7 +438,7 @@ public class preferenceLayout  extends Activity {
         restartDialog.show();
     }
 
-    private void buildRebootDialog(){
+    private void buildRebootDialog(final String selectedYearValue){
 
         AlertDialog.Builder restartDialog = new AlertDialog.Builder(preferenceLayout.this);
 
@@ -468,11 +468,6 @@ public class preferenceLayout  extends Activity {
                         progressDialog.setCancelable(false);
                         progressDialog.show();
 
-                        // Store values needed in background thread
-                        final String selectedYearText = String.valueOf(eventYearButton.getText());
-                        final boolean isCurrentYear = selectedYearText.equals("Current") || selectedYearText.equals(localCurrentValue);
-                        final boolean isNotCurrent = !selectedYearText.equals("Current") && !selectedYearText.equals(localCurrentValue);
-
                         // Move heavy work to background thread to allow dialog to render
                         new Thread(new Runnable() {
                             @Override
@@ -492,8 +487,9 @@ public class preferenceLayout  extends Activity {
                                     }
 
                                     Log.d("preferenceLayout", "Testing network connection, passed");
-                                    String selectedYear = selectedYearText;
-                                    staticVariables.preferences.setEventYearToLoad(selectedYear);
+                                    final boolean isCurrentYear = selectedYearValue.equals("Current") || selectedYearValue.equals(localCurrentValue);
+
+                                    staticVariables.preferences.setEventYearToLoad(selectedYearValue);
                                     
                                     // Auto-enable "Hide Expired Events" when year is set to "Current"
                                     if (isCurrentYear) {
@@ -513,63 +509,111 @@ public class preferenceLayout  extends Activity {
                                     staticVariables.preferences.saveData();
                                     staticVariables.artistURL = null;
                                     staticVariables.eventYear = 0;
-                                    staticVariables.eventYearIndex = selectedYearText;
-                                    staticVariables.lookupUrls();
+                                    staticVariables.eventYearIndex = selectedYearValue;
 
-                                    //delete band file
-                                    Log.d("preferenceLayout", "Deleting band file");
-                                    File fileBandFile = FileHandler70k.bandInfo;
-                                    fileBandFile.delete();
+                                    // Year change should NOT re-download the pointer file.
+                                    // Use the cached pointer file (saved during normal startup refresh) to resolve year URLs.
+                                    if (!staticVariables.loadUrlsFromCachedPointerFile(selectedYearValue)) {
+                                        Log.w("preferenceLayout", "Pointer cache missing/unusable; aborting year change to avoid pointer download");
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                progressDialog.dismiss();
+                                                abortLastYearOperation();
+                                            }
+                                        });
+                                        return;
+                                    }
 
-                                    //delete current schedule file
-                                    Log.d("preferenceLayout", "Deleting schedule file");
-                                    File fileSchedule = FileHandler70k.schedule;
-                                    fileSchedule.delete();
+                                    // Delete the year-dependent cache files so we don't show stale data.
+                                    try {
+                                        Log.d("preferenceLayout", "Deleting band file");
+                                        FileHandler70k.bandInfo.delete();
+                                    } catch (Exception ignored) {}
+                                    try {
+                                        Log.d("preferenceLayout", "Deleting schedule file");
+                                        FileHandler70k.schedule.delete();
+                                    } catch (Exception ignored) {}
+                                    try {
+                                        Log.d("preferenceLayout", "Deleting descriptionMap file");
+                                        FileHandler70k.descriptionMapFile.delete();
+                                    } catch (Exception ignored) {}
 
-                                    //erase existing alerts
-                                    Log.d("preferenceLayout", "Erasing alerts");
+                                    // Erase existing alerts (events change with year)
+                                    try {
+                                        Log.d("preferenceLayout", "Erasing alerts");
+                                        scheduleAlertHandler alerts = new scheduleAlertHandler();
+                                        alerts.clearAlerts();
+                                    } catch (Exception ignored) {}
 
-                                    scheduleAlertHandler alerts = new scheduleAlertHandler();
-                                    alerts.clearAlerts();
-
+                                    // Download the 3 year-change files BEFORE offering band/event view choice:
+                                    // - band CSV
+                                    // - schedule CSV
+                                    // - descriptionMap CSV
                                     BandInfo bandInfo = new BandInfo();
-                                    bandInfo.getDownloadtUrls();
                                     bandInfo.DownloadBandFile();
 
+                                    // Schedule MUST be loaded before we leave preferences / show the chooser.
+                                    // If this fails, abort the year change instead of proceeding with missing data.
+                                    String scheduleUrl = staticVariables.scheduleURL;
+                                    if (scheduleUrl == null || scheduleUrl.trim().isEmpty()) {
+                                        Log.e("preferenceLayout", "Schedule URL missing after pointer-cache load; aborting year change");
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                progressDialog.dismiss();
+                                                abortLastYearOperation();
+                                            }
+                                        });
+                                        return;
+                                    }
+
                                     scheduleInfo scheduleData = new scheduleInfo();
-                                    scheduleData.DownloadScheduleFile(staticVariables.scheduleURL);
+                                    boolean scheduleLoaded = false;
+                                    for (int attempt = 1; attempt <= 3; attempt++) {
+                                        Log.d("preferenceLayout", "Downloading schedule (attempt " + attempt + "): " + scheduleUrl);
+                                        // Prevent cross-year leakage: clear schedule-derived maps before parsing.
+                                        // These are populated during ParseScheduleCSV().
+                                        try { staticVariables.showNotesMap.clear(); } catch (Exception ignored) {}
+                                        try { staticVariables.imageUrlMap.clear(); } catch (Exception ignored) {}
+                                        try { staticVariables.imageDateMap.clear(); } catch (Exception ignored) {}
+                                        staticVariables.schedulePresent = false;
+
+                                        java.util.Map<String, scheduleTimeTracker> scheduleRecords =
+                                                scheduleData.DownloadScheduleFile(scheduleUrl);
+
+                                        boolean scheduleFileOk = FileHandler70k.schedule.exists() && FileHandler70k.schedule.length() > 0;
+                                        boolean scheduleParsedOk = scheduleRecords != null && !scheduleRecords.isEmpty();
+
+                                        if (scheduleFileOk && scheduleParsedOk) {
+                                            // CRITICAL: ensure event list uses the new year's schedule in-memory.
+                                            BandInfo.scheduleRecords = scheduleRecords;
+                                            scheduleLoaded = true;
+                                            break;
+                                        }
+
+                                        Log.w("preferenceLayout", "Schedule not ready yet (fileOk=" + scheduleFileOk +
+                                                ", parsedOk=" + scheduleParsedOk + "), retrying...");
+                                        try { Thread.sleep(500); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+                                    }
+
+                                    if (!scheduleLoaded) {
+                                        Log.e("preferenceLayout", "Schedule failed to load after retries; aborting year change");
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                progressDialog.dismiss();
+                                                abortLastYearOperation();
+                                            }
+                                        });
+                                        return;
+                                    }
+
+                                    CustomerDescriptionHandler descHandler = CustomerDescriptionHandler.getInstance();
+                                    descHandler.getDescriptionMapFile();
+                                    descHandler.getDescriptionMap(); // parse immediately so it's ready on main screen
 
                                     staticVariablesInitialize();
-                                    
-                                    Log.d("preferenceLayout", "Checking for file " + FileHandler70k.schedule.toString());
-                                    // Use exponential backoff instead of fixed sleep delays
-                                    AtomicBoolean scheduleFileReady = new AtomicBoolean(false);
-                                    if (!FileHandler70k.schedule.exists()) {
-                                        Log.d("preferenceLayout", "Missing file " + FileHandler70k.schedule.toString() + " - downloading");
-                                        bandInfo.getDownloadtUrls();
-                                        scheduleData.DownloadScheduleFile(staticVariables.scheduleURL);
-                                        
-                                        // Wait with backoff instead of busy-waiting
-                                        if (!SynchronizationManager.waitWithBackoff(scheduleFileReady, 5, 500)) {
-                                            Log.w("preferenceLayout", "Timeout waiting for schedule file download");
-                                        }
-                                    }
-                                    
-                                    Log.d("preferenceLayout", "Found file " + FileHandler70k.schedule.toString());
-                                    Log.d("preferenceLayout", "Checking for file " + FileHandler70k.bandInfo.toString());
-                                    
-                                    AtomicBoolean bandInfoFileReady = new AtomicBoolean(false);
-                                    if (!FileHandler70k.bandInfo.exists()) {
-                                        Log.d("preferenceLayout", "Missing band info file - downloading");
-                                        bandInfo.getDownloadtUrls();
-                                        bandInfo.DownloadBandFile();
-                                        
-                                        // Wait with backoff instead of busy-waiting
-                                        if (!SynchronizationManager.waitWithBackoff(bandInfoFileReady, 5, 500)) {
-                                            Log.w("preferenceLayout", "Timeout waiting for band info file download");
-                                        }
-                                    }
-                                    Log.d("preferenceLayout", "Found file " + FileHandler70k.bandInfo.toString());
 
                                     staticVariables.refreshActivated = true;
 
@@ -579,12 +623,20 @@ public class preferenceLayout  extends Activity {
                                         public void run() {
                                             progressDialog.dismiss();
 
-                                            if (isNotCurrent) {
-                                                bandListOrScheduleDialog();
-                                            } else if (isCurrentYear) {
-                                                bandListOrScheduleDialog();
-                                                onBackPressed();
+                                            // If switching back to Current, do NOT ask band/event.
+                                            // Force Hide Expired ON and return to main screen.
+                                            if (isCurrentYear) {
+                                                staticVariables.preferences.setHideExpiredEvents(true);
+                                                if (hideExpiredEvents != null) {
+                                                    hideExpiredEvents.setChecked(true);
+                                                }
+                                                staticVariables.preferences.saveData();
+                                                onBackPressed(); // navigates up to main screen
+                                                return;
                                             }
+
+                                            // For non-current years, keep existing behavior: ask band/event list.
+                                            bandListOrScheduleDialog();
                                         }
                                     });
                                 } catch (Exception e) {
@@ -605,11 +657,10 @@ public class preferenceLayout  extends Activity {
         restartDialog.setNegativeButton(getResources().getString(R.string.Cancel),
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        String selectedYear = String.valueOf(eventYearButton.getText());
-                        staticVariables.preferences.setEventYearToLoad(selectedYear);
+                        staticVariables.preferences.setEventYearToLoad(selectedYearValue);
                         
                         // Auto-enable "Hide Expired Events" when year is set to "Current"
-                        if (selectedYear.equals("Current") || selectedYear.equals(localCurrentEventYear)) {
+                        if (selectedYearValue.equals("Current") || selectedYearValue.equals(localCurrentEventYear)) {
                             staticVariables.preferences.setHideExpiredEvents(true);
                             // Update the UI switch if it exists
                             if (hideExpiredEvents != null) {

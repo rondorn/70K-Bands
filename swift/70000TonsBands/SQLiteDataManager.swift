@@ -86,6 +86,50 @@ class SQLiteDataManager: DataManagerProtocol {
         setupDatabase()
     }
     
+    // MARK: - Transaction helpers
+    
+    /// Runs the provided block inside a single IMMEDIATE transaction.
+    /// This ensures readers never observe partial delete/insert states during large refreshes
+    /// (e.g., schedule imports) and fixes event-count oscillations.
+    @discardableResult
+    func withImmediateTransaction(_ label: String, _ block: () -> Bool) -> Bool {
+        guard let db = db else {
+            print("❌ SQLiteDataManager: Transaction '\(label)' failed - DB not initialized")
+            return false
+        }
+        
+        do {
+            try db.execute("BEGIN IMMEDIATE TRANSACTION")
+            let ok = block()
+            if ok {
+                try db.execute("COMMIT")
+                return true
+            } else {
+                try db.execute("ROLLBACK")
+                print("⚠️ SQLiteDataManager: Transaction '\(label)' rolled back (block returned false)")
+                return false
+            }
+        } catch {
+            try? db.execute("ROLLBACK")
+            print("❌ SQLiteDataManager: Transaction '\(label)' failed and was rolled back: \(error)")
+            return false
+        }
+    }
+    
+    /// Deletes all events for a given year in a single statement.
+    /// Returns the number of deleted rows (best-effort; 0 if DB not available).
+    @discardableResult
+    func deleteAllEvents(forYear year: Int) -> Int {
+        guard let db = db else { return 0 }
+        do {
+            let count = try db.run(eventsTable.filter(eventYear_col == year).delete())
+            return count
+        } catch {
+            print("❌ SQLiteDataManager: Failed to delete all events for year \(year): \(error)")
+            return 0
+        }
+    }
+    
     private func setupDatabase() {
         do {
             let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0]

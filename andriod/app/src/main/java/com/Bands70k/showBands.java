@@ -129,6 +129,11 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     
     // INTERMITTENT POSITION LOSS FIX: Flag to track when we're returning from details screen
     public static Boolean returningFromDetailsScreen = false;
+    
+    // Only perform the "startup refresh" (core CSV downloads) once per process.
+    // Prevents re-downloading when returning from internal screens (details/preferences/stats).
+    private static final java.util.concurrent.atomic.AtomicBoolean startupRefreshDone =
+            new java.util.concurrent.atomic.AtomicBoolean(false);
 
     //private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
     private static final String TAG = "MainActivity";
@@ -533,7 +538,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                         // 3) schedule.csv
                         // 4) descriptionMap.csv
                         try {
-                            staticVariables.lookupUrls(); // pointer refresh first
+                            // Prescribed time: pull-to-refresh is allowed to download the pointer file.
+                            staticVariables.forceLookupUrlsFromNetwork();
                         } catch (Exception e) {
                             Log.e("PullToRefresh", "Error refreshing pointer data", e);
                         }
@@ -3442,8 +3448,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 // Save current scroll position before refresh (AsyncTask will also save if needed)
                 saveScrollPosition();
                 
-                // Refresh data to show updated rankings
-                refreshNewData();
+                // IMPORTANT: Returning from an internal screen (details/preferences/etc) should NOT trigger
+                // a re-download of the core CSV files. Just reload from cache and refresh the UI.
+                reloadData();
+                refreshData();
                 
                 // Reset flags after refresh completes (not immediately, as refreshNewData is async)
                 // The flag will be reset after displayBandData completes in displayBandDataWithSchedule
@@ -3457,18 +3465,17 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             } else {
                 Log.d("ListPosition", "Normal onResume - checking if offline to optimize loading");
                 
-                // OFFLINE FIX: If offline and we have cached data, just reload from cache
-                // This is much faster than trying to refresh (which waits for network)
                 boolean hasCachedData = FileHandler70k.bandInfo.exists() && FileHandler70k.schedule.exists();
-                if (!OnlineStatus.isOnline() && hasCachedData) {
-                    Log.d("OFFLINE_FIX", "Offline with cached data - reloading from cache immediately");
-                    // Just reload from cache - much faster than refreshNewData()
-                    reloadData();
-                    // Still need to refresh the display
-                    refreshData();
-                } else {
-                    // Online or no cached data - do normal refresh
+                
+                if (!hasCachedData) {
+                    Log.d("refreshNewData", "No cached data - downloading core data files");
                     refreshNewData();
+                } else {
+                    // Normal resume (including internal navigation and true background->foreground):
+                    // - Core refresh is handled at the Application level (Bands70k -> CoreDataRefreshManager)
+                    // - This onResume path should stay cache-first and never trigger re-downloads
+                    reloadData();
+                    refreshData();
                 }
             }
         } else {
@@ -3802,7 +3809,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 try {
                     // Ensure pointer data is refreshed first (background, non-blocking UI).
                     // This sets artistURL/scheduleURL/descriptionMap + eventYearRaw.
-                    staticVariables.lookupUrls();
+                    // Prescribed time: startup refresh is allowed to download the pointer file.
+                    staticVariables.forceLookupUrlsFromNetwork();
 
                     BandInfo bandInfo = new BandInfo();
                     bandInfo.DownloadBandFile();

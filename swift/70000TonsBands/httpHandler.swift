@@ -35,7 +35,7 @@ func HTTPGet(_ url: String, callback: @escaping (String, String?) -> Void) {
     if (url.isEmpty == false && url != " " && internetAvailble == true){
         print ("Loading URL - '\(url)'")
         let request = NSMutableURLRequest(url: URL(string: url)!)
-        request.timeoutInterval = 15;
+        request.timeoutInterval = NetworkTimeoutPolicy.timeoutIntervalForCurrentThread()
 
         HTTPsendRequest(request as URLRequest, callback: callback)
         print ("Finished making http call")
@@ -80,19 +80,85 @@ func getUrlData(urlString: String) -> String{
                     }
                     
                     print ("getUrlData: Attempting to load URL \(urlString) (attempt \(retryCount + 1))")
-                    let url = try URL(string: urlString) ?? URL(fileURLWithPath: "")
-                    let contents = try String(contentsOf: url)
-                    
-                    if !contents.isEmpty {
-                        print("getUrlData: Successfully loaded \(contents.count) characters")
-                        results = contents
+
+                    guard let url = URL(string: urlString) else {
+                        print("getUrlData: Invalid URL: \(urlString)")
+                        retryCount += 1
+                        continue
+                    }
+
+                    // Apply timeout policy (Android parity).
+                    let timeout = NetworkTimeoutPolicy.timeoutIntervalForCurrentThread()
+                    var request = URLRequest(url: url)
+                    request.httpMethod = "GET"
+                    request.timeoutInterval = timeout
+
+                    let configuration = URLSessionConfiguration.default
+                    configuration.timeoutIntervalForRequest = timeout
+                    configuration.timeoutIntervalForResource = timeout
+                    let session = URLSession(configuration: configuration)
+
+                    let semaphore = DispatchSemaphore(value: 0)
+                    var responseString: String = ""
+                    var responseCode: Int? = nil
+                    var taskError: Error? = nil
+
+                    let task = session.dataTask(with: request) { data, response, error in
+                        defer { semaphore.signal() }
+
+                        if let httpResponse = response as? HTTPURLResponse {
+                            responseCode = httpResponse.statusCode
+                        }
+
+                        taskError = error
+
+                        guard error == nil, let data = data else {
+                            return
+                        }
+
+                        // Prefer UTF-8, fall back to ISO-8859-1, then ASCII (legacy).
+                        if let s = String(data: data, encoding: .utf8) {
+                            responseString = s
+                        } else if let s = String(data: data, encoding: .isoLatin1) {
+                            responseString = s
+                        } else if let s = String(data: data, encoding: .ascii) {
+                            responseString = s
+                        }
+                    }
+
+                    task.resume()
+
+                    let waitResult = semaphore.wait(timeout: .now() + timeout + 1.0)
+                    if waitResult == .timedOut {
+                        print("getUrlData: Timed out waiting for response after ~\(timeout)s: \(urlString)")
+                        task.cancel()
+                        retryCount += 1
+                        continue
+                    }
+
+                    if let code = responseCode, code != 200 {
+                        print("getUrlData: HTTP \(code) for \(urlString)")
+                        retryCount += 1
+                        continue
+                    }
+
+                    if let error = taskError {
+                        print("getUrlData: Attempt \(retryCount + 1) failed: \(error.localizedDescription)")
+                        retryCount += 1
+                        continue
+                    }
+
+                    if !responseString.isEmpty {
+                        print("getUrlData: Successfully loaded \(responseString.count) characters")
+                        results = responseString
                         success = true
                     } else {
                         print("getUrlData: Empty response received")
                         retryCount += 1
                     }
                 } catch {
-                    print("getUrlData: Attempt \(retryCount + 1) failed: \(error.localizedDescription)")
+                    // Should be rare now (mostly URL creation is guarded), but keep for safety.
+                    print("getUrlData: Attempt \(retryCount + 1) threw: \(error.localizedDescription)")
                     retryCount += 1
                     
                     // If this was the last retry, log the final failure

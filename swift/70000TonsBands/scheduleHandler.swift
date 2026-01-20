@@ -32,6 +32,8 @@ open class scheduleHandler {
     
     // PERFORMANCE FIX: Make cacheLoaded accessible for cache-only operations
     var cacheLoaded = false
+    // Track which year the in-memory cache belongs to (prevents cross-year reuse)
+    private var cachedForYear: Int = -1
     
     // Thread management to prevent concurrent operations
     private var isDataLoadingInProgress = false
@@ -124,11 +126,16 @@ open class scheduleHandler {
     /// Loads schedule data from SQLite into memory cache for fast access
     /// SQLITE FIX: Simplified to work with thread-safe SQLite (no complex locking needed)
     private func loadCacheFromCoreData() {
-        
-        // Simple check - if already loaded, don't reload
-        guard !cacheLoaded else { 
-            print("🔍 [SCHEDULE_DEBUG] loadCacheFromCoreData: Cache already loaded, returning early")
-            return 
+        // Year-aware cache: if cache is loaded for a different year, force a reload.
+        // This prevents hangs/race conditions after year changes where we accidentally keep the old year's cache.
+        if cacheLoaded {
+            if cachedForYear == eventYear {
+                print("🔍 [SCHEDULE_DEBUG] loadCacheFromCoreData: Cache already loaded for year \(cachedForYear), returning early")
+                return
+            } else {
+                print("🔍 [SCHEDULE_DEBUG] loadCacheFromCoreData: Cache loaded for year \(cachedForYear) but current eventYear is \(eventYear) - forcing reload")
+                cacheLoaded = false
+            }
         }
         
         print("🔄 Loading schedule from SQLite (thread-safe)...")
@@ -432,6 +439,7 @@ open class scheduleHandler {
             }
             print("🔧 [UNOFFICIAL_DEBUG] ✅ Final cache contains \(unofficialBandNames.count) unofficial 'bands': \(unofficialBandNames)")
             
+            self.cachedForYear = yearToUse
             self.cacheLoaded = true
         }
         
@@ -561,16 +569,30 @@ open class scheduleHandler {
     func clearCache() {
         print("[YEAR_CHANGE_DEBUG] Clearing schedule cache for year \(eventYear)")
         print("🔍 [SCHEDULE_DEBUG] clearCache: Starting cache clear")
-        scheduleHandlerQueue.async(flags: .barrier) {
-            print("🔍 [SCHEDULE_DEBUG] clearCache: Inside barrier block")
+
+        // If called from within scheduleHandlerQueue, do the work inline to avoid deadlock.
+        // Otherwise, use a barrier sync so callers (especially year-change) can rely on the cache being cleared
+        // before subsequent reads happen.
+        let isOnScheduleQueue = DispatchQueue.getSpecific(key: scheduleHandlerQueueKey) != nil
+        let clearBlock = { [self] in
             self.dictionaryQueue.sync {
                 // CRASH FIX: Create new dictionary instances instead of assigning empty dictionaries
                 self._schedulingData = [String : [TimeInterval : [String : String]]]()
                 self._schedulingDataByTime = [TimeInterval : [[String : String]]]()
                 print("🔧 [CRASH_FIX] clearCache: Created new dictionary instances to prevent memory corruption")
             }
+            self.cachedForYear = -1
             self.cacheLoaded = false
-            print("🔍 [SCHEDULE_DEBUG] clearCache: Cache cleared, cacheLoaded = false")
+            print("🔍 [SCHEDULE_DEBUG] clearCache: Cache cleared, cacheLoaded = false, cachedForYear = -1")
+        }
+
+        if isOnScheduleQueue {
+            clearBlock()
+        } else {
+            scheduleHandlerQueue.sync(flags: .barrier) {
+                print("🔍 [SCHEDULE_DEBUG] clearCache: Inside barrier block (sync)")
+                clearBlock()
+            }
         }
         
         // Also clear the static cache

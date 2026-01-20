@@ -242,6 +242,27 @@ class localNoticationHandler {
         
         print ("✅ [THREAD_SAFE] addNotifications: No locking needed with SQLite")
         print ("🌍 [ALERT_TIMEZONE] Scheduling alerts using current timezone: \(TimeZone.current.identifier)")
+
+        // YEAR CHANGE / CSV DOWNLOAD GUARD:
+        // Avoid generating notifications while the year-change pipeline is importing schedule/band data.
+        // This prevents lock contention and “deadlock-like” hangs during year switches.
+        if MasterViewController.isYearChangeInProgress {
+            print("🚫 [YEAR_CHANGE] addNotifications: Skipping - year change in progress")
+            return
+        }
+        if MasterViewController.isCsvDownloadInProgress {
+            print("🚫 [YEAR_CHANGE] addNotifications: Skipping - CSV download in progress")
+            return
+        }
+
+        // CURRENT YEAR ONLY:
+        // Notifications are only meaningful for the current sailing year.
+        // If the user is browsing a past year, skip notification generation entirely.
+        let currentYearFromPointer = Int(getPointerUrlData(keyValue: "eventYear")) ?? eventYear
+        if eventYear != currentYearFromPointer {
+            print("🚫 [ALERTS] addNotifications: Skipping - non-current year selected (eventYear=\(eventYear), current=\(currentYearFromPointer))")
+            return
+        }
         
         // Don't add notifications if schedule data is empty or inconsistent
         if schedule.schedulingData.isEmpty {

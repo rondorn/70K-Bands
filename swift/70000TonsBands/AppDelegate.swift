@@ -63,146 +63,186 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
      - Cleans up temporary files on failure
      - Uses atomic file operations to prevent corruption
      */
-    private func downloadAndUpdatePointerFileOnLaunch() {
-        // Ensure this function is only called once per app launch
-        guard !hasAttemptedPointerDownloadOnLaunch else {
-            print("downloadAndUpdatePointerFileOnLaunch: Already attempted download on this launch, skipping")
-            return
+    private func resolvePointerUrlForCurrentPreference() -> String {
+        // Ensure we pick up any Settings.bundle changes
+        UserDefaults.standard.synchronize()
+        
+        let pointerUrlPref = UserDefaults.standard.string(forKey: "PointerUrl") ?? "NOT_SET"
+        if pointerUrlPref == testingSetting {
+            return FestivalConfig.current.defaultStorageUrlTest
         }
-        hasAttemptedPointerDownloadOnLaunch = true
+        return FestivalConfig.current.defaultStorageUrl
+    }
+    
+    private func downloadAndUpdatePointerFile(reason: String, enforceOncePerLaunch: Bool, completion: ((Bool) -> Void)? = nil) {
+        if enforceOncePerLaunch {
+            guard !hasAttemptedPointerDownloadOnLaunch else {
+                print("downloadAndUpdatePointerFile(\(reason)): Already attempted download on this launch, skipping")
+                completion?(false)
+                return
+            }
+            hasAttemptedPointerDownloadOnLaunch = true
+        }
         
-        print("downloadAndUpdatePointerFileOnLaunch: Starting pointer file download and update")
+        print("downloadAndUpdatePointerFile(\(reason)): Starting pointer file download and update")
         
-        // Check if we have internet connectivity
+        // POLICY: Pointer file network download is only allowed on startup and pull-to-refresh.
+        // This function is the ONLY code path that should download the pointer file.
+        
         guard Reachability.isConnectedToNetwork() else {
-            print("downloadAndUpdatePointerFileOnLaunch: No internet connection available, skipping download")
+            print("downloadAndUpdatePointerFile(\(reason)): No internet connection available, skipping download")
+            completion?(false)
             return
         }
+        
+        // Ensure defaultStorageUrl matches current preference before downloading.
+        defaultStorageUrl = resolvePointerUrlForCurrentPreference()
         
         // Create temporary file path
         let documentsPath = getDocumentsDirectory()
         let tempPointerFile = documentsPath.appendingPathComponent("tempPointerData.txt")
         let cachedPointerFile = documentsPath.appendingPathComponent("cachedPointerData.txt")
         
-        // Download pointer file to temporary location
         guard let url = URL(string: defaultStorageUrl) else {
-            print("downloadAndUpdatePointerFileOnLaunch: Invalid URL: \(defaultStorageUrl)")
+            print("downloadAndUpdatePointerFile(\(reason)): Invalid URL: \(defaultStorageUrl)")
+            completion?(false)
             return
         }
         
         // Set a timeout for the download
         let configuration = URLSessionConfiguration.default
-        configuration.timeoutIntervalForRequest = 30.0 // 30 second timeout
-        configuration.timeoutIntervalForResource = 60.0 // 60 second timeout for the entire resource
+        // Android parity: 10s on GUI thread, 60s in background.
+        let timeout = NetworkTimeoutPolicy.timeoutIntervalForCurrentThread()
+        configuration.timeoutIntervalForRequest = timeout
+        configuration.timeoutIntervalForResource = timeout
         let session = URLSession(configuration: configuration)
         
         let task = session.dataTask(with: url) { [weak self] (data, response, error) in
             guard let self = self else { return }
             
             if let error = error {
-                print("downloadAndUpdatePointerFileOnLaunch: Download error: \(error)")
+                print("downloadAndUpdatePointerFile(\(reason)): Download error: \(error)")
+                DispatchQueue.main.async { completion?(false) }
                 return
             }
             
-            guard let data = data, let httpResponse = response as? HTTPURLResponse,
+            guard let data = data,
+                  let httpResponse = response as? HTTPURLResponse,
                   httpResponse.statusCode == 200 else {
-                print("downloadAndUpdatePointerFileOnLaunch: Invalid response or no data")
+                print("downloadAndUpdatePointerFile(\(reason)): Invalid response or no data")
+                DispatchQueue.main.async { completion?(false) }
                 return
             }
             
             // Check if the downloaded data is not too large (safety check)
             let maxSize = 1024 * 1024 // 1MB limit
             guard data.count <= maxSize else {
-                print("downloadAndUpdatePointerFileOnLaunch: Downloaded data too large (\(data.count) bytes), aborting")
+                print("downloadAndUpdatePointerFile(\(reason)): Downloaded data too large (\(data.count) bytes), aborting")
+                DispatchQueue.main.async { completion?(false) }
                 return
             }
             
-            // Write downloaded data to temporary file
             do {
                 try data.write(to: URL(fileURLWithPath: tempPointerFile))
-                print("downloadAndUpdatePointerFileOnLaunch: Successfully downloaded pointer file to temp location")
+                print("downloadAndUpdatePointerFile(\(reason)): Successfully downloaded pointer file to temp location")
                 
-                // Verify the downloaded data is valid by attempting to parse it
                 guard let downloadedContent = String(data: data, encoding: .utf8),
                       !downloadedContent.isEmpty else {
-                    print("downloadAndUpdatePointerFileOnLaunch: Downloaded content is empty or invalid")
+                    print("downloadAndUpdatePointerFile(\(reason)): Downloaded content is empty or invalid")
+                    DispatchQueue.main.async { completion?(false) }
                     return
                 }
                 
-                // Parse a few lines to verify it's valid pointer data
+                // Validate it looks like pointer data
                 let lines = downloadedContent.components(separatedBy: "\n")
-                var isValidPointerData = false
                 var validLineCount = 0
-                for line in lines.prefix(10) { // Check first 10 lines
+                for line in lines.prefix(10) {
                     if line.contains("::") && line.components(separatedBy: "::").count >= 3 {
                         validLineCount += 1
-                        if validLineCount >= 2 { // Require at least 2 valid lines
-                            isValidPointerData = true
-                            break
-                        }
+                        if validLineCount >= 2 { break }
                     }
                 }
-                
-                guard isValidPointerData else {
-                    print("downloadAndUpdatePointerFileOnLaunch: Downloaded content does not appear to be valid pointer data")
+                guard validLineCount >= 2 else {
+                    print("downloadAndUpdatePointerFile(\(reason)): Downloaded content does not appear to be valid pointer data")
+                    DispatchQueue.main.async { completion?(false) }
                     return
                 }
                 
-                // If we reach here, the download was successful and data is valid
-                // Now replace the existing pointer file with the new one
                 let fileManager = FileManager.default
                 
-                // Remove existing cached pointer file if it exists
                 if fileManager.fileExists(atPath: cachedPointerFile) {
                     do {
                         try fileManager.removeItem(atPath: cachedPointerFile)
-                        print("downloadAndUpdatePointerFileOnLaunch: Removed existing cached pointer file")
+                        print("downloadAndUpdatePointerFile(\(reason)): Removed existing cached pointer file")
                     } catch {
-                        print("downloadAndUpdatePointerFileOnLaunch: Failed to remove existing cached pointer file: \(error)")
+                        print("downloadAndUpdatePointerFile(\(reason)): Failed to remove existing cached pointer file: \(error)")
                     }
                 }
                 
-                // Move temp file to final location
                 do {
                     try fileManager.moveItem(atPath: tempPointerFile, toPath: cachedPointerFile)
-                    print("downloadAndUpdatePointerFileOnLaunch: Successfully replaced cached pointer file")
+                    print("downloadAndUpdatePointerFile(\(reason)): Successfully replaced cached pointer file")
                     
-                    // Clear in-memory cache to force reload
+                    // Clear in-memory cache to force reload from disk
                     storePointerLock.sync() {
                         cacheVariables.storePointerData.removeAll()
                     }
-                    print("downloadAndUpdatePointerFileOnLaunch: Cleared in-memory pointer cache")
+                    print("downloadAndUpdatePointerFile(\(reason)): Cleared in-memory pointer cache")
                     
-                    // Force reload of pointer data by calling getPointerUrlData for key values
+                    // Pre-warm common pointer values (disk-backed; no network)
                     DispatchQueue.global(qos: .background).async {
-                        // Pre-load common pointer values to ensure they're available
                         _ = getPointerUrlData(keyValue: "artistUrl")
                         _ = getPointerUrlData(keyValue: "scheduleUrl")
-                        _ = getPointerUrlData(keyValue: "eventYear")
+                        let resolvedEventYearString = getPointerUrlData(keyValue: "eventYear")
                         _ = getPointerUrlData(keyValue: "reportUrl")
                         
-                        print("downloadAndUpdatePointerFileOnLaunch: Forced reload of pointer data completed")
+                        print("downloadAndUpdatePointerFile(\(reason)): Forced reload of pointer data completed")
                         
-                        // Notify that pointer data has been updated
+                        // Update global eventYear if user is on "Current".
+                        // Respect explicit user year choices (e.g. "2025") by not overriding them.
+                        let yearPreference = getScheduleUrl()
+                        if yearPreference == "Current" {
+                            if let y = Int(resolvedEventYearString), y > 2000 {
+                                DispatchQueue.main.async {
+                                    eventYear = y
+                                    print("downloadAndUpdatePointerFile(\(reason)): Updated global eventYear to \(y) (Current)")
+                                }
+                            }
+                        } else if yearPreference.isYearString, let y = Int(yearPreference), y > 2000 {
+                            DispatchQueue.main.async {
+                                eventYear = y
+                                print("downloadAndUpdatePointerFile(\(reason)): Preserved explicit year preference, eventYear=\(y)")
+                            }
+                        }
+                        
                         DispatchQueue.main.async {
                             NotificationCenter.default.post(name: Notification.Name("PointerDataUpdated"), object: nil)
+                            completion?(true)
                         }
                     }
                     
                 } catch {
-                    print("downloadAndUpdatePointerFileOnLaunch: Failed to move temp file to final location: \(error)")
-                    // Clean up temp file if it still exists
+                    print("downloadAndUpdatePointerFile(\(reason)): Failed to move temp file to final location: \(error)")
                     if fileManager.fileExists(atPath: tempPointerFile) {
                         try? fileManager.removeItem(atPath: tempPointerFile)
                     }
+                    DispatchQueue.main.async { completion?(false) }
                 }
-                
             } catch {
-                print("downloadAndUpdatePointerFileOnLaunch: Failed to write downloaded data to temp file: \(error)")
+                print("downloadAndUpdatePointerFile(\(reason)): Failed to write downloaded data to temp file: \(error)")
+                DispatchQueue.main.async { completion?(false) }
             }
         }
         
         task.resume()
+    }
+    
+    func refreshPointerFileForUserInitiatedRefresh(completion: ((Bool) -> Void)? = nil) {
+        downloadAndUpdatePointerFile(reason: "pull-to-refresh", enforceOncePerLaunch: false, completion: completion)
+    }
+    
+    private func downloadAndUpdatePointerFileOnLaunch() {
+        downloadAndUpdatePointerFile(reason: "startup", enforceOncePerLaunch: true, completion: nil)
     }
 
     /**

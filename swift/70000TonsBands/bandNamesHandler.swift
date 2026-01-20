@@ -592,79 +592,39 @@ open class bandNamesHandler {
             isEmpty = self.bandNames.isEmpty
         }
         
-        // Enhanced retry logic for band data
+        // IMPORTANT POLICY (per request):
+        // - Band list should be downloaded ONCE at startup.
+        // - Cached data should be used at all other times.
+        // - Only exceptions for additional downloads: pull-to-refresh and foreground return.
+        //
+        // To enforce this, we DO NOT re-download the band list here if the cache still appears empty
+        // after a forced download/import attempt. Instead we only retry *loading from SQLite* briefly.
+        //
+        // This prevents multiple redundant Dropbox downloads during startup caused by retry loops.
         if isEmpty && forceDownload {
-            print("Core Data is empty and forceDownload is true. Attempting retry with enhanced logic.")
-            let maxRetries = 3
-            var retryCount = 0
-            var success = false
+            print("Band data cache is empty after forced download/import. Will retry SQLite visibility without additional network downloads.")
             
-            while retryCount < maxRetries && !success {
-                retryCount += 1
-                print("Band data retry attempt \(retryCount)/\(maxRetries)")
+            // Give Core Data/SQLite a moment to surface the newly imported rows (edge-case timing).
+            // Retry quickly a few times without touching the network.
+            let maxVisibilityRetries = 10
+            for attempt in 1...maxVisibilityRetries {
+                // Small backoff; keep total under ~2 seconds.
+                Thread.sleep(forTimeInterval: 0.2)
                 
-                if isInternetAvailable() == true {
-                    // Use eventYear as-is (should be set correctly during app launch or year change)
-                    let artistUrl = getPointerUrlData(keyValue: "artistUrl") ?? "http://dropbox.com"
-                    print("Retrying: Getting band data from " + artistUrl + " (attempt \(retryCount))");
-                    
-                    // Add a small delay between retries
-                    if retryCount > 1 {
-                        Thread.sleep(forTimeInterval: 1.0)
-                    }
-                    
-                    // Ensure network call happens on background thread to prevent main thread blocking
-                    var httpData = ""
-                    if Thread.isMainThread {
-                        print("bandNamesHandler: Main thread detected, dispatching to background for network call")
-                        let semaphore = DispatchSemaphore(value: 0)
-                        DispatchQueue.global(qos: .userInitiated).async {
-                            httpData = getUrlData(urlString: artistUrl)
-                            semaphore.signal()
-                        }
-                        semaphore.wait()
-                    } else {
-                        httpData = getUrlData(urlString: artistUrl)
-                    }
-                    if (httpData.isEmpty == false && httpData.count > 100) {
-                        csvImporter.importBandsFromCSVString(httpData)
-                        
-                        // Reset cache loaded flag to force reload of new data
-                        self.cacheLoaded = false
-                        print("DEBUG_MARKER: Reset cacheLoaded flag after CSV import")
-                        
-                        // Use eventYear as-is (should be set correctly during app launch or year change)
-                        print("DEBUG_MARKER: Using eventYear = \(eventYear) (set by proper resolution chain)")
-                        
-                        loadCacheFromCoreData()
-                        staticBandName.sync {
-                            isEmpty = self.bandNames.isEmpty
-                        }
-                        if !isEmpty {
-                            print("Band data loaded successfully on retry \(retryCount), setting justLaunched to false.")
-                            cacheVariables.justLaunched = false
-                            success = true
-                            populateCache(completion: completion)
-                            return
-                        } else {
-                            print("Retry \(retryCount) failed: Data downloaded but Core Data is still empty.")
-                        }
-                    } else {
-                        print("Retry \(retryCount) failed: Internet is down or data is empty/invalid.")
-                    }
-                } else {
-                    print("Retry \(retryCount) failed: No internet connection.")
+                // Force cache reload attempt
+                self.cacheLoaded = false
+                loadCacheFromCoreData()
+                staticBandName.sync {
+                    isEmpty = self.bandNames.isEmpty
                 }
                 
-                // Wait before next retry
-                if retryCount < maxRetries {
-                    Thread.sleep(forTimeInterval: 2.0)
+                if !isEmpty {
+                    print("✅ Band data became visible from SQLite after \(attempt) visibility retries (no extra downloads).")
+                    break
+                } else {
+                    print("⚠️ Visibility retry \(attempt)/\(maxVisibilityRetries): band cache still empty (no extra downloads).")
                 }
             }
-            
-            print("No band data available after \(maxRetries) retries. Giving up and calling completion.")
-            completion?()
-            return
         } else if isEmpty && !forceDownload {
             print("Core Data is empty but forceDownload is false. Skipping retry logic.")
         }

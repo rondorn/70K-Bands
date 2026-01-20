@@ -175,19 +175,6 @@ public final class MinimumVersionWarningManager {
             Log.w(TAG, "[MIN_VERSION] staticVariables.getPointerUrlData(androidMinimum) failed: " + e.getMessage(), e);
         }
 
-        // Fallback: direct pointer fetch if pointer system hasn't initialized yet.
-        if (fetched == null || fetched.isEmpty()) {
-            String pointerUrl = staticVariables.getDefaultUrls();
-            try {
-                if (staticVariables.preferences != null && "Testing".equals(staticVariables.preferences.getPointerUrl())) {
-                    pointerUrl = staticVariables.getDefaultUrlTest();
-                }
-            } catch (Exception ignored) {
-                // If preferences aren't ready yet, just use production pointer.
-            }
-            fetched = fetchCurrentPointerValue(pointerUrl, "androidMinimum");
-        }
-
         if (fetched != null && !fetched.isEmpty()) {
             prefs.edit()
                     .putString(KEY_LAST_FETCHED_MINIMUM, fetched)
@@ -203,43 +190,8 @@ public final class MinimumVersionWarningManager {
         return cachedMinimum;
     }
 
-    /**
-     * Downloads pointer file and returns the value for a line like "Current::<key>::<value>".
-     */
-    private static String fetchCurrentPointerValue(String pointerUrl, String key) {
-        HttpURLConnection connection = null;
-        BufferedReader in = null;
-        try {
-            URL url = new URL(pointerUrl);
-            connection = (HttpURLConnection) url.openConnection();
-            connection.setInstanceFollowRedirects(true);
-            HttpConnectionHelper.applyTimeouts(connection);
-
-            in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-            String line;
-            final String prefix = "Current::" + key + "::";
-            while ((line = in.readLine()) != null) {
-                if (line.startsWith(prefix)) {
-                    String[] parts = line.split("::");
-                    if (parts.length >= 3) {
-                        return parts[2].trim();
-                    }
-                }
-            }
-        } catch (Exception e) {
-            Log.w(TAG, "[MIN_VERSION] Error fetching pointer value: " + e.getMessage(), e);
-        } finally {
-            try {
-                if (in != null) in.close();
-            } catch (Exception ignored) {}
-            if (connection != null) {
-                try {
-                    connection.disconnect();
-                } catch (Exception ignored) {}
-            }
-        }
-        return "";
-    }
+    // NOTE: Do not add pointer network fetch fallbacks here.
+    // Pointer downloads are restricted to prescribed refresh times; this manager only reads cached pointer data.
 
     /**
      * Extracts digits and compares numerically.

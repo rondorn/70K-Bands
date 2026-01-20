@@ -34,6 +34,9 @@ public class ForegroundDownloadManager {
     private static final AtomicBoolean isDownloading = new AtomicBoolean(false);
     private static final AtomicBoolean isDialogShowing = new AtomicBoolean(false);
     private static final AtomicBoolean justCameFromBackground = new AtomicBoolean(false);
+    // Separate flag for "refresh the 4 core CSV files" on true app resume.
+    // This must NOT be consumed/cleared by bulk-download logic (images/notes/firebase).
+    private static final AtomicBoolean dataRefreshPending = new AtomicBoolean(false);
     private static final AtomicBoolean initialDownloadsCompleted = new AtomicBoolean(false);
     
     private static Dialog progressDialog = null;
@@ -53,6 +56,7 @@ public class ForegroundDownloadManager {
     public static void onAppForegrounded() {
         Log.d(TAG, "App came to foreground - marking as just came from background");
         justCameFromBackground.set(true);
+        dataRefreshPending.set(true);
         // Downloads will be started after CSV processing completes
     }
     
@@ -63,10 +67,19 @@ public class ForegroundDownloadManager {
         Log.d(TAG, "App going to background");
         // Clear the flag when app goes to background
         justCameFromBackground.set(false);
+        dataRefreshPending.set(false);
         // Hide floating progress indicator when app goes to background
         hideFloatingProgressIndicator();
         // Note: We do NOT reset initialDownloadsCompleted here - it stays true for the app session
         // This ensures downloads only start again when coming from background, not when returning from internal screens
+    }
+
+    /**
+     * Returns true exactly once after a true background -> foreground transition.
+     * Used to decide whether to refresh the core cached CSV files.
+     */
+    public static boolean consumeDataRefreshPending() {
+        return dataRefreshPending.getAndSet(false);
     }
     
     /**

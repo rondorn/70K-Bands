@@ -11,6 +11,22 @@ import CoreData
 import SystemConfiguration
 import UIKit
 import Network
+
+// MARK: - Network timeout policy (Android parity)
+//
+// Requirement:
+// - 10s timeout when a network call is initiated from the GUI (main) thread
+// - 60s timeout when running in the background
+//
+// Note: We still avoid *blocking* synchronous network work on the main thread wherever possible.
+enum NetworkTimeoutPolicy {
+    static let guiThreadTimeout: TimeInterval = 10.0
+    static let backgroundTimeout: TimeInterval = 60.0
+
+    static func timeoutIntervalForCurrentThread() -> TimeInterval {
+        return Thread.isMainThread ? guiThreadTimeout : backgroundTimeout
+    }
+}
 //prevent alerts from being re-added all the time
 var alertTracker = [String]()
 
@@ -279,7 +295,11 @@ var userCountry = ""
 var didNotFindMarkedEventsCount = 0
 var defaultStorageUrl = FestivalConfig.current.defaultStorageUrl
 let defaultStorageUrlTest = FestivalConfig.current.defaultStorageUrlTest
-let statsUrl = getPointerUrlData(keyValue: "reportUrl")
+// IMPORTANT: Do not resolve pointer-derived URLs at global init time.
+// This prevents accidental pointer downloads during module load.
+var statsUrl: String {
+    return getPointerUrlData(keyValue: "reportUrl")
+}
 
 //var defaultStorageUrl = "https://www.dropbox.com/s/f3raj8hkfbd81mp/productionPointer2024-Test.txt?raw=1"
 
@@ -477,166 +497,53 @@ func getPointerUrlData(keyValue: String) -> String {
     // Use the user's preference as the pointer index (e.g., "Current", "2025", etc.)
     var pointerIndex = getScheduleUrl()
     
-    // IMPROVED CACHING: Check memory cache first with proper cache key
-    // CRITICAL: Skip cache for eventYear lookups to avoid stale pointer issues
+    // POINTER POLICY:
+    // - The pointer file must be downloaded ONLY on app startup and on pull-to-refresh.
+    // - All other lookups MUST use the cached pointer file on disk (cachedPointerData.txt)
+    //   and/or in-memory cache (storePointerData).
+    //
+    // This function therefore NEVER downloads the pointer file from the network.
     let cacheKey = "\(pointerIndex):\(actualKeyValue)"
-    if actualKeyValue != "eventYear" {
-        storePointerLock.sync() {
-            if let cachedValue = cacheVariables.storePointerData[cacheKey], !cachedValue.isEmpty {
-                dataString = cachedValue
-                print("getPointerUrlData: ✅ FAST CACHE HIT for \(cacheKey) = \(dataString)")
-            }
+    storePointerLock.sync() {
+        if let cachedValue = cacheVariables.storePointerData[cacheKey], !cachedValue.isEmpty {
+            dataString = cachedValue
+            print("getPointerUrlData: ✅ FAST CACHE HIT for \(cacheKey) = \(dataString)")
         }
-        
-        // If we have valid cached data, return it immediately (no network call needed)
-        if !dataString.isEmpty {
-            print("getPointerUrlData: ✅ Returning cached data for \(actualKeyValue): \(dataString)")
-            return dataString
-        }
-    } else {
-        print("getPointerUrlData: ⚠️ Skipping cache for eventYear lookup to ensure fresh resolution")
+    }
+    if !dataString.isEmpty {
+        print("getPointerUrlData: ✅ Returning cached data for \(actualKeyValue): \(dataString)")
+        return dataString
     }
     
-    print("getPointerUrlData: ⚠️ Cache miss for \(actualKeyValue), will need to load pointer data")
+    print("getPointerUrlData: ⚠️ Cache miss for \(actualKeyValue) (\(cacheKey)) - reading cached pointer file from disk")
     var pointerValues : [String:[String:String]] = [String:[String:String]]()
-
-    print ("Files were Done setting 2 \(pointerIndex)")
-    // Only proceed with network/disk operations if cache miss
-    if (dataString.isEmpty == true){
-        // Check internet availability before attempting download
-        if !isInternetAvailable() {
-            print("getPointerUrlData: No internet available, using cached data for \(actualKeyValue)")
-            
-            // Try to use cached pointer data from disk as fallback
-            let cachedPointerFile = getDocumentsDirectory().appendingPathComponent("cachedPointerData.txt")
-            if FileManager.default.fileExists(atPath: cachedPointerFile) {
-                do {
-                    let cachedData = try String(contentsOfFile: cachedPointerFile, encoding: .utf8)
-                    print("getPointerUrlData: Using cached pointer data from disk")
-                    let dataArray = cachedData.components(separatedBy: "\n")
-                    // Optimize: Process only necessary data for current year to avoid excessive loading
-                    pointerValues = readPointDataOptimized(dataArray: dataArray, pointerValues: pointerValues, pointerIndex: pointerIndex, targetKeyValue: actualKeyValue)
-                    
-                    // Save eventYearArray to disk once after processing all cached records (synchronous to ensure year is written before further processing)
-                    print("eventYearsInfoFile: Saving after processing cached pointer data")
-                    let variableStoreHandle = variableStore()
-                    variableStoreHandle.storeDataToDisk(data: eventYearArray, fileName: eventYearsInfoFile)
-                    
-                    dataString = (pointerValues[pointerIndex]?[actualKeyValue]) ?? ""
-                    
-                    // Cache the result in memory for future use with proper cache key
-                    storePointerLock.sync() {
-                        cacheVariables.storePointerData[cacheKey] = dataString
-                    }
-                } catch {
-                    print("getPointerUrlData: Failed to read cached pointer data: \(error)")
-                }
-            }
-            return dataString
-        }
-        
-        // If we still don't have data and no internet, provide sensible defaults
-        if dataString.isEmpty && !isInternetAvailable() {
-            
-            // LAUNCH OPTIMIZATION: Always return defaults immediately, no retries during launch
-            print("🚀 LAUNCH OPTIMIZATION: No internet and no cache - returning default value for \(actualKeyValue)")
-            return getDefaultPointerValue(for: actualKeyValue)
-        }
-        
-        print ("getPointerUrlData: getting URL data of \(defaultStorageUrl) - \(actualKeyValue)")
-        
-        // MAIN THREAD PROTECTION: Never block main thread with network calls
-        var httpData = ""
-        if Thread.isMainThread {
-            print("🚀 LAUNCH OPTIMIZATION: Main thread detected - returning default value to prevent blocking")
-            print("🚀 LAUNCH OPTIMIZATION: Network update will happen in background for next time")
-            // Start background update for next time
-            DispatchQueue.global(qos: .utility).async {
-                _ = getUrlData(urlString: defaultStorageUrl)
-                print("🚀 LAUNCH OPTIMIZATION: Background pointer update completed")
-            }
-            // Return default value immediately instead of blocking
-            return getDefaultPointerValue(for: actualKeyValue)
-        } else {
-            httpData = getUrlData(urlString: defaultStorageUrl)
-        }
-        
-        print ("getPointerUrlData: httpData for pointers data = \(httpData)")
-        if (httpData.isEmpty == false){
-            
-            let dataArray = httpData.components(separatedBy: "\n")
-            // Safety check: Ensure we have valid data to process
-            guard !dataArray.isEmpty else {
-                print("getPointerUrlData: ⚠️ Data array is empty, skipping processing")
-                return getDefaultPointerValue(for: keyValue)
-            }
-            
-            // Optimize: Process only necessary data for current year to avoid excessive loading
-            do {
-                pointerValues = readPointDataOptimized(dataArray: dataArray, pointerValues: pointerValues, pointerIndex: pointerIndex, targetKeyValue: actualKeyValue)
-            } catch {
-                print("getPointerUrlData: ⚠️ Error processing pointer data: \(error)")
-                return getDefaultPointerValue(for: keyValue)
-            }
-            
-            // Save eventYearArray to disk once after processing all HTTP records (synchronous to ensure year is written before further processing)
-            print("eventYearsInfoFile: Saving after processing HTTP pointer data")
-            let variableStoreHandle = variableStore()
-            variableStoreHandle.storeDataToDisk(data: eventYearArray, fileName: eventYearsInfoFile)
-            
+    let cachedPointerFile = getDocumentsDirectory().appendingPathComponent("cachedPointerData.txt")
+    if FileManager.default.fileExists(atPath: cachedPointerFile) {
+        do {
+            let cachedData = try String(contentsOfFile: cachedPointerFile, encoding: .utf8)
+            let dataArray = cachedData.components(separatedBy: "\n")
+            pointerValues = readPointDataOptimized(
+                dataArray: dataArray,
+                pointerValues: pointerValues,
+                pointerIndex: pointerIndex,
+                targetKeyValue: actualKeyValue
+            )
             dataString = (pointerValues[pointerIndex]?[actualKeyValue]) ?? ""
-            
-            // Cache the result in memory for future fast access
             if !dataString.isEmpty {
                 storePointerLock.sync() {
                     cacheVariables.storePointerData[cacheKey] = dataString
                 }
-                print("getPointerUrlData: ✅ Cached result for \(cacheKey) = \(dataString)")
+                print("getPointerUrlData: ✅ Cached disk-derived result for \(cacheKey) = \(dataString)")
+                return dataString
             }
-            
-            // Cache the pointer data to disk for future offline use
-            let cachedPointerFile = getDocumentsDirectory().appendingPathComponent("cachedPointerData.txt")
-            do {
-                try httpData.write(toFile: cachedPointerFile, atomically: true, encoding: .utf8)
-                print("getPointerUrlData: Cached pointer data to disk for offline use")
-            } catch {
-                print("getPointerUrlData: Failed to cache pointer data: \(error)")
-            }
-
-        } else {
-            print ("getPointerUrlData: Why is \(actualKeyValue) empty - \(dataString)")
-            
-            // Try to use cached pointer data from disk as fallback
-            let cachedPointerFile = getDocumentsDirectory().appendingPathComponent("cachedPointerData.txt")
-            if FileManager.default.fileExists(atPath: cachedPointerFile) {
-                do {
-                    let cachedData = try String(contentsOfFile: cachedPointerFile, encoding: .utf8)
-                    print("getPointerUrlData: Using cached pointer data from disk")
-                    let dataArray = cachedData.components(separatedBy: "\n")
-                    // Optimize: Process only necessary data for current year to avoid excessive loading
-                    pointerValues = readPointDataOptimized(dataArray: dataArray, pointerValues: pointerValues, pointerIndex: pointerIndex, targetKeyValue: actualKeyValue)
-                    
-                    // Save eventYearArray to disk once after processing all fallback cached records (synchronous to ensure year is written before further processing)
-                    print("eventYearsInfoFile: Saving after processing fallback cached pointer data")
-                    let variableStoreHandle = variableStore()
-                    variableStoreHandle.storeDataToDisk(data: eventYearArray, fileName: eventYearsInfoFile)
-                    
-                    dataString = (pointerValues[pointerIndex]?[actualKeyValue]) ?? ""
-                    
-                    // Cache the result in memory for future fast access
-                    if !dataString.isEmpty {
-                        storePointerLock.sync() {
-                            cacheVariables.storePointerData[cacheKey] = dataString
-                        }
-                        print("getPointerUrlData: ✅ Cached fallback result for \(cacheKey) = \(dataString)")
-                    }
-                } catch {
-                    print("getPointerUrlData: Failed to read cached pointer data: \(error)")
-                }
-            }
+        } catch {
+            print("getPointerUrlData: Failed to read cached pointer file: \(error)")
         }
-        
-        if (keyValue == "eventYear"){
+    } else {
+        print("getPointerUrlData: No cached pointer file on disk yet (expected on first launch before startup download completes)")
+    }
+
+    if (keyValue == "eventYear"){
             // Get the user's year preference (could be "Current", "2025", "2024", etc.)
             let userYearPreference = getArtistUrl()
             print("🎯 [YEAR_RESOLUTION_DEBUG] getPointerUrlData: User year preference: '\(userYearPreference)'")
@@ -677,18 +584,20 @@ func getPointerUrlData(keyValue: String) -> String {
                         if !dataString.isEmpty {
                             print("getPointerUrlData: Using Default eventYear: \(dataString)")
                         } else {
-                            // Ultimate fallback - try cached file or use hardcoded default
+            // Ultimate fallback - try cached file or use current calendar year
                             do {
                                 if FileManager.default.fileExists(atPath: eventYearFile) {
                                     dataString = try String(contentsOfFile: eventYearFile, encoding: String.Encoding.utf8)
                                     print("getPointerUrlData: Using cached eventYear from file: \(dataString)")
                                 } else {
-                                    dataString = "2026" // Hardcoded fallback
-                                    print("getPointerUrlData: Using hardcoded fallback eventYear: \(dataString)")
+                    let currentYear = Calendar.current.component(.year, from: Date())
+                    dataString = String(currentYear)
+                    print("getPointerUrlData: Using calendar fallback eventYear: \(dataString)")
                                 }
                             } catch {
-                                dataString = "2026" // Hardcoded fallback
-                                print("getPointerUrlData: Error reading cached file, using hardcoded fallback: \(dataString)")
+                let currentYear = Calendar.current.component(.year, from: Date())
+                dataString = String(currentYear)
+                print("getPointerUrlData: Error reading cached file, using calendar fallback: \(dataString)")
                             }
                         }
                     }
@@ -698,7 +607,8 @@ func getPointerUrlData(keyValue: String) -> String {
             if dataString == "Problem" {
                print ("This is BAD - no valid year found and no cached year available")
                // Don't exit, try to use a reasonable default
-               dataString = "2026" // Use a reasonable default year
+               let currentYear = Calendar.current.component(.year, from: Date())
+               dataString = String(currentYear)
                print ("Using default year \(dataString) as fallback")
             }
             do {
@@ -722,13 +632,15 @@ func getPointerUrlData(keyValue: String) -> String {
                 print("getPointerUrlData: ✅ Cached eventYear result for \(cacheKey) = \(dataString)")
             }
         }
-
-    }
     
     print ("getPointerUrlData: Using Final value of " + actualKeyValue + " of " + dataString + " \(getArtistUrl())")
     
     loadUrlCounter = 0
     
+    // If we still have no data (e.g., cached pointer not present yet), return sensible defaults.
+    if dataString.isEmpty {
+        return getDefaultPointerValue(for: actualKeyValue)
+    }
     return dataString
 }
 
@@ -961,12 +873,17 @@ func readPointDataOptimized(dataArray: [String], pointerValues: [String:[String:
 }
 
 /// Loads user defaults and venue locations, and sets the current event year from pointer data.
-func setupDefaults() {
+func setupDefaults(runMigrationCheck: Bool = true) {
     
-    // CRITICAL: Migrate Core Data to SQLite FIRST, before any data access
-    print("🔄 Starting Core Data → SQLite migration check...")
-    CoreDataToSQLiteMigrator.shared.migrateIfNeeded()
-    print("✅ Migration check complete")
+    // CRITICAL: Migration must NOT be triggered by year changes.
+    // This can be invoked from multiple code paths; only run when explicitly allowed.
+    if runMigrationCheck {
+        print("🔄 Starting Core Data → SQLite migration check...")
+        CoreDataToSQLiteMigrator.shared.migrateIfNeeded()
+        print("✅ Migration check complete")
+    } else {
+        print("🚫 [MIGRATION] setupDefaults: Skipping Core Data → SQLite migration check (runMigrationCheck=false)")
+    }
         
     readFiltersFile()
     setupVenueLocations()
@@ -1126,13 +1043,11 @@ func ensureYearResolvedAtLaunch() -> Int {
         }
     }
     
-    // Step 3: If still no data, use sensible default and trigger background update
+    // Step 3: If still no data, use sensible default.
+    // Pointer file will be downloaded during startup (AppDelegate) and/or pull-to-refresh.
     if resolvedYear.isEmpty {
         print("🚀 LAUNCH OPTIMIZATION: No cached year data - using default and triggering background update")
         resolvedYear = getDefaultPointerValue(for: "eventYear")
-        
-        // Trigger background pointer update for next time (non-blocking)
-        triggerBackgroundPointerUpdate()
     } else {
         // We have cached year - check if user is on "Current" and if pointer file has newer year
         let yearPreference = getScheduleUrl() // Returns "Current" or specific year like "2025"
@@ -1177,12 +1092,23 @@ func checkForYearChangeInPointerFile(cachedYear: String) {
         return
     }
     
-    // Download fresh pointer file
-    let pointerUrl = FestivalConfig.current.defaultStorageUrl
-    let httpData = getUrlData(urlString: pointerUrl)
+    // POLICY: Do not download pointer data here. Only use cached pointer data on disk.
+    let cachedPointerFile = getDocumentsDirectory().appendingPathComponent("cachedPointerData.txt")
+    guard FileManager.default.fileExists(atPath: cachedPointerFile) else {
+        print("📅 No cached pointer file on disk - skipping year check")
+        return
+    }
+    
+    let httpData: String
+    do {
+        httpData = try String(contentsOfFile: cachedPointerFile, encoding: .utf8)
+    } catch {
+        print("📅 Failed to read cached pointer file - skipping year check: \(error)")
+        return
+    }
     
     guard !httpData.isEmpty else {
-        print("📅 Could not download pointer file - skipping year check")
+        print("📅 Cached pointer file is empty - skipping year check")
         return
     }
     

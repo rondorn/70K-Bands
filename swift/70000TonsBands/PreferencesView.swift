@@ -281,9 +281,6 @@ struct LifecycleModifiers: ViewModifier {
                 
                 minutesText = String(viewModel.minutesBeforeAlert)
             }
-            .onDisappear {
-                viewModel.refreshDataAndNotifications()
-            }
             .onChange(of: viewModel.minutesBeforeAlert) { newValue in
                 minutesText = String(newValue)
             }

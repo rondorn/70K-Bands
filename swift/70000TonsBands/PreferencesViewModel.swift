@@ -165,11 +165,23 @@ class PreferencesViewModel: ObservableObject {
         loadAvailableYears()
         loadCurrentPreferences()
         
+        // If the pointer file is updated while preferences are open, refresh the year list.
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handlePointerDataUpdated),
+            name: Notification.Name("PointerDataUpdated"),
+            object: nil
+        )
+        
         // Defer any heavy iCloud operations to avoid blocking the preferences UI
         DispatchQueue.global(qos: .background).async {
             // Any heavy data operations that might be needed can go here
             // This ensures the preferences screen opens immediately
         }
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
     
     // MARK: - Public Methods
@@ -219,42 +231,18 @@ class PreferencesViewModel: ObservableObject {
     }
     
     func refreshDataAndNotifications() {
+        // Preferences changes should NOT trigger fresh downloads.
+        // Rule: Only foreground, pull-to-refresh, and explicit year-change should download data.
+        // This method now only refreshes notifications and updates UI from cache.
+        
         // Final cleanup - reset notifications
         let localNotification = localNoticationHandler()
         localNotification.clearNotifications()
         localNotification.addNotifications()
         
-        // Trigger data refresh in background
-        DispatchQueue.global(qos: .background).async {
-            // CRITICAL: Use protected CSV download to prevent race conditions
-            MasterViewController.backgroundRefreshLock.lock()
-            let downloadAllowed = !MasterViewController.isCsvDownloadInProgress
-            if downloadAllowed {
-                MasterViewController.isCsvDownloadInProgress = true
-            }
-            MasterViewController.backgroundRefreshLock.unlock()
-            
-            if downloadAllowed {
-                print("🔒 refreshDataAndNotifications: Starting protected DUAL CSV download (bands + schedule)")
-                
-                // CRITICAL FIX: Both operations must be protected as a single atomic unit
-                // to prevent race conditions where band names import interferes with schedule import
-                masterView.bandNameHandle.gatherData()
-                masterView.schedule.DownloadCsv()
-                masterView.schedule.populateSchedule(forceDownload: false)
-                
-                // Mark download as complete
-                MasterViewController.backgroundRefreshLock.lock()
-                MasterViewController.isCsvDownloadInProgress = false
-                MasterViewController.backgroundRefreshLock.unlock()
-                print("🔒 refreshDataAndNotifications: Protected DUAL CSV download completed")
-            } else {
-                print("🔒 refreshDataAndNotifications: ❌ DUAL CSV download blocked - already in progress")
-            }
-            
-            DispatchQueue.main.async {
-                masterView.refreshData(isUserInitiated: true)
-            }
+        // Cache-only UI refresh (no network)
+        DispatchQueue.main.async {
+            masterView.refreshBandList(reason: "Preferences closed - cache-only refresh", skipDataLoading: true)
         }
     }
     
@@ -308,7 +296,9 @@ class PreferencesViewModel: ObservableObject {
         
         // Refresh display and navigate back immediately (data already loaded during year change)
         NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
-        masterView.refreshData(isUserInitiated: true)
+        // IMPORTANT: Do NOT trigger fresh downloads here.
+        // Year-change pipeline already downloaded/imported the selected year's data.
+        masterView.refreshBandList(reason: "Year change selection: Band List (cache-only)", skipDataLoading: true)
         
         print("🎯 Band List selection complete - navigating back to main screen")
         navigateBackToMainScreen()
@@ -328,7 +318,9 @@ class PreferencesViewModel: ObservableObject {
         
         // Refresh display and navigate back immediately (data already loaded during year change)
         NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
-        masterView.refreshData(isUserInitiated: true)
+        // IMPORTANT: Do NOT trigger fresh downloads here.
+        // Year-change pipeline already downloaded/imported the selected year's data.
+        masterView.refreshBandList(reason: "Year change selection: Event List (cache-only)", skipDataLoading: true)
         
         print("🎯 Event List selection complete - navigating back to main screen")
         navigateBackToMainScreen()
@@ -377,10 +369,20 @@ class PreferencesViewModel: ObservableObject {
         let variableStoreHandle = variableStore()
         print("🎯 Loading event years from file: \(eventYearsInfoFile)")
         
-        // Load event years from disk
+        // Prefer building the list from the locally cached pointer file.
+        // This ensures the year menu always reflects the pointer file contents.
         if eventYearArray.isEmpty {
-            eventYearArray = variableStoreHandle.readDataFromDiskArray(fileName: eventYearsInfoFile) ?? ["Current"]
-            print("🎯 eventYearsInfoFile: file is loaded \(eventYearArray)")
+            if let yearsFromPointer = loadEventYearsFromCachedPointerFile(), !yearsFromPointer.isEmpty {
+                eventYearArray = yearsFromPointer
+                print("🎯 Loaded event years from cached pointer file: \(eventYearArray)")
+                
+                // Persist for legacy callers/UI that still uses eventYearsInfoFile.
+                variableStoreHandle.storeDataToDisk(data: eventYearArray, fileName: eventYearsInfoFile)
+            } else {
+                // Fallback: read the last saved list from disk.
+                eventYearArray = variableStoreHandle.readDataFromDiskArray(fileName: eventYearsInfoFile) ?? ["Current"]
+                print("🎯 eventYearsInfoFile: file is loaded \(eventYearArray)")
+            }
         }
         
         // Map to display names, keeping original values for comparison
@@ -395,6 +397,68 @@ class PreferencesViewModel: ObservableObject {
         
         print("🎯 Final available years: \(availableYears)")
         print("🎯 Raw eventYearArray: \(eventYearArray)")
+    }
+    
+    /// Builds the year list from the locally cached pointer file (`cachedPointerData.txt`).
+    /// Pointer file is downloaded locally; the preferences UI should parse it from disk (no network).
+    private func loadEventYearsFromCachedPointerFile() -> [String]? {
+        let cachedPointerFile = getDocumentsDirectory().appendingPathComponent("cachedPointerData.txt")
+        guard FileManager.default.fileExists(atPath: cachedPointerFile) else {
+            print("🎯 cachedPointerData.txt does not exist yet - cannot build year list")
+            return nil
+        }
+        
+        let raw: String
+        do {
+            raw = try String(contentsOfFile: cachedPointerFile, encoding: .utf8)
+        } catch {
+            print("🎯 Failed to read cachedPointerData.txt: \(error)")
+            return nil
+        }
+        
+        if raw.isEmpty {
+            print("🎯 cachedPointerData.txt is empty - cannot build year list")
+            return nil
+        }
+        
+        var years: [String] = []
+        var seen = Set<String>()
+        
+        for line in raw.components(separatedBy: "\n") {
+            guard line.contains("::") else { continue }
+            let parts = line.components(separatedBy: "::")
+            guard parts.count >= 3 else { continue }
+            
+            let index = parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
+            if index.isEmpty { continue }
+            
+            // Skip non-year indices
+            if index == "Default" || index == "lastYear" { continue }
+            
+            // Keep "Current" and numeric years only
+            if index == "Current" || index.isYearString {
+                if seen.insert(index).inserted {
+                    years.append(index)
+                }
+            }
+        }
+        
+        // Ensure "Current" is always first if present; otherwise insert it.
+        if years.contains("Current") {
+            years.removeAll(where: { $0 == "Current" })
+            years.insert("Current", at: 0)
+        } else {
+            years.insert("Current", at: 0)
+        }
+        
+        return years
+    }
+    
+    @objc private func handlePointerDataUpdated() {
+        print("🎯 PreferencesViewModel: PointerDataUpdated received - refreshing year list")
+        DispatchQueue.main.async { [weak self] in
+            self?.refreshAvailableYears()
+        }
     }
     
     private func findOriginalYear(for displayYear: String) -> String {
@@ -883,7 +947,8 @@ class PreferencesViewModel: ObservableObject {
         
         // Re-setup defaults to ensure consistency
         setupCurrentYearUrls()
-        setupDefaults()
+        // IMPORTANT: Do NOT run any legacy migration as part of a year change (even on revert).
+        setupDefaults(runMigrationCheck: false)
         
         print("✅ Year change successfully reverted back to \(currentYearSetting)")
         print("🔄 UI should now show previous year: \(selectedYear)")
@@ -925,19 +990,41 @@ class PreferencesViewModel: ObservableObject {
     /// Continues the year change process after the centralized data refresh completes
     @MainActor 
     private func waitForCoreDataPopulationAndContinueYearChange() async {
-        print("🎯 STEP 5.5: Waiting for Core Data to be fully populated with new year's data")
+        print("🎯 STEP 5.5: Waiting for year-change completion signal before continuing")
         
-        let targetYear = resolveYearToNumber(eventYearChangeAttempt)
+        // The year-change pipeline (MasterViewController.performBackgroundDataRefresh) now:
+        // - loads bands + schedule + descriptionMap
+        // - marks data ready
+        // - ends year-change mode
+        // - calls the completion handler
+        //
+        // So here we only need to wait for the explicit readiness flags, without
+        // repeatedly loading caches on the main thread.
         
-        // CRITICAL FIX: Skip Core Data fetch during ALL year changes to prevent crashes
-        // The Core Data fetch causes concurrency violations when data is being imported
-        // during the year change process. The fetch is just a verification step that's
-        // not essential - the data will load normally through the import process.
-        print("🚨 [CRASH_FIX] SKIPPING Core Data check during year change to prevent concurrency crash")
-        print("🔍 [CRASH_FIX] Year change: '\(eventYearChangeAttempt)' - proceeding directly to completion")
-        print("🔍 [CRASH_FIX] Data will load normally through import process without verification delays")
+        let timeoutSeconds: TimeInterval = 20.0
+        let pollIntervalSeconds: TimeInterval = 0.2
+        let start = Date()
         
-        // Skip the entire Core Data population check and proceed directly
+        while Date().timeIntervalSince(start) < timeoutSeconds {
+            guard !Task.isCancelled else {
+                print("🚫 Year change cancelled while waiting for completion signal")
+                isLoadingData = false
+                return
+            }
+            
+            let ready = MasterViewController.isYearChangeDataReady()
+            let inProgress = MasterViewController.isYearChangeInProgress
+            
+            if ready && !inProgress {
+                print("✅ [YEAR_CHANGE] Completion signal received (dataReady=\(ready), inProgress=\(inProgress))")
+                await continueYearChangeAfterDataRefresh()
+                return
+            }
+            
+            try? await Task.sleep(nanoseconds: UInt64(pollIntervalSeconds * 1_000_000_000))
+        }
+        
+        print("⏰ [YEAR_CHANGE] Timeout waiting for completion signal - proceeding to completion to avoid trapping user")
         await continueYearChangeAfterDataRefresh()
     }
     

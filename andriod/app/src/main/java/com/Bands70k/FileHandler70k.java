@@ -44,6 +44,8 @@ public class FileHandler70k {
     public static final File bandRankingsBk = new File(showBands.newRootDir + directoryName + "bandRankings.bk");
     public static final File schedule = new File(showBands.newRootDir + directoryName + "70kScheduleInfo.csv");
     public static final File descriptionMapFile = new File(showBands.newRootDir + directoryName + "70kbandDescriptionMap.csv");
+    // Cached copy of the pointer file contents (used for year changes without re-downloading the pointer).
+    public static final File pointerCacheFile = new File(showBands.newRootDir + directoryName + "pointerCache.txt");
     public static final File showsAttendedFile = new File(showBands.newRootDir + directoryName + "showsAtteded.data");
     public static final File countryFile = new File(showBands.newRootDir + directoryName + "country.txt");
 
