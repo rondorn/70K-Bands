@@ -208,9 +208,25 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     var isPerformingQuickLoad = false
     
     var easterEggTriggeredForSearch = false
+    private var pupaPartyOverlay: PupaPartyOverlayView?
     
     // Flag to track if country dialog should be shown after data loads on first install
     private var shouldShowCountryDialogAfterDataLoad = false
+
+    // MARK: - Image pipeline diagnostics
+    private func logImagePipelineState(_ context: String) {
+        // Keep this lightweight and safe to call from any thread.
+        let year = eventYear
+        let bandCount = bandNameHandle.getBandNames().count
+
+        // Schedule cache: count bands + approximate total events from cached dictionary.
+        let scheduleBands = schedule.schedulingData.count
+        let scheduleEventsApprox = schedule.schedulingData.values.reduce(0) { $0 + $1.count }
+
+        let combinedCount = CombinedImageListHandler.shared.combinedImageList.count
+
+        print("🧩 [IMAGE_PIPELINE] \(context) | year=\(year) bands=\(bandCount) scheduleBands=\(scheduleBands) scheduleEvents≈\(scheduleEventsApprox) combinedImageList=\(combinedCount)")
+    }
     
     var filterRequestID = 0
     
@@ -626,8 +642,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         print("Filtering activated 2  \(searchBar.text) \(searchBar.text?.count)")
-        let lowercased = searchText.lowercased()
-        if lowercased.contains("more cow bell") {
+        let normalized = normalizedEasterEggSearchText(searchText)
+        
+        // Accept "more cow bell" or "more cowbell" in any case (with/without spaces).
+        let compact = normalized.replacingOccurrences(of: " ", with: "")
+        if compact.contains("morecowbell") {
             if !easterEggTriggeredForSearch {
                 triggerEasterEgg()
                 easterEggTriggeredForSearch = true
@@ -635,8 +654,23 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         } else {
             easterEggTriggeredForSearch = false
         }
+        
+        // "pupa party" easter egg: bounce an image around the screen until the user taps anywhere.
+        if normalized == "pupa party" {
+            if pupaPartyOverlay == nil {
+                triggerPupaPartyEasterEgg()
+            }
+        }
+        
         print("Calling refreshBandList from searchBar(_:textDidChange:) with reason: Search changed")
         refreshBandList(reason: "Search changed")
+    }
+
+    private func normalizedEasterEggSearchText(_ text: String) -> String {
+        // Lowercase + trim + collapse whitespace so users can type "pupa   party".
+        let trimmed = text.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        let parts = trimmed.split(whereSeparator: { $0.isWhitespace })
+        return parts.joined(separator: " ")
     }
     
     @objc func iCloudRefresh() {
@@ -795,6 +829,206 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
         } else {
             print("Error: SNL-More_Cowbell.mov not found in bundle.")
+        }
+    }
+
+    private func triggerPupaPartyEasterEgg() {
+        // Keep this isolated: purely visual overlay; no data refresh, no filtering changes.
+        let image = loadPupaPartyImage()
+            ?? UIImage(named: "70KSearch")
+            ?? UIImage(systemName: "sparkles")
+        
+        let overlay = PupaPartyOverlayView(image: image, minHeightFraction: 0.20)
+        overlay.onDismiss = { [weak self] in
+            self?.pupaPartyOverlay = nil
+        }
+        
+        let containerView: UIView = navigationController?.view ?? self.view
+        overlay.frame = containerView.bounds
+        overlay.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        containerView.addSubview(overlay)
+        overlay.startAnimating()
+        
+        pupaPartyOverlay = overlay
+    }
+
+    private func loadPupaPartyImage() -> UIImage? {
+        // Preferred: Images.xcassets with name "pupa_party"
+        if let img = UIImage(named: "pupa_party") {
+            return img
+        }
+        
+        // Fallback: a raw resource file included in the app bundle (e.g. "pupa_party.png")
+        let candidates: [(name: String, ext: String?)] = [
+            ("pupa_party", "png"),
+            ("PupaParty", "png"),
+            ("pupa_party", nil)
+        ]
+        
+        for candidate in candidates {
+            let path = Bundle.main.path(forResource: candidate.name, ofType: candidate.ext)
+            if let path, let img = UIImage(contentsOfFile: path) {
+                return img
+            }
+        }
+        
+        return nil
+    }
+
+    // MARK: - "Pupa Party" Easter Egg
+
+    private final class PupaPartyOverlayView: UIView {
+        
+        private let imageView: UIImageView
+        private var displayLink: CADisplayLink?
+        private var lastTimestamp: CFTimeInterval?
+        private var velocity: CGPoint = .zero
+        private let minHeightFraction: CGFloat
+        
+        var onDismiss: (() -> Void)?
+        
+        init(image: UIImage?, minHeightFraction: CGFloat) {
+            self.imageView = UIImageView(image: image)
+            self.minHeightFraction = minHeightFraction
+            super.init(frame: .zero)
+            commonInit()
+        }
+        
+        required init?(coder: NSCoder) {
+            self.imageView = UIImageView(image: UIImage(named: "pupa_party"))
+            self.minHeightFraction = 0.20
+            super.init(coder: coder)
+            commonInit()
+        }
+        
+        private func commonInit() {
+            backgroundColor = .clear
+            isOpaque = false
+            isUserInteractionEnabled = true
+            
+            imageView.contentMode = .scaleAspectFit
+            imageView.isUserInteractionEnabled = false
+            addSubview(imageView)
+            
+            let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap))
+            addGestureRecognizer(tap)
+        }
+        
+        func startAnimating() {
+            layoutImageViewInitialFrameIfNeeded()
+            configureInitialVelocityIfNeeded()
+            
+            let link = CADisplayLink(target: self, selector: #selector(step))
+            link.add(to: .main, forMode: .common)
+            displayLink = link
+        }
+        
+        private func layoutImageViewInitialFrameIfNeeded() {
+            guard imageView.bounds.size == .zero else { return }
+
+            let fallbackSize = CGSize(width: 300, height: 600)
+            let original = imageView.image?.size ?? fallbackSize
+            let aspect = original.width / max(original.height, 1)
+
+            // Requirement: at least 20% of the screen height (e.g., iPhone 17).
+            let targetHeight = max(bounds.height * minHeightFraction, 120)
+            var width = targetHeight * max(aspect, 0.05)
+            var height = targetHeight
+
+            // Keep it within the screen width with a small margin, preserving aspect ratio.
+            let maxWidth = bounds.width * 0.92
+            if width > maxWidth {
+                let scale = maxWidth / width
+                width *= scale
+                height *= scale
+            }
+
+            imageView.bounds = CGRect(x: 0, y: 0, width: width, height: height)
+            
+            let safeBounds = bounds.insetBy(dx: width / 2, dy: height / 2)
+            let startX = CGFloat.random(in: safeBounds.minX...max(safeBounds.maxX, safeBounds.minX))
+            let startY = CGFloat.random(in: safeBounds.minY...max(safeBounds.maxY, safeBounds.minY))
+            imageView.center = CGPoint(x: startX, y: startY)
+        }
+        
+        private func configureInitialVelocityIfNeeded() {
+            guard velocity == .zero else { return }
+            let speed = CGFloat.random(in: 180...360) // points / sec
+            let angle = CGFloat.random(in: 0...(2 * .pi))
+            velocity = CGPoint(x: cos(angle) * speed, y: sin(angle) * speed)
+        }
+        
+        @objc private func step(link: CADisplayLink) {
+            guard bounds.width > 0, bounds.height > 0 else { return }
+            
+            let now = link.timestamp
+            let dt: CGFloat
+            if let lastTimestamp {
+                dt = CGFloat(now - lastTimestamp)
+            } else {
+                dt = 0
+            }
+            lastTimestamp = now
+            
+            guard dt > 0 else { return }
+            
+            var nextCenter = CGPoint(
+                x: imageView.center.x + velocity.x * dt,
+                y: imageView.center.y + velocity.y * dt
+            )
+            
+            let halfW = imageView.bounds.width / 2
+            let halfH = imageView.bounds.height / 2
+            let minX = halfW
+            let maxX = bounds.width - halfW
+            let minY = halfH
+            let maxY = bounds.height - halfH
+            
+            var bounced = false
+            
+            if nextCenter.x <= minX {
+                nextCenter.x = minX
+                velocity.x = abs(velocity.x)
+                bounced = true
+            } else if nextCenter.x >= maxX {
+                nextCenter.x = maxX
+                velocity.x = -abs(velocity.x)
+                bounced = true
+            }
+            
+            if nextCenter.y <= minY {
+                nextCenter.y = minY
+                velocity.y = abs(velocity.y)
+                bounced = true
+            } else if nextCenter.y >= maxY {
+                nextCenter.y = maxY
+                velocity.y = -abs(velocity.y)
+                bounced = true
+            }
+            
+            if bounced {
+                // Add a tiny randomness so it feels screensaver-y.
+                velocity.x *= CGFloat.random(in: 0.92...1.08)
+                velocity.y *= CGFloat.random(in: 0.92...1.08)
+            }
+            
+            imageView.center = nextCenter
+        }
+        
+        @objc private func handleTap() {
+            stopAndRemove()
+        }
+        
+        private func stopAndRemove() {
+            displayLink?.invalidate()
+            displayLink = nil
+            lastTimestamp = nil
+            removeFromSuperview()
+            onDismiss?()
+        }
+        
+        deinit {
+            displayLink?.invalidate()
         }
     }
     
@@ -1879,6 +2113,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print("🎛️ [YEAR_CHANGE] handleReturnFromPreferencesAfterYearChange called - user returned after year change")
         print("🎛️ [YEAR_CHANGE] Current eventYear: \(eventYear)")
         print("🎛️ [YEAR_CHANGE] Current hideExpiredEvents: \(getHideExpireScheduleData())")
+        logImagePipelineState("ReturnFromPreferencesAfterYearChange (entry)")
         
         // RACE FIX: Wait briefly if year change data isn't ready yet (edge case protection)
         // This prevents reading SQLite before data import completes
@@ -4886,62 +5121,64 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 
                 // 3f. Generate consolidated image list then refresh the GUI
                 iCloudGroup.notify(queue: .main) {
-                    print("Full data refresh (\(reason)): Step 3f - All data loaded, generating consolidated image list")
+                    print("Full data refresh (\(reason)): Step 3f - All data loaded (iCloud sync complete)")
                     
-                    // Generate consolidated image list immediately after both artist and schedule data are loaded
-                    CombinedImageListHandler.shared.generateCombinedImageList(
-                        bandNameHandle: self.bandNameHandle,
-                        scheduleHandle: self.schedule
-                    ) {
-                        print("Full data refresh (\(reason)): Step 3g - Consolidated image list generated, refreshing GUI")
-                        
-                        if endRefreshControl {
-                            self.refreshControl?.endRefreshing()
-                        }
-                        if shouldScrollToTop {
-                            self.shouldSnapToTopAfterRefresh = true
-                        }
-                        
-                        // YEAR CHANGE SEQUENCING:
-                        // For year changes, we must only proceed once ALL year data is ready:
-                        // - Bands (SQLite imported)
-                        // - Schedule (SQLite imported)
-                        // - Description map (downloaded + parsed)
-                        //
-                        // Also: Clear the year-change-in-progress flag BEFORE loading caches so bandNamesHandler
-                        // doesn't defer cache loads indefinitely (this was causing the refreshBandList loop).
-                        if isYearChangeOperation {
-                            print("🎯 [YEAR_CHANGE] Step FINAL-PRE-UI: Loading bands + schedule + descriptionMap for selected year before UI/Preferences dismissal")
-                            
-                            // Load description map (it may have been cleared during cache reset).
-                            self.bandDescriptions.getDescriptionMapFile()
-                            self.bandDescriptions.getDescriptionMap()
-                            
-                            // Mark year-change data as ready and end year-change mode.
-                            MasterViewController.markYearChangeDataReady()
-                            MasterViewController.notifyYearChangeCompleted()
-                            
-                            // Now that year-change mode is cleared, force-load SQLite caches so UI can render.
-                            self.bandNameHandle.loadCachedDataImmediately()
-                            self.schedule.loadCachedDataImmediately()
-                        }
-                        
-                        // For year changes, do NOT try to refresh the main list while the Preferences screen
-                        // may still be presented. That UI refresh can spam retries / appear hung.
-                        // The Preferences year-change flow will dismiss and then trigger the final list refresh.
-                        if !isYearChangeOperation {
-                            // Final GUI refresh with all new data and consolidated images
-                            // The bands array will be safely repopulated in refreshBandList
-                            self.refreshBandList(reason: "\(reason) - final refresh", scrollToTop: false, isPullToRefresh: shouldScrollToTop)
-                        } else {
-                            print("🎯 [YEAR_CHANGE] Skipping refreshBandList from performBackgroundDataRefresh; will refresh after Preferences flow completes")
-                        }
-                        
-                        print("Full data refresh (\(reason)): Complete with consolidated images!")
-                        
-                        // Call completion handler to signal data refresh is complete
-                        completion?()
+                    if endRefreshControl {
+                        self.refreshControl?.endRefreshing()
                     }
+                    if shouldScrollToTop {
+                        self.shouldSnapToTopAfterRefresh = true
+                    }
+                    
+                    // YEAR CHANGE SEQUENCING:
+                    // Move combined image list generation to the "post-year-change-ready" phase:
+                    // - clear year-change mode
+                    // - load caches for the selected year
+                    // - then trigger image generation (non-blocking)
+                    if isYearChangeOperation {
+                        print("🎯 [YEAR_CHANGE] Step FINAL-PRE-UI: Loading bands + schedule + descriptionMap for selected year before UI/Preferences dismissal")
+                        
+                        // Load description map (it may have been cleared during cache reset).
+                        self.bandDescriptions.getDescriptionMapFile()
+                        self.bandDescriptions.getDescriptionMap()
+                        self.logImagePipelineState("YearChange FINAL-PRE-UI after descriptionMap load")
+                        
+                        // Mark year-change data as ready and end year-change mode FIRST.
+                        MasterViewController.markYearChangeDataReady()
+                        MasterViewController.notifyYearChangeCompleted()
+                        
+                        // Load caches now that year-change mode is cleared (prevents deferrals).
+                        self.bandNameHandle.loadCachedDataImmediately()
+                        self.schedule.loadCachedDataImmediately()
+                        self.logImagePipelineState("YearChange FINAL-PRE-UI after cache load")
+                        
+                        // Trigger image generation, but never block year-change completion on it.
+                        CombinedImageListHandler.shared.triggerRefreshPostDataLoad(
+                            bandNameHandle: self.bandNameHandle,
+                            scheduleHandle: self.schedule,
+                            context: "YearChange post-ready"
+                        )
+                    } else {
+                        // Non-year-change refresh (pull-to-refresh / foreground):
+                        // Do not block UI completion on image generation. Trigger it after data commit.
+                        CombinedImageListHandler.shared.triggerRefreshPostDataLoad(
+                            bandNameHandle: self.bandNameHandle,
+                            scheduleHandle: self.schedule,
+                            context: "Non-year-change refresh post-commit"
+                        )
+                        
+                        // Final GUI refresh with all new data (images may fill in as the map updates)
+                        self.refreshBandList(reason: "\(reason) - final refresh", scrollToTop: false, isPullToRefresh: shouldScrollToTop)
+                    }
+                    
+                    if isYearChangeOperation {
+                        print("🎯 [YEAR_CHANGE] Skipping refreshBandList from performBackgroundDataRefresh; will refresh after Preferences flow completes")
+                    }
+                    
+                    print("Full data refresh (\(reason)): Complete (image generation is decoupled)")
+                    
+                    // Call completion handler to signal data refresh is complete
+                    completion?()
                 }
             } else {
                 print("Full data refresh (\(reason)): No content changes detected, keeping existing cache")
@@ -5347,21 +5584,24 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 self.bandDescriptions.getDescriptionMap()
                 print("✅ [UNIFIED_REFRESH] Description map loaded with fresh CSV data")
                 
-                // CRITICAL FIX: Build image map AFTER CSVs are imported
-                // This ensures the image map uses the NEW year's data with proper URLs
-                // Previously, image map was built in parallel with CSV downloads, causing empty URLs
-                self.loadCombinedImageList()
-                
-                print("✅ [UNIFIED_REFRESH] Image map built with fresh CSV data")
+                // Build image map AFTER CSVs are imported AND AFTER descriptionMap is loaded,
+                // but DO NOT block UI completion on image generation (prevents "hung" refreshes).
+                self.bandNameHandle.loadCachedDataImmediately()
+                self.schedule.loadCachedDataImmediately()
+                CombinedImageListHandler.shared.triggerRefreshPostDataLoad(
+                    bandNameHandle: self.bandNameHandle,
+                    scheduleHandle: self.schedule,
+                    context: "UnifiedRefresh(\(reason)) post-commit"
+                )
                 
                 // DISABLED: Orphaned band cleanup removed
                 // Bands and events are separate entities - bands can legitimately exist without events
                 // Fake bands (like "All Star Jam") are filtered in UI display logic, not deleted from database
                 print("🧹 [CLEANUP] Skipping orphaned band cleanup - bands and events are separate entities")
                 
-                // Now update the display on main thread
+                // Now update the display on main thread (images may fill in as the map updates)
                 DispatchQueue.main.async {
-                    print("🎉 [UNIFIED_REFRESH] All data complete (CSVs + description map + image map) - updating display")
+                    print("🎉 [UNIFIED_REFRESH] All data complete (CSVs + description map) - updating display")
                     
                     // Clear justLaunched flag
                     cacheVariables.justLaunched = false

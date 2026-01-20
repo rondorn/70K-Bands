@@ -80,6 +80,7 @@ class CombinedImageListHandler {
     ///   - completion: Completion handler called when the list is generated
     func generateCombinedImageList(bandNameHandle: bandNamesHandler, scheduleHandle: scheduleHandler, completion: @escaping () -> Void) {
         print("📋 [IMAGE_DEBUG] generateCombinedImageList called")
+        print("🧩 [IMAGE_PIPELINE] generateCombinedImageList START | year=\(eventYear)")
         
         // NOTE: We no longer abort during year changes because:
         // 1. SQLite is thread-safe and won't cause deadlocks
@@ -96,6 +97,7 @@ class CombinedImageListHandler {
             
             // Get all band names and their image URLs (URL lookup only, no downloads)
             let bandNames = bandNameHandle.getBandNames()
+            print("🧩 [IMAGE_PIPELINE] inputs | artistBands=\(bandNames.count) scheduleBands=\(scheduleHandle.schedulingData.count)")
             print("📋 Collecting image URLs for \(bandNames.count) artists (no downloads)")
             for bandName in bandNames {
                 let imageUrl = bandNameHandle.getBandImageUrl(bandName)
@@ -156,6 +158,7 @@ class CombinedImageListHandler {
             // SQLite stores events independently by eventBandName, so all events are accessible
             print("📋 Fetching events from SQLite (including those without bands)...")
             let sqliteEvents = SQLiteDataManager.shared.fetchEvents(forYear: eventYear)
+            print("🧩 [IMAGE_PIPELINE] inputs | sqliteEvents=\(sqliteEvents.count)")
             print("📋 Found \(sqliteEvents.count) events in SQLite for year \(eventYear)")
             
             // Process SQLite events to extract unique band/event names and their image URLs
@@ -194,6 +197,7 @@ class CombinedImageListHandler {
             self.saveCombinedImageList()
             
             print("✅ [IMAGE_DEBUG] Combined image URL list generated with \(newCombinedList.count) entries (no downloads performed)")
+            print("🧩 [IMAGE_PIPELINE] generateCombinedImageList END | year=\(eventYear) combinedImageList=\(newCombinedList.count)")
             if newCombinedList.count > 0 {
                 print("📋 [IMAGE_DEBUG] Sample entries: \(Array(newCombinedList.keys.prefix(5)))")
             }
@@ -287,6 +291,8 @@ class CombinedImageListHandler {
             guard !bandNames.isEmpty else {
                 print("❌ [IMAGE_DEBUG] No artist data available for async generation - handlers not ready")
                 self.isGenerating = false
+                // Don't stall callers/observers. Schedule a retry when data is ready.
+                self.checkAndRefreshWhenReady()
                 return
             }
             
@@ -374,6 +380,16 @@ class CombinedImageListHandler {
                 print("📊 [IMAGE_DEBUG] New list has \(newCombinedList.count) entries")
                 if newCombinedList.count > 0 {
                     print("📋 [IMAGE_DEBUG] First 10 entries: \(Array(newCombinedList.keys.prefix(10)).sorted())")
+                }
+
+                // CRITICAL LOOP FIX:
+                // If generation produced an empty list, do NOT overwrite any existing list on disk,
+                // and do NOT post ImageListUpdated (DetailViewModel will otherwise reload and re-trigger generation).
+                if newCombinedList.isEmpty {
+                    print("⚠️ [IMAGE_DEBUG] Async generation produced 0 entries - skipping update/notify and scheduling retry")
+                    self.isGenerating = false
+                    self.checkAndRefreshWhenReady()
+                    return
                 }
                 
                 self.combinedImageList = newCombinedList
@@ -646,6 +662,43 @@ class CombinedImageListHandler {
         // Delay the check slightly to ensure all data loading is complete
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             self?.checkAndRefreshOnLaunch()
+        }
+    }
+
+    // MARK: - Post-refresh image generation (non-blocking)
+    
+    /// Trigger image-list regeneration in a way that never stalls critical UI pipelines.
+    ///
+    /// Rules:
+    /// - If band data isn't ready yet (0 bands), return quickly and schedule a retry.
+    /// - If band data is ready, kick off async generation (completion is informational only).
+    ///
+    /// This is intended to be called from:
+    /// - year-change "post-ready" phase (after year-change flags cleared and caches loaded)
+    /// - pull-to-refresh / foreground refresh AFTER data imports commit
+    func triggerRefreshPostDataLoad(
+        bandNameHandle: bandNamesHandler,
+        scheduleHandle: scheduleHandler,
+        context: String
+    ) {
+        let year = eventYear
+        let bandCount = bandNameHandle.getBandNames().count
+        let scheduleBandCount = scheduleHandle.schedulingData.count
+        let currentCombinedCount = combinedImageList.count
+        
+        print("🧩 [IMAGE_PIPELINE] triggerRefreshPostDataLoad | \(context) | year=\(year) bands=\(bandCount) scheduleBands=\(scheduleBandCount) combinedImageList=\(currentCombinedCount)")
+        
+        // If band cache isn't ready, do not stall. Schedule a retry.
+        if bandCount == 0 {
+            print("🧩 [IMAGE_PIPELINE] triggerRefreshPostDataLoad: bands=0, skipping generation and scheduling retry")
+            checkAndRefreshWhenReady()
+            return
+        }
+        
+        // Kick off async generation; do not block callers.
+        generateCombinedImageList(bandNameHandle: bandNameHandle, scheduleHandle: scheduleHandle) {
+            let updatedCount = self.combinedImageList.count
+            print("🧩 [IMAGE_PIPELINE] triggerRefreshPostDataLoad: generation completed | year=\(year) combinedImageList=\(updatedCount)")
         }
     }
     

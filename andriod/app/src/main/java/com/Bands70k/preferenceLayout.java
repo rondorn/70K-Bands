@@ -21,6 +21,8 @@ import android.widget.Button;
 import android.widget.PopupMenu;
 import android.widget.Switch;
 import android.widget.EditText;
+import android.widget.Spinner;
+import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -89,7 +91,7 @@ public class preferenceLayout  extends Activity {
 
     private EditText bandsUrl;
     private EditText scheduleUrl;
-    private EditText pointerUrl;
+    private Spinner pointerUrl;
     private String versionString = "";
 
     private Button eventYearButton;
@@ -820,8 +822,18 @@ public class preferenceLayout  extends Activity {
         scheduleUrl = (EditText)findViewById(R.id.scheduleUrl);
         scheduleUrl.setText(staticVariables.preferences.getScheduleUrl().toString());
 
-        pointerUrl = (EditText)findViewById(R.id.pointerUrl);
-        pointerUrl.setText(staticVariables.preferences.getPointerUrl().toString());
+        pointerUrl = (Spinner)findViewById(R.id.pointerUrl);
+        ArrayAdapter<String> pointerAdapter = new ArrayAdapter<>(
+                this,
+                R.layout.spinner_item_white,
+                new String[]{"Default", "Testing"}
+        );
+        pointerAdapter.setDropDownViewResource(R.layout.spinner_dropdown_item_dark);
+        pointerUrl.setAdapter(pointerAdapter);
+        
+        String currentPointerSetting = staticVariables.preferences.getPointerUrl();
+        int selection = "Testing".equalsIgnoreCase(currentPointerSetting) ? 1 : 0;
+        pointerUrl.setSelection(selection);
 
         hideExpiredEvents = (Switch)findViewById(R.id.hideExpiredEvents);
         hideExpiredEvents.setChecked(staticVariables.preferences.getHideExpiredEvents());
@@ -882,7 +894,7 @@ public class preferenceLayout  extends Activity {
         staticVariables.preferences.setMinBeforeToAlert(Integer.valueOf(alertMin.getText().toString()));
         staticVariables.preferences.setArtsistsUrl(bandsUrl.getText().toString());
         staticVariables.preferences.setScheduleUrl(scheduleUrl.getText().toString());
-        staticVariables.preferences.setPointerUrl(pointerUrl.getText().toString());
+        staticVariables.preferences.setPointerUrl(String.valueOf(pointerUrl.getSelectedItem()));
         staticVariables.preferences.saveData();
 
         // Removed unnecessary 70ms sleep - modern Android handles activity transitions properly
