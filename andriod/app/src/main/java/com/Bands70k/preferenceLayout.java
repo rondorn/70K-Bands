@@ -248,7 +248,10 @@ public class preferenceLayout  extends Activity {
                         }
 
                         URL u = new URL(downloadUrl);
-                        InputStream is = u.openStream();
+                        java.net.HttpURLConnection connection = (java.net.HttpURLConnection) u.openConnection();
+                        connection.setInstanceFollowRedirects(true);
+                        HttpConnectionHelper.applyTimeouts(connection);
+                        InputStream is = connection.getInputStream();
 
                         DataInputStream dis = new DataInputStream(is);
 
@@ -259,6 +262,7 @@ public class preferenceLayout  extends Activity {
                         while ((length = dis.read(buffer)) > 0) {
                             fos.write(buffer, 0, length);
                         }
+                        try { connection.disconnect(); } catch (Exception ignored) {}
 
 
                     } catch (MalformedURLException mue) {
