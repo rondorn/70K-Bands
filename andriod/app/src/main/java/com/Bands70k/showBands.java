@@ -235,7 +235,6 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         
         // Initialize sharing managers early
         Log.d("INIT", "🔧 Initializing sharing managers...");
-        SQLiteProfileManager.getInstance();
         ProfileColorManager.getInstance();
         SharedPreferencesManager.getInstance();
         Log.d("INIT", "✅ Sharing managers initialized");

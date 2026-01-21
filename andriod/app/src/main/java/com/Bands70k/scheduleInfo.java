@@ -127,8 +127,6 @@ public class scheduleInfo {
             Log.d("ParseScheduleCSV", "ParseScheduleCSV - 2");
             while ((line = br.readLine()) != null) {
                 lineCount++;
-                Log.d("ScheduleLine", line);
-                Log.d("FILTER_DEBUG", "🔍 SCHEDULE PARSING: Processing line " + lineCount + ": " + line);
                 try {
                     Log.d("ParseScheduleCSV", "ParseScheduleCSV - 3");
                     String[] RowData = line.split(",");
@@ -167,7 +165,6 @@ public class scheduleInfo {
                         }
 
                         if (RowData.length > labelKeys.get(staticVariables.schedNotesRow)) {
-                            Log.d("ScheduleLine2", staticVariables.schedNotesRow + " RowData.length = " + RowData.length);
                             scheduleLine.setShowNotes(RowData[labelKeys.get(staticVariables.schedNotesRow)]);
                         }
 
@@ -187,9 +184,7 @@ public class scheduleInfo {
                             }
                         }
 
-                        Log.d("ScheduleLine 1", scheduleLine.toString());
                         if (bandSchedule.get(bandName) == null){
-                            Log.d("ScheduleLine2", "Adding:" +bandName + ":" + scheduleLine.getEpochStart() + ":" + scheduleLine);
                             scheduleTimeTracker timeTrack = new scheduleTimeTracker();
                             timeTrack.addToscheduleByTime(scheduleLine.getEpochStart(), scheduleLine);
                             bandSchedule.put(bandName, timeTrack);
@@ -208,21 +203,17 @@ public class scheduleInfo {
                 }
 
             }
+            try { br.close(); } catch (Exception ignored) {}
 
         } catch (Exception e) {
             Log.d("ParseScheduleCSV", "ParseScheduleCSV - 6");
             Log.e("ScheduleLine Exception", "Parsing bandData", e);
-            Log.d("FILTER_DEBUG", "🔍 SCHEDULE PARSING: Exception occurred during parsing: " + e.getMessage());
 
         }
         //Log.d("Output of bandData", bandSchedule.toString());
 
         Log.d("ParseScheduleCSV", "ParseScheduleCSV - 7");
-        Log.d("FILTER_DEBUG", "🔍 SCHEDULE PARSING: Completed parsing, returning " + bandSchedule.size() + " schedule records");
-        for (String bandName : bandSchedule.keySet()) {
-            Log.d("FILTER_DEBUG", "🔍 SCHEDULE PARSING: Band found: " + bandName + " with " + 
-                  bandSchedule.get(bandName).scheduleByTime.size() + " time slots");
-        }
+        Log.d("ScheduleInfo", "Parsed schedule CSV: " + bandSchedule.size() + " bands");
         return bandSchedule;
     }
 
