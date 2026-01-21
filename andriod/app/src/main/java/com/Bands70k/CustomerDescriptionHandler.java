@@ -426,27 +426,27 @@ public class CustomerDescriptionHandler {
             }
             br.close();
             
-            Log.d("70K_NOTE_DEBUG", "Read " + allLines.size() + " total lines from file");
+            // Keep logging lightweight; this can run during startup.
+            Log.d("CustomerDescriptionHandler", "Description map: read " + allLines.size() + " lines from file");
 
             // Now process all the lines
             for (String currentLine : allLines) {
                 lineCount++;
-                Log.d("70K_NOTE_DEBUG", "Reading CSV line " + lineCount + ": " + currentLine);
                 String[] rowData = currentLine.split(",");
                 if (!"Band".equals(rowData[0])) {
                     processedCount++;
                     String normalizedBandName = normalizeBandName(rowData[0]);
-                    Log.d("70K_NOTE_DEBUG", "Processing band " + processedCount + ": " + rowData[0] + " -> " + normalizedBandName + " -> " + rowData[1]);
                     descriptionMapData.put(normalizedBandName, rowData[1]);
                     if (rowData.length > 2){
-                        Log.d("descriptionMapFile", "Date value is " + rowData[2]);
                         staticVariables.descriptionMapModData.put(normalizedBandName, rowData[2]);
                     }
                 }
             }
             
-            Log.d("70K_NOTE_DEBUG", "CSV parsing complete - read " + lineCount + " lines, processed " + processedCount + " bands");
-            Log.d("70K_NOTE_DEBUG", "Final descriptionMapData size: " + descriptionMapData.size());
+            Log.d(
+                "CustomerDescriptionHandler",
+                "Description map: parsed " + processedCount + " bands (" + lineCount + " lines). Map size=" + descriptionMapData.size()
+            );
         } catch (FileNotFoundException fnfe) {
             Log.e("General Exception", "Description map file not found, attempting to download it", fnfe);
             // File was deleted after check, try to download it again
@@ -467,26 +467,26 @@ public class CustomerDescriptionHandler {
                     }
                     br.close();
                     
-                    Log.d("70K_NOTE_DEBUG", "Read " + allLines.size() + " total lines from file (retry)");
+                    Log.d("CustomerDescriptionHandler", "Description map (retry): read " + allLines.size() + " lines from file");
 
                     // Now process all the lines
                     for (String currentLine : allLines) {
                         retryLineCount++;
-                        Log.d("70K_NOTE_DEBUG", "Reading CSV line (retry) " + retryLineCount + ": " + currentLine);
                         String[] rowData = currentLine.split(",");
                         if (!"Band".equals(rowData[0])) {
                             retryProcessedCount++;
                             String normalizedBandName = normalizeBandName(rowData[0]);
-                            Log.d("70K_NOTE_DEBUG", "Processing band (retry) " + retryProcessedCount + ": " + rowData[0] + " -> " + normalizedBandName + " -> " + rowData[1]);
                             descriptionMapData.put(normalizedBandName, rowData[1]);
                             if (rowData.length > 2){
-                                Log.d("descriptionMapFile", "Date value is " + rowData[2]);
                                 staticVariables.descriptionMapModData.put(normalizedBandName, rowData[2]);
                             }
                         }
                     }
                     
-                    Log.d("70K_NOTE_DEBUG", "CSV parsing (retry) complete - read " + retryLineCount + " lines, processed " + retryProcessedCount + " bands");
+                    Log.d(
+                        "CustomerDescriptionHandler",
+                        "Description map (retry): parsed " + retryProcessedCount + " bands (" + retryLineCount + " lines). Map size=" + descriptionMapData.size()
+                    );
                 }
             } catch (Exception retryError) {
                 Log.e("General Exception", "Failed to read description map file after retry", retryError);

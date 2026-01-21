@@ -277,7 +277,6 @@ public class BandInfo {
      */
     public static String getNote(String bandName){
         String note = getBandDetailsData(bandName, "note");
-        Log.d("GET_NOTE_DEBUG", "Band: " + bandName + " | Note: '" + note + "'");
         if (note != null && !note.trim().isEmpty()) {
             return note;
         } else {
@@ -294,8 +293,6 @@ public class BandInfo {
     private static String getBandDetailsData (String bandName, String key){
 
         String data = "";
-        Log.d("The bandName is ", bandName);
-        //Log.d("Here is the full map", bandData.toString());
         Map<String, Map> detailedData = bandData.get(bandName);
 
         //Log.d("Here is the map", detailedData.toString());
@@ -451,7 +448,6 @@ public class BandInfo {
                 String line;
 
                 while ((line = br.readLine()) != null) {
-                    Log.d("RawBandLine", line);
                     try {
                         String[] RowData = line.split(",");
                         Map<String, String> bandDetails = new HashMap<String, String>();
@@ -466,19 +462,6 @@ public class BandInfo {
                         bandDetails = addToBandDetails("genre", RowData, 7, bandDetails);
                         bandDetails = addToBandDetails("note", RowData, 8, bandDetails);
                         bandDetails = addToBandDetails("priorYears", RowData, 9, bandDetails);
-                        
-                        // DEBUG: Log note data for bands with notes
-                        if (RowData.length > 8 && !RowData[8].trim().isEmpty()) {
-                            Log.d("CSV_NOTE_DEBUG", "Band: " + RowData[0] + " | Note: " + RowData[8]);
-                        }
-                        
-                        // DEBUG: Log specific bands we're investigating
-                        if (RowData[0].contains("Death Angel") || RowData[0].contains("Cephalic Carnage") || RowData[0].contains("Dying Fetus")) {
-                            Log.d("CSV_SPECIFIC_DEBUG", "Band: " + RowData[0] + " | RowData.length: " + RowData.length);
-                            for (int i = 0; i < RowData.length; i++) {
-                                Log.d("CSV_SPECIFIC_DEBUG", "  Index " + i + ": " + RowData[i]);
-                            }
-                        }
                         if (!RowData[0].contains("bandName")) {
                             bandData.put(RowData[0], bandDetails);
                             bandNames.add(RowData[0]);
@@ -494,7 +477,8 @@ public class BandInfo {
         }
 
 
-        Log.d("Output of bandData", bandData.toString());
+        // Avoid logging the full bandData map (can be huge and slow on startup).
+        Log.d("BandInfo", "Parsed band CSV: " + bandNames.size() + " bands");
 
         return bandNames;
     }

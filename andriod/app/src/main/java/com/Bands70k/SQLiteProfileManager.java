@@ -3,11 +3,13 @@ package com.Bands70k;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Looper;
 import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * SQLiteProfileManager
@@ -25,6 +27,12 @@ import java.util.List;
 public class SQLiteProfileManager {
     private static final String TAG = "SQLiteProfileManager";
     private static SQLiteProfileManager instance;
+
+    // Must match DBHelper.DATABASE_NAME
+    private static final String DATABASE_NAME = "70kBands.db";
+
+    private static final AtomicBoolean warmUpScheduled = new AtomicBoolean(false);
+    private final Object dbInitLock = new Object();
     
     private SQLiteDatabase db;
     
@@ -41,9 +49,9 @@ public class SQLiteProfileManager {
     private static final String COL_IS_READ_ONLY = "isReadOnly";
     
     private SQLiteProfileManager() {
-        Log.d(TAG, "🔧 [PROFILE_INIT] SQLiteProfileManager init() called");
-        setupDatabase();
-        Log.d(TAG, "🔧 [PROFILE_INIT] SQLiteProfileManager init() completed");
+        // IMPORTANT: Do not open/upgrade SQLite on the UI thread.
+        // DB initialization is triggered via warmUp() / warmUpAsync() and guarded in ensureDbReady().
+        Log.d(TAG, "🔧 [PROFILE_INIT] SQLiteProfileManager instance created (DB init deferred)");
     }
     
     public static synchronized SQLiteProfileManager getInstance() {
@@ -53,47 +61,153 @@ public class SQLiteProfileManager {
         return instance;
     }
     
-    private void setupDatabase() {
-        Log.d(TAG, "🔧 [PROFILE_INIT] setupDatabase() starting...");
-        
+    /**
+     * Pre-warms the profile DB on the current thread.
+     *
+     * Call this ONLY from a background thread (Application async init, background tasks).
+     */
+    public static void warmUp() {
+        SQLiteProfileManager mgr = getInstance();
+        mgr.ensureDbReady(/* allowBlocking */ true);
+    }
+
+    /**
+     * Schedules a background warm-up of the profile DB.
+     * Safe to call from any thread; will run at most once per process.
+     */
+    public static void warmUpAsync() {
+        if (!warmUpScheduled.compareAndSet(false, true)) {
+            return;
+        }
+        ThreadManager.getInstance().executeFile(() -> {
+            try {
+                warmUp();
+            } catch (Exception e) {
+                Log.e(TAG, "❌ [PROFILE_INIT] Background warmUp failed", e);
+            }
+        });
+    }
+
+    private boolean ensureDbReady(boolean allowBlocking) {
+        if (db != null) {
+            return true;
+        }
+
+        // Never block the UI thread on SQLite open/upgrade. Instead schedule warm-up.
+        boolean isUiThread = Looper.myLooper() == Looper.getMainLooper();
+        if (isUiThread && allowBlocking) {
+            // Callers should never request blocking on UI, but be safe.
+            allowBlocking = false;
+        }
+        if (isUiThread && !allowBlocking) {
+            warmUpAsync();
+            return false;
+        }
+
+        synchronized (dbInitLock) {
+            if (db != null) {
+                return true;
+            }
+            setupDatabaseInternal();
+            return db != null;
+        }
+    }
+
+    private void setupDatabaseInternal() {
+        Log.d(TAG, "🔧 [PROFILE_INIT] setupDatabase starting (background thread)");
+
+        // Attempt 1: normal open
+        if (tryOpenDatabase()) {
+            return;
+        }
+
+        // Attempt 2: delete corrupted DB and recreate (profiles metadata only)
         try {
-            // Use the same database helper as priority/attendance managers
+            Log.w(TAG, "⚠️ [PROFILE_INIT] Deleting profile database and recreating (possible corruption)");
+            if (Bands70k.getAppContext() != null) {
+                Bands70k.getAppContext().deleteDatabase(DATABASE_NAME);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "❌ [PROFILE_INIT] Failed to delete database for recovery", e);
+        }
+
+        tryOpenDatabase();
+    }
+
+    private boolean tryOpenDatabase() {
+        try {
             DBHelper dbHelper = new DBHelper(Bands70k.getAppContext());
             db = dbHelper.getWritableDatabase();
-            
-            Log.d(TAG, "✅ SQLiteProfileManager: Database connection established");
-            
-            // CRITICAL: Set busy timeout to handle concurrent writes
+
+            // CRITICAL: Set busy timeout to handle concurrent writes.
+            // This is safe here because we only open in the background.
             db.execSQL("PRAGMA busy_timeout = 30000");
-            Log.d(TAG, "✅ SQLiteProfileManager: Set busy timeout to 30 seconds");
-            
-            // Create table if not exists
-            String createTable = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
-                    COL_USER_ID + " TEXT PRIMARY KEY, " +
-                    COL_LABEL + " TEXT NOT NULL, " +
-                    COL_COLOR + " TEXT NOT NULL, " +
-                    COL_IMPORT_DATE + " INTEGER NOT NULL, " +
-                    COL_SHARE_DATE + " INTEGER NOT NULL, " +
-                    COL_EVENT_YEAR + " INTEGER NOT NULL, " +
-                    COL_PRIORITY_COUNT + " INTEGER DEFAULT 0, " +
-                    COL_ATTENDANCE_COUNT + " INTEGER DEFAULT 0, " +
-                    COL_IS_READ_ONLY + " INTEGER DEFAULT 0)";
-            
-            db.execSQL(createTable);
-            Log.d(TAG, "✅ SQLiteProfileManager: Table created/verified");
-            
-            // Verify table exists and log count
-            android.database.Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM " + TABLE_NAME, null);
-            if (cursor.moveToFirst()) {
-                int count = cursor.getInt(0);
-                Log.d(TAG, "✅ SQLiteProfileManager: Database initialized successfully, " + count + " profiles exist");
-            }
-            cursor.close();
-            
+
+            ensureSharedProfilesSchema(db);
+
+            return true;
         } catch (Exception e) {
-            Log.e(TAG, "❌ SQLiteProfileManager: Failed to initialize database", e);
-            e.printStackTrace();
+            Log.e(TAG, "❌ [PROFILE_INIT] Failed to open/initialize database", e);
+            db = null;
+            return false;
         }
+    }
+
+    /**
+     * Ensures the shared_profiles table exists with the correct (camelCase) schema.
+     *
+     * Older builds used snake_case columns; those tables are incompatible with current code.
+     * Since this table only stores derived metadata about imported/shared profiles, it's safe
+     * to drop/recreate when an incompatible schema is found.
+     */
+    private void ensureSharedProfilesSchema(SQLiteDatabase db) {
+        boolean hasAnyColumns = false;
+        boolean hasUserId = false;
+        boolean hasOldUserId = false;
+        Cursor cursor = null;
+
+        try {
+            cursor = db.rawQuery("PRAGMA table_info(" + TABLE_NAME + ")", null);
+            if (cursor != null) {
+                while (cursor.moveToNext()) {
+                    hasAnyColumns = true;
+                    String colName = cursor.getString(cursor.getColumnIndexOrThrow("name"));
+                    if ("userId".equals(colName)) {
+                        hasUserId = true;
+                    } else if ("user_id".equals(colName)) {
+                        hasOldUserId = true;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "⚠️ [PROFILE_INIT] Failed to inspect shared_profiles schema; will recreate if needed", e);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+
+        if (hasOldUserId || (hasAnyColumns && !hasUserId)) {
+            Log.w(TAG, "⚠️ [PROFILE_INIT] Incompatible shared_profiles schema detected; recreating table");
+            try {
+                db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
+            } catch (Exception e) {
+                Log.e(TAG, "❌ [PROFILE_INIT] Failed to drop incompatible shared_profiles table", e);
+            }
+        }
+
+        // Create/verify table with correct camelCase column names.
+        String createTable = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
+                COL_USER_ID + " TEXT PRIMARY KEY, " +
+                COL_LABEL + " TEXT NOT NULL, " +
+                COL_COLOR + " TEXT NOT NULL, " +
+                COL_IMPORT_DATE + " INTEGER NOT NULL, " +
+                COL_SHARE_DATE + " INTEGER NOT NULL, " +
+                COL_EVENT_YEAR + " INTEGER NOT NULL, " +
+                COL_PRIORITY_COUNT + " INTEGER DEFAULT 0, " +
+                COL_ATTENDANCE_COUNT + " INTEGER DEFAULT 0, " +
+                COL_IS_READ_ONLY + " INTEGER DEFAULT 0)";
+        db.execSQL(createTable);
     }
     
     /**
@@ -105,13 +219,9 @@ public class SQLiteProfileManager {
         Log.d(TAG, "💾 [SAVE] saveProfile() called for: " + profile.label + " (" + profile.userId + ")");
         
         try {
-            if (db == null) {
-                Log.e(TAG, "❌ [SAVE] Database is null! Reinitializing...");
-                setupDatabase();
-                if (db == null) {
-                    Log.e(TAG, "❌ [SAVE] Database still null after reinitialization!");
-                    return false;
-                }
+            if (!ensureDbReady(/* allowBlocking */ false)) {
+                Log.w(TAG, "⚠️ [SAVE] DB not ready on this thread; skipping save to avoid UI block");
+                return false;
             }
             ContentValues values = new ContentValues();
             values.put(COL_USER_ID, profile.userId);
@@ -177,6 +287,23 @@ public class SQLiteProfileManager {
         Cursor cursor = null;
         
         try {
+            if (!ensureDbReady(/* allowBlocking */ false)) {
+                // DB not ready: return a safe fallback for Default; otherwise null.
+                if ("Default".equals(userId)) {
+                    return new ProfileMetadata(
+                            "Default",
+                            "Default",
+                            "#FFFFFF",
+                            new Date(),
+                            new Date(),
+                            staticVariables.eventYear,
+                            0,
+                            0,
+                            false
+                    );
+                }
+                return null;
+            }
             cursor = db.query(TABLE_NAME, null, COL_USER_ID + "=?", 
                     new String[]{userId}, null, null, null);
             
@@ -223,9 +350,20 @@ public class SQLiteProfileManager {
         Cursor cursor = null;
         
         try {
-            if (db == null) {
-                Log.e(TAG, "❌ [GET_ALL] Database is null! Reinitializing...");
-                setupDatabase();
+            if (!ensureDbReady(/* allowBlocking */ false)) {
+                // DB not ready: keep UI usable with Default only.
+                results.add(new ProfileMetadata(
+                        "Default",
+                        "Default",
+                        "#FFFFFF",
+                        new Date(),
+                        new Date(),
+                        staticVariables.eventYear,
+                        0,
+                        0,
+                        false
+                ));
+                return results;
             }
             
             cursor = db.query(TABLE_NAME, null, null, null, null, null, COL_LABEL + " ASC");
@@ -290,6 +428,9 @@ public class SQLiteProfileManager {
         }
         
         try {
+            if (!ensureDbReady(/* allowBlocking */ false)) {
+                return false;
+            }
             int rows = db.delete(TABLE_NAME, COL_USER_ID + "=?", new String[]{userId});
             Log.d(TAG, "✅ SQLiteProfileManager: Deleted profile: " + userId);
             return rows > 0;
@@ -307,6 +448,9 @@ public class SQLiteProfileManager {
      */
     public boolean updateLabel(String userId, String newLabel) {
         try {
+            if (!ensureDbReady(/* allowBlocking */ false)) {
+                return false;
+            }
             ContentValues values = new ContentValues();
             values.put(COL_LABEL, newLabel);
             
@@ -327,6 +471,9 @@ public class SQLiteProfileManager {
      */
     public boolean updateColor(String userId, String newColorHex) {
         try {
+            if (!ensureDbReady(/* allowBlocking */ false)) {
+                return false;
+            }
             ContentValues values = new ContentValues();
             values.put(COL_COLOR, newColorHex);
             

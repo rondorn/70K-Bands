@@ -830,12 +830,11 @@ public class staticVariables {
                 Log.w("lookupUrls", "Failed to save pointer cache: " + e.getMessage());
             }
 
-            Log.d("defaultUrls", data);
-
             String[] records = data.split("\\n");
-            Log.d("defaultUrls", "eventYearIndex is " + eventYearIndex);
+            // Do not log the full pointer file contents (can be large/noisy).
+            Log.d("lookupUrls", "Pointer downloaded: " + records.length + " lines (eventYearIndex=" + eventYearIndex + ")");
             Map<String, String> downloadUrls = readPointData(records, eventYearIndex);
-            Log.d("defaultUrls", downloadUrls.toString());
+            Log.d("lookupUrls", "Pointer parsed keys: " + (downloadUrls != null ? downloadUrls.keySet() : "null"));
             
             return downloadUrls;
         } catch (Exception error) {
@@ -1078,7 +1077,6 @@ public class staticVariables {
         Map<String, String> downloadUrls = new HashMap<String, String>();
         for (String record : records) {
             String[] recordData = record.split("::");
-            Log.d("defaultUrls", "record = " + record);
             if (recordData.length >= 3) {
                 String recordIndex = recordData[0];
                 String keyName = recordData[1];
@@ -1089,10 +1087,8 @@ public class staticVariables {
                         eventYearArray.add(recordIndex);
                     }
                 }
-                Log.d("defaultUrls", "adding data  = " + recordIndex + "-" + eventYearIndex + "-" + keyName + "=" + vaueData);
 
                 if (eventYearIndex.equals(recordIndex)) {
-                    Log.d("defaultUrls", "REALLY adding data  = " + keyName + "=" + vaueData);
                     downloadUrls.put(keyName, vaueData);
                 }
             }

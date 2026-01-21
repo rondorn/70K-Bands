@@ -91,8 +91,6 @@ public class preferencesHandler {
 
                 while ((line = br.readLine()) != null) {
                     String[] RowData = line.split(",");
-                    Log.d("Load Data", line);
-                    Log.d("Load Data", "Setting " + RowData[0] + " to be " + RowData[1]);
                     switch (RowData[0]) {
                         case "mustSeeAlert":
                             setMustSeeAlert(Boolean.valueOf(RowData[1]));
