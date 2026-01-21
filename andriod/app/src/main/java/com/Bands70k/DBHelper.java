@@ -41,16 +41,6 @@ public class DBHelper extends SQLiteOpenHelper {
         Log.d(TAG, "Database upgrade completed");
     }
     
-    @Override
-    public void onOpen(SQLiteDatabase db) {
-        super.onOpen(db);
-        Log.d(TAG, "Database opened, ensuring tables exist...");
-        
-        // CRITICAL: Ensure shared_profiles table exists even on existing databases
-        // This handles the case where the database existed before we added profiles
-        createSharedProfilesTable(db);
-    }
-    
     /**
      * Creates the shared_profiles table if it doesn't exist
      * IMPORTANT: Column names must match SQLiteProfileManager constants exactly (camelCase)

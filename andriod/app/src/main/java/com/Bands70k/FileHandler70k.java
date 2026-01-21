@@ -146,7 +146,9 @@ public class FileHandler70k {
      */
     public static void saveData(String data, File fileHandle){
 
-        Log.d("Save Data", data);
+        // Avoid logging full payloads (can be large and can contribute to ANRs if called on UI thread).
+        // If needed, log metadata only.
+        // Log.d("Save Data", "Saving " + (data != null ? data.length() : 0) + " chars to " + fileHandle.getAbsolutePath());
         try {
             FileOutputStream stream = new FileOutputStream(fileHandle);
             try {

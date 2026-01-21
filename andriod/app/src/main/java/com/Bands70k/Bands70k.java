@@ -64,6 +64,9 @@ public class Bands70k extends Application implements Application.ActivityLifecyc
             try {
                 // Perform any heavy initialization that was previously relying on the sleep
                 Log.d("AppLifecycle", "Performing async app initialization");
+
+                // Warm up SQLite/profile DB on background thread to prevent UI-thread ANRs during launch.
+                SQLiteProfileManager.warmUp();
                 
                 // Give some time for essential services to initialize if needed
                 Thread.sleep(500); // Much shorter delay, only if absolutely necessary
