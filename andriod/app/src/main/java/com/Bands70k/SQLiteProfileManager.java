@@ -2,6 +2,8 @@ package com.Bands70k;
 
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteCantOpenDatabaseException;
+import android.database.sqlite.SQLiteDatabaseCorruptException;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Looper;
 import android.util.Log;
@@ -33,6 +35,7 @@ public class SQLiteProfileManager {
 
     private static final AtomicBoolean warmUpScheduled = new AtomicBoolean(false);
     private final Object dbInitLock = new Object();
+    private volatile boolean lastOpenFailureSuggestsDelete = false;
     
     private SQLiteDatabase db;
     
@@ -121,9 +124,25 @@ public class SQLiteProfileManager {
             return;
         }
 
+        // Attempt 2: delete and recreate ONLY when the failure indicates corruption/can't-open.
+        // Avoid deleting on transient errors (locks/timeouts) as that can make things worse.
+        if (!lastOpenFailureSuggestsDelete) {
+            Log.w(TAG, "⚠️ [PROFILE_INIT] DB open failed but does not suggest corruption; will not delete DB");
+            return;
+        }
+
         // Attempt 2: delete corrupted DB and recreate (profiles metadata only)
         try {
             Log.w(TAG, "⚠️ [PROFILE_INIT] Deleting profile database and recreating (possible corruption)");
+            try {
+                if (db != null && db.isOpen()) {
+                    db.close();
+                }
+            } catch (Exception ignored) {
+                // Ignore close failures; we'll still attempt delete/recreate.
+            } finally {
+                db = null;
+            }
             if (Bands70k.getAppContext() != null) {
                 Bands70k.getAppContext().deleteDatabase(DATABASE_NAME);
             }
@@ -135,19 +154,57 @@ public class SQLiteProfileManager {
     }
 
     private boolean tryOpenDatabase() {
+        DBHelper dbHelper = null;
+        SQLiteDatabase openedDb = null;
+        lastOpenFailureSuggestsDelete = false;
         try {
-            DBHelper dbHelper = new DBHelper(Bands70k.getAppContext());
-            db = dbHelper.getWritableDatabase();
+            dbHelper = new DBHelper(Bands70k.getAppContext());
+            openedDb = dbHelper.getWritableDatabase();
+            db = openedDb;
 
             // CRITICAL: Set busy timeout to handle concurrent writes.
             // This is safe here because we only open in the background.
-            db.execSQL("PRAGMA busy_timeout = 30000");
+            // NOTE: Some Android builds treat PRAGMA as a "query" and will throw if execSQL() is used.
+            // Use rawQuery() to be compatible and immediately close the cursor.
+            Cursor pragmaCursor = null;
+            try {
+                pragmaCursor = db.rawQuery("PRAGMA busy_timeout = 30000", null);
+            } finally {
+                if (pragmaCursor != null) {
+                    pragmaCursor.close();
+                }
+            }
 
             ensureSharedProfilesSchema(db);
 
             return true;
         } catch (Exception e) {
-            Log.e(TAG, "❌ [PROFILE_INIT] Failed to open/initialize database", e);
+            boolean suggestsDelete = (e instanceof SQLiteDatabaseCorruptException)
+                    || (e instanceof SQLiteCantOpenDatabaseException);
+            lastOpenFailureSuggestsDelete = suggestsDelete;
+
+            Log.e(
+                    TAG,
+                    "❌ [PROFILE_INIT] Failed to open/initialize database (thread="
+                            + Thread.currentThread().getName()
+                            + ", isUiThread=" + (Looper.myLooper() == Looper.getMainLooper())
+                            + ", suggestsDelete=" + suggestsDelete + ")",
+                    e
+            );
+            try {
+                if (openedDb != null && openedDb.isOpen()) {
+                    openedDb.close();
+                }
+            } catch (Exception ignored) {
+                // Best-effort cleanup.
+            }
+            try {
+                if (dbHelper != null) {
+                    dbHelper.close();
+                }
+            } catch (Exception ignored) {
+                // Best-effort cleanup.
+            }
             db = null;
             return false;
         }
@@ -220,7 +277,9 @@ public class SQLiteProfileManager {
         
         try {
             if (!ensureDbReady(/* allowBlocking */ false)) {
-                Log.w(TAG, "⚠️ [SAVE] DB not ready on this thread; skipping save to avoid UI block");
+                Log.w(TAG, "⚠️ [SAVE] DB not ready (thread=" + Thread.currentThread().getName()
+                        + ", isUiThread=" + (Looper.myLooper() == Looper.getMainLooper())
+                        + "); cannot save profile right now");
                 return false;
             }
             ContentValues values = new ContentValues();

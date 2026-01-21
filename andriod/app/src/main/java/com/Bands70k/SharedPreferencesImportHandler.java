@@ -75,21 +75,26 @@ public class SharedPreferencesImportHandler {
      * - For existing profiles: Show confirmation dialog (name not editable)
      */
     private void showImportDialog(SharedPreferenceSet preferenceSet, Activity activity) {
-        // Check if this UserID already exists
-        ProfileMetadata existingProfile = SQLiteProfileManager.getInstance()
-                .getProfile(preferenceSet.senderUserId);
-        
-        if (existingProfile != null) {
-            // Profile exists - show confirmation dialog (no name change)
-            Log.d(TAG, "📥 [IMPORT] Existing profile found: " + existingProfile.label + 
-                    " (" + preferenceSet.senderUserId + ")");
-            showUpdateConfirmationDialog(preferenceSet, existingProfile, activity);
-            return;
-        }
-        
-        // New profile - prompt for name with senderName as default
-        Log.d(TAG, "📥 [IMPORT] New profile, prompting for name");
-        showNewProfileDialog(preferenceSet, activity);
+        // IMPORTANT: Do not touch SQLite on the UI thread. Check existence in background.
+        ThreadManager.getInstance().executeFile(() -> {
+            SQLiteProfileManager.warmUp();
+            ProfileMetadata existingProfile = SQLiteProfileManager.getInstance()
+                    .getProfile(preferenceSet.senderUserId);
+
+            activity.runOnUiThread(() -> {
+                if (existingProfile != null) {
+                    // Profile exists - show confirmation dialog (no name change)
+                    Log.d(TAG, "📥 [IMPORT] Existing profile found: " + existingProfile.label +
+                            " (" + preferenceSet.senderUserId + ")");
+                    showUpdateConfirmationDialog(preferenceSet, existingProfile, activity);
+                    return;
+                }
+
+                // New profile - prompt for name with senderName as default
+                Log.d(TAG, "📥 [IMPORT] New profile, prompting for name");
+                showNewProfileDialog(preferenceSet, activity);
+            });
+        });
     }
     
     /**
@@ -185,57 +190,63 @@ public class SharedPreferencesImportHandler {
                                boolean isUpdate, Activity activity) {
         Log.d(TAG, "📥 [IMPORT_HANDLER] completeImport called with name: " + customName);
         Log.d(TAG, "📥 [IMPORT_HANDLER] preferenceSet userId: " + preferenceSet.senderUserId);
-        
-        boolean importSuccess = sharingManager.importPreferenceSet(preferenceSet, customName);
-        Log.d(TAG, "📥 [IMPORT_HANDLER] importPreferenceSet returned: " + importSuccess);
-        
-        if (importSuccess) {
-            Log.d(TAG, "✅ [IMPORT_HANDLER] Import successful, switching to imported profile");
-            
-            // CRITICAL: Switch to the imported profile (using UserID as the profile key)
-            String profileKey = preferenceSet.senderUserId;
-            sharingManager.setActivePreferenceSource(profileKey);
-            
-            Log.d(TAG, "✅ [IMPORT_HANDLER] Switched to profile: " + profileKey);
-            
-            // CRITICAL: Reload profile-specific data (same as manual profile switching)
-            // This ensures the UI shows the correct profile data, not just the color
-            rankStore.reloadForActiveProfile();
-            if (staticVariables.attendedHandler != null) {
-                staticVariables.attendedHandler.reloadForActiveProfile();
-            }
-            Log.d(TAG, "✅ [IMPORT_HANDLER] Reloaded priority and attendance data for profile: " + customName);
-            
-            // Update header color and refresh UI if this is the showBands activity
-            if (activity instanceof showBands) {
-                showBands showBandsActivity = (showBands) activity;
-                showBandsActivity.updateHeaderColorForCurrentProfile();
-                Log.d(TAG, "✅ [IMPORT_HANDLER] Updated header color for new profile");
-                
-                // CRITICAL: Refresh the band list with new profile data
-                // This ensures the UI displays the imported profile's data, not just the color
-                showBandsActivity.refreshNewData();
-                Log.d(TAG, "✅ [IMPORT_HANDLER] Refreshed band list with new profile data");
-            }
-            
-            // Different message for update vs new import
-            String message;
-            if (isUpdate) {
-                message = context.getString(R.string.updated) + " '" + customName + "' " +
-                        context.getString(R.string.with_new_data) + "\n\n" +
-                        context.getString(R.string.showing_preferences_from) + " '" + customName + "'.";
-            } else {
-                message = context.getString(R.string.successfully_imported) + " '" + customName + "'!\n\n" +
-                        context.getString(R.string.showing_preferences_from) + " '" + customName + "'.";
-            }
-            
-            showSuccessAlert(activity, message, isUpdate);
-            
-        } else {
-            showErrorAlert(activity, context.getString(R.string.failed_to_import));
-        }
-        
-        pendingImportSet = null;
+
+        // IMPORTANT: importPreferenceSet writes to SQLite, so do it in background.
+        ThreadManager.getInstance().executeFile(() -> {
+            SQLiteProfileManager.warmUp();
+            boolean importSuccess = sharingManager.importPreferenceSet(preferenceSet, customName);
+            Log.d(TAG, "📥 [IMPORT_HANDLER] importPreferenceSet returned: " + importSuccess);
+
+            activity.runOnUiThread(() -> {
+                if (importSuccess) {
+                    Log.d(TAG, "✅ [IMPORT_HANDLER] Import successful, switching to imported profile");
+
+                    // CRITICAL: Switch to the imported profile (using UserID as the profile key)
+                    String profileKey = preferenceSet.senderUserId;
+                    sharingManager.setActivePreferenceSource(profileKey);
+
+                    Log.d(TAG, "✅ [IMPORT_HANDLER] Switched to profile: " + profileKey);
+
+                    // CRITICAL: Reload profile-specific data (same as manual profile switching)
+                    // This ensures the UI shows the correct profile data, not just the color
+                    rankStore.reloadForActiveProfile();
+                    if (staticVariables.attendedHandler != null) {
+                        staticVariables.attendedHandler.reloadForActiveProfile();
+                    }
+                    Log.d(TAG, "✅ [IMPORT_HANDLER] Reloaded priority and attendance data for profile: " + customName);
+
+                    // Update header color and refresh UI if this is the showBands activity
+                    if (activity instanceof showBands) {
+                        showBands showBandsActivity = (showBands) activity;
+                        showBandsActivity.updateHeaderColorForCurrentProfile();
+                        Log.d(TAG, "✅ [IMPORT_HANDLER] Updated header color for new profile");
+
+                        // CRITICAL: Refresh the band list with new profile data
+                        // This ensures the UI displays the imported profile's data, not just the color
+                        showBandsActivity.refreshNewData();
+                        Log.d(TAG, "✅ [IMPORT_HANDLER] Refreshed band list with new profile data");
+                    }
+
+                    // Different message for update vs new import
+                    String message;
+                    if (isUpdate) {
+                        message = context.getString(R.string.updated) + " '" + customName + "' " +
+                                context.getString(R.string.with_new_data) + "\n\n" +
+                                context.getString(R.string.showing_preferences_from) + " '" + customName + "'.";
+                    } else {
+                        message = context.getString(R.string.successfully_imported) + " '" + customName + "'!\n\n" +
+                                context.getString(R.string.showing_preferences_from) + " '" + customName + "'.";
+                    }
+
+                    showSuccessAlert(activity, message, isUpdate);
+
+                } else {
+                    showErrorAlert(activity, context.getString(R.string.failed_to_import));
+                }
+
+                pendingImportSet = null;
+            });
+        });
     }
     
     /**
