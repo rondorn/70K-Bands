@@ -139,7 +139,7 @@ class localNoticationHandler {
         case listeningPartyType:
             listeningPartyMessage (name, indexValue: indexValue)
         
-        case unofficalEventType:
+        case unofficalEventType, unofficalEventTypeOld:
             unofficalEventMessage(name, indexValue: indexValue)
             
         default:

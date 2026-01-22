@@ -185,6 +185,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
+        StartupTracker.markStep(getApplicationContext(), "showBands:onCreate:start");
+
         // Use internal app storage - no permissions required
         Log.d("App Storage", "Using internal app storage: " + newRootDir);
         
@@ -193,9 +195,11 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
         setTheme(R.style.AppTheme);
         super.onCreate(savedInstanceState);
+        StartupTracker.markStep(getApplicationContext(), "showBands:onCreate:afterSuper");
 
         // DEBUG: Log current festival configuration
         ConfigDebugger.logCurrentConfig();
+        StartupTracker.markStep(getApplicationContext(), "showBands:onCreate:afterConfig");
 
         if (staticVariables.preferences == null) {
             staticVariables.preferences = new preferencesHandler();
@@ -204,13 +208,29 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         }
 
         setContentView(R.layout.activity_show_bands);
+        StartupTracker.markStep(getApplicationContext(), "showBands:onCreate:setContentView");
+
+        // Mark "first frame drawn" as soon as the first choreographer frame happens.
+        // If we never reach this callback, the watchdog will fire.
+        try {
+            Choreographer.getInstance().postFrameCallback(frameTimeNanos -> {
+                StartupTracker.markFirstFrameDrawn(getApplicationContext());
+                StartupTracker.markStep(getApplicationContext(), "showBands:firstFrame:drawn");
+            });
+        } catch (Exception ignored) {
+        }
+
+        StartupTracker.markStep(getApplicationContext(), "showBands:onCreate:beforeStrictMode");
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
+        StartupTracker.markStep(getApplicationContext(), "showBands:onCreate:afterStrictMode");
 
         setContentView(R.layout.activity_show_bands);
+        StartupTracker.markStep(getApplicationContext(), "showBands:onCreate:setContentView2");
         
         // Initialize data timestamp preferences for change detection
         dataTimestampPrefs = getSharedPreferences(PREFS_DATA_TIMESTAMPS, MODE_PRIVATE);
+        StartupTracker.markStep(getApplicationContext(), "showBands:onCreate:afterDataTimestampPrefs");
         mRegistrationBroadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -222,16 +242,21 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         };
 
         // Registering BroadcastReceiver
+        StartupTracker.markStep(getApplicationContext(), "showBands:onCreate:beforeRegisterReceiver");
         registerReceiver();
+        StartupTracker.markStep(getApplicationContext(), "showBands:onCreate:afterRegisterReceiver");
 
 
         if (staticVariables.attendedHandler == null) {
             staticVariables.attendedHandler = new showsAttended();
         }
+        StartupTracker.markStep(getApplicationContext(), "showBands:onCreate:afterAttendedHandler");
 
         Log.d("startup", "show init start - 1");
 
+        StartupTracker.markStep(getApplicationContext(), "showBands:before:staticVariablesInitialize");
         staticVariablesInitialize();
+        StartupTracker.markStep(getApplicationContext(), "showBands:after:staticVariablesInitialize");
         
         // Initialize sharing managers early
         Log.d("INIT", "🔧 Initializing sharing managers...");
@@ -242,7 +267,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         // Handle incoming shared preference file (if opened from external source)
         handleIncomingIntent(getIntent());
 
+        StartupTracker.markStep(getApplicationContext(), "showBands:before:getCountry");
         this.getCountry();
+        StartupTracker.markStep(getApplicationContext(), "showBands:after:getCountry");
         Log.d("startup", "show init start - 2");
         bandInfo = new BandInfo();
         bandNotes = CustomerDescriptionHandler.getInstance();

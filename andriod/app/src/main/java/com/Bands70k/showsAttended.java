@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * PROFILE-AWARE: This class now supports multiple profiles
@@ -20,12 +21,20 @@ import java.util.ResourceBundle;
  */
 public class showsAttended {
 
-    private Map<String,String> showsAttendedHash = new HashMap<String,String>();
-    private File showsAttendedFile = FileHandler70k.showsAttendedFile;
-    private String currentLoadedProfile = null;  // Track which profile is currently loaded
+    private static final String TAG = "showsAttended";
+
+    private volatile Map<String,String> showsAttendedHash = new HashMap<String,String>();
+    private volatile String currentLoadedProfile = null;  // Track which profile is currently loaded
+
+    private final AtomicBoolean loadScheduled = new AtomicBoolean(false);
+    private final AtomicBoolean saveScheduled = new AtomicBoolean(false);
+    private final AtomicBoolean migrationScheduled = new AtomicBoolean(false);
 
     public showsAttended(){
-        showsAttendedHash = loadShowsAttended();
+        // CRITICAL: Never block the UI thread during startup.
+        // Loading/parsing/migrating is done asynchronously.
+        showsAttendedHash = new HashMap<String,String>();
+        scheduleLoadForActiveProfile();
     }
     
     /**
@@ -35,8 +44,18 @@ public class showsAttended {
         String activeProfile = SharedPreferencesManager.getInstance().getActivePreferenceSource();
         
         if ("Default".equals(activeProfile)) {
-            // Use standard file for Default profile
-            return FileHandler70k.showsAttendedFile;
+            // Use a consistent file name going forward, but support legacy typo for existing users.
+            File correct = new File(showBands.newRootDir + FileHandler70k.directoryName + "showsAttended.data");
+            File legacyTypo = FileHandler70k.showsAttendedFile; // "showsAtteded.data"
+
+            if (correct.exists()) {
+                return correct;
+            }
+            if (legacyTypo.exists()) {
+                return legacyTypo;
+            }
+            // Default to the corrected file name for new writes.
+            return correct;
         } else {
             // Use profile-specific file
             File profileDir = new File(Bands70k.getAppContext().getFilesDir(), "profiles/" + activeProfile);
@@ -50,14 +69,14 @@ public class showsAttended {
      */
     public void reloadForActiveProfile() {
         String activeProfile = SharedPreferencesManager.getInstance().getActivePreferenceSource();
-        Log.d("showsAttended", "🔄 [PROFILE_RELOAD] Reloading attendance for profile: " + activeProfile);
         
         // Clear current data
         showsAttendedHash.clear();
         currentLoadedProfile = null;
         
-        // Reload from correct profile
-        showsAttendedHash = loadShowsAttended();
+        // Reload from correct profile (async)
+        loadScheduled.set(false);
+        scheduleLoadForActiveProfile();
     }
 
     public Map<String,String> getShowsAttended(){
@@ -65,7 +84,6 @@ public class showsAttended {
         
         // Reload if profile changed
         if (!activeProfile.equals(currentLoadedProfile)) {
-            Log.d("showsAttended", "🔄 [PROFILE_CHECK] Profile changed. Current: " + currentLoadedProfile + ", Active: " + activeProfile);
             reloadForActiveProfile();
         }
         
@@ -73,78 +91,242 @@ public class showsAttended {
     }
 
     public void saveShowsAttended(Map<String,String> showsAttendedHash){
-        String activeProfile = SharedPreferencesManager.getInstance().getActivePreferenceSource();
-        
-        File fileToSave = getFileForActiveProfile();
-        
-        // Ensure directory exists for profile-specific files
-        File parentDir = fileToSave.getParentFile();
-        if (parentDir != null && !parentDir.exists()) {
-            parentDir.mkdirs();
+        final String activeProfile = SharedPreferencesManager.getInstance().getActivePreferenceSource();
+
+        if (showsAttendedHash == null) {
+            return;
         }
 
-        if (showsAttendedHash.size() > 0) {
-            Log.d("ShowsAttended", "loadShowsAttended " + staticVariables.eventYearIndex);
-            Log.d("Save showsAttendedHash", showsAttendedHash.toString());
-            try {
+        // Snapshot to avoid concurrent modification while writing.
+        final Map<String,String> snapshot = new HashMap<String,String>(showsAttendedHash);
 
-                //Saving of object in a file
+        // Avoid hammering the file I/O thread with many rapid saves.
+        if (!saveScheduled.compareAndSet(false, true)) {
+            return;
+        }
+
+        ThreadManager.getInstance().executeFile(() -> {
+            try {
+                File fileToSave = getFileForActiveProfile();
+
+                // Ensure directory exists for profile-specific files
+                File parentDir = fileToSave.getParentFile();
+                if (parentDir != null && !parentDir.exists()) {
+                    //noinspection ResultOfMethodCallIgnored
+                    parentDir.mkdirs();
+                }
+
+                // Migrate legacy typo file to corrected name on successful save for Default profile.
+                if ("Default".equals(activeProfile)) {
+                    File correct = new File(showBands.newRootDir + FileHandler70k.directoryName + "showsAttended.data");
+                    File legacyTypo = FileHandler70k.showsAttendedFile;
+                    if (!correct.equals(fileToSave) && legacyTypo.exists() && !correct.exists()) {
+                        // Best-effort copy; keep the original as backup.
+                        copyFile(legacyTypo, correct);
+                        fileToSave = correct; // local to this background task
+                    }
+                }
+
                 FileOutputStream file = new FileOutputStream(fileToSave);
                 ObjectOutputStream out = new ObjectOutputStream(file);
-
-                // Method for serialization of object
-                out.writeObject(showsAttendedHash);
-
+                out.writeObject(snapshot);
                 out.close();
                 file.close();
-                
-                Log.d("showsAttended", "💾 [PROFILE_SAVE] Saved to profile '" + activeProfile + "': " + fileToSave.getPath());
-
             } catch (Exception error) {
-                Log.e("ShowsAttended Error", "Unable to save attended tracking data " + error.getLocalizedMessage());
-                Log.e("ShowsAttended Error", "Unable to save attended tracking data " + error.fillInStackTrace());
+                Log.e(TAG, "Unable to save attended tracking data: " + error.getMessage());
+            } finally {
+                saveScheduled.set(false);
             }
-        }
+        });
     }
 
     public Map<String,String>  loadShowsAttended() {
+        // Kept for API compatibility. This method must not block the UI thread in practice;
+        // it is called from scheduleLoadForActiveProfile() on the file executor.
         String activeProfile = SharedPreferencesManager.getInstance().getActivePreferenceSource();
-        File fileToLoad = getFileForActiveProfile();
-        
-        Log.d("showsAttended", "📂 [PROFILE_LOAD] Loading attendance for profile '" + activeProfile + "' from: " + fileToLoad.getPath());
+        return loadShowsAttendedForProfile(activeProfile);
+    }
 
-        Map<String, String> showsAttendedHash = new HashMap<String, String>();
+    private Map<String,String> loadShowsAttendedForProfile(String profileKey) {
+        File fileToLoad = getFileForActiveProfile();
+        Map<String, String> loaded = new HashMap<String, String>();
 
         try {
             if (!fileToLoad.exists()) {
-                Log.d("showsAttended", "📂 [PROFILE_LOAD] File doesn't exist for profile '" + activeProfile + "', starting with empty attendance");
-                currentLoadedProfile = activeProfile;
-                return showsAttendedHash;
+                currentLoadedProfile = profileKey;
+                return loaded;
             }
-            
-            Log.d("ShowsAttended", "loadShowsAttended " + staticVariables.eventYearIndex);
-            // Reading the object from a file
+
             FileInputStream file = new FileInputStream(fileToLoad);
             ObjectInputStream in = new ObjectInputStream(file);
-
             // Method for deserialization of object
-            showsAttendedHash = (Map<String, String>) in.readObject();
-
+            //noinspection unchecked
+            loaded = (Map<String, String>) in.readObject();
             in.close();
             file.close();
 
-            showsAttendedHash = convertToNewFormat(showsAttendedHash);
-            
-            currentLoadedProfile = activeProfile;
-            Log.d("showsAttended", "✅ [PROFILE_LOAD] Loaded " + showsAttendedHash.size() + " attendance records for profile '" + activeProfile + "'");
-
+            currentLoadedProfile = profileKey;
         } catch (Exception error) {
-            Log.e("ShowsAttended Error", "Unable to load alert tracking data " + error.getMessage());
+            // Defensive: if the file is corrupted or incompatible, back it up so we don't lose it.
+            try {
+                File backup = new File(fileToLoad.getParentFile(),
+                        fileToLoad.getName() + ".corrupt." + System.currentTimeMillis());
+                copyFile(fileToLoad, backup);
+            } catch (Exception ignored) {
+            }
+            Log.e(TAG, "Unable to load attended tracking data: " + error.getMessage());
+            StartupTracker.markError(Bands70k.getAppContext(), TAG, "load failed: " + error.getClass().getSimpleName() + " " + error.getMessage());
+            currentLoadedProfile = profileKey;
+            return new HashMap<String, String>();
         }
-        
-        return showsAttendedHash;
+
+        // Schedule legacy-key migration in the background (never on UI thread).
+        // This is safe because it is triggered from the file executor.
+        if (loaded != null && !loaded.isEmpty()) {
+            scheduleLegacyKeyMigrationIfNeeded(profileKey, loaded);
+        }
+
+        return loaded != null ? loaded : new HashMap<String, String>();
     }
 
+    private void scheduleLoadForActiveProfile() {
+        if (!loadScheduled.compareAndSet(false, true)) {
+            return;
+        }
+        ThreadManager.getInstance().executeFile(() -> {
+            try {
+                String activeProfile = SharedPreferencesManager.getInstance().getActivePreferenceSource();
+                Map<String, String> loaded = loadShowsAttendedForProfile(activeProfile);
+                if (loaded == null) {
+                    loaded = new HashMap<String, String>();
+                }
+                showsAttendedHash = loaded;
+                currentLoadedProfile = activeProfile;
+            } finally {
+                loadScheduled.set(false);
+            }
+        });
+    }
+
+    /**
+     * Legacy migration: older installs stored keys without eventYear (5 segments).
+     * We migrate them to the 6-segment format by appending the current eventYear.
+     *
+     * IMPORTANT:
+     * - Runs only on the file executor (cannot block the splash).
+     * - Backs up the file before rewriting.
+     * - Never depends on BandInfo/network; purely structural migration.
+     */
+    private void scheduleLegacyKeyMigrationIfNeeded(String profileKey, Map<String, String> loaded) {
+        if (!migrationScheduled.compareAndSet(false, true)) {
+            return;
+        }
+        ThreadManager.getInstance().executeFile(() -> {
+            try {
+                // Only migrate if the active profile matches what we loaded.
+                String activeProfile = SharedPreferencesManager.getInstance().getActivePreferenceSource();
+                if (profileKey == null || !profileKey.equals(activeProfile)) {
+                    return;
+                }
+
+                if (staticVariables.preferences != null && staticVariables.preferences.getUseLastYearsData()) {
+                    // Old behavior: do not add current year keys when "use last year's data" is enabled.
+                    return;
+                }
+
+                // Ensure eventYear is available (may do a small amount of work, but we're on background thread).
+                if (staticVariables.eventYear == 0) {
+                    staticVariables.ensureEventYearIsSet();
+                }
+                int year = staticVariables.eventYear;
+                if (year == 0) {
+                    return;
+                }
+
+                boolean needsMigration = false;
+                for (String key : loaded.keySet()) {
+                    if (key != null && key.split(":").length == 5) {
+                        needsMigration = true;
+                        break;
+                    }
+                }
+                if (!needsMigration) {
+                    return;
+                }
+
+                File fileToLoad = getFileForActiveProfile();
+                // Backup first (non-destructive).
+                try {
+                    File backup = new File(fileToLoad.getParentFile(),
+                            fileToLoad.getName() + ".pre_migration." + System.currentTimeMillis());
+                    copyFile(fileToLoad, backup);
+                } catch (Exception e) {
+                    StartupTracker.markError(Bands70k.getAppContext(), TAG, "backup before migration failed: " + e.getMessage());
+                }
+
+                Map<String, String> migrated = new HashMap<String, String>(loaded.size());
+                for (Map.Entry<String, String> entry : loaded.entrySet()) {
+                    String key = entry.getKey();
+                    String value = entry.getValue();
+                    if (key == null) {
+                        continue;
+                    }
+                    String[] parts = key.split(":");
+                    if (parts.length == 5) {
+                        String newKey = key + ":" + year;
+                        migrated.put(newKey, value);
+                    } else {
+                        migrated.put(key, value);
+                    }
+                }
+
+                // Write migrated data to disk (synchronously here since we're already on file executor).
+                writeMapToFile(fileToLoad, migrated);
+
+                // Update in-memory state if we're still on this profile.
+                showsAttendedHash = migrated;
+                currentLoadedProfile = profileKey;
+
+                StartupTracker.markStep(Bands70k.getAppContext(), "showsAttended:migratedLegacyKeys");
+            } catch (Exception e) {
+                StartupTracker.markError(Bands70k.getAppContext(), TAG, "migration failed: " + e.getClass().getSimpleName() + " " + e.getMessage());
+            } finally {
+                migrationScheduled.set(false);
+            }
+        });
+    }
+
+    private static void writeMapToFile(File fileToSave, Map<String, String> data) throws Exception {
+        if (fileToSave == null) return;
+        File parentDir = fileToSave.getParentFile();
+        if (parentDir != null && !parentDir.exists()) {
+            //noinspection ResultOfMethodCallIgnored
+            parentDir.mkdirs();
+        }
+        FileOutputStream file = new FileOutputStream(fileToSave);
+        ObjectOutputStream out = new ObjectOutputStream(file);
+        out.writeObject(data != null ? data : new HashMap<String, String>());
+        out.close();
+        file.close();
+    }
+
+    private static void copyFile(File src, File dst) throws Exception {
+        FileInputStream in = new FileInputStream(src);
+        FileOutputStream out = new FileOutputStream(dst);
+        byte[] buf = new byte[8192];
+        int r;
+        while ((r = in.read(buf)) > 0) {
+            out.write(buf, 0, r);
+        }
+        in.close();
+        out.close();
+    }
+
+    // NOTE: convertToNewFormat() intentionally removed from startup load path.
+    // If we need to re-introduce migration, it should be done asynchronously after eventYear is known,
+    // with a safe "copy keys first" approach to avoid concurrent modification.
+
+    /*
     private Map<String,String> convertToNewFormat(Map<String,String> showsAttendedArray) {
 
         List<String> unuiqueSpecial = new ArrayList<String>();
@@ -181,6 +363,7 @@ public class showsAttended {
         saveShowsAttended(showsAttendedArray);
         return showsAttendedArray;
     }
+    */
 
     public String addShowsAttended (String index, String attendedStatus) {
 
