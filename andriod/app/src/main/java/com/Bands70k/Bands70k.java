@@ -1,8 +1,13 @@
 package com.Bands70k;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.Application;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.LinkProperties;
@@ -35,6 +40,15 @@ public class Bands70k extends Application implements Application.ActivityLifecyc
         super.onCreate();
 
         Bands70k.context = getApplicationContext();
+
+        StartupTracker.initProcess(this);
+        StartupTracker.markStep(this, "app:onCreate");
+
+        if (isDiagnosticsProcess()) {
+            // Keep the diagnostics process minimal; do not run heavy init or background work.
+            Log.d("AppLifecycle", "Diagnostics process started; skipping main app initialization");
+            return;
+        }
         
         // Initialize crash reporting first to catch any issues during modernization
         CrashReporter.initialize(this);
@@ -52,6 +66,11 @@ public class Bands70k extends Application implements Application.ActivityLifecyc
         // Initialize app components asynchronously to avoid blocking startup
         initializeAppAsync();
 
+        // If we never draw the first frame, post a notification with diagnostics (non-technical user friendly).
+        if (staticVariables.sendDebug) {
+            startStartupWatchdog();
+        }
+
     }
     
     /**
@@ -64,19 +83,119 @@ public class Bands70k extends Application implements Application.ActivityLifecyc
             try {
                 // Perform any heavy initialization that was previously relying on the sleep
                 Log.d("AppLifecycle", "Performing async app initialization");
+                StartupTracker.markStep(this, "app:asyncInit:start");
 
                 // Warm up SQLite/profile DB on background thread to prevent UI-thread ANRs during launch.
                 SQLiteProfileManager.warmUp();
+                StartupTracker.markStep(this, "app:asyncInit:sqliteProfileWarmUp:done");
                 
                 // Give some time for essential services to initialize if needed
                 Thread.sleep(500); // Much shorter delay, only if absolutely necessary
                 
                 Log.d("AppLifecycle", "Async app initialization completed");
+                StartupTracker.markStep(this, "app:asyncInit:done");
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 Log.w("AppLifecycle", "App initialization interrupted", e);
             }
         });
+    }
+
+    private void startStartupWatchdog() {
+        ThreadManager.getInstance().executeGeneral(() -> {
+            try {
+                // If no first frame after this delay, treat it as "stuck starting".
+                Thread.sleep(12_000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+
+            if (StartupTracker.isFirstFrameDrawn(this)) {
+                return;
+            }
+
+            String report = StartupTracker.buildDiagnosticsReport(this);
+            Log.e("StartupWatchdog", "Startup appears stuck (no first frame).");
+            CrashReporter.reportIssue("StartupWatchdog", "No first frame drawn after 12s", new RuntimeException(report));
+
+            postStartupDiagnosticsNotification();
+        });
+    }
+
+    private void postStartupDiagnosticsNotification() {
+        try {
+            final String channelId = "startup_watchdog";
+            NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm == null) return;
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                NotificationChannel channel = new NotificationChannel(
+                        channelId,
+                        "Startup diagnostics",
+                        NotificationManager.IMPORTANCE_HIGH
+                );
+                channel.setDescription("Shown when the app is taking too long to start.");
+                nm.createNotificationChannel(channel);
+            }
+
+            Intent intent = new Intent(this, StartupDiagnosticsActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+            PendingIntent pi;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                pi = PendingIntent.getActivity(
+                        this,
+                        1001,
+                        intent,
+                        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+                );
+            } else {
+                //noinspection deprecation
+                pi = PendingIntent.getActivity(this, 1001, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            }
+
+            android.app.Notification.Builder builder;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                builder = new android.app.Notification.Builder(this, channelId);
+            } else {
+                //noinspection deprecation
+                builder = new android.app.Notification.Builder(this);
+            }
+
+            builder.setContentTitle(getString(R.string.startup_watchdog_notification_title))
+                    .setContentText(getString(R.string.startup_watchdog_notification_text))
+                    .setContentIntent(pi)
+                    .setAutoCancel(true)
+                    .setSmallIcon(android.R.drawable.stat_notify_error);
+
+            nm.notify(1001, builder.build());
+        } catch (Exception e) {
+            Log.e("StartupWatchdog", "Failed to post startup diagnostics notification", e);
+        }
+    }
+
+    private boolean isDiagnosticsProcess() {
+        try {
+            if (Build.VERSION.SDK_INT >= 28) {
+                String name = Application.getProcessName();
+                return name != null && name.endsWith(":diag");
+            }
+        } catch (Exception ignored) {
+        }
+        // Best-effort fallback (older devices).
+        try {
+            int myPid = android.os.Process.myPid();
+            ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+            if (am == null) return false;
+            for (ActivityManager.RunningAppProcessInfo p : am.getRunningAppProcesses()) {
+                if (p != null && p.pid == myPid) {
+                    return p.processName != null && p.processName.endsWith(":diag");
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return false;
     }
     
     /**

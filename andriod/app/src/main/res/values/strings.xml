@@ -118,6 +118,15 @@
 
     <string name="verify_country">Verify Your Country</string>
     <string name="correct_if_needed">Correct Your Country If Needed</string>
+
+    <!-- Startup diagnostics (stuck on splash) -->
+    <string name="startup_diag_title">Startup diagnostics</string>
+    <string name="startup_diag_body">If the app is stuck starting, tap Share and send this to support.</string>
+    <string name="startup_diag_share">Share</string>
+    <string name="startup_diag_close">Close</string>
+    <string name="startup_diag_share_subject">70K Bands startup diagnostics</string>
+    <string name="startup_watchdog_notification_title">70K Bands is taking longer to start</string>
+    <string name="startup_watchdog_notification_text">Tap to view diagnostics you can share with support.</string>
     <string name="country_invalid">Country value is not recognized as valid</string>
 
     <string name="waiting_for_data">Waiting for data to load, please standby....</string>
