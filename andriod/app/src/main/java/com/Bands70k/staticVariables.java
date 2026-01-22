@@ -36,6 +36,10 @@ public class staticVariables {
 
     private static File eventYearFile;
 
+    // Support/diagnostics toggle (production-safe). Set to false now that issue is resolved.
+    // When false, startup watchdog + breadcrumb sharing are disabled everywhere.
+    public static boolean sendDebug = false;
+
 
 
 

@@ -36,6 +36,11 @@
             <!-- See: src/mdfbands/AndroidManifest.xml for .mdfshare -->
         </activity>
         <activity
+            android:name=".StartupDiagnosticsActivity"
+            android:label="@string/startup_diag_title"
+            android:exported="false"
+            android:process=":diag" />
+        <activity
             android:name=".showBandDetails"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
             android:label="showBandDetails"
