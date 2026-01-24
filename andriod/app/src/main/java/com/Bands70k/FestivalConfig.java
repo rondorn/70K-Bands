@@ -130,10 +130,11 @@ public class FestivalConfig {
             
             // MDF venues: Real venue names with Market Street addresses (all shown in filters)
             this.venues = Arrays.asList(
+                new Venue("Rams Head", "FF8C00", "icon_theater", "icon_theater_alt", "20 Market", true),
                 new Venue("Market", "008000", "icon_theater", "icon_theater_alt", "121 Market", true),
                 new Venue("Power Plant", "0000FF", "icon_theater", "icon_theater_alt", "34 Market", true),
-                new Venue("Nevermore", "FF69B4", "icon_theater", "icon_theater_alt", "20 Market", true),
-                new Venue("Soundstage", "FF0000", "icon_theater", "icon_theater_alt", "124 Market", true),
+                new Venue("Nevermore", "87CEEB", "icon_theater", "icon_theater_alt", "20 Market", true),
+                new Venue("Soundstage", "8B0000", "icon_theater", "icon_theater_alt", "124 Market", true),
                 new Venue("Angels Rock", "FFFF00", "icon_theater", "icon_theater_alt", "10 Market", true)
             );
             

@@ -202,11 +202,11 @@ struct FestivalConfig {
         
         // MDF venues: Real venue names with Market Street addresses
         self.venues = [
-            Venue(name: "Rams Head", color: "FF69B4", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "20 Market", showInFilters: true),
+            Venue(name: "Rams Head", color: "FF8C00", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "20 Market", showInFilters: true),
             Venue(name: "Market", color: "008000", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "121 Market", showInFilters: true),
             Venue(name: "Power Plant", color: "0000FF", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "34 Market", showInFilters: true),
-            Venue(name: "Nevermore", color: "FF69B4", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "20 Market", showInFilters: true),
-            Venue(name: "Soundstage", color: "FF0000", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "124 Market", showInFilters: true),
+            Venue(name: "Nevermore", color: "87CEEB", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "20 Market", showInFilters: true),
+            Venue(name: "Soundstage", color: "8B0000", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "124 Market", showInFilters: true),
             Venue(name: "Angels Rock", color: "FFFF00", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "10 Market", showInFilters: true)
         ]
         
