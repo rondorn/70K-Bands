@@ -77,20 +77,20 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     private func downloadAndUpdatePointerFile(reason: String, enforceOncePerLaunch: Bool, completion: ((Bool) -> Void)? = nil) {
         if enforceOncePerLaunch {
             guard !hasAttemptedPointerDownloadOnLaunch else {
-                print("downloadAndUpdatePointerFile(\(reason)): Already attempted download on this launch, skipping")
+                debugLog("downloadAndUpdatePointerFile(\(reason)): Already attempted download on this launch, skipping")
                 completion?(false)
                 return
             }
             hasAttemptedPointerDownloadOnLaunch = true
         }
         
-        print("downloadAndUpdatePointerFile(\(reason)): Starting pointer file download and update")
+        debugLog("downloadAndUpdatePointerFile(\(reason)): Starting pointer file download and update")
         
         // POLICY: Pointer file network download is only allowed on startup and pull-to-refresh.
         // This function is the ONLY code path that should download the pointer file.
         
         guard Reachability.isConnectedToNetwork() else {
-            print("downloadAndUpdatePointerFile(\(reason)): No internet connection available, skipping download")
+            debugWarning("downloadAndUpdatePointerFile(\(reason)): No internet connection available, skipping download")
             completion?(false)
             return
         }
@@ -104,7 +104,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         let cachedPointerFile = documentsPath.appendingPathComponent("cachedPointerData.txt")
         
         guard let url = URL(string: defaultStorageUrl) else {
-            print("downloadAndUpdatePointerFile(\(reason)): Invalid URL: \(defaultStorageUrl)")
+            debugError("downloadAndUpdatePointerFile(\(reason)): Invalid URL: \(defaultStorageUrl)")
             completion?(false)
             return
         }
@@ -121,7 +121,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             guard let self = self else { return }
             
             if let error = error {
-                print("downloadAndUpdatePointerFile(\(reason)): Download error: \(error)")
+                debugError("downloadAndUpdatePointerFile(\(reason)): Download error: \(error)")
                 DispatchQueue.main.async { completion?(false) }
                 return
             }
@@ -129,7 +129,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             guard let data = data,
                   let httpResponse = response as? HTTPURLResponse,
                   httpResponse.statusCode == 200 else {
-                print("downloadAndUpdatePointerFile(\(reason)): Invalid response or no data")
+                debugError("downloadAndUpdatePointerFile(\(reason)): Invalid response or no data")
                 DispatchQueue.main.async { completion?(false) }
                 return
             }
@@ -137,18 +137,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             // Check if the downloaded data is not too large (safety check)
             let maxSize = 1024 * 1024 // 1MB limit
             guard data.count <= maxSize else {
-                print("downloadAndUpdatePointerFile(\(reason)): Downloaded data too large (\(data.count) bytes), aborting")
+                debugError("downloadAndUpdatePointerFile(\(reason)): Downloaded data too large (\(data.count) bytes), aborting")
                 DispatchQueue.main.async { completion?(false) }
                 return
             }
             
             do {
                 try data.write(to: URL(fileURLWithPath: tempPointerFile))
-                print("downloadAndUpdatePointerFile(\(reason)): Successfully downloaded pointer file to temp location")
+                debugLog("downloadAndUpdatePointerFile(\(reason)): Successfully downloaded pointer file to temp location")
                 
                 guard let downloadedContent = String(data: data, encoding: .utf8),
                       !downloadedContent.isEmpty else {
-                    print("downloadAndUpdatePointerFile(\(reason)): Downloaded content is empty or invalid")
+                    debugError("downloadAndUpdatePointerFile(\(reason)): Downloaded content is empty or invalid")
                     DispatchQueue.main.async { completion?(false) }
                     return
                 }
@@ -163,7 +163,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                     }
                 }
                 guard validLineCount >= 2 else {
-                    print("downloadAndUpdatePointerFile(\(reason)): Downloaded content does not appear to be valid pointer data")
+                    debugError("downloadAndUpdatePointerFile(\(reason)): Downloaded content does not appear to be valid pointer data")
                     DispatchQueue.main.async { completion?(false) }
                     return
                 }
@@ -173,21 +173,21 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                 if fileManager.fileExists(atPath: cachedPointerFile) {
                     do {
                         try fileManager.removeItem(atPath: cachedPointerFile)
-                        print("downloadAndUpdatePointerFile(\(reason)): Removed existing cached pointer file")
+                        debugLog("downloadAndUpdatePointerFile(\(reason)): Removed existing cached pointer file")
                     } catch {
-                        print("downloadAndUpdatePointerFile(\(reason)): Failed to remove existing cached pointer file: \(error)")
+                        debugWarning("downloadAndUpdatePointerFile(\(reason)): Failed to remove existing cached pointer file: \(error)")
                     }
                 }
                 
                 do {
                     try fileManager.moveItem(atPath: tempPointerFile, toPath: cachedPointerFile)
-                    print("downloadAndUpdatePointerFile(\(reason)): Successfully replaced cached pointer file")
+                    debugLog("downloadAndUpdatePointerFile(\(reason)): Successfully replaced cached pointer file")
                     
                     // Clear in-memory cache to force reload from disk
                     storePointerLock.sync() {
                         cacheVariables.storePointerData.removeAll()
                     }
-                    print("downloadAndUpdatePointerFile(\(reason)): Cleared in-memory pointer cache")
+                    debugLog("downloadAndUpdatePointerFile(\(reason)): Cleared in-memory pointer cache")
                     
                     // Pre-warm common pointer values (disk-backed; no network)
                     DispatchQueue.global(qos: .background).async {
@@ -196,7 +196,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                         let resolvedEventYearString = getPointerUrlData(keyValue: "eventYear")
                         _ = getPointerUrlData(keyValue: "reportUrl")
                         
-                        print("downloadAndUpdatePointerFile(\(reason)): Forced reload of pointer data completed")
+                        debugLog("downloadAndUpdatePointerFile(\(reason)): Forced reload of pointer data completed")
                         
                         // Update global eventYear if user is on "Current".
                         // Respect explicit user year choices (e.g. "2025") by not overriding them.
@@ -205,13 +205,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                             if let y = Int(resolvedEventYearString), y > 2000 {
                                 DispatchQueue.main.async {
                                     eventYear = y
-                                    print("downloadAndUpdatePointerFile(\(reason)): Updated global eventYear to \(y) (Current)")
+                                    debugLog("downloadAndUpdatePointerFile(\(reason)): Updated global eventYear to \(y) (Current)")
                                 }
                             }
                         } else if yearPreference.isYearString, let y = Int(yearPreference), y > 2000 {
                             DispatchQueue.main.async {
                                 eventYear = y
-                                print("downloadAndUpdatePointerFile(\(reason)): Preserved explicit year preference, eventYear=\(y)")
+                                debugLog("downloadAndUpdatePointerFile(\(reason)): Preserved explicit year preference, eventYear=\(y)")
                             }
                         }
                         
@@ -222,14 +222,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                     }
                     
                 } catch {
-                    print("downloadAndUpdatePointerFile(\(reason)): Failed to move temp file to final location: \(error)")
+                    debugError("downloadAndUpdatePointerFile(\(reason)): Failed to move temp file to final location: \(error)")
                     if fileManager.fileExists(atPath: tempPointerFile) {
                         try? fileManager.removeItem(atPath: tempPointerFile)
                     }
                     DispatchQueue.main.async { completion?(false) }
                 }
             } catch {
-                print("downloadAndUpdatePointerFile(\(reason)): Failed to write downloaded data to temp file: \(error)")
+                debugError("downloadAndUpdatePointerFile(\(reason)): Failed to write downloaded data to temp file: \(error)")
                 DispatchQueue.main.async { completion?(false) }
             }
         }

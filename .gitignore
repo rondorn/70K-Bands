@@ -7,3 +7,13 @@
 *.swiftconstvalues
 *.hprof
 andriod/build/reports/configuration-cache
+swift/.env.example
+swift/.env.swp
+swift/apps_config.json
+swift/fix_build_issues.sh
+swift/migrate_debug_logs.py
+swift/release_all_apps.sh
+swift/release_with_xcode.sh
+swift/release_with_xcode_upload.sh
+swift/translate_libre.py
+swift/translate_release_notes.py
