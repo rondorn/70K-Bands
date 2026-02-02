@@ -1701,7 +1701,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     dataHandle: self.dataHandle,
                     priorityManager: self.priorityManager,
                     attendedHandle: self.attendedHandle,
-                    searchCriteria: self.bandSearch.text ?? ""
+                    searchCriteria: self.bandSearch.text ?? "",
+                    areFiltersActive: self.filterTextNeeded
                 ) { [weak self] (filtered: [String]) in
             // CRITICAL FIX: Ensure all UI operations happen on main thread
             DispatchQueue.main.async {
@@ -2496,7 +2497,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // 3. Expiration filtering
         if getHideExpireScheduleData() {
             let currentTime = Date().timeIntervalSinceReferenceDate
-            filteredEvents = filteredEvents.filter { $0.endTimeIndex > currentTime }
+            filteredEvents = filteredEvents.filter { event in
+                var endTimeIndex = event.endTimeIndex
+                // FIX: Detect midnight crossing (matches Android logic)
+                if event.timeIndex > endTimeIndex {
+                    endTimeIndex += 86400 // Add 24 hours
+                }
+                return endTimeIndex > currentTime
+            }
         }
         
         // 4. Priority filtering
@@ -2605,7 +2613,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // 3. Expiration filtering
         if getHideExpireScheduleData() {
             let currentTime = Date().timeIntervalSinceReferenceDate
-            filteredEvents = filteredEvents.filter { $0.endTimeIndex > currentTime }
+            filteredEvents = filteredEvents.filter { event in
+                var endTimeIndex = event.endTimeIndex
+                // FIX: Detect midnight crossing (matches Android logic)
+                if event.timeIndex > endTimeIndex {
+                    endTimeIndex += 86400 // Add 24 hours
+                }
+                return endTimeIndex > currentTime
+            }
         }
         
         // 4. Priority filtering
@@ -6036,7 +6051,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             dataHandle: self.dataHandle,
             priorityManager: self.priorityManager,
             attendedHandle: self.attendedHandle,
-            searchCriteria: self.bandSearch.text ?? ""
+            searchCriteria: self.bandSearch.text ?? "",
+            areFiltersActive: self.filterTextNeeded
         ) { [weak self] (filtered: [String]) in
             // CRITICAL FIX: Ensure all UI operations happen on main thread
             DispatchQueue.main.async {
