@@ -12,6 +12,7 @@ class showAttendenceReport {
     
     var eventCounts :[String:[String:Int]] = [String:[String:Int]]()
     var bandCounts : [String : [String : [String : Int]]] = [String : [String : [String : Int]]]()
+    var bandEventDetails: [String: [[String: String]]] = [:] // Track individual events with venue info
     
     var schedule = scheduleHandler.shared
     var bandNamesHandle = bandNamesHandler.shared
@@ -61,8 +62,12 @@ class showAttendenceReport {
         
         var tempEventCount = 0
         
-        // Reset report empty flag at the start
+        // Reset ALL report data at the start to allow multiple calls to assembleReport()
         isReportEmpty = false
+        bandEventDetails.removeAll()
+        indexMap.removeAll()
+        eventCounts.removeAll()
+        bandCounts.removeAll()
         
         if (schedule.getBandSortedSchedulingData().count > 0){
             for index in showsAttendedArray {
@@ -129,10 +134,22 @@ class showAttendenceReport {
                 
                 print("🔍 [VALIDATION] Status (without timestamp): '\(statusOnly)'")
                 
+                // For Unofficial Events and Special Events, the "bandName" field actually contains the EVENT name
+                // For regular shows/clinics/meets, it contains the actual band name
+                let isNonBandEvent = (eventType == unofficalEventType || 
+                                      eventType == unofficalEventTypeOld || 
+                                      eventType == specialEventType || 
+                                      eventType == karaokeEventType)
+                
                 var validateEvent = false
                 if scheduleData.index(forKey: bandName) != nil {
                     validateEvent = true
-                    print("✅ [VALIDATION] Band '\(bandName)' FOUND in schedule data")
+                    print("✅ [VALIDATION] '\(bandName)' FOUND in schedule data")
+                } else if isNonBandEvent {
+                    // For non-band events, we don't require them to be in scheduleData
+                    // We just need to verify they match an attended event by time/location/type
+                    validateEvent = true
+                    print("✅ [VALIDATION] Non-band event '\(bandName)' (type: '\(eventType)') - allowing without scheduleData check")
                 } else {
                     print("⚠️ [VALIDATION] Band '\(bandName)' NOT FOUND in schedule data")
                 }
@@ -143,50 +160,74 @@ class showAttendenceReport {
                     print("🔍 [VALIDATION] Checking time/location match for '\(bandName)'...")
                     print("🔍 [VALIDATION] Looking for: location='\(location)', type='\(eventType)', time='\(hour):\(min)'")
                     
-                    for timeIndex in scheduleData[bandName]!.keys {
-                        let schedLocation = scheduleData[bandName]?[timeIndex]?["Location"] ?? ""
-                        let schedType = scheduleData[bandName]?[timeIndex]?["Type"] ?? ""
-                        let schedTime = scheduleData[bandName]?[timeIndex]?["Start Time"] ?? ""
-                        let expectedTime = hour + ":" + min
-                        
-                        print("🔍 [VALIDATION]   Checking schedule entry: location='\(schedLocation)', type='\(schedType)', time='\(schedTime)'")
-                        
-                        if (schedLocation == location &&
-                            schedType == eventType &&
-                            schedTime == expectedTime){
-                            timeValidated = true
-                            print("✅ [VALIDATION] TIME/LOCATION MATCH FOUND!")
-                            break
+                    // IMPORTANT: Check event TYPE first, not just whether it exists in scheduleData
+                    // Non-band events (Special, Unofficial, Karaoke) should use the event-based lookup
+                    // even if they exist in scheduleData
+                    if isNonBandEvent {
+                        // Non-band event - search all schedule entries for matching event name, location, type, time
+                        print("🔍 [VALIDATION] Using NON-BAND event lookup for type '\(eventType)'")
+                        for (eventName, eventSchedule) in scheduleData {
+                            for (_, eventDetails) in eventSchedule {
+                                let schedLocation = eventDetails["Location"] ?? ""
+                                let schedType = eventDetails["Type"] ?? ""
+                                let schedTime = eventDetails["Start Time"] ?? ""
+                                let expectedTime = hour + ":" + min
+                                
+                                print("🔍 [VALIDATION]   Checking event '\(eventName)': location='\(schedLocation)', type='\(schedType)', time='\(schedTime)'")
+                                
+                                // Normalize event type comparison to handle "Cruiser Organized" vs "Unofficial Event"
+                                let typesMatch = (schedType == eventType) ||
+                                                 (schedType == unofficalEventType && eventType == unofficalEventTypeOld) ||
+                                                 (schedType == unofficalEventTypeOld && eventType == unofficalEventType)
+                                
+                                // For non-band events, match by: event name (in scheduleData key), location, type, and time
+                                if (eventName == bandName &&
+                                    schedLocation == location &&
+                                    typesMatch &&
+                                    schedTime == expectedTime){
+                                    timeValidated = true
+                                    print("✅ [VALIDATION] NON-BAND EVENT MATCH FOUND!")
+                                    break
+                                }
+                            }
+                            if timeValidated { break }
+                        }
+                    } else if scheduleData[bandName] != nil {
+                        // Band-based event - check schedule entries for this band
+                        print("🔍 [VALIDATION] Using BAND-BASED lookup")
+                        for timeIndex in scheduleData[bandName]!.keys {
+                            let schedLocation = scheduleData[bandName]?[timeIndex]?["Location"] ?? ""
+                            let schedType = scheduleData[bandName]?[timeIndex]?["Type"] ?? ""
+                            let schedTime = scheduleData[bandName]?[timeIndex]?["Start Time"] ?? ""
+                            let expectedTime = hour + ":" + min
+                            
+                            print("🔍 [VALIDATION]   Checking schedule entry: location='\(schedLocation)', type='\(schedType)', time='\(schedTime)'")
+                            
+                            if (schedLocation == location &&
+                                schedType == eventType &&
+                                schedTime == expectedTime){
+                                timeValidated = true
+                                print("✅ [VALIDATION] TIME/LOCATION MATCH FOUND!")
+                                break
+                            }
                         }
                     }
                     
                     if timeValidated {
                         print("✅ [VALIDATION] Event PASSED all validation - counting it!")
                         getEventTypeCounts(eventType: eventType, sawStatus: statusOnly)
-                        getBandCounts(eventType: eventType, bandName: bandName, sawStatus: statusOnly)
+                        getBandCounts(eventType: eventType, bandName: bandName, location: location, sawStatus: statusOnly)
                         tempEventCount += 1
                     } else {
                         print("⚠️ [VALIDATION] SKIPPED: Time/location validation FAILED")
                         continue
                     }
                 } else {
-                    print("⚠️ [VALIDATION] SKIPPED: Band not in schedule")
+                    print("⚠️ [VALIDATION] SKIPPED: Not in schedule and not a non-band event type")
                     continue
                 }
                 
-                // Additional band validation (for special events not in main band list)
-                if (allBands.contains(bandName) == false &&
-                    eventType != unofficalEventType &&
-                    eventType != karaokeEventType &&
-                    eventType != specialEventType &&
-                    eventType != unofficalEventTypeOld){
-
-                    print("⚠️ [VALIDATION] FINAL CHECK FAILED: Band '\(bandName)' not in main band list and not a special event type - skipping")
-                    print("⚠️ [VALIDATION] eventType='\(eventType)', unofficalEventType='\(unofficalEventType)', karaokeEventType='\(karaokeEventType)'")
-                    continue
-                }
-                
-                print("✅ [VALIDATION] Event '\(bandName)' PASSED final band validation check")
+                print("✅ [VALIDATION] Event '\(bandName)' PASSED validation check")
                 print("🔍 [VALIDATION] ========================================")
                 
             }
@@ -429,20 +470,33 @@ class showAttendenceReport {
             if totalCount > 0 {
                 message += "\(emoji) \(label) (\(totalCount)):\n"
                 
-                // Get all bands/events for this type with venue info
+                // Get all individual events for this type with venue info
                 var eventEntries: [String] = []
                 let sortedBandNames = Array(eventTypeData.keys).sorted()
                 
                 for bandName in sortedBandNames {
-                    if let bandData = eventTypeData[bandName],
-                       let sawAllCount = bandData[sawAllStatus],
-                       sawAllCount > 0 {
-                        
-                        // Get venue info for this band/event
-                        let venue = getVenueForBandEvent(bandName: bandName, eventType: eventType)
-                        let venueInfo = venue.isEmpty ? "" : " (\(venue))"
-                        
-                        eventEntries.append("• \(bandName)\(venueInfo)")
+                    let eventKey = "\(eventType)|\(bandName)"
+                    
+                    // Check if we have detailed event info
+                    if let events = bandEventDetails[eventKey], !events.isEmpty {
+                        // Add each individual event attended
+                        for event in events {
+                            let location = event["location"] ?? ""
+                            let venueInfo = location.isEmpty ? "" : " (\(location))"
+                            eventEntries.append("• \(bandName)\(venueInfo)")
+                        }
+                    } else {
+                        // Fallback to old behavior if no detail info available
+                        if let bandData = eventTypeData[bandName],
+                           let sawAllCount = bandData[sawAllStatus],
+                           sawAllCount > 0 {
+                            
+                            // Get venue info for this band/event
+                            let venue = getVenueForBandEvent(bandName: bandName, eventType: eventType)
+                            let venueInfo = venue.isEmpty ? "" : " (\(venue))"
+                            
+                            eventEntries.append("• \(bandName)\(venueInfo)")
+                        }
                     }
                 }
                 
@@ -522,12 +576,14 @@ class showAttendenceReport {
     
     /**
      Updates the bandCounts dictionary with the count of bands by event type and attendance status.
+     Also tracks individual event details including venue/location.
      - Parameters:
         - eventType: The type of event.
         - bandName: The name of the band.
+        - location: The venue/location of the event.
         - sawStatus: The attendance status for the band.
      */
-    func getBandCounts (eventType:String, bandName:String, sawStatus: String){
+    func getBandCounts (eventType:String, bandName:String, location: String, sawStatus: String){
         
         if (bandCounts[eventType] == nil){
             bandCounts[eventType] = [String : [String : Int]]();
@@ -539,6 +595,20 @@ class showAttendenceReport {
             bandCounts[eventType]![bandName]![sawStatus] = 1;
         } else {
             bandCounts[eventType]![bandName]![sawStatus] = bandCounts[eventType]![bandName]![sawStatus]! + 1
+        }
+        
+        // Track individual event details for the report
+        let eventKey = "\(eventType)|\(bandName)"
+        if bandEventDetails[eventKey] == nil {
+            bandEventDetails[eventKey] = []
+        }
+        
+        // Only add if sawStatus indicates attendance (not "sawNone")
+        if sawStatus == sawAllStatus || sawStatus == sawSomeStatus {
+            bandEventDetails[eventKey]?.append([
+                "location": location,
+                "status": sawStatus
+            ])
         }
     }
 }
