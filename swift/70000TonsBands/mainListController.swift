@@ -242,7 +242,13 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
             return true
         }
         
-        let endTimeIndex = calculateTimeIndexForFiltering(date: dateString, time: endTimeString)
+        var endTimeIndex = calculateTimeIndexForFiltering(date: dateString, time: endTimeString)
+        
+        // FIX: Detect midnight crossing (matches Android logic in mainListHandler.java lines 121-123)
+        // If start time > end time, event crosses midnight boundary - add 24 hours to end time
+        if event.timeIndex > endTimeIndex {
+            endTimeIndex += 86400 // Add 24 hours (86400 seconds = 24 * 60 * 60)
+        }
         
         // DEBUG: Log filtering details for specific event
         if event.bandName.contains("Bloodred Hourglass") {
@@ -849,6 +855,7 @@ func getFilteredBands(
     priorityManager: SQLitePriorityManager,
     attendedHandle: ShowsAttended,
     searchCriteria: String,
+    areFiltersActive: Bool,
     completion: @escaping ([String]) -> Void
 ) {
     let startTime = CFAbsoluteTimeGetCurrent()
@@ -864,6 +871,7 @@ func getFilteredBands(
                 priorityManager: priorityManager,
                 attendedHandle: attendedHandle,
                 searchCriteria: searchCriteria,
+                areFiltersActive: areFiltersActive,
                 completion: completion
             )
         }
@@ -925,7 +933,7 @@ func getFilteredBands(
         filteredBandCount = filteredBands.count
         if (filteredBandCount == 0){
             print ("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] mainListDebug: handleEmptryList: Why is this being called 1")
-            filteredBands = handleEmptryList(bandNameHandle: bandNameHandle);
+            filteredBands = handleEmptryList(bandNameHandle: bandNameHandle, areFiltersActive: areFiltersActive);
         } else {
             bandCounter = filteredBands.count
             listCount = filteredBands.count
@@ -948,7 +956,7 @@ func getFilteredBands(
     }
 }
 
-func handleEmptryList(bandNameHandle: bandNamesHandler)->[String]{
+func handleEmptryList(bandNameHandle: bandNamesHandler, areFiltersActive: Bool)->[String]{
     
     var filteredBands = [String]()
     var localMessage = ""
@@ -957,10 +965,14 @@ func handleEmptryList(bandNameHandle: bandNamesHandler)->[String]{
     if MasterViewController.isYearChangeInProgress {
         localMessage = NSLocalizedString("year_change_loading", comment: "Loading data for new year...")
         print("🔄 [YEAR_CHANGE_UI] Showing year change loading message")
-    } else if (bandNameHandle.getBandNames().count == 0){
+    } else if (bandNameHandle.getBandNames().count == 0 && !areFiltersActive){
+        // No data and no filters active - show waiting message
         localMessage = NSLocalizedString("waiting_for_data", comment: "")
+        print("📋 [EMPTY_LIST] No data and no filters active - showing waiting message")
     } else {
+        // Either data exists but is filtered out, or filters are active with no results
         localMessage = NSLocalizedString("data_filter_issue", comment: "")
+        print("📋 [EMPTY_LIST] Filters active or data filtered out - showing filter issue message")
     }
     
     filteredBands.append(localMessage)

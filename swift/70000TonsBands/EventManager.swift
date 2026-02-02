@@ -261,7 +261,14 @@ class EventManager {
         // 4. TIME FILTERING (upcoming events only if hideExpiredScheduleData is enabled)
         if getHideExpireScheduleData() {
             let currentTime = Date().timeIntervalSinceReferenceDate
-            filteredEvents = filteredEvents.filter { $0.endTimeIndex > currentTime }
+            filteredEvents = filteredEvents.filter { event in
+                var endTimeIndex = event.endTimeIndex
+                // FIX: Detect midnight crossing (matches Android logic)
+                if event.timeIndex > endTimeIndex {
+                    endTimeIndex += 86400 // Add 24 hours
+                }
+                return endTimeIndex > currentTime
+            }
             print("🔍 DEBUG: Filtering expired events (endTimeIndex > \(currentTime))")
         }
         

@@ -1113,7 +1113,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             case NSUbiquitousKeyValueStoreInitialSyncChange:
                 print("iCloud: Change reason: Initial sync")
             case NSUbiquitousKeyValueStoreQuotaViolationChange:
-                print("iCloud: Change reason: Quota violation")
+                print("iCloud: Change reason: Quota violation - skipping sync to prevent infinite loop")
+                // CRITICAL FIX: Don't try to sync more data when quota is exceeded - this prevents infinite loop
+                return
             case NSUbiquitousKeyValueStoreAccountChange:
                 print("iCloud: Change reason: Account change")
             default:
