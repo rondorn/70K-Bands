@@ -149,7 +149,7 @@
         android:layout_alignParentLeft="true"
         android:layout_marginLeft="201dp" />
 
-    <!-- Start Time - Fixed position, percentage width -->
+    <!-- Start Time - Fixed position, wider width, right-aligned -->
     <TextView
         android:id="@+id/startTimeInCell"
         android:layout_width="wrap_content"
@@ -170,11 +170,11 @@
         android:textAlignment="gravity"
         android:textColor="#FFFFFF"
         android:textStyle="bold"
-        app:layout_widthPercent="23%"
+        app:layout_widthPercent="28%"
         android:layout_alignParentLeft="true"
         android:layout_marginLeft="230dp" />
 
-    <!-- End Time - Fixed position, percentage width -->
+    <!-- End Time - Fixed position, wider width, right-aligned -->
     <TextView
         android:id="@+id/endTimeInCell"
         android:layout_width="wrap_content"
@@ -195,7 +195,7 @@
         android:textAlignment="gravity"
         android:textColor="#5d5d5d"
         android:textStyle="bold"
-        app:layout_widthPercent="23%"
+        app:layout_widthPercent="28%"
         android:layout_alignParentLeft="true"
         android:layout_marginLeft="230dp" />
 
