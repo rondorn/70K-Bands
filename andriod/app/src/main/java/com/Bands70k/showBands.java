@@ -1750,6 +1750,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     }
 
     public void shareMenuPrompt() {
+        Log.d(TAG, "🎬 [SHARE_MENU] shareMenuPrompt() called - BUILD VERSION CHECK: 2026-02-03-FIX1");
 
         sharedZipFile = false;
         TextView titleView = new TextView(context);
@@ -1781,13 +1782,52 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         na1.setVisibility(View.INVISIBLE);
         na2.setVisibility(View.INVISIBLE);
         
+        Log.d(TAG, "🎬 [SHARE_MENU] ========== SHARE MENU OPENING ==========");
+        Log.d(TAG, "📅 [SHARE_MENU] Current event year: " + staticVariables.eventYear);
+        
+        // CRITICAL: Ensure schedule data is available for Event Report
+        // If not in memory, load from cached file synchronously
+        if (BandInfo.scheduleRecords == null || BandInfo.scheduleRecords.isEmpty()) {
+            Log.d(TAG, "📂 [SHARE_MENU] Schedule not in memory, checking for cached file...");
+            Log.d(TAG, "📂 [SHARE_MENU] Cached file exists? " + FileHandler70k.schedule.exists());
+            
+            if (FileHandler70k.schedule.exists()) {
+                Log.d(TAG, "📂 [SHARE_MENU] Loading schedule from cached file...");
+                try {
+                    scheduleInfo schedule = new scheduleInfo();
+                    BandInfo.scheduleRecords = schedule.ParseScheduleCSV();
+                    Log.d(TAG, "✅ [SHARE_MENU] Loaded " + 
+                        (BandInfo.scheduleRecords != null ? BandInfo.scheduleRecords.size() : "0") + 
+                        " bands from cached schedule");
+                } catch (Exception e) {
+                    Log.e(TAG, "❌ [SHARE_MENU] Error loading cached schedule: " + e.getMessage(), e);
+                }
+            } else {
+                Log.w(TAG, "⚠️ [SHARE_MENU] No cached schedule file found at: " + FileHandler70k.schedule.getAbsolutePath());
+            }
+        } else {
+            Log.d(TAG, "✅ [SHARE_MENU] Schedule already in memory: " + BandInfo.scheduleRecords.size() + " bands");
+        }
+        
         // Check if Share Event Report should be enabled
         boolean hasScheduleData = BandInfo.scheduleRecords != null && !BandInfo.scheduleRecords.isEmpty();
         boolean hasAttendanceData = hasUserAttendanceData();
         
+        Log.d(TAG, "🔍 [SHARE_MENU] Button enable check:");
+        Log.d(TAG, "   hasScheduleData = " + hasScheduleData + 
+            (hasScheduleData ? " (size: " + BandInfo.scheduleRecords.size() + ")" : ""));
+        Log.d(TAG, "   hasAttendanceData = " + hasAttendanceData);
+        
         if (!hasScheduleData || !hasAttendanceData) {
             shareEventReport.setEnabled(false);
             shareEventReport.setAlpha(0.5f); // Visual indication that it's disabled
+            Log.w(TAG, "❌ [SHARE_MENU] Event Report button DISABLED");
+            Log.w(TAG, "   Reason: " + 
+                (!hasScheduleData ? "No schedule data" : "") + 
+                (!hasScheduleData && !hasAttendanceData ? " AND " : "") +
+                (!hasAttendanceData ? "No attendance data" : ""));
+        } else {
+            Log.d(TAG, "✅ [SHARE_MENU] Event Report button ENABLED");
         }
 
         // add a button
@@ -1829,17 +1869,29 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         // Share Event Report - Third option
         shareEventReport.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                Log.d(TAG, "🎬 [EVENT_REPORT] Event Report button clicked!");
                 dialog.dismiss();
                 Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
                 sharingIntent.setType("text/plain");
 
+                Log.d(TAG, "📊 [EVENT_REPORT] Creating report handler...");
                 showsAttendedReport reportHandler = new showsAttendedReport();
+                
+                Log.d(TAG, "📊 [EVENT_REPORT] Calling assembleReport()...");
                 reportHandler.assembleReport();
+                
+                Log.d(TAG, "📊 [EVENT_REPORT] Building message...");
                 String shareBody = reportHandler.buildMessage();
+                
+                Log.d(TAG, "📊 [EVENT_REPORT] Message length: " + shareBody.length() + " characters");
+                Log.d(TAG, "📊 [EVENT_REPORT] First 200 chars: " + (shareBody.length() > 200 ? shareBody.substring(0, 200) : shareBody));
+                
                 String subject = FestivalConfig.getInstance().appName + " - " + getString(R.string.EventsAttended);
 
                 sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, subject);
                 sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBody);
+                
+                Log.d(TAG, "📊 [EVENT_REPORT] Launching share chooser...");
                 startActivity(Intent.createChooser(sharingIntent, "Share via"));
             }
         });
@@ -1940,6 +1992,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         Button shareButton = (Button) findViewById(R.id.shareButton);
         shareButton.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View v) {
+                Log.d(TAG, "🔔 [SHARE_BUTTON] Share button clicked!");
                 Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
                 sharingIntent.setType("text/plain");
 
@@ -2070,13 +2123,28 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
      */
     private boolean hasUserAttendanceData() {
         try {
-            showsAttended attendedHandler = new showsAttended();
-            attendedHandler.loadShowsAttended();
-            Map<String, String> showsAttendedArray = attendedHandler.getShowsAttended();
+            Log.d(TAG, "🔍 [ATTENDANCE_CHECK] Checking for user attendance data...");
             
-            if (showsAttendedArray == null || showsAttendedArray.isEmpty()) {
+            showsAttended attendedHandler = new showsAttended();
+            // CRITICAL: Use the return value from loadShowsAttended() directly
+            // Don't call getShowsAttended() afterwards as it can trigger async profile reload that clears data
+            Map<String, String> showsAttendedArray = attendedHandler.loadShowsAttended();
+            
+            if (showsAttendedArray == null) {
+                Log.w(TAG, "⚠️ [ATTENDANCE_CHECK] showsAttendedArray is NULL");
                 return false;
             }
+            
+            if (showsAttendedArray.isEmpty()) {
+                Log.w(TAG, "⚠️ [ATTENDANCE_CHECK] showsAttendedArray is EMPTY");
+                return false;
+            }
+            
+            Log.d(TAG, "📊 [ATTENDANCE_CHECK] Total attendance records: " + showsAttendedArray.size());
+            Log.d(TAG, "📅 [ATTENDANCE_CHECK] Looking for events in year: " + staticVariables.eventYear);
+            
+            int currentYearEvents = 0;
+            int attendedEvents = 0;
             
             // Check if user has indicated attendance for any event in current year
             for (String index : showsAttendedArray.keySet()) {
@@ -2085,16 +2153,25 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                     Integer eventYear = Integer.valueOf(indexArray[5]);
                     String attendanceStatus = showsAttendedArray.get(index);
                     
-                    if (eventYear.equals(staticVariables.eventYear) && 
-                        (attendanceStatus.equals(staticVariables.sawAllStatus) || 
-                         attendanceStatus.equals(staticVariables.sawSomeStatus))) {
-                        return true;
+                    if (eventYear.equals(staticVariables.eventYear)) {
+                        currentYearEvents++;
+                        
+                        if (attendanceStatus.equals(staticVariables.sawAllStatus) || 
+                            attendanceStatus.equals(staticVariables.sawSomeStatus)) {
+                            attendedEvents++;
+                        }
                     }
                 }
             }
-            return false;
+            
+            Log.d(TAG, "📊 [ATTENDANCE_CHECK] Current year events: " + currentYearEvents + ", Attended: " + attendedEvents);
+            
+            boolean hasData = attendedEvents > 0;
+            Log.d(TAG, (hasData ? "✅" : "❌") + " [ATTENDANCE_CHECK] Result: " + hasData);
+            
+            return hasData;
         } catch (Exception e) {
-            Log.e("hasUserAttendanceData", "Error checking attendance data", e);
+            Log.e(TAG, "❌ [ATTENDANCE_CHECK] Error checking attendance data", e);
             return false;
         }
     }
