@@ -2790,9 +2790,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                         print("📊 [ASYNC_LOGIC] Decision: Show BANDS (Rule 1: Only bands) - count=\(labeleCounter) (effectiveDisplayedCount=\(effectiveDisplayedCount) - unofficial=\(unofficialCountToSubtract))")
                     } else if hasEvents && !hasBands {
                         // RULE 2/4: ONLY events, NO standalone bands - show "Events" (regardless of event type)
-                        labeleCounter = max(effectiveDisplayedCount, 0)
+                        labeleCounter = max(eventCount, 0)
                         lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + self.filtersOnText
-                        print("📊 [ASYNC_LOGIC] Decision: Show EVENTS (Rule 2/4: Only events, regardless of type) - count=\(labeleCounter) (effectiveDisplayedCount=\(effectiveDisplayedCount))")
+                        print("📊 [ASYNC_LOGIC] Decision: Show EVENTS (Rule 2/4: Only events, regardless of type) - count=\(labeleCounter) (eventCount=\(eventCount))")
                     } else if hasEvents && hasBands && allEventsAreUnofficial {
                         // RULE 3a: MIXTURE with ALL events being unofficial/cruiser organized - show "Bands"
                         labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
@@ -2800,9 +2800,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                         print("📊 [ASYNC_LOGIC] Decision: Show BANDS (Rule 3a: Mixed, all unofficial) - count=\(labeleCounter) (effectiveDisplayedCount=\(effectiveDisplayedCount) - unofficial=\(unofficialCountToSubtract))")
                     } else if hasNonUnofficalEvents {
                         // RULE 3b: MIXTURE with ANY official events - show "Events"
-                        labeleCounter = max(effectiveDisplayedCount, 0)
+                        labeleCounter = max(eventCount, 0)
                         lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + self.filtersOnText
-                        print("📊 [ASYNC_LOGIC] Decision: Show EVENTS (Rule 3b: Mixed with official events) - count=\(labeleCounter) (effectiveDisplayedCount=\(effectiveDisplayedCount))")
+                        print("📊 [ASYNC_LOGIC] Decision: Show EVENTS (Rule 3b: Mixed with official events) - count=\(labeleCounter) (eventCount=\(eventCount))")
                     } else {
                         // FALLBACK
                         labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
@@ -2992,11 +2992,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             // ========================================================================
             // RULE 2/4: ONLY events, NO standalone bands
             // Display "{x} Events" (regardless of event type - even if all are Cruise Organized/Unofficial)
-            // Use effectiveDisplayedCount which handles sync issues
+            // Use eventCount to show only the event count, not bands
             // ========================================================================
-            labeleCounter = max(effectiveDisplayedCount, 0)
+            labeleCounter = max(eventCount, 0)
             lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + filtersOnText
-            print("📊 [COUNT_LOGIC] Rule 2/4: Only events (\(labeleCounter)) - showing Events (effectiveDisplayedCount=\(effectiveDisplayedCount))")
+            print("📊 [COUNT_LOGIC] Rule 2/4: Only events (\(labeleCounter)) - showing Events (eventCount=\(eventCount))")
             
         } else if (hasEvents && hasBands && allEventsAreUnofficial) {
             // ========================================================================
@@ -3012,11 +3012,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             // ========================================================================
             // RULE 3b: MIXTURE with ANY events being official (NOT "Unofficial" or "Cruiser Organized")
             // Display "{x} Events" (ignore band count)
-            // Use effectiveDisplayedCount which handles sync issues
+            // Use eventCount to show only the event count, not bands
             // ========================================================================
-            labeleCounter = max(effectiveDisplayedCount, 0)
+            labeleCounter = max(eventCount, 0)
             lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + filtersOnText
-            print("📊 [COUNT_LOGIC] Rule 3b: Mixed with official events - showing \(labeleCounter) Events (effectiveDisplayedCount=\(effectiveDisplayedCount))")
+            print("📊 [COUNT_LOGIC] Rule 3b: Mixed with official events - showing \(labeleCounter) Events (eventCount=\(eventCount))")
             
         } else {
             // ========================================================================
