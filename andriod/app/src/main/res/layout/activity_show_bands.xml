@@ -84,34 +84,47 @@
     </LinearLayout>
 
     <RelativeLayout
-        android:layout_width="fill_parent"
-        android:layout_height="60dp"
+        android:id="@+id/searchFilterBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="60dp"
         android:layout_marginTop="65dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
         android:background="#FF000000">
 
         <Button
             android:id="@+id/FilerMenu"
             android:layout_width="wrap_content"
-            android:layout_height="31dp"
-            android:layout_marginLeft="10dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginRight="150dp"
+            android:layout_height="wrap_content"
+            android:minHeight="31dp"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="8dp"
             android:background="@color/common_google_signin_btn_text_light_pressed"
-            android:gravity="left"
+            android:gravity="start|center_vertical"
             android:text="Filters"
             android:textColor="#A2AAAD"
             android:textAppearance="@style/TextAppearance.AppCompat.Light.Widget.PopupMenu.Large"
             android:drawableLeft="@drawable/ic_menu_copy"
             android:textOff="Filters"
             android:textOn="Filters"
-            android:textSize="25sp"
-            android:textStyle="bold" />
+            android:textSize="20sp"
+            android:maxLines="1"
+            android:textStyle="bold"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp" />
 
         <androidx.appcompat.widget.SearchView
             android:id="@+id/searchCriteria"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="100dp"
+            android:layout_toEndOf="@+id/FilerMenu"
+            android:layout_toStartOf="@+id/shareButton"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
             app:iconifiedByDefault="false"
             app:queryHint="@string/SearchCritiera"
             app:searchIcon="@drawable/search_icon" />
@@ -120,24 +133,25 @@
             android:id="@+id/shareButton"
             android:layout_width="28dp"
             android:layout_height="28dp"
-            android:layout_marginTop="2dp"
-            android:gravity="right"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="10dp"
+            android:gravity="center"
             android:background="@drawable/icon_share"
             android:text=""
-            android:layout_alignParentEnd="true"
-            android:layout_marginRight="10dp"/>
-        />
+            android:contentDescription="Share" />
 
     </RelativeLayout >
 
     <RelativeLayout
         android:id="@+id/listViewLayout"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/searchFilterBar"
         android:layout_gravity="bottom"
-        android:layout_marginLeft="10dp"
-        android:layout_marginTop="110dp"
-        android:layout_marginRight="5dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="5dp"
+        android:layout_marginTop="5dp"
         android:background="#FF000000"
         android:orientation="horizontal">
 
