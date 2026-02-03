@@ -68,8 +68,17 @@ public class FirebaseEventDataWrite {
     public void writeData(){
 
         if (staticVariables.isTestingEnv == false && staticVariables.userID.isEmpty() == false) {
-            showsAttended attendedHandler = new showsAttended();
-            Map<String, String> showsAttendedArray = attendedHandler.getShowsAttended();
+            // CRITICAL FIX: Use existing attended handler instead of creating new instance
+            // Creating new instance loads data asynchronously, so getShowsAttended() returns empty map
+            // Use the static handler which is already initialized with data
+            if (staticVariables.attendedHandler == null) {
+                Log.e("FirebaseEventDataWrite", "❌ ERROR: staticVariables.attendedHandler is null! Cannot upload attended data.");
+                return;
+            }
+            Map<String, String> showsAttendedArray = staticVariables.attendedHandler.getShowsAttended();
+            
+            Log.d("FirebaseEventDataWrite", "🔥 firebase EVENT_WRITE: Starting writeData - total attended events: " + 
+                    showsAttendedArray.size());
             
             // Ensure eventYear is set before using it
             if (staticVariables.eventYear == 0) {
@@ -103,6 +112,13 @@ public class FirebaseEventDataWrite {
             Set<String> knownEventIdentifiers = buildKnownEventIdentifiers(currentYear);
             Log.d("FirebaseEventDataWrite", "🔥 firebase EVENT_WRITE: Found " + knownEventIdentifiers.size() + " known events in schedule");
             
+            // Log warning if no known events found (likely indicates scheduleRecords not loaded)
+            if (knownEventIdentifiers.isEmpty()) {
+                Log.e("FirebaseEventDataWrite", "⚠️⚠️⚠️ WARNING: No known events found! BandInfo.scheduleRecords might not be loaded. " +
+                        "This will cause ALL attended events to be filtered out. scheduleRecords is " +
+                        (BandInfo.scheduleRecords == null ? "NULL" : "size=" + BandInfo.scheduleRecords.size()));
+            }
+            
             // Filter to only include events that the app knows about
             Map<String, String> knownEventsOnly = new HashMap<>();
             int unknownEventCount = 0;
@@ -117,6 +133,14 @@ public class FirebaseEventDataWrite {
             
             Log.d("FirebaseEventDataWrite", "🔥 firebase EVENT_WRITE: Filtered to " + knownEventsOnly.size() + 
                     " known events (excluded " + unknownEventCount + " unknown events)");
+            
+            // Final check before upload
+            if (knownEventsOnly.isEmpty()) {
+                Log.e("FirebaseEventDataWrite", "❌ ERROR: No events to upload after filtering! Original: " + 
+                        totalEvents + ", CurrentYear: " + currentYearEvents.size() + 
+                        ", Known: " + knownEventsOnly.size() + ". Skipping Firebase upload.");
+                return;
+            }
 
             if (checkIfDataHasChanged(knownEventsOnly)) {
                 // OPTIMIZATION: Use batch write instead of individual writes
