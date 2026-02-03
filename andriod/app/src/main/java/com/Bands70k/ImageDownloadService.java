@@ -589,6 +589,26 @@ public class ImageDownloadService extends Service {
                 updateNotificationStatic(0, 1, "Uploading data to Firebase");
                 // Don't show floating progress for Firebase - it's only 1 record, not worth displaying
                 
+                // CRITICAL FIX: Ensure schedule data is loaded before Firebase reporting
+                // Firebase event upload filters events based on scheduleRecords. If scheduleRecords 
+                // is null/empty, ALL attended events will be filtered out as "unknown" and nothing
+                // will be uploaded. This was causing missing data for Android.
+                if ((BandInfo.scheduleRecords == null || BandInfo.scheduleRecords.isEmpty()) && FileHandler70k.schedule.exists()) {
+                    Log.d(TAG, "⚠️ Firebase reporting: scheduleRecords not loaded, loading from cache first");
+                    try {
+                        scheduleInfo schedule = new scheduleInfo();
+                        // Parse cached schedule file to populate scheduleRecords
+                        BandInfo.scheduleRecords = schedule.ParseScheduleCSV();
+                        Log.d(TAG, "✅ Firebase reporting: scheduleRecords loaded from cache, size: " + 
+                                (BandInfo.scheduleRecords != null ? BandInfo.scheduleRecords.size() : "null"));
+                    } catch (Exception e) {
+                        Log.e(TAG, "❌ Firebase reporting: Failed to load schedule from cache: " + e.getMessage());
+                    }
+                } else {
+                    Log.d(TAG, "✅ Firebase reporting: scheduleRecords already loaded, size: " + 
+                            (BandInfo.scheduleRecords != null ? BandInfo.scheduleRecords.size() : "null"));
+                }
+                
                 // Perform Firebase writes
                 FireBaseAsyncBandEventWrite firebaseTask = new FireBaseAsyncBandEventWrite();
                 firebaseTask.execute();

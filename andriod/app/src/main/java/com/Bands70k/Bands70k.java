@@ -319,8 +319,50 @@ public class Bands70k extends Application implements Application.ActivityLifecyc
             if (ForegroundDownloadManager.isDownloading()) {
                 Log.i("AppLifecycle", "Downloads in progress - user should wait or they'll continue in service");
             }
+            
+            // CRITICAL FIX: Upload Firebase data when app goes to background
+            // This ensures attendance data is uploaded even if user doesn't manually refresh
+            uploadFirebaseDataOnBackground();
         }
         Log.d("AppLifecycle", "Activity stopped: " + activity.getClass().getSimpleName() + " (active count: " + activityCount + ")");
+    }
+    
+    /**
+     * Uploads Firebase data when app goes to background.
+     * Uses a background thread with short timeout to comply with Android background restrictions.
+     */
+    private void uploadFirebaseDataOnBackground() {
+        ThreadManager.getInstance().executeNetwork(() -> {
+            try {
+                Log.i("AppLifecycle", "🔥 BACKGROUND UPLOAD: Starting Firebase upload");
+                
+                // Safety check: Ensure attended handler is initialized
+                if (staticVariables.attendedHandler == null) {
+                    Log.e("AppLifecycle", "❌ ERROR: attendedHandler is null, cannot upload data");
+                    return;
+                }
+                
+                // Log current state for debugging
+                int attendedCount = staticVariables.attendedHandler.getShowsAttended().size();
+                Log.d("AppLifecycle", "🔥 BACKGROUND UPLOAD: Found " + attendedCount + " attended events");
+                
+                // Ensure schedule data is loaded (required for Firebase filtering)
+                if ((BandInfo.scheduleRecords == null || BandInfo.scheduleRecords.isEmpty()) 
+                        && FileHandler70k.schedule.exists()) {
+                    Log.d("AppLifecycle", "Loading schedule data for Firebase upload");
+                    scheduleInfo schedule = new scheduleInfo();
+                    BandInfo.scheduleRecords = schedule.ParseScheduleCSV();
+                }
+                
+                // Perform Firebase write
+                FireBaseAsyncBandEventWrite firebaseTask = new FireBaseAsyncBandEventWrite();
+                firebaseTask.execute();
+                
+                Log.i("AppLifecycle", "🔥 BACKGROUND UPLOAD: Firebase upload completed");
+            } catch (Exception e) {
+                Log.e("AppLifecycle", "Error during background Firebase upload: " + e.getMessage(), e);
+            }
+        });
     }
     
     @Override
