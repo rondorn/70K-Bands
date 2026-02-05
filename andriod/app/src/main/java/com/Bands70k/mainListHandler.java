@@ -122,9 +122,11 @@ public class mainListHandler {
                             endTime = endTime + (3600000 * 24);
                             Log.d("FILTER_DEBUG", "⏰ TIME ADJUSTED for " + bandName + ": new endTime=" + endTime);
                         }
+                        // Add 10-minute buffer (600000 milliseconds) before expiration
+                        Long bufferEndTime = endTime + 600000;
                         Log.d("FILTER_DEBUG", "⏰ getHideExpiredEvents: " + staticVariables.preferences.getHideExpiredEvents());
-                        boolean timeCondition = endTime > System.currentTimeMillis() || staticVariables.preferences.getHideExpiredEvents() == false;
-                        Log.d("FILTER_DEBUG", "⏰ TIME CONDITION for " + bandName + ": " + timeCondition);
+                        boolean timeCondition = bufferEndTime > System.currentTimeMillis() || staticVariables.preferences.getHideExpiredEvents() == false;
+                        Log.d("FILTER_DEBUG", "⏰ TIME CONDITION for " + bandName + ": " + timeCondition + " (buffer end time: " + bufferEndTime + ")");
                         if (timeCondition){
                             allUpcomingEvents++;
                             Log.d("FILTER_DEBUG", "📞 SORTBYTIME: Calling applyFilters for band: " + bandName + ", timeIndex: " + timeIndex);
@@ -147,9 +149,11 @@ public class mainListHandler {
                             endTime = endTime + (3600000 * 24);
                             Log.d("FILTER_DEBUG", "⏰ ALPHA TIME ADJUSTED for " + bandName + ": new endTime=" + endTime);
                         }
+                        // Add 10-minute buffer (600000 milliseconds) before expiration
+                        Long bufferEndTime = endTime + 600000;
                         Log.d("FILTER_DEBUG", "⏰ ALPHA getHideExpiredEvents: " + staticVariables.preferences.getHideExpiredEvents());
-                        boolean timeCondition = endTime > System.currentTimeMillis() || staticVariables.preferences.getHideExpiredEvents() == false;
-                        Log.d("FILTER_DEBUG", "⏰ ALPHA TIME CONDITION for " + bandName + ": " + timeCondition);
+                        boolean timeCondition = bufferEndTime > System.currentTimeMillis() || staticVariables.preferences.getHideExpiredEvents() == false;
+                        Log.d("FILTER_DEBUG", "⏰ ALPHA TIME CONDITION for " + bandName + ": " + timeCondition + " (buffer end time: " + bufferEndTime + ")");
                         if (timeCondition) {
                             allUpcomingEvents++;
                             Log.d("FILTER_DEBUG", "📞 SORTALPHA: Calling applyFilters for band: " + bandName + ", timeIndex: " + timeIndex);
@@ -704,8 +708,11 @@ public class mainListHandler {
                     endTime = endTime + (3600000 * 24);
                 }
                 
-                // Check if this is an expired event
-                if (endTime <= System.currentTimeMillis()) {
+                // Add 10-minute buffer (600000 milliseconds) before considering expired
+                Long bufferEndTime = endTime + 600000;
+                
+                // Check if this is an expired event (after 10-minute buffer)
+                if (bufferEndTime <= System.currentTimeMillis()) {
                     hasExpiredEvents = true;
                     
                     // Check if this expired event would pass the current filters (ignoring the expiration check)

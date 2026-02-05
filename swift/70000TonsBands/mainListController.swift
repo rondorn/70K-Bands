@@ -178,10 +178,13 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
     }
     
     // 4. EXPIRATION FILTER (if enabled)
+    // Note: This NSPredicate is not actually used - filtering happens in Swift below
+    // Kept here for documentation/compatibility purposes
     if getHideExpireScheduleData() {
         let currentTime = Date().timeIntervalSinceReferenceDate // FIX: Use same reference as timeIndex
+        // NSPredicate doesn't handle midnight crossing or 10-min buffer - actual filtering happens in Swift filter below
         predicates.append(NSPredicate(format: "endTimeIndex > %f", currentTime))
-        print("🔍 [FILTER] Hiding expired events (ended before) \(currentTime)")
+        print("🔍 [FILTER] Hiding expired events (with 10-min buffer, ended before) \(currentTime + 600)")
     }
     
     // EXECUTE QUERY (via DataManager -> SQLite) and filter in Swift
@@ -250,6 +253,9 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
             endTimeIndex += 86400 // Add 24 hours (86400 seconds = 24 * 60 * 60)
         }
         
+        // Add 10-minute buffer (600 seconds) to end time before checking expiration
+        let bufferEndTime = endTimeIndex + 600
+        
         // DEBUG: Log filtering details for specific event
         if event.bandName.contains("Bloodred Hourglass") {
             print("🔍 [EXPIRE_DEBUG] Band: \(event.bandName)")
@@ -259,19 +265,20 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
             print("🔍 [EXPIRE_DEBUG] End Time: \(endTimeString)")
             print("🔍 [EXPIRE_DEBUG] Stored endTimeIndex: \(event.endTimeIndex)")
             print("🔍 [EXPIRE_DEBUG] Recalculated endTimeIndex (current TZ): \(endTimeIndex)")
+            print("🔍 [EXPIRE_DEBUG] Buffer end time (+ 10 min): \(bufferEndTime)")
             print("🔍 [EXPIRE_DEBUG] currentTime: \(currentTime)")
             print("🔍 [EXPIRE_DEBUG] Current timezone: \(TimeZone.current.identifier)")
-            print("🔍 [EXPIRE_DEBUG] endTimeIndex <= currentTime? \(endTimeIndex <= currentTime)")
+            print("🔍 [EXPIRE_DEBUG] bufferEndTime <= currentTime? \(bufferEndTime <= currentTime)")
             
             // Convert to readable dates for debugging
-            let endDate = Date(timeIntervalSinceReferenceDate: endTimeIndex)
+            let endDate = Date(timeIntervalSinceReferenceDate: bufferEndTime)
             let now = Date(timeIntervalSinceReferenceDate: currentTime)
-            print("🔍 [EXPIRE_DEBUG] End time as Date: \(endDate)")
+            print("🔍 [EXPIRE_DEBUG] Buffer end time as Date: \(endDate)")
             print("🔍 [EXPIRE_DEBUG] Current time as Date: \(now)")
         }
         
-        // Use recalculated time index, not stored one
-        if endTimeIndex <= currentTime {
+        // Use recalculated time index with 10-minute buffer
+        if bufferEndTime <= currentTime {
             return false
         }
     }
@@ -472,7 +479,15 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
     if getHideExpireScheduleData() {
         // When "Hide Expired Events" is enabled, get all bands that have future events (regardless of venue/priority filters)
         let currentTime = Date().timeIntervalSinceReferenceDate // FIX: Use same reference as timeIndex
-        let nonExpiredEvents = allYearEvents.filter { $0.timeIndex > currentTime }
+        let nonExpiredEvents = allYearEvents.filter { event in
+            var endTimeIndex = event.endTimeIndex
+            // Detect midnight crossing - add 24 hours if needed
+            if event.timeIndex > endTimeIndex {
+                endTimeIndex += 86400
+            }
+            // Add 10-minute buffer (600 seconds) before expiration
+            return endTimeIndex + 600 > currentTime
+        }
         bandsWithVisibleEvents = Set(nonExpiredEvents.map { $0.bandName })
         print("🔍 [BAND_DISPLAY_FIX] Hide Expired Events ON - bands with non-expired events: \(bandsWithVisibleEvents.sorted())")
     } else {
