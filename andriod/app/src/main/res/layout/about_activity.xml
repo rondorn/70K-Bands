@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:background="#1C1C1E">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- About Header -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="About"
+            android:textSize="34sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:paddingBottom="20dp" />
+
+        <!-- Main Description -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="This is an unofficial, open-source application designed to help users discover bands and artists appearing at multiple music festivals, and to view event schedules, times, and venues in one place."
+            android:textSize="17sp"
+            android:textColor="#FFFFFF"
+            android:lineSpacingMultiplier="1.4"
+            android:paddingBottom="16dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="The app allows users to browse artists, explore event listings, and stay organized while attending festivals. It is designed to work across different events without being tied to any single festival, promoter, or organizer."
+            android:textSize="17sp"
+            android:textColor="#FFFFFF"
+            android:lineSpacingMultiplier="1.4"
+            android:paddingBottom="16dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="This application is not affiliated with, endorsed by, or officially connected to any festival, event organizer, promoter, or performing artist. All artist names, event names, and related information remain the property of their respective owners and are used for informational purposes only."
+            android:textSize="17sp"
+            android:textColor="#FFFFFF"
+            android:lineSpacingMultiplier="1.4"
+            android:paddingBottom="16dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="The source code for this application is open-sourced and licensed under the GNU General Public License, version 2 (GPL-2.0)."
+            android:textSize="17sp"
+            android:textColor="#FFFFFF"
+            android:lineSpacingMultiplier="1.4"
+            android:paddingBottom="16dp" />
+
+        <!-- Copyright -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Copyright © 2015–present"
+            android:textSize="13sp"
+            android:textColor="#8E8E93"
+            android:paddingTop="10dp"
+            android:paddingBottom="20dp" />
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0.5dp"
+            android:background="#3A3A3C"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="20dp" />
+
+        <!-- The Team Section -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="The Team"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:paddingBottom="16dp" />
+
+        <!-- Team Members -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="20dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Ron Dorn"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:paddingBottom="2dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Lead developer and creator (center)"
+                android:textSize="13sp"
+                android:textColor="#8E8E93"
+                android:paddingBottom="12dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Robert Jan de Vries"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:paddingBottom="2dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="UI Designer (right)"
+                android:textSize="13sp"
+                android:textColor="#8E8E93"
+                android:paddingBottom="12dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Aaron Copeland"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:paddingBottom="2dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="70K Bands Summary Curator (left)"
+                android:textSize="13sp"
+                android:textColor="#8E8E93"
+                android:paddingBottom="20dp" />
+        </LinearLayout>
+
+        <!-- Team Photo -->
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:src="@drawable/about_team"
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter"
+            android:contentDescription="Team Photo" />
+
+        <!-- Bottom Spacing -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="30dp" />
+
+    </LinearLayout>
+</ScrollView>
