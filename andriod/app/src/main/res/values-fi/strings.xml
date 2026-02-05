@@ -211,6 +211,17 @@
     <string name="sort_by_name">Lajittele nimen mukaan</string>
     <!-- menu choice -->
     <string name="sort_by_time">Lajittele ajan mukaan</string>
+    <!-- expired events filter -->
+    <string name="expired_events">Vanhentuneet tapahtumat</string>
+    <!-- section header -->
+    <string name="hide_expired_events">Piilota vanhentuneet tapahtumat</string>
+    <!-- menu choice -->
+    <string name="show_expired_events">Näytä vanhentuneet tapahtumat</string>
+    <!-- menu choice -->
+    <string name="hiding_expired_events">Piilotetaan vanhentuneita tapahtumia</string>
+    <!-- toast message -->
+    <string name="showing_expired_events">Näytetään vanhentuneita tapahtumia</string>
+    <!-- toast message -->
     <!-- band preference filter -->
     <string name="show_must_see_items">Näytä Kyllä-tapahtumat</string>
     <!-- menu choice -->
