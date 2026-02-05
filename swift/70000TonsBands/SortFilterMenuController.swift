@@ -11,6 +11,23 @@ import Foundation
 import Foundation
 import UIKit
 
+// Helper function to check if there are any events in the database (regardless of filters/view mode)
+func hasAnyEvents() -> Bool {
+    let allEvents = DataManager.shared.fetchEvents(forYear: eventYear)
+    return allEvents.count > 0
+}
+
+// Helper function to check if there are any expired events
+func hasExpiredEvents() -> Bool {
+    let currentTime = Date().timeIntervalSinceReferenceDate
+    let allEvents = DataManager.shared.fetchEvents(forYear: eventYear)
+    
+    // Check if any event has expired (endTimeIndex < currentTime)
+    return allEvents.contains { event in
+        event.endTimeIndex < currentTime
+    }
+}
+
 func createrFilterMenu( controller: MasterViewController){
     
     controller.refreshData()
@@ -32,10 +49,11 @@ func createrFilterMenu( controller: MasterViewController){
     let showScheduleView = getShowScheduleView()
     let showScheduleFilters = hasScheduledEvents && showScheduleView
     
-    // Add Schedule/Bands Only filter section as FIRST section when scheduled events are present
-    if hasScheduledEvents {
-        controller.filterMenu.dataSource.append("View Mode Header")
-        controller.filterMenu.dataSource.append("View Mode Toggle")
+    // Add Hide Expired Events option (TOP choice) - only when events exist and at least one is expired
+    // Check raw criteria: events exist in database (regardless of view mode/filters) and at least one has expired
+    if hasAnyEvents() && hasExpiredEvents() {
+        controller.filterMenu.dataSource.append("Expired Events Header")
+        controller.filterMenu.dataSource.append("Expired Events")
     }
     
     // Add Band Ranking Filters section (always shown)
@@ -125,9 +143,9 @@ func setupAllEntries(controller: MasterViewController){
         guard var cell = cell as? CustomListEntry else { return }
 
         setupHeadersAndMisc(controller: controller, item: item, cellRow: cell)
+        setupExpiredEventsMenuChoices(controller: controller, item: item, cellRow: cell)
         setupFlaggedOnlylMenuChoices(controller: controller, item: item, cellRow: cell)
         setupSortMenuChoices(controller: controller, item: item, cellRow: cell)
-        setupViewModeMenuChoices(controller: controller, item: item, cellRow: cell)
         setupClearAllMenuChoices(controller: controller, item: item, cellRow: cell)
         setupMustMightMenuChoices(controller: controller, item: item, cellRow: cell)
         setupEventTypeMenuChoices(controller: controller, item: item, cellRow: cell)
@@ -159,8 +177,8 @@ func setupHeadersAndMisc(controller: MasterViewController, item: String, cellRow
         
     } else if (item == "Venue Filters"){
         setupCell(header: true, titleText: NSLocalizedString("Venue Filters", comment: ""), cellData: cellRow, imageName: "", disabled: false)
-    } else if (item == "View Mode Header"){
-        setupCell(header: true, titleText: NSLocalizedString("View Mode", comment: ""), cellData: cellRow, imageName: "", disabled: false)
+    } else if (item == "Expired Events Header"){
+        setupCell(header: true, titleText: NSLocalizedString("Expired Events", comment: ""), cellData: cellRow, imageName: "", disabled: false)
     }
 }
 
@@ -170,9 +188,9 @@ func setupClickResponse(controller: MasterViewController){
         
         setupMustMightClickResponse(controller: controller!, item: item)
         setupClearClickResponse(controller: controller!, item: item)
+        setupExpiredEventsClickResponse(controller: controller!, item: item)
         setupFlaggedOnlyResponse(controller: controller!, item: item)
         setupSortResponse(controller: controller!, item: item)
-        setupViewModeClickResponse(controller: controller!, item: item)
         setupEventTypeClickResponse(controller: controller!, item: item)
         setupVenueClickResponse(controller: controller!, item: item)
         print ("The respond from the chosen one is \(item) = \(index)")
@@ -206,6 +224,50 @@ func setupSortMenuChoices(controller: MasterViewController, item: String, cellRo
             setupCell(header: false, titleText: NSLocalizedString("Sort By Time", comment: "") , cellData: cellRow, imageName: scheduleIconSort, disabled: false)
         } else {
             setupCell(header: false, titleText: NSLocalizedString("Sort By Name", comment: "") , cellData: cellRow, imageName: bandIconSort, disabled: false)
+        }
+    }
+}
+
+func setupExpiredEventsClickResponse(controller: MasterViewController, item: String){
+    
+    if (item == "Expired Events"){
+        var message = NSLocalizedString("Show Expired Events", comment: "")
+        if (getHideExpireScheduleData() == true){
+            setHideExpireScheduleData(false)
+            message = NSLocalizedString("Showing Expired Events", comment: "")
+        } else {
+            setHideExpireScheduleData(true)
+            message = NSLocalizedString("Hiding Expired Events", comment: "")
+        }
+        refreshAfterMenuSelected(controller: controller, message: message)
+    }
+}
+
+func setupExpiredEventsMenuChoices(controller: MasterViewController, item: String, cellRow: CustomListEntry){
+    
+    if (item == "Expired Events"){
+        // Simple criteria: events exist in database and at least one is expired (regardless of view mode/filters)
+        let eventsExist = hasAnyEvents()
+        let hasExpired = hasExpiredEvents()
+        
+        // Enable filter only when events exist and at least one has expired
+        let shouldEnableFilter = eventsExist && hasExpired
+        
+        if (getHideExpireScheduleData() == false){
+            setupCell(header: false, titleText: NSLocalizedString("Hide Expired Events", comment: ""), cellData: cellRow, imageName: scheduleIconSort, disabled: !shouldEnableFilter)
+        } else {
+            setupCell(header: false, titleText: NSLocalizedString("Show Expired Events", comment: "") , cellData: cellRow, imageName: scheduleIconSort, disabled: !shouldEnableFilter)
+        }
+        
+        if (!shouldEnableFilter){
+            print("🔍 [EXPIRED_FILTER_DEBUG] ❌ Disabling 'Hide Expired Events'")
+            print("🔍 [EXPIRED_FILTER_DEBUG]   - eventsExist: \(eventsExist)")
+            print("🔍 [EXPIRED_FILTER_DEBUG]   - hasExpired: \(hasExpired)")
+            cellRow.optionLabel.textColor = UIColor.darkGray
+        } else {
+            print("🔍 [EXPIRED_FILTER_DEBUG] ✅ Enabling 'Hide Expired Events'")
+            print("🔍 [EXPIRED_FILTER_DEBUG]   - eventsExist: \(eventsExist)")
+            print("🔍 [EXPIRED_FILTER_DEBUG]   - hasExpired: \(hasExpired)")
         }
     }
 }
@@ -273,6 +335,7 @@ func setupClearClickResponse(controller: MasterViewController, item: String){
         print("🔄 [CLEAR_DEBUG] Clear All Filters clicked - resetting all filters to default state")
         var message = NSLocalizedString("Clear All Items", comment: "")
         setShowOnlyWillAttened(false)
+        setHideExpireScheduleData(false) // Reset Hide Expired Events filter
         
         // Reset all dynamic venues to true
         setAllVenueFilters(show: true)
@@ -286,7 +349,6 @@ func setupClearClickResponse(controller: MasterViewController, item: String){
         setShowSpecialEvents(true)
         setShowUnofficalEvents(true)
         setShowMeetAndGreetEvents(true)
-        setShowScheduleView(true) // Reset to Schedule view (default)
         setMustSeeOn(true)
         setMightSeeOn(true)
         setWontSeeOn(true)

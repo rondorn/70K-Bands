@@ -22,6 +22,35 @@ public class OtherFilterHandler {
     public OtherFilterHandler(PopupWindow value){
         popupWindow = value;
     }
+    
+    // Helper method to check if there are any events in the database
+    private boolean hasAnyEvents() {
+        return BandInfo.scheduleRecords != null && !BandInfo.scheduleRecords.isEmpty();
+    }
+    
+    // Helper method to check if there are any expired events
+    private boolean hasExpiredEvents() {
+        if (BandInfo.scheduleRecords == null || BandInfo.scheduleRecords.isEmpty()) {
+            return false;
+        }
+        
+        long currentTime = System.currentTimeMillis();
+        for (String bandName : BandInfo.scheduleRecords.keySet()) {
+            scheduleTimeTracker tracker = BandInfo.scheduleRecords.get(bandName);
+            if (tracker != null && tracker.scheduleByTime != null) {
+                for (Long timeIndex : tracker.scheduleByTime.keySet()) {
+                    scheduleHandler event = tracker.scheduleByTime.get(timeIndex);
+                    if (event != null && event.getEpochEnd() != null) {
+                        if (event.getEpochEnd() < currentTime) {
+                            return true; // Found at least one expired event
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+    
     public void setupEventTypeListener(showBands showBands){
 
         TextView clearFilter = (TextView) popupWindow.getContentView().findViewById(R.id.clearFilter);
@@ -56,9 +85,10 @@ public class OtherFilterHandler {
                      staticVariables.preferences.setShowVenueEvents(venueName, true);
                  }
 
-                 staticVariables.preferences.setShowWillAttend(false);
+                staticVariables.preferences.setShowWillAttend(false);
+                staticVariables.preferences.setHideExpiredEvents(false);
 
-                 staticVariables.preferences.saveData();
+                staticVariables.preferences.saveData();
 
                  setupOtherFilters();
                  FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands, message);
@@ -112,6 +142,24 @@ public class OtherFilterHandler {
                 FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands, message);
             }
         });
+        
+        LinearLayout hideExpiredEventsAll = (LinearLayout) popupWindow.getContentView().findViewById(R.id.hideExpiredEventsAll);
+        hideExpiredEventsAll.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View context) {
+                String message = "";
+                if (staticVariables.preferences.getHideExpiredEvents() == true) {
+                    staticVariables.preferences.setHideExpiredEvents(false);
+                    message = staticVariables.context.getString(R.string.showing_expired_events);
+                } else {
+                    staticVariables.preferences.setHideExpiredEvents(true);
+                    message = staticVariables.context.getString(R.string.hiding_expired_events);
+                }
+                staticVariables.preferences.saveData();
+                setupOtherFilters();
+                FilterButtonHandler.refreshAfterButtonClick(popupWindow, showBands, message);
+            }
+        });
     }
 
 
@@ -122,6 +170,37 @@ public class OtherFilterHandler {
     public void setupOtherFilters(boolean showScheduleFilters){
         
         Log.d("UNOFFICIAL_DEBUG", "🔧 setupOtherFilters called - showScheduleFilters=" + showScheduleFilters + ", showEventButtons=" + staticVariables.showEventButtons + ", showUnofficalEventButtons=" + staticVariables.showUnofficalEventButtons);
+        
+        // Show/hide "Hide Expired Events" section based on raw criteria
+        boolean eventsExist = hasAnyEvents();
+        boolean hasExpired = hasExpiredEvents();
+        if (eventsExist && hasExpired) {
+            FilterButtonHandler.showMenuSection(R.id.expiredEventsHeader, "TextView", popupWindow);
+            FilterButtonHandler.showMenuSection(R.id.expiredEventsBrake, "TextView", popupWindow);
+            FilterButtonHandler.showMenuSection(R.id.hideExpiredEventsAll, "LinearLayout", popupWindow);
+            FilterButtonHandler.showMenuSection(R.id.hideExpiredEventsBrake, "TextView", popupWindow);
+            
+            // Update text and icon based on current preference
+            TextView hideExpiredEventsText = (TextView) popupWindow.getContentView().findViewById(R.id.hideExpiredEvents);
+            ImageView hideExpiredEventsIcon = (ImageView) popupWindow.getContentView().findViewById(R.id.hideExpiredEventsIcon);
+            Drawable sortTimeIcon = AppCompatResources.getDrawable(context, R.drawable.icon_sort_time);
+            
+            if (staticVariables.preferences.getHideExpiredEvents() == false) {
+                hideExpiredEventsText.setText(R.string.hide_expired_events);
+                hideExpiredEventsIcon.setImageDrawable(sortTimeIcon);
+            } else {
+                hideExpiredEventsText.setText(R.string.show_expired_events);
+                hideExpiredEventsIcon.setImageDrawable(sortTimeIcon);
+            }
+            
+            Log.d("EXPIRED_FILTER_DEBUG", "✅ Showing 'Hide Expired Events' - eventsExist=" + eventsExist + ", hasExpired=" + hasExpired);
+        } else {
+            FilterButtonHandler.hideMenuSection(R.id.expiredEventsHeader, "TextView", popupWindow);
+            FilterButtonHandler.hideMenuSection(R.id.expiredEventsBrake, "TextView", popupWindow);
+            FilterButtonHandler.hideMenuSection(R.id.hideExpiredEventsAll, "LinearLayout", popupWindow);
+            FilterButtonHandler.hideMenuSection(R.id.hideExpiredEventsBrake, "TextView", popupWindow);
+            Log.d("EXPIRED_FILTER_DEBUG", "❌ Hiding 'Hide Expired Events' - eventsExist=" + eventsExist + ", hasExpired=" + hasExpired);
+        }
 
         // Show schedule filters if:
         // 1. We have events OR

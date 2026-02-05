@@ -204,6 +204,17 @@
     <string name="sort_by_name">Ordenar por nombre</string>
     <!-- menu  choice -->
     <string name="sort_by_time">Ordenar por fecha y hora</string>
+    <!-- expired events filter -->
+    <string name="expired_events">Eventos Pasados</string>
+    <!-- section header -->
+    <string name="hide_expired_events">Ocultar Eventos Pasados</string>
+    <!-- menu choice -->
+    <string name="show_expired_events">Mostrar Eventos Pasados</string>
+    <!-- menu choice -->
+    <string name="hiding_expired_events">Ocultando Eventos Pasados</string>
+    <!-- toast message -->
+    <string name="showing_expired_events">Mostrando Eventos Pasados</string>
+    <!-- toast message -->
     <!-- band preference filter -->
     <string name="show_must_see_items">Mostrar eventos a los que asistiré</string>
     <!-- menu choice -->

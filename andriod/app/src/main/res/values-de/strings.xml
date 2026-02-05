@@ -210,6 +210,17 @@
     <string name="sort_by_name">Nach Name sortieren</string>
     <!-- menu choice -->
     <string name="sort_by_time">Nach Zeit sortieren</string>
+    <!-- expired events filter -->
+    <string name="expired_events">Abgelaufene Ereignisse</string>
+    <!-- section header -->
+    <string name="hide_expired_events">Vergangene Ereignisse ausblenden</string>
+    <!-- menu choice -->
+    <string name="show_expired_events">Vergangene Ereignisse anzeigen</string>
+    <!-- menu choice -->
+    <string name="hiding_expired_events">Vergangene Ereignisse ausblenden</string>
+    <!-- toast message -->
+    <string name="showing_expired_events">Vergangene Ereignisse anzeigen</string>
+    <!-- toast message -->
     <!-- band preference filter -->
     <string name="show_must_see_items">„Muss-Bands“ anzeigen</string>
     <!-- menu choice -->

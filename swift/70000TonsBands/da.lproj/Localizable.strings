@@ -74,6 +74,10 @@
 
 "showHideExpiredLabel" = "Vis/Skjul Udløbet Begivenheder";
 "hideExpiredEvents" = "Skjul Udløbet Begivenheder";
+"Expired Events" = "Udløbet Begivenheder";
+"Show Expired Events" = "Vis Udløbet Begivenheder";
+"Hiding Expired Events" = "Skjuler Udløbet Begivenheder";
+"Showing Expired Events" = "Viser Udløbet Begivenheder";
 
 "AlertPreferences" = "Indstillinger for Alarm";
 "PreferenceHeader" = "Præferencer";

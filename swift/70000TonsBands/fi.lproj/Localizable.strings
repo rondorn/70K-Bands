@@ -80,6 +80,10 @@
 
 "showHideExpiredLabel" = "Näytä/piilota vanhentuneet tapahtumat";
 "hideExpiredEvents" = "Piilota vanhentuneet tapahtumat";
+"Expired Events" = "Vanhentuneet tapahtumat";
+"Show Expired Events" = "Näytä vanhentuneet tapahtumat";
+"Hiding Expired Events" = "Piilotetaan vanhentuneita tapahtumia";
+"Showing Expired Events" = "Näytetään vanhentuneita tapahtumia";
 
 "AlertPreferences" = "Hälytysasetukset";
 "PreferenceHeader" = "Asetukset";
