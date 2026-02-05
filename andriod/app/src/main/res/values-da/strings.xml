@@ -208,6 +208,17 @@
     <string name="sort_by_name">Sorter efter navn</string>
     <!-- menu choice -->
     <string name="sort_by_time">Sorter efter tid</string>
+    <!-- expired events filter -->
+    <string name="expired_events">Udløbet Begivenheder</string>
+    <!-- section header -->
+    <string name="hide_expired_events">Skjul Udløbet Begivenheder</string>
+    <!-- menu choice -->
+    <string name="show_expired_events">Vis Udløbet Begivenheder</string>
+    <!-- menu choice -->
+    <string name="hiding_expired_events">Skjuler Udløbet Begivenheder</string>
+    <!-- toast message -->
+    <string name="showing_expired_events">Viser Udløbet Begivenheder</string>
+    <!-- toast message -->
     <!-- band preference filter -->
     <string name="show_must_see_items">Vis varer, der skal ses</string>
     <!-- menu choice -->

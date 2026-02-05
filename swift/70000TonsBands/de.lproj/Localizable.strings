@@ -76,6 +76,10 @@
 "showTypeFilterHeader" = "Ereignistyp anzeigen/ausblenden";
 "showHideExpiredLabel" = "Vergangene Ereignisse anzeigen/ausblenden";
 "hideExpiredEvents" = "Vergangene Ereignisse ausblenden";
+"Expired Events" = "Abgelaufene Ereignisse";
+"Show Expired Events" = "Vergangene Ereignisse anzeigen";
+"Hiding Expired Events" = "Vergangene Ereignisse ausblenden";
+"Showing Expired Events" = "Vergangene Ereignisse anzeigen";
 
 "AlertPreferences" = "Benachrichtigungseinstellungen";
 "PreferenceHeader" = "Einstellungen";

@@ -77,6 +77,10 @@
 
 "showHideExpiredLabel" = "Mostrar/Ocultar Eventos Expirados";
 "hideExpiredEvents" = "Ocultar Eventos Expirados";
+"Expired Events" = "Eventos Expirados";
+"Show Expired Events" = "Mostrar Eventos Expirados";
+"Hiding Expired Events" = "Ocultando Eventos Expirados";
+"Showing Expired Events" = "Mostrando Eventos Expirados";
 
 "AlertPreferences" = "Preferências de Alerta";
 "PreferenceHeader" = "Preferências";

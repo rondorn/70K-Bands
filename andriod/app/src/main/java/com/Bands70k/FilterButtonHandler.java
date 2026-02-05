@@ -57,14 +57,9 @@ public class FilterButtonHandler  {
 
                 popupWindow.showAsDropDown(filterMenuButton, 0, 0);
 
-                // View Mode Filter (Schedule/Bands Only) - show only when scheduled events are present
+                // View Mode Filter removed - use title button to toggle instead
                 boolean hasScheduledEvents = staticVariables.showEventButtons;
                 boolean showScheduleFilters = staticVariables.preferences.getShowScheduleView();
-                
-                ViewModeFilterHandler viewModeFilterHandle = new ViewModeFilterHandler(popupWindow);
-                viewModeFilterHandle.setViewModeSectionVisibility(hasScheduledEvents);
-                viewModeFilterHandle.setupViewModeFilters();
-                viewModeFilterHandle.setupViewModeListener(showBands);
 
                 MustMightFilterHandler mustMightHandle = new MustMightFilterHandler(popupWindow);
                 mustMightHandle.setupMustMightFilters();
@@ -106,13 +101,9 @@ public class FilterButtonHandler  {
         
         showBands.refreshData();
 
-        // View Mode Filter (Schedule/Bands Only) - show only when scheduled events are present
+        // View Mode Filter removed - use title button to toggle instead
         boolean hasScheduledEvents = staticVariables.showEventButtons;
         boolean showScheduleFilters = staticVariables.preferences.getShowScheduleView();
-        
-        ViewModeFilterHandler viewModeFilterHandle = new ViewModeFilterHandler(popupWindow);
-        viewModeFilterHandle.setViewModeSectionVisibility(hasScheduledEvents);
-        viewModeFilterHandle.setupViewModeFilters();
 
         MustMightFilterHandler mustMightHandle = new MustMightFilterHandler(popupWindow);
         mustMightHandle.setupMustMightFilters();

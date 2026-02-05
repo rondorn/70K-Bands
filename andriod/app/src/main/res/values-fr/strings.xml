@@ -212,6 +212,17 @@
     <string name="sort_by_name">Trier par nom</string>
     <!-- menu choice -->
     <string name="sort_by_time">Trier par heure</string>
+    <!-- expired events filter -->
+    <string name="expired_events">Événements Expirés</string>
+    <!-- section header -->
+    <string name="hide_expired_events">Masquer Événements Expirés</string>
+    <!-- menu choice -->
+    <string name="show_expired_events">Afficher Événements Expirés</string>
+    <!-- menu choice -->
+    <string name="hiding_expired_events">Masquage Événements Expirés</string>
+    <!-- toast message -->
+    <string name="showing_expired_events">Affichage Événements Expirés</string>
+    <!-- toast message -->
     <!-- band preference filter -->
     <string name="show_must_see_items">Afficher les éléments incontournables</string>
     <!-- menu choice -->

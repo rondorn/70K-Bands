@@ -242,6 +242,17 @@
     <string name="sort_by_name">Sort By Name</string>
     <!-- menu choice -->
     <string name="sort_by_time">Sort By Time</string>
+    <!-- expired events filter -->
+    <string name="expired_events">Expired Events</string>
+    <!-- section header -->
+    <string name="hide_expired_events">Hide Expired Events</string>
+    <!-- menu choice -->
+    <string name="show_expired_events">Show Expired Events</string>
+    <!-- menu choice -->
+    <string name="hiding_expired_events">Hiding Expired Events</string>
+    <!-- toast message -->
+    <string name="showing_expired_events">Showing Expired Events</string>
+    <!-- toast message -->
     <!-- band preference filter -->
     <string name="show_must_see_items">Show Must See Items</string>
     <!-- menu choice -->
