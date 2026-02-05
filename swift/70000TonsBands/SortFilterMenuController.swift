@@ -22,9 +22,15 @@ func hasExpiredEvents() -> Bool {
     let currentTime = Date().timeIntervalSinceReferenceDate
     let allEvents = DataManager.shared.fetchEvents(forYear: eventYear)
     
-    // Check if any event has expired (endTimeIndex < currentTime)
+    // Check if any event has expired (endTimeIndex + 10 min buffer < currentTime)
     return allEvents.contains { event in
-        event.endTimeIndex < currentTime
+        var endTimeIndex = event.endTimeIndex
+        // Detect midnight crossing - add 24 hours if needed
+        if event.timeIndex > endTimeIndex {
+            endTimeIndex += 86400
+        }
+        // Add 10-minute buffer (600 seconds) before considering expired
+        return endTimeIndex + 600 < currentTime
     }
 }
 

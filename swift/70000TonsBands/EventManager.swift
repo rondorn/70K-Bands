@@ -267,9 +267,10 @@ class EventManager {
                 if event.timeIndex > endTimeIndex {
                     endTimeIndex += 86400 // Add 24 hours
                 }
-                return endTimeIndex > currentTime
+                // Add 10-minute buffer (600 seconds) before expiration
+                return endTimeIndex + 600 > currentTime
             }
-            print("🔍 DEBUG: Filtering expired events (endTimeIndex > \(currentTime))")
+            print("🔍 DEBUG: Filtering expired events (endTimeIndex + 600 > \(currentTime))")
         }
         
         // 5. SORTING
