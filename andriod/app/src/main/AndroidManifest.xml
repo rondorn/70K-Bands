@@ -54,6 +54,12 @@
         </activity>
 
         <activity
+            android:name=".AboutActivity"
+            android:label="About"
+            android:exported="false">
+        </activity>
+
+        <activity
             android:name=".filterMenu"
             android:label="Filter"
             android:exported="true">
