@@ -132,6 +132,10 @@ struct PreferencesView: View {
     
     private var informationSection: some View {
         Section(NSLocalizedString("Information", comment: "")) {
+            NavigationLink(destination: AboutView()) {
+                Text("About")
+                    .font(.body)
+            }
             informationRowView(label: NSLocalizedString("User Identifier", comment: ""), value: viewModel.userId)
             informationRowView(label: NSLocalizedString("Build", comment: ""), value: viewModel.buildInfo)
         }

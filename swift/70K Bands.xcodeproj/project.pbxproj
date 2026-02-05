@@ -314,6 +314,12 @@
 		11E4EDAB2ACBAE5E0036D002 /* Settings70k.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E4EDA92ACBAE5E0036D002 /* Settings70k.swift */; };
 		11E6F41B2AEC6C47007C1387 /* CustomListEntry.xib in Resources */ = {isa = PBXBuildFile; fileRef = 11E6F4142AEC6C47007C1387 /* CustomListEntry.xib */; };
 		11E6F41C2AEC6C47007C1387 /* CustomListEntry.xib in Resources */ = {isa = PBXBuildFile; fileRef = 11E6F4142AEC6C47007C1387 /* CustomListEntry.xib */; };
+		11EB86AB2F3530C8007D5AD0 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11EB86AA2F3530C8007D5AD0 /* AboutView.swift */; };
+		11EB86AC2F3530C8007D5AD0 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11EB86AA2F3530C8007D5AD0 /* AboutView.swift */; };
+		11EB86AD2F3530C8007D5AD0 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11EB86AA2F3530C8007D5AD0 /* AboutView.swift */; };
+		11EB86AF2F353160007D5AD0 /* about-team.png in Resources */ = {isa = PBXBuildFile; fileRef = 11EB86AE2F353160007D5AD0 /* about-team.png */; };
+		11EB86B02F353160007D5AD0 /* about-team.png in Resources */ = {isa = PBXBuildFile; fileRef = 11EB86AE2F353160007D5AD0 /* about-team.png */; };
+		11EB86B12F353160007D5AD0 /* about-team.png in Resources */ = {isa = PBXBuildFile; fileRef = 11EB86AE2F353160007D5AD0 /* about-team.png */; };
 		11ED61811A9103C100D29A5B /* UtilityHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ED61801A9103C100D29A5B /* UtilityHandler.swift */; };
 		11ED61821A91105000D29A5B /* UtilityHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ED61801A9103C100D29A5B /* UtilityHandler.swift */; };
 		11F0333E1AB3B26D00AA29B8 /* scheduleHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C8BDC51A7D25E700037F2B /* scheduleHandler.swift */; };
@@ -493,6 +499,8 @@
 		11E2F2442E8D78530004D6F4 /* CoreDataiCloudSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataiCloudSync.swift; sourceTree = "<group>"; };
 		11E4EDA92ACBAE5E0036D002 /* Settings70k.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings70k.swift; sourceTree = "<group>"; };
 		11E6F4142AEC6C47007C1387 /* CustomListEntry.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = CustomListEntry.xib; sourceTree = "<group>"; };
+		11EB86AA2F3530C8007D5AD0 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
+		11EB86AE2F353160007D5AD0 /* about-team.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "about-team.png"; sourceTree = "<group>"; };
 		11ED61801A9103C100D29A5B /* UtilityHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UtilityHandler.swift; sourceTree = "<group>"; };
 		11F4AB231B61673000C52BE0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Base; path = Base.lproj/Localizable.strings; sourceTree = "<group>"; };
 		11FBBE1D232F26E000109035 /* NotificationPayload.apns */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = NotificationPayload.apns; sourceTree = "<group>"; };
@@ -614,6 +622,8 @@
 		1154F6081A575893003F4764 /* 70000TonsBands */ = {
 			isa = PBXGroup;
 			children = (
+				11EB86AE2F353160007D5AD0 /* about-team.png */,
+				11EB86AA2F3530C8007D5AD0 /* AboutView.swift */,
 				113EB9292F243A4D00CE27BB /* DebugLogger.swift */,
 				1154F60D1A575893003F4764 /* _0000TonsBands.xcdatamodeld */,
 				113C3B9C1A62CBDA000E8D9A /* 70000TonsBands.entitlements */,
@@ -909,6 +919,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				11EB86B12F353160007D5AD0 /* about-team.png in Resources */,
 				117BAADD2DC1315900A2830A /* SNL-More_Cowbell.mov in Resources */,
 				1172EE562E5A292E006E3596 /* Info-MDF.plist in Resources */,
 				1172EE572E5A292E006E3596 /* Info-70K.plist in Resources */,
@@ -934,6 +945,7 @@
 				11E6F41C2AEC6C47007C1387 /* CustomListEntry.xib in Resources */,
 				1172A2391B5AC7DC00C28AB3 /* Localizable.strings in Resources */,
 				117BAADC2DC1315900A2830A /* SNL-More_Cowbell.mov in Resources */,
+				11EB86AF2F353160007D5AD0 /* about-team.png in Resources */,
 				1172EE602E5A292E006E3596 /* Info-MDF.plist in Resources */,
 				1172EE612E5A292E006E3596 /* Info-70K.plist in Resources */,
 				11D05AB0291C571D00D5B002 /* countries.txt in Resources */,
@@ -960,6 +972,7 @@
 				1172EE3C2E5A1C4D006E3596 /* OnMyWayToDeath.wav in Resources */,
 				1172EE3D2E5A1C4D006E3596 /* DropDownCell.xib in Resources */,
 				1172EE3E2E5A1C4D006E3596 /* countries.txt in Resources */,
+				11EB86B02F353160007D5AD0 /* about-team.png in Resources */,
 				1172EE4A2E5A2604006E3596 /* GoogleService-Info-MDF.plist in Resources */,
 				1172EE3F2E5A1C4D006E3596 /* Localizable.strings in Resources */,
 				1172EE402E5A1C4D006E3596 /* Settings.bundle in Resources */,
@@ -1236,6 +1249,7 @@
 				11895BA42EE4F0DB008CC4A9 /* DataModels.swift in Sources */,
 				119434B42B1FCFA000DA3F87 /* CustomListEntry.swift in Sources */,
 				115213292A69E23C0017DD9F /* variableStore.swift in Sources */,
+				11EB86AD2F3530C8007D5AD0 /* AboutView.swift in Sources */,
 				11DCE9BD1A86F9E000A25FB8 /* Constants.swift in Sources */,
 				110E085A2AECB6E200075618 /* DropDownCell.swift in Sources */,
 				11E2F2492E8D78530004D6F4 /* CoreDataiCloudSync.swift in Sources */,
@@ -1327,6 +1341,7 @@
 				11D4844C2241DA0C00910878 /* firebaseBandDataWrite.swift in Sources */,
 				11895BA32EE4F0DB008CC4A9 /* DataModels.swift in Sources */,
 				119434B52B1FCFA000DA3F87 /* CustomListEntry.swift in Sources */,
+				11EB86AB2F3530C8007D5AD0 /* AboutView.swift in Sources */,
 				1152132A2A69E23C0017DD9F /* variableStore.swift in Sources */,
 				1155E3AA1A8B121000D51ED9 /* httpHandler.swift in Sources */,
 				1169374620F555D400038DA5 /* Reachability.swift in Sources */,
@@ -1418,6 +1433,7 @@
 				1172EDFF2E5A1C4D006E3596 /* ShowsAttended.swift in Sources */,
 				11895BA52EE4F0DB008CC4A9 /* DataModels.swift in Sources */,
 				1172EE002E5A1C4D006E3596 /* CustomListEntry.swift in Sources */,
+				11EB86AC2F3530C8007D5AD0 /* AboutView.swift in Sources */,
 				1172EE012E5A1C4D006E3596 /* variableStore.swift in Sources */,
 				1172EE022E5A1C4D006E3596 /* Constants.swift in Sources */,
 				1172EE032E5A1C4D006E3596 /* DropDownCell.swift in Sources */,

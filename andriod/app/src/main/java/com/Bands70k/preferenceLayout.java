@@ -25,6 +25,7 @@ import android.widget.Spinner;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.LinearLayout;
 
 import androidx.core.app.NavUtils;
 
@@ -127,6 +128,18 @@ public class preferenceLayout  extends Activity {
         String appName = FestivalConfig.getInstance().appName;
         String preferencesText = getResources().getString(R.string.Preferences);
         headerText.setText(appName + " " + preferencesText);
+
+        // Set up About button click listener
+        LinearLayout aboutButton = findViewById(R.id.aboutButton);
+        if (aboutButton != null) {
+            aboutButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(preferenceLayout.this, AboutActivity.class);
+                    startActivity(intent);
+                }
+            });
+        }
 
     }
 
