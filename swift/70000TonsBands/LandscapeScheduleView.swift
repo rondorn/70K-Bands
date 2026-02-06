@@ -73,6 +73,7 @@ struct ScheduleBlock: Identifiable {
     let bandName: String
     let startTime: Date
     let endTime: Date
+    let startTimeString: String  // Original time string (e.g., "17:30") for attendance tracking
     let eventType: String
     let location: String
     let day: String
@@ -95,6 +96,7 @@ struct LandscapeScheduleView: View {
     @Environment(\.presentationMode) var presentationMode
     
     let onBandTapped: (String, String?) -> Void  // (bandName, currentDay)
+    let attendedHandle: ShowsAttended
     
     init(priorityManager: SQLitePriorityManager, attendedHandle: ShowsAttended, initialDay: String? = nil, hideExpiredEvents: Bool = false, onBandTapped: @escaping (String, String?) -> Void) {
         self._viewModel = StateObject(wrappedValue: LandscapeScheduleViewModel(
@@ -104,6 +106,7 @@ struct LandscapeScheduleView: View {
             hideExpiredEvents: hideExpiredEvents
         ))
         self.onBandTapped = onBandTapped
+        self.attendedHandle = attendedHandle
     }
     
     func getCurrentDay() -> String? {
@@ -125,6 +128,13 @@ struct LandscapeScheduleView: View {
         .preferredColorScheme(.dark)
         .onAppear {
             viewModel.loadScheduleData()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("DetailScreenDismissed"))) { notification in
+            // Refresh the event that was just viewed in the detail screen
+            if let bandName = notification.userInfo?["bandName"] as? String {
+                print("🔄 [LANDSCAPE_SCHEDULE] Detail screen dismissed for \(bandName), refreshing event")
+                viewModel.refreshEventData(bandName: bandName)
+            }
         }
     }
     
@@ -169,7 +179,33 @@ struct LandscapeScheduleView: View {
             
             // Sticky headers and scrollable content
             GeometryReader { geometry in
-                StickyHeaderScrollView(dayData: dayData, onBandTapped: onBandTapped)
+                StickyHeaderScrollView(
+                    dayData: dayData,
+                    onBandTapped: onBandTapped,
+                    onAttendanceUpdate: { bandName, location, startTime, eventType, status in
+                        // Normalize event type for database operations
+                        // Event data contains "Unofficial Event" but database keys use "Cruiser Organized"
+                        let normalizedEventType = (eventType == "Unofficial Event") ? "Cruiser Organized" : eventType
+                        
+                        print("🔍 [LANDSCAPE_SCHEDULE] Event type for attendance: \(eventType) -> \(normalizedEventType)")
+                        
+                        // Update attendance in database
+                        attendedHandle.addShowsAttendedWithStatus(
+                            band: bandName,
+                            location: location,
+                            startTime: startTime,
+                            eventType: normalizedEventType,
+                            eventYearString: String(eventYear),
+                            status: status
+                        )
+                        
+                        // Update the view model's data in place (use original eventType for matching)
+                        viewModel.updateAttendanceForEvent(bandName: bandName, location: location, startTime: startTime, eventType: eventType)
+                        
+                        print("✅ [LANDSCAPE_SCHEDULE] Attendance updated for \(bandName) (\(eventType))")
+                    },
+                    attendedHandle: attendedHandle
+                )
             }
         }
     }
@@ -179,6 +215,8 @@ struct LandscapeScheduleView: View {
     private struct StickyHeaderScrollView: View {
         let dayData: DayScheduleData
         let onBandTapped: (String, String?) -> Void
+        let onAttendanceUpdate: (String, String, String, String, String) -> Void
+        let attendedHandle: ShowsAttended
         @State private var scrollOffset: CGPoint = .zero
         
         var body: some View {
@@ -273,13 +311,13 @@ struct LandscapeScheduleView: View {
                 
                 // Event blocks
                 ForEach(venue.events) { event in
-                    eventBlockView(event: event, dayData: dayData, columnWidth: columnWidth)
+                    eventBlockView(event: event, dayData: dayData, columnWidth: columnWidth, onAttendanceUpdate: onAttendanceUpdate, attendedHandle: attendedHandle)
                 }
             }
             .frame(width: columnWidth)
         }
         
-        private func eventBlockView(event: ScheduleBlock, dayData: DayScheduleData, columnWidth: CGFloat) -> some View {
+        private func eventBlockView(event: ScheduleBlock, dayData: DayScheduleData, columnWidth: CGFloat, onAttendanceUpdate: @escaping (String, String, String, String, String) -> Void, attendedHandle: ShowsAttended) -> some View {
             let yOffset = calculateYOffset(for: event, in: dayData)
             let blockHeight = calculateBlockHeight(for: event)
             let onBandTapped = self.onBandTapped
@@ -331,7 +369,7 @@ struct LandscapeScheduleView: View {
                     // Line 5: Event type (only if not "Show")
                     if !event.eventType.isEmpty && event.eventType != "Show" {
                         HStack(spacing: 3) {
-                            Text(event.eventType)
+                            Text(localizeEventType(event.eventType))
                                 .font(.system(size: 8))
                                 .foregroundColor(event.isExpired ? .white.opacity(0.4) : .white)
                                 .lineLimit(1)
@@ -354,6 +392,40 @@ struct LandscapeScheduleView: View {
                     RoundedRectangle(cornerRadius: 4)
                         .stroke(Color.white.opacity(event.isExpired ? 0.15 : 0.3), lineWidth: 1)
                 )
+            }
+            .contextMenu {
+                // Get current status
+                let currentStatus = event.attendedStatus
+                
+                // Show "All Of Event" if not already selected
+                if currentStatus != "sawAll" {
+                    Button(action: {
+                        onAttendanceUpdate(event.bandName, event.location, event.startTimeString, event.eventType, sawAllStatus)
+                    }) {
+                        Text(NSLocalizedString("All Of Event", comment: ""))
+                        Image(systemName: "checkmark.circle.fill")
+                    }
+                }
+                
+                // Show "Part Of Event" if not already selected AND event type is "Show"
+                if currentStatus != "sawSome" && event.eventType == "Show" {
+                    Button(action: {
+                        onAttendanceUpdate(event.bandName, event.location, event.startTimeString, event.eventType, sawSomeStatus)
+                    }) {
+                        Text(NSLocalizedString("Part Of Event", comment: ""))
+                        Image(systemName: "checkmark.circle")
+                    }
+                }
+                
+                // Show "None Of Event" if not already selected
+                if currentStatus != "sawNone" && currentStatus != "" {
+                    Button(action: {
+                        onAttendanceUpdate(event.bandName, event.location, event.startTimeString, event.eventType, sawNoneStatus)
+                    }) {
+                        Text(NSLocalizedString("None Of Event", comment: ""))
+                        Image(systemName: "xmark.circle")
+                    }
+                }
             }
             .offset(x: 2, y: yOffset)
         }
@@ -409,6 +481,14 @@ struct LandscapeScheduleView: View {
             case "sawSome": return "icon-seen-partial"
             default: return ""
             }
+        }
+        
+        private func localizeEventType(_ eventType: String) -> String {
+            // Map database event type to display name via localization
+            if eventType == "Unofficial Event" {
+                return NSLocalizedString("Unofficial Events", comment: "")
+            }
+            return eventType
         }
     }
     

@@ -50,6 +50,13 @@ struct DetailView: View {
                     VStack {
                         HStack {
                             Button(action: {
+                                // Notify landscape view to refresh this band's data
+                                NotificationCenter.default.post(
+                                    name: Notification.Name("DetailScreenDismissed"),
+                                    object: nil,
+                                    userInfo: ["bandName": viewModel.bandName]
+                                )
+                                print("🔄 [DETAIL_VIEW] Posted DetailScreenDismissed notification for \(viewModel.bandName)")
                                 presentationMode.wrappedValue.dismiss()
                             }) {
                                 HStack(spacing: 4) {
