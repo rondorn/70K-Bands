@@ -1035,6 +1035,7 @@ class DetailViewModel: ObservableObject {
         let imageURLFromMap = imageInfo?.url ?? ""
         let isValidURL = !imageURLFromMap.isEmpty && 
                          imageURLFromMap != "http://" && 
+                         imageURLFromMap != "https://" && 
                          imageURLFromMap.trimmingCharacters(in: .whitespaces).count > 0
         
         if imageInfo == nil || !isValidURL {
@@ -1081,7 +1082,7 @@ class DetailViewModel: ObservableObject {
             print("📸 Image has no expiration date (standard caching)")
         }
         
-        guard !imageURL.isEmpty && imageURL != "http://" else {
+        guard !imageURL.isEmpty && imageURL != "http://" && imageURL != "https://" else {
             print("❌ IMAGE_LOAD: Invalid/empty URL for '\(bandName)' - showing festival-specific placeholder (NOT cached)")
             print("   URL was: '\(imageURL)'")
             DispatchQueue.main.async {
