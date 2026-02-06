@@ -71,23 +71,24 @@ class LandscapeScheduleViewModel: ObservableObject {
             // Process events into days
             var processedDays = self.processEventsIntodays(allEvents)
             
-            // If hiding expired events, filter out days with ONLY expired events
+            // If hideExpiredEvents is true, filter out days with ONLY expired events
             if self.hideExpiredEvents {
+                let beforeFiltering = processedDays.count
                 processedDays = processedDays.filter { dayData in
                     // Keep the day if it has at least one non-expired event
-                    let hasNonExpiredEvent = dayData.venues.contains { venue in
+                    let hasActiveEvent = dayData.venues.contains { venue in
                         venue.events.contains { event in
                             !event.isExpired
                         }
                     }
-                    if !hasNonExpiredEvent {
+                    if !hasActiveEvent {
                         print("🔍 [LANDSCAPE_SCHEDULE] Filtering out day '\(dayData.dayLabel)' - all events expired")
                     }
-                    return hasNonExpiredEvent
+                    return hasActiveEvent
                 }
-                print("🔍 [LANDSCAPE_SCHEDULE] After filtering expired days: \(processedDays.count) days remaining (hideExpiredEvents: true)")
+                print("🔍 [LANDSCAPE_SCHEDULE] Filtered days: \(beforeFiltering) → \(processedDays.count) (hideExpiredEvents: true)")
             } else {
-                print("🔍 [LANDSCAPE_SCHEDULE] Not filtering expired days: \(processedDays.count) days total (hideExpiredEvents: false)")
+                print("🔍 [LANDSCAPE_SCHEDULE] Showing all \(processedDays.count) days (hideExpiredEvents: false)")
             }
             
             DispatchQueue.main.async {
@@ -217,47 +218,14 @@ class LandscapeScheduleViewModel: ObservableObject {
                 eventYearString: String(event.eventYear)
             )
             
-            // Determine if event is expired when hideExpiredEvents is enabled
+            // Mark events as expired when hideExpiredEvents is enabled (for dimming)
+            // Use the same logic as portrait view: endTimeIndex > currentTime (using reference date)
             let isExpired: Bool
             if self.hideExpiredEvents {
-                // Parse event date (e.g., "01/29/2026")
-                let dateStr = event.date ?? ""
-                let dateFormatter = DateFormatter()
-                dateFormatter.dateFormat = "MM/dd/yyyy"
-                
-                if let eventDate = dateFormatter.date(from: dateStr) {
-                    // Parse end time string (e.g., "17:00", "02:00")
-                    let endTimeStr = event.endTime ?? ""
-                    let endTimeComponents = endTimeStr.split(separator: ":").compactMap { Int($0) }
-                    
-                    if endTimeComponents.count == 2 {
-                        let endHour = endTimeComponents[0]
-                        let endMinute = endTimeComponents[1]
-                        
-                        // Create the actual end date+time
-                        let calendar = Calendar.current
-                        var eventEndDateTime = calendar.date(bySettingHour: endHour, minute: endMinute, second: 0, of: eventDate) ?? eventDate
-                        
-                        // If end time is before start time, it crosses midnight - add a day
-                        let endMinutesTotal = endHour * 60 + endMinute
-                        if endMinutesTotal < startMinutes {
-                            eventEndDateTime = calendar.date(byAdding: .day, value: 1, to: eventEndDateTime) ?? eventEndDateTime
-                        }
-                        
-                        // Add 10 minute buffer
-                        let bufferSeconds: TimeInterval = 600
-                        let now = Date()
-                        isExpired = now.timeIntervalSince(eventEndDateTime) > bufferSeconds
-                        
-                        if isExpired {
-                            print("🔍 [EXPIRED_CHECK] \(event.bandName): ended at \(eventEndDateTime), current=\(now) - EXPIRED")
-                        }
-                    } else {
-                        isExpired = false
-                    }
-                } else {
-                    // Can't parse date, assume not expired
-                    isExpired = false
+                let currentTime = Date().timeIntervalSinceReferenceDate
+                isExpired = event.endTimeIndex <= currentTime
+                if isExpired {
+                    print("🔍 [EXPIRED_CHECK] \(event.bandName): endTimeIndex=\(event.endTimeIndex), current=\(currentTime) - EXPIRED")
                 }
             } else {
                 isExpired = false

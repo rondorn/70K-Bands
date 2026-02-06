@@ -12,12 +12,14 @@ import SwiftUI
 class DetailHostingController: UIHostingController<AnyView> {
     
     private let bandName: String
+    private let showCustomBackButton: Bool
     
-    init(bandName: String) {
+    init(bandName: String, showCustomBackButton: Bool = false) {
         self.bandName = bandName
+        self.showCustomBackButton = showCustomBackButton
         
         // Create the SwiftUI view
-        let detailView = DetailView(bandName: bandName)
+        let detailView = DetailView(bandName: bandName, showCustomBackButton: showCustomBackButton)
         let rootView = AnyView(detailView)
         
         super.init(rootView: rootView)
@@ -27,8 +29,9 @@ class DetailHostingController: UIHostingController<AnyView> {
     @MainActor required dynamic init?(coder aDecoder: NSCoder) {
         // Default band name for storyboard initialization
         self.bandName = "Unknown Band"
+        self.showCustomBackButton = false
         
-        let detailView = DetailView(bandName: self.bandName)
+        let detailView = DetailView(bandName: self.bandName, showCustomBackButton: false)
         let rootView = AnyView(detailView)
         
         super.init(coder: aDecoder, rootView: rootView)
@@ -93,8 +96,8 @@ class DetailHostingController: UIHostingController<AnyView> {
     
     /// Updates the band name and refreshes the view
     func updateBandName(_ newBandName: String) {
-        // Create a new SwiftUI view with the updated band name
-        let detailView = DetailView(bandName: newBandName)
+        // Create a new SwiftUI view with the updated band name, preserving showCustomBackButton
+        let detailView = DetailView(bandName: newBandName, showCustomBackButton: self.showCustomBackButton)
         let rootView = AnyView(detailView)
         
         // Update the root view
@@ -124,8 +127,8 @@ class DetailHostingController: UIHostingController<AnyView> {
         
         // Ensure we're on the main thread
         DispatchQueue.main.async {
-            // Create a completely new SwiftUI view with fresh data
-            let detailView = DetailView(bandName: self.bandName)
+            // Create a completely new SwiftUI view with fresh data, preserving showCustomBackButton
+            let detailView = DetailView(bandName: self.bandName, showCustomBackButton: self.showCustomBackButton)
             let rootView = AnyView(detailView)
             
             // Update the root view to trigger UI refresh
@@ -140,8 +143,8 @@ class DetailHostingController: UIHostingController<AnyView> {
         print("🔄 Refreshing DetailHostingController data for band: \(bandName)")
         
         DispatchQueue.main.async {
-            // Create a new SwiftUI view to ensure fresh UI state
-            let detailView = DetailView(bandName: self.bandName)
+            // Create a new SwiftUI view to ensure fresh UI state, preserving showCustomBackButton
+            let detailView = DetailView(bandName: self.bandName, showCustomBackButton: self.showCustomBackButton)
             let rootView = AnyView(detailView)
             
             // Update the root view to trigger complete UI refresh with fresh data
