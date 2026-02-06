@@ -16,11 +16,13 @@ struct DetailView: View {
     @State private var offset: CGFloat = 0
     @State private var blockSwiping = false
     @State private var dragStartX: CGFloat = 0
-    @State private var isLandscape: Bool = false
+    @State private var isModalPresentation: Bool = false
     
-    init(bandName: String) {
+    let showCustomBackButton: Bool
+    
+    init(bandName: String, showCustomBackButton: Bool = false) {
         self._viewModel = StateObject(wrappedValue: DetailViewModel(bandName: bandName))
-        
+        self.showCustomBackButton = showCustomBackButton
     }
     
     var body: some View {
@@ -43,8 +45,8 @@ struct DetailView: View {
                     loadingDataOverlay
                 }
                 
-                // Back button overlay - top left corner (only when presented modally from landscape)
-                if isLandscape {
+                // Back button overlay - top left corner (only when presented modally from landscape schedule)
+                if showCustomBackButton {
                     VStack {
                         HStack {
                             Button(action: {
@@ -69,12 +71,6 @@ struct DetailView: View {
                 }
             }
             .ignoresSafeArea(.keyboard)
-            .onAppear {
-                updateOrientation()
-            }
-            .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
-                updateOrientation()
-            }
         } else {
             // Fallback on earlier versions
         }
@@ -122,44 +118,69 @@ struct DetailView: View {
     
     private var mainContent: some View {
         ZStack {
-            VStack(spacing: 0) {
-                // Compact top section - non-scrollable
+            // Check if we should show simplified landscape layout
+            if showCustomBackButton && !viewModel.scheduleEvents.isEmpty {
+                // Simplified layout for landscape modal with schedule events
                 VStack(spacing: 0) {
-                    // Band Logo - moved to very top
-                    bandLogoSection
+                    // Add top padding to avoid conflict with back button
+                    Spacer()
+                        .frame(height: 50)
                     
-                    // Schedule Events - right after logo
-                    if !viewModel.scheduleEvents.isEmpty {
+                    VStack(spacing: 0) {
+                        // Schedule Events only
                         scheduleEventsSection
                     }
+                    .padding(.horizontal, 14)
+                    .background(Color.black)
                     
-                    // Links Section - after schedule events
-                    if viewModel.hasAnyLinks {
-                        linksSection
-                    }
+                    // Larger space before notes section
+                    Spacer(minLength: 20)
                     
-                    // Band Details - after links
-                    if viewModel.hasBandDetails {
-                        bandDetailsSection
-                    }
+                    // Scrollable Notes Section - takes remaining space
+                    notesSection
+                        .frame(maxHeight: .infinity)
                 }
-                .padding(.horizontal, 14)
-                .background(Color.black)
-                
-                // Larger space before notes section
-                Spacer(minLength: 20)
-                
-                // Scrollable Notes Section - takes remaining space
-                notesSection
-                    .frame(maxHeight: .infinity)
+            } else {
+                // Full layout for normal detail view
+                VStack(spacing: 0) {
+                    // Compact top section - non-scrollable
+                    VStack(spacing: 0) {
+                        // Band Logo - moved to very top
+                        bandLogoSection
+                        
+                        // Schedule Events - right after logo
+                        if !viewModel.scheduleEvents.isEmpty {
+                            scheduleEventsSection
+                        }
+                        
+                        // Links Section - after schedule events
+                        if viewModel.hasAnyLinks {
+                            linksSection
+                        }
+                        
+                        // Band Details - after links
+                        if viewModel.hasBandDetails {
+                            bandDetailsSection
+                        }
+                    }
+                    .padding(.horizontal, 14)
+                    .background(Color.black)
+                    
+                    // Larger space before notes section
+                    Spacer(minLength: 20)
+                    
+                    // Scrollable Notes Section - takes remaining space
+                    notesSection
+                        .frame(maxHeight: .infinity)
+                }
             }
             
             // Pinned sections at bottom
             VStack(spacing: 0) {
                 Spacer()
                 
-                // Translation button - fixed above priority section
-                if viewModel.showTranslationButton {
+                // Translation button - fixed above priority section (hide in simplified landscape mode)
+                if viewModel.showTranslationButton && !(showCustomBackButton && !viewModel.scheduleEvents.isEmpty) {
                     translationButtonSection
                         .background(Color.black.opacity(0.95))
                         .background(.ultraThinMaterial, in: Rectangle())
@@ -282,12 +303,6 @@ struct DetailView: View {
                 }
             }
         }
-    }
-    
-    private func updateOrientation() {
-        let orientation = UIDevice.current.orientation
-        isLandscape = orientation.isLandscape || 
-                      (UIScreen.main.bounds.width > UIScreen.main.bounds.height)
     }
     
     // MARK: - View Components
