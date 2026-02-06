@@ -1355,18 +1355,8 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         scheduleIndexByCall[scheduleText]!["startTime"] = startTime
         scheduleIndexByCall[scheduleText]!["event"] = event
         
-        if day == "Day 1"{
-            dayText = "1";
-        
-        } else if day == "Day 2"{
-            dayText = "2";
-            
-        } else if day == "Day 3"{
-            dayText = "3";
-            
-        } else if day == "Day 4"{
-            dayText = "4";
-            
+        if day.hasPrefix("Day ") {
+            dayText = day.replacingOccurrences(of: "Day ", with: "")
         } else {
             dayText = day
         }
