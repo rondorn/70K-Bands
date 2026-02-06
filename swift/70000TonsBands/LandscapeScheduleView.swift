@@ -97,8 +97,10 @@ struct LandscapeScheduleView: View {
     
     let onBandTapped: (String, String?) -> Void  // (bandName, currentDay)
     let attendedHandle: ShowsAttended
+    let isSplitViewCapable: Bool  // iPad or similar
+    let onDismissRequested: (() -> Void)?  // iPad: callback to return to list view
     
-    init(priorityManager: SQLitePriorityManager, attendedHandle: ShowsAttended, initialDay: String? = nil, hideExpiredEvents: Bool = false, onBandTapped: @escaping (String, String?) -> Void) {
+    init(priorityManager: SQLitePriorityManager, attendedHandle: ShowsAttended, initialDay: String? = nil, hideExpiredEvents: Bool = false, isSplitViewCapable: Bool = false, onDismissRequested: (() -> Void)? = nil, onBandTapped: @escaping (String, String?) -> Void) {
         self._viewModel = StateObject(wrappedValue: LandscapeScheduleViewModel(
             priorityManager: priorityManager,
             attendedHandle: attendedHandle,
@@ -107,6 +109,8 @@ struct LandscapeScheduleView: View {
         ))
         self.onBandTapped = onBandTapped
         self.attendedHandle = attendedHandle
+        self.isSplitViewCapable = isSplitViewCapable
+        self.onDismissRequested = onDismissRequested
     }
     
     func getCurrentDay() -> String? {
@@ -155,18 +159,43 @@ struct LandscapeScheduleView: View {
     // MARK: - No Data View
     
     private var noDataView: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "calendar.badge.exclamationmark")
-                .font(.system(size: 48))
-                .foregroundColor(.gray)
+        ZStack {
+            VStack(spacing: 16) {
+                Image(systemName: "calendar.badge.exclamationmark")
+                    .font(.system(size: 48))
+                    .foregroundColor(.gray)
+                
+                Text("No Schedule Data Available")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(.white)
+                
+                Text("Schedule information is not currently loaded")
+                    .font(.system(size: 14))
+                    .foregroundColor(.gray)
+            }
             
-            Text("No Schedule Data Available")
-                .font(.system(size: 18, weight: .medium))
-                .foregroundColor(.white)
-            
-            Text("Schedule information is not currently loaded")
-                .font(.system(size: 14))
-                .foregroundColor(.gray)
+            // iPad: Add return to list view button
+            if isSplitViewCapable, let onDismiss = onDismissRequested {
+                VStack {
+                    HStack {
+                        Spacer()
+                        Button(action: {
+                            print("📱 [IPAD_TOGGLE] Return to list from no data screen")
+                            onDismiss()
+                        }) {
+                            Image(systemName: "list.bullet")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(.white)
+                                .frame(width: 44, height: 44)
+                                .background(Color.blue.opacity(0.8))
+                                .cornerRadius(8)
+                        }
+                        .padding(.top, 16)
+                        .padding(.trailing, 16)
+                    }
+                    Spacer()
+                }
+            }
         }
     }
     
@@ -537,6 +566,22 @@ struct LandscapeScheduleView: View {
             }
             
             Spacer()
+            
+            // iPad: List view toggle button (return to list view)
+            if isSplitViewCapable, let onDismiss = onDismissRequested {
+                Button(action: {
+                    print("📱 [IPAD_TOGGLE] List button tapped in calendar view")
+                    onDismiss()
+                }) {
+                    Image(systemName: "list.bullet")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(width: 44, height: 44)
+                        .background(Color.blue.opacity(0.8))
+                        .cornerRadius(8)
+                }
+                .padding(.trailing, 16)
+            }
         }
         .frame(height: 60)
         .background(Color.black)
@@ -550,6 +595,10 @@ struct LandscapeScheduleView: View {
     LandscapeScheduleView(
         priorityManager: SQLitePriorityManager.shared,
         attendedHandle: ShowsAttended(),
+        isSplitViewCapable: true,
+        onDismissRequested: {
+            print("Preview: Dismiss requested")
+        },
         onBandTapped: { bandName, currentDay in
             print("Preview: Tapped \(bandName) on \(currentDay ?? "unknown")")
         }

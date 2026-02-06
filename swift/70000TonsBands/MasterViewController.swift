@@ -156,6 +156,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     private var currentViewingDay: String? = nil  // Track which day user is viewing
     private var savedScrollPosition: CGPoint? = nil  // Save scroll position when navigating away
     
+    // iPad-specific calendar toggle
+    private var viewToggleButton: UIBarButtonItem?
+    private var isManualCalendarView: Bool = false  // For iPad: true = calendar view, false = list view
+    
     @IBOutlet weak var statsButton: UIBarButtonItem!
     @IBOutlet weak var filterButtonBar: UIBarButtonItem!
     @IBOutlet weak var searchButtonBar: UIBarButtonItem!
@@ -558,6 +562,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             let afterCount = self.bands.count
             print("🔍 [NOTIF_TRACE] Updated bands array: \(beforeCount) -> \(afterCount)")
             
+            // Update iPad toggle button visibility based on data availability
+            self.setupViewToggleButton()
+            
             // Force table view reload
             print("🔍 [NOTIF_TRACE] About to call tableView.reloadData()")
             self.tableView.reloadData()
@@ -595,6 +602,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             // Directly update the bands array
             self.bands = bandNames
             
+            // Update iPad toggle button visibility based on data availability
+            self.setupViewToggleButton()
+            
             // Force table view reload
             print("🔍 [FIRST_LAUNCH_DEBUG] Reloading table view with \(self.bands.count) bands")
             self.tableView.reloadData()
@@ -624,6 +634,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             // Directly update the bands array
             self.bands = bandNames
+            
+            // Update iPad toggle button visibility based on data availability
+            self.setupViewToggleButton()
             
             // Force table view reload
             print("🔍 [FIRST_LAUNCH_DEBUG] Reloading table view with \(self.bands.count) bands")
@@ -1366,6 +1379,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print("🎛️ [PREFERENCES_SYNC] ⚠️ viewWillAppear called - this might override user preference changes!")
         print("🎛️ [PREFERENCES_SYNC] Current hideExpiredEvents at viewWillAppear start: \(getHideExpireScheduleData())")
         
+        // Setup iPad view toggle button
+        setupViewToggleButton()
+        
         // Register for preference source change notifications
         NotificationCenter.default.addObserver(
             self,
@@ -1959,13 +1975,29 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     private func checkOrientationAndShowLandscapeIfNeeded() {
-        let isLandscape = UIApplication.shared.statusBarOrientation.isLandscape || 
-                          UIDevice.current.orientation.isLandscape
         let isScheduleView = getShowScheduleView()
         
-        print("🔄 [LANDSCAPE_SCHEDULE] Check orientation - Landscape: \(isLandscape), Schedule View: \(isScheduleView)")
+        // iPad: Use manual toggle instead of orientation
+        if isSplitViewCapable() {
+            print("📱 [IPAD_TOGGLE] Schedule View: \(isScheduleView), Manual Calendar View: \(isManualCalendarView)")
+            // iPad behavior is controlled by the manual toggle button, not orientation
+            // Do nothing here - the toggle button handles presentation
+            return
+        }
         
-        if isLandscape && isScheduleView {
+        // Phone: Use orientation-based switching
+        let isLandscape = UIApplication.shared.statusBarOrientation.isLandscape || 
+                          UIDevice.current.orientation.isLandscape
+        
+        // Check if bands array contains event entries (format: "timeIndex:bandName")
+        // When all events are expired, bands array contains only band names (no timeIndex prefix)
+        let hasEventEntries = self.bands.contains { item in
+            item.contains(":") && item.components(separatedBy: ":").first?.doubleValue != nil
+        }
+        
+        print("🔄 [LANDSCAPE_SCHEDULE] Check orientation - Landscape: \(isLandscape), Schedule View: \(isScheduleView), Has Event Entries: \(hasEventEntries), Bands Count: \(self.bands.count)")
+        
+        if isLandscape && isScheduleView && hasEventEntries {
             // Update current viewing day from first visible cell if not already set
             if currentViewingDay == nil {
                 updateCurrentViewingDayFromVisibleCells()
@@ -1996,6 +2028,120 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 print("🔄 [LANDSCAPE_SCHEDULE] Updated viewing day from visible cells: \(day)")
             }
         }
+    }
+    
+    // MARK: - iPad Split View Detection
+    
+    private func isSplitViewCapable() -> Bool {
+        // Check if device is iPad or has split view capability
+        return UIDevice.current.userInterfaceIdiom == .pad
+    }
+    
+    private func setupViewToggleButton() {
+        // Only show on iPad
+        guard isSplitViewCapable() else {
+            viewToggleButton = nil
+            updateNavigationBar()
+            return
+        }
+        
+        // Check same conditions as iPhone landscape mode availability
+        let isScheduleView = getShowScheduleView()
+        let hideExpiredEvents = getHideExpireScheduleData()
+        
+        // Determine if schedule data would be available by checking for event entries in bands array
+        // Event entries have format "timeIndex:bandName", band-only entries are just "bandName"
+        let hasEventEntries = self.bands.contains { item in
+            item.contains(":") && item.components(separatedBy: ":").first?.doubleValue != nil
+        }
+        
+        let scheduleDataAvailable: Bool
+        if hideExpiredEvents {
+            // If hiding expired events, only available if bands array contains event entries
+            // When all events are expired, bands array contains only band names (no timeIndex prefix)
+            scheduleDataAvailable = hasEventEntries
+            print("📱 [IPAD_TOGGLE] hideExpiredEvents=true, hasEventEntries=\(hasEventEntries), bands.count=\(self.bands.count), available=\(scheduleDataAvailable)")
+        } else {
+            // If showing all events, check if we have event entries
+            scheduleDataAvailable = hasEventEntries
+            print("📱 [IPAD_TOGGLE] hideExpiredEvents=false, hasEventEntries=\(hasEventEntries), bands.count=\(self.bands.count), available=\(scheduleDataAvailable)")
+        }
+        
+        // Show button only when:
+        // 1. We're in schedule view mode
+        // 2. Schedule data would actually be available
+        let shouldShowButton = isScheduleView && scheduleDataAvailable
+        
+        print("📱 [IPAD_TOGGLE] isScheduleView=\(isScheduleView), scheduleDataAvailable=\(scheduleDataAvailable), shouldShowButton=\(shouldShowButton)")
+        
+        guard shouldShowButton else {
+            // Hide button if landscape wouldn't be available
+            if viewToggleButton != nil {
+                viewToggleButton = nil
+                updateNavigationBar()
+                print("📱 [IPAD_TOGGLE] Button hidden - landscape not available")
+            }
+            return
+        }
+        
+        // Create or update toggle button with appropriate icon based on current state
+        let iconName = isManualCalendarView ? "list.bullet" : "calendar"
+        
+        if let existingButton = viewToggleButton {
+            // Update existing button icon
+            existingButton.image = UIImage(systemName: iconName)
+            print("📱 [IPAD_TOGGLE] Button icon updated to: \(iconName)")
+        } else {
+            // Create new button
+            let button = UIBarButtonItem(
+                image: UIImage(systemName: iconName),
+                style: .plain,
+                target: self,
+                action: #selector(toggleViewTapped)
+            )
+            button.tintColor = .white
+            viewToggleButton = button
+            updateNavigationBar()
+            print("📱 [IPAD_TOGGLE] View toggle button created with icon: \(iconName)")
+        }
+    }
+    
+    @objc private func toggleViewTapped() {
+        isManualCalendarView.toggle()
+        print("📱 [IPAD_TOGGLE] Manual toggle to: \(isManualCalendarView ? "Calendar" : "List")")
+        
+        if isManualCalendarView {
+            // Switch to calendar view
+            updateCurrentViewingDayFromVisibleCells()
+            presentLandscapeScheduleView()
+            // Update button to list icon
+            viewToggleButton?.image = UIImage(systemName: "list.bullet")
+        } else {
+            // Switch to list view
+            dismissLandscapeScheduleView()
+            // Update button to calendar icon
+            viewToggleButton?.image = UIImage(systemName: "calendar")
+        }
+    }
+    
+    private func updateNavigationBar() {
+        var rightButtons = navigationItem.rightBarButtonItems ?? []
+        
+        // Remove any existing toggle button first
+        rightButtons.removeAll { item in
+            item.action == #selector(toggleViewTapped)
+        }
+        
+        // Add the toggle button if it exists (otherwise just leave it removed)
+        if let toggleButton = viewToggleButton {
+            // Add toggle button at the beginning (leftmost position)
+            rightButtons.insert(toggleButton, at: 0)
+            print("📱 [IPAD_TOGGLE] Button added to navigation bar")
+        } else {
+            print("📱 [IPAD_TOGGLE] Button removed from navigation bar")
+        }
+        
+        navigationItem.rightBarButtonItems = rightButtons
     }
     
     // MARK: - Landscape Schedule View Management
@@ -2034,6 +2180,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             attendedHandle: attendedHandle,
             initialDay: initialDay,
             hideExpiredEvents: hideExpiredEvents,
+            isSplitViewCapable: isSplitViewCapable(),
+            onDismissRequested: { [weak self] in
+                // iPad: User wants to return to list view
+                self?.isManualCalendarView = false
+                self?.dismissLandscapeScheduleView()
+            },
             onBandTapped: { [weak self] bandName, currentDay in
                 // Handle band tap - present detail directly from landscape view
                 guard let self = self else { return }
@@ -2099,6 +2251,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             print("✅ [LANDSCAPE_SCHEDULE] Landscape schedule view dismissed")
             self?.landscapeScheduleViewController = nil
             self?.isShowingLandscapeSchedule = false
+            
+            // Reset iPad manual toggle state and button icon
+            if self?.isSplitViewCapable() == true {
+                self?.isManualCalendarView = false
+                self?.viewToggleButton?.image = UIImage(systemName: "calendar")
+                print("📱 [IPAD_TOGGLE] Reset to list view, button updated")
+            }
+            
             completion?()
         }
     }
@@ -5464,6 +5624,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // Also update the other arrays to maintain consistency
         bandsByName = newBands
         
+        // Update iPad toggle button visibility based on data availability
+        setupViewToggleButton()
+        
         // CRITICAL FIX: Rebuild CellDataCache after year changes to populate UI cache with priority data
         // This ensures priority data is displayed correctly after year changes
         print("🔄 Rebuilding CellDataCache after band data merge - reason: '\(reason)'")
@@ -5497,6 +5660,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // Update the arrays atomically
         bands = newBands
         bandsByName = newBands
+        
+        // Update iPad toggle button visibility based on data availability
+        setupViewToggleButton()
         
         // CRITICAL FIX: Rebuild CellDataCache after full data refresh to populate UI cache with priority data
         // This ensures priority data is displayed correctly after year changes

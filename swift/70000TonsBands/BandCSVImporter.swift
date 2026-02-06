@@ -470,6 +470,13 @@ extension BandCSVImporter {
         print("🚀 [SQLITE_DIRECT] Import complete!")
         print("🚀 [SQLITE_DIRECT] Summary: \(bandsToInsert.count) bands inserted/updated, \(deletedCount) old bands deleted")
         
+        // CRITICAL FIX: After importing to SQLite, force bandNamesHandler to reload its cache
+        // This ensures CombinedImageListHandler gets the updated data when regenerating the image list
+        print("🔄 [SQLITE_DIRECT] Forcing bandNamesHandler cache reload after CSV import")
+        bandNamesHandler.shared.clearCachedData()
+        bandNamesHandler.shared.loadCachedDataImmediately()
+        print("✅ [SQLITE_DIRECT] bandNamesHandler cache reloaded - \(bandNamesHandler.shared.getBandNames().count) bands now available")
+        
         return true
     }
 }

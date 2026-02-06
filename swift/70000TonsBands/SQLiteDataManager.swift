@@ -566,7 +566,7 @@ class SQLiteDataManager: DataManagerProtocol {
             func isValidImageURL(_ url: String?) -> Bool {
                 guard let url = url else { return false }
                 let trimmed = url.trimmingCharacters(in: .whitespacesAndNewlines)
-                return !trimmed.isEmpty && trimmed != "http://"
+                return !trimmed.isEmpty && trimmed != "http://" && trimmed != "https://"
             }
             
             try db.transaction {
