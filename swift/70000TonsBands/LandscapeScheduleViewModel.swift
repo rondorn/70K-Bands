@@ -136,6 +136,132 @@ class LandscapeScheduleViewModel: ObservableObject {
         currentDayIndex += 1
     }
     
+    func updateAttendanceForEvent(bandName: String, location: String, startTime: String, eventType: String) {
+        print("🔄 [LANDSCAPE_SCHEDULE] Updating attendance for \(bandName) (\(eventType)) at \(location) \(startTime)")
+        
+        // Normalize event type for database query
+        // Event data contains "Unofficial Event" but database keys use "Cruiser Organized"
+        let normalizedEventType = (eventType == "Unofficial Event") ? "Cruiser Organized" : eventType
+        
+        print("🔍 [LANDSCAPE_SCHEDULE] Normalized event type: \(eventType) -> \(normalizedEventType)")
+        
+        // Get fresh attendance status
+        let newStatus = attendedHandle.getShowAttendedStatus(
+            band: bandName,
+            location: location,
+            startTime: startTime,
+            eventType: normalizedEventType,
+            eventYearString: String(eventYear)
+        )
+        
+        // Update the days array in place
+        for dayIndex in 0..<days.count {
+            var updatedVenues: [VenueColumn] = []
+            
+            for venue in days[dayIndex].venues {
+                var updatedEvents: [ScheduleBlock] = []
+                
+                for event in venue.events {
+                    if event.bandName == bandName && event.location == location && event.startTimeString == startTime && event.eventType == eventType {
+                        // Create updated event with new attendance status
+                        let updatedEvent = ScheduleBlock(
+                            bandName: event.bandName,
+                            startTime: event.startTime,
+                            endTime: event.endTime,
+                            startTimeString: event.startTimeString,
+                            eventType: event.eventType,
+                            location: event.location,
+                            day: event.day,
+                            timeIndex: event.timeIndex,
+                            priority: event.priority,
+                            attendedStatus: newStatus,
+                            isExpired: event.isExpired
+                        )
+                        updatedEvents.append(updatedEvent)
+                        print("✅ [LANDSCAPE_SCHEDULE] Updated event \(bandName) (\(eventType)): \(event.attendedStatus) -> \(newStatus)")
+                    } else {
+                        updatedEvents.append(event)
+                    }
+                }
+                
+                let updatedVenue = VenueColumn(name: venue.name, color: venue.color, events: updatedEvents)
+                updatedVenues.append(updatedVenue)
+            }
+            
+            days[dayIndex] = DayScheduleData(
+                dayLabel: days[dayIndex].dayLabel,
+                venues: updatedVenues,
+                timeSlots: days[dayIndex].timeSlots,
+                startTime: days[dayIndex].startTime,
+                endTime: days[dayIndex].endTime,
+                baseTimeIndex: days[dayIndex].baseTimeIndex
+            )
+        }
+    }
+    
+    func refreshEventData(bandName: String) {
+        print("🔄 [LANDSCAPE_SCHEDULE] Refreshing all events for band: \(bandName)")
+        
+        // Find all events for this band and update their priority and attendance
+        for dayIndex in 0..<days.count {
+            var updatedVenues: [VenueColumn] = []
+            
+            for venue in days[dayIndex].venues {
+                var updatedEvents: [ScheduleBlock] = []
+                
+                for event in venue.events {
+                    if event.bandName == bandName {
+                        // Normalize event type for database query
+                        let normalizedEventType = (event.eventType == "Unofficial Event") ? "Cruiser Organized" : event.eventType
+                        
+                        // Get fresh priority
+                        let newPriority = priorityManager.getPriority(for: bandName)
+                        
+                        // Get fresh attendance status
+                        let newStatus = attendedHandle.getShowAttendedStatus(
+                            band: bandName,
+                            location: event.location,
+                            startTime: event.startTimeString,
+                            eventType: normalizedEventType,
+                            eventYearString: String(eventYear)
+                        )
+                        
+                        // Create updated event with fresh data
+                        let updatedEvent = ScheduleBlock(
+                            bandName: event.bandName,
+                            startTime: event.startTime,
+                            endTime: event.endTime,
+                            startTimeString: event.startTimeString,
+                            eventType: event.eventType,
+                            location: event.location,
+                            day: event.day,
+                            timeIndex: event.timeIndex,
+                            priority: newPriority,
+                            attendedStatus: newStatus,
+                            isExpired: event.isExpired
+                        )
+                        updatedEvents.append(updatedEvent)
+                        print("✅ [LANDSCAPE_SCHEDULE] Refreshed \(bandName) at \(event.location) \(event.startTimeString): priority=\(newPriority), attended=\(newStatus)")
+                    } else {
+                        updatedEvents.append(event)
+                    }
+                }
+                
+                let updatedVenue = VenueColumn(name: venue.name, color: venue.color, events: updatedEvents)
+                updatedVenues.append(updatedVenue)
+            }
+            
+            days[dayIndex] = DayScheduleData(
+                dayLabel: days[dayIndex].dayLabel,
+                venues: updatedVenues,
+                timeSlots: days[dayIndex].timeSlots,
+                startTime: days[dayIndex].startTime,
+                endTime: days[dayIndex].endTime,
+                baseTimeIndex: days[dayIndex].baseTimeIndex
+            )
+        }
+    }
+    
     func refreshData() {
         print("🔄 [LANDSCAPE_SCHEDULE] Refreshing data due to filter change")
         loadScheduleData()
@@ -235,6 +361,7 @@ class LandscapeScheduleViewModel: ObservableObject {
                 bandName: event.bandName,
                 startTime: startDate,
                 endTime: endDate,
+                startTimeString: startTimeStr,
                 eventType: event.eventType ?? "Performance",
                 location: event.location,
                 day: day,
