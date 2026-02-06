@@ -230,12 +230,12 @@ class EventManager {
             }
         }
         
-        // Apply venue filtering
+        // Apply venue filtering (EXACT match only, case-insensitive)
         if !enabledFilterVenues.isEmpty || getShowOtherShows() {
             filteredEvents = filteredEvents.filter { event in
-                // Check if location matches any enabled filter venue
+                // Check if location matches any enabled filter venue (EXACT match)
                 let matchesFilterVenue = enabledFilterVenues.contains { venueName in
-                    event.location.localizedCaseInsensitiveContains(venueName)
+                    event.location.localizedCaseInsensitiveCompare(venueName) == .orderedSame
                 }
                 
                 if matchesFilterVenue {
@@ -245,7 +245,7 @@ class EventManager {
                 // Check if it's an "Other" venue (not matching any filter venue)
                 if getShowOtherShows() {
                     let matchesAnyFilterVenue = filterVenues.contains { venueName in
-                        event.location.localizedCaseInsensitiveContains(venueName)
+                        event.location.localizedCaseInsensitiveCompare(venueName) == .orderedSame
                     }
                     return !matchesAnyFilterVenue
                 }
@@ -375,11 +375,11 @@ class EventManager {
             events = events.filter { bandNameSet.contains($0.bandName) }
         }
         
-        // Location filtering
+        // Location filtering (EXACT match only, case-insensitive)
         if let locations = locations, !locations.isEmpty {
             events = events.filter { event in
                 locations.contains { location in
-                    event.location.localizedCaseInsensitiveContains(location)
+                    event.location.localizedCaseInsensitiveCompare(location) == .orderedSame
                 }
             }
         }
