@@ -1476,14 +1476,8 @@ class DetailViewModel: ObservableObject {
                 let eventTypeIcon = getEventTypeIcon(eventType: eventType, eventName: bandName)
                 
                 var dayText = ""
-                if day == "Day 1" {
-                    dayText = "1"
-                } else if day == "Day 2" {
-                    dayText = "2"
-                } else if day == "Day 3" {
-                    dayText = "3"
-                } else if day == "Day 4" {
-                    dayText = "4"
+                if day.hasPrefix("Day ") {
+                    dayText = day.replacingOccurrences(of: "Day ", with: "")
                 } else {
                     dayText = day
                 }

@@ -12,9 +12,11 @@ import Translation
 struct DetailView: View {
     @StateObject private var viewModel: DetailViewModel
     @Environment(\.presentationMode) var presentationMode
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
     @State private var offset: CGFloat = 0
     @State private var blockSwiping = false
     @State private var dragStartX: CGFloat = 0
+    @State private var isLandscape: Bool = false
     
     init(bandName: String) {
         self._viewModel = StateObject(wrappedValue: DetailViewModel(bandName: bandName))
@@ -40,8 +42,39 @@ struct DetailView: View {
                 if viewModel.isLoadingEssentialData {
                     loadingDataOverlay
                 }
+                
+                // Back button overlay - top left corner (only when presented modally from landscape)
+                if isLandscape {
+                    VStack {
+                        HStack {
+                            Button(action: {
+                                presentationMode.wrappedValue.dismiss()
+                            }) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "chevron.left")
+                                        .font(.system(size: 18, weight: .semibold))
+                                    Text("Back")
+                                        .font(.system(size: 17))
+                                }
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 6)
+                            }
+                            .padding(.top, 12)
+                            .padding(.leading, 12)
+                            Spacer()
+                        }
+                        Spacer()
+                    }
+                }
             }
             .ignoresSafeArea(.keyboard)
+            .onAppear {
+                updateOrientation()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
+                updateOrientation()
+            }
         } else {
             // Fallback on earlier versions
         }
@@ -249,6 +282,12 @@ struct DetailView: View {
                 }
             }
         }
+    }
+    
+    private func updateOrientation() {
+        let orientation = UIDevice.current.orientation
+        isLandscape = orientation.isLandscape || 
+                      (UIScreen.main.bounds.width > UIScreen.main.bounds.height)
     }
     
     // MARK: - View Components

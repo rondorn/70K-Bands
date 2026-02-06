@@ -10,6 +10,7 @@ import UIKit
 import CoreData
 import Firebase
 import AVKit
+import SwiftUI
 
 class MasterViewController: UITableViewController, UISplitViewControllerDelegate, NSFetchedResultsControllerDelegate, UISearchBarDelegate {
     
@@ -148,6 +149,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     //@IBOutlet weak var scheduleButton: UIButton!
     @IBOutlet weak var settingsButton: UIButton!
     @IBOutlet weak var blankScreenActivityIndicator: UIActivityIndicatorView!
+    
+    // MARK: - Landscape Schedule View
+    private var landscapeScheduleViewController: UIViewController?
+    private var isShowingLandscapeSchedule: Bool = false
+    private var currentViewingDay: String? = nil  // Track which day user is viewing
+    private var savedScrollPosition: CGPoint? = nil  // Save scroll position when navigating away
     
     @IBOutlet weak var statsButton: UIBarButtonItem!
     @IBOutlet weak var filterButtonBar: UIBarButtonItem!
@@ -1418,6 +1425,24 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         cleanupEasterEggPlayer() // Defensive: ensure no video is left over
         
+        // Schedule scroll position restoration and landscape check for after data loads
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            guard let self = self else { return }
+            
+            // Restore scroll position if we have one saved
+            if let savedPosition = self.savedScrollPosition {
+                print("🔄 [LANDSCAPE_SCHEDULE] Restoring scroll position: \(savedPosition)")
+                self.tableView.setContentOffset(savedPosition, animated: false)
+                self.savedScrollPosition = nil
+                
+                // Update viewing day from restored position
+                self.updateCurrentViewingDayFromVisibleCells()
+            }
+            
+            // Check orientation and show landscape view if needed
+            self.checkOrientationAndShowLandscapeIfNeeded()
+        }
+        
         let endTime = CFAbsoluteTimeGetCurrent()
         print("🕐 [\(String(format: "%.3f", endTime))] viewWillAppear END - total time: \(String(format: "%.3f", (endTime - startTime) * 1000))ms")
     }
@@ -1919,10 +1944,154 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     @objc func OnOrientationChange(){
         // DEADLOCK FIX: Never block main thread - use async delay instead
         print("🔓 DEADLOCK FIX: Orientation change detected - scheduling refresh with non-blocking delay")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+        
+        // Check if we should show landscape schedule view
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
             guard let self = self else { return }
-            print("Calling refreshBandList from OnOrientationChange with reason: Orientation change")
-            self.refreshBandList(reason: "Orientation change")
+            self.checkOrientationAndShowLandscapeIfNeeded()
+            
+            // Refresh band list if not showing landscape
+            if !self.isShowingLandscapeSchedule {
+                print("Calling refreshBandList from OnOrientationChange with reason: Orientation change")
+                self.refreshBandList(reason: "Orientation change")
+            }
+        }
+    }
+    
+    private func checkOrientationAndShowLandscapeIfNeeded() {
+        let isLandscape = UIApplication.shared.statusBarOrientation.isLandscape || 
+                          UIDevice.current.orientation.isLandscape
+        let isScheduleView = getShowScheduleView()
+        
+        print("🔄 [LANDSCAPE_SCHEDULE] Check orientation - Landscape: \(isLandscape), Schedule View: \(isScheduleView)")
+        
+        if isLandscape && isScheduleView {
+            // Update current viewing day from first visible cell if not already set
+            if currentViewingDay == nil {
+                updateCurrentViewingDayFromVisibleCells()
+            }
+            
+            // Show landscape schedule view
+            presentLandscapeScheduleView()
+        } else {
+            // Hide landscape schedule view if showing
+            dismissLandscapeScheduleView()
+        }
+    }
+    
+    private func updateCurrentViewingDayFromVisibleCells() {
+        guard let visibleIndexPaths = tableView.indexPathsForVisibleRows,
+              let firstVisibleIndexPath = visibleIndexPaths.first,
+              firstVisibleIndexPath.row < bands.count else {
+            return
+        }
+        
+        let bandEntry = bands[firstVisibleIndexPath.row]
+        
+        // Extract day from the band entry (format: "timeIndex:bandName")
+        if let timeIndex = bandEntry.components(separatedBy: ":").first?.doubleValue {
+            let events = schedule.schedulingDataByTime[timeIndex] ?? []
+            if let firstEvent = events.first, let day = firstEvent["Day"] {
+                currentViewingDay = day
+                print("🔄 [LANDSCAPE_SCHEDULE] Updated viewing day from visible cells: \(day)")
+            }
+        }
+    }
+    
+    // MARK: - Landscape Schedule View Management
+    
+    private func presentLandscapeScheduleView() {
+        // Don't present if already showing
+        guard !isShowingLandscapeSchedule else {
+            print("🔄 [LANDSCAPE_SCHEDULE] Already showing landscape schedule view")
+            return
+        }
+        
+        print("🔄 [LANDSCAPE_SCHEDULE] Presenting landscape schedule view")
+        
+        // Check if hiding expired events
+        let hideExpiredEvents = getHideExpireScheduleData()
+        print("🔄 [LANDSCAPE_SCHEDULE] hideExpiredEvents: \(hideExpiredEvents)")
+        
+        // Use the tracked current viewing day
+        let initialDay = currentViewingDay
+        if let day = initialDay {
+            print("🔄 [LANDSCAPE_SCHEDULE] Starting on tracked day: \(day)")
+        } else {
+            print("🔄 [LANDSCAPE_SCHEDULE] No tracked day, will start on first day")
+        }
+        
+        // Pass the same dependencies used by the main view for filtering
+        let landscapeView = LandscapeScheduleView(
+            priorityManager: priorityManager,
+            attendedHandle: attendedHandle,
+            initialDay: initialDay,
+            hideExpiredEvents: hideExpiredEvents
+        ) { [weak self] bandName, currentDay in
+            // Handle band tap - present detail directly from landscape view
+            guard let self = self else { return }
+            
+            print("🔄 [LANDSCAPE_SCHEDULE] Band tapped: \(bandName) on day: \(currentDay ?? "unknown")")
+            
+            // Save the current day for when we return
+            if let day = currentDay {
+                self.currentViewingDay = day
+                print("🔄 [LANDSCAPE_SCHEDULE] Saved current viewing day: \(day)")
+            }
+            
+            // Save scroll position
+            self.savedScrollPosition = self.tableView.contentOffset
+            print("🔄 [LANDSCAPE_SCHEDULE] Saved scroll position: \(self.savedScrollPosition!)")
+            
+            // Find the band index
+            let bandIndex: Int
+            if let index = self.bands.firstIndex(where: { band in
+                getNameFromSortable(band, sortedBy: getSortedBy()) == bandName
+            }) {
+                bandIndex = index
+            } else {
+                print("⚠️ [LANDSCAPE_SCHEDULE] Band not in filtered list, using index 0")
+                bandIndex = 0
+            }
+            
+            // Set up for detail navigation (using globals from Constants.swift)
+            bandSelected = bandName
+            bandListIndexCache = bandIndex
+            currentBandList = self.bands
+            
+            // Create and present detail view from the stored landscape controller
+            let detailController = DetailHostingController(bandName: bandName)
+            
+            // Present from the stored landscape view controller
+            self.landscapeScheduleViewController?.present(detailController, animated: true) {
+                print("✅ [LANDSCAPE_SCHEDULE] Detail view presented")
+            }
+        }
+        
+        let hostingController = UIHostingController(rootView: landscapeView)
+        hostingController.modalPresentationStyle = .fullScreen
+        
+        landscapeScheduleViewController = hostingController
+        isShowingLandscapeSchedule = true
+        
+        present(hostingController, animated: true) {
+            print("✅ [LANDSCAPE_SCHEDULE] Landscape schedule view presented")
+        }
+    }
+    
+    private func dismissLandscapeScheduleView(completion: (() -> Void)? = nil) {
+        guard isShowingLandscapeSchedule, let viewController = landscapeScheduleViewController else {
+            completion?()
+            return
+        }
+        
+        print("🔄 [LANDSCAPE_SCHEDULE] Dismissing landscape schedule view")
+        
+        viewController.dismiss(animated: true) { [weak self] in
+            print("✅ [LANDSCAPE_SCHEDULE] Landscape schedule view dismissed")
+            self?.landscapeScheduleViewController = nil
+            self?.isShowingLandscapeSchedule = false
+            completion?()
         }
     }
     
@@ -3146,6 +3315,21 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         return cell
     }
     
+    override func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        // Track the currently visible day when in schedule view mode
+        if getShowScheduleView() && indexPath.row < bands.count {
+            let bandEntry = bands[indexPath.row]
+            
+            // Extract day from the band entry (format: "timeIndex:bandName")
+            if let timeIndex = bandEntry.components(separatedBy: ":").first?.doubleValue {
+                let events = schedule.schedulingDataByTime[timeIndex] ?? []
+                if let firstEvent = events.first, let day = firstEvent["Day"] {
+                    currentViewingDay = day
+                }
+            }
+        }
+    }
+    
     override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
         // Return false if you do not want the specified item to be editable.
         return true
@@ -3920,6 +4104,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         bandListIndexCache = indexPath.row
         
         print("Bands size is \(bands.count) Index is \(indexPath.row)")
+        
+        // Track which day this band is on for landscape view initial positioning
+        let eventManager = EventManager()
+        let allEvents = eventManager.getEvents(forYear: eventYear)
+        if let firstEvent = allEvents.first(where: { $0.bandName == bandName }), let day = firstEvent.day {
+            currentViewingDay = day
+            print("🔄 [DAY_TRACKING] Set currentViewingDay to \(day) for band: \(bandName)")
+        }
         
         // IMPORTANT: Populate currentBandList for swipe navigation (same as prepare(for:sender:))
         currentBandList = self.bands

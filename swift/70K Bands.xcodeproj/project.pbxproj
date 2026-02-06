@@ -320,6 +320,10 @@
 		11EB86AF2F353160007D5AD0 /* about-team.png in Resources */ = {isa = PBXBuildFile; fileRef = 11EB86AE2F353160007D5AD0 /* about-team.png */; };
 		11EB86B02F353160007D5AD0 /* about-team.png in Resources */ = {isa = PBXBuildFile; fileRef = 11EB86AE2F353160007D5AD0 /* about-team.png */; };
 		11EB86B12F353160007D5AD0 /* about-team.png in Resources */ = {isa = PBXBuildFile; fileRef = 11EB86AE2F353160007D5AD0 /* about-team.png */; };
+		11EB86B42F353C56007D5AD0 /* LandscapeScheduleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA018E4476A45C994ED91C0 /* LandscapeScheduleView.swift */; };
+		11EB86B52F353C56007D5AD0 /* LandscapeScheduleViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DDB7E0B0AC440BA94B56DBD /* LandscapeScheduleViewModel.swift */; };
+		11EB86B62F353C56007D5AD0 /* LandscapeScheduleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA018E4476A45C994ED91C0 /* LandscapeScheduleView.swift */; };
+		11EB86B72F353C56007D5AD0 /* LandscapeScheduleViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DDB7E0B0AC440BA94B56DBD /* LandscapeScheduleViewModel.swift */; };
 		11ED61811A9103C100D29A5B /* UtilityHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ED61801A9103C100D29A5B /* UtilityHandler.swift */; };
 		11ED61821A91105000D29A5B /* UtilityHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ED61801A9103C100D29A5B /* UtilityHandler.swift */; };
 		11F0333E1AB3B26D00AA29B8 /* scheduleHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C8BDC51A7D25E700037F2B /* scheduleHandler.swift */; };
@@ -328,7 +332,9 @@
 		29EC6AF2BCA8A12239CBE201 /* ProfilePickerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 080FE1E959C6EBF8BA8E5265 /* ProfilePickerViewController.swift */; };
 		31BA99733FDAE4BB78AD4B5F /* ProfileTutorialOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1530C58547653A0C1AAAA76C /* ProfileTutorialOverlay.swift */; };
 		4F67BE347E058E3E472A7FAB /* Pods_70K_Bands.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FE3B5991B589286B7C27B395 /* Pods_70K_Bands.framework */; };
+		82F2265E50F74313A6F60BE1 /* LandscapeScheduleViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DDB7E0B0AC440BA94B56DBD /* LandscapeScheduleViewModel.swift */; };
 		9DE58C80B71FF2933BD45C36 /* Pods_MDF_Bands.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DDAE333FDF216D5113AD6F14 /* Pods_MDF_Bands.framework */; };
+		A0E332C6C3514EE2A65FF3DC /* LandscapeScheduleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA018E4476A45C994ED91C0 /* LandscapeScheduleView.swift */; };
 		B0B1C2D3E4F5061728394A5C /* MinimumVersionWarningManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0B1C2D3E4F5061728394A5B /* MinimumVersionWarningManager.swift */; };
 		B0B1C2D3E4F5061728394A5D /* MinimumVersionWarningManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0B1C2D3E4F5061728394A5B /* MinimumVersionWarningManager.swift */; };
 		B0B1C2D3E4F5061728394A5E /* MinimumVersionWarningManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0B1C2D3E4F5061728394A5B /* MinimumVersionWarningManager.swift */; };
@@ -511,6 +517,8 @@
 		7244FDFE5D87C624F0B9DB94 /* Pods_70K_BandsTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_70K_BandsTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		7256E9D754DCD004377624E8 /* Pods-70K BandsTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-70K BandsTests.release.xcconfig"; path = "Target Support Files/Pods-70K BandsTests/Pods-70K BandsTests.release.xcconfig"; sourceTree = "<group>"; };
 		77777021F00AE7B5605B50B9 /* Pods-70K Bands.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-70K Bands.debug.xcconfig"; path = "Target Support Files/Pods-70K Bands/Pods-70K Bands.debug.xcconfig"; sourceTree = "<group>"; };
+		8CA018E4476A45C994ED91C0 /* LandscapeScheduleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandscapeScheduleView.swift; sourceTree = "<group>"; };
+		8DDB7E0B0AC440BA94B56DBD /* LandscapeScheduleViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandscapeScheduleViewModel.swift; sourceTree = "<group>"; };
 		B0B1C2D3E4F5061728394A5B /* MinimumVersionWarningManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MinimumVersionWarningManager.swift; sourceTree = "<group>"; };
 		DDAE333FDF216D5113AD6F14 /* Pods_MDF_Bands.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MDF_Bands.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		E5280282B2B9A8824CA090AF /* Pods-MDF Bands.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MDF Bands.release.xcconfig"; path = "Target Support Files/Pods-MDF Bands/Pods-MDF Bands.release.xcconfig"; sourceTree = "<group>"; };
@@ -658,6 +666,8 @@
 				1175C9382E4D2C5A0074E2F2 /* DetailHostingController.swift */,
 				1175C9392E4D2C5A0074E2F2 /* DetailView.swift */,
 				1175C93A2E4D2C5A0074E2F2 /* DetailViewModel.swift */,
+				8CA018E4476A45C994ED91C0 /* LandscapeScheduleView.swift */,
+				8DDB7E0B0AC440BA94B56DBD /* LandscapeScheduleViewModel.swift */,
 				110E084B2AECB6E100075618 /* DPDConstants.swift */,
 				110E08492AECB6E100075618 /* DPDKeyboardListener.swift */,
 				110E084C2AECB6E200075618 /* DPDUIView+Extension.swift */,
@@ -1278,6 +1288,8 @@
 				112913842EE618BE008472A3 /* SQLitePriorityManager.swift in Sources */,
 				1175C93F2E4D2C5A0074E2F2 /* DetailView.swift in Sources */,
 				1175C9402E4D2C5A0074E2F2 /* DetailViewModel.swift in Sources */,
+				A0E332C6C3514EE2A65FF3DC /* LandscapeScheduleView.swift in Sources */,
+				82F2265E50F74313A6F60BE1 /* LandscapeScheduleViewModel.swift in Sources */,
 				114B5C0A2E468DCE0030CA9D /* BandDescriptionTranslator.swift in Sources */,
 				1147D7022E63CF51000A98B0 /* BandNamesHandlerProtocol.swift in Sources */,
 				11615BB62E4644ED007BD3D5 /* PreferencesHostingController.swift in Sources */,
@@ -1370,6 +1382,8 @@
 				1129137D2EE618BE008472A3 /* CoreDataToSQLiteMigrationHelper.swift in Sources */,
 				1129137F2EE618BE008472A3 /* SQLitePriorityManager.swift in Sources */,
 				1175C93D2E4D2C5A0074E2F2 /* DetailViewModel.swift in Sources */,
+				11EB86B42F353C56007D5AD0 /* LandscapeScheduleView.swift in Sources */,
+				11EB86B52F353C56007D5AD0 /* LandscapeScheduleViewModel.swift in Sources */,
 				114B5C092E468DCE0030CA9D /* BandDescriptionTranslator.swift in Sources */,
 				11ABAA61222C7F0000A04397 /* userDataHandler.swift in Sources */,
 				1147D7002E63CF51000A98B0 /* BandNamesHandlerProtocol.swift in Sources */,
@@ -1463,6 +1477,8 @@
 				112913892EE618BE008472A3 /* SQLitePriorityManager.swift in Sources */,
 				1172EE112E5A1C4D006E3596 /* DetailView.swift in Sources */,
 				1172EE122E5A1C4D006E3596 /* DetailViewModel.swift in Sources */,
+				11EB86B62F353C56007D5AD0 /* LandscapeScheduleView.swift in Sources */,
+				11EB86B72F353C56007D5AD0 /* LandscapeScheduleViewModel.swift in Sources */,
 				1172EE132E5A1C4D006E3596 /* BandDescriptionTranslator.swift in Sources */,
 				1147D6FE2E63CF51000A98B0 /* BandNamesHandlerProtocol.swift in Sources */,
 				1172EE142E5A1C4D006E3596 /* PreferencesHostingController.swift in Sources */,
@@ -1721,7 +1737,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260205001;
+				CURRENT_PROJECT_VERSION = 20260205002;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1749,7 +1765,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260205001;
+				MARKETING_VERSION = 20260205002;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -1805,7 +1821,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260205001;
+				CURRENT_PROJECT_VERSION = 20260205002;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1830,7 +1846,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260205001;
+				MARKETING_VERSION = 20260205002;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -2027,7 +2043,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260205001;
+				CURRENT_PROJECT_VERSION = 20260205002;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -2048,7 +2064,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260205001;
+				MARKETING_VERSION = 20260205002;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -2104,7 +2120,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260205001;
+				CURRENT_PROJECT_VERSION = 20260205002;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -2129,7 +2145,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260205001;
+				MARKETING_VERSION = 20260205002;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
