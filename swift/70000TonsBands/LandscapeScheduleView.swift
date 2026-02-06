@@ -289,27 +289,32 @@ struct LandscapeScheduleView: View {
                 print("Tapped on \(event.bandName) on \(currentDay)")
                 onBandTapped(event.bandName, currentDay)
             }) {
-                VStack(alignment: .leading, spacing: 2) {
-                    // Band name
+                VStack(alignment: .leading, spacing: 1) {
+                    // Line 1: Band name
                     Text(event.bandName)
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundColor(event.isExpired ? .white.opacity(0.4) : .white)
-                        .lineLimit(2)
+                        .lineLimit(1)
                         .minimumScaleFactor(0.7)
                     
-                    // Time range
-                    Text(formatTimeRange(start: event.startTime, end: event.endTime))
+                    // Line 2: Start time with label
+                    Text("Start: \(formatTime(event.startTime))")
                         .font(.system(size: 9))
-                        .foregroundColor(event.isExpired ? .white.opacity(0.3) : .white.opacity(0.8))
+                        .foregroundColor(event.isExpired ? .white.opacity(0.4) : .white)
                     
-                    // Priority and Attended icons
+                    // Line 3: End time with label
+                    Text("End: \(formatTime(event.endTime))")
+                        .font(.system(size: 9))
+                        .foregroundColor(event.isExpired ? .white.opacity(0.4) : .white)
+                    
+                    // Line 4: Priority and Attended icons
                     HStack(spacing: 3) {
                         // Priority icon
                         if event.priority > 0 {
                             Image(getPriorityIconName(event.priority))
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
-                                .frame(width: 16, height: 16)
+                                .frame(width: 14, height: 14)
                                 .opacity(event.isExpired ? 0.4 : 1.0)
                         }
                         
@@ -318,12 +323,28 @@ struct LandscapeScheduleView: View {
                             Image(getAttendedIconName(event.attendedStatus))
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
-                                .frame(width: 16, height: 16)
+                                .frame(width: 14, height: 14)
+                                .opacity(event.isExpired ? 0.4 : 1.0)
+                        }
+                    }
+                    
+                    // Line 5: Event type (only if not "Show")
+                    if !event.eventType.isEmpty && event.eventType != "Show" {
+                        HStack(spacing: 3) {
+                            Text(event.eventType)
+                                .font(.system(size: 8))
+                                .foregroundColor(event.isExpired ? .white.opacity(0.4) : .white)
+                                .lineLimit(1)
+                            
+                            Image(uiImage: getEventTypeIcon(eventType: event.eventType, eventName: event.bandName))
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 12, height: 12)
                                 .opacity(event.isExpired ? 0.4 : 1.0)
                         }
                     }
                 }
-                .frame(width: columnWidth - 6, height: max(blockHeight - 6, 35), alignment: .topLeading)
+                .frame(width: columnWidth - 6, height: max(blockHeight - 6, 50), alignment: .topLeading)
                 .padding(3)
                 .background(
                     RoundedRectangle(cornerRadius: 4)
@@ -357,6 +378,12 @@ struct LandscapeScheduleView: View {
             // Each 15-minute slot is 30px tall, so 1 hour (4 slots) = 120px
             let pixelsPerSecond: CGFloat = 120.0 / 3600.0 // 120 pixels per hour
             return max(CGFloat(durationSeconds) * pixelsPerSecond, 30)
+        }
+        
+        private func formatTime(_ date: Date) -> String {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "h:mma"
+            return formatter.string(from: date).lowercased()
         }
         
         private func formatTimeRange(start: Date, end: Date) -> String {
