@@ -2013,6 +2013,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let hideExpiredEvents = getHideExpireScheduleData()
         print("🔄 [LANDSCAPE_SCHEDULE] hideExpiredEvents: \(hideExpiredEvents)")
         
+        // If hiding expired events and NO bands are visible in portrait, don't show landscape
+        // Use the existing bands array which is already filtered
+        if hideExpiredEvents && self.bands.isEmpty {
+            print("⚠️ [LANDSCAPE_SCHEDULE] No bands in portrait view - staying in portrait view")
+            return
+        }
+        
         // Use the tracked current viewing day
         let initialDay = currentViewingDay
         if let day = initialDay {
@@ -2059,8 +2066,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             bandListIndexCache = bandIndex
             currentBandList = self.bands
             
-            // Create and present detail view from the stored landscape controller
-            let detailController = DetailHostingController(bandName: bandName)
+            // Create and present detail view from the stored landscape controller with custom back button
+            let detailController = DetailHostingController(bandName: bandName, showCustomBackButton: true)
             
             // Present from the stored landscape view controller
             self.landscapeScheduleViewController?.present(detailController, animated: true) {
