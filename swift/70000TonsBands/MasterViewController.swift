@@ -2033,47 +2033,48 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             priorityManager: priorityManager,
             attendedHandle: attendedHandle,
             initialDay: initialDay,
-            hideExpiredEvents: hideExpiredEvents
-        ) { [weak self] bandName, currentDay in
-            // Handle band tap - present detail directly from landscape view
-            guard let self = self else { return }
-            
-            print("🔄 [LANDSCAPE_SCHEDULE] Band tapped: \(bandName) on day: \(currentDay ?? "unknown")")
-            
-            // Save the current day for when we return
-            if let day = currentDay {
-                self.currentViewingDay = day
-                print("🔄 [LANDSCAPE_SCHEDULE] Saved current viewing day: \(day)")
+            hideExpiredEvents: hideExpiredEvents,
+            onBandTapped: { [weak self] bandName, currentDay in
+                // Handle band tap - present detail directly from landscape view
+                guard let self = self else { return }
+                
+                print("🔄 [LANDSCAPE_SCHEDULE] Band tapped: \(bandName) on day: \(currentDay ?? "unknown")")
+                
+                // Save the current day for when we return
+                if let day = currentDay {
+                    self.currentViewingDay = day
+                    print("🔄 [LANDSCAPE_SCHEDULE] Saved current viewing day: \(day)")
+                }
+                
+                // Save scroll position
+                self.savedScrollPosition = self.tableView.contentOffset
+                print("🔄 [LANDSCAPE_SCHEDULE] Saved scroll position: \(self.savedScrollPosition!)")
+                
+                // Find the band index
+                let bandIndex: Int
+                if let index = self.bands.firstIndex(where: { band in
+                    getNameFromSortable(band, sortedBy: getSortedBy()) == bandName
+                }) {
+                    bandIndex = index
+                } else {
+                    print("⚠️ [LANDSCAPE_SCHEDULE] Band not in filtered list, using index 0")
+                    bandIndex = 0
+                }
+                
+                // Set up for detail navigation (using globals from Constants.swift)
+                bandSelected = bandName
+                bandListIndexCache = bandIndex
+                currentBandList = self.bands
+                
+                // Create and present detail view from the stored landscape controller with custom back button
+                let detailController = DetailHostingController(bandName: bandName, showCustomBackButton: true)
+                
+                // Present from the stored landscape view controller
+                self.landscapeScheduleViewController?.present(detailController, animated: true) {
+                    print("✅ [LANDSCAPE_SCHEDULE] Detail view presented")
+                }
             }
-            
-            // Save scroll position
-            self.savedScrollPosition = self.tableView.contentOffset
-            print("🔄 [LANDSCAPE_SCHEDULE] Saved scroll position: \(self.savedScrollPosition!)")
-            
-            // Find the band index
-            let bandIndex: Int
-            if let index = self.bands.firstIndex(where: { band in
-                getNameFromSortable(band, sortedBy: getSortedBy()) == bandName
-            }) {
-                bandIndex = index
-            } else {
-                print("⚠️ [LANDSCAPE_SCHEDULE] Band not in filtered list, using index 0")
-                bandIndex = 0
-            }
-            
-            // Set up for detail navigation (using globals from Constants.swift)
-            bandSelected = bandName
-            bandListIndexCache = bandIndex
-            currentBandList = self.bands
-            
-            // Create and present detail view from the stored landscape controller with custom back button
-            let detailController = DetailHostingController(bandName: bandName, showCustomBackButton: true)
-            
-            // Present from the stored landscape view controller
-            self.landscapeScheduleViewController?.present(detailController, animated: true) {
-                print("✅ [LANDSCAPE_SCHEDULE] Detail view presented")
-            }
-        }
+        )
         
         let hostingController = UIHostingController(rootView: landscapeView)
         hostingController.modalPresentationStyle = .fullScreen
