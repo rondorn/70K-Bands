@@ -122,6 +122,7 @@ public class showBandDetails extends Activity {
     private String bandName;
     private BandNotes bandHandler;
     private Boolean clickedOnEvent = false;
+    private boolean showCustomBackButton = false;  // Flag for custom back button from landscape schedule
 
     private String rankIconLocation = "";
     
@@ -140,6 +141,19 @@ public class showBandDetails extends Activity {
         
         // Update activity reference for progress indicator if downloads are running
         ForegroundDownloadManager.setCurrentActivity(this);
+        
+        // Check if we should show custom back button (launched from landscape schedule)
+        Intent intent = getIntent();
+        if (intent != null) {
+            showCustomBackButton = intent.getBooleanExtra("showCustomBackButton", false);
+            if (showCustomBackButton) {
+                Log.d("BandDetails", "Launched from landscape schedule - enabling up navigation");
+                // Enable up navigation in action bar
+                if (getActionBar() != null) {
+                    getActionBar().setDisplayHomeAsUpEnabled(true);
+                }
+            }
+        }
         
             setContentView(R.layout.band_details_native);
         
@@ -3357,7 +3371,17 @@ public class showBandDetails extends Activity {
         
         Log.d("WebView", "Standard back navigation to bands list");
         // Removed unnecessary 70ms sleep - modern Android handles activity transitions properly
-        setResult(RESULT_OK, null);
+        
+        // If launched from landscape schedule, return bandName so it can refresh
+        if (showCustomBackButton) {
+            Intent resultIntent = new Intent();
+            resultIntent.putExtra("bandName", bandName);
+            setResult(RESULT_OK, resultIntent);
+            Log.d("BandDetails", "Returning to landscape schedule with bandName: " + bandName);
+        } else {
+            setResult(RESULT_OK, null);
+        }
+        
         // LIST POSITION FIX: Use simple finish() to return to existing parent activity
         // This preserves the list position instead of creating a new activity instance
         finish();

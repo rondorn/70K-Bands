@@ -130,12 +130,12 @@ public class FestivalConfig {
             
             // MDF venues: Real venue names with Market Street addresses (all shown in filters)
             this.venues = Arrays.asList(
-                new Venue("Rams Head", "FF8C00", "icon_theater", "icon_theater_alt", "20 Market", true),
-                new Venue("Market", "008000", "icon_theater", "icon_theater_alt", "121 Market", true),
-                new Venue("Power Plant", "0000FF", "icon_theater", "icon_theater_alt", "34 Market", true),
-                new Venue("Nevermore", "87CEEB", "icon_theater", "icon_theater_alt", "20 Market", true),
-                new Venue("Soundstage", "8B0000", "icon_theater", "icon_theater_alt", "124 Market", true),
-                new Venue("Angels Rock", "FFFF00", "icon_theater", "icon_theater_alt", "10 Market", true)
+                new Venue("Rams Head", "EA580C", "icon_theater", "icon_theater_alt", "20 Market", true),      // Orange
+                new Venue("Market", "047857", "icon_theater", "icon_theater_alt", "121 Market", true),        // Emerald
+                new Venue("Power Plant", "1D4ED8", "icon_theater", "icon_theater_alt", "34 Market", true),    // Blue
+                new Venue("Nevermore", "0891B2", "icon_theater", "icon_theater_alt", "20 Market", true),      // Cyan
+                new Venue("Soundstage", "991B1B", "icon_theater", "icon_theater_alt", "124 Market", true),    // Dark red
+                new Venue("Angels Rock", "A16207", "icon_theater", "icon_theater_alt", "10 Market", true)     // Yellow (dark)
             );
             
             // MDF: Hide all event type filters by default
@@ -178,18 +178,18 @@ public class FestivalConfig {
             
             // 70K venues: Main venues shown in filters, others grouped as "Other"
             this.venues = Arrays.asList(
-                new Venue("Pool", "0000FF", "icon_pool", "icon_pool_alt", "Deck 11", true),
-                new Venue("Lounge", "008000", "icon_lounge", "icon_lounge_alt", "Deck 5", true),
-                new Venue("Theater", "FFFF00", "icon_theater", "icon_theater_alt", "Deck 3/4", true),
-                new Venue("Rink", "FF0000", "ice_rink", "ice_rink_alt", "Deck 3", true),
-                new Venue("Sports Bar", "FFA500", "icon_unknown", "icon_unknown_alt", "Deck 4", false),
-                new Venue("Viking Crown", "800080", "icon_unknown", "icon_unknown_alt", "Deck 14", false),
-                new Venue("Boleros Lounge", "8B4513", "icon_unknown", "icon_unknown_alt", "Deck 4", false),
-                new Venue("Solarium", "20B2AA", "icon_unknown", "icon_unknown_alt", "Deck 11", false),
-                new Venue("Ale And Anchor Pub", "DAA520", "icon_unknown", "icon_unknown_alt", "Deck 5", false),
-                new Venue("Ale & Anchor Pub", "DAA520", "icon_unknown", "icon_unknown_alt", "Deck 5", false),
-                new Venue("Bull And Bear Pub", "B22222", "icon_unknown", "icon_unknown_alt", "Deck 5", false),
-                new Venue("Bull & Bear Pub", "B22222", "icon_unknown", "icon_unknown_alt", "Deck 5", false)
+                new Venue("Pool", "1D4ED8", "icon_pool", "icon_pool_alt", "Deck 11", true),                  // Blue
+                new Venue("Lounge", "047857", "icon_lounge", "icon_lounge_alt", "Deck 5", true),              // Emerald
+                new Venue("Theater", "B45309", "icon_theater", "icon_theater_alt", "Deck 3/4", true),         // Amber
+                new Venue("Rink", "C026D3", "ice_rink", "ice_rink_alt", "Deck 3", true),                      // Magenta
+                new Venue("Sports Bar", "EA580C", "icon_unknown", "icon_unknown_alt", "Deck 4", false),       // Orange
+                new Venue("Viking Crown", "7C3AED", "icon_unknown", "icon_unknown_alt", "Deck 14", false),    // Violet
+                new Venue("Boleros Lounge", "92400E", "icon_unknown", "icon_unknown_alt", "Deck 4", false),   // Brown
+                new Venue("Solarium", "0891B2", "icon_unknown", "icon_unknown_alt", "Deck 11", false),        // Cyan
+                new Venue("Ale And Anchor Pub", "A16207", "icon_unknown", "icon_unknown_alt", "Deck 5", false), // Yellow (dark)
+                new Venue("Ale & Anchor Pub", "A16207", "icon_unknown", "icon_unknown_alt", "Deck 5", false),   // Yellow (dark)
+                new Venue("Bull And Bear Pub", "991B1B", "icon_unknown", "icon_unknown_alt", "Deck 5", false),  // Dark red
+                new Venue("Bull & Bear Pub", "991B1B", "icon_unknown", "icon_unknown_alt", "Deck 5", false)     // Dark red
             );
             
             // 70K: Show all event type filters by default (maintain existing behavior)

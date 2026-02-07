@@ -128,11 +128,13 @@ class LandscapeScheduleViewModel: ObservableObject {
     
     func navigateToPreviousDay() {
         guard canNavigateToPreviousDay else { return }
+        objectWillChange.send()
         currentDayIndex -= 1
     }
     
     func navigateToNextDay() {
         guard canNavigateToNextDay else { return }
+        objectWillChange.send()
         currentDayIndex += 1
     }
     
