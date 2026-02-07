@@ -48,6 +48,14 @@
         </activity>
 
         <activity
+            android:name=".landscape.LandscapeScheduleActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
+            android:label="Schedule"
+            android:theme="@style/AppTheme"
+            android:exported="false">
+        </activity>
+
+        <activity
             android:name=".preferenceLayout"
             android:label="Preferences"
             android:exported="true">

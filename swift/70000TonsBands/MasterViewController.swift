@@ -438,6 +438,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         NotificationCenter.default.addObserver(self, selector: #selector(handlePushNotificationReceived), name: Notification.Name("PushNotificationReceived"), object: nil)
         // App foreground handling is now done globally in AppDelegate
         NotificationCenter.default.addObserver(self, selector: #selector(self.detailDidUpdate), name: Notification.Name("DetailDidUpdate"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(self.handleDetailScreenDismissing), name: Notification.Name("DetailScreenDismissing"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(iCloudDataReadyHandler), name: Notification.Name("iCloudDataReady"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(iCloudRefresh), name: Notification.Name("iCloudRefresh"), object: nil)
         
@@ -1455,12 +1456,31 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 self.updateCurrentViewingDayFromVisibleCells()
             }
             
-            // Check orientation and show landscape view if needed
-            self.checkOrientationAndShowLandscapeIfNeeded()
+            // CRITICAL FIX: When returning from detail screen, check if detail screen was dismissed
+            // from landscape view. If so, check orientation and show appropriate view.
+            // This handles the case where user rotates in detail screen, then exits detail screen.
+            if self.isShowingLandscapeSchedule,
+               let landscapeVC = self.landscapeScheduleViewController,
+               landscapeVC.presentedViewController == nil {
+                // Detail screen was dismissed, check orientation to show appropriate view
+                print("🔄 [LANDSCAPE_SCHEDULE] Detail screen dismissed, checking orientation for appropriate view")
+                self.checkOrientationAndShowLandscapeIfNeeded()
+            } else {
+                // Normal case: Check orientation and show landscape view if needed
+                self.checkOrientationAndShowLandscapeIfNeeded()
+            }
         }
         
         let endTime = CFAbsoluteTimeGetCurrent()
         print("🕐 [\(String(format: "%.3f", endTime))] viewWillAppear END - total time: \(String(format: "%.3f", (endTime - startTime) * 1000))ms")
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        // Run orientation check after view has laid out (fixes launch in landscape showing portrait)
+        if !isSplitViewCapable() {
+            checkOrientationAndShowLandscapeIfNeeded()
+        }
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -1985,9 +2005,23 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             return
         }
         
+        // CRITICAL FIX: If a detail screen is currently presented from the landscape view,
+        // don't dismiss the landscape view on orientation change. Let the detail screen
+        // handle its own orientation changes. The landscape view will be dismissed when
+        // the user exits the detail screen (handled in detail screen dismissal).
+        if let landscapeVC = landscapeScheduleViewController,
+           landscapeVC.presentedViewController != nil {
+            print("🔄 [LANDSCAPE_SCHEDULE] Detail screen is presented - skipping orientation change handling")
+            print("🔄 [LANDSCAPE_SCHEDULE] Detail screen will handle its own orientation, landscape view stays")
+            return
+        }
+        
         // Phone: Use orientation-based switching
+        // At launch, statusBarOrientation may still report portrait; use view bounds as fallback
+        let viewBoundsLandscape = view.bounds.width > view.bounds.height
         let isLandscape = UIApplication.shared.statusBarOrientation.isLandscape || 
-                          UIDevice.current.orientation.isLandscape
+                          UIDevice.current.orientation.isLandscape ||
+                          viewBoundsLandscape
         
         // Check if bands array contains event entries (format: "timeIndex:bandName")
         // When all events are expired, bands array contains only band names (no timeIndex prefix)
@@ -2247,6 +2281,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         print("🔄 [LANDSCAPE_SCHEDULE] Dismissing landscape schedule view")
         
+        // When dismissing landscape view, check if detail screen is presented.
+        // If detail screen is presented, it will be automatically dismissed when
+        // the landscape view controller is dismissed (iOS modal presentation behavior).
+        // After dismissal, check orientation to show appropriate view.
+        dismissLandscapeViewController(viewController: viewController) { [weak self] in
+            // After landscape view is dismissed, check orientation and show appropriate view
+            self?.checkOrientationAndShowLandscapeIfNeeded()
+            completion?()
+        }
+    }
+    
+    private func dismissLandscapeViewController(viewController: UIViewController, completion: (() -> Void)?) {
         viewController.dismiss(animated: true) { [weak self] in
             print("✅ [LANDSCAPE_SCHEDULE] Landscape schedule view dismissed")
             self?.landscapeScheduleViewController = nil
@@ -4935,6 +4981,34 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // Refresh UI using only cached data (no background network operations)
         DispatchQueue.main.async {
             self.refreshBandList(reason: "Detail screen update - cache only")
+        }
+    }
+    
+    @objc func handleDetailScreenDismissing(notification: Notification) {
+        // When detail screen is dismissing, check orientation and show appropriate view
+        // This handles the case where user rotates in detail screen, then exits detail screen
+        print("🔄 [LANDSCAPE_SCHEDULE] Detail screen dismissing, checking orientation for appropriate view")
+        
+        // Use a small delay to ensure detail screen dismissal animation completes
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            guard let self = self else { return }
+            
+            // Check current orientation
+            let isLandscape = UIApplication.shared.statusBarOrientation.isLandscape || 
+                              UIDevice.current.orientation.isLandscape
+            
+            // Check if landscape view is still showing (it should be, since detail was presented from it)
+            if self.isShowingLandscapeSchedule {
+                if isLandscape {
+                    // Still in landscape - keep calendar view
+                    print("🔄 [LANDSCAPE_SCHEDULE] Still in landscape after detail dismissal - keeping calendar view")
+                    // Landscape view should already be showing, no action needed
+                } else {
+                    // Now in portrait - MUST dismiss landscape view to return to list view
+                    print("🔄 [LANDSCAPE_SCHEDULE] Now in portrait after detail dismissal - dismissing calendar view to show list view")
+                    self.dismissLandscapeScheduleView()
+                }
+            }
         }
     }
     
