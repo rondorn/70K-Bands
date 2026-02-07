@@ -13,9 +13,11 @@ import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
+import android.widget.ImageView;
 import android.widget.TextView;
 import com.Bands70k.BandInfo;
 import com.Bands70k.FestivalConfig;
+import com.Bands70k.iconResolve;
 import com.Bands70k.showsAttended;
 import com.Bands70k.staticVariables;
 import com.Bands70k.scheduleHandler;
@@ -28,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Locale;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -87,6 +90,7 @@ public class LandscapeScheduleView extends LinearLayout {
         
         setOrientation(LinearLayout.VERTICAL);
         setBackgroundColor(Color.BLACK);
+        // Don't set gravity - let children layout naturally from top
         
         attendedHandle = staticVariables.attendedHandler != null ? 
                          staticVariables.attendedHandler : new showsAttended();
@@ -106,23 +110,33 @@ public class LandscapeScheduleView extends LinearLayout {
     private void createHeader() {
         headerLayout = new LinearLayout(context);
         headerLayout.setOrientation(LinearLayout.HORIZONTAL);
-        headerLayout.setGravity(Gravity.CENTER); // Center all children
-        // Add extra top padding to avoid system UI, and more horizontal padding to move buttons away from edges
-        headerLayout.setPadding(dpToPx(64), dpToPx(48), dpToPx(64), dpToPx(16));
+        headerLayout.setGravity(Gravity.CENTER); // Center the nav group
+        // Add extra top padding to avoid system UI, reduced horizontal padding to keep buttons close to center
+        headerLayout.setPadding(dpToPx(16), dpToPx(48), dpToPx(16), dpToPx(16));
         headerLayout.setBackgroundColor(Color.BLACK);
         // Don't intercept touches - let buttons handle them
         headerLayout.setClickable(false);
         headerLayout.setFocusable(false);
         
+        // Container to group buttons and label together so they stay close
+        LinearLayout navGroup = new LinearLayout(context);
+        navGroup.setOrientation(LinearLayout.HORIZONTAL);
+        navGroup.setGravity(Gravity.CENTER_VERTICAL);
+        navGroup.setLayoutParams(new LinearLayout.LayoutParams(
+            LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT
+        ));
+        navGroup.setClickable(false);
+        navGroup.setFocusable(false);
+        
         // Prev button - Clean style: just icon with very subtle background for touch feedback
         prevButton = new Button(context);
         prevButton.setText("◀");
         prevButton.setTextColor(Color.WHITE);
-        prevButton.setTextSize(20); // Larger icon
-        // Make button larger for easier clicking (56dp touch target)
-        prevButton.setMinWidth(dpToPx(56));
-        prevButton.setMinHeight(dpToPx(56));
-        prevButton.setPadding(dpToPx(12), dpToPx(12), dpToPx(12), dpToPx(12));
+        prevButton.setTextSize(14); // Smaller icon like iOS
+        // Smaller buttons like iOS (32dp)
+        prevButton.setMinWidth(dpToPx(32));
+        prevButton.setMinHeight(dpToPx(32));
+        prevButton.setPadding(dpToPx(6), dpToPx(6), dpToPx(6), dpToPx(6));
         // Very subtle background - almost transparent but provides touch feedback
         prevButton.setBackground(getRoundedBackground(Color.argb(30, 255, 255, 255))); // Very subtle white
         // CRITICAL: Ensure button is clickable
@@ -131,9 +145,9 @@ public class LandscapeScheduleView extends LinearLayout {
         prevButton.setFocusableInTouchMode(true);
         prevButton.setEnabled(true);
         LinearLayout.LayoutParams prevParams = new LinearLayout.LayoutParams(
-            dpToPx(56), dpToPx(56)
+            dpToPx(32), dpToPx(32) // Smaller buttons like iOS (32dp)
         );
-        prevParams.setMargins(0, 0, dpToPx(16), 0); // More spacing from label
+        prevParams.setMargins(0, 0, dpToPx(1), 0); // Minimal spacing from label (1dp)
         prevButton.setLayoutParams(prevParams);
         // Add touch listener to debug
         prevButton.setOnTouchListener(new View.OnTouchListener() {
@@ -158,7 +172,7 @@ public class LandscapeScheduleView extends LinearLayout {
             }
         });
         
-        // Day label - takes remaining space but centered
+        // Day label - wrap content, no weight so buttons stay close
         dayLabel = new TextView(context);
         dayLabel.setText("Loading...");
         dayLabel.setTextColor(Color.WHITE);
@@ -168,20 +182,20 @@ public class LandscapeScheduleView extends LinearLayout {
         dayLabel.setClickable(false);
         dayLabel.setFocusable(false);
         LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(
-            0, LayoutParams.WRAP_CONTENT, 1.0f // Take remaining space
+            LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT // Wrap content, don't expand
         );
-        labelParams.setMargins(dpToPx(16), 0, dpToPx(16), 0); // More spacing from buttons
+        labelParams.setMargins(dpToPx(1), 0, dpToPx(1), 0); // Minimal spacing from buttons (1dp)
         dayLabel.setLayoutParams(labelParams);
         
         // Next button - Clean style: just icon with very subtle background for touch feedback
         nextButton = new Button(context);
         nextButton.setText("▶");
         nextButton.setTextColor(Color.WHITE);
-        nextButton.setTextSize(20); // Larger icon
-        // Make button larger for easier clicking (56dp touch target)
-        nextButton.setMinWidth(dpToPx(56));
-        nextButton.setMinHeight(dpToPx(56));
-        nextButton.setPadding(dpToPx(12), dpToPx(12), dpToPx(12), dpToPx(12));
+        nextButton.setTextSize(14); // Smaller icon like iOS
+        // Smaller buttons like iOS (32dp)
+        nextButton.setMinWidth(dpToPx(32));
+        nextButton.setMinHeight(dpToPx(32));
+        nextButton.setPadding(dpToPx(6), dpToPx(6), dpToPx(6), dpToPx(6));
         // Very subtle background - almost transparent but provides touch feedback
         nextButton.setBackground(getRoundedBackground(Color.argb(30, 255, 255, 255))); // Very subtle white
         // CRITICAL: Ensure button is clickable
@@ -190,9 +204,9 @@ public class LandscapeScheduleView extends LinearLayout {
         nextButton.setFocusableInTouchMode(true);
         nextButton.setEnabled(true);
         LinearLayout.LayoutParams nextParams = new LinearLayout.LayoutParams(
-            dpToPx(56), dpToPx(56)
+            dpToPx(32), dpToPx(32) // Smaller buttons like iOS (32dp)
         );
-        nextParams.setMargins(dpToPx(16), 0, 0, 0); // More spacing from label
+        nextParams.setMargins(dpToPx(1), 0, 0, 0); // Minimal spacing from label (1dp)
         nextButton.setLayoutParams(nextParams);
         // Add touch listener to debug
         nextButton.setOnTouchListener(new View.OnTouchListener() {
@@ -217,11 +231,13 @@ public class LandscapeScheduleView extends LinearLayout {
             }
         });
         
-        // Add views in order: button, label, button
-        // The label with weight 1.0f will take remaining space, centering the buttons
-        headerLayout.addView(prevButton);
-        headerLayout.addView(dayLabel);
-        headerLayout.addView(nextButton);
+        // Add views to nav group: button, label, button (grouped together)
+        navGroup.addView(prevButton);
+        navGroup.addView(dayLabel);
+        navGroup.addView(nextButton);
+        
+        // Add the nav group to header layout (centered as a single unit)
+        headerLayout.addView(navGroup);
         
         addView(headerLayout);
         
@@ -253,19 +269,30 @@ public class LandscapeScheduleView extends LinearLayout {
         // Don't intercept touches - let scroll view handle them
         venueHeaderScrollView.setClickable(false);
         venueHeaderScrollView.setFocusable(false);
+        // Ensure content doesn't get clipped
+        venueHeaderScrollView.setClipChildren(false);
+        venueHeaderScrollView.setClipToPadding(false);
         
         venueHeaderRow = new LinearLayout(context);
         venueHeaderRow.setOrientation(LinearLayout.HORIZONTAL);
         venueHeaderRow.setBackgroundColor(Color.BLACK);
-        venueHeaderRow.setLayoutParams(new LinearLayout.LayoutParams(
+        // Use WRAP_CONTENT to allow horizontal scrolling when needed
+        LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
             LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT
-        ));
+        );
+        venueHeaderRow.setLayoutParams(rowParams);
+        // Ensure headers don't clip
+        venueHeaderRow.setClipChildren(false);
+        venueHeaderRow.setClipToPadding(false);
         venueHeaderScrollView.addView(venueHeaderRow);
         
         contentScrollView = new ScrollView(context);
-        contentScrollView.setLayoutParams(new LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(
             LayoutParams.MATCH_PARENT, 0, 1.0f
-        ));
+        );
+        contentScrollView.setLayoutParams(scrollParams);
+        contentScrollView.setBackgroundColor(Color.BLACK);
+        contentScrollView.setFillViewport(true);
         // Don't intercept touches - let child views handle them
         contentScrollView.setClickable(false);
         contentScrollView.setFocusable(false);
@@ -273,11 +300,19 @@ public class LandscapeScheduleView extends LinearLayout {
         contentLayout = new LinearLayout(context);
         contentLayout.setOrientation(LinearLayout.VERTICAL);
         contentLayout.setBackgroundColor(Color.BLACK);
+        LinearLayout.LayoutParams contentParams = new LinearLayout.LayoutParams(
+            LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT
+        );
+        contentLayout.setLayoutParams(contentParams);
         // Don't intercept touches - let child views handle them
         contentLayout.setClickable(false);
         contentLayout.setFocusable(false);
         
         contentScrollView.addView(contentLayout);
+        
+        // Ensure views are visible
+        venueHeaderScrollView.setVisibility(View.VISIBLE);
+        contentScrollView.setVisibility(View.VISIBLE);
         
         // Add venue header row first, then scroll view
         addView(venueHeaderScrollView);
@@ -399,31 +434,101 @@ public class LandscapeScheduleView extends LinearLayout {
         int availableWidth = screenWidth - dpToPx(60); // Subtract time column width
         int columnWidth = currentDay.venues.isEmpty() ? availableWidth : availableWidth / currentDay.venues.size();
         
+        // Venue headers - collect them first to measure max height
+        java.util.List<TextView> venueHeaders = new java.util.ArrayList<>();
+        int maxHeaderHeight = dpToPx(44); // Minimum height
+        
+        // First pass: create all venue headers and measure them
+        for (VenueColumn venue : currentDay.venues) {
+            TextView venueHeader = new TextView(context);
+            venueHeader.setText(venue.name != null ? venue.name : "");
+            venueHeader.setTextColor(Color.WHITE);
+            venueHeader.setTextSize(12); // Reduced from 14
+            venueHeader.setTypeface(null, android.graphics.Typeface.BOLD);
+            venueHeader.setGravity(Gravity.CENTER);
+            venueHeader.setBackgroundColor(venue.color);
+            int padding = dpToPx(4);
+            venueHeader.setPadding(padding, padding, padding, padding);
+            // Allow text to wrap - allow up to 3 lines to handle long names
+            venueHeader.setSingleLine(false);
+            venueHeader.setMaxLines(3); // Allow up to 3 lines
+            venueHeader.setEllipsize(null); // Don't ellipsize, wrap instead
+            // Ensure text is visible
+            venueHeader.setVisibility(View.VISIBLE);
+            venueHeader.setAlpha(1.0f); // Ensure full opacity
+            
+            // Measure the text to determine required height
+            // Create a temporary parent to get accurate measurements
+            LinearLayout.LayoutParams measureParams = new LinearLayout.LayoutParams(
+                columnWidth, ViewGroup.LayoutParams.WRAP_CONTENT
+            );
+            venueHeader.setLayoutParams(measureParams);
+            
+            // Measure with proper constraints - account for padding
+            int widthSpec = View.MeasureSpec.makeMeasureSpec(columnWidth, View.MeasureSpec.EXACTLY);
+            int heightSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
+            venueHeader.measure(widthSpec, heightSpec);
+            
+            // Get measured height including padding
+            int measuredHeight = venueHeader.getMeasuredHeight();
+            Log.d(TAG, "Venue header measurement: " + venue.name + " -> height=" + measuredHeight + 
+                  ", columnWidth=" + columnWidth);
+            
+            if (measuredHeight > maxHeaderHeight) {
+                maxHeaderHeight = measuredHeight;
+                Log.d(TAG, "New maxHeaderHeight: " + maxHeaderHeight + " for venue: " + venue.name);
+            }
+            venueHeaders.add(venueHeader);
+        }
+        
+        // Add some extra padding to ensure text doesn't get cut off
+        maxHeaderHeight += dpToPx(2);
+        
         // Create fixed venue header row
-        // Time header
+        // Time header - use maxHeaderHeight so it matches venue headers
         TextView timeHeader = new TextView(context);
         timeHeader.setText("Time");
         timeHeader.setTextColor(Color.WHITE);
-        timeHeader.setTextSize(14);
+        timeHeader.setTextSize(12); // Match venue header size
         timeHeader.setTypeface(null, android.graphics.Typeface.BOLD);
         timeHeader.setGravity(Gravity.CENTER);
         timeHeader.setBackgroundColor(Color.GRAY);
-        timeHeader.setLayoutParams(new LinearLayout.LayoutParams(
-            dpToPx(60), dpToPx(44)
-        ));
+        int timePadding = dpToPx(4);
+        timeHeader.setPadding(timePadding, timePadding, timePadding, timePadding);
+        LinearLayout.LayoutParams timeParams = new LinearLayout.LayoutParams(
+            dpToPx(60), maxHeaderHeight
+        );
+        timeHeader.setLayoutParams(timeParams);
+        timeHeader.setMinHeight(maxHeaderHeight);
+        timeHeader.setMaxHeight(maxHeaderHeight);
         venueHeaderRow.addView(timeHeader);
         
-        // Venue headers
-        for (VenueColumn venue : currentDay.venues) {
-            TextView venueHeader = new TextView(context);
-            venueHeader.setText(venue.name);
-            venueHeader.setTextColor(Color.WHITE);
-            venueHeader.setTextSize(14);
+        Log.d(TAG, "Header height set to: " + maxHeaderHeight + "dp (" + (maxHeaderHeight / getResources().getDisplayMetrics().density) + "dp)");
+        
+        // Second pass: set all venue headers to the same height (maxHeaderHeight)
+        for (int i = 0; i < venueHeaders.size(); i++) {
+            TextView venueHeader = venueHeaders.get(i);
+            VenueColumn venue = currentDay.venues.get(i);
+            
+            LinearLayout.LayoutParams headerParams = new LinearLayout.LayoutParams(
+                columnWidth, maxHeaderHeight
+            );
+            // Ensure headers don't overlap - use exact width
+            headerParams.width = columnWidth;
+            headerParams.height = maxHeaderHeight;
+            venueHeader.setLayoutParams(headerParams);
+            venueHeader.setMinHeight(maxHeaderHeight);
+            venueHeader.setMaxHeight(maxHeaderHeight);
+            // Center text both horizontally and vertically
             venueHeader.setGravity(Gravity.CENTER);
-            venueHeader.setBackgroundColor(venue.color);
-            venueHeader.setLayoutParams(new LinearLayout.LayoutParams(
-                columnWidth, dpToPx(44)
-            ));
+            venueHeader.setVisibility(View.VISIBLE);
+            // Ensure text wraps properly and doesn't get cut off
+            venueHeader.setSingleLine(false);
+            venueHeader.setMaxLines(3); // Allow up to 3 lines
+            venueHeader.setEllipsize(null); // Don't ellipsize, wrap instead
+            // Verify text is set correctly
+            Log.d(TAG, "Adding venue header: " + venue.name + ", text=" + venueHeader.getText() + 
+                  ", height=" + maxHeaderHeight + ", columnWidth=" + columnWidth);
             venueHeaderRow.addView(venueHeader);
         }
         
@@ -452,13 +557,13 @@ public class LandscapeScheduleView extends LinearLayout {
         LinearLayout columnsContainer = new LinearLayout(context);
         columnsContainer.setOrientation(LinearLayout.HORIZONTAL);
         
-        // Add time column first (without header)
-        LinearLayout timeColumn = createTimeColumn(currentDay);
+        // Add time column first (without header) - pass header height for spacer
+        LinearLayout timeColumn = createTimeColumn(currentDay, maxHeaderHeight);
         columnsContainer.addView(timeColumn);
         
-        // Add venue columns (without headers)
+        // Add venue columns (without headers) - pass header height for spacer
         for (VenueColumn venue : currentDay.venues) {
-            LinearLayout venueColumn = createVenueColumn(venue, currentDay, columnWidth);
+            LinearLayout venueColumn = createVenueColumn(venue, currentDay, columnWidth, maxHeaderHeight);
             columnsContainer.addView(venueColumn);
         }
         
@@ -466,7 +571,7 @@ public class LandscapeScheduleView extends LinearLayout {
         contentLayout.addView(horizontalScroll);
     }
     
-    private LinearLayout createTimeColumn(DayScheduleData dayData) {
+    private LinearLayout createTimeColumn(DayScheduleData dayData, int headerHeight) {
         LinearLayout timeColumn = new LinearLayout(context);
         timeColumn.setOrientation(LinearLayout.VERTICAL);
         timeColumn.setLayoutParams(new LinearLayout.LayoutParams(
@@ -477,7 +582,7 @@ public class LandscapeScheduleView extends LinearLayout {
         // Spacer for fixed header (same height as header)
         View headerSpacer = new View(context);
         headerSpacer.setLayoutParams(new LinearLayout.LayoutParams(
-            LayoutParams.MATCH_PARENT, dpToPx(44)
+            LayoutParams.MATCH_PARENT, headerHeight
         ));
         headerSpacer.setBackgroundColor(Color.BLACK);
         timeColumn.addView(headerSpacer);
@@ -503,7 +608,7 @@ public class LandscapeScheduleView extends LinearLayout {
         return timeColumn;
     }
     
-    private LinearLayout createVenueColumn(VenueColumn venue, DayScheduleData dayData, int columnWidth) {
+    private LinearLayout createVenueColumn(VenueColumn venue, DayScheduleData dayData, int columnWidth, int headerHeight) {
         LinearLayout venueColumn = new LinearLayout(context);
         venueColumn.setOrientation(LinearLayout.VERTICAL);
         venueColumn.setLayoutParams(new LinearLayout.LayoutParams(
@@ -513,7 +618,7 @@ public class LandscapeScheduleView extends LinearLayout {
         // Spacer for fixed header (same height as header)
         View headerSpacer = new View(context);
         headerSpacer.setLayoutParams(new LinearLayout.LayoutParams(
-            LayoutParams.MATCH_PARENT, dpToPx(44)
+            LayoutParams.MATCH_PARENT, headerHeight
         ));
         headerSpacer.setBackgroundColor(Color.BLACK);
         venueColumn.addView(headerSpacer);
@@ -592,26 +697,85 @@ public class LandscapeScheduleView extends LinearLayout {
         params.topMargin = yPosition;
         eventBlock.setLayoutParams(params);
         
-        // Band name
+        // Line 1: Band name
         TextView bandName = new TextView(context);
         bandName.setText(event.bandName);
-        bandName.setTextColor(Color.WHITE);
+        bandName.setTextColor(event.isExpired ? Color.argb(102, 255, 255, 255) : Color.WHITE); // 40% opacity if expired
         bandName.setTextSize(11);
         bandName.setTypeface(null, android.graphics.Typeface.BOLD);
         bandName.setMaxLines(1);
         eventBlock.addView(bandName);
         
-        // Time
-        TextView timeText = new TextView(context);
+        // Line 2: Start time with label
+        TextView startTimeText = new TextView(context);
         SimpleDateFormat timeFormat = new SimpleDateFormat("h:mma", Locale.US);
-        if (event.startTime != null && event.endTime != null) {
-            timeText.setText(timeFormat.format(event.startTime).toLowerCase() + "-" + 
-                           timeFormat.format(event.endTime).toLowerCase());
+        if (event.startTime != null) {
+            startTimeText.setText("Start: " + timeFormat.format(event.startTime).toLowerCase());
         }
-        timeText.setTextColor(Color.WHITE);
-        timeText.setTextSize(9);
-        timeText.setMaxLines(1);
-        eventBlock.addView(timeText);
+        startTimeText.setTextColor(event.isExpired ? Color.argb(102, 255, 255, 255) : Color.WHITE);
+        startTimeText.setTextSize(9);
+        startTimeText.setMaxLines(1);
+        eventBlock.addView(startTimeText);
+        
+        // Line 3: End time with label
+        TextView endTimeText = new TextView(context);
+        if (event.endTime != null) {
+            endTimeText.setText("End: " + timeFormat.format(event.endTime).toLowerCase());
+        }
+        endTimeText.setTextColor(event.isExpired ? Color.argb(102, 255, 255, 255) : Color.WHITE);
+        endTimeText.setTextSize(9);
+        endTimeText.setMaxLines(1);
+        eventBlock.addView(endTimeText);
+        
+        // Line 4: Priority and Attended icons in horizontal layout
+        LinearLayout iconRow = new LinearLayout(context);
+        iconRow.setOrientation(LinearLayout.HORIZONTAL);
+        iconRow.setPadding(0, dpToPx(2), 0, 0);
+        
+        // Priority icon (Must/Might/Won't see)
+        if (event.priority > 0) {
+            ImageView priorityIcon = new ImageView(context);
+            int priorityResId = 0;
+            if (event.priority == 1) {
+                priorityResId = staticVariables.graphicMustSee;
+            } else if (event.priority == 2) {
+                priorityResId = staticVariables.graphicMightSee;
+            } else if (event.priority == 3) {
+                priorityResId = staticVariables.graphicWontSee;
+            }
+            
+            if (priorityResId != 0) {
+                priorityIcon.setImageResource(priorityResId);
+                priorityIcon.setLayoutParams(new LinearLayout.LayoutParams(dpToPx(14), dpToPx(14)));
+                priorityIcon.setAlpha(event.isExpired ? 0.4f : 1.0f);
+                iconRow.addView(priorityIcon);
+                
+                // Add spacing between icons
+                View spacer = new View(context);
+                spacer.setLayoutParams(new LinearLayout.LayoutParams(dpToPx(3), 1));
+                iconRow.addView(spacer);
+            }
+        }
+        
+        // Attended icon
+        if (event.attendedStatus != null && !event.attendedStatus.isEmpty() && 
+            !event.attendedStatus.equals("sawNone")) {
+            int attendedResId = iconResolve.getAttendedIcon(event.attendedStatus);
+            Log.d(TAG, "Attended icon check: band=" + event.bandName + ", status=" + event.attendedStatus + ", resId=" + attendedResId);
+            if (attendedResId != 0) {
+                ImageView attendedIcon = new ImageView(context);
+                attendedIcon.setImageResource(attendedResId);
+                attendedIcon.setLayoutParams(new LinearLayout.LayoutParams(dpToPx(14), dpToPx(14)));
+                attendedIcon.setAlpha(event.isExpired ? 0.4f : 1.0f);
+                iconRow.addView(attendedIcon);
+            } else {
+                Log.d(TAG, "Attended icon not shown: resId is 0 for status=" + event.attendedStatus);
+            }
+        } else {
+            Log.d(TAG, "Attended icon not shown: status=" + (event.attendedStatus != null ? event.attendedStatus : "null"));
+        }
+        
+        eventBlock.addView(iconRow);
         
         // Simple click listener - NO complex touch handling
         final ScheduleBlock eventData = event;
