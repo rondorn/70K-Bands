@@ -85,6 +85,15 @@ class DetailHostingController: UIHostingController<AnyView> {
         super.viewWillDisappear(animated)
         // Disable interactive pop gesture recognizer
         navigationController?.interactivePopGestureRecognizer?.isEnabled = false
+        
+        // Post notification when detail screen is dismissing
+        // This allows MasterViewController to check orientation and show appropriate view
+        NotificationCenter.default.post(
+            name: Notification.Name("DetailScreenDismissing"),
+            object: nil,
+            userInfo: ["bandName": bandName]
+        )
+        
         // The SwiftUI view will handle saving notes in its onDisappear modifier
     }
     

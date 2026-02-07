@@ -254,7 +254,7 @@ struct LandscapeScheduleView: View {
                 let columnWidth = availableWidth / CGFloat(dayData.venues.count)
                 
                 ZStack(alignment: .topLeading) {
-                    // Main scrollable content (vertical only)
+                    // Main scrollable content (vertical only) - time column included for layout
                     TrackableScrollView(axes: .vertical, showsIndicators: true, contentOffset: $scrollOffset) {
                         VStack(alignment: .leading, spacing: 0) {
                             // Spacer for headers
@@ -262,7 +262,7 @@ struct LandscapeScheduleView: View {
                             
                             // Content
                             HStack(alignment: .top, spacing: 0) {
-                                // Time column content
+                                // Time column (in scroll for layout; sticky overlay below shows it)
                                 timeColumnContentView(dayData: dayData)
                                 
                                 // Venue columns
@@ -272,6 +272,17 @@ struct LandscapeScheduleView: View {
                             }
                         }
                     }
+                    
+                    // Sticky time column overlay - stays visible when scrolling
+                    VStack(spacing: 0) {
+                        Color.clear.frame(height: 44) // Below header
+                        timeColumnContentView(dayData: dayData)
+                            .background(Color.black)
+                            .offset(y: -scrollOffset.y)
+                    }
+                    .frame(width: 60, height: geometry.size.height, alignment: .topLeading)
+                    .clipped()
+                    .allowsHitTesting(false)
                     
                     // Fixed headers overlay
                     VStack(spacing: 0) {
@@ -304,10 +315,12 @@ struct LandscapeScheduleView: View {
                     Text(slot.label)
                         .font(.system(size: 12))
                         .foregroundColor(isHourMark ? .white : .gray)
-                        .frame(width: 60, height: 30, alignment: .top)
-                        .background(
+                        .frame(width: 60, height: 30, alignment: .leading)
+                        .padding(.leading, 4)
+                        .background(Color.black.opacity(0.95))
+                        .overlay(
                             Rectangle()
-                                .stroke(Color.gray.opacity(0.2), lineWidth: 0.5)
+                                .stroke(Color.gray.opacity(0.3), lineWidth: 0.5)
                         )
                 }
             }
@@ -544,7 +557,7 @@ struct LandscapeScheduleView: View {
             
             // Day label and event count
             VStack(spacing: 2) {
-                Text("\(viewModel.currentDayEventCount) Events - \(dayData.dayLabel)")
+                Text("\(dayData.dayLabel) - \(viewModel.currentDayEventCount) Events")
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.white)
             }

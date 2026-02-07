@@ -17,6 +17,7 @@ struct DetailView: View {
     @State private var blockSwiping = false
     @State private var dragStartX: CGFloat = 0
     @State private var isModalPresentation: Bool = false
+    @State private var currentOrientation: UIDeviceOrientation = UIDevice.current.orientation
     
     let showCustomBackButton: Bool
     
@@ -78,6 +79,15 @@ struct DetailView: View {
                 }
             }
             .ignoresSafeArea(.keyboard)
+            .onAppear {
+                // Initialize orientation state
+                currentOrientation = UIDevice.current.orientation
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
+                // Update orientation state to trigger view refresh
+                currentOrientation = UIDevice.current.orientation
+                viewModel.handleOrientationChange()
+            }
         } else {
             // Fallback on earlier versions
         }
@@ -126,7 +136,11 @@ struct DetailView: View {
     private var mainContent: some View {
         ZStack {
             // Check if we should show simplified landscape layout
-            if showCustomBackButton && !viewModel.scheduleEvents.isEmpty {
+            // Use actual orientation check, not just showCustomBackButton flag
+            let isCurrentlyLandscape = UIApplication.shared.statusBarOrientation.isLandscape || 
+                                       currentOrientation.isLandscape
+            
+            if showCustomBackButton && !viewModel.scheduleEvents.isEmpty && isCurrentlyLandscape {
                 // Simplified layout for landscape modal with schedule events
                 VStack(spacing: 0) {
                     // Add top padding to avoid conflict with back button
@@ -187,7 +201,10 @@ struct DetailView: View {
                 Spacer()
                 
                 // Translation button - fixed above priority section (hide in simplified landscape mode)
-                if viewModel.showTranslationButton && !(showCustomBackButton && !viewModel.scheduleEvents.isEmpty) {
+                // Check actual orientation, not just showCustomBackButton flag
+                let isCurrentlyLandscapeForTranslation = UIApplication.shared.statusBarOrientation.isLandscape || 
+                                                        currentOrientation.isLandscape
+                if viewModel.showTranslationButton && !(showCustomBackButton && !viewModel.scheduleEvents.isEmpty && isCurrentlyLandscapeForTranslation) {
                     translationButtonSection
                         .background(Color.black.opacity(0.95))
                         .background(.ultraThinMaterial, in: Rectangle())

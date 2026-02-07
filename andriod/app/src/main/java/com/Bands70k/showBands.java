@@ -180,6 +180,12 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             android.Manifest.permission.VIBRATE
     };
     private static final int REQUEST = 1337;
+    
+    // Landscape Schedule View support
+    private static final int REQUEST_CODE_LANDSCAPE_SCHEDULE = 2001;
+    private boolean isShowingLandscapeSchedule = false;
+    private String currentViewingDay = null;  // Track which day user is viewing
+    private boolean isManualCalendarView = false;  // For tablets: true = calendar view, false = list view
 
 
     @Override
@@ -514,8 +520,36 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        Log.d("orientation", "orientation DONE!");
+        Log.d("orientation", "orientation DONE! New orientation: " + newConfig.orientation);
         setSearchBarWidth();
+        
+        // CRITICAL FIX: Don't check orientation if we're not the top activity
+        // This prevents interfering with detail screens launched from landscape schedule
+        // When detail screen is showing, showBands loses window focus, so skip orientation check
+        if (!hasWindowFocus()) {
+            Log.d("LANDSCAPE_SCHEDULE", "onConfigurationChanged - no window focus, skipping orientation check (detail screen likely showing)");
+            return;
+        }
+        
+        // Check if we should show landscape schedule view
+        // Delay slightly to allow orientation to fully settle
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                // Double-check we're still the top activity before launching landscape
+                if (hasWindowFocus()) {
+                    Log.d("LANDSCAPE_SCHEDULE", "onConfigurationChanged - checking orientation after delay");
+                    checkOrientationAndShowLandscapeIfNeeded();
+                } else {
+                    Log.d("LANDSCAPE_SCHEDULE", "onConfigurationChanged - delayed check skipped, no window focus");
+                }
+            }
+        }, 300);
+        
+        // Only check immediately if we have window focus
+        if (hasWindowFocus()) {
+            checkOrientationAndShowLandscapeIfNeeded();
+        }
     }
 
     /**
@@ -2034,6 +2068,18 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        
+        // Handle landscape schedule activity result
+        if (requestCode == REQUEST_CODE_LANDSCAPE_SCHEDULE) {
+            Log.d("LANDSCAPE_SCHEDULE", "Returned from landscape schedule activity");
+            isShowingLandscapeSchedule = false;
+            
+            // Refresh data in case anything changed
+            if (adapter != null) {
+                adapter.notifyDataSetChanged();
+            }
+        }
+        
         if (resultCode == RESULT_OK) {
             ///Intent refresh = new Intent(this, showBands.class);
             //startActivity(refresh);
@@ -3715,6 +3761,16 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
         Log.d(TAG, notificationTag + " In onResume - 2");
         
+        // CRITICAL FIX: Check orientation after view has appeared and data may have loaded
+        // This fixes the issue where launching in landscape shows portrait until rotated
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Log.d("LANDSCAPE_SCHEDULE", "onResume - checking orientation after delay");
+                checkOrientationAndShowLandscapeIfNeeded();
+            }
+        }, 500);
+        
         // Only refresh if we're not returning from stats page to avoid blocking stats loading
         // The stats page should load immediately without waiting for main activity refresh
         if (!returningFromStatsPage) {
@@ -3879,6 +3935,14 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         // Position restoration is now handled centrally in displayBandDataWithSchedule()
 
         Log.d(TAG, notificationTag + " In onResume - 8");
+        
+        // Check if we should show landscape schedule view (after data is loaded)
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                checkOrientationAndShowLandscapeIfNeeded();
+            }
+        }, 500);
 
         // Background loading management is now handled at the Application level
         // Dimageescription map cache refresh on return to foreground
@@ -4315,6 +4379,230 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
             return result;
 
+        }
+    }
+    
+    // MARK: - Landscape Schedule View Support
+    
+    /**
+     * Check if device is a tablet or has WindowWidthSizeClass.Expanded
+     * Only returns true for actual tablets, not phones in landscape
+     */
+    private boolean isSplitViewCapable() {
+        // Check if device is a tablet (use screen size in portrait to avoid landscape phones being detected)
+        // Get screen size in the smallest dimension (portrait width) to determine if it's a tablet
+        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+        int smallestWidthDp = (int)(Math.min(displayMetrics.widthPixels, displayMetrics.heightPixels) / displayMetrics.density);
+        
+        // Tablets typically have smallest width >= 600dp in portrait
+        // WindowWidthSizeClass.Expanded is >= 840dp, but we want to check in portrait orientation
+        // So we check the smallest dimension to avoid false positives from landscape phones
+        boolean isTablet = smallestWidthDp >= 600;
+        
+        Log.d("LANDSCAPE_SCHEDULE", "isSplitViewCapable check - smallestWidthDp: " + smallestWidthDp + ", isTablet: " + isTablet);
+        
+        return isTablet;
+    }
+    
+    /**
+     * Check orientation and show landscape schedule view if needed
+     */
+    private void checkOrientationAndShowLandscapeIfNeeded() {
+        // CRITICAL FIX: Don't launch landscape if we're not the top activity
+        // This prevents interfering with detail screens launched from landscape schedule
+        if (!hasWindowFocus()) {
+            Log.d("LANDSCAPE_SCHEDULE", "checkOrientationAndShowLandscapeIfNeeded - no window focus, skipping (detail screen likely showing)");
+            return;
+        }
+        
+        boolean isScheduleView = staticVariables.preferences.getShowScheduleView();
+        
+        // Tablet: Use manual toggle instead of orientation
+        boolean isTablet = isSplitViewCapable();
+        Log.d("LANDSCAPE_SCHEDULE", "Device check - isTablet: " + isTablet + ", Schedule View: " + isScheduleView + ", Manual Calendar View: " + isManualCalendarView);
+        
+        if (isTablet) {
+            Log.d("LANDSCAPE_SCHEDULE", "[TABLET_TOGGLE] Tablet detected - manual toggle behavior (not implemented yet)");
+            // Tablet behavior is controlled by a manual toggle button (not implemented yet)
+            // For now, tablets will just use portrait list view
+            return;
+        }
+        
+        Log.d("LANDSCAPE_SCHEDULE", "[PHONE_MODE] Phone detected - using orientation-based switching");
+        
+        // Phone: Use orientation-based switching
+        int orientation = getResources().getConfiguration().orientation;
+        boolean isLandscape = orientation == Configuration.ORIENTATION_LANDSCAPE;
+        
+        // Also check actual screen dimensions as fallback
+        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+        int width = displayMetrics.widthPixels;
+        int height = displayMetrics.heightPixels;
+        boolean isLandscapeBySize = width > height;
+        
+        Log.d("LANDSCAPE_SCHEDULE", "Orientation check - config orientation: " + orientation + " (" + (orientation == Configuration.ORIENTATION_LANDSCAPE ? "LANDSCAPE" : "PORTRAIT") + "), size-based: " + isLandscapeBySize + " (" + width + "x" + height + ")");
+        
+        // Use either check
+        isLandscape = isLandscape || isLandscapeBySize;
+        
+        // Check if bands array contains event entries (format: "timeIndex:bandName")
+        // When all events are expired, bands array contains only band names (no timeIndex prefix)
+        boolean hasEventEntries = false;
+        if (bandNames != null && !bandNames.isEmpty()) {
+            Log.d("LANDSCAPE_SCHEDULE", "Checking " + bandNames.size() + " band entries for event format...");
+            for (String item : bandNames) {
+                if (item != null && item.contains(":")) {
+                    String[] parts = item.split(":");
+                    if (parts.length >= 2) {
+                        try {
+                            double timeIndex = Double.parseDouble(parts[0]);
+                            // Valid timeIndex found
+                            hasEventEntries = true;
+                            Log.d("LANDSCAPE_SCHEDULE", "Found event entry: " + item + " (timeIndex: " + timeIndex + ")");
+                            break;
+                        } catch (NumberFormatException e) {
+                            // Not a timeIndex, continue checking
+                        }
+                    }
+                }
+            }
+            if (!hasEventEntries) {
+                Log.d("LANDSCAPE_SCHEDULE", "No event entries found - all entries are band names only");
+            }
+        } else {
+            Log.d("LANDSCAPE_SCHEDULE", "bandNames is null or empty");
+        }
+        
+        Log.d("LANDSCAPE_SCHEDULE", "Check orientation - Landscape: " + isLandscape + ", Schedule View: " + isScheduleView + ", Has Event Entries: " + hasEventEntries + ", Bands Count: " + (bandNames != null ? bandNames.size() : 0));
+        
+        // Debug: Log first few band entries to see format
+        if (bandNames != null && !bandNames.isEmpty()) {
+            int sampleSize = Math.min(5, bandNames.size());
+            for (int i = 0; i < sampleSize; i++) {
+                Log.d("LANDSCAPE_SCHEDULE", "Band entry " + i + ": " + bandNames.get(i));
+            }
+        }
+        
+        // Simplified condition: If in landscape and schedule view is enabled, show landscape view
+        // Don't require hasEventEntries check - let the landscape view handle empty data
+        if (isLandscape && isScheduleView) {
+            Log.d("LANDSCAPE_SCHEDULE", "✅ Conditions met - launching landscape schedule view (Landscape: " + isLandscape + ", ScheduleView: " + isScheduleView + ")");
+            // Update current viewing day from first visible cell if not already set
+            if (currentViewingDay == null) {
+                updateCurrentViewingDayFromVisibleCells();
+            }
+            
+            // Show landscape schedule view
+            presentLandscapeScheduleView();
+        } else {
+            Log.d("LANDSCAPE_SCHEDULE", "❌ Conditions NOT met - Landscape: " + isLandscape + ", ScheduleView: " + isScheduleView + ", HasEvents: " + hasEventEntries);
+            // Hide landscape schedule view if showing
+            // (No need to dismiss as it's a separate activity)
+            isShowingLandscapeSchedule = false;
+        }
+    }
+    
+    /**
+     * Update current viewing day from visible cells in the list
+     */
+    private void updateCurrentViewingDayFromVisibleCells() {
+        if (bandNamesList == null || bandNames == null || bandNames.isEmpty()) {
+            return;
+        }
+        
+        int firstVisiblePosition = bandNamesList.getFirstVisiblePosition();
+        if (firstVisiblePosition >= 0 && firstVisiblePosition < bandNames.size()) {
+            String bandEntry = bandNames.get(firstVisiblePosition);
+            
+            // Extract day from the band entry (format: "timeIndex:bandName")
+            if (bandEntry != null && bandEntry.contains(":")) {
+                String[] parts = bandEntry.split(":");
+                if (parts.length >= 2) {
+                    try {
+                        double timeIndexDouble = Double.parseDouble(parts[0]);
+                        Long timeIndex = (long) timeIndexDouble;
+                        String bandName = parts[1];
+                        
+                        // Get the day from schedule data
+                        if (BandInfo.scheduleRecords != null && BandInfo.scheduleRecords.containsKey(bandName)) {
+                            scheduleTimeTracker tracker = BandInfo.scheduleRecords.get(bandName);
+                            if (tracker != null && tracker.scheduleByTime != null && tracker.scheduleByTime.containsKey(timeIndex)) {
+                                scheduleHandler scheduleHandle = tracker.scheduleByTime.get(timeIndex);
+                                if (scheduleHandle != null) {
+                                    String day = scheduleHandle.getShowDay();
+                                    currentViewingDay = day;
+                                    Log.d("LANDSCAPE_SCHEDULE", "Updated viewing day from visible cells: " + day);
+                                }
+                            }
+                        }
+                    } catch (NumberFormatException e) {
+                        // Not a timeIndex, skip
+                    }
+                }
+            }
+        }
+    }
+    
+    /**
+     * Present the landscape schedule view activity
+     */
+    private void presentLandscapeScheduleView() {
+        // Don't present if already showing
+        if (isShowingLandscapeSchedule) {
+            Log.d("LANDSCAPE_SCHEDULE", "Already showing landscape schedule view");
+            return;
+        }
+        
+        // CRITICAL FIX: Don't launch if we don't have window focus
+        // This prevents launching landscape when detail screen is showing
+        if (!hasWindowFocus()) {
+            Log.d("LANDSCAPE_SCHEDULE", "No window focus - detail screen likely showing, skipping landscape launch");
+            return;
+        }
+        
+        Log.d("LANDSCAPE_SCHEDULE", "Presenting landscape schedule view");
+        
+        // Check if hiding expired events
+        boolean hideExpiredEvents = staticVariables.preferences.getHideExpiredEvents();
+        Log.d("LANDSCAPE_SCHEDULE", "hideExpiredEvents: " + hideExpiredEvents);
+        
+        // If hiding expired events and NO bands are visible in portrait, don't show landscape
+        if (hideExpiredEvents && (bandNames == null || bandNames.isEmpty())) {
+            Log.w("LANDSCAPE_SCHEDULE", "No bands in portrait view - staying in portrait view");
+            return;
+        }
+        
+        // Use the tracked current viewing day
+        String initialDay = currentViewingDay;
+        if (initialDay != null) {
+            Log.d("LANDSCAPE_SCHEDULE", "Starting on tracked day: " + initialDay);
+        } else {
+            Log.d("LANDSCAPE_SCHEDULE", "No tracked day, will start on first day");
+        }
+        
+        // Launch the landscape schedule activity
+        try {
+            // Verify the activity class exists
+            Class<?> activityClass = Class.forName("com.Bands70k.landscape.LandscapeScheduleActivity");
+            Log.d("LANDSCAPE_SCHEDULE", "✅ LandscapeScheduleActivity class found: " + activityClass.getName());
+            
+            Intent intent = new Intent(this, activityClass);
+            intent.putExtra(com.Bands70k.landscape.LandscapeScheduleActivity.EXTRA_INITIAL_DAY, initialDay);
+            intent.putExtra(com.Bands70k.landscape.LandscapeScheduleActivity.EXTRA_HIDE_EXPIRED_EVENTS, hideExpiredEvents);
+            intent.putExtra(com.Bands70k.landscape.LandscapeScheduleActivity.EXTRA_IS_SPLIT_VIEW_CAPABLE, isSplitViewCapable());
+            
+            Log.d("LANDSCAPE_SCHEDULE", "🚀 Launching LandscapeScheduleActivity with extras - initialDay: " + initialDay + ", hideExpired: " + hideExpiredEvents);
+            
+            isShowingLandscapeSchedule = true;
+            startActivityForResult(intent, REQUEST_CODE_LANDSCAPE_SCHEDULE);
+            Log.d("LANDSCAPE_SCHEDULE", "✅ Activity launch initiated - startActivityForResult called");
+        } catch (ClassNotFoundException e) {
+            Log.e("LANDSCAPE_SCHEDULE", "❌ LandscapeScheduleActivity class not found!", e);
+            isShowingLandscapeSchedule = false;
+        } catch (Exception e) {
+            Log.e("LANDSCAPE_SCHEDULE", "❌ Error launching landscape schedule activity", e);
+            e.printStackTrace();
+            isShowingLandscapeSchedule = false;
         }
     }
 }
