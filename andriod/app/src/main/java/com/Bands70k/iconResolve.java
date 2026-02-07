@@ -52,11 +52,13 @@ public class iconResolve {
         if (attendedStatus == null) {
             imageId = 0;
         } else {
-
-            if (attendedStatus.equals(staticVariables.sawAllIcon)) {
+            // Handle both icon strings (emoji) and status strings ("sawAll", "sawSome")
+            if (attendedStatus.equals(staticVariables.sawAllIcon) || 
+                attendedStatus.equals(staticVariables.sawAllStatus)) {
                 imageId = staticVariables.graphicAttended;
 
-            } else if (attendedStatus.equals(staticVariables.sawSomeIcon)) {
+            } else if (attendedStatus.equals(staticVariables.sawSomeIcon) || 
+                       attendedStatus.equals(staticVariables.sawSomeStatus)) {
                 imageId = staticVariables.graphicPartiallyAttended;
 
             } else {
