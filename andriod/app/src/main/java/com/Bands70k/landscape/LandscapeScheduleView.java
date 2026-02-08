@@ -165,7 +165,7 @@ public class LandscapeScheduleView extends LinearLayout {
         LinearLayout.LayoutParams prevParams = new LinearLayout.LayoutParams(
             dpToPx(32), dpToPx(32) // Smaller buttons like iOS (32dp)
         );
-        prevParams.setMargins(0, 0, dpToPx(1), 0);
+        prevParams.setMargins(0, 0, dpToPx(10), 0);
         prevButton.setLayoutParams(prevParams);
         // Add touch listener to debug
         prevButton.setOnTouchListener(new View.OnTouchListener() {
@@ -190,7 +190,7 @@ public class LandscapeScheduleView extends LinearLayout {
             }
         });
         
-        // Day label - wrap content, no weight so buttons stay close
+        // Day label - fixed-width center slot so label can expand/contract (~20px) without moving prev/next
         dayLabel = new TextView(context);
         dayLabel.setText("Loading...");
         dayLabel.setTextColor(Color.WHITE);
@@ -199,11 +199,17 @@ public class LandscapeScheduleView extends LinearLayout {
         dayLabel.setGravity(Gravity.CENTER);
         dayLabel.setClickable(false);
         dayLabel.setFocusable(false);
-        LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(
-            LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT // Wrap content, don't expand
+        dayLabel.setSingleLine(true);
+        dayLabel.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        FrameLayout labelSlot = new FrameLayout(context);
+        labelSlot.setLayoutParams(new LinearLayout.LayoutParams(dpToPx(160), LayoutParams.WRAP_CONTENT));
+        labelSlot.setClickable(false);
+        labelSlot.setFocusable(false);
+        FrameLayout.LayoutParams labelParams = new FrameLayout.LayoutParams(
+            LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT, Gravity.CENTER
         );
-        labelParams.setMargins(dpToPx(1), 0, dpToPx(1), 0);
         dayLabel.setLayoutParams(labelParams);
+        labelSlot.addView(dayLabel);
         
         // Next button - Clean style: just icon with very subtle background for touch feedback
         nextButton = new Button(context);
@@ -224,7 +230,7 @@ public class LandscapeScheduleView extends LinearLayout {
         LinearLayout.LayoutParams nextParams = new LinearLayout.LayoutParams(
             dpToPx(32), dpToPx(32) // Smaller buttons like iOS (32dp)
         );
-        nextParams.setMargins(dpToPx(1), 0, 0, 0);
+        nextParams.setMargins(dpToPx(10), 0, 0, 0);
         nextButton.setLayoutParams(nextParams);
         // Add touch listener to debug
         nextButton.setOnTouchListener(new View.OnTouchListener() {
@@ -251,7 +257,7 @@ public class LandscapeScheduleView extends LinearLayout {
         
         // Add views to nav group: button, label, button (grouped together)
         navGroup.addView(prevButton);
-        navGroup.addView(dayLabel);
+        navGroup.addView(labelSlot);
         navGroup.addView(nextButton);
         
         navContainer.addView(navGroup);
