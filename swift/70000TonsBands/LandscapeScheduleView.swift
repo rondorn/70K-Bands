@@ -254,7 +254,7 @@ struct LandscapeScheduleView: View {
                 let columnWidth = availableWidth / CGFloat(dayData.venues.count)
                 
                 ZStack(alignment: .topLeading) {
-                    // Main scrollable content (vertical only) - time column included for layout
+                    // Main scrollable content (vertical only) - time column hidden, only venue columns scroll
                     TrackableScrollView(axes: .vertical, showsIndicators: true, contentOffset: $scrollOffset) {
                         VStack(alignment: .leading, spacing: 0) {
                             // Spacer for headers
@@ -263,6 +263,7 @@ struct LandscapeScheduleView: View {
                             // Content
                             HStack(alignment: .top, spacing: 0) {
                                 // Time column (in scroll for layout; sticky overlay below shows it)
+                                // Keep visible for proper scroll tracking - sticky overlay will cover it
                                 timeColumnContentView(dayData: dayData)
                                 
                                 // Venue columns
@@ -274,6 +275,7 @@ struct LandscapeScheduleView: View {
                     }
                     
                     // Sticky time column overlay - stays visible when scrolling
+                    // This overlay covers the scrollable time column and scrolls with it using offset
                     VStack(spacing: 0) {
                         Color.clear.frame(height: 44) // Below header
                         timeColumnContentView(dayData: dayData)
@@ -283,6 +285,7 @@ struct LandscapeScheduleView: View {
                     .frame(width: 60, height: geometry.size.height, alignment: .topLeading)
                     .clipped()
                     .allowsHitTesting(false)
+                    .zIndex(1) // Ensure sticky overlay is on top of scrollable content
                     
                     // Fixed headers overlay
                     VStack(spacing: 0) {
