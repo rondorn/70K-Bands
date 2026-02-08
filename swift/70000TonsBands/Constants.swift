@@ -110,6 +110,7 @@ let staticBandName = DispatchQueue(label: "staticBandName")
 let staticData = DispatchQueue(label: "staticData")
 let storePointerLock = DispatchQueue(label: "storePointerLock")
 let bandDescriptionLock = DispatchQueue(label: "bandDescriptionLock")
+let eventYearArrayLock = DispatchQueue(label: "eventYearArrayLock") // Thread-safe access to eventYearArray
 
 var iCloudCheck = false;
 var internetCheckCache = ""
@@ -752,10 +753,13 @@ func readPointData(pointData:String, pointerValues: [String:[String:String]], po
         let currentIndex = valueArray[0]
         
         if (currentIndex != "Default" && currentIndex != "lastYear"){
-            if (eventYearArray.contains(currentIndex) == false){
-                eventYearArray.append(currentIndex)
-                // Only log when we actually add a new year, don't save to disk yet
-                print("eventYearsInfoFile: Added new year to array: \(currentIndex)")
+            // THREAD-SAFETY FIX: Synchronize access to prevent crashes from concurrent modification
+            eventYearArrayLock.sync {
+                if (eventYearArray.contains(currentIndex) == false){
+                    eventYearArray.append(currentIndex)
+                    // Only log when we actually add a new year, don't save to disk yet
+                    print("eventYearsInfoFile: Added new year to array: \(currentIndex)")
+                }
             }
         }
         
@@ -813,10 +817,13 @@ func readPointDataOptimized(dataArray: [String], pointerValues: [String:[String:
             let currentIndex = valueArray[0]
             
             // STEP 1: Always collect year information for the eventYearArray (need to know available years)
+            // THREAD-SAFETY FIX: Synchronize access to prevent crashes from concurrent modification
             if (currentIndex != "Default" && currentIndex != "lastYear"){
-                if (eventYearArray.contains(currentIndex) == false){
-                    eventYearArray.append(currentIndex)
-                    print("eventYearsInfoFile: Added new year to array: \(currentIndex)")
+                eventYearArrayLock.sync {
+                    if (eventYearArray.contains(currentIndex) == false){
+                        eventYearArray.append(currentIndex)
+                        print("eventYearsInfoFile: Added new year to array: \(currentIndex)")
+                    }
                 }
             }
             
@@ -867,7 +874,9 @@ func readPointDataOptimized(dataArray: [String], pointerValues: [String:[String:
     }
     
     print("readPointDataOptimized: Completed processing for year '\(pointerIndex)'. Found target data: \(foundTargetData), Processed selected year: \(processedSelectedYear)")
-    print("readPointDataOptimized: Total years in eventYearArray: \(eventYearArray.count), but only processed data for: \(Array(targetIndices))")
+    // THREAD-SAFETY FIX: Synchronize access when reading count
+    let yearCount = eventYearArrayLock.sync { eventYearArray.count }
+    print("readPointDataOptimized: Total years in eventYearArray: \(yearCount), but only processed data for: \(Array(targetIndices))")
     
     return newPointValues
 }

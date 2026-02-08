@@ -523,6 +523,13 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         Log.d("orientation", "orientation DONE! New orientation: " + newConfig.orientation);
         setSearchBarWidth();
         
+        // For tablets/master-detail view: ignore rotation, rely on button only
+        boolean isTablet = isSplitViewCapable();
+        if (isTablet) {
+            Log.d("LANDSCAPE_SCHEDULE", "onConfigurationChanged - Tablet detected, ignoring rotation (button-only mode)");
+            return;
+        }
+        
         // CRITICAL FIX: Don't check orientation if we're not the top activity
         // This prevents interfering with detail screens launched from landscape schedule
         // When detail screen is showing, showBands loses window focus, so skip orientation check
