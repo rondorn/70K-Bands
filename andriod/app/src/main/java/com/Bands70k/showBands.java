@@ -1208,6 +1208,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                     currentScrollState = scrollState;
                     if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_IDLE) {
                         lastScrollTime = System.currentTimeMillis();
+                        // Update current viewing day when scroll stops to track which day is visible
+                        updateCurrentViewingDayFromVisibleCells();
                     }
                 }
 
@@ -4487,10 +4489,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         // Don't require hasEventEntries check - let the landscape view handle empty data
         if (isLandscape && isScheduleView) {
             Log.d("LANDSCAPE_SCHEDULE", "✅ Conditions met - launching landscape schedule view (Landscape: " + isLandscape + ", ScheduleView: " + isScheduleView + ")");
-            // Update current viewing day from first visible cell if not already set
-            if (currentViewingDay == null) {
-                updateCurrentViewingDayFromVisibleCells();
-            }
+            // Always update current viewing day from topmost visible cell when launching landscape view
+            // This ensures landscape view starts on the same day as the topmost entry in portrait list
+            updateCurrentViewingDayFromVisibleCells();
             
             // Show landscape schedule view
             presentLandscapeScheduleView();
@@ -4504,43 +4505,241 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     
     /**
      * Update current viewing day from visible cells in the list
+     * Tries the topmost visible entries to find a valid day
+     * Checks both the first visible position and the actual topmost visible view
      */
     private void updateCurrentViewingDayFromVisibleCells() {
-        if (bandNamesList == null || bandNames == null || bandNames.isEmpty()) {
+        if (bandNamesList == null) {
+            Log.w("LANDSCAPE_SCHEDULE", "Cannot update day - bandNamesList is null");
             return;
         }
         
+        // ROOT CAUSE FIX: Use the member variable adapter directly (not from ListView.getAdapter())
+        // The ListView might return a wrapper adapter, but we know our member variable is bandListView
+        if (adapter == null) {
+            Log.w("LANDSCAPE_SCHEDULE", "Cannot update day - member adapter is null");
+            // Fallback: try to get from ListView
+            android.widget.ListAdapter listAdapter = bandNamesList.getAdapter();
+            if (listAdapter == null) {
+                Log.w("LANDSCAPE_SCHEDULE", "Cannot update day - ListView adapter is also null");
+                return;
+            }
+            Log.d("LANDSCAPE_SCHEDULE", "Member adapter is null, using ListView adapter. Type: " + listAdapter.getClass().getName());
+            if (!(listAdapter instanceof bandListView)) {
+                Log.w("LANDSCAPE_SCHEDULE", "ListView adapter is not bandListView, cannot extract day. Actual type: " + listAdapter.getClass().getName());
+                return;
+            }
+            adapter = (bandListView) listAdapter;
+        }
+        
+        // Verify it's actually a bandListView (safety check)
+        if (!(adapter instanceof bandListView)) {
+            Log.w("LANDSCAPE_SCHEDULE", "Member adapter is not bandListView, cannot extract day. Actual type: " + adapter.getClass().getName());
+            return;
+        }
+        
+        bandListView bandAdapter = adapter;
+        int adapterCount = bandAdapter.getCount();
         int firstVisiblePosition = bandNamesList.getFirstVisiblePosition();
-        if (firstVisiblePosition >= 0 && firstVisiblePosition < bandNames.size()) {
-            String bandEntry = bandNames.get(firstVisiblePosition);
+        int lastVisiblePosition = bandNamesList.getLastVisiblePosition();
+        
+        Log.d("LANDSCAPE_SCHEDULE", "Updating day from adapter - firstVisible: " + firstVisiblePosition + ", lastVisible: " + lastVisiblePosition + ", adapterCount: " + adapterCount);
+        
+        if (firstVisiblePosition >= 0 && firstVisiblePosition < adapterCount) {
+            // PRIORITY 1: Try the topmost visible entry (firstVisiblePosition) itself
+            // This is the entry the user sees at the top of the screen
+            try {
+                bandListItem item = bandAdapter.getItem(firstVisiblePosition);
+                String rawDay = extractRawDayFromBandListItem(item);
+                if (rawDay != null && !rawDay.isEmpty()) {
+                    currentViewingDay = rawDay;
+                    Log.d("LANDSCAPE_SCHEDULE", "✅ Updated viewing day from TOPMOST visible entry at position " + firstVisiblePosition + ": '" + currentViewingDay + "'");
+                    return;
+                }
+            } catch (Exception e) {
+                Log.d("LANDSCAPE_SCHEDULE", "Error getting topmost item at position " + firstVisiblePosition + ": " + e.getMessage());
+            }
             
-            // Extract day from the band entry (format: "timeIndex:bandName")
-            if (bandEntry != null && bandEntry.contains(":")) {
-                String[] parts = bandEntry.split(":");
-                if (parts.length >= 2) {
+            // PRIORITY 2: Search BACKWARDS from firstVisiblePosition to find the most recent event
+            // If the topmost entry is a band header or doesn't have a day, find the most recent event entry
+            // This ensures we get the day the user is actually viewing (e.g., if they scrolled to Day 3)
+            int maxBackward = Math.min(100, firstVisiblePosition);
+            Log.d("LANDSCAPE_SCHEDULE", "Topmost entry has no day, searching backwards " + maxBackward + " positions from " + firstVisiblePosition);
+            for (int i = 1; i <= maxBackward; i++) {
+                int position = firstVisiblePosition - i;
+                if (position >= 0) {
                     try {
-                        double timeIndexDouble = Double.parseDouble(parts[0]);
-                        Long timeIndex = (long) timeIndexDouble;
-                        String bandName = parts[1];
+                        bandListItem item = bandAdapter.getItem(position);
+                        String rawDay = extractRawDayFromBandListItem(item);
+                        if (rawDay != null && !rawDay.isEmpty()) {
+                            currentViewingDay = rawDay;
+                            Log.d("LANDSCAPE_SCHEDULE", "✅ Updated viewing day from backward search at position " + position + ": '" + currentViewingDay + "' (topmost was at " + firstVisiblePosition + ")");
+                            return;
+                        }
+                    } catch (Exception e) {
+                        // Continue searching
+                    }
+                }
+            }
+            
+            // PRIORITY 3: Search forward from firstVisiblePosition (only if backward search failed)
+            // This handles edge cases where the topmost entry might be at the very start of a day
+            int maxForward = Math.min(50, adapterCount - firstVisiblePosition);
+            Log.d("LANDSCAPE_SCHEDULE", "Backward search failed, searching forward " + maxForward + " positions from " + firstVisiblePosition);
+            for (int i = 1; i < maxForward; i++) {
+                int position = firstVisiblePosition + i;
+                try {
+                    bandListItem item = bandAdapter.getItem(position);
+                    String rawDay = extractRawDayFromBandListItem(item);
+                    if (rawDay != null && !rawDay.isEmpty()) {
+                        currentViewingDay = rawDay;
+                        Log.d("LANDSCAPE_SCHEDULE", "✅ Updated viewing day from forward search at position " + position + ": '" + currentViewingDay + "' (topmost was at " + firstVisiblePosition + ")");
+                        return;
+                    }
+                } catch (Exception e) {
+                    // Continue searching
+                }
+            }
+        }
+        
+        // Fallback: search from end backwards
+        Log.d("LANDSCAPE_SCHEDULE", "Fallback: searching backwards from end");
+        int searchEnd = Math.max(0, adapterCount - 100);
+        for (int position = adapterCount - 1; position >= searchEnd; position--) {
+            try {
+                bandListItem item = bandAdapter.getItem(position);
+                String rawDay = extractRawDayFromBandListItem(item);
+                if (rawDay != null && !rawDay.isEmpty()) {
+                    currentViewingDay = rawDay;
+                    Log.d("LANDSCAPE_SCHEDULE", "✅ Updated viewing day from end search at position " + position + ": '" + currentViewingDay + "'");
+                    return;
+                }
+            } catch (Exception e) {
+                // Continue searching
+            }
+        }
+        
+        Log.w("LANDSCAPE_SCHEDULE", "❌ Could not determine day from adapter after exhaustive search");
+    }
+    
+    /**
+     * Extract RAW day value from bandListItem by looking up schedule data
+     * This is needed because bandListItem.getDay() returns FORMATTED day, but landscape view needs RAW day
+     */
+    private String extractRawDayFromBandListItem(bandListItem item) {
+        if (item == null) {
+            return null;
+        }
+        
+        String bandName = item.getBandName();
+        String location = item.getLocation();
+        String startTime = item.getStartTime();
+        
+        // If no location/startTime, this might be a plain band entry (not an event entry)
+        if (bandName == null || bandName.isEmpty() || location == null || location.isEmpty() || startTime == null || startTime.isEmpty()) {
+            Log.d("LANDSCAPE_SCHEDULE", "  Item missing bandName/location/startTime - not an event entry");
+            return null;
+        }
+        
+        // Look up the raw day from schedule records
+        if (BandInfo.scheduleRecords != null && BandInfo.scheduleRecords.containsKey(bandName)) {
+            scheduleTimeTracker tracker = BandInfo.scheduleRecords.get(bandName);
+            if (tracker != null && tracker.scheduleByTime != null) {
+                // Clean location for matching (remove venue suffix like " 1", " 2")
+                String cleanLocation = location.trim();
+                if (cleanLocation.matches(".*\\s+\\d+$")) {
+                    // Remove trailing number (e.g., "Pool Deck 1" -> "Pool Deck")
+                    cleanLocation = cleanLocation.replaceAll("\\s+\\d+$", "");
+                }
+                
+                // Iterate through scheduleByTime to find matching location
+                // We'll match on location first, then verify with startTime if possible
+                for (Map.Entry<Long, scheduleHandler> entry : tracker.scheduleByTime.entrySet()) {
+                    scheduleHandler scheduleHandle = entry.getValue();
+                    if (scheduleHandle != null) {
+                        String scheduleLocation = scheduleHandle.getShowLocation();
                         
-                        // Get the day from schedule data
-                        if (BandInfo.scheduleRecords != null && BandInfo.scheduleRecords.containsKey(bandName)) {
-                            scheduleTimeTracker tracker = BandInfo.scheduleRecords.get(bandName);
-                            if (tracker != null && tracker.scheduleByTime != null && tracker.scheduleByTime.containsKey(timeIndex)) {
-                                scheduleHandler scheduleHandle = tracker.scheduleByTime.get(timeIndex);
-                                if (scheduleHandle != null) {
-                                    String day = scheduleHandle.getShowDay();
-                                    currentViewingDay = day;
-                                    Log.d("LANDSCAPE_SCHEDULE", "Updated viewing day from visible cells: " + day);
+                        if (scheduleLocation != null) {
+                            // Try exact match or cleaned match
+                            boolean locationMatches = scheduleLocation.equals(location) || 
+                                                      scheduleLocation.equals(cleanLocation) ||
+                                                      location.equals(scheduleLocation) ||
+                                                      cleanLocation.equals(scheduleLocation);
+                            
+                            if (locationMatches) {
+                                // Found matching location - get the raw day
+                                // We don't need perfect startTime match since location should be unique enough
+                                String rawDay = scheduleHandle.getShowDay();
+                                if (rawDay != null && !rawDay.isEmpty()) {
+                                    Log.d("LANDSCAPE_SCHEDULE", "  Found raw day: '" + rawDay + "' for " + bandName + " at " + location + " (startTime: " + startTime + ")");
+                                    return rawDay;
                                 }
                             }
                         }
-                    } catch (NumberFormatException e) {
-                        // Not a timeIndex, skip
                     }
                 }
             }
         }
+        
+        Log.d("LANDSCAPE_SCHEDULE", "  Could not find raw day for " + bandName + " at " + location + " " + startTime);
+        return null;
+    }
+    
+    /**
+     * Extract day from a specific position in the bandNames list
+     */
+    private String extractDayFromPosition(int position) {
+        if (position < 0 || position >= bandNames.size()) {
+            Log.d("LANDSCAPE_SCHEDULE", "Position " + position + " out of bounds (size: " + bandNames.size() + ")");
+            return null;
+        }
+        
+        String bandEntry = bandNames.get(position);
+        Log.d("LANDSCAPE_SCHEDULE", "Checking position " + position + ": '" + bandEntry + "'");
+        
+        // Extract day from the band entry (format: "timeIndex:bandName")
+        if (bandEntry != null && bandEntry.contains(":")) {
+            String[] parts = bandEntry.split(":");
+            if (parts.length >= 2) {
+                try {
+                    double timeIndexDouble = Double.parseDouble(parts[0]);
+                    Long timeIndex = (long) timeIndexDouble;
+                    String bandName = parts[1];
+                    
+                    Log.d("LANDSCAPE_SCHEDULE", "  Parsed - bandName: '" + bandName + "', timeIndex: " + timeIndex);
+                    
+                    // Get the day from schedule data
+                    if (BandInfo.scheduleRecords != null && BandInfo.scheduleRecords.containsKey(bandName)) {
+                        scheduleTimeTracker tracker = BandInfo.scheduleRecords.get(bandName);
+                        if (tracker != null && tracker.scheduleByTime != null && tracker.scheduleByTime.containsKey(timeIndex)) {
+                            scheduleHandler scheduleHandle = tracker.scheduleByTime.get(timeIndex);
+                            if (scheduleHandle != null) {
+                                String day = scheduleHandle.getShowDay();
+                                Log.d("LANDSCAPE_SCHEDULE", "  Found day: '" + day + "'");
+                                if (day != null && !day.isEmpty()) {
+                                    return day;
+                                } else {
+                                    Log.d("LANDSCAPE_SCHEDULE", "  Day is null or empty");
+                                }
+                            } else {
+                                Log.d("LANDSCAPE_SCHEDULE", "  scheduleHandle is null");
+                            }
+                        } else {
+                            Log.d("LANDSCAPE_SCHEDULE", "  No scheduleByTime entry for timeIndex " + timeIndex);
+                        }
+                    } else {
+                        Log.d("LANDSCAPE_SCHEDULE", "  No scheduleRecords entry for bandName '" + bandName + "'");
+                    }
+                } catch (NumberFormatException e) {
+                    Log.d("LANDSCAPE_SCHEDULE", "  Not a timeIndex entry: " + e.getMessage());
+                }
+            } else {
+                Log.d("LANDSCAPE_SCHEDULE", "  Entry doesn't have expected format (parts.length=" + parts.length + ")");
+            }
+        } else {
+            Log.d("LANDSCAPE_SCHEDULE", "  Entry doesn't contain ':' separator");
+        }
+        return null;
     }
     
     /**
@@ -4562,6 +4761,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         
         Log.d("LANDSCAPE_SCHEDULE", "Presenting landscape schedule view");
         
+        // CRITICAL: Always update day from visible cells RIGHT BEFORE launching landscape view
+        // This ensures we have the most current day even if scroll listener hasn't fired yet
+        updateCurrentViewingDayFromVisibleCells();
+        
         // Check if hiding expired events
         boolean hideExpiredEvents = staticVariables.preferences.getHideExpiredEvents();
         Log.d("LANDSCAPE_SCHEDULE", "hideExpiredEvents: " + hideExpiredEvents);
@@ -4572,12 +4775,12 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             return;
         }
         
-        // Use the tracked current viewing day
+        // Use the tracked current viewing day (just updated above)
         String initialDay = currentViewingDay;
         if (initialDay != null) {
-            Log.d("LANDSCAPE_SCHEDULE", "Starting on tracked day: " + initialDay);
+            Log.d("LANDSCAPE_SCHEDULE", "🚀 Starting landscape view on day: '" + initialDay + "'");
         } else {
-            Log.d("LANDSCAPE_SCHEDULE", "No tracked day, will start on first day");
+            Log.w("LANDSCAPE_SCHEDULE", "⚠️ No tracked day found, will start on first day");
         }
         
         // Launch the landscape schedule activity
