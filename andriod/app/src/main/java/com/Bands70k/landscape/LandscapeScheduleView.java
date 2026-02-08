@@ -287,6 +287,16 @@ public class LandscapeScheduleView extends LinearLayout {
         return drawable;
     }
     
+    private android.graphics.drawable.Drawable getEventBlockBackground(int fillColor) {
+        android.graphics.drawable.GradientDrawable drawable = new android.graphics.drawable.GradientDrawable();
+        drawable.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
+        drawable.setColor(fillColor);
+        drawable.setCornerRadius(dpToPx(4)); // 4dp corner radius to match iOS
+        // Add 1px white border
+        drawable.setStroke(1, Color.WHITE);
+        return drawable;
+    }
+    
     private ViewGroup venueHeaderContainer; // Fixed header row container (no horizontal scroll - content fits width)
     private LinearLayout venueHeaderRow; // Fixed header row for venue names
     
@@ -853,7 +863,8 @@ public class LandscapeScheduleView extends LinearLayout {
         LinearLayout eventBlock = new LinearLayout(context);
         eventBlock.setOrientation(LinearLayout.VERTICAL);
         eventBlock.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
-        eventBlock.setBackgroundColor(event.venueColor);
+        // Use drawable with white border instead of solid color
+        eventBlock.setBackground(getEventBlockBackground(event.venueColor));
         eventBlock.setClickable(true);
         eventBlock.setFocusable(false);
         eventBlock.setFocusableInTouchMode(false);
