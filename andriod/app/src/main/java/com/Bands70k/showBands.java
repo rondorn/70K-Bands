@@ -353,6 +353,16 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         Log.d("startup", "show init start - 5");
         populateBandList();
         Log.d("startup", "show init start - 6");
+        // When app launches already in landscape (phone), config may not be updated immediately.
+        // Run orientation check after a delay so calendar view shows without requiring rotate-away-and-back.
+        if (staticVariables.preferences.getShowScheduleView()) {
+            new android.os.Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    checkOrientationAndShowLandscapeIfNeeded();
+                }
+            }, 600);
+        }
         showNotification();
 
         Log.d(TAG, "3 settingFilters for ShowUnknown is " + staticVariables.preferences.getShowUnknown());
@@ -2471,6 +2481,16 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         } else {
             Log.d("VIEW_MODE_DEBUG", "🔍 displayBandData: Calling displayBandDataWithoutSchedule()");
             displayBandDataWithoutSchedule();
+        }
+        // After displaying data, check if we're in landscape (phone) and should show calendar.
+        // Fixes launch-in-landscape showing list until user rotates away and back.
+        if (showScheduleView) {
+            new android.os.Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    checkOrientationAndShowLandscapeIfNeeded();
+                }
+            }, 150);
         }
     }
 

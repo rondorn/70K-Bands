@@ -381,6 +381,13 @@ public class LandscapeScheduleView extends LinearLayout {
                         return;
                     }
                     
+                    // Preserve current day when reloading (e.g. returning from details) so position is not reset
+                    String dayToRestore = null;
+                    if (days != null && !days.isEmpty() && currentDayIndex >= 0 && currentDayIndex < days.size()) {
+                        dayToRestore = days.get(currentDayIndex).dayLabel;
+                        Log.d(TAG, "Preserving current day for restore: '" + dayToRestore + "' (index " + currentDayIndex + ")");
+                    }
+                    
                     days = processEventsFromScheduleRecords();
                     
                     // Apply visibility rules:
@@ -490,22 +497,32 @@ public class LandscapeScheduleView extends LinearLayout {
                         return;
                     }
                     
-                    if (initialDay != null) {
-                        Log.d(TAG, "Looking for initial day: '" + initialDay + "'");
-                        Log.d(TAG, "Available days: " + days.size());
+                    // Restore to the day we were on (e.g. after returning from details), else use initialDay from intent
+                    boolean restored = false;
+                    if (dayToRestore != null && !days.isEmpty()) {
                         for (int i = 0; i < days.size(); i++) {
                             String dayLabel = days.get(i).dayLabel;
-                            Log.d(TAG, "  Day " + i + ": '" + dayLabel + "'");
-                            // Compare with trimming to handle any whitespace differences
-                            if (dayLabel != null && dayLabel.trim().equals(initialDay.trim())) {
+                            if (dayLabel != null && dayLabel.trim().equals(dayToRestore.trim())) {
                                 currentDayIndex = i;
-                                Log.d(TAG, "✅ Found matching day at index " + i);
+                                restored = true;
+                                Log.d(TAG, "✅ Restored calendar to day: '" + dayToRestore + "' (index " + i + ")");
                                 break;
                             }
                         }
-                        if (currentDayIndex == 0 && days.size() > 0) {
-                            Log.w(TAG, "⚠️ Could not find matching day, defaulting to index 0 (day: '" + (days.isEmpty() ? "none" : days.get(0).dayLabel) + "')");
+                    }
+                    if (!restored && initialDay != null) {
+                        Log.d(TAG, "Looking for initial day: '" + initialDay + "'");
+                        for (int i = 0; i < days.size(); i++) {
+                            String dayLabel = days.get(i).dayLabel;
+                            if (dayLabel != null && dayLabel.trim().equals(initialDay.trim())) {
+                                currentDayIndex = i;
+                                Log.d(TAG, "✅ Found matching initial day at index " + i);
+                                break;
+                            }
                         }
+                    }
+                    if (currentDayIndex >= days.size()) {
+                        currentDayIndex = 0;
                     }
                     
                     if (!shouldFinishActivity) {
