@@ -55,6 +55,7 @@ public class LandscapeScheduleView extends LinearLayout {
     private int currentDayIndex = 0;
     private OnBandTappedListener bandTappedListener;
     private showsAttended attendedHandle;
+    private boolean shouldFinishActivity = false; // Flag to prevent display updates if we're finishing
     
     // Simple UI components
     private LinearLayout headerLayout;
@@ -345,8 +346,111 @@ public class LandscapeScheduleView extends LinearLayout {
                     
                     days = processEventsFromScheduleRecords();
                     
+                    // Apply visibility rules:
+                    // Rule 1: If Hide Expired Events is ON and ALL events are expired → Don't show calendar view
+                    // Rule 2: If Hide Expired Events is ON and ANY events are visible → Show calendar view, but only for days where events exist
+                    // Rule 3: If Hide Expired Events is OFF and ANY scheduled events exist → Show calendar view for all days
+                    // Rule 4: If there are NO scheduled events → Don't show calendar view
+                    
+                    // Check if there are any events at all (Rule 4)
+                    if (days.isEmpty()) {
+                        Log.w(TAG, "No scheduled events found - not showing calendar view");
+                        post(new Runnable() {
+                            @Override
+                            public void run() {
+                                updateDisplay();
+                            }
+                        });
+                        return;
+                    }
+                    
+                    // If hiding expired events, check if ALL events are expired (Rule 1)
                     if (hideExpiredEvents) {
+                        boolean allEventsExpired = true;
+                        long currentTimeMillis = System.currentTimeMillis();
+                        
+                        for (DayScheduleData day : days) {
+                            for (VenueColumn venue : day.venues) {
+                                for (ScheduleBlock event : venue.events) {
+                                    // Check if event is expired independently of hideExpiredEvents setting
+                                    // event.timeIndex is now in seconds (converted from milliseconds when block was created)
+                                    boolean eventIsExpired = false;
+                                    
+                                    if (event.timeIndex > 0) {
+                                        // Calculate endTimeIndex: timeIndex (start in seconds) + duration
+                                        double endTimeIndex = event.timeIndex;
+                                        if (event.startTime != null && event.endTime != null) {
+                                            // Calculate duration in seconds
+                                            long durationSeconds = (event.endTime.getTime() - event.startTime.getTime()) / 1000;
+                                            endTimeIndex = event.timeIndex + durationSeconds;
+                                        } else {
+                                            // Default to 1 hour if we can't determine duration
+                                            endTimeIndex = event.timeIndex + 3600;
+                                        }
+                                        
+                                        // Compare endTimeIndex (in seconds) with current time (in seconds)
+                                        double currentTimeSeconds = currentTimeMillis / 1000.0;
+                                        eventIsExpired = endTimeIndex <= currentTimeSeconds;
+                                    } else {
+                                        // If we can't determine expiration, assume it's not expired to be safe
+                                        eventIsExpired = false;
+                                        Log.w(TAG, "Cannot determine expiration for event: " + event.bandName + 
+                                              " (timeIndex=" + event.timeIndex + ")");
+                                    }
+                                    
+                                    if (!eventIsExpired) {
+                                        allEventsExpired = false;
+                                        Log.d(TAG, "Found non-expired event: " + event.bandName + 
+                                              " (endTime=" + (event.endTime != null ? event.endTime : "null") + 
+                                              ", currentTime=" + new Date(currentTimeMillis) + ")");
+                                        break;
+                                    }
+                                }
+                                if (!allEventsExpired) break;
+                            }
+                            if (!allEventsExpired) break;
+                        }
+                        
+                        if (allEventsExpired) {
+                            Log.w(TAG, "Hide Expired Events is ON and ALL events are expired - not showing calendar view");
+                            shouldFinishActivity = true;
+                            post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    // Finish the activity if we're in one
+                                    if (context instanceof android.app.Activity) {
+                                        Log.d(TAG, "Finishing activity because all events are expired");
+                                        ((android.app.Activity) context).finish();
+                                    }
+                                }
+                            });
+                            return;
+                        }
+                        
+                        // Rule 2: Filter to only show days with non-expired events
                         days = filterExpiredDays(days);
+                        
+                        // If after filtering there are no days left, don't show calendar view
+                        if (days.isEmpty()) {
+                            Log.w(TAG, "After filtering expired events, no days remain - not showing calendar view");
+                            shouldFinishActivity = true;
+                            post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    // Finish the activity if we're in one
+                                    if (context instanceof android.app.Activity) {
+                                        Log.d(TAG, "Finishing activity because no days remain after filtering");
+                                        ((android.app.Activity) context).finish();
+                                    }
+                                }
+                            });
+                            return;
+                        }
+                    }
+                    
+                    if (shouldFinishActivity) {
+                        Log.d(TAG, "Skipping display update because activity should finish");
+                        return;
                     }
                     
                     if (initialDay != null) {
@@ -367,12 +471,16 @@ public class LandscapeScheduleView extends LinearLayout {
                         }
                     }
                     
-                    post(new Runnable() {
-                        @Override
-                        public void run() {
-                            updateDisplay();
-                        }
-                    });
+                    if (!shouldFinishActivity) {
+                        post(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (!shouldFinishActivity) {
+                                    updateDisplay();
+                                }
+                            }
+                        });
+                    }
                 } catch (Exception e) {
                     Log.e(TAG, "Error loading schedule data", e);
                 }
@@ -1351,7 +1459,8 @@ public class LandscapeScheduleView extends LinearLayout {
                 return null;
             }
             
-            double timeIndexDouble = timeIndex != null ? timeIndex.doubleValue() : 0.0;
+            // CRITICAL: timeIndex is stored in MILLISECONDS, convert to seconds for calculations
+            double timeIndexDouble = timeIndex != null ? timeIndex.doubleValue() / 1000.0 : 0.0;
             
             // CRITICAL: Use the Date objects from scheduleHandler which include actual dates
             // These are set when the schedule is parsed and include both date and time
@@ -1373,7 +1482,7 @@ public class LandscapeScheduleView extends LinearLayout {
                 }
             }
             
-            // Calculate endTimeIndex for expiration checking
+            // Calculate endTimeIndex for expiration checking (timeIndexDouble is now in seconds)
             double endTimeIndex = timeIndexDouble;
             if (startDate != null && endDate != null) {
                 long durationSeconds = (endDate.getTime() - startDate.getTime()) / 1000;
