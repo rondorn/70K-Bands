@@ -1981,6 +1981,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // DEADLOCK FIX: Never block main thread - use async delay instead
         print("🔓 DEADLOCK FIX: Orientation change detected - scheduling refresh with non-blocking delay")
         
+        // Check if detail view is currently presented - if so, don't handle orientation change
+        // Detail view should stay in detail view regardless of orientation
+        if let topVC = navigationController?.topViewController, topVC is DetailHostingController {
+            print("🔄 [ORIENTATION] Detail view is showing - skipping orientation handling in main view")
+            return
+        }
+        
         // Check if we should show landscape schedule view
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
             guard let self = self else { return }
@@ -2013,6 +2020,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
            landscapeVC.presentedViewController != nil {
             print("🔄 [LANDSCAPE_SCHEDULE] Detail screen is presented - skipping orientation change handling")
             print("🔄 [LANDSCAPE_SCHEDULE] Detail screen will handle its own orientation, landscape view stays")
+            return
+        }
+        
+        // CRITICAL FIX: If detail view is presented from main navigation controller,
+        // don't handle orientation changes - detail view should stay visible
+        if let topVC = navigationController?.topViewController, topVC is DetailHostingController {
+            print("🔄 [ORIENTATION] Detail view is showing in navigation stack - skipping orientation handling")
             return
         }
         
