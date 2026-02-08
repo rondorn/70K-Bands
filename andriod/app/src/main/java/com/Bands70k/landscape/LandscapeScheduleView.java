@@ -49,6 +49,7 @@ public class LandscapeScheduleView extends LinearLayout {
     private Context context;
     private String initialDay;
     private boolean hideExpiredEvents;
+    private boolean isSplitViewCapable; // True for tablets/master-detail view mode
     
     // Simple data storage
     private List<DayScheduleData> days = new ArrayList<>();
@@ -72,12 +73,14 @@ public class LandscapeScheduleView extends LinearLayout {
     public LandscapeScheduleView(Context context) {
         super(context);
         this.context = context;
+        this.isSplitViewCapable = false; // Default to phone mode
         init();
     }
     
     public LandscapeScheduleView(Context context, AttributeSet attrs) {
         super(context, attrs);
         this.context = context;
+        this.isSplitViewCapable = false; // Default to phone mode
         init();
     }
     
@@ -86,6 +89,7 @@ public class LandscapeScheduleView extends LinearLayout {
         this.context = context;
         this.initialDay = initialDay;
         this.hideExpiredEvents = hideExpiredEvents;
+        this.isSplitViewCapable = isSplitViewCapable;
         init();
     }
     
@@ -552,7 +556,21 @@ public class LandscapeScheduleView extends LinearLayout {
         // Calculate column widths
         int screenWidth = getResources().getDisplayMetrics().widthPixels;
         int availableWidth = screenWidth - dpToPx(60); // Subtract time column width
-        int columnWidth = currentDay.venues.isEmpty() ? availableWidth : availableWidth / currentDay.venues.size();
+        
+        // For tablets/master-detail view: use full width columns (no squashed mode)
+        // For phones: divide width by number of venues (may be narrow/squashed)
+        int columnWidth;
+        if (isSplitViewCapable) {
+            // Tablet mode: use full available width per column (no squashing)
+            // Set minimum width to ensure readability (e.g., 200dp minimum)
+            int minColumnWidth = dpToPx(200);
+            columnWidth = currentDay.venues.isEmpty() ? availableWidth : Math.max(minColumnWidth, availableWidth / currentDay.venues.size());
+            Log.d(TAG, "Tablet mode - using full width columns. columnWidth: " + columnWidth + ", minWidth: " + minColumnWidth);
+        } else {
+            // Phone mode: divide by number of venues (may be narrow)
+            columnWidth = currentDay.venues.isEmpty() ? availableWidth : availableWidth / currentDay.venues.size();
+            Log.d(TAG, "Phone mode - dividing width by venues. columnWidth: " + columnWidth);
+        }
         
         // Venue headers - measure first to find max height, then recreate with fixed height
         int maxHeaderHeight = dpToPx(44); // Minimum height
