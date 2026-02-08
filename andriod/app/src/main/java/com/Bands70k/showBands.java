@@ -534,6 +534,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         Log.d("orientation", "orientation DONE! New orientation: " + newConfig.orientation);
         setSearchBarWidth();
         
+        // CRITICAL: Update DeviceSizeManager on configuration change
+        // This ensures device size classification is recalculated (important for orientation changes and foldable devices)
+        DeviceSizeManager.getInstance(this).updateDeviceSize();
+        
         // For tablets/master-detail view: ignore rotation, rely on button only
         boolean isTablet = isSplitViewCapable();
         if (isTablet) {
@@ -4447,22 +4451,13 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     
     /**
      * Check if device is a tablet or has WindowWidthSizeClass.Expanded
-     * Only returns true for actual tablets, not phones in landscape
+     * Uses centralized DeviceSizeManager for consistent classification
+     * Recalculates on orientation changes and device folds
      */
     private boolean isSplitViewCapable() {
-        // Check if device is a tablet (use screen size in portrait to avoid landscape phones being detected)
-        // Get screen size in the smallest dimension (portrait width) to determine if it's a tablet
-        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
-        int smallestWidthDp = (int)(Math.min(displayMetrics.widthPixels, displayMetrics.heightPixels) / displayMetrics.density);
-        
-        // Tablets typically have smallest width >= 600dp in portrait
-        // WindowWidthSizeClass.Expanded is >= 840dp, but we want to check in portrait orientation
-        // So we check the smallest dimension to avoid false positives from landscape phones
-        boolean isTablet = smallestWidthDp >= 600;
-        
-        Log.d("LANDSCAPE_SCHEDULE", "isSplitViewCapable check - smallestWidthDp: " + smallestWidthDp + ", isTablet: " + isTablet);
-        
-        return isTablet;
+        // Use centralized DeviceSizeManager for consistent device size classification
+        // This recalculates on orientation changes and device folds
+        return DeviceSizeManager.getInstance(this).isLargeDisplay();
     }
     
     /**

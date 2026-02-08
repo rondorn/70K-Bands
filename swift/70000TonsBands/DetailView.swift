@@ -52,11 +52,11 @@ struct DetailView: View {
                         // Check if landscape mode and device type
                         let isCurrentlyLandscape = UIApplication.shared.statusBarOrientation.isLandscape || 
                                                    currentOrientation.isLandscape
-                        let isPad = UIDevice.current.userInterfaceIdiom == .pad
+                        let isLargeDisplay = DeviceSizeManager.isLargeDisplay()
                         
-                        // CRITICAL FIX: On iPad, only show back button (no band name overlay to avoid overlapping logo)
-                        // On iPhone in landscape, show back button + centered band name
-                        if isCurrentlyLandscape && !viewModel.scheduleEvents.isEmpty && !isPad {
+                        // CRITICAL FIX: On large display devices, only show back button (no band name overlay to avoid overlapping logo)
+                        // On normal display devices in landscape, show back button + centered band name
+                        if isCurrentlyLandscape && !viewModel.scheduleEvents.isEmpty && !isLargeDisplay {
                             // iPhone Landscape mode: Back button on left, centered band name
                             HStack {
                                 Button(action: {
@@ -98,8 +98,8 @@ struct DetailView: View {
                                     .padding(.trailing, 12)
                             }
                         } else {
-                            // Portrait mode or iPad: Just Back button (no band name overlay to avoid overlapping logo)
-                            let isPad = UIDevice.current.userInterfaceIdiom == .pad
+                            // Portrait mode or large display: Just Back button (no band name overlay to avoid overlapping logo)
+                            let isLargeDisplay = DeviceSizeManager.isLargeDisplay()
                             HStack {
                                 Button(action: {
                                     // Notify landscape view to refresh this band's data
@@ -121,7 +121,7 @@ struct DetailView: View {
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 6)
                                 }
-                                .padding(.top, isPad ? 8 : 12) // Less padding on iPad to avoid overlap with logo
+                                .padding(.top, isLargeDisplay ? 8 : 12) // Less padding on large display to avoid overlap with logo
                                 .padding(.leading, 12)
                                 Spacer()
                             }
@@ -192,10 +192,11 @@ struct DetailView: View {
             // CRITICAL FIX: On iPad (master/detail), always show full layout with notes
             let isCurrentlyLandscape = UIApplication.shared.statusBarOrientation.isLandscape || 
                                        currentOrientation.isLandscape
-            let isPad = UIDevice.current.userInterfaceIdiom == .pad
+            let isLargeDisplay = DeviceSizeManager.isLargeDisplay()
             
-            // For non-iPad devices, always use simplified calendar layout when in landscape
-            if isCurrentlyLandscape && !isPad {
+            // For non-large display devices, use simplified calendar layout when in landscape OR when accessed from landscape calendar
+            // This ensures country/genre are shown when accessed from landscape calendar, even if rotated to portrait
+            if (!isLargeDisplay && (isCurrentlyLandscape || showCustomBackButton)) {
                 // Simplified layout for landscape modal (iPhone only)
                 VStack(spacing: 0) {
                     // Add top padding to avoid conflict with back button and band name
@@ -231,9 +232,9 @@ struct DetailView: View {
                 VStack(spacing: 0) {
                     // Compact top section - non-scrollable
                     VStack(spacing: 0) {
-                        // CRITICAL FIX: On iPad, show band name above logo with proper spacing
-                        let isPad = UIDevice.current.userInterfaceIdiom == .pad
-                        if isPad && showCustomBackButton {
+                        // CRITICAL FIX: On large display devices, show band name above logo with proper spacing
+                        let isLargeDisplay = DeviceSizeManager.isLargeDisplay()
+                        if isLargeDisplay && showCustomBackButton {
                             // Band name text above logo (iPad only, when using custom back button)
                             Text(viewModel.bandName)
                                 .font(.system(size: 24, weight: .bold))
@@ -258,7 +259,10 @@ struct DetailView: View {
                         }
                         
                         // Band Details - after links
-                        if viewModel.hasBandDetails {
+                        // For normal display devices when accessed from landscape calendar, always show band details (country, genre, etc.)
+                        // For large display devices or other cases, only show if hasBandDetails is true
+                        // Reuse isLargeDisplay declared above
+                        if (!isLargeDisplay && showCustomBackButton) || viewModel.hasBandDetails {
                             bandDetailsSection
                         }
                     }
@@ -933,7 +937,8 @@ struct DetailLifecycleModifiers: ViewModifier {
         content
             .onAppear {
                 print("DEBUG: DetailView appeared for band: '\(viewModel.bandName)'")
-                viewModel.loadBandData()
+                // NOTE: loadBandData() is already called in DetailViewModel.init(), so no need to call it here
+                // This prevents duplicate data loading and improves performance
             }
             .onDisappear {
                 print("DEBUG: DetailView disappeared for band: '\(viewModel.bandName)'")

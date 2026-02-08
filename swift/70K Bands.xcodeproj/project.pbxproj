@@ -171,6 +171,7 @@
 		1172EE102E5A1C4D006E3596 /* DetailHostingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1175C9382E4D2C5A0074E2F2 /* DetailHostingController.swift */; };
 		1172EE112E5A1C4D006E3596 /* DetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1175C9392E4D2C5A0074E2F2 /* DetailView.swift */; };
 		1172EE122E5A1C4D006E3596 /* DetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1175C93A2E4D2C5A0074E2F2 /* DetailViewModel.swift */; };
+		1172EE122E5A1C4D006E3597 /* DeviceSizeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1175C93A2E4D2C5A0074E2F3 /* DeviceSizeManager.swift */; };
 		1172EE132E5A1C4D006E3596 /* BandDescriptionTranslator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114B5C082E468DCE0030CA9D /* BandDescriptionTranslator.swift */; };
 		1172EE142E5A1C4D006E3596 /* PreferencesHostingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11615BB02E4644ED007BD3D5 /* PreferencesHostingController.swift */; };
 		1172EE152E5A1C4D006E3596 /* PreferencesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11615BB22E4644ED007BD3D5 /* PreferencesViewModel.swift */; };
@@ -236,9 +237,11 @@
 		1175C93B2E4D2C5A0074E2F2 /* DetailHostingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1175C9382E4D2C5A0074E2F2 /* DetailHostingController.swift */; };
 		1175C93C2E4D2C5A0074E2F2 /* DetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1175C9392E4D2C5A0074E2F2 /* DetailView.swift */; };
 		1175C93D2E4D2C5A0074E2F2 /* DetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1175C93A2E4D2C5A0074E2F2 /* DetailViewModel.swift */; };
+		1175C93D2E4D2C5A0074E2F3 /* DeviceSizeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1175C93A2E4D2C5A0074E2F3 /* DeviceSizeManager.swift */; };
 		1175C93E2E4D2C5A0074E2F2 /* DetailHostingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1175C9382E4D2C5A0074E2F2 /* DetailHostingController.swift */; };
 		1175C93F2E4D2C5A0074E2F2 /* DetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1175C9392E4D2C5A0074E2F2 /* DetailView.swift */; };
 		1175C9402E4D2C5A0074E2F2 /* DetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1175C93A2E4D2C5A0074E2F2 /* DetailViewModel.swift */; };
+		1175C9402E4D2C5A0074E2F3 /* DeviceSizeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1175C93A2E4D2C5A0074E2F3 /* DeviceSizeManager.swift */; };
 		117BAADC2DC1315900A2830A /* SNL-More_Cowbell.mov in Resources */ = {isa = PBXBuildFile; fileRef = 117BAADB2DC1315900A2830A /* SNL-More_Cowbell.mov */; };
 		117BAADD2DC1315900A2830A /* SNL-More_Cowbell.mov in Resources */ = {isa = PBXBuildFile; fileRef = 117BAADB2DC1315900A2830A /* SNL-More_Cowbell.mov */; };
 		1187BE1220D6AFC8002F070F /* ToastMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1187BE1120D6AFC8002F070F /* ToastMessages.swift */; };
@@ -461,6 +464,7 @@
 		1175C9382E4D2C5A0074E2F2 /* DetailHostingController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailHostingController.swift; sourceTree = "<group>"; };
 		1175C9392E4D2C5A0074E2F2 /* DetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailView.swift; sourceTree = "<group>"; };
 		1175C93A2E4D2C5A0074E2F2 /* DetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailViewModel.swift; sourceTree = "<group>"; };
+		1175C93A2E4D2C5A0074E2F3 /* DeviceSizeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceSizeManager.swift; sourceTree = "<group>"; };
 		117BAADB2DC1315900A2830A /* SNL-More_Cowbell.mov */ = {isa = PBXFileReference; lastKnownFileType = video.quicktime; path = "SNL-More_Cowbell.mov"; sourceTree = "<group>"; };
 		1187BE1120D6AFC8002F070F /* ToastMessages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastMessages.swift; sourceTree = "<group>"; };
 		11895B962EE4C8EB008CC4A9 /* DataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataManager.swift; sourceTree = "<group>"; };
@@ -666,6 +670,7 @@
 				1175C9382E4D2C5A0074E2F2 /* DetailHostingController.swift */,
 				1175C9392E4D2C5A0074E2F2 /* DetailView.swift */,
 				1175C93A2E4D2C5A0074E2F2 /* DetailViewModel.swift */,
+				1175C93A2E4D2C5A0074E2F3 /* DeviceSizeManager.swift */,
 				8CA018E4476A45C994ED91C0 /* LandscapeScheduleView.swift */,
 				8DDB7E0B0AC440BA94B56DBD /* LandscapeScheduleViewModel.swift */,
 				110E084B2AECB6E100075618 /* DPDConstants.swift */,
@@ -1288,6 +1293,7 @@
 				112913842EE618BE008472A3 /* SQLitePriorityManager.swift in Sources */,
 				1175C93F2E4D2C5A0074E2F2 /* DetailView.swift in Sources */,
 				1175C9402E4D2C5A0074E2F2 /* DetailViewModel.swift in Sources */,
+				1175C9402E4D2C5A0074E2F3 /* DeviceSizeManager.swift in Sources */,
 				A0E332C6C3514EE2A65FF3DC /* LandscapeScheduleView.swift in Sources */,
 				82F2265E50F74313A6F60BE1 /* LandscapeScheduleViewModel.swift in Sources */,
 				114B5C0A2E468DCE0030CA9D /* BandDescriptionTranslator.swift in Sources */,
@@ -1382,6 +1388,7 @@
 				1129137D2EE618BE008472A3 /* CoreDataToSQLiteMigrationHelper.swift in Sources */,
 				1129137F2EE618BE008472A3 /* SQLitePriorityManager.swift in Sources */,
 				1175C93D2E4D2C5A0074E2F2 /* DetailViewModel.swift in Sources */,
+				1175C93D2E4D2C5A0074E2F3 /* DeviceSizeManager.swift in Sources */,
 				11EB86B42F353C56007D5AD0 /* LandscapeScheduleView.swift in Sources */,
 				11EB86B52F353C56007D5AD0 /* LandscapeScheduleViewModel.swift in Sources */,
 				114B5C092E468DCE0030CA9D /* BandDescriptionTranslator.swift in Sources */,
@@ -1477,6 +1484,7 @@
 				112913892EE618BE008472A3 /* SQLitePriorityManager.swift in Sources */,
 				1172EE112E5A1C4D006E3596 /* DetailView.swift in Sources */,
 				1172EE122E5A1C4D006E3596 /* DetailViewModel.swift in Sources */,
+				1172EE122E5A1C4D006E3597 /* DeviceSizeManager.swift in Sources */,
 				11EB86B62F353C56007D5AD0 /* LandscapeScheduleView.swift in Sources */,
 				11EB86B72F353C56007D5AD0 /* LandscapeScheduleViewModel.swift in Sources */,
 				1172EE132E5A1C4D006E3596 /* BandDescriptionTranslator.swift in Sources */,
@@ -1737,7 +1745,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260207002;
+				CURRENT_PROJECT_VERSION = 20260207003;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1765,7 +1773,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260207002;
+				MARKETING_VERSION = 20260207003;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -1821,7 +1829,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260207002;
+				CURRENT_PROJECT_VERSION = 20260207003;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1846,7 +1854,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260207002;
+				MARKETING_VERSION = 20260207003;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -2043,7 +2051,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260207002;
+				CURRENT_PROJECT_VERSION = 20260207003;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -2064,7 +2072,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260207002;
+				MARKETING_VERSION = 20260207003;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -2120,7 +2128,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260207002;
+				CURRENT_PROJECT_VERSION = 20260207003;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -2145,7 +2153,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260207002;
+				MARKETING_VERSION = 20260207003;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
