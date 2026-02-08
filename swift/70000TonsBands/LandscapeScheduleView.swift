@@ -378,13 +378,24 @@ struct LandscapeScheduleView: View {
                     
                     // Line 4: Priority and Attended icons
                     HStack(spacing: 3) {
-                        // Priority icon
-                        if event.priority > 0 {
-                            Image(getPriorityIconName(event.priority))
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 14, height: 14)
-                                .opacity(event.isExpired ? 0.4 : 1.0)
+                        // Priority icon - apply circle background to all priority levels (1=must, 2=might, 3=wont)
+                        if event.priority == 1 || event.priority == 2 || event.priority == 3 {
+                            // Use different circle background colors: very dark grey for must/might, lighter grey for wont
+                            ZStack {
+                                // Circle background extending 2px beyond icon
+                                // Use light grey for "won't" (priority 3) to better contrast with red "no" symbol
+                                Circle()
+                                    .fill(event.priority == 3 ? Color(white: 0.75) : Color(white: 0.2))
+                                    .frame(width: 18, height: 18)
+                                    .shadow(color: Color.black.opacity(0.2), radius: 1.5, x: 0, y: 0.5)
+                                
+                                // Icon on top
+                                Image(getPriorityIconName(event.priority))
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 14, height: 14)
+                                    .opacity(event.isExpired ? 0.4 : 1.0)
+                            }
                         }
                         
                         // Attended icon
