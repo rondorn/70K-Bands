@@ -12,12 +12,14 @@ import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
+import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.ImageView;
 import android.widget.TextView;
 import com.Bands70k.BandInfo;
 import com.Bands70k.FestivalConfig;
+import com.Bands70k.R;
 import com.Bands70k.iconResolve;
 import com.Bands70k.showsAttended;
 import com.Bands70k.staticVariables;
@@ -874,7 +876,141 @@ public class LandscapeScheduleView extends LinearLayout {
             }
         });
         
+        // Long click listener for attendance menu
+        eventBlock.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                showAttendanceMenu(v, eventData, dayData);
+                return true; // Consume the event
+            }
+        });
+        
         return eventBlock;
+    }
+    
+    private void showAttendanceMenu(View anchor, ScheduleBlock event, DayScheduleData dayData) {
+        PopupMenu popupMenu = new PopupMenu(context, anchor);
+        
+        // Get current status
+        String currentStatus = event.attendedStatus;
+        if (currentStatus == null) {
+            currentStatus = "";
+        }
+        
+        // Normalize event type for database operations (like iOS does)
+        // Event data contains "Unofficial Event" but database keys use "Cruiser Organized"
+        String normalizedEventType = event.eventType;
+        if ("Unofficial Event".equals(event.eventType)) {
+            normalizedEventType = "Cruiser Organized";
+        }
+        
+        Log.d(TAG, "Showing attendance menu for " + event.bandName + 
+              ", currentStatus=" + currentStatus + 
+              ", eventType=" + event.eventType + 
+              " -> normalizedEventType=" + normalizedEventType);
+        
+        // Define menu item IDs
+        final int MENU_ID_ALL = 1;
+        final int MENU_ID_SOME = 2;
+        final int MENU_ID_NONE = 3;
+        
+        // Add menu items, excluding the currently active option
+        // Show "All Of Event" if not already selected
+        if (!currentStatus.equals(staticVariables.sawAllStatus)) {
+            popupMenu.getMenu().add(0, MENU_ID_ALL, 0, context.getString(R.string.AllOfEvent));
+        }
+        
+        // Show "Part Of Event" if not already selected AND event type is "Show"
+        if (!currentStatus.equals(staticVariables.sawSomeStatus) && 
+            event.eventType != null && event.eventType.equals(staticVariables.show)) {
+            popupMenu.getMenu().add(0, MENU_ID_SOME, 0, context.getString(R.string.PartOfEvent));
+        }
+        
+        // Show "None Of Event" if not already selected (and current status is not empty)
+        if (!currentStatus.equals(staticVariables.sawNoneStatus) && !currentStatus.isEmpty()) {
+            popupMenu.getMenu().add(0, MENU_ID_NONE, 0, context.getString(R.string.NoneOfEvent));
+        }
+        
+        // Check if menu is empty (all options already selected - shouldn't happen normally)
+        if (popupMenu.getMenu().size() == 0) {
+            Log.w(TAG, "Attendance menu is empty - all options already selected?");
+            return;
+        }
+        
+        // Store event data in final variables for use in listener
+        final ScheduleBlock finalEvent = event;
+        final String finalNormalizedEventType = normalizedEventType;
+        
+        // Set click listener
+        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(android.view.MenuItem item) {
+                String selectedStatus = null;
+                
+                // Determine which status was selected based on menu item ID
+                switch (item.getItemId()) {
+                    case MENU_ID_ALL:
+                        selectedStatus = staticVariables.sawAllStatus;
+                        break;
+                    case MENU_ID_SOME:
+                        selectedStatus = staticVariables.sawSomeStatus;
+                        break;
+                    case MENU_ID_NONE:
+                        selectedStatus = staticVariables.sawNoneStatus;
+                        break;
+                }
+                
+                if (selectedStatus != null) {
+                    // Ensure eventYear is set
+                    if (staticVariables.eventYear == 0) {
+                        staticVariables.ensureEventYearIsSet();
+                    }
+                    String eventYear = String.valueOf(staticVariables.eventYear);
+                    
+                    // Update attendance in database
+                    Log.d(TAG, "Updating attendance: band=" + finalEvent.bandName + 
+                          ", location=" + finalEvent.location + 
+                          ", startTime=" + finalEvent.startTimeString + 
+                          ", eventType=" + finalNormalizedEventType + 
+                          ", eventYear=" + eventYear + 
+                          ", status=" + selectedStatus);
+                    
+                    attendedHandle.addShowsAttended(
+                        finalEvent.bandName,
+                        finalEvent.location,
+                        finalEvent.startTimeString,
+                        finalNormalizedEventType,
+                        selectedStatus
+                    );
+                    
+                    // Refresh the display to show updated status
+                    // Update the event's attendedStatus in the current day's data
+                    if (currentDayIndex >= 0 && currentDayIndex < days.size()) {
+                        DayScheduleData currentDay = days.get(currentDayIndex);
+                        for (VenueColumn venue : currentDay.venues) {
+                            for (ScheduleBlock block : venue.events) {
+                                if (block.bandName.equals(finalEvent.bandName) &&
+                                    block.location.equals(finalEvent.location) &&
+                                    block.startTimeString.equals(finalEvent.startTimeString) &&
+                                    block.eventType.equals(finalEvent.eventType)) {
+                                    // Update the status in the data structure
+                                    block.attendedStatus = selectedStatus;
+                                    break;
+                                }
+                            }
+                        }
+                        // Refresh the display
+                        updateDisplay();
+                    }
+                    
+                    Log.d(TAG, "Attendance updated successfully for " + finalEvent.bandName);
+                }
+                
+                return true;
+            }
+        });
+        
+        popupMenu.show();
     }
     
     private int calculateYPositionFromTimeIndex(double eventTimeIndex, DayScheduleData dayData) {
