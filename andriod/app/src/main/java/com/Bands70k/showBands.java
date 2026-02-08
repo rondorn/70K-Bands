@@ -41,6 +41,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.util.DisplayMetrics;
+import android.view.Menu;
 import android.view.MenuItem;
 
 import android.util.Log;
@@ -2031,6 +2032,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             }
         });
 
+        updateCalendarButtonVisibility();
 
         Button shareButton = (Button) findViewById(R.id.shareButton);
         shareButton.setOnClickListener(new Button.OnClickListener() {
@@ -3482,6 +3484,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         }
         
         displayBandData();
+        updateCalendarButtonVisibility();
         
         // CRITICAL FIX: Ensure list is visible after refresh, especially on first install
         // This is important because saveScrollPosition() might have hidden it
@@ -3758,6 +3761,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         }
         Log.d(TAG, notificationTag + " In onResume - 1");
         super.onResume();
+        
+        // Invalidate options menu and header calendar button for tablets/foldables
+        invalidateOptionsMenu();
+        updateCalendarButtonVisibility();
         
         // Check for incoming file share intent (for API 35 emulator compatibility)
         Log.d(TAG, "🔥🔥🔥 onResume - checking for file share intent 🔥🔥🔥");
@@ -4152,6 +4159,21 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     }
 
     @Override
+    public boolean onCreateOptionsMenu(android.view.Menu menu) {
+        // Only show calendar button for tablets
+        if (isSplitViewCapable()) {
+            getMenuInflater().inflate(R.menu.menu_show_bands, menu);
+            // Find the calendar menu item and make it visible
+            MenuItem calendarItem = menu.findItem(R.id.action_calendar_view);
+            if (calendarItem != null) {
+                calendarItem.setVisible(true);
+                calendarItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+            }
+        }
+        return true;
+    }
+    
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
@@ -4159,6 +4181,14 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         int id = item.getItemId();
         listState = bandNamesList.onSaveInstanceState();
         Log.d("State Status", "Saving state");
+        
+        // Handle calendar view toggle for tablets
+        if (id == R.id.action_calendar_view) {
+            Log.d("LANDSCAPE_SCHEDULE", "📱 [TABLET_TOGGLE] Calendar button tapped in list view");
+            presentLandscapeScheduleView();
+            return true;
+        }
+        
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
@@ -4414,6 +4444,46 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     }
     
     /**
+     * True when the rotation/calendar view can show content: either hide-expired is off,
+     * or there is at least one non-expired event. Used to enable the calendar button
+     * only when opening the calendar would be useful.
+     */
+    private boolean isRotationViewOffered() {
+        if (BandInfo.scheduleRecords == null || BandInfo.scheduleRecords.isEmpty()) {
+            return false;
+        }
+        boolean hideExpired = staticVariables.preferences.getHideExpiredEvents();
+        return !hideExpired || !areAllEventsExpired();
+    }
+
+    /**
+     * Show or hide the header calendar button based on device size (large/extended = max space).
+     * When visible, enable the button only when rotation view is offered (hide expired false
+     * or non-expired events present). Rotation view change is disabled on non-large displays
+     * (button hidden); on large display the rotation/calendar view applies when the button is used.
+     */
+    private void updateCalendarButtonVisibility() {
+        ImageButton calendarViewButton = (ImageButton) findViewById(R.id.calendarViewButton);
+        if (calendarViewButton == null) return;
+        if (isSplitViewCapable()) {
+            calendarViewButton.setVisibility(View.VISIBLE);
+            boolean rotationOffered = isRotationViewOffered();
+            calendarViewButton.setEnabled(rotationOffered);
+            calendarViewButton.setAlpha(rotationOffered ? 1.0f : 0.4f);
+            calendarViewButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (!isRotationViewOffered()) return;
+                    Log.d("LANDSCAPE_SCHEDULE", "📱 [TABLET_TOGGLE] Calendar button tapped in list view");
+                    presentLandscapeScheduleView();
+                }
+            });
+        } else {
+            calendarViewButton.setVisibility(View.GONE);
+        }
+    }
+    
+    /**
      * Check orientation and show landscape schedule view if needed
      */
     private void checkOrientationAndShowLandscapeIfNeeded() {
@@ -4431,9 +4501,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         Log.d("LANDSCAPE_SCHEDULE", "Device check - isTablet: " + isTablet + ", Schedule View: " + isScheduleView + ", Manual Calendar View: " + isManualCalendarView);
         
         if (isTablet) {
-            Log.d("LANDSCAPE_SCHEDULE", "[TABLET_TOGGLE] Tablet detected - manual toggle behavior (not implemented yet)");
-            // Tablet behavior is controlled by a manual toggle button (not implemented yet)
-            // For now, tablets will just use portrait list view
+            Log.d("LANDSCAPE_SCHEDULE", "[TABLET_TOGGLE] Tablet detected - manual toggle behavior");
+            // Tablet behavior is controlled by a manual toggle button
+            // Calendar view is launched via menu button, not automatically on rotation
+            // Just return - don't auto-launch on orientation change
             return;
         }
         

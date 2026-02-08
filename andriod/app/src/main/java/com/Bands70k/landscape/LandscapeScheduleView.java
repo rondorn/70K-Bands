@@ -55,6 +55,7 @@ public class LandscapeScheduleView extends LinearLayout {
     private List<DayScheduleData> days = new ArrayList<>();
     private int currentDayIndex = 0;
     private OnBandTappedListener bandTappedListener;
+    private OnDismissRequestedListener dismissRequestedListener;
     private showsAttended attendedHandle;
     private boolean shouldFinishActivity = false; // Flag to prevent display updates if we're finishing
     
@@ -63,11 +64,16 @@ public class LandscapeScheduleView extends LinearLayout {
     private Button prevButton;
     private Button nextButton;
     private TextView dayLabel;
+    private Button listViewButton; // Button to return to list view (tablets only)
     private ScrollView contentScrollView;
     private LinearLayout contentLayout;
     
     public interface OnBandTappedListener {
         void onBandTapped(String bandName, String currentDay);
+    }
+    
+    public interface OnDismissRequestedListener {
+        void onDismissRequested();
     }
     
     public LandscapeScheduleView(Context context) {
@@ -119,7 +125,6 @@ public class LandscapeScheduleView extends LinearLayout {
         headerLayout = new LinearLayout(context);
         headerLayout.setOrientation(LinearLayout.HORIZONTAL);
         headerLayout.setGravity(Gravity.CENTER); // Center the nav group
-        // Add extra top padding to avoid system UI, reduced horizontal padding to keep buttons close to center
         headerLayout.setPadding(dpToPx(16), dpToPx(48), dpToPx(16), dpToPx(16));
         headerLayout.setBackgroundColor(Color.BLACK);
         // Don't intercept touches - let buttons handle them
@@ -155,7 +160,7 @@ public class LandscapeScheduleView extends LinearLayout {
         LinearLayout.LayoutParams prevParams = new LinearLayout.LayoutParams(
             dpToPx(32), dpToPx(32) // Smaller buttons like iOS (32dp)
         );
-        prevParams.setMargins(0, 0, dpToPx(1), 0); // Minimal spacing from label (1dp)
+        prevParams.setMargins(0, 0, dpToPx(1), 0);
         prevButton.setLayoutParams(prevParams);
         // Add touch listener to debug
         prevButton.setOnTouchListener(new View.OnTouchListener() {
@@ -192,7 +197,7 @@ public class LandscapeScheduleView extends LinearLayout {
         LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(
             LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT // Wrap content, don't expand
         );
-        labelParams.setMargins(dpToPx(1), 0, dpToPx(1), 0); // Minimal spacing from buttons (1dp)
+        labelParams.setMargins(dpToPx(1), 0, dpToPx(1), 0);
         dayLabel.setLayoutParams(labelParams);
         
         // Next button - Clean style: just icon with very subtle background for touch feedback
@@ -214,7 +219,7 @@ public class LandscapeScheduleView extends LinearLayout {
         LinearLayout.LayoutParams nextParams = new LinearLayout.LayoutParams(
             dpToPx(32), dpToPx(32) // Smaller buttons like iOS (32dp)
         );
-        nextParams.setMargins(dpToPx(1), 0, 0, 0); // Minimal spacing from label (1dp)
+        nextParams.setMargins(dpToPx(1), 0, 0, 0);
         nextButton.setLayoutParams(nextParams);
         // Add touch listener to debug
         nextButton.setOnTouchListener(new View.OnTouchListener() {
@@ -244,8 +249,34 @@ public class LandscapeScheduleView extends LinearLayout {
         navGroup.addView(dayLabel);
         navGroup.addView(nextButton);
         
-        // Add the nav group to header layout (centered as a single unit)
         headerLayout.addView(navGroup);
+        if (isSplitViewCapable) {
+            listViewButton = new Button(context);
+            listViewButton.setText("☰"); // List icon (hamburger/list symbol)
+            listViewButton.setTextColor(Color.WHITE);
+            listViewButton.setTextSize(18);
+            listViewButton.setMinWidth(dpToPx(44));
+            listViewButton.setMinHeight(dpToPx(44));
+            listViewButton.setPadding(dpToPx(8), dpToPx(8), dpToPx(8), dpToPx(8));
+            listViewButton.setBackground(getRoundedBackground(Color.argb(204, 0, 122, 255))); // Blue background like iOS
+            listViewButton.setClickable(true);
+            listViewButton.setFocusable(true);
+            listViewButton.setFocusableInTouchMode(true);
+            listViewButton.setEnabled(true);
+            LinearLayout.LayoutParams listButtonParams = new LinearLayout.LayoutParams(dpToPx(44), dpToPx(44));
+            listButtonParams.setMargins(0, 0, dpToPx(16), 0);
+            listViewButton.setLayoutParams(listButtonParams);
+            listViewButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Log.d(TAG, "📱 [TABLET_TOGGLE] List button tapped in calendar view");
+                    if (dismissRequestedListener != null) {
+                        dismissRequestedListener.onDismissRequested();
+                    }
+                }
+            });
+            headerLayout.addView(listViewButton);
+        }
         
         addView(headerLayout);
         
@@ -254,6 +285,9 @@ public class LandscapeScheduleView extends LinearLayout {
               ", enabled=" + prevButton.isEnabled() + ", visibility=" + prevButton.getVisibility());
         Log.d(TAG, "Header created - nextButton clickable=" + nextButton.isClickable() + 
               ", enabled=" + nextButton.isEnabled() + ", visibility=" + nextButton.getVisibility());
+        if (isSplitViewCapable) {
+            Log.d(TAG, "Header created - listViewButton added for tablet mode");
+        }
     }
     
     private android.graphics.drawable.Drawable getRoundedBackground(int color) {
@@ -1188,6 +1222,11 @@ public class LandscapeScheduleView extends LinearLayout {
         Log.d(TAG, "setBandTappedListener called: " + (listener != null ? "NOT NULL" : "NULL"));
         this.bandTappedListener = listener;
         Log.d(TAG, "bandTappedListener set to: " + (this.bandTappedListener != null ? "NOT NULL" : "NULL"));
+    }
+    
+    public void setDismissRequestedListener(OnDismissRequestedListener listener) {
+        Log.d(TAG, "setDismissRequestedListener called: " + (listener != null ? "NOT NULL" : "NULL"));
+        this.dismissRequestedListener = listener;
     }
     
     public void refreshEventData(String bandName) {
