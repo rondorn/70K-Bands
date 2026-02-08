@@ -4769,10 +4769,18 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         boolean hideExpiredEvents = staticVariables.preferences.getHideExpiredEvents();
         Log.d("LANDSCAPE_SCHEDULE", "hideExpiredEvents: " + hideExpiredEvents);
         
-        // If hiding expired events and NO bands are visible in portrait, don't show landscape
-        if (hideExpiredEvents && (bandNames == null || bandNames.isEmpty())) {
-            Log.w("LANDSCAPE_SCHEDULE", "No bands in portrait view - staying in portrait view");
+        // Rule 4: If there are NO scheduled events → Don't show calendar view
+        if (BandInfo.scheduleRecords == null || BandInfo.scheduleRecords.isEmpty()) {
+            Log.w("LANDSCAPE_SCHEDULE", "No scheduled events found - not showing calendar view");
             return;
+        }
+        
+        // Rule 1: If Hide Expired Events is ON, check if ALL events are expired before launching
+        if (hideExpiredEvents) {
+            if (areAllEventsExpired()) {
+                Log.w("LANDSCAPE_SCHEDULE", "Hide Expired Events is ON and ALL events are expired - not showing calendar view");
+                return;
+            }
         }
         
         // Use the tracked current viewing day (just updated above)
@@ -4807,6 +4815,81 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             e.printStackTrace();
             isShowingLandscapeSchedule = false;
         }
+    }
+    
+    /**
+     * Check if all events in the schedule are expired
+     * Returns true if hideExpiredEvents is ON and ALL events have ended
+     */
+    private boolean areAllEventsExpired() {
+        if (BandInfo.scheduleRecords == null || BandInfo.scheduleRecords.isEmpty()) {
+            return false; // No events means not all expired
+        }
+        
+        long currentTimeMillis = System.currentTimeMillis();
+        double currentTimeSeconds = currentTimeMillis / 1000.0;
+        
+        boolean foundAnyNonExpired = false;
+        int totalEvents = 0;
+        int expiredEvents = 0;
+        
+        for (java.util.Map.Entry<String, com.Bands70k.scheduleTimeTracker> bandEntry : BandInfo.scheduleRecords.entrySet()) {
+            com.Bands70k.scheduleTimeTracker tracker = bandEntry.getValue();
+            if (tracker == null || tracker.scheduleByTime == null) {
+                continue;
+            }
+            
+            for (java.util.Map.Entry<Long, com.Bands70k.scheduleHandler> timeEntry : tracker.scheduleByTime.entrySet()) {
+                Long timeIndex = timeEntry.getKey();
+                com.Bands70k.scheduleHandler scheduleHandle = timeEntry.getValue();
+                
+                if (scheduleHandle == null) {
+                    continue;
+                }
+                
+                totalEvents++;
+                
+                // Calculate if this event is expired
+                // CRITICAL: timeIndex is stored in MILLISECONDS, convert to seconds for comparison
+                double timeIndexSeconds = timeIndex.doubleValue() / 1000.0;
+                double endTimeIndex = timeIndexSeconds;
+                
+                // Get duration from schedule handler
+                java.util.Date startDate = scheduleHandle.getStartTime();
+                java.util.Date endDate = scheduleHandle.getEndTime();
+                
+                if (startDate != null && endDate != null) {
+                    long durationSeconds = (endDate.getTime() - startDate.getTime()) / 1000;
+                    endTimeIndex = timeIndexSeconds + durationSeconds;
+                } else {
+                    // Default to 1 hour if we can't determine duration
+                    endTimeIndex = timeIndexSeconds + 3600;
+                }
+                
+                // Event is expired if its end time has passed
+                boolean isExpired = endTimeIndex <= currentTimeSeconds;
+                
+                if (isExpired) {
+                    expiredEvents++;
+                } else {
+                    foundAnyNonExpired = true;
+                    Log.d("LANDSCAPE_SCHEDULE", "Found non-expired event: " + bandEntry.getKey() + 
+                          " (endTimeIndex=" + endTimeIndex + ", currentTime=" + currentTimeSeconds + ")");
+                    // Early exit if we find any non-expired event
+                    break;
+                }
+            }
+            
+            if (foundAnyNonExpired) {
+                break;
+            }
+        }
+        
+        boolean allExpired = totalEvents > 0 && !foundAnyNonExpired;
+        Log.d("LANDSCAPE_SCHEDULE", "areAllEventsExpired check: totalEvents=" + totalEvents + 
+              ", expiredEvents=" + expiredEvents + ", allExpired=" + allExpired);
+        
+        return allExpired;
     }
 }
 
