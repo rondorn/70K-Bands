@@ -4171,6 +4171,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         Log.d("ListPosition", "Saved list position: " + position + " for band: " + selectedBand);
 
         Intent showDetails = new Intent(showBands.this, showBandDetails.class);
+        // On tablet-sized devices, details should always show full content (notes, extra data, links) regardless of orientation
+        showDetails.putExtra("alwaysShowFullDetails", isSplitViewCapable());
         Log.d("NAVIGATION_DEBUG", "🚀 Starting showBandDetails activity");
         // Update activity reference for progress indicator if downloads are running
         ForegroundDownloadManager.setCurrentActivity(showBands.this);

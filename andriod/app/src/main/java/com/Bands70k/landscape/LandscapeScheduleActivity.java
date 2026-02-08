@@ -65,10 +65,12 @@ public class LandscapeScheduleActivity extends Activity {
                 com.Bands70k.BandInfo.setSelectedBand(bandName);
                 Log.d(TAG, "Set selected band to: " + bandName);
                 
-                // Launch detail activity
+                // Launch detail activity.
+                // On tablet (smallestWidthDp >= 600), show full details like list view; on phone keep modified view.
                 Intent intent = new Intent(LandscapeScheduleActivity.this, showBandDetails.class);
                 intent.putExtra("BandName", bandName);
                 intent.putExtra("showCustomBackButton", true);
+                intent.putExtra("showAllDetailsInDetails", isSplitViewCapable);
                 startActivityForResult(intent, REQUEST_CODE_BAND_DETAILS);
             }
         });
