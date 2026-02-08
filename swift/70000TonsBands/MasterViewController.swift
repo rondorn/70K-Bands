@@ -429,6 +429,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.OnOrientationChange), name: UIDevice.orientationDidChangeNotification, object: nil)
         
+        // Initialize DeviceSizeManager to start listening for orientation changes
+        // This ensures device size classification is recalculated on orientation changes
+        _ = DeviceSizeManager.shared
+        
         NotificationCenter.default.addObserver(self, selector: #selector(bandNamesCacheReadyHandler), name: .bandNamesCacheReady, object: nil)
         
         // --- ADDED: Start 5-min timer ---
@@ -2095,6 +2099,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // DEADLOCK FIX: Never block main thread - use async delay instead
         print("🔓 DEADLOCK FIX: Orientation change detected - scheduling refresh with non-blocking delay")
         
+        // CRITICAL: Update DeviceSizeManager on orientation change
+        // This ensures device size classification is recalculated (important for foldable devices)
+        DeviceSizeManager.shared.updateDeviceSize()
+        
         // Check if detail view is currently presented - if so, don't handle orientation change
         // Detail view should stay in detail view regardless of orientation
         // Check both navigation controller and landscape view controller for presented detail views
@@ -2308,8 +2316,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     // MARK: - iPad Split View Detection
     
     private func isSplitViewCapable() -> Bool {
-        // Check if device is iPad or has split view capability
-        return UIDevice.current.userInterfaceIdiom == .pad
+        // Use centralized DeviceSizeManager for consistent device size classification
+        // This recalculates on orientation changes and device folds
+        return DeviceSizeManager.isLargeDisplay()
     }
     
     private func setupViewToggleButton() {

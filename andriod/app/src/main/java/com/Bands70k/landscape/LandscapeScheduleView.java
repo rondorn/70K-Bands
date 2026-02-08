@@ -264,32 +264,7 @@ public class LandscapeScheduleView extends LinearLayout {
         headerLayout.addView(navContainer);
         
         if (isSplitViewCapable) {
-            listViewButton = new Button(context);
-            listViewButton.setText("☰"); // List icon (hamburger/list symbol)
-            listViewButton.setTextColor(Color.WHITE);
-            listViewButton.setTextSize(18);
-            listViewButton.setMinWidth(dpToPx(44));
-            listViewButton.setMinHeight(dpToPx(44));
-            listViewButton.setPadding(dpToPx(8), dpToPx(8), dpToPx(8), dpToPx(8));
-            listViewButton.setBackground(getRoundedBackground(Color.argb(204, 0, 122, 255))); // Blue background like iOS
-            listViewButton.setClickable(true);
-            listViewButton.setFocusable(false);
-            listViewButton.setFocusableInTouchMode(false);
-            listViewButton.setEnabled(true);
-            FrameLayout.LayoutParams listButtonParams = new FrameLayout.LayoutParams(dpToPx(44), dpToPx(44));
-            listButtonParams.gravity = Gravity.END | Gravity.TOP;
-            listButtonParams.setMargins(0, 0, dpToPx(8), dpToPx(8)); // Small inset from top-right corner
-            listViewButton.setLayoutParams(listButtonParams);
-            listViewButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Log.d(TAG, "📱 [TABLET_TOGGLE] List button tapped in calendar view");
-                    if (dismissRequestedListener != null) {
-                        dismissRequestedListener.onDismissRequested();
-                    }
-                }
-            });
-            headerLayout.addView(listViewButton);
+            createListViewButton();
         }
         
         addView(headerLayout);
@@ -1237,6 +1212,99 @@ public class LandscapeScheduleView extends LinearLayout {
     public void setDismissRequestedListener(OnDismissRequestedListener listener) {
         Log.d(TAG, "setDismissRequestedListener called: " + (listener != null ? "NOT NULL" : "NULL"));
         this.dismissRequestedListener = listener;
+    }
+    
+    /**
+     * Update device size classification dynamically (handles foldable devices)
+     * Shows/hides the list view button and updates behavior based on device size
+     */
+    public void updateSplitViewCapable(boolean newIsSplitViewCapable) {
+        if (this.isSplitViewCapable == newIsSplitViewCapable) {
+            Log.d(TAG, "Device size unchanged - isSplitViewCapable: " + newIsSplitViewCapable);
+            return; // No change needed
+        }
+        
+        boolean wasSplitViewCapable = this.isSplitViewCapable;
+        this.isSplitViewCapable = newIsSplitViewCapable;
+        
+        Log.d(TAG, "Device size changed - isSplitViewCapable: " + wasSplitViewCapable + " -> " + newIsSplitViewCapable);
+        
+        // Update listViewButton visibility
+        if (listViewButton != null) {
+            if (newIsSplitViewCapable) {
+                // Show button for tablet mode
+                if (listViewButton.getParent() == null) {
+                    // Button doesn't exist yet, create it
+                    createListViewButton();
+                } else {
+                    listViewButton.setVisibility(View.VISIBLE);
+                }
+                Log.d(TAG, "List view button shown (tablet mode)");
+            } else {
+                // Hide button for phone mode
+                if (listViewButton.getParent() != null) {
+                    listViewButton.setVisibility(View.GONE);
+                }
+                Log.d(TAG, "List view button hidden (phone mode)");
+            }
+        } else if (newIsSplitViewCapable && headerLayout != null) {
+            // Button doesn't exist but should be shown - create it
+            createListViewButton();
+        }
+    }
+    
+    /**
+     * Create and add the list view button to the header
+     * Called during initialization and when device size changes (foldable devices)
+     */
+    private void createListViewButton() {
+        if (headerLayout == null) {
+            Log.w(TAG, "Cannot create list view button - headerLayout is null");
+            return; // Header not initialized
+        }
+        
+        if (listViewButton != null && listViewButton.getParent() != null) {
+            Log.d(TAG, "List view button already exists and is added to parent");
+            return; // Button already exists and is added
+        }
+        
+        // Create button if it doesn't exist
+        if (listViewButton == null) {
+            listViewButton = new Button(context);
+            listViewButton.setText("☰"); // List icon (hamburger/list symbol)
+            listViewButton.setTextColor(Color.WHITE);
+            listViewButton.setTextSize(18);
+            listViewButton.setMinWidth(dpToPx(44));
+            listViewButton.setMinHeight(dpToPx(44));
+            listViewButton.setPadding(dpToPx(8), dpToPx(8), dpToPx(8), dpToPx(8));
+            listViewButton.setBackground(getRoundedBackground(Color.argb(204, 0, 122, 255))); // Blue background like iOS
+            listViewButton.setClickable(true);
+            listViewButton.setFocusable(false);
+            listViewButton.setFocusableInTouchMode(false);
+            listViewButton.setEnabled(true);
+            FrameLayout.LayoutParams listButtonParams = new FrameLayout.LayoutParams(dpToPx(44), dpToPx(44));
+            listButtonParams.gravity = Gravity.END | Gravity.TOP;
+            listButtonParams.setMargins(0, 0, dpToPx(8), dpToPx(8)); // Small inset from top-right corner
+            listViewButton.setLayoutParams(listButtonParams);
+            listViewButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Log.d(TAG, "📱 [TABLET_TOGGLE] List button tapped in calendar view");
+                    if (dismissRequestedListener != null) {
+                        dismissRequestedListener.onDismissRequested();
+                    }
+                }
+            });
+        }
+        
+        // Add to header if not already added
+        if (listViewButton.getParent() == null) {
+            headerLayout.addView(listViewButton);
+            Log.d(TAG, "List view button created and added to header");
+        } else {
+            listViewButton.setVisibility(View.VISIBLE);
+            Log.d(TAG, "List view button already in parent, made visible");
+        }
     }
     
     public void refreshEventData(String bandName) {

@@ -11,6 +11,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import com.Bands70k.R;
 import com.Bands70k.showBandDetails;
+import com.Bands70k.DeviceSizeManager;
 
 /**
  * Activity that displays the landscape schedule view
@@ -26,6 +27,7 @@ public class LandscapeScheduleActivity extends Activity {
     
     private LandscapeScheduleView scheduleView;
     private String currentViewingDay;
+    private boolean initialIsSplitViewCapable; // Store initial value for reference
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,14 +39,19 @@ public class LandscapeScheduleActivity extends Activity {
             | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
         );
         
+        // CRITICAL: Update DeviceSizeManager on activity creation (handles foldable devices)
+        DeviceSizeManager.getInstance(this).updateDeviceSize();
+        
         // Get parameters from intent
         String initialDay = getIntent().getStringExtra(EXTRA_INITIAL_DAY);
         boolean hideExpiredEvents = getIntent().getBooleanExtra(EXTRA_HIDE_EXPIRED_EVENTS, false);
-        boolean isSplitViewCapable = getIntent().getBooleanExtra(EXTRA_IS_SPLIT_VIEW_CAPABLE, false);
+        // Use dynamic device size check instead of static Intent extra
+        boolean isSplitViewCapable = DeviceSizeManager.getInstance(this).isLargeDisplay();
+        initialIsSplitViewCapable = isSplitViewCapable; // Store for reference
         
         Log.d(TAG, "Creating LandscapeScheduleActivity - initialDay: " + initialDay + 
               ", hideExpiredEvents: " + hideExpiredEvents + 
-              ", isSplitViewCapable: " + isSplitViewCapable);
+              ", isSplitViewCapable: " + isSplitViewCapable + " (dynamic)");
         
         currentViewingDay = initialDay;
         
@@ -66,25 +73,18 @@ public class LandscapeScheduleActivity extends Activity {
                 Log.d(TAG, "Set selected band to: " + bandName);
                 
                 // Launch detail activity.
-                // On tablet (smallestWidthDp >= 600), show full details like list view; on phone keep modified view.
+                // Use dynamic device size check (handles foldable devices)
+                boolean currentIsSplitViewCapable = DeviceSizeManager.getInstance(LandscapeScheduleActivity.this).isLargeDisplay();
                 Intent intent = new Intent(LandscapeScheduleActivity.this, showBandDetails.class);
                 intent.putExtra("BandName", bandName);
                 intent.putExtra("showCustomBackButton", true);
-                intent.putExtra("showAllDetailsInDetails", isSplitViewCapable);
+                intent.putExtra("showAllDetailsInDetails", currentIsSplitViewCapable);
                 startActivityForResult(intent, REQUEST_CODE_BAND_DETAILS);
             }
         });
         
-        // Set dismiss listener for tablets (return to list view)
-        if (isSplitViewCapable) {
-            scheduleView.setDismissRequestedListener(new LandscapeScheduleView.OnDismissRequestedListener() {
-                @Override
-                public void onDismissRequested() {
-                    Log.d(TAG, "📱 [TABLET_TOGGLE] Dismiss requested - returning to list view");
-                    finish();
-                }
-            });
-        }
+        // Set dismiss listener for tablets (return to list view) - use dynamic check
+        setupDismissListener(isSplitViewCapable);
         
         setContentView(scheduleView);
     }
@@ -110,9 +110,22 @@ public class LandscapeScheduleActivity extends Activity {
               " (ORIENTATION_PORTRAIT=" + Configuration.ORIENTATION_PORTRAIT + 
               ", ORIENTATION_LANDSCAPE=" + Configuration.ORIENTATION_LANDSCAPE + ")");
         
+        // CRITICAL: Recalculate device size on configuration change (handles foldable devices)
+        DeviceSizeManager.getInstance(this).updateDeviceSize();
+        boolean isSplitViewCapable = DeviceSizeManager.getInstance(this).isLargeDisplay();
+        
+        Log.d(TAG, "Device size after config change - isSplitViewCapable: " + isSplitViewCapable + 
+              " (was: " + initialIsSplitViewCapable + ")");
+        
+        // Update the view's behavior if device size changed
+        if (scheduleView != null) {
+            scheduleView.updateSplitViewCapable(isSplitViewCapable);
+            // Update dismiss listener if needed
+            setupDismissListener(isSplitViewCapable);
+        }
+        
         // For tablets/master-detail view: don't auto-close on portrait rotation
         // Landscape view is controlled by button, not rotation
-        boolean isSplitViewCapable = getIntent().getBooleanExtra(EXTRA_IS_SPLIT_VIEW_CAPABLE, false);
         if (isSplitViewCapable) {
             Log.d(TAG, "Tablet mode - ignoring portrait rotation (button-controlled)");
             return;
@@ -137,6 +150,27 @@ public class LandscapeScheduleActivity extends Activity {
         }
     }
     
+    /**
+     * Setup dismiss listener based on current device size (handles foldable devices)
+     */
+    private void setupDismissListener(boolean isSplitViewCapable) {
+        if (scheduleView == null) return;
+        
+        if (isSplitViewCapable) {
+            // Set or update dismiss listener for tablets
+            scheduleView.setDismissRequestedListener(new LandscapeScheduleView.OnDismissRequestedListener() {
+                @Override
+                public void onDismissRequested() {
+                    Log.d(TAG, "📱 [TABLET_TOGGLE] Dismiss requested - returning to list view");
+                    finish();
+                }
+            });
+        } else {
+            // Remove dismiss listener for phones
+            scheduleView.setDismissRequestedListener(null);
+        }
+    }
+    
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
@@ -144,7 +178,10 @@ public class LandscapeScheduleActivity extends Activity {
         // CRITICAL FIX: Also check orientation when window gains focus
         // This catches cases where onConfigurationChanged might not fire
         if (hasFocus) {
-            boolean isSplitViewCapable = getIntent().getBooleanExtra(EXTRA_IS_SPLIT_VIEW_CAPABLE, false);
+            // Use dynamic device size check (handles foldable devices)
+            DeviceSizeManager.getInstance(this).updateDeviceSize();
+            boolean isSplitViewCapable = DeviceSizeManager.getInstance(this).isLargeDisplay();
+            
             if (!isSplitViewCapable) {
                 // Check orientation using view bounds
                 android.util.DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
