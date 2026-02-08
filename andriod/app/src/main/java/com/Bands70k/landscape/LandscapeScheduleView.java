@@ -965,9 +965,28 @@ public class LandscapeScheduleView extends LinearLayout {
             
             if (priorityResId != 0) {
                 priorityIcon.setImageResource(priorityResId);
-                priorityIcon.setLayoutParams(new LinearLayout.LayoutParams(dpToPx(14), dpToPx(14)));
+                priorityIcon.setLayoutParams(new FrameLayout.LayoutParams(dpToPx(14), dpToPx(14), Gravity.CENTER));
                 priorityIcon.setAlpha(event.isExpired ? 0.4f : 1.0f);
-                iconRow.addView(priorityIcon);
+                
+                // Wrap icon in FrameLayout with circular background
+                // Circle extends 2px beyond icon: 14dp icon + 4dp (2px on each side) = 18dp circle
+                FrameLayout iconContainer = new FrameLayout(context);
+                iconContainer.setLayoutParams(new LinearLayout.LayoutParams(dpToPx(18), dpToPx(18)));
+                
+                // Set circular background color based on priority
+                // Very dark grey (0.2) for must/might, light grey (0.75) for wont
+                float greyValue = (event.priority == 3) ? 0.75f : 0.2f;
+                int greyColor = Color.rgb((int)(greyValue * 255), (int)(greyValue * 255), (int)(greyValue * 255));
+                android.graphics.drawable.GradientDrawable circleBackground = new android.graphics.drawable.GradientDrawable();
+                circleBackground.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+                circleBackground.setColor(greyColor);
+                iconContainer.setBackground(circleBackground);
+                
+                // Add shadow/elevation for depth
+                iconContainer.setElevation(2f);
+                
+                iconContainer.addView(priorityIcon);
+                iconRow.addView(iconContainer);
                 
                 // Add spacing between icons
                 View spacer = new View(context);
