@@ -132,16 +132,28 @@ public class LandscapeScheduleActivity extends Activity {
         }
         
         // CRITICAL FIX: Use multiple methods to detect portrait orientation
-        // Sometimes newConfig.orientation might not update immediately, so check view bounds too
+        // On Pixel Fold front display, display metrics may be stale - use window dimensions instead
         android.util.DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
-        int width = displayMetrics.widthPixels;
-        int height = displayMetrics.heightPixels;
-        boolean isPortraitBySize = height > width;
+        int displayWidth = displayMetrics.widthPixels;
+        int displayHeight = displayMetrics.heightPixels;
         
+        // Get actual window dimensions (more reliable on foldable devices)
+        android.view.View decorView = getWindow().getDecorView();
+        int windowWidth = decorView.getWidth();
+        int windowHeight = decorView.getHeight();
+        
+        // Use window dimensions if available, otherwise fall back to display metrics
+        int width = (windowWidth > 0) ? windowWidth : displayWidth;
+        int height = (windowHeight > 0) ? windowHeight : displayHeight;
+        
+        boolean isPortraitBySize = height > width;
         boolean isPortrait = (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) || isPortraitBySize;
         
         Log.d(TAG, "Orientation check - config: " + newConfig.orientation + 
-              ", size-based: " + isPortraitBySize + " (" + width + "x" + height + "), isPortrait: " + isPortrait);
+              ", display metrics: " + displayWidth + "x" + displayHeight +
+              ", window size: " + windowWidth + "x" + windowHeight +
+              ", using: " + width + "x" + height +
+              ", size-based portrait: " + isPortraitBySize + ", isPortrait: " + isPortrait);
         
         // Phone mode: If rotated back to portrait, close this activity immediately
         if (isPortrait) {
@@ -183,11 +195,24 @@ public class LandscapeScheduleActivity extends Activity {
             boolean isSplitViewCapable = DeviceSizeManager.getInstance(this).isLargeDisplay();
             
             if (!isSplitViewCapable) {
-                // Check orientation using view bounds
+                // Check orientation using window dimensions (more reliable on foldable devices)
                 android.util.DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
-                int width = displayMetrics.widthPixels;
-                int height = displayMetrics.heightPixels;
+                int displayWidth = displayMetrics.widthPixels;
+                int displayHeight = displayMetrics.heightPixels;
+                
+                // Get actual window dimensions
+                android.view.View decorView = getWindow().getDecorView();
+                int windowWidth = decorView.getWidth();
+                int windowHeight = decorView.getHeight();
+                
+                // Use window dimensions if available, otherwise fall back to display metrics
+                int width = (windowWidth > 0) ? windowWidth : displayWidth;
+                int height = (windowHeight > 0) ? windowHeight : displayHeight;
                 boolean isPortrait = height > width;
+                
+                Log.d(TAG, "Window focus check - display: " + displayWidth + "x" + displayHeight +
+                      ", window: " + windowWidth + "x" + windowHeight +
+                      ", using: " + width + "x" + height + ", isPortrait: " + isPortrait);
                 
                 if (isPortrait) {
                     Log.d(TAG, "🚫 Window focus gained in portrait - closing landscape schedule activity");
