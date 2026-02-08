@@ -73,6 +73,17 @@ public class LandscapeScheduleActivity extends Activity {
             }
         });
         
+        // Set dismiss listener for tablets (return to list view)
+        if (isSplitViewCapable) {
+            scheduleView.setDismissRequestedListener(new LandscapeScheduleView.OnDismissRequestedListener() {
+                @Override
+                public void onDismissRequested() {
+                    Log.d(TAG, "📱 [TABLET_TOGGLE] Dismiss requested - returning to list view");
+                    finish();
+                }
+            });
+        }
+        
         setContentView(scheduleView);
     }
     
