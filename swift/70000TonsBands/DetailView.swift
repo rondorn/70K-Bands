@@ -194,9 +194,9 @@ struct DetailView: View {
                                        currentOrientation.isLandscape
             let isPad = UIDevice.current.userInterfaceIdiom == .pad
             
-            // Only use simplified layout on iPhone in landscape, never on iPad
-            if showCustomBackButton && !viewModel.scheduleEvents.isEmpty && isCurrentlyLandscape && !isPad {
-                // Simplified layout for landscape modal with schedule events (iPhone only)
+            // For non-iPad devices, always use simplified calendar layout when in landscape
+            if isCurrentlyLandscape && !isPad {
+                // Simplified layout for landscape modal (iPhone only)
                 VStack(spacing: 0) {
                     // Add top padding to avoid conflict with back button and band name
                     Spacer()
@@ -204,13 +204,16 @@ struct DetailView: View {
                     
                     ScrollView(.vertical, showsIndicators: true) {
                         VStack(alignment: .leading, spacing: 0) {
-                            // Schedule Events - show all events
-                            scheduleEventsSection
-                                .padding(.top, 8)
+                            // Schedule Events - show all events (if any)
+                            if !viewModel.scheduleEvents.isEmpty {
+                                scheduleEventsSection
+                                    .padding(.top, 8)
+                            }
                             
                             // Band Details - Country, Genre, Last On Cruise, Note
+                            // Always show band details (country, genre, etc.) when accessed from landscape calendar
                             bandDetailsSection
-                                .padding(.top, 16)
+                                .padding(.top, viewModel.scheduleEvents.isEmpty ? 8 : 16)
                             
                             // Add bottom padding to ensure last item is fully visible above priority widget
                             Spacer()
