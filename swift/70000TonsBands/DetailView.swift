@@ -49,30 +49,78 @@ struct DetailView: View {
                 // Back button overlay - top left corner (only when presented modally from landscape schedule)
                 if showCustomBackButton {
                     VStack {
-                        HStack {
-                            Button(action: {
-                                // Notify landscape view to refresh this band's data
-                                NotificationCenter.default.post(
-                                    name: Notification.Name("DetailScreenDismissed"),
-                                    object: nil,
-                                    userInfo: ["bandName": viewModel.bandName]
-                                )
-                                print("🔄 [DETAIL_VIEW] Posted DetailScreenDismissed notification for \(viewModel.bandName)")
-                                presentationMode.wrappedValue.dismiss()
-                            }) {
-                                HStack(spacing: 4) {
-                                    Image(systemName: "chevron.left")
-                                        .font(.system(size: 18, weight: .semibold))
-                                    Text("Back")
-                                        .font(.system(size: 17))
+                        // Check if landscape mode
+                        let isCurrentlyLandscape = UIApplication.shared.statusBarOrientation.isLandscape || 
+                                                   currentOrientation.isLandscape
+                        
+                        if isCurrentlyLandscape && !viewModel.scheduleEvents.isEmpty {
+                            // Landscape mode: Back button on left, centered band name
+                            HStack {
+                                Button(action: {
+                                    // Notify landscape view to refresh this band's data
+                                    NotificationCenter.default.post(
+                                        name: Notification.Name("DetailScreenDismissed"),
+                                        object: nil,
+                                        userInfo: ["bandName": viewModel.bandName]
+                                    )
+                                    print("🔄 [DETAIL_VIEW] Posted DetailScreenDismissed notification for \(viewModel.bandName)")
+                                    presentationMode.wrappedValue.dismiss()
+                                }) {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "chevron.left")
+                                            .font(.system(size: 18, weight: .semibold))
+                                        Text("Back")
+                                            .font(.system(size: 17))
+                                    }
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 6)
                                 }
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 6)
+                                .padding(.top, 12)
+                                .padding(.leading, 12)
+                                
+                                Spacer()
+                                
+                                // Band/Event Name centered
+                                Text(viewModel.bandName)
+                                    .font(.system(size: 20, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .padding(.top, 12)
+                                
+                                Spacer()
+                                
+                                // Invisible spacer to balance the Back button
+                                Color.clear
+                                    .frame(width: 80, height: 44)
+                                    .padding(.trailing, 12)
                             }
-                            .padding(.top, 12)
-                            .padding(.leading, 12)
-                            Spacer()
+                        } else {
+                            // Portrait mode: Just Back button
+                            HStack {
+                                Button(action: {
+                                    // Notify landscape view to refresh this band's data
+                                    NotificationCenter.default.post(
+                                        name: Notification.Name("DetailScreenDismissed"),
+                                        object: nil,
+                                        userInfo: ["bandName": viewModel.bandName]
+                                    )
+                                    print("🔄 [DETAIL_VIEW] Posted DetailScreenDismissed notification for \(viewModel.bandName)")
+                                    presentationMode.wrappedValue.dismiss()
+                                }) {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "chevron.left")
+                                            .font(.system(size: 18, weight: .semibold))
+                                        Text("Back")
+                                            .font(.system(size: 17))
+                                    }
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 6)
+                                }
+                                .padding(.top, 12)
+                                .padding(.leading, 12)
+                                Spacer()
+                            }
                         }
                         Spacer()
                     }
@@ -143,24 +191,31 @@ struct DetailView: View {
             if showCustomBackButton && !viewModel.scheduleEvents.isEmpty && isCurrentlyLandscape {
                 // Simplified layout for landscape modal with schedule events
                 VStack(spacing: 0) {
-                    // Add top padding to avoid conflict with back button
+                    // Add top padding to avoid conflict with back button and band name
                     Spacer()
                         .frame(height: 50)
                     
-                    VStack(spacing: 0) {
-                        // Schedule Events only
-                        scheduleEventsSection
+                    ScrollView(.vertical, showsIndicators: true) {
+                        VStack(alignment: .leading, spacing: 0) {
+                            // Schedule Events - show all events
+                            scheduleEventsSection
+                                .padding(.top, 8)
+                            
+                            // Band Details - Country, Genre, Last On Cruise, Note
+                            bandDetailsSection
+                                .padding(.top, 16)
+                            
+                            // Add bottom padding to ensure last item is fully visible above priority widget
+                            Spacer()
+                                .frame(height: 100)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 14)
+                        .background(Color.black)
                     }
-                    .padding(.horizontal, 14)
-                    .background(Color.black)
-                    
-                    // Larger space before notes section
-                    Spacer(minLength: 20)
-                    
-                    // Scrollable Notes Section - takes remaining space
-                    notesSection
-                        .frame(maxHeight: .infinity)
+                    .frame(maxHeight: .infinity)
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             } else {
                 // Full layout for normal detail view
                 VStack(spacing: 0) {
