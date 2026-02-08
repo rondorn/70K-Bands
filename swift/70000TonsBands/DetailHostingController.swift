@@ -183,10 +183,12 @@ extension DetailHostingController {
         let detailController = DetailHostingController(bandName: bandName)
         
         if UIDevice.current.userInterfaceIdiom == .pad {
-            // iPad: Present modally or in split view
-            let navigationController = UINavigationController(rootViewController: detailController)
-            navigationController.modalPresentationStyle = .formSheet
-            viewController.present(navigationController, animated: true)
+            // iPad: Present modally with larger size to accommodate band name and logo
+            detailController.modalPresentationStyle = .formSheet
+            // Set larger preferred content size to accommodate band name and logo
+            // iPad Air 11-inch width is ~820pt, so use ~75% for comfortable viewing
+            detailController.preferredContentSize = CGSize(width: 800, height: 900)
+            viewController.present(detailController, animated: true)
         } else {
             // iPhone: Push onto navigation stack
             viewController.navigationController?.pushViewController(detailController, animated: true)

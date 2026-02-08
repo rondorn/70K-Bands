@@ -32,7 +32,7 @@ struct DetailView: View {
                 // Main content that slides with animation
                 mainContent
                     .offset(x: offset)
-                    .modifier(DetailNavigationModifier(viewModel: viewModel))
+                    .modifier(DetailNavigationModifier(viewModel: viewModel, showCustomBackButton: showCustomBackButton))
                     .modifier(DetailLifecycleModifiers(viewModel: viewModel))
                     .preferredColorScheme(.dark)
                     .environment(\.colorScheme, .dark)
@@ -49,12 +49,15 @@ struct DetailView: View {
                 // Back button overlay - top left corner (only when presented modally from landscape schedule)
                 if showCustomBackButton {
                     VStack {
-                        // Check if landscape mode
+                        // Check if landscape mode and device type
                         let isCurrentlyLandscape = UIApplication.shared.statusBarOrientation.isLandscape || 
                                                    currentOrientation.isLandscape
+                        let isPad = UIDevice.current.userInterfaceIdiom == .pad
                         
-                        if isCurrentlyLandscape && !viewModel.scheduleEvents.isEmpty {
-                            // Landscape mode: Back button on left, centered band name
+                        // CRITICAL FIX: On iPad, only show back button (no band name overlay to avoid overlapping logo)
+                        // On iPhone in landscape, show back button + centered band name
+                        if isCurrentlyLandscape && !viewModel.scheduleEvents.isEmpty && !isPad {
+                            // iPhone Landscape mode: Back button on left, centered band name
                             HStack {
                                 Button(action: {
                                     // Notify landscape view to refresh this band's data
@@ -81,7 +84,7 @@ struct DetailView: View {
                                 
                                 Spacer()
                                 
-                                // Band/Event Name centered
+                                // Band/Event Name centered (iPhone only)
                                 Text(viewModel.bandName)
                                     .font(.system(size: 20, weight: .bold))
                                     .foregroundColor(.white)
@@ -95,7 +98,8 @@ struct DetailView: View {
                                     .padding(.trailing, 12)
                             }
                         } else {
-                            // Portrait mode: Just Back button
+                            // Portrait mode or iPad: Just Back button (no band name overlay to avoid overlapping logo)
+                            let isPad = UIDevice.current.userInterfaceIdiom == .pad
                             HStack {
                                 Button(action: {
                                     // Notify landscape view to refresh this band's data
@@ -117,7 +121,7 @@ struct DetailView: View {
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 6)
                                 }
-                                .padding(.top, 12)
+                                .padding(.top, isPad ? 8 : 12) // Less padding on iPad to avoid overlap with logo
                                 .padding(.leading, 12)
                                 Spacer()
                             }
@@ -185,11 +189,14 @@ struct DetailView: View {
         ZStack {
             // Check if we should show simplified landscape layout
             // Use actual orientation check, not just showCustomBackButton flag
+            // CRITICAL FIX: On iPad (master/detail), always show full layout with notes
             let isCurrentlyLandscape = UIApplication.shared.statusBarOrientation.isLandscape || 
                                        currentOrientation.isLandscape
+            let isPad = UIDevice.current.userInterfaceIdiom == .pad
             
-            if showCustomBackButton && !viewModel.scheduleEvents.isEmpty && isCurrentlyLandscape {
-                // Simplified layout for landscape modal with schedule events
+            // Only use simplified layout on iPhone in landscape, never on iPad
+            if showCustomBackButton && !viewModel.scheduleEvents.isEmpty && isCurrentlyLandscape && !isPad {
+                // Simplified layout for landscape modal with schedule events (iPhone only)
                 VStack(spacing: 0) {
                     // Add top padding to avoid conflict with back button and band name
                     Spacer()
@@ -221,6 +228,19 @@ struct DetailView: View {
                 VStack(spacing: 0) {
                     // Compact top section - non-scrollable
                     VStack(spacing: 0) {
+                        // CRITICAL FIX: On iPad, show band name above logo with proper spacing
+                        let isPad = UIDevice.current.userInterfaceIdiom == .pad
+                        if isPad && showCustomBackButton {
+                            // Band name text above logo (iPad only, when using custom back button)
+                            Text(viewModel.bandName)
+                                .font(.system(size: 24, weight: .bold))
+                                .foregroundColor(.white)
+                                .multilineTextAlignment(.center)
+                                .padding(.top, 8) // Space from back button
+                                .padding(.bottom, 12) // Space before logo
+                                .frame(maxWidth: .infinity)
+                        }
+                        
                         // Band Logo - moved to very top
                         bandLogoSection
                         
@@ -887,11 +907,19 @@ struct ToastOverlayView: View {
 
 struct DetailNavigationModifier: ViewModifier {
     @ObservedObject var viewModel: DetailViewModel
+    let showCustomBackButton: Bool
     
     func body(content: Content) -> some View {
-        content
-            .navigationTitle(viewModel.bandName)
-            .navigationBarTitleDisplayMode(.inline)
+        if showCustomBackButton {
+            // When using custom back button overlay, hide navigation bar completely
+            content
+                .navigationBarHidden(true)
+        } else {
+            // Normal navigation with title
+            content
+                .navigationTitle(viewModel.bandName)
+                .navigationBarTitleDisplayMode(.inline)
+        }
     }
 }
 
