@@ -123,6 +123,8 @@ public class showBandDetails extends Activity {
     private BandNotes bandHandler;
     private Boolean clickedOnEvent = false;
     private boolean showCustomBackButton = false;  // Flag for custom back button from landscape schedule
+    private boolean showAllDetailsInDetails = false;  // When true (tablet from calendar), show full data like list view
+    private boolean alwaysShowFullDetails = false;   // When true (tablet from list or calendar), same content in all orientations
 
     private String rankIconLocation = "";
     
@@ -146,6 +148,8 @@ public class showBandDetails extends Activity {
         Intent intent = getIntent();
         if (intent != null) {
             showCustomBackButton = intent.getBooleanExtra("showCustomBackButton", false);
+            showAllDetailsInDetails = intent.getBooleanExtra("showAllDetailsInDetails", false);
+            alwaysShowFullDetails = intent.getBooleanExtra("alwaysShowFullDetails", false) || showAllDetailsInDetails;
             if (showCustomBackButton) {
                 Log.d("BandDetails", "Launched from landscape schedule - enabling up navigation");
                 // Enable up navigation in action bar
@@ -802,8 +806,8 @@ public class showBandDetails extends Activity {
             }
             
             bandLogoImage.setImageBitmap(bitmap);
-            // Hide logo in landscape mode when launched from schedule view with events
-            if (showCustomBackButton && orientation.equals("landscape") && scheduleSection.getChildCount() > 0) {
+            // Hide logo in landscape when from calendar on phone only; tablet always shows full content
+            if (showCustomBackButton && !alwaysShowFullDetails && orientation.equals("landscape") && scheduleSection.getChildCount() > 0) {
                 bandLogoImage.setVisibility(View.GONE);
             } else {
                 bandLogoImage.setVisibility(View.VISIBLE);
@@ -2791,10 +2795,9 @@ public class showBandDetails extends Activity {
         
         // Hide image initially - will be loaded by progressive loading thread
         // NOTE: This should only be called during initial setup, not during refresh operations
-        // Also hide logo in landscape mode when launched from schedule view with events
+        // Also hide logo in landscape when from calendar on phone only; tablet always shows full content
         if (bandLogoImage != null) {
-            if (showCustomBackButton && orientation.equals("landscape")) {
-                // Check if schedule events exist - will be checked again when schedule is loaded
+            if (showCustomBackButton && !alwaysShowFullDetails && orientation.equals("landscape")) {
                 bandLogoImage.setVisibility(View.GONE);
             } else {
                 bandLogoImage.setVisibility(View.GONE); // Will be shown when image loads
@@ -2864,8 +2867,8 @@ public class showBandDetails extends Activity {
                 }
             }
             
-            // Hide logo in landscape mode when launched from schedule view with events
-            if (showCustomBackButton && orientation.equals("landscape") && scheduleSection.getChildCount() > 0) {
+            // Hide logo in landscape when from calendar on phone only; tablet always shows full content
+            if (showCustomBackButton && !alwaysShowFullDetails && orientation.equals("landscape") && scheduleSection.getChildCount() > 0) {
                 if (bandLogoImage != null) {
                     bandLogoImage.setVisibility(View.GONE);
                 }
@@ -3208,17 +3211,17 @@ public class showBandDetails extends Activity {
         }
         
         // Show/hide sections based on landscape mode and schedule view
-        if (showCustomBackButton && orientation.equals("landscape") && scheduleSection.getChildCount() > 0) {
-            // Landscape mode from schedule view: Hide all extra data (country, genre, last cruise, note)
-            // Show only: Band name, Schedule, Must/Might/Wont widget
+        // On tablet (alwaysShowFullDetails), always show full data regardless of orientation; on phone from calendar, modified view only in landscape
+        if (showCustomBackButton && !alwaysShowFullDetails && orientation.equals("landscape") && scheduleSection.getChildCount() > 0) {
+            // Phone from calendar: Hide extra data and links; show only Band name, Schedule, Must/Might/Wont
             extraDataSection.setVisibility(View.GONE);
-            // Hide links section in landscape mode with schedule
             linksSection.setVisibility(View.GONE);
-        } else if (hasExtraData && !orientation.equals("landscape")) {
-            // Portrait mode: Show all extra data
+        } else if (hasExtraData && (!orientation.equals("landscape") || alwaysShowFullDetails)) {
+            // Portrait, or tablet (list or calendar): Show all extra data (notes, country, genre, etc.)
+            // Links section visibility is set by setupLinksSection() (only VISIBLE when band has URLs); do not override
             extraDataSection.setVisibility(View.VISIBLE);
         } else {
-            // Landscape mode (not from schedule): Hide extra data
+            // Landscape on phone (not from calendar): Hide extra data
             extraDataSection.setVisibility(View.GONE);
         }
     }
