@@ -802,7 +802,12 @@ public class showBandDetails extends Activity {
             }
             
             bandLogoImage.setImageBitmap(bitmap);
-            bandLogoImage.setVisibility(View.VISIBLE);
+            // Hide logo in landscape mode when launched from schedule view with events
+            if (showCustomBackButton && orientation.equals("landscape") && scheduleSection.getChildCount() > 0) {
+                bandLogoImage.setVisibility(View.GONE);
+            } else {
+                bandLogoImage.setVisibility(View.VISIBLE);
+            }
             
             // Set appropriate scaling based on aspect ratio
             int width = bitmap.getWidth();
@@ -2786,9 +2791,15 @@ public class showBandDetails extends Activity {
         
         // Hide image initially - will be loaded by progressive loading thread
         // NOTE: This should only be called during initial setup, not during refresh operations
+        // Also hide logo in landscape mode when launched from schedule view with events
         if (bandLogoImage != null) {
+            if (showCustomBackButton && orientation.equals("landscape")) {
+                // Check if schedule events exist - will be checked again when schedule is loaded
                 bandLogoImage.setVisibility(View.GONE);
+            } else {
+                bandLogoImage.setVisibility(View.GONE); // Will be shown when image loads
             }
+        }
         
         // NOTE: Image loading is handled by progressive loading phases to prevent thread conflicts
         Log.d("setupBandTitleAndLogo", "Title set, image loading handled by progressive loading for " + bandName);
@@ -2850,6 +2861,13 @@ public class showBandDetails extends Activity {
                                          dayNumber, eventType, eventNote, attendedImage, eventTypeImage, attendIndex);
                     
                     scheduleSection.addView(scheduleItemView);
+                }
+            }
+            
+            // Hide logo in landscape mode when launched from schedule view with events
+            if (showCustomBackButton && orientation.equals("landscape") && scheduleSection.getChildCount() > 0) {
+                if (bandLogoImage != null) {
+                    bandLogoImage.setVisibility(View.GONE);
                 }
             }
         } catch (Exception error) {
@@ -3189,10 +3207,18 @@ public class showBandDetails extends Activity {
             updateTranslationButton();
         }
         
-        // Show/hide the entire extra data section
-        if (hasExtraData && !orientation.equals("landscape")) {
+        // Show/hide sections based on landscape mode and schedule view
+        if (showCustomBackButton && orientation.equals("landscape") && scheduleSection.getChildCount() > 0) {
+            // Landscape mode from schedule view: Hide all extra data (country, genre, last cruise, note)
+            // Show only: Band name, Schedule, Must/Might/Wont widget
+            extraDataSection.setVisibility(View.GONE);
+            // Hide links section in landscape mode with schedule
+            linksSection.setVisibility(View.GONE);
+        } else if (hasExtraData && !orientation.equals("landscape")) {
+            // Portrait mode: Show all extra data
             extraDataSection.setVisibility(View.VISIBLE);
         } else {
+            // Landscape mode (not from schedule): Hide extra data
             extraDataSection.setVisibility(View.GONE);
         }
     }
