@@ -120,6 +120,31 @@ public class LandscapeScheduleView extends LinearLayout {
         Log.d(TAG, "=== SIMPLIFIED init() END ===");
     }
     
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        // CRITICAL FIX: Recalculate layout when view size changes (handles rotation on foldable devices)
+        // On Pixel Fold front display, rotation may not trigger onConfigurationChanged immediately
+        if ((w != oldw || h != oldh) && oldw > 0 && oldh > 0) {
+            Log.d(TAG, "View size changed: " + oldw + "x" + oldh + " -> " + w + "x" + h);
+            // Only recalculate if we have data loaded and view is properly sized
+            // Check if contentLayout exists and has children (content already displayed)
+            if (w > 0 && h > 0 && contentLayout != null && contentLayout.getChildCount() > 0) {
+                // Post to ensure layout is complete before recalculating
+                post(new Runnable() {
+                    @Override
+                    public void run() {
+                        // Double-check we still have content before updating
+                        if (!days.isEmpty() && currentDayIndex >= 0 && currentDayIndex < days.size()) {
+                            Log.d(TAG, "Recalculating layout after size change");
+                            updateContent();
+                        }
+                    }
+                });
+            }
+        }
+    }
+    
     private void createHeader() {
         // FrameLayout: nav stays centered; list icon positioned in top-right by gravity (no weights)
         headerLayout = new FrameLayout(context);
@@ -595,8 +620,11 @@ public class LandscapeScheduleView extends LinearLayout {
         DayScheduleData currentDay = days.get(currentDayIndex);
         
         // Calculate column widths
-        int screenWidth = getResources().getDisplayMetrics().widthPixels;
+        // CRITICAL FIX: Use actual view width instead of display metrics for foldable devices
+        // On Pixel Fold front display, display metrics may be stale during rotation
+        int screenWidth = getWidth() > 0 ? getWidth() : getResources().getDisplayMetrics().widthPixels;
         int availableWidth = screenWidth - dpToPx(60); // Subtract time column width
+        Log.d(TAG, "Screen width calculation - view width: " + getWidth() + ", display metrics width: " + getResources().getDisplayMetrics().widthPixels + ", using: " + screenWidth);
         
         // Always divide width by venue count so content fits on screen (no horizontal scroll, no hidden content)
         int columnWidth = currentDay.venues.isEmpty() ? availableWidth : availableWidth / currentDay.venues.size();
