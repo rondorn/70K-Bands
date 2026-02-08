@@ -194,9 +194,10 @@ struct DetailView: View {
                                        currentOrientation.isLandscape
             let isLargeDisplay = DeviceSizeManager.isLargeDisplay()
             
-            // For non-large display devices, use simplified calendar layout when in landscape OR when accessed from landscape calendar
-            // This ensures country/genre are shown when accessed from landscape calendar, even if rotated to portrait
-            if (!isLargeDisplay && (isCurrentlyLandscape || showCustomBackButton)) {
+            // For non-large display devices, use simplified calendar layout when in landscape
+            // The layout should always respond to actual device orientation, regardless of how the detail view was opened
+            // This ensures the correct portrait or landscape view is shown based on current orientation
+            if (!isLargeDisplay && isCurrentlyLandscape) {
                 // Simplified layout for landscape modal (iPhone only)
                 VStack(spacing: 0) {
                     // Add top padding to avoid conflict with back button and band name
@@ -259,10 +260,10 @@ struct DetailView: View {
                         }
                         
                         // Band Details - after links
-                        // For normal display devices when accessed from landscape calendar, always show band details (country, genre, etc.)
-                        // For large display devices or other cases, only show if hasBandDetails is true
+                        // Always show band details if they exist, or if schedule events are present (for iPhone)
+                        // This ensures country/genre are shown when schedule is present, regardless of orientation
                         // Reuse isLargeDisplay declared above
-                        if (!isLargeDisplay && showCustomBackButton) || viewModel.hasBandDetails {
+                        if (!isLargeDisplay && !viewModel.scheduleEvents.isEmpty) || viewModel.hasBandDetails {
                             bandDetailsSection
                         }
                     }
@@ -283,10 +284,13 @@ struct DetailView: View {
                 Spacer()
                 
                 // Translation button - fixed above priority section (hide in simplified landscape mode)
-                // Check actual orientation, not just showCustomBackButton flag
+                // Hide translation button when in landscape mode with schedule events (iPhone only)
+                // Check actual orientation to determine visibility
                 let isCurrentlyLandscapeForTranslation = UIApplication.shared.statusBarOrientation.isLandscape || 
                                                         currentOrientation.isLandscape
-                if viewModel.showTranslationButton && !(showCustomBackButton && !viewModel.scheduleEvents.isEmpty && isCurrentlyLandscapeForTranslation) {
+                let isLargeDisplayForTranslation = DeviceSizeManager.isLargeDisplay()
+                let shouldHideTranslation = !isLargeDisplayForTranslation && isCurrentlyLandscapeForTranslation && !viewModel.scheduleEvents.isEmpty
+                if viewModel.showTranslationButton && !shouldHideTranslation {
                     translationButtonSection
                         .background(Color.black.opacity(0.95))
                         .background(.ultraThinMaterial, in: Rectangle())
