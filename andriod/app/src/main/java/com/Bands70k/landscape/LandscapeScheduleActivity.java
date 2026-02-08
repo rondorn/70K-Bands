@@ -93,12 +93,57 @@ public class LandscapeScheduleActivity extends Activity {
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        Log.d(TAG, "Configuration changed - orientation: " + newConfig.orientation);
+        Log.d(TAG, "Configuration changed - orientation: " + newConfig.orientation + 
+              " (ORIENTATION_PORTRAIT=" + Configuration.ORIENTATION_PORTRAIT + 
+              ", ORIENTATION_LANDSCAPE=" + Configuration.ORIENTATION_LANDSCAPE + ")");
         
-        // If rotated back to portrait, close this activity
-        if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            Log.d(TAG, "Rotated to portrait - closing landscape schedule activity");
+        // For tablets/master-detail view: don't auto-close on portrait rotation
+        // Landscape view is controlled by button, not rotation
+        boolean isSplitViewCapable = getIntent().getBooleanExtra(EXTRA_IS_SPLIT_VIEW_CAPABLE, false);
+        if (isSplitViewCapable) {
+            Log.d(TAG, "Tablet mode - ignoring portrait rotation (button-controlled)");
+            return;
+        }
+        
+        // CRITICAL FIX: Use multiple methods to detect portrait orientation
+        // Sometimes newConfig.orientation might not update immediately, so check view bounds too
+        android.util.DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+        int width = displayMetrics.widthPixels;
+        int height = displayMetrics.heightPixels;
+        boolean isPortraitBySize = height > width;
+        
+        boolean isPortrait = (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) || isPortraitBySize;
+        
+        Log.d(TAG, "Orientation check - config: " + newConfig.orientation + 
+              ", size-based: " + isPortraitBySize + " (" + width + "x" + height + "), isPortrait: " + isPortrait);
+        
+        // Phone mode: If rotated back to portrait, close this activity immediately
+        if (isPortrait) {
+            Log.d(TAG, "🚫 Rotated to portrait - closing landscape schedule activity (portrait never shows calendar on phone)");
             finish();
+        }
+    }
+    
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        
+        // CRITICAL FIX: Also check orientation when window gains focus
+        // This catches cases where onConfigurationChanged might not fire
+        if (hasFocus) {
+            boolean isSplitViewCapable = getIntent().getBooleanExtra(EXTRA_IS_SPLIT_VIEW_CAPABLE, false);
+            if (!isSplitViewCapable) {
+                // Check orientation using view bounds
+                android.util.DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+                int width = displayMetrics.widthPixels;
+                int height = displayMetrics.heightPixels;
+                boolean isPortrait = height > width;
+                
+                if (isPortrait) {
+                    Log.d(TAG, "🚫 Window focus gained in portrait - closing landscape schedule activity");
+                    finish();
+                }
+            }
         }
     }
     
