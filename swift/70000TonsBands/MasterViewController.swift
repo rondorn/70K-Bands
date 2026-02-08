@@ -1557,7 +1557,15 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // CRITICAL FIX: Check orientation after layout changes (more reliable than OnOrientationChange)
         // This catches cases where orientation changes but the notification hasn't fired yet
+        // BUT: Don't dismiss if a detail screen is currently presented - let it handle its own orientation
         if !isSplitViewCapable() && isShowingLandscapeSchedule {
+            // CRITICAL: If a detail screen is currently presented, don't dismiss on orientation change
+            if let landscapeVC = landscapeScheduleViewController,
+               landscapeVC.presentedViewController != nil {
+                print("🔄 [LAYOUT] Detail screen is presented - skipping portrait dismissal check in viewDidLayoutSubviews")
+                return
+            }
+            
             // Get main window (not landscape view controller's window)
             let mainWindow = UIApplication.shared.connectedScenes
                 .compactMap { $0 as? UIWindowScene }
@@ -2089,8 +2097,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // Check if detail view is currently presented - if so, don't handle orientation change
         // Detail view should stay in detail view regardless of orientation
+        // Check both navigation controller and landscape view controller for presented detail views
         if let topVC = navigationController?.topViewController, topVC is DetailHostingController {
             print("🔄 [ORIENTATION] Detail view is showing - skipping orientation handling in main view")
+            return
+        }
+        
+        // Also check if detail view is presented from landscape view controller
+        if let landscapeVC = landscapeScheduleViewController,
+           landscapeVC.presentedViewController != nil {
+            print("🔄 [ORIENTATION] Detail view is presented from landscape view - skipping orientation handling")
             return
         }
         
@@ -2118,6 +2134,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     /// Uses multiple attempts with increasing delays to catch orientation changes
     private func checkAndDismissIfPortrait(attempt: Int, maxAttempts: Int) {
         guard !isSplitViewCapable() && isShowingLandscapeSchedule else {
+            return
+        }
+        
+        // CRITICAL FIX: If a detail screen is currently presented, don't dismiss on orientation change
+        // Let the detail screen handle its own orientation changes
+        if let landscapeVC = landscapeScheduleViewController,
+           landscapeVC.presentedViewController != nil {
+            print("🔄 [ORIENTATION] Detail screen is presented - skipping portrait dismissal check")
             return
         }
         
@@ -2194,14 +2218,27 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             isLandscape = windowBoundsLandscape || viewBoundsLandscape
         }
         
+        // CRITICAL FIX: If a detail screen is currently presented from the landscape view,
+        // don't dismiss the landscape view on orientation change. Let the detail screen
+        // handle its own orientation changes. The landscape view will be dismissed when
+        // the user exits the detail screen (handled in detail screen dismissal).
+        // This check MUST happen FIRST, before portrait dismissal check, to prevent dismissing detail view
+        if let landscapeVC = landscapeScheduleViewController,
+           landscapeVC.presentedViewController != nil {
+            print("🔄 [LANDSCAPE_SCHEDULE] Detail screen is presented - skipping orientation change handling")
+            print("🔄 [LANDSCAPE_SCHEDULE] Detail screen will handle its own orientation, landscape view stays")
+            return
+        }
+        
         // CRITICAL FIX: iPhone in portrait mode should NEVER show calendar mode
-        // This check must happen FIRST, before any other logic, to ensure calendar is dismissed immediately
+        // This check happens AFTER detail view check, so detail views aren't dismissed on orientation change
         if !isSplitViewCapable() {
             // Log detailed orientation info for debugging
             print("🚫 [LANDSCAPE_SCHEDULE] Orientation check - windowBounds: \(windowBoundsLandscape) (w:\(windowBounds.width) h:\(windowBounds.height)), viewBounds: \(viewBoundsLandscape) (w:\(view.bounds.width) h:\(view.bounds.height)), statusBar: \(statusBarLandscape), device: \(deviceOrientationLandscape), isLandscape: \(isLandscape), isShowingCalendar: \(isShowingLandscapeSchedule)")
             
             if !isLandscape {
                 // iPhone is in portrait - MUST dismiss calendar view immediately
+                // BUT only if no detail view is presented (checked above)
                 if isShowingLandscapeSchedule {
                     print("🚫 [LANDSCAPE_SCHEDULE] iPhone rotated to portrait - immediately dismissing calendar view (portrait never shows calendar)")
                     dismissLandscapeScheduleView()
@@ -2217,17 +2254,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             print("📱 [IPAD_TOGGLE] Schedule View: \(isScheduleView), Manual Calendar View: \(isManualCalendarView)")
             // iPad behavior is controlled by the manual toggle button, not orientation
             // Do nothing here - the toggle button handles presentation
-            return
-        }
-        
-        // CRITICAL FIX: If a detail screen is currently presented from the landscape view,
-        // don't dismiss the landscape view on orientation change. Let the detail screen
-        // handle its own orientation changes. The landscape view will be dismissed when
-        // the user exits the detail screen (handled in detail screen dismissal).
-        if let landscapeVC = landscapeScheduleViewController,
-           landscapeVC.presentedViewController != nil {
-            print("🔄 [LANDSCAPE_SCHEDULE] Detail screen is presented - skipping orientation change handling")
-            print("🔄 [LANDSCAPE_SCHEDULE] Detail screen will handle its own orientation, landscape view stays")
             return
         }
         
@@ -5248,13 +5274,63 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // This handles the case where user rotates in detail screen, then exits detail screen
         print("🔄 [LANDSCAPE_SCHEDULE] Detail screen dismissing, checking orientation for appropriate view")
         
-        // Use a small delay to ensure detail screen dismissal animation completes
+        // CRITICAL FIX: For iPhone, check immediately and again after delay to catch portrait mode
+        // This ensures we dismiss landscape view if user exited detail in portrait
+        guard !isSplitViewCapable() else {
+            // iPad: Use delayed check only (handled below)
+            // Use a small delay to ensure detail screen dismissal animation completes
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+                self?.handleDetailScreenDismissingDelayed()
+            }
+            return
+        }
+        
+        // iPhone: Check immediately for portrait mode
+        checkAndDismissLandscapeIfPortrait()
+        
+        // Also check after delay to catch any timing issues
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            guard let self = self else { return }
-            
-            // CRITICAL FIX: For iPad (master/detail), preserve the view state we left from
-            // Don't change based on orientation - use isManualCalendarView to restore state
-            if self.isSplitViewCapable() {
+            self?.handleDetailScreenDismissingDelayed()
+        }
+    }
+    
+    private func checkAndDismissLandscapeIfPortrait() {
+        guard !isSplitViewCapable() && isShowingLandscapeSchedule else {
+            return
+        }
+        
+        // Get main window for accurate bounds
+        let mainWindow = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .first { $0.isKeyWindow } ?? view.window
+        
+        let windowBounds = mainWindow?.bounds ?? view.bounds
+        let windowBoundsLandscape = windowBounds.width > windowBounds.height
+        let viewBoundsLandscape = view.bounds.width > view.bounds.height
+        let statusBarLandscape = UIApplication.shared.statusBarOrientation.isLandscape
+        let deviceOrientationLandscape = UIDevice.current.orientation.isLandscape
+        
+        // Prioritize device orientation and status bar
+        let isLandscape: Bool
+        if !statusBarLandscape && !deviceOrientationLandscape {
+            isLandscape = false
+        } else if statusBarLandscape || deviceOrientationLandscape {
+            isLandscape = true
+        } else {
+            isLandscape = windowBoundsLandscape || viewBoundsLandscape
+        }
+        
+        if !isLandscape {
+            print("🚫 [LANDSCAPE_SCHEDULE] iPhone in portrait after detail dismissal (immediate check) - dismissing calendar view")
+            dismissLandscapeScheduleView()
+        }
+    }
+    
+    private func handleDetailScreenDismissingDelayed() {
+        // CRITICAL FIX: For iPad (master/detail), preserve the view state we left from
+        // Don't change based on orientation - use isManualCalendarView to restore state
+        if self.isSplitViewCapable() {
                 // iPad: Restore the view state based on manual toggle, not orientation
                 if self.isManualCalendarView {
                     // User was in calendar mode - restore calendar view
@@ -5275,29 +5351,50 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     }
                 }
                 return // Exit early - iPad behavior handled above
-            }
-            
-            // iPhone: Use orientation-based logic (existing behavior)
-            // CRITICAL FIX: Use same orientation check logic as checkOrientationAndShowLandscapeIfNeeded
-            // At launch, statusBarOrientation may still report portrait; use view bounds as fallback
-            let viewBoundsLandscape = self.view.bounds.width > self.view.bounds.height
-            let isLandscape = UIApplication.shared.statusBarOrientation.isLandscape || 
-                              UIDevice.current.orientation.isLandscape ||
-                              viewBoundsLandscape
-            
-            // Check if landscape view is still showing (it should be, since detail was presented from it)
-            if self.isShowingLandscapeSchedule {
-                // CRITICAL FIX: iPhone in portrait mode should NEVER show calendar mode
-                // If we're on iPhone (not iPad) and in portrait, always dismiss calendar view
-                if !isLandscape {
-                    // iPhone in portrait - MUST dismiss calendar view
-                    print("🚫 [LANDSCAPE_SCHEDULE] iPhone in portrait after detail dismissal - dismissing calendar view (portrait mode never shows calendar)")
-                    self.dismissLandscapeScheduleView()
-                } else {
-                    // Still in landscape - keep calendar view
-                    print("🔄 [LANDSCAPE_SCHEDULE] Still in landscape after detail dismissal - keeping calendar view")
-                    // Landscape view should already be showing, no action needed
-                }
+        }
+        
+        // iPhone: Use orientation-based logic (existing behavior)
+        // CRITICAL FIX: Use comprehensive orientation check to reliably detect portrait mode
+        // Get main window (not landscape view controller's window) for accurate bounds
+        let mainWindow = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .first { $0.isKeyWindow } ?? self.view.window
+        
+        let windowBounds = mainWindow?.bounds ?? self.view.bounds
+        let windowBoundsLandscape = windowBounds.width > windowBounds.height
+        let viewBoundsLandscape = self.view.bounds.width > self.view.bounds.height
+        let statusBarLandscape = UIApplication.shared.statusBarOrientation.isLandscape
+        let deviceOrientationLandscape = UIDevice.current.orientation.isLandscape
+        
+        // CRITICAL: Prioritize device orientation and status bar over window bounds
+        // If device/statusBar say portrait, trust them (more reliable than window bounds)
+        let isLandscape: Bool
+        if !statusBarLandscape && !deviceOrientationLandscape {
+            // Both device and statusBar say portrait - trust them, ignore window bounds
+            isLandscape = false
+        } else if statusBarLandscape || deviceOrientationLandscape {
+            // Device or statusBar say landscape - trust them
+            isLandscape = true
+        } else {
+            // Fallback to window bounds if device/statusBar are unknown
+            isLandscape = windowBoundsLandscape || viewBoundsLandscape
+        }
+        
+        print("🔄 [LANDSCAPE_SCHEDULE] Detail dismissal orientation check (delayed) - windowBounds: \(windowBoundsLandscape) (w:\(windowBounds.width) h:\(windowBounds.height)), viewBounds: \(viewBoundsLandscape), statusBar: \(statusBarLandscape), device: \(deviceOrientationLandscape), isLandscape: \(isLandscape)")
+        
+        // Check if landscape view is still showing (it should be, since detail was presented from it)
+        if self.isShowingLandscapeSchedule {
+            // CRITICAL FIX: iPhone in portrait mode should NEVER show calendar mode
+            // If we're on iPhone (not iPad) and in portrait, always dismiss calendar view
+            if !isLandscape {
+                // iPhone in portrait - MUST dismiss calendar view
+                print("🚫 [LANDSCAPE_SCHEDULE] iPhone in portrait after detail dismissal (delayed check) - dismissing calendar view (portrait mode never shows calendar)")
+                self.dismissLandscapeScheduleView()
+            } else {
+                // Still in landscape - keep calendar view
+                print("🔄 [LANDSCAPE_SCHEDULE] Still in landscape after detail dismissal (delayed check) - keeping calendar view")
+                // Landscape view should already be showing, no action needed
             }
         }
     }

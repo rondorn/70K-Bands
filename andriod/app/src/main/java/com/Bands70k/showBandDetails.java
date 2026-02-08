@@ -3210,10 +3210,13 @@ public class showBandDetails extends Activity {
         }
         
         // Show/hide sections based on landscape mode and schedule view
-        // On tablet (alwaysShowFullDetails), always show full data regardless of orientation; on phone from calendar, modified view only in landscape
+        // On tablet (alwaysShowFullDetails), always show full data regardless of orientation; on phone from calendar, show country/genre in landscape
         if (showCustomBackButton && !alwaysShowFullDetails && orientation.equals("landscape") && scheduleSection.getChildCount() > 0) {
-            // Phone from calendar: Hide extra data and links; show only Band name, Schedule, Must/Might/Wont
-            extraDataSection.setVisibility(View.GONE);
+            // Phone from calendar in landscape: Show country/genre/etc but hide links; show Band name, Schedule, Country/Genre, Must/Might/Wont
+            // Show extra data section (country, genre, etc.) when accessed from landscape calendar view
+            if (hasExtraData) {
+                extraDataSection.setVisibility(View.VISIBLE);
+            }
             linksSection.setVisibility(View.GONE);
         } else if (hasExtraData && (!orientation.equals("landscape") || alwaysShowFullDetails)) {
             // Portrait, or tablet (list or calendar): Show all extra data (notes, country, genre, etc.)
