@@ -10,7 +10,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
-import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
@@ -60,7 +59,7 @@ public class LandscapeScheduleView extends LinearLayout {
     private boolean shouldFinishActivity = false; // Flag to prevent display updates if we're finishing
     
     // Simple UI components
-    private LinearLayout headerLayout;
+    private ViewGroup headerLayout;
     private Button prevButton;
     private Button nextButton;
     private TextView dayLabel;
@@ -122,16 +121,22 @@ public class LandscapeScheduleView extends LinearLayout {
     }
     
     private void createHeader() {
-        headerLayout = new LinearLayout(context);
-        headerLayout.setOrientation(LinearLayout.HORIZONTAL);
-        headerLayout.setGravity(Gravity.CENTER); // Center the nav group
+        // FrameLayout: nav stays centered; list icon positioned in top-right by gravity (no weights)
+        headerLayout = new FrameLayout(context);
         headerLayout.setPadding(dpToPx(16), dpToPx(48), dpToPx(16), dpToPx(16));
         headerLayout.setBackgroundColor(Color.BLACK);
-        // Don't intercept touches - let buttons handle them
         headerLayout.setClickable(false);
         headerLayout.setFocusable(false);
         
-        // Container to group buttons and label together so they stay close
+        // Centered nav bar: horizontal row of prev, label, next
+        LinearLayout navContainer = new LinearLayout(context);
+        navContainer.setOrientation(LinearLayout.HORIZONTAL);
+        navContainer.setGravity(Gravity.CENTER);
+        navContainer.setLayoutParams(new FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
+        navContainer.setClickable(false);
+        navContainer.setFocusable(false);
+        
         LinearLayout navGroup = new LinearLayout(context);
         navGroup.setOrientation(LinearLayout.HORIZONTAL);
         navGroup.setGravity(Gravity.CENTER_VERTICAL);
@@ -249,7 +254,9 @@ public class LandscapeScheduleView extends LinearLayout {
         navGroup.addView(dayLabel);
         navGroup.addView(nextButton);
         
-        headerLayout.addView(navGroup);
+        navContainer.addView(navGroup);
+        headerLayout.addView(navContainer);
+        
         if (isSplitViewCapable) {
             listViewButton = new Button(context);
             listViewButton.setText("☰"); // List icon (hamburger/list symbol)
@@ -263,8 +270,9 @@ public class LandscapeScheduleView extends LinearLayout {
             listViewButton.setFocusable(true);
             listViewButton.setFocusableInTouchMode(true);
             listViewButton.setEnabled(true);
-            LinearLayout.LayoutParams listButtonParams = new LinearLayout.LayoutParams(dpToPx(44), dpToPx(44));
-            listButtonParams.setMargins(0, 0, dpToPx(16), 0);
+            FrameLayout.LayoutParams listButtonParams = new FrameLayout.LayoutParams(dpToPx(44), dpToPx(44));
+            listButtonParams.gravity = Gravity.END | Gravity.TOP;
+            listButtonParams.setMargins(0, 0, dpToPx(8), dpToPx(8)); // Small inset from top-right corner
             listViewButton.setLayoutParams(listButtonParams);
             listViewButton.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -298,35 +306,28 @@ public class LandscapeScheduleView extends LinearLayout {
         return drawable;
     }
     
-    private HorizontalScrollView venueHeaderScrollView; // Fixed header row container
+    private ViewGroup venueHeaderContainer; // Fixed header row container (no horizontal scroll - content fits width)
     private LinearLayout venueHeaderRow; // Fixed header row for venue names
     
     private void createContentArea() {
-        // Create fixed venue header row (outside scroll view, but can scroll horizontally)
-        venueHeaderScrollView = new HorizontalScrollView(context);
-        venueHeaderScrollView.setLayoutParams(new LinearLayout.LayoutParams(
+        // Venue header row container - no horizontal scroll; content shrinks to fit width
+        venueHeaderContainer = new LinearLayout(context);
+        venueHeaderContainer.setLayoutParams(new LinearLayout.LayoutParams(
             LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT
         ));
-        venueHeaderScrollView.setHorizontalScrollBarEnabled(false);
-        // Don't intercept touches - let scroll view handle them
-        venueHeaderScrollView.setClickable(false);
-        venueHeaderScrollView.setFocusable(false);
-        // Ensure content doesn't get clipped
-        venueHeaderScrollView.setClipChildren(false);
-        venueHeaderScrollView.setClipToPadding(false);
+        venueHeaderContainer.setClickable(false);
+        venueHeaderContainer.setFocusable(false);
         
         venueHeaderRow = new LinearLayout(context);
         venueHeaderRow.setOrientation(LinearLayout.HORIZONTAL);
         venueHeaderRow.setBackgroundColor(Color.BLACK);
-        // Use WRAP_CONTENT to allow horizontal scrolling when needed
         LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
-            LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT
+            LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT
         );
         venueHeaderRow.setLayoutParams(rowParams);
-        // Enable clipping to ensure headers respect their height constraints
         venueHeaderRow.setClipChildren(true);
         venueHeaderRow.setClipToPadding(true);
-        venueHeaderScrollView.addView(venueHeaderRow);
+        venueHeaderContainer.addView(venueHeaderRow);
         
         contentScrollView = new ScrollView(context);
         LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(
@@ -352,12 +353,10 @@ public class LandscapeScheduleView extends LinearLayout {
         
         contentScrollView.addView(contentLayout);
         
-        // Ensure views are visible
-        venueHeaderScrollView.setVisibility(View.VISIBLE);
+        venueHeaderContainer.setVisibility(View.VISIBLE);
         contentScrollView.setVisibility(View.VISIBLE);
         
-        // Add venue header row first, then scroll view
-        addView(venueHeaderScrollView);
+        addView(venueHeaderContainer);
         addView(contentScrollView);
     }
     
@@ -591,20 +590,9 @@ public class LandscapeScheduleView extends LinearLayout {
         int screenWidth = getResources().getDisplayMetrics().widthPixels;
         int availableWidth = screenWidth - dpToPx(60); // Subtract time column width
         
-        // For tablets/master-detail view: use full width columns (no squashed mode)
-        // For phones: divide width by number of venues (may be narrow/squashed)
-        int columnWidth;
-        if (isSplitViewCapable) {
-            // Tablet mode: use full available width per column (no squashing)
-            // Set minimum width to ensure readability (e.g., 200dp minimum)
-            int minColumnWidth = dpToPx(200);
-            columnWidth = currentDay.venues.isEmpty() ? availableWidth : Math.max(minColumnWidth, availableWidth / currentDay.venues.size());
-            Log.d(TAG, "Tablet mode - using full width columns. columnWidth: " + columnWidth + ", minWidth: " + minColumnWidth);
-        } else {
-            // Phone mode: divide by number of venues (may be narrow)
-            columnWidth = currentDay.venues.isEmpty() ? availableWidth : availableWidth / currentDay.venues.size();
-            Log.d(TAG, "Phone mode - dividing width by venues. columnWidth: " + columnWidth);
-        }
+        // Always divide width by venue count so content fits on screen (no horizontal scroll, no hidden content)
+        int columnWidth = currentDay.venues.isEmpty() ? availableWidth : availableWidth / currentDay.venues.size();
+        Log.d(TAG, "Column width (fit to screen): " + columnWidth + ", venues: " + currentDay.venues.size());
         
         // Venue headers - measure first to find max height, then recreate with fixed height
         int maxHeaderHeight = dpToPx(44); // Minimum height
@@ -760,30 +748,12 @@ public class LandscapeScheduleView extends LinearLayout {
             venueHeaderRow.addView(headerWrapper);
         }
         
-        // Create horizontal scroll container for venue columns
-        HorizontalScrollView horizontalScroll = new HorizontalScrollView(context);
-        horizontalScroll.setLayoutParams(new LinearLayout.LayoutParams(
-            LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT
-        ));
-        horizontalScroll.setHorizontalScrollBarEnabled(false);
-        
-        // Synchronize horizontal scrolling between header and content
-        horizontalScroll.setOnScrollChangeListener(new View.OnScrollChangeListener() {
-            @Override
-            public void onScrollChange(View v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
-                venueHeaderScrollView.scrollTo(scrollX, 0);
-            }
-        });
-        
-        venueHeaderScrollView.setOnScrollChangeListener(new View.OnScrollChangeListener() {
-            @Override
-            public void onScrollChange(View v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
-                horizontalScroll.scrollTo(scrollX, 0);
-            }
-        });
-        
+        // Columns container fits screen width (no horizontal scroll)
         LinearLayout columnsContainer = new LinearLayout(context);
         columnsContainer.setOrientation(LinearLayout.HORIZONTAL);
+        columnsContainer.setLayoutParams(new LinearLayout.LayoutParams(
+            LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT
+        ));
         
         // Add time column first (without header) - pass header height for spacer
         LinearLayout timeColumn = createTimeColumn(currentDay, maxHeaderHeight);
@@ -795,8 +765,7 @@ public class LandscapeScheduleView extends LinearLayout {
             columnsContainer.addView(venueColumn);
         }
         
-        horizontalScroll.addView(columnsContainer);
-        contentLayout.addView(horizontalScroll);
+        contentLayout.addView(columnsContainer);
     }
     
     private LinearLayout createTimeColumn(DayScheduleData dayData, int headerHeight) {
