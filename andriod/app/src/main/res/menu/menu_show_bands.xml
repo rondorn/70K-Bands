@@ -3,4 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools" tools:context=".showBands">
     <item android:id="@+id/action_settings" android:title="@string/app_name"
         android:orderInCategory="100" app:showAsAction="never" />
+    <item android:id="@+id/action_calendar_view"
+        android:title="Calendar"
+        android:icon="@android:drawable/ic_menu_today"
+        android:orderInCategory="1"
+        app:showAsAction="ifRoom" />
 </menu>

@@ -72,6 +72,17 @@
 
         </LinearLayout>
 
+        <!-- Calendar view button: visible only on tablets/foldables (visibility set in code) -->
+        <ImageButton
+            android:id="@+id/calendarViewButton"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@android:drawable/ic_menu_today"
+            android:background="@android:color/black"
+            android:scaleType="fitCenter"
+            android:contentDescription="Calendar view"
+            android:visibility="gone" />
+
         <ImageButton
             android:id="@+id/preferences"
             android:layout_width="40dp"
