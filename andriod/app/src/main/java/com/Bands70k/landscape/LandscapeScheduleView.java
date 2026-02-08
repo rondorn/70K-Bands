@@ -348,11 +348,20 @@ public class LandscapeScheduleView extends LinearLayout {
                     }
                     
                     if (initialDay != null) {
+                        Log.d(TAG, "Looking for initial day: '" + initialDay + "'");
+                        Log.d(TAG, "Available days: " + days.size());
                         for (int i = 0; i < days.size(); i++) {
-                            if (days.get(i).dayLabel.equals(initialDay)) {
+                            String dayLabel = days.get(i).dayLabel;
+                            Log.d(TAG, "  Day " + i + ": '" + dayLabel + "'");
+                            // Compare with trimming to handle any whitespace differences
+                            if (dayLabel != null && dayLabel.trim().equals(initialDay.trim())) {
                                 currentDayIndex = i;
+                                Log.d(TAG, "✅ Found matching day at index " + i);
                                 break;
                             }
+                        }
+                        if (currentDayIndex == 0 && days.size() > 0) {
+                            Log.w(TAG, "⚠️ Could not find matching day, defaulting to index 0 (day: '" + (days.isEmpty() ? "none" : days.get(0).dayLabel) + "')");
                         }
                     }
                     
