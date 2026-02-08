@@ -157,10 +157,10 @@ public class LandscapeScheduleView extends LinearLayout {
         prevButton.setPadding(dpToPx(6), dpToPx(6), dpToPx(6), dpToPx(6));
         // Very subtle background - almost transparent but provides touch feedback
         prevButton.setBackground(getRoundedBackground(Color.argb(30, 255, 255, 255))); // Very subtle white
-        // CRITICAL: Ensure button is clickable
+        // CRITICAL: Ensure button is clickable; avoid focusableInTouchMode so first tap registers as click (not focus request)
         prevButton.setClickable(true);
-        prevButton.setFocusable(true);
-        prevButton.setFocusableInTouchMode(true);
+        prevButton.setFocusable(false);
+        prevButton.setFocusableInTouchMode(false);
         prevButton.setEnabled(true);
         LinearLayout.LayoutParams prevParams = new LinearLayout.LayoutParams(
             dpToPx(32), dpToPx(32) // Smaller buttons like iOS (32dp)
@@ -222,10 +222,10 @@ public class LandscapeScheduleView extends LinearLayout {
         nextButton.setPadding(dpToPx(6), dpToPx(6), dpToPx(6), dpToPx(6));
         // Very subtle background - almost transparent but provides touch feedback
         nextButton.setBackground(getRoundedBackground(Color.argb(30, 255, 255, 255))); // Very subtle white
-        // CRITICAL: Ensure button is clickable
+        // CRITICAL: Ensure button is clickable; avoid focusableInTouchMode so first tap registers as click (not focus request)
         nextButton.setClickable(true);
-        nextButton.setFocusable(true);
-        nextButton.setFocusableInTouchMode(true);
+        nextButton.setFocusable(false);
+        nextButton.setFocusableInTouchMode(false);
         nextButton.setEnabled(true);
         LinearLayout.LayoutParams nextParams = new LinearLayout.LayoutParams(
             dpToPx(32), dpToPx(32) // Smaller buttons like iOS (32dp)
@@ -273,8 +273,8 @@ public class LandscapeScheduleView extends LinearLayout {
             listViewButton.setPadding(dpToPx(8), dpToPx(8), dpToPx(8), dpToPx(8));
             listViewButton.setBackground(getRoundedBackground(Color.argb(204, 0, 122, 255))); // Blue background like iOS
             listViewButton.setClickable(true);
-            listViewButton.setFocusable(true);
-            listViewButton.setFocusableInTouchMode(true);
+            listViewButton.setFocusable(false);
+            listViewButton.setFocusableInTouchMode(false);
             listViewButton.setEnabled(true);
             FrameLayout.LayoutParams listButtonParams = new FrameLayout.LayoutParams(dpToPx(44), dpToPx(44));
             listButtonParams.gravity = Gravity.END | Gravity.TOP;
@@ -880,9 +880,8 @@ public class LandscapeScheduleView extends LinearLayout {
         eventBlock.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
         eventBlock.setBackgroundColor(event.venueColor);
         eventBlock.setClickable(true);
-        eventBlock.setFocusable(true);
-        eventBlock.setFocusableInTouchMode(true);
-        // Ensure event block can receive clicks
+        eventBlock.setFocusable(false);
+        eventBlock.setFocusableInTouchMode(false);
         eventBlock.setEnabled(true);
         
         // Calculate position and height
