@@ -43,7 +43,6 @@ import android.widget.ProgressBar;
 import android.widget.ImageView;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Button;
 import android.view.LayoutInflater;
@@ -115,7 +114,7 @@ public class showBandDetails extends Activity {
     private String currentTranslatedText;
     private ImageView rankingIcon;
     private ProgressBar loadingProgressBar;
-    private ScrollView contentScrollView;
+    private ViewGroup contentScrollView;
     private LinearLayout contentContainer;
     private String orientation;
     private String bandNote;
@@ -1300,7 +1299,7 @@ public class showBandDetails extends Activity {
     }
     
     /**
-     * Sets up swipe gesture detection that works properly with ScrollView
+     * Sets up swipe gesture detection on the main content area (notes have their own ScrollView).
      */
     private void setupSwipeGestureListener() {
         final GestureDetector gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
@@ -1344,9 +1343,9 @@ public class showBandDetails extends Activity {
                 // Let the gesture detector try to handle the event first
                 boolean gestureHandled = gestureDetector.onTouchEvent(event);
                 
-                // If no horizontal swipe was detected, let the ScrollView handle it normally
+                // If no horizontal swipe was detected, let the event propagate (e.g. to notes ScrollView)
                 if (!gestureHandled) {
-                    // Return false to allow ScrollView to handle vertical scrolling
+                    // Return false so vertical scroll in notes area works
                     return false;
                 }
                 
