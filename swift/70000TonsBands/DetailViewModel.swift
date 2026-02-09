@@ -1365,30 +1365,13 @@ class DetailViewModel: ObservableObject {
     private func loadBandDetails() {
         print("DEBUG: loadBandDetails() called for band: '\(bandName)'")
         
-        let currentOrientation = UIApplication.shared.statusBarOrientation
-        let deviceType = UIDevice.current.userInterfaceIdiom
-        let isPortrait = currentOrientation == .portrait
-        let isPad = deviceType == .pad
-        let shouldShowData = isPortrait || isPad
+        // Always load the data - let the views decide what to display based on orientation and schedule presence
+        country = bandNameHandle.getBandCountry(bandName)
+        genre = bandNameHandle.getBandGenre(bandName)
+        lastOnCruise = bandNameHandle.getPriorYears(bandName)
+        noteWorthy = bandNameHandle.getBandNoteWorthy(bandName)
         
-        print("DEBUG: Device check - orientation: \(currentOrientation.rawValue), isPortrait: \(isPortrait), deviceType: \(deviceType.rawValue), isPad: \(isPad), shouldShowData: \(shouldShowData)")
-        
-        // Only show details in portrait or on iPad
-        if shouldShowData {
-            country = bandNameHandle.getBandCountry(bandName)
-            genre = bandNameHandle.getBandGenre(bandName)
-            lastOnCruise = bandNameHandle.getPriorYears(bandName)
-            noteWorthy = bandNameHandle.getBandNoteWorthy(bandName)
-            
-            print("DEBUG: loadBandDetails() for '\(bandName)' - country: '\(country)', genre: '\(genre)', lastOnCruise: '\(lastOnCruise)', noteWorthy: '\(noteWorthy)'")
-        } else {
-            // Hide details in landscape on iPhone only (iPads always show data)
-            country = ""
-            genre = ""
-            lastOnCruise = ""
-            noteWorthy = ""
-            print("DEBUG: loadBandDetails() for '\(bandName)' - hiding details (iPhone in landscape)")
-        }
+        print("DEBUG: loadBandDetails() for '\(bandName)' - country: '\(country)', genre: '\(genre)', lastOnCruise: '\(lastOnCruise)', noteWorthy: '\(noteWorthy)'")
     }
     
     private func loadBandLinks() {

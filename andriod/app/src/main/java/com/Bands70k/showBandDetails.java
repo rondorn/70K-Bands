@@ -805,8 +805,9 @@ public class showBandDetails extends Activity {
             }
             
             bandLogoImage.setImageBitmap(bitmap);
-            // Hide logo in landscape when from calendar on phone only; tablet always shows full content
-            if (showCustomBackButton && !alwaysShowFullDetails && orientation.equals("landscape") && scheduleSection.getChildCount() > 0) {
+            // Control logo visibility based on the 4 distinct views
+            String viewType = getViewType();
+            if (viewType.equals("landscape_with_schedule")) {
                 bandLogoImage.setVisibility(View.GONE);
             } else {
                 bandLogoImage.setVisibility(View.VISIBLE);
@@ -2794,9 +2795,14 @@ public class showBandDetails extends Activity {
         
         // Hide image initially - will be loaded by progressive loading thread
         // NOTE: This should only be called during initial setup, not during refresh operations
-        // Also hide logo in landscape when from calendar on phone only; tablet always shows full content
+        // Control logo visibility based on the 4 distinct views:
+        // - Portrait with schedule: show logo
+        // - Portrait without schedule: show logo
+        // - Landscape with schedule: hide logo
+        // - Landscape without schedule: show logo
         if (bandLogoImage != null) {
-            if (showCustomBackButton && !alwaysShowFullDetails && orientation.equals("landscape")) {
+            String viewType = getViewType();
+            if (viewType.equals("landscape_with_schedule")) {
                 bandLogoImage.setVisibility(View.GONE);
             } else {
                 bandLogoImage.setVisibility(View.GONE); // Will be shown when image loads
@@ -2976,9 +2982,17 @@ public class showBandDetails extends Activity {
     
     /**
      * Sets up the links section for external websites with dynamic spacing
+     * Control visibility based on the 4 distinct views:
+     * - Portrait with schedule: show links
+     * - Portrait without schedule: show links
+     * - Landscape with schedule: hide links
+     * - Landscape without schedule: show links
      */
     private void setupLinksSection() {
-        if (BandInfo.getMetalArchivesWebLink(bandName).contains("metal")) {
+        String viewType = getViewType();
+        boolean showLinks = !viewType.equals("landscape_with_schedule");
+        
+        if (BandInfo.getMetalArchivesWebLink(bandName).contains("metal") && showLinks) {
             linksLabel.setText("Links:");
             linksSection.setVisibility(View.VISIBLE);
             
@@ -3113,6 +3127,28 @@ public class showBandDetails extends Activity {
     }
     
     /**
+     * Determines which of the 4 views to show based on orientation and schedule presence
+     * Returns: "portrait_with_schedule", "portrait_without_schedule", "landscape_with_schedule", "landscape_without_schedule"
+     */
+    private String getViewType() {
+        boolean hasSchedule = scheduleSection != null && scheduleSection.getChildCount() > 0;
+        boolean isLandscape = orientation.equals("landscape");
+        boolean isTablet = alwaysShowFullDetails;
+        
+        // Tablets always show full details regardless of orientation
+        if (isTablet) {
+            return hasSchedule ? "portrait_with_schedule" : "portrait_without_schedule";
+        }
+        
+        // Phones: determine based on orientation and schedule
+        if (isLandscape) {
+            return hasSchedule ? "landscape_with_schedule" : "landscape_without_schedule";
+        } else {
+            return hasSchedule ? "portrait_with_schedule" : "portrait_without_schedule";
+        }
+    }
+    
+    /**
      * Sets up the extra data section (country, genre, etc.)
      */
     private void setupExtraDataSection() {
@@ -3148,9 +3184,13 @@ public class showBandDetails extends Activity {
         }
         
         // CSV Noteworthy - small read-only field from CSV showing "Act III set", "WWI themed", etc.
+        // Determine view type to control visibility
+        String viewType = getViewType();
+        boolean showNoteWorthy = !viewType.equals("landscape_with_schedule"); // Hide in landscape with schedule
+        
         String csvNoteworthy = BandInfo.getNote(bandName);
         Log.d("CSV_NOTEWORTHY_DEBUG", "Band: " + bandName + " | CSV noteworthy: '" + csvNoteworthy + "'");
-        if (!csvNoteworthy.trim().isEmpty()) {
+        if (!csvNoteworthy.trim().isEmpty() && showNoteWorthy) {
             csvNoteworthyValue.setText(csvNoteworthy.trim());
             csvNoteworthyRow.setVisibility(View.VISIBLE);
             hasExtraData = true;
@@ -3195,8 +3235,17 @@ public class showBandDetails extends Activity {
                 noteValue.setText(noteText);
             }
             
-            noteRow.setVisibility(View.VISIBLE);
-            hasExtraData = true;
+            // Control notes section visibility based on view type
+            // Notes section only shows in portrait views
+            boolean showNotesSection = viewType.equals("portrait_with_schedule") || viewType.equals("portrait_without_schedule");
+            
+            if (showNotesSection) {
+                noteRow.setVisibility(View.VISIBLE);
+                hasExtraData = true;
+            } else {
+                // Hide notes section in landscape views
+                noteRow.setVisibility(View.GONE);
+            }
             
             // Update translation button after note content is set
             updateTranslationButton();
@@ -3209,21 +3258,17 @@ public class showBandDetails extends Activity {
             updateTranslationButton();
         }
         
-        // Show/hide sections based on landscape mode and schedule view
-        // On tablet (alwaysShowFullDetails), always show full data regardless of orientation; on phone from calendar, show country/genre in landscape
-        if (showCustomBackButton && !alwaysShowFullDetails && orientation.equals("landscape") && scheduleSection.getChildCount() > 0) {
-            // Phone from calendar in landscape: Show country/genre/etc but hide links; show Band name, Schedule, Country/Genre, Must/Might/Wont
-            // Show extra data section (country, genre, etc.) when accessed from landscape calendar view
-            if (hasExtraData) {
-                extraDataSection.setVisibility(View.VISIBLE);
-            }
-            linksSection.setVisibility(View.GONE);
-        } else if (hasExtraData && (!orientation.equals("landscape") || alwaysShowFullDetails)) {
-            // Portrait, or tablet (list or calendar): Show all extra data (notes, country, genre, etc.)
-            // Links section visibility is set by setupLinksSection() (only VISIBLE when band has URLs); do not override
+        // Control visibility based on the 4 distinct views:
+        // 1. Portrait with schedule: logo, schedule, links, band details (including noteWorthy), notes section
+        // 2. Portrait without schedule: logo, links, band details (including noteWorthy), notes section (no schedule)
+        // 3. Landscape with schedule: schedule, band details (excluding noteWorthy) - no logo, no links, no notes
+        // 4. Landscape without schedule: logo, links, band details (including noteWorthy) - no notes section
+        
+        // Show/hide extra data section (country, genre, lastCruise, noteWorthy)
+        // Always show if there's data, except in old landscape mode logic (which we're replacing)
+        if (hasExtraData) {
             extraDataSection.setVisibility(View.VISIBLE);
         } else {
-            // Landscape on phone (not from calendar): Hide extra data
             extraDataSection.setVisibility(View.GONE);
         }
     }
