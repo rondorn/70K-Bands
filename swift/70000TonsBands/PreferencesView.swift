@@ -29,6 +29,7 @@ struct PreferencesView: View {
             detailScreenSection
             miscSection
             informationSection
+            advancedPreferencesSection
         }
     }
     
@@ -195,6 +196,62 @@ struct PreferencesView: View {
             Text("Loading data...")
                 .font(.caption)
                 .foregroundColor(.secondary)
+        }
+    }
+    
+    private var advancedPreferencesSection: some View {
+        Section {
+            // Warning text
+            Text(NSLocalizedString("AdvancedPreferencesWarning", comment: ""))
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .padding(.vertical, 4)
+            
+            // Bands URL
+            VStack(alignment: .leading, spacing: 4) {
+                Text(NSLocalizedString("Bands URL", comment: ""))
+                    .font(.body)
+                    .foregroundColor(.primary)
+                TextField(NSLocalizedString("Default", comment: ""), text: $viewModel.bandsUrl)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .autocapitalization(.none)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
+            }
+            .padding(.vertical, 4)
+            
+            // Schedule URL
+            VStack(alignment: .leading, spacing: 4) {
+                Text(NSLocalizedString("Schedule URL", comment: ""))
+                    .font(.body)
+                    .foregroundColor(.primary)
+                TextField(NSLocalizedString("Default", comment: ""), text: $viewModel.scheduleUrl)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .autocapitalization(.none)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
+            }
+            .padding(.vertical, 4)
+            
+            // Pointer URL
+            VStack(alignment: .leading, spacing: 4) {
+                Text(NSLocalizedString("Pointer URL", comment: ""))
+                    .font(.body)
+                    .foregroundColor(.primary)
+                Picker("", selection: $viewModel.pointerUrl) {
+                    ForEach(viewModel.pointerUrlOptions, id: \.self) { option in
+                        Text(option).tag(option)
+                    }
+                }
+                .pickerStyle(MenuPickerStyle())
+                .font(.caption)
+                .foregroundColor(.secondary)
+            }
+            .padding(.vertical, 4)
+        } header: {
+            Text(NSLocalizedString("AdvancedPreferences", comment: ""))
         }
     }
 }

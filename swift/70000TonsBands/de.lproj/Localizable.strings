@@ -233,6 +233,14 @@
 "User Identifier" = "Benutzerkennung";
 "Build" = "Build";
 
+// Advanced Preferences section
+"AdvancedPreferences" = "ERWEITERTE EINSTELLUNGEN.";
+"AdvancedPreferencesWarning" = "NICHT ÄNDERN, ES SEI DENN, SIE WISSEN, WAS SIE TUN!";
+"Bands URL" = "Bands URL";
+"Schedule URL" = "Zeitplan URL";
+"Pointer URL" = "Zeiger URL";
+"Default" = "Standard";
+
 // Localized share text
 "Choices" = "Auswahl";
 "MustSeeBands" = "Muss Sehen Bands";

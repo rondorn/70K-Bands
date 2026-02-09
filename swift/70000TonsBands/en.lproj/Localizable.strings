@@ -245,6 +245,14 @@
 "User Identifier" = "User Identifier";
 "Build" = "Build";
 
+// Advanced Preferences section
+"AdvancedPreferences" = "ADVANCED PREFERENCE.";
+"AdvancedPreferencesWarning" = "DO NOT MODIFY UNLESS YOU KNOW WHAT YOUR DOING!";
+"Bands URL" = "Bands URL";
+"Schedule URL" = "Schedule URL";
+"Pointer URL" = "Pointer URL";
+"Default" = "Default";
+
 
 // Event sharing localization
 "EventsAttended" = "Events Attended";

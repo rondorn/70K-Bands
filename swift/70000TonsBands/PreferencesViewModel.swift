@@ -153,6 +153,92 @@ class PreferencesViewModel: ObservableObject {
     @Published var userId: String = ""
     @Published var buildInfo: String = ""
     
+    // Advanced Preferences
+    @Published var bandsUrl: String = "Default" {
+        didSet {
+            // Only save if value actually changed to avoid unnecessary writes
+            if oldValue != bandsUrl {
+                UserDefaults.standard.set(bandsUrl, forKey: "artistUrl")
+                UserDefaults.standard.synchronize()
+            }
+        }
+    }
+    @Published var scheduleUrl: String = "Default" {
+        didSet {
+            // Only save if value actually changed to avoid unnecessary writes
+            if oldValue != scheduleUrl {
+                UserDefaults.standard.set(scheduleUrl, forKey: "scheduleUrl")
+                UserDefaults.standard.synchronize()
+            }
+        }
+    }
+    @Published var pointerUrl: String = "Production" {
+        didSet {
+            // Only save if value actually changed to avoid unnecessary writes
+            if oldValue != pointerUrl {
+                print("🔧 [POINTER_URL_CHANGE] Pointer URL changed from '\(oldValue)' to '\(pointerUrl)'")
+                
+                // Map display value back to Settings.bundle value
+                let settingsValue = pointerUrl == "Production" ? "Prod" : pointerUrl
+                UserDefaults.standard.set(settingsValue, forKey: "PointerUrl")
+                UserDefaults.standard.synchronize()
+                
+                // Clear LastUsedPointerUrl to force getPointerUrlData to detect mismatch and clear caches
+                UserDefaults.standard.removeObject(forKey: "LastUsedPointerUrl")
+                UserDefaults.standard.synchronize()
+                print("🔧 [POINTER_URL_CHANGE] Cleared LastUsedPointerUrl to force cache clearing")
+                
+                // Trigger pointer file download from new location
+                // Use background queue to avoid blocking UI
+                DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                    guard let self = self else { return }
+                    
+                    // Ensure masterView is available
+                    guard masterView != nil else {
+                        print("🔧 [POINTER_URL_CHANGE] ⚠️ masterView not available, cannot download pointer file")
+                        return
+                    }
+                    
+                    print("🔧 [POINTER_URL_CHANGE] Triggering pointer file download from new location")
+                    
+                    // First, ensure defaultStorageUrl is set correctly by calling getPointerUrlData
+                    // This will also clear caches if needed
+                    _ = getPointerUrlData(keyValue: "eventYear")
+                    
+                    // Now download the pointer file from the new location
+                    let success = masterView.downloadAndUpdatePointerFileSync()
+                    
+                    if success {
+                        print("🔧 [POINTER_URL_CHANGE] ✅ Successfully downloaded pointer file from new location")
+                        
+                        // Update LastUsedPointerUrl to match what was downloaded
+                        // Determine which pointer URL was actually used
+                        UserDefaults.standard.synchronize()
+                        let pointerUrlPref = UserDefaults.standard.string(forKey: "PointerUrl") ?? "Prod"
+                        let testingSetting = "Testing"
+                        let targetPointerUrl: String
+                        if pointerUrlPref == testingSetting {
+                            targetPointerUrl = FestivalConfig.current.defaultStorageUrlTest
+                        } else {
+                            targetPointerUrl = FestivalConfig.current.defaultStorageUrl
+                        }
+                        UserDefaults.standard.set(targetPointerUrl, forKey: "LastUsedPointerUrl")
+                        UserDefaults.standard.synchronize()
+                        print("🔧 [POINTER_URL_CHANGE] Updated LastUsedPointerUrl to '\(targetPointerUrl)'")
+                        
+                        // Post notification that pointer data was updated
+                        DispatchQueue.main.async {
+                            NotificationCenter.default.post(name: Notification.Name("PointerDataUpdated"), object: nil)
+                        }
+                    } else {
+                        print("🔧 [POINTER_URL_CHANGE] ⚠️ Failed to download pointer file from new location")
+                    }
+                }
+            }
+        }
+    }
+    @Published var pointerUrlOptions: [String] = ["Production", "Testing"]
+    
     // MARK: - Private Properties
     private var eventYearArray: [String] = []
     private var eventYearChangeAttempt: String = "Current"
@@ -211,6 +297,15 @@ class PreferencesViewModel: ObservableObject {
             displayYear = NSLocalizedString("Current", comment: "")
         }
         
+        // Load advanced preferences from UserDefaults
+        UserDefaults.standard.synchronize() // Sync to get latest from Settings.bundle
+        let artistUrlValue = UserDefaults.standard.string(forKey: "artistUrl") ?? "Default"
+        let scheduleUrlValue = UserDefaults.standard.string(forKey: "scheduleUrl") ?? "Default"
+        let pointerUrlValue = UserDefaults.standard.string(forKey: "PointerUrl") ?? "Prod"
+        
+        // Map pointer URL values (Settings.bundle uses "Prod"/"Testing", display uses "Production"/"Testing")
+        let displayPointerUrl = pointerUrlValue == "Prod" ? "Production" : pointerUrlValue
+        
         // Now set the values (this will trigger didSet but that's ok for initial load)
         hideExpiredEvents = hideExpired
         promptForAttended = promptAttended
@@ -228,6 +323,11 @@ class PreferencesViewModel: ObservableObject {
         openYouTubeApp = youtubeApp
         allLinksOpenInExternalBrowser = allLinksExternal
         selectedYear = displayYear
+        
+        // Set advanced preferences - values will only save if they differ from defaults
+        bandsUrl = artistUrlValue
+        scheduleUrl = scheduleUrlValue
+        pointerUrl = displayPointerUrl
     }
     
     func refreshDataAndNotifications() {

@@ -247,6 +247,14 @@
 "User Identifier" = "Identificador do usuário";
 "Build" = "Versão";
 
+// Advanced Preferences section
+"AdvancedPreferences" = "PREFERÊNCIAS AVANÇADAS.";
+"AdvancedPreferencesWarning" = "NÃO MODIFIQUE A MENOS QUE SAIBA O QUE ESTÁ FAZENDO!";
+"Bands URL" = "URL das bandas";
+"Schedule URL" = "URL do calendário";
+"Pointer URL" = "URL do ponteiro";
+"Default" = "Padrão";
+
 "NoteFontSize"="Tamanho de fonte grande para notas";
 "OpenYouTubeApp"="Abrir aplicativo do YouTube";
 "AllLinksOpenInExternalBrowser"="Todos os links abrem no navegador externo";

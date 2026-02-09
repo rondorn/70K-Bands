@@ -312,14 +312,32 @@ public class LandscapeScheduleView extends LinearLayout {
         return drawable;
     }
     
-    private android.graphics.drawable.Drawable getEventBlockBackground(int fillColor) {
+    private android.graphics.drawable.Drawable getEventBlockBackground(int fillColor, boolean isExpired) {
         android.graphics.drawable.GradientDrawable drawable = new android.graphics.drawable.GradientDrawable();
         drawable.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
-        drawable.setColor(fillColor);
+        
+        // Darken the fill color for expired events (reduce brightness by ~60%)
+        int displayColor = isExpired ? darkenColor(fillColor, 0.4f) : fillColor;
+        drawable.setColor(displayColor);
         drawable.setCornerRadius(dpToPx(4)); // 4dp corner radius to match iOS
-        // Add 1px white border
-        drawable.setStroke(1, Color.WHITE);
+        // Darken border for expired events (use dark grey instead of white)
+        int borderColor = isExpired ? Color.argb(102, 128, 128, 128) : Color.WHITE; // Dark grey border for expired
+        drawable.setStroke(1, borderColor);
         return drawable;
+    }
+    
+    /**
+     * Darken a color by reducing its RGB values by a factor
+     * @param color Original color
+     * @param factor Factor to darken (0.0 = black, 1.0 = original color)
+     * @return Darkened color
+     */
+    private int darkenColor(int color, float factor) {
+        int alpha = Color.alpha(color);
+        int red = (int)(Color.red(color) * factor);
+        int green = (int)(Color.green(color) * factor);
+        int blue = (int)(Color.blue(color) * factor);
+        return Color.argb(alpha, red, green, blue);
     }
     
     private ViewGroup venueHeaderContainer; // Fixed header row container (no horizontal scroll - content fits width)
@@ -891,8 +909,8 @@ public class LandscapeScheduleView extends LinearLayout {
         LinearLayout eventBlock = new LinearLayout(context);
         eventBlock.setOrientation(LinearLayout.VERTICAL);
         eventBlock.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
-        // Use drawable with white border instead of solid color
-        eventBlock.setBackground(getEventBlockBackground(event.venueColor));
+        // Use drawable with white border instead of solid color, darken if expired
+        eventBlock.setBackground(getEventBlockBackground(event.venueColor, event.isExpired));
         eventBlock.setClickable(true);
         eventBlock.setFocusable(false);
         eventBlock.setFocusableInTouchMode(false);
@@ -933,7 +951,8 @@ public class LandscapeScheduleView extends LinearLayout {
         // Line 1: Band name
         TextView bandName = new TextView(context);
         bandName.setText(event.bandName);
-        bandName.setTextColor(event.isExpired ? Color.argb(102, 255, 255, 255) : Color.WHITE); // 40% opacity if expired
+        // Use darker grey for expired events instead of semi-transparent white
+        bandName.setTextColor(event.isExpired ? Color.rgb(102, 102, 102) : Color.WHITE);
         bandName.setTextSize(11);
         bandName.setTypeface(null, android.graphics.Typeface.BOLD);
         bandName.setMaxLines(1);
@@ -945,7 +964,8 @@ public class LandscapeScheduleView extends LinearLayout {
         if (event.startTime != null) {
             startTimeText.setText("Start: " + timeFormat.format(event.startTime).toLowerCase());
         }
-        startTimeText.setTextColor(event.isExpired ? Color.argb(102, 255, 255, 255) : Color.WHITE);
+        // Use darker grey for expired events instead of semi-transparent white
+        startTimeText.setTextColor(event.isExpired ? Color.rgb(102, 102, 102) : Color.WHITE);
         startTimeText.setTextSize(9);
         startTimeText.setMaxLines(1);
         eventBlock.addView(startTimeText);
@@ -955,7 +975,8 @@ public class LandscapeScheduleView extends LinearLayout {
         if (event.endTime != null) {
             endTimeText.setText("End: " + timeFormat.format(event.endTime).toLowerCase());
         }
-        endTimeText.setTextColor(event.isExpired ? Color.argb(102, 255, 255, 255) : Color.WHITE);
+        // Use darker grey for expired events instead of semi-transparent white
+        endTimeText.setTextColor(event.isExpired ? Color.rgb(102, 102, 102) : Color.WHITE);
         endTimeText.setTextSize(9);
         endTimeText.setMaxLines(1);
         eventBlock.addView(endTimeText);
@@ -989,7 +1010,11 @@ public class LandscapeScheduleView extends LinearLayout {
                 
                 // Set circular background color based on priority
                 // Very dark grey (0.2) for must/might, light grey (0.75) for wont
+                // Darken further if expired
                 float greyValue = (event.priority == 3) ? 0.75f : 0.2f;
+                if (event.isExpired) {
+                    greyValue *= 0.5f; // Darken by 50% for expired events
+                }
                 int greyColor = Color.rgb((int)(greyValue * 255), (int)(greyValue * 255), (int)(greyValue * 255));
                 android.graphics.drawable.GradientDrawable circleBackground = new android.graphics.drawable.GradientDrawable();
                 circleBackground.setShape(android.graphics.drawable.GradientDrawable.OVAL);
@@ -1672,7 +1697,9 @@ public class LandscapeScheduleView extends LinearLayout {
                 String.valueOf(eventYear)
             );
             
-            boolean isExpired = hideExpiredEvents && endTimeIndex <= (System.currentTimeMillis() / 1000.0);
+            // Always check if event is expired for styling purposes (darker colors)
+            // hideExpiredEvents only controls filtering, not styling
+            boolean isExpired = endTimeIndex <= (System.currentTimeMillis() / 1000.0);
             
             String venueColorHex = FestivalConfig.getInstance().getVenueColor(location);
             int venueColor = parseColorFromHex(venueColorHex);
