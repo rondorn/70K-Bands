@@ -68,6 +68,7 @@ public class preferencesHandler {
     private String eventYearToLoad = "Current";
 
     private String pointerUrl = "Default";
+    private String customPointerUrl = "";
 
     private Boolean sortByTime = true;
     
@@ -194,6 +195,10 @@ public class preferencesHandler {
 
                         case "pointerUrl":
                             setPointerUrl(RowData[1]);
+                            break;
+
+                        case "customPointerUrl":
+                            setCustomPointerUrl(RowData.length > 1 ? RowData[1] : "");
                             break;
 
                         case "showMust":
@@ -373,6 +378,7 @@ public class preferencesHandler {
         dataString += "artistsUrl," + artsistsUrl + "\n";
         dataString += "scheduleUrl," + scheduleUrl + "\n";
         dataString += "pointerUrl," + pointerUrl + "\n";
+        dataString += "customPointerUrl," + (customPointerUrl != null ? customPointerUrl : "") + "\n";
         dataString += "sortByTime," + sortByTime.toString() + "\n";
         // REMOVED: showScheduleView - session-only, never saved to disk
         // dataString += "showScheduleView," + getShowScheduleView().toString() + "\n";
@@ -742,6 +748,14 @@ public class preferencesHandler {
 
     public void setPointerUrl(String pointerUrl) {
         this.pointerUrl = pointerUrl;
+    }
+
+    public String getCustomPointerUrl() {
+        return customPointerUrl != null ? customPointerUrl : "";
+    }
+
+    public void setCustomPointerUrl(String customPointerUrl) {
+        this.customPointerUrl = customPointerUrl != null && !customPointerUrl.trim().isEmpty() ? customPointerUrl.trim() : null;
     }
 
     public String getScheduleUrl() {

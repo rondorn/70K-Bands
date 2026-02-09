@@ -6319,16 +6319,24 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             print("🔄 [UNIFIED_REFRESH] Step 0 - Synchronized UserDefaults to read latest settings")
             
             // Re-read the pointer URL preference to respect user's choice
-            let pointerUrlPref = UserDefaults.standard.string(forKey: "PointerUrl") ?? "Prod"
-            print("🔄 [UNIFIED_REFRESH] Current PointerUrl preference: '\(pointerUrlPref)'")
+            let customPointerUrl = UserDefaults.standard.string(forKey: "CustomPointerUrl") ?? ""
+            let usingCustomUrl = !customPointerUrl.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             
-            // Update defaultStorageUrl based on current preference
-            if pointerUrlPref == testingSetting {
-                defaultStorageUrl = FestivalConfig.current.defaultStorageUrlTest
-                print("🔄 [UNIFIED_REFRESH] ✅ Using TESTING pointer URL: \(defaultStorageUrl)")
+            if usingCustomUrl {
+                defaultStorageUrl = customPointerUrl.trimmingCharacters(in: .whitespacesAndNewlines)
+                print("🔄 [UNIFIED_REFRESH] ✅ Using CUSTOM pointer URL: \(defaultStorageUrl)")
             } else {
-                defaultStorageUrl = FestivalConfig.current.defaultStorageUrl
-                print("🔄 [UNIFIED_REFRESH] ✅ Using PRODUCTION pointer URL: \(defaultStorageUrl)")
+                let pointerUrlPref = UserDefaults.standard.string(forKey: "PointerUrl") ?? "Prod"
+                print("🔄 [UNIFIED_REFRESH] Current PointerUrl preference: '\(pointerUrlPref)'")
+                
+                // Update defaultStorageUrl based on current preference
+                if pointerUrlPref == testingSetting {
+                    defaultStorageUrl = FestivalConfig.current.defaultStorageUrlTest
+                    print("🔄 [UNIFIED_REFRESH] ✅ Using TESTING pointer URL: \(defaultStorageUrl)")
+                } else {
+                    defaultStorageUrl = FestivalConfig.current.defaultStorageUrl
+                    print("🔄 [UNIFIED_REFRESH] ✅ Using PRODUCTION pointer URL: \(defaultStorageUrl)")
+                }
             }
             
             // STEP 1: Download and update pointer file FIRST (synchronously)
@@ -6472,7 +6480,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     /// Returns true if successful, false otherwise
     /// This is called at the start of every data refresh to ensure fresh pointer data
     /// Also called when Pointer URL preference changes to download from new location
-    func downloadAndUpdatePointerFileSync() -> Bool {
+    internal func downloadAndUpdatePointerFileSync() -> Bool {
         print("📍 [POINTER_SYNC] Starting synchronous pointer file download")
         
         // Check internet connectivity
@@ -6739,16 +6747,24 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             print("📡 FRESH DATA COLLECTION: Synchronized UserDefaults to read latest settings")
             
             // Re-read the pointer URL preference to respect user's choice
-            let pointerUrlPref = UserDefaults.standard.string(forKey: "PointerUrl") ?? "Prod"
-            print("📡 FRESH DATA COLLECTION: Current PointerUrl preference: '\(pointerUrlPref)'")
+            let customPointerUrl = UserDefaults.standard.string(forKey: "CustomPointerUrl") ?? ""
+            let usingCustomUrl = !customPointerUrl.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             
-            // Update defaultStorageUrl based on current preference
-            if pointerUrlPref == testingSetting {
-                defaultStorageUrl = FestivalConfig.current.defaultStorageUrlTest
-                print("📡 FRESH DATA COLLECTION: ✅ Using TESTING pointer URL: \(defaultStorageUrl)")
+            if usingCustomUrl {
+                defaultStorageUrl = customPointerUrl.trimmingCharacters(in: .whitespacesAndNewlines)
+                print("📡 FRESH DATA COLLECTION: ✅ Using CUSTOM pointer URL: \(defaultStorageUrl)")
             } else {
-                defaultStorageUrl = FestivalConfig.current.defaultStorageUrl
-                print("📡 FRESH DATA COLLECTION: ✅ Using PRODUCTION pointer URL: \(defaultStorageUrl)")
+                let pointerUrlPref = UserDefaults.standard.string(forKey: "PointerUrl") ?? "Prod"
+                print("📡 FRESH DATA COLLECTION: Current PointerUrl preference: '\(pointerUrlPref)'")
+                
+                // Update defaultStorageUrl based on current preference
+                if pointerUrlPref == testingSetting {
+                    defaultStorageUrl = FestivalConfig.current.defaultStorageUrlTest
+                    print("📡 FRESH DATA COLLECTION: ✅ Using TESTING pointer URL: \(defaultStorageUrl)")
+                } else {
+                    defaultStorageUrl = FestivalConfig.current.defaultStorageUrl
+                    print("📡 FRESH DATA COLLECTION: ✅ Using PRODUCTION pointer URL: \(defaultStorageUrl)")
+                }
             }
             
             // Step 1: Download band names

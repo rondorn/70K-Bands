@@ -425,9 +425,15 @@ public class WebViewActivity extends Activity {
             }
             
             // If no cached URL, make independent network call
-            String pointerUrl = staticVariables.getDefaultUrls();
-            if (staticVariables.preferences.getPointerUrl().equals("Testing")) {
-                pointerUrl = staticVariables.getDefaultUrlTest();
+            String pointerUrl = null;
+            String customPointerUrl = staticVariables.preferences.getCustomPointerUrl();
+            if (customPointerUrl != null && !customPointerUrl.trim().isEmpty()) {
+                pointerUrl = customPointerUrl.trim();
+            } else {
+                pointerUrl = staticVariables.getDefaultUrls();
+                if (staticVariables.preferences.getPointerUrl().equals("Testing")) {
+                    pointerUrl = staticVariables.getDefaultUrlTest();
+                }
             }
             
             // Make independent HTTP call

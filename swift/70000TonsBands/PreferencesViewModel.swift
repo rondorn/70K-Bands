@@ -154,20 +154,12 @@ class PreferencesViewModel: ObservableObject {
     @Published var buildInfo: String = ""
     
     // Advanced Preferences
-    @Published var bandsUrl: String = "Default" {
+    @Published var customPointerUrl: String = "" {
         didSet {
             // Only save if value actually changed to avoid unnecessary writes
-            if oldValue != bandsUrl {
-                UserDefaults.standard.set(bandsUrl, forKey: "artistUrl")
-                UserDefaults.standard.synchronize()
-            }
-        }
-    }
-    @Published var scheduleUrl: String = "Default" {
-        didSet {
-            // Only save if value actually changed to avoid unnecessary writes
-            if oldValue != scheduleUrl {
-                UserDefaults.standard.set(scheduleUrl, forKey: "scheduleUrl")
+            if oldValue != customPointerUrl {
+                let trimmed = customPointerUrl.trimmingCharacters(in: .whitespacesAndNewlines)
+                UserDefaults.standard.set(trimmed.isEmpty ? nil : trimmed, forKey: "CustomPointerUrl")
                 UserDefaults.standard.synchronize()
             }
         }
@@ -299,8 +291,7 @@ class PreferencesViewModel: ObservableObject {
         
         // Load advanced preferences from UserDefaults
         UserDefaults.standard.synchronize() // Sync to get latest from Settings.bundle
-        let artistUrlValue = UserDefaults.standard.string(forKey: "artistUrl") ?? "Default"
-        let scheduleUrlValue = UserDefaults.standard.string(forKey: "scheduleUrl") ?? "Default"
+        let customPointerUrlValue = UserDefaults.standard.string(forKey: "CustomPointerUrl") ?? ""
         let pointerUrlValue = UserDefaults.standard.string(forKey: "PointerUrl") ?? "Prod"
         
         // Map pointer URL values (Settings.bundle uses "Prod"/"Testing", display uses "Production"/"Testing")
@@ -325,8 +316,7 @@ class PreferencesViewModel: ObservableObject {
         selectedYear = displayYear
         
         // Set advanced preferences - values will only save if they differ from defaults
-        bandsUrl = artistUrlValue
-        scheduleUrl = scheduleUrlValue
+        customPointerUrl = customPointerUrlValue
         pointerUrl = displayPointerUrl
     }
     

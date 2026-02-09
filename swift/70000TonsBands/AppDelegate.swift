@@ -67,6 +67,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         // Ensure we pick up any Settings.bundle changes
         UserDefaults.standard.synchronize()
         
+        // Check for custom pointer URL first
+        let customPointerUrl = UserDefaults.standard.string(forKey: "CustomPointerUrl") ?? ""
+        let trimmedCustomUrl = customPointerUrl.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedCustomUrl.isEmpty {
+            return trimmedCustomUrl
+        }
+        
+        // Otherwise use default based on preference
         let pointerUrlPref = UserDefaults.standard.string(forKey: "PointerUrl") ?? "NOT_SET"
         if pointerUrlPref == testingSetting {
             return FestivalConfig.current.defaultStorageUrlTest
@@ -122,6 +130,33 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             
             if let error = error {
                 debugError("downloadAndUpdatePointerFile(\(reason)): Download error: \(error)")
+                
+                // If using custom pointer URL and it fails, show error message once per launch
+                let customPointerUrl = UserDefaults.standard.string(forKey: "CustomPointerUrl") ?? ""
+                let usingCustomUrl = !customPointerUrl.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                
+                if usingCustomUrl {
+                    let errorKey = "CustomPointerUrlErrorShown"
+                    let alreadyShown = UserDefaults.standard.bool(forKey: errorKey)
+                    
+                    if !alreadyShown {
+                        UserDefaults.standard.set(true, forKey: errorKey)
+                        DispatchQueue.main.async {
+                            // Show error alert
+                            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                               let rootViewController = windowScene.windows.first?.rootViewController {
+                                let alert = UIAlertController(
+                                    title: "Pointer URL Error",
+                                    message: "Failed to load data from Custom Pointer URL. Please check the URL or clear it to use the default.",
+                                    preferredStyle: .alert
+                                )
+                                alert.addAction(UIAlertAction(title: "OK", style: .default))
+                                rootViewController.present(alert, animated: true)
+                            }
+                        }
+                    }
+                }
+                
                 DispatchQueue.main.async { completion?(false) }
                 return
             }
@@ -130,6 +165,33 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                   let httpResponse = response as? HTTPURLResponse,
                   httpResponse.statusCode == 200 else {
                 debugError("downloadAndUpdatePointerFile(\(reason)): Invalid response or no data")
+                
+                // If using custom pointer URL and it fails, show error message once per launch
+                let customPointerUrl = UserDefaults.standard.string(forKey: "CustomPointerUrl") ?? ""
+                let usingCustomUrl = !customPointerUrl.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                
+                if usingCustomUrl {
+                    let errorKey = "CustomPointerUrlErrorShown"
+                    let alreadyShown = UserDefaults.standard.bool(forKey: errorKey)
+                    
+                    if !alreadyShown {
+                        UserDefaults.standard.set(true, forKey: errorKey)
+                        DispatchQueue.main.async {
+                            // Show error alert
+                            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                               let rootViewController = windowScene.windows.first?.rootViewController {
+                                let alert = UIAlertController(
+                                    title: "Pointer URL Error",
+                                    message: "Failed to load data from Custom Pointer URL. Please check the URL or clear it to use the default.",
+                                    preferredStyle: .alert
+                                )
+                                alert.addAction(UIAlertAction(title: "OK", style: .default))
+                                rootViewController.present(alert, animated: true)
+                            }
+                        }
+                    }
+                }
+                
                 DispatchQueue.main.async { completion?(false) }
                 return
             }
@@ -268,6 +330,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         print("🔄 Checking for Core Data to SQLite migration...")
         CoreDataToSQLiteMigrationHelper.shared.performMigrationIfNeeded()
         print("✅ Migration check complete")
+        
+        // Reset custom pointer URL error flag on app launch
+        UserDefaults.standard.set(false, forKey: "CustomPointerUrlErrorShown")
+        UserDefaults.standard.synchronize()
         
         // Manually create the window and set the root view controller from the storyboard.
         self.window = UIWindow(frame: UIScreen.main.bounds)

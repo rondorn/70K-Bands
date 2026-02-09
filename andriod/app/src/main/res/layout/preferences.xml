@@ -879,78 +879,6 @@
                 android:layout_marginRight="16dp"
                 android:elevation="1dp">
 
-                <!-- Bands URL -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:paddingLeft="16dp"
-                    android:paddingRight="16dp"
-                    android:paddingTop="12dp"
-                    android:paddingBottom="12dp">
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Bands URL"
-                        android:textSize="17sp"
-                        android:textColor="#FFFFFF"
-                        android:paddingBottom="4dp" />
-
-                    <EditText
-                        android:id="@+id/bandsUrl"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textSize="15sp"
-                        android:textColor="#FFFFFF"
-                        android:textColorHint="#8E8E93"
-                        android:background="@android:color/transparent"
-                        android:inputType="textNoSuggestions" />
-                </LinearLayout>
-
-                <!-- Divider -->
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="0.5dp"
-                    android:background="#3A3A3C"
-                    android:layout_marginLeft="16dp" />
-
-                <!-- Schedule URL -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:paddingLeft="16dp"
-                    android:paddingRight="16dp"
-                    android:paddingTop="12dp"
-                    android:paddingBottom="12dp">
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Schedule URL"
-                        android:textSize="17sp"
-                        android:textColor="#FFFFFF"
-                        android:paddingBottom="4dp" />
-
-                    <EditText
-                        android:id="@+id/scheduleUrl"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textSize="15sp"
-                        android:textColor="#FFFFFF"
-                        android:textColorHint="#8E8E93"
-                        android:background="@android:color/transparent"
-                        android:inputType="textNoSuggestions" />
-                </LinearLayout>
-
-                <!-- Divider -->
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="0.5dp"
-                    android:background="#3A3A3C"
-                    android:layout_marginLeft="16dp" />
-
                 <!-- Pointer URL -->
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -975,6 +903,43 @@
                         android:layout_height="wrap_content"
                         android:background="@android:color/transparent"
                         android:spinnerMode="dropdown" />
+                </LinearLayout>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="0.5dp"
+                    android:background="#3A3A3C"
+                    android:layout_marginLeft="16dp" />
+
+                <!-- Custom Pointer URL -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Custom Pointer URL"
+                        android:textSize="17sp"
+                        android:textColor="#FFFFFF"
+                        android:paddingBottom="4dp" />
+
+                    <EditText
+                        android:id="@+id/customPointerUrl"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="15sp"
+                        android:textColor="#FFFFFF"
+                        android:textColorHint="#8E8E93"
+                        android:hint="Leave empty to use default"
+                        android:background="@android:color/transparent"
+                        android:inputType="textUri|textNoSuggestions" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
