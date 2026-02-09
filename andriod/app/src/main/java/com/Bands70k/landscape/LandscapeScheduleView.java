@@ -312,16 +312,16 @@ public class LandscapeScheduleView extends LinearLayout {
         return drawable;
     }
     
-    private android.graphics.drawable.Drawable getEventBlockBackground(int fillColor, boolean isExpired) {
+    private android.graphics.drawable.Drawable getEventBlockBackground(int fillColor, boolean shouldDim) {
         android.graphics.drawable.GradientDrawable drawable = new android.graphics.drawable.GradientDrawable();
         drawable.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
         
-        // Darken the fill color for expired events (reduce brightness by ~60%)
-        int displayColor = isExpired ? darkenColor(fillColor, 0.4f) : fillColor;
+        // Darken the fill color for expired events (reduce brightness by ~60%) only if shouldDim is true
+        int displayColor = shouldDim ? darkenColor(fillColor, 0.4f) : fillColor;
         drawable.setColor(displayColor);
         drawable.setCornerRadius(dpToPx(4)); // 4dp corner radius to match iOS
-        // Darken border for expired events (use dark grey instead of white)
-        int borderColor = isExpired ? Color.argb(102, 128, 128, 128) : Color.WHITE; // Dark grey border for expired
+        // Darken border for expired events (use dark grey instead of white) only if shouldDim is true
+        int borderColor = shouldDim ? Color.argb(102, 128, 128, 128) : Color.WHITE; // Dark grey border for expired
         drawable.setStroke(1, borderColor);
         return drawable;
     }
@@ -895,9 +895,15 @@ public class LandscapeScheduleView extends LinearLayout {
             contentArea.addView(gridLine);
         }
         
+        // Check if there are any unexpired events in this day (for dimming logic)
+        boolean hasUnexpiredEvents = hasUnexpiredEvents(dayData);
+        
         // Add event blocks
         for (ScheduleBlock event : venue.events) {
-            View eventBlock = createEventBlock(event, columnWidth, dayData);
+            // Only dim expired events if: hideExpiredEvents is ON AND unexpired events exist
+            // If all events are expired and hideExpiredEvents is OFF, don't dim
+            boolean shouldDim = hideExpiredEvents && hasUnexpiredEvents && event.isExpired;
+            View eventBlock = createEventBlock(event, columnWidth, dayData, shouldDim);
             contentArea.addView(eventBlock);
         }
         
@@ -905,12 +911,26 @@ public class LandscapeScheduleView extends LinearLayout {
         return venueColumn;
     }
     
-    private View createEventBlock(ScheduleBlock event, int columnWidth, DayScheduleData dayData) {
+    /**
+     * Check if there are any unexpired events in the given day
+     */
+    private boolean hasUnexpiredEvents(DayScheduleData dayData) {
+        for (VenueColumn venue : dayData.venues) {
+            for (ScheduleBlock event : venue.events) {
+                if (!event.isExpired) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
+    private View createEventBlock(ScheduleBlock event, int columnWidth, DayScheduleData dayData, boolean shouldDim) {
         LinearLayout eventBlock = new LinearLayout(context);
         eventBlock.setOrientation(LinearLayout.VERTICAL);
         eventBlock.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
-        // Use drawable with white border instead of solid color, darken if expired
-        eventBlock.setBackground(getEventBlockBackground(event.venueColor, event.isExpired));
+        // Use drawable with white border instead of solid color, darken only if shouldDim is true
+        eventBlock.setBackground(getEventBlockBackground(event.venueColor, shouldDim));
         eventBlock.setClickable(true);
         eventBlock.setFocusable(false);
         eventBlock.setFocusableInTouchMode(false);
@@ -951,8 +971,8 @@ public class LandscapeScheduleView extends LinearLayout {
         // Line 1: Band name
         TextView bandName = new TextView(context);
         bandName.setText(event.bandName);
-        // Use darker grey for expired events instead of semi-transparent white
-        bandName.setTextColor(event.isExpired ? Color.rgb(102, 102, 102) : Color.WHITE);
+        // Use darker grey for expired events only if shouldDim is true
+        bandName.setTextColor(shouldDim ? Color.rgb(102, 102, 102) : Color.WHITE);
         bandName.setTextSize(11);
         bandName.setTypeface(null, android.graphics.Typeface.BOLD);
         bandName.setMaxLines(1);
@@ -964,8 +984,8 @@ public class LandscapeScheduleView extends LinearLayout {
         if (event.startTime != null) {
             startTimeText.setText("Start: " + timeFormat.format(event.startTime).toLowerCase());
         }
-        // Use darker grey for expired events instead of semi-transparent white
-        startTimeText.setTextColor(event.isExpired ? Color.rgb(102, 102, 102) : Color.WHITE);
+        // Use darker grey for expired events only if shouldDim is true
+        startTimeText.setTextColor(shouldDim ? Color.rgb(102, 102, 102) : Color.WHITE);
         startTimeText.setTextSize(9);
         startTimeText.setMaxLines(1);
         eventBlock.addView(startTimeText);
@@ -975,8 +995,8 @@ public class LandscapeScheduleView extends LinearLayout {
         if (event.endTime != null) {
             endTimeText.setText("End: " + timeFormat.format(event.endTime).toLowerCase());
         }
-        // Use darker grey for expired events instead of semi-transparent white
-        endTimeText.setTextColor(event.isExpired ? Color.rgb(102, 102, 102) : Color.WHITE);
+        // Use darker grey for expired events only if shouldDim is true
+        endTimeText.setTextColor(shouldDim ? Color.rgb(102, 102, 102) : Color.WHITE);
         endTimeText.setTextSize(9);
         endTimeText.setMaxLines(1);
         eventBlock.addView(endTimeText);
@@ -1001,7 +1021,7 @@ public class LandscapeScheduleView extends LinearLayout {
             if (priorityResId != 0) {
                 priorityIcon.setImageResource(priorityResId);
                 priorityIcon.setLayoutParams(new FrameLayout.LayoutParams(dpToPx(14), dpToPx(14), Gravity.CENTER));
-                priorityIcon.setAlpha(event.isExpired ? 0.4f : 1.0f);
+                priorityIcon.setAlpha(shouldDim ? 0.4f : 1.0f);
                 
                 // Wrap icon in FrameLayout with circular background
                 // Circle extends 2px beyond icon: 14dp icon + 4dp (2px on each side) = 18dp circle
@@ -1010,9 +1030,9 @@ public class LandscapeScheduleView extends LinearLayout {
                 
                 // Set circular background color based on priority
                 // Very dark grey (0.2) for must/might, light grey (0.75) for wont
-                // Darken further if expired
+                // Darken further only if shouldDim is true
                 float greyValue = (event.priority == 3) ? 0.75f : 0.2f;
-                if (event.isExpired) {
+                if (shouldDim) {
                     greyValue *= 0.5f; // Darken by 50% for expired events
                 }
                 int greyColor = Color.rgb((int)(greyValue * 255), (int)(greyValue * 255), (int)(greyValue * 255));
@@ -1043,7 +1063,7 @@ public class LandscapeScheduleView extends LinearLayout {
                 ImageView attendedIcon = new ImageView(context);
                 attendedIcon.setImageResource(attendedResId);
                 attendedIcon.setLayoutParams(new LinearLayout.LayoutParams(dpToPx(14), dpToPx(14)));
-                attendedIcon.setAlpha(event.isExpired ? 0.4f : 1.0f);
+                attendedIcon.setAlpha(shouldDim ? 0.4f : 1.0f);
                 iconRow.addView(attendedIcon);
             } else {
                 Log.d(TAG, "Attended icon not shown: resId is 0 for status=" + event.attendedStatus);
