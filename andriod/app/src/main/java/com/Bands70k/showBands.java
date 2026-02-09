@@ -357,7 +357,13 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
         Log.d(TAG, "2 settingFilters for ShowUnknown is " + staticVariables.preferences.getShowUnknown());
         Log.d("startup", "show init start - 5");
-        populateBandList();
+        Log.d("MDF_DEBUG", "🚀 onCreate() - About to call populateBandList()");
+        try {
+            populateBandList();
+            Log.d("MDF_DEBUG", "🚀 onCreate() - populateBandList() returned successfully");
+        } catch (Exception e) {
+            Log.e("MDF_DEBUG", "🚀 onCreate() - ERROR in populateBandList(): " + e.getMessage(), e);
+        }
         Log.d("startup", "show init start - 6");
         // When app launches already in landscape (phone), config may not be updated immediately.
         // Run orientation check after a delay so calendar view shows without requiring rotate-away-and-back.
@@ -2331,25 +2337,46 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     }
 
     public void populateBandList() {
-
+        Log.d("MDF_DEBUG", "🚀 populateBandList() START");
+        Log.d("startup", "MDF_DEBUG: populateBandList() START - This log should always appear");
+        android.util.Log.d("MDF_DEBUG", "🚀 populateBandList() START (using android.util.Log)");
+        
         bandNamesList = (SwipeMenuListView) findViewById(R.id.bandNames);
+        Log.d("MDF_DEBUG", "🚀 populateBandList() - bandNamesList initialized");
+        Log.d("startup", "MDF_DEBUG: bandNamesList initialized");
         
         // CLICK LISTENER FIX: Ensure click listener is set when list is re-initialized
         setupClickListener();
+        Log.d("MDF_DEBUG", "🚀 populateBandList() - click listener setup complete");
 
         // OFFLINE FIX: Check for cached files directly for faster offline loading
         // This ensures events appear quickly even when offline
-        boolean hasCachedData = FileHandler70k.bandInfo.exists() && FileHandler70k.schedule.exists();
+        // EMPTY FILE FIX: Also check that files are non-empty (size > 0) to avoid processing empty files
+        boolean bandInfoExists = FileHandler70k.bandInfo.exists();
+        boolean scheduleExists = FileHandler70k.schedule.exists();
+        long bandInfoSize = bandInfoExists ? FileHandler70k.bandInfo.length() : 0;
+        long scheduleSize = scheduleExists ? FileHandler70k.schedule.length() : 0;
+        boolean hasCachedData = bandInfoExists && scheduleExists &&
+                                 bandInfoSize > 0 && scheduleSize > 0;
+        
+        Log.d("MDF_DEBUG", "🚀 populateBandList() - File check: bandInfo.exists=" + bandInfoExists + 
+              ", size=" + bandInfoSize + ", schedule.exists=" + scheduleExists + 
+              ", size=" + scheduleSize + ", hasCachedData=" + hasCachedData + 
+              ", fileDownloaded=" + fileDownloaded);
         
         if (fileDownloaded == false && !hasCachedData) {
             // No cached data - need to download
+            Log.d("MDF_DEBUG", "🚀 populateBandList() - No cached data, calling refreshNewData()");
             refreshNewData();
         } else {
             // We have cached data (either fileDownloaded=true or files exist) - load from cache
+            Log.d("MDF_DEBUG", "🚀 populateBandList() - Has cached data, calling reloadData()");
             reloadData();
         }
 
+        Log.d("MDF_DEBUG", "🚀 populateBandList() - Calling setupSwipeList()");
         setupSwipeList();
+        Log.d("MDF_DEBUG", "🚀 populateBandList() END");
     }
 
 
@@ -2426,31 +2453,86 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     }
 
     private void reloadData() {
+        Log.d("MDF_DEBUG", "📥 reloadData() START");
 
         // OFFLINE FIX: Check for cached files directly, not just fileDownloaded flag
         // This ensures events load quickly even when offline
-        boolean hasCachedData = FileHandler70k.bandInfo.exists() && FileHandler70k.schedule.exists();
+        boolean bandInfoExists = FileHandler70k.bandInfo.exists();
+        boolean scheduleExists = FileHandler70k.schedule.exists();
+        boolean hasCachedData = bandInfoExists && scheduleExists;
+        
+        Log.d("MDF_DEBUG", "📥 reloadData() - File check: bandInfo.exists=" + bandInfoExists + 
+              ", schedule.exists=" + scheduleExists + ", hasCachedData=" + hasCachedData + 
+              ", fileDownloaded=" + fileDownloaded);
         
         if (fileDownloaded == true || hasCachedData) {
+            Log.d("MDF_DEBUG", "📥 reloadData() - Entering data loading block");
             Log.d("BandData Loaded", "from Cache");
 
+            Log.d("MDF_DEBUG", "📥 reloadData() - Step 1: Creating BandInfo and getting band names");
             Log.d("reloadData", "reloadData - 1");
             BandInfo bandInfoNames = new BandInfo();
             bandNames = bandInfoNames.getBandNames();
+            Log.d("MDF_DEBUG", "📥 reloadData() - getBandNames() returned: " + 
+                  (bandNames == null ? "NULL" : "List with " + bandNames.size() + " items"));
 
+            // EMPTY DATA FIX: Handle case where files exist but are empty
+            if (bandNames == null) {
+                Log.w("MDF_DEBUG", "📥 reloadData() - WARNING: bandNames is null, initializing empty list");
+                Log.w("reloadData", "bandNames is null, initializing empty list");
+                bandNames = new ArrayList<String>();
+            }
+            Log.d("MDF_DEBUG", "📥 reloadData() - Final bandNames size: " + bandNames.size());
+            Log.d("reloadData", "Loaded " + bandNames.size() + " bands from cache");
+
+            Log.d("MDF_DEBUG", "📥 reloadData() - Step 2: Getting ranked band names");
             Log.d("reloadData", "reloadData - 2");
-            rankedBandNames = bandInfo.getRankedBandNames(bandNames);
-            rankStore.getBandRankings();
+            try {
+                rankedBandNames = bandInfo.getRankedBandNames(bandNames);
+                Log.d("MDF_DEBUG", "📥 reloadData() - getRankedBandNames() completed, rankedBandNames=" + 
+                      (rankedBandNames == null ? "NULL" : "List with " + rankedBandNames.size() + " items"));
+            } catch (Exception e) {
+                Log.e("MDF_DEBUG", "📥 reloadData() - ERROR in getRankedBandNames(): " + e.getMessage(), e);
+            }
+            
+            try {
+                rankStore.getBandRankings();
+                Log.d("MDF_DEBUG", "📥 reloadData() - getBandRankings() completed");
+            } catch (Exception e) {
+                Log.e("MDF_DEBUG", "📥 reloadData() - ERROR in getBandRankings(): " + e.getMessage(), e);
+            }
 
+            Log.d("MDF_DEBUG", "📥 reloadData() - Step 3: Setting up schedule alerts");
             Log.d("reloadData", "reloadData - 3");
             // ERRATIC JUMPING FIX: Remove duplicate position restoration from reloadData
             // Position restoration is now handled centrally in displayBandDataWithSchedule()
 
+            Log.d("MDF_DEBUG", "📥 reloadData() - Step 4: Executing schedule alert handler");
             Log.d("reloadData", "reloadData - 4");
-            scheduleAlertHandler alerts = new scheduleAlertHandler();
-            alerts.execute();
+            try {
+                scheduleAlertHandler alerts = new scheduleAlertHandler();
+                alerts.execute();
+                Log.d("MDF_DEBUG", "📥 reloadData() - scheduleAlertHandler.execute() completed");
+            } catch (Exception e) {
+                Log.e("MDF_DEBUG", "📥 reloadData() - ERROR in scheduleAlertHandler: " + e.getMessage(), e);
+            }
 
+            // UI UPDATE FIX: Ensure UI is updated after loading data, even if data is empty
+            // This prevents the app from appearing hung when files exist but are empty
+            Log.d("MDF_DEBUG", "📥 reloadData() - Step 5: Calling refreshData() to update UI");
+            Log.d("reloadData", "reloadData - 5: Updating UI");
+            try {
+                refreshData();
+                Log.d("MDF_DEBUG", "📥 reloadData() - refreshData() completed");
+            } catch (Exception e) {
+                Log.e("MDF_DEBUG", "📥 reloadData() - ERROR in refreshData(): " + e.getMessage(), e);
+            }
+
+        } else {
+            Log.d("MDF_DEBUG", "📥 reloadData() - SKIPPED: fileDownloaded=false and !hasCachedData");
         }
+        
+        Log.d("MDF_DEBUG", "📥 reloadData() END");
     }
 
 
@@ -2555,30 +2637,52 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     }
 
     private void displayBandData() {
-
+        Log.d("MDF_DEBUG", "🎨 displayBandData() START");
         Log.d("DisplayListData", "starting display ");
         
         // Check view mode preference to determine which display method to use
         boolean showScheduleView = staticVariables.preferences.getShowScheduleView();
+        Log.d("MDF_DEBUG", "🎨 displayBandData() - showScheduleView=" + showScheduleView);
         Log.d("VIEW_MODE_DEBUG", "🔍 displayBandData: getShowScheduleView() = " + showScheduleView);
         
+        // Log current data state
+        Log.d("MDF_DEBUG", "🎨 displayBandData() - Data state: bandNames=" + 
+              (bandNames == null ? "NULL" : "List with " + bandNames.size() + " items") +
+              ", scheduleRecords=" + (BandInfo.scheduleRecords == null ? "NULL" : 
+              "Map with " + BandInfo.scheduleRecords.size() + " entries"));
+        
         if (showScheduleView) {
+            Log.d("MDF_DEBUG", "🎨 displayBandData() - Calling displayBandDataWithSchedule()");
             Log.d("VIEW_MODE_DEBUG", "🔍 displayBandData: Calling displayBandDataWithSchedule()");
-            displayBandDataWithSchedule();
+            try {
+                displayBandDataWithSchedule();
+                Log.d("MDF_DEBUG", "🎨 displayBandData() - displayBandDataWithSchedule() completed");
+            } catch (Exception e) {
+                Log.e("MDF_DEBUG", "🎨 displayBandData() - ERROR in displayBandDataWithSchedule(): " + e.getMessage(), e);
+            }
         } else {
+            Log.d("MDF_DEBUG", "🎨 displayBandData() - Calling displayBandDataWithoutSchedule()");
             Log.d("VIEW_MODE_DEBUG", "🔍 displayBandData: Calling displayBandDataWithoutSchedule()");
-            displayBandDataWithoutSchedule();
+            try {
+                displayBandDataWithoutSchedule();
+                Log.d("MDF_DEBUG", "🎨 displayBandData() - displayBandDataWithoutSchedule() completed");
+            } catch (Exception e) {
+                Log.e("MDF_DEBUG", "🎨 displayBandData() - ERROR in displayBandDataWithoutSchedule(): " + e.getMessage(), e);
+            }
         }
         // After displaying data, check if we're in landscape (phone) and should show calendar.
         // Fixes launch-in-landscape showing list until user rotates away and back.
         if (showScheduleView) {
+            Log.d("MDF_DEBUG", "🎨 displayBandData() - Scheduling orientation check");
             new android.os.Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {
+                    Log.d("MDF_DEBUG", "🎨 displayBandData() - Running delayed orientation check");
                     checkOrientationAndShowLandscapeIfNeeded();
                 }
             }, 150);
         }
+        Log.d("MDF_DEBUG", "🎨 displayBandData() END");
     }
 
     private void displayBandDataWithoutSchedule() {
@@ -2797,11 +2901,13 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     }
 
     private void displayBandDataWithSchedule() {
+        Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() START");
 
         // CLICK FIX: Mark refresh as in progress to prevent clicks during adapter updates
         refreshCounter++;
         lastRefreshStartTime = System.currentTimeMillis();
         isRefreshing = true;
+        Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Refresh state: counter=" + refreshCounter + ", isRefreshing=" + isRefreshing);
 
         Log.d("ListPosition", "displayBandDataWithSchedule called - returningFromDetailsScreen: " + returningFromDetailsScreen + ", savedPosition: " + staticVariables.listPosition);
         
@@ -2816,9 +2922,11 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                     bandListItem centerItem = adapter.getItem(centerIndex);
                     if (centerItem != null) {
                         centerBandName = centerItem.getBandName();
+                        Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Saved center band: " + centerBandName);
                         Log.d("TransparentRefresh", "Saved center band for position: " + centerBandName + " at index " + centerIndex);
                     }
                 } catch (Exception e) {
+                    Log.w("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Error getting center item: " + e.getMessage());
                     Log.w("TransparentRefresh", "Error getting center item: " + e.getMessage());
                 }
             }
@@ -2826,51 +2934,85 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         
         // FLASHING FIX: Build new list first, then replace atomically to avoid flash
         // This prevents the adapter from going to 0 items, which causes flashing
+        Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Step 1: Getting band names");
         BandInfo bandInfoNames = new BandInfo();
         bandNames = bandInfoNames.getBandNames();
+        Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - bandNames=" + 
+              (bandNames == null ? "NULL" : "List with " + bandNames.size() + " items"));
 
         // OFFLINE/STARTUP ROBUSTNESS:
         // If the schedule cache exists but scheduleRecords hasn't been populated yet (common on cold start),
         // load it from disk in the background. While it loads, fall back to bands-only display so cached
         // content still renders immediately even when network is down.
-        if ((BandInfo.scheduleRecords == null || BandInfo.scheduleRecords.isEmpty()) && FileHandler70k.schedule.exists()) {
+        boolean scheduleRecordsNull = BandInfo.scheduleRecords == null;
+        boolean scheduleRecordsEmpty = !scheduleRecordsNull && BandInfo.scheduleRecords.isEmpty();
+        boolean scheduleFileExists = FileHandler70k.schedule.exists();
+        Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Schedule check: scheduleRecords=" + 
+              (scheduleRecordsNull ? "NULL" : "Map with " + BandInfo.scheduleRecords.size() + " entries") +
+              ", scheduleFile.exists()=" + scheduleFileExists);
+        
+        if ((scheduleRecordsNull || scheduleRecordsEmpty) && scheduleFileExists) {
+            Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Schedule cache exists but empty, parsing in background and falling back to bands-only view");
             Log.d("ScheduleCache", "Schedule cache exists but scheduleRecords is empty; parsing cached schedule in background");
             ThreadManager.getInstance().executeGeneralWithCallbacks(
                     () -> {
                         try {
+                            Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Background: Starting schedule parse");
                             scheduleInfo schedule = new scheduleInfo();
                             // IMPORTANT: Do NOT call DownloadScheduleFile() here.
                             // DownloadScheduleFile() evaluates OnlineStatus.isOnline(), which can block for a long
                             // time on "wifi connected but no internet / 100% packet loss" networks.
                             // We only want to parse the cached schedule file immediately.
                             BandInfo.scheduleRecords = schedule.ParseScheduleCSV();
+                            Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Background: Schedule parse complete, records=" + 
+                                  (BandInfo.scheduleRecords == null ? "NULL" : BandInfo.scheduleRecords.size()));
                         } catch (Exception e) {
+                            Log.e("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Background: ERROR parsing schedule: " + e.getMessage(), e);
                             Log.e("ScheduleCache", "Error parsing cached schedule", e);
                         }
                     },
                     null,
                     () -> {
                         try {
-                            Log.d("ScheduleCache", "Cached schedule parsed; refreshing schedule view");
-                            refreshData(true);
+                            // INFINITE LOOP FIX: Only refresh if schedule actually has data after parsing
+                            // If schedule is still empty, we're already showing bands-only view, so no refresh needed
+                            boolean hasScheduleData = BandInfo.scheduleRecords != null && 
+                                                      !BandInfo.scheduleRecords.isEmpty();
+                            
+                            if (hasScheduleData) {
+                                Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Background callback: Schedule has data, refreshing");
+                                Log.d("ScheduleCache", "Cached schedule parsed with " + BandInfo.scheduleRecords.size() + " records; refreshing schedule view");
+                                refreshData(true);
+                                Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Background callback: Refresh complete");
+                            } else {
+                                Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Background callback: Schedule still empty after parse, skipping refresh (already showing bands-only view)");
+                                Log.d("ScheduleCache", "Cached schedule parsed but still empty; skipping refresh to avoid infinite loop");
+                            }
                         } catch (Exception e) {
+                            Log.e("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Background callback: ERROR refreshing: " + e.getMessage(), e);
                             Log.e("ScheduleCache", "Error refreshing after cached schedule parse", e);
                         }
                     }
             );
             Log.d("ScheduleCache", "Falling back to bands-only view while schedule loads");
+            Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Falling back to bands-only view, resetting refresh state");
 
             // CRITICAL CLICK FIX:
             // We incremented refreshCounter/isRefreshing at the start of displayBandDataWithSchedule().
             // This early-return path would leave isRefreshing stuck true, which blocks all clicks.
             refreshCounter = Math.max(0, refreshCounter - 1);
             isRefreshing = (refreshCounter > 0);
+            Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Reset refresh state: counter=" + refreshCounter + ", isRefreshing=" + isRefreshing);
 
+            Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Calling displayBandDataWithoutSchedule()");
             displayBandDataWithoutSchedule();
+            Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - EARLY RETURN (fallback to bands-only)");
             return;
         }
 
+        Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Step 2: Checking bandNames size");
         if (bandNames.size() == 0) {
+            Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - WARNING: bandNames is empty");
             String emptyDataMessage = "";
             if (unfilteredBandCount > 1) {
                 Log.d("populateBandInfo", "BandList has issues 1");
@@ -2882,154 +3024,203 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
         }
 
+        Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Step 3: Getting ranked band names");
         //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 4");
-        rankedBandNames = bandInfo.getRankedBandNames(bandNames);
-        rankStore.getBandRankings();
+        try {
+            rankedBandNames = bandInfo.getRankedBandNames(bandNames);
+            Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - getRankedBandNames() completed");
+        } catch (Exception e) {
+            Log.e("MDF_DEBUG", "📅 displayBandDataWithSchedule() - ERROR in getRankedBandNames(): " + e.getMessage(), e);
+        }
+        
+        try {
+            rankStore.getBandRankings();
+            Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - getBandRankings() completed");
+        } catch (Exception e) {
+            Log.e("MDF_DEBUG", "📅 displayBandDataWithSchedule() - ERROR in getBandRankings(): " + e.getMessage(), e);
+        }
 
+        Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Step 4: Creating listHandler");
         //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 5");
         listHandler = new mainListHandler(showBands.this);
+        Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - listHandler created");
 
-
+        Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Step 5: Getting scheduleSortedBandNames");
         //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 6");
         
         // CRITICAL FIX: Force fresh data processing in alphabetical mode to prevent stale cache
         if (!staticVariables.preferences.getSortByTime()) {
+            Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Alphabetical mode: clearing cache and populating");
             Log.d("DisplayListData", "🔧 CRITICAL: Alphabetical mode detected, clearing cache to force fresh data");
             listHandler.clearCache();
             scheduleSortedBandNames = listHandler.populateBandInfo(bandInfo, bandNames);
+            Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - populateBandInfo() returned " + scheduleSortedBandNames.size() + " items");
             Log.d("CRITICAL_DEBUG", "🚨 SHOWBANDS: populateBandInfo() returned " + scheduleSortedBandNames.size() + " items");
         } else {
+            Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Time-sorted mode: getting sortable names");
             scheduleSortedBandNames = listHandler.getSortableBandNames();
+            Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - getSortableBandNames() returned " + scheduleSortedBandNames.size() + " items");
             Log.d("CRITICAL_DEBUG", "🚨 SHOWBANDS: getSortableBandNames() returned " + scheduleSortedBandNames.size() + " items");
             Log.d("CRITICAL_DEBUG", "🚨 SHOWBANDS: Current sortByTime preference = " + staticVariables.preferences.getSortByTime());
 
             if (scheduleSortedBandNames.isEmpty() == true) {
+                Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - scheduleSortedBandNames is empty, calling populateBandInfo()");
                 Log.d("CRITICAL_DEBUG", "🚨 SHOWBANDS: scheduleSortedBandNames is empty, calling populateBandInfo()");
                 scheduleSortedBandNames = listHandler.populateBandInfo(bandInfo, bandNames);
+                Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - populateBandInfo() returned " + scheduleSortedBandNames.size() + " items");
                 Log.d("CRITICAL_DEBUG", "🚨 SHOWBANDS: populateBandInfo() returned " + scheduleSortedBandNames.size() + " items");
             } else {
+                Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - scheduleSortedBandNames has " + scheduleSortedBandNames.size() + " items, skipping populateBandInfo()");
                 Log.d("CRITICAL_DEBUG", "🚨 SHOWBANDS: scheduleSortedBandNames already has " + scheduleSortedBandNames.size() + " items, skipping populateBandInfo()");
             }
         }
 
-        if (scheduleSortedBandNames.get(0).contains(":") == false) {
-            //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 7");
-            //Log.d("DisplayListData", "starting file download ");
-            //bandInfoNames.DownloadBandFile();
-            bandNames = bandInfoNames.getBandNames();
-            Log.d("DisplayListData", "starting file download, done ");
+        Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Step 6: Checking scheduleSortedBandNames");
+        if (scheduleSortedBandNames == null || scheduleSortedBandNames.isEmpty()) {
+            Log.w("MDF_DEBUG", "📅 displayBandDataWithSchedule() - WARNING: scheduleSortedBandNames is null or empty!");
+        } else {
+            Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - scheduleSortedBandNames has " + scheduleSortedBandNames.size() + " items");
+            if (scheduleSortedBandNames.get(0).contains(":") == false) {
+                Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - First item doesn't contain ':', refreshing band names");
+                //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 7");
+                //Log.d("DisplayListData", "starting file download ");
+                //bandInfoNames.DownloadBandFile();
+                bandNames = bandInfoNames.getBandNames();
+                Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Refreshed bandNames, now has " + bandNames.size() + " items");
+                Log.d("DisplayListData", "starting file download, done ");
+            }
         }
 
+        Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Step 7: Building new items list");
         // FLASHING FIX: Build new list of items FIRST (without modifying adapter)
         List<bandListItem> newItems = new ArrayList<>();
         List<String> newBandNamesIndex = new ArrayList<>();
         
         Integer counter = 0;
+        Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Loading shows attended");
         attendedHandler.loadShowsAttended();
+        Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Shows attended loaded");
         //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 8");
         
+        Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Step 8: Starting iteration over scheduleSortedBandNames");
         Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: About to iterate over scheduleSortedBandNames");
         Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: scheduleSortedBandNames.size() = " + scheduleSortedBandNames.size());
         Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: scheduleSortedBandNames = " + (scheduleSortedBandNames != null ? "NOT NULL" : "NULL"));
         
+        if (scheduleSortedBandNames == null || scheduleSortedBandNames.isEmpty()) {
+            Log.w("MDF_DEBUG", "📅 displayBandDataWithSchedule() - ERROR: Cannot iterate, scheduleSortedBandNames is null or empty!");
+            Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - END (early return due to empty schedule)");
+            return;
+        }
+        
+        Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Iterating over " + scheduleSortedBandNames.size() + " items");
+        int totalItems = scheduleSortedBandNames.size();
+        int loopIteration = 0;
         for (String bandIndex : scheduleSortedBandNames) {
+            loopIteration++;
+            if (loopIteration % 10 == 0 || loopIteration == 1 || loopIteration == totalItems) {
+                Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Processing iteration " + loopIteration + "/" + totalItems + ": " + bandIndex);
+            }
 
             Log.d("WorkingOnScheduleIndex", "WorkingOnScheduleIndex " + bandIndex + "-" + String.valueOf(staticVariables.eventYear));
 
             String[] indexSplit = bandIndex.split(":");
 
             if (indexSplit.length == 2) {
+                try {
+                    String bandName = getBandNameFromIndex(bandIndex);
+                    Long timeIndex = getTimeIndexFromIndex(bandIndex);
 
-                String bandName = getBandNameFromIndex(bandIndex);
-                Long timeIndex = getTimeIndexFromIndex(bandIndex);
-
-                // Ensure eventYear is set before using it
-                if (staticVariables.eventYear == 0) {
-                    staticVariables.ensureEventYearIsSet();
-                }
-                String eventYear = String.valueOf(staticVariables.eventYear);
-
-                bandListItem bandItem = new bandListItem(bandName);
-                loadOnceStopper = false;
-
-                if (timeIndex > 0) {
-
-                    // Never abort the entire render because of a single bad/missing record.
-                    if (bandName == null || timeIndex == null || BandInfo.scheduleRecords == null) {
-                        continue;
+                    // Ensure eventYear is set before using it
+                    if (staticVariables.eventYear == 0) {
+                        staticVariables.ensureEventYearIsSet();
                     }
-                    if (BandInfo.scheduleRecords.containsKey(bandName) == false) {
-                        Log.d("WorkingOnScheduleIndex", "WorkingOnScheduleIndex No bandname " + bandName + " - " + timeIndex);
-                        bandName = bandNames.get(0);
+                    String eventYear = String.valueOf(staticVariables.eventYear);
+
+                    bandListItem bandItem = new bandListItem(bandName);
+                    loadOnceStopper = false;
+
+                    if (timeIndex > 0) {
+
+                        // Never abort the entire render because of a single bad/missing record.
+                        if (bandName == null || timeIndex == null || BandInfo.scheduleRecords == null) {
+                            continue;
+                        }
                         if (BandInfo.scheduleRecords.containsKey(bandName) == false) {
-                            Log.d("WorkingOnScheduleIndex", "WorkingOnScheduleIndex No bandname 1 " + bandName + " - " + timeIndex);
+                            Log.d("WorkingOnScheduleIndex", "WorkingOnScheduleIndex No bandname " + bandName + " - " + timeIndex);
+                            bandName = bandNames.get(0);
+                            if (BandInfo.scheduleRecords.containsKey(bandName) == false) {
+                                Log.d("WorkingOnScheduleIndex", "WorkingOnScheduleIndex No bandname 1 " + bandName + " - " + timeIndex);
+                            }
+                        }
+                        if (BandInfo.scheduleRecords.get(bandName) == null){
+                            continue;
+                        }
+                        if (BandInfo.scheduleRecords.get(bandName).scheduleByTime.containsKey(timeIndex) == false) {
+                            continue;
+                        }
+
+                        Log.d("WorkingOnScheduleIndex", "WorkingOnScheduleIndex No bandname 1 " + bandName + " - " + timeIndex);
+                        if (BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex) != null) {
+
+                            scheduleHandler scheduleHandle = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex);
+                            String location = scheduleHandle.getShowLocation();
+                            String startTime = scheduleHandle.getStartTimeString();
+                            String endTime = scheduleHandle.getEndTimeString();
+                            String eventType = scheduleHandle.getShowType();
+                            String day = scheduleHandle.getShowDay();
+                            String note = scheduleHandle.getShowNotes();
+
+                            String attendedIcon = attendedHandler.getShowAttendedIcon(bandName, location, startTime, eventType, eventYear);
+                            Log.d("ShowsAttended", "attendedIcon is " + attendedIcon + " for " + bandName + "-" + location + "-" + "-" + startTime);
+                            if (day.contains("Day")) {
+                                day = " " + day.replaceAll("Day", "");
+                            }
+
+                            if (day.contains("/") == false) {
+                                day = day + "  ";
+                            }
+
+                            Log.d("PopulatingDayValue", "Day = " + day);
+                            startTime = dateTimeFormatter.formatScheduleTime(startTime);
+                            endTime = dateTimeFormatter.formatScheduleTime(endTime);
+
+                            bandItem.setLocationColor(iconResolve.getLocationColor(location));
+
+                            if (venueLocation.containsKey(location)) {
+                                location += " " + venueLocation.get(location);
+                            }
+
+                            Log.d("settingEvent", " for " + bandName + " note of " + note);
+                            bandItem.setEventNote(note);
+
+                            Integer eventImage = iconResolve.getEventIcon(eventType, bandName);
+
+                            bandItem.setLocation(location);
+                            bandItem.setStartTime(startTime);
+                            bandItem.setEndTime(endTime);
+                            bandItem.setDay(day);
+
+                            if (eventImage != 0) {
+                                bandItem.setEventTypeImage(eventImage);
+                            }
+
+                            bandItem.setAttendedImage(iconResolve.getAttendedIcon(attendedIcon));
+
+                            Log.d("settingEvent", " for " + bandName + " eventType of " + eventType + "returned image " + eventImage);
                         }
                     }
-                    if (BandInfo.scheduleRecords.get(bandName) == null){
-                        continue;
-                    }
-                    if (BandInfo.scheduleRecords.get(bandName).scheduleByTime.containsKey(timeIndex) == false) {
-                        continue;
-                    }
 
-                    Log.d("WorkingOnScheduleIndex", "WorkingOnScheduleIndex No bandname 1 " + bandName + " - " + timeIndex);
-                    if (BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex) != null) {
-
-                        scheduleHandler scheduleHandle = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex);
-                        String location = scheduleHandle.getShowLocation();
-                        String startTime = scheduleHandle.getStartTimeString();
-                        String endTime = scheduleHandle.getEndTimeString();
-                        String eventType = scheduleHandle.getShowType();
-                        String day = scheduleHandle.getShowDay();
-                        String note = scheduleHandle.getShowNotes();
-
-                        String attendedIcon = attendedHandler.getShowAttendedIcon(bandName, location, startTime, eventType, eventYear);
-                        Log.d("ShowsAttended", "attendedIcon is " + attendedIcon + " for " + bandName + "-" + location + "-" + "-" + startTime);
-                        if (day.contains("Day")) {
-                            day = " " + day.replaceAll("Day", "");
-                        }
-
-                        if (day.contains("/") == false) {
-                            day = day + "  ";
-                        }
-
-                        Log.d("PopulatingDayValue", "Day = " + day);
-                        startTime = dateTimeFormatter.formatScheduleTime(startTime);
-                        endTime = dateTimeFormatter.formatScheduleTime(endTime);
-
-                        bandItem.setLocationColor(iconResolve.getLocationColor(location));
-
-                        if (venueLocation.containsKey(location)) {
-                            location += " " + venueLocation.get(location);
-                        }
-
-                        Log.d("settingEvent", " for " + bandName + " note of " + note);
-                        bandItem.setEventNote(note);
-
-                        Integer eventImage = iconResolve.getEventIcon(eventType, bandName);
-
-                        bandItem.setLocation(location);
-                        bandItem.setStartTime(startTime);
-                        bandItem.setEndTime(endTime);
-                        bandItem.setDay(day);
-
-                        if (eventImage != 0) {
-                            bandItem.setEventTypeImage(eventImage);
-                        }
-
-                        bandItem.setAttendedImage(iconResolve.getAttendedIcon(attendedIcon));
-
-                        Log.d("settingEvent", " for " + bandName + " eventType of " + eventType + "returned image " + eventImage);
-                    }
+                    bandItem.setRankImg(rankStore.getRankImageForBand(bandName));
+                    counter = counter + 1;
+                    newItems.add(bandItem);
+                    // CRITICAL FIX: Add band name to index to keep in sync with adapter
+                    newBandNamesIndex.add(bandIndex);
+                } catch (Exception e) {
+                    Log.e("MDF_DEBUG", "📅 displayBandDataWithSchedule() - ERROR processing iteration " + loopIteration + ": " + e.getMessage(), e);
                 }
-
-                bandItem.setRankImg(rankStore.getRankImageForBand(bandName));
-                counter = counter + 1;
-                newItems.add(bandItem);
-                // CRITICAL FIX: Add band name to index to keep in sync with adapter
-                newBandNamesIndex.add(bandName);
             } else {
-
+                Log.w("MDF_DEBUG", "📅 displayBandDataWithSchedule() - WARNING: bandIndex doesn't contain ':', adding as-is: " + bandIndex);
                 bandIndex = bandIndex.replaceAll(":", "");
                 bandListItem bandItem = new bandListItem(bandIndex);
                 bandItem.setRankImg(rankStore.getRankImageForBand(bandIndex));
@@ -3041,8 +3232,11 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
         }
         
+        Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Loop complete, processed " + counter + " items");
+        
         // Handle empty data case
         if (counter == 0) {
+            Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - No items processed, adding empty data message");
             String emptyDataMessage = "";
             if (unfilteredBandCount > 1) {
                 Log.d("populateBandInfo", "BandList has issues 2");
@@ -3207,6 +3401,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             isRefreshing = (refreshCounter > 0);
             lastRefreshEndTime = System.currentTimeMillis();
         }
+        
+        Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() END - Final counter: " + counter + ", adapter items: " + 
+              (adapter != null ? adapter.getCount() : "NULL"));
         
         // JUMPING FIX: Position restoration is no longer needed here
         // We now prevent the refresh entirely when returning from details screen
@@ -3571,12 +3768,13 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     }
     
     public void refreshData(boolean forceRefresh) {
-
+        Log.d("MDF_DEBUG", "🔄 refreshData() START (forceRefresh: " + forceRefresh + ")");
         Log.d("DisplayListData", "called from refreshData (forceRefresh: " + forceRefresh + ")");
         
         // UNIVERSAL SCROLL PRESERVATION: Always save position before any refresh to make it transparent
         if (bandNamesList != null && staticVariables.savedScrollPosition < 0) {
             // Only save if we don't already have a saved position
+            Log.d("MDF_DEBUG", "🔄 refreshData() - Saving scroll position");
             saveScrollPosition();
             Log.d("ScrollPosition", "Universal scroll preservation activated for refreshData()");
         }
@@ -3586,12 +3784,26 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             int currentPosition = bandNamesList.getFirstVisiblePosition();
             if (currentPosition > 0) {
                 staticVariables.listPosition = currentPosition;
+                Log.d("MDF_DEBUG", "🔄 refreshData() - Saved legacy scroll position: " + currentPosition);
                 Log.d("ListPosition", "Saved current scroll position before refresh: " + currentPosition);
             }
         }
         
-        displayBandData();
-        updateCalendarButtonVisibility();
+        Log.d("MDF_DEBUG", "🔄 refreshData() - Calling displayBandData()");
+        try {
+            displayBandData();
+            Log.d("MDF_DEBUG", "🔄 refreshData() - displayBandData() completed");
+        } catch (Exception e) {
+            Log.e("MDF_DEBUG", "🔄 refreshData() - ERROR in displayBandData(): " + e.getMessage(), e);
+        }
+        
+        Log.d("MDF_DEBUG", "🔄 refreshData() - Calling updateCalendarButtonVisibility()");
+        try {
+            updateCalendarButtonVisibility();
+            Log.d("MDF_DEBUG", "🔄 refreshData() - updateCalendarButtonVisibility() completed");
+        } catch (Exception e) {
+            Log.e("MDF_DEBUG", "🔄 refreshData() - ERROR in updateCalendarButtonVisibility(): " + e.getMessage(), e);
+        }
         
         // CRITICAL FIX: Ensure list is visible after refresh, especially on first install
         // This is important because saveScrollPosition() might have hidden it
