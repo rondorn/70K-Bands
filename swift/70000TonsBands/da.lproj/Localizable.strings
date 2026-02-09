@@ -244,6 +244,19 @@
 "Profile Updated" = "Profil Opdateret";
 "Import Failed" = "Import Mislykkedes";
 
+// Information section
+"Information" = "Information";
+"User Identifier" = "Bruger-id";
+"Build" = "Build";
+
+// Advanced Preferences section
+"AdvancedPreferences" = "AVANCEREDE PRÆFERENCER.";
+"AdvancedPreferencesWarning" = "ÆNDR IKKE MEDMINDRE DU VED, HVAD DU GØR!";
+"Bands URL" = "Bands URL";
+"Schedule URL" = "Tidsplan URL";
+"Pointer URL" = "Pegestreg URL";
+"Default" = "Standard";
+
 // Profile Management
 "Choose an action" = "Vælg en handling";
 "Rename This Entry" = "Omdøb Denne Post";

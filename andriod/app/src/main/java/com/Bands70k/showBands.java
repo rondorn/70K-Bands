@@ -187,6 +187,12 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     private boolean isShowingLandscapeSchedule = false;
     private String currentViewingDay = null;  // Track which day user is viewing
     private boolean isManualCalendarView = false;  // For tablets: true = calendar view, false = list view
+    
+    // CRITICAL FIX: Track window dimensions to detect rotation on foldable devices
+    // On Pixel Fold front display, onConfigurationChanged may not fire reliably
+    private int lastWindowWidth = 0;
+    private int lastWindowHeight = 0;
+    private android.view.ViewTreeObserver.OnGlobalLayoutListener layoutChangeListener = null;
 
 
     @Override
@@ -381,6 +387,74 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         Log.d("startup", "show init start - 10");
 
         setSearchBarWidth();
+        
+        // CRITICAL FIX: Setup layout change listener for foldable devices
+        // On Pixel Fold front display, onConfigurationChanged may not fire, so watch for layout changes
+        setupLayoutChangeListener();
+    }
+    
+    /**
+     * Setup ViewTreeObserver to detect layout changes (rotation) on foldable devices
+     * This is a fallback when onConfigurationChanged doesn't fire reliably
+     */
+    private void setupLayoutChangeListener() {
+        final android.view.View rootView = getWindow().getDecorView().getRootView();
+        
+        // Remove existing listener if any
+        if (layoutChangeListener != null) {
+            rootView.getViewTreeObserver().removeOnGlobalLayoutListener(layoutChangeListener);
+        }
+        
+        layoutChangeListener = new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                // Get current window dimensions
+                android.view.View decorView = getWindow().getDecorView();
+                int currentWidth = decorView.getWidth();
+                int currentHeight = decorView.getHeight();
+                
+                // Only check if dimensions are valid and have changed significantly
+                if (currentWidth > 0 && currentHeight > 0) {
+                    // Check if dimensions changed significantly (rotation)
+                    boolean dimensionsChanged = (lastWindowWidth != currentWidth || lastWindowHeight != currentHeight);
+                    boolean isSignificantChange = Math.abs(currentWidth - lastWindowWidth) > 50 || 
+                                                  Math.abs(currentHeight - lastWindowHeight) > 50;
+                    
+                    if (dimensionsChanged && isSignificantChange && (lastWindowWidth > 0 || lastWindowHeight > 0)) {
+                        Log.d("LANDSCAPE_SCHEDULE", "Layout change detected via ViewTreeObserver - " +
+                              lastWindowWidth + "x" + lastWindowHeight + " -> " + currentWidth + "x" + currentHeight);
+                        
+                        // Update stored dimensions
+                        lastWindowWidth = currentWidth;
+                        lastWindowHeight = currentHeight;
+                        
+                        // Check orientation and show landscape view if needed
+                        // Only for phone mode (not tablets)
+                        if (!isSplitViewCapable() && hasWindowFocus()) {
+                            // Post with slight delay to ensure layout is complete
+                            new android.os.Handler().postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (hasWindowFocus()) {
+                                        Log.d("LANDSCAPE_SCHEDULE", "Layout change - checking orientation");
+                                        checkOrientationAndShowLandscapeIfNeeded();
+                                        setSearchBarWidth(); // Also update search bar width
+                                    }
+                                }
+                            }, 100);
+                        }
+                    } else if (lastWindowWidth == 0 && lastWindowHeight == 0) {
+                        // First layout - just store dimensions
+                        lastWindowWidth = currentWidth;
+                        lastWindowHeight = currentHeight;
+                        Log.d("LANDSCAPE_SCHEDULE", "Initial layout dimensions: " + currentWidth + "x" + currentHeight);
+                    }
+                }
+            }
+        };
+        
+        rootView.getViewTreeObserver().addOnGlobalLayoutListener(layoutChangeListener);
+        Log.d("LANDSCAPE_SCHEDULE", "Layout change listener setup complete");
     }
 
     public void checkForEasterEgg(){
@@ -692,15 +766,24 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     }
 
     private void setSearchBarWidth(){
+        // CRITICAL FIX: Use window dimensions instead of display metrics for foldable devices
+        // On Pixel Fold front display, display metrics may be stale during rotation
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        int screenWidth = displayMetrics.widthPixels;
+        int displayWidth = displayMetrics.widthPixels;
+        
+        // Get actual window dimensions (more reliable on foldable devices)
+        android.view.View decorView = getWindow().getDecorView();
+        int windowWidth = decorView.getWidth();
+        
+        // Use window width if available, otherwise fall back to display metrics
+        int screenWidth = (windowWidth > 0) ? windowWidth : displayWidth;
 
         // Set SearchView size based on screen width
-        float widthPercentage = 0.62f;  // 70% of screen width
+        float widthPercentage = 0.62f;  // 62% of screen width
         int desiredWidth = (int) (screenWidth * widthPercentage);
 
-        Log.d("orientation", "orientation DONE! " + String.valueOf(desiredWidth));
+        Log.d("orientation", "setSearchBarWidth - display: " + displayWidth + ", window: " + windowWidth + ", using: " + screenWidth + ", desired: " + desiredWidth);
         // Find SearchView and update its layout params
         searchCriteriaObject = (SearchView)findViewById(R.id.searchCriteria);
         ViewGroup.LayoutParams layoutParams = searchCriteriaObject.getLayoutParams();
@@ -3572,6 +3655,20 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     @Override
     protected void onDestroy() {
         Log.d("Saving Data", "Saving state during Destroy");
+        
+        // CRITICAL FIX: Clean up layout change listener to prevent memory leaks
+        if (layoutChangeListener != null) {
+            try {
+                android.view.View rootView = getWindow().getDecorView().getRootView();
+                if (rootView != null && rootView.getViewTreeObserver().isAlive()) {
+                    rootView.getViewTreeObserver().removeOnGlobalLayoutListener(layoutChangeListener);
+                }
+            } catch (Exception e) {
+                Log.e("LANDSCAPE_SCHEDULE", "Error removing layout listener", e);
+            }
+            layoutChangeListener = null;
+        }
+        
         onPause();
         super.onDestroy();
 
@@ -4531,13 +4628,27 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         int orientation = getResources().getConfiguration().orientation;
         boolean isLandscape = orientation == Configuration.ORIENTATION_LANDSCAPE;
         
-        // Also check actual screen dimensions as fallback
+        // CRITICAL FIX: Use window dimensions instead of display metrics for foldable devices
+        // On Pixel Fold front display, display metrics may be stale during rotation
         DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
-        int width = displayMetrics.widthPixels;
-        int height = displayMetrics.heightPixels;
+        int displayWidth = displayMetrics.widthPixels;
+        int displayHeight = displayMetrics.heightPixels;
+        
+        // Get actual window dimensions (more reliable on foldable devices)
+        android.view.View decorView = getWindow().getDecorView();
+        int windowWidth = decorView.getWidth();
+        int windowHeight = decorView.getHeight();
+        
+        // Use window dimensions if available, otherwise fall back to display metrics
+        int width = (windowWidth > 0) ? windowWidth : displayWidth;
+        int height = (windowHeight > 0) ? windowHeight : displayHeight;
         boolean isLandscapeBySize = width > height;
         
-        Log.d("LANDSCAPE_SCHEDULE", "Orientation check - config orientation: " + orientation + " (" + (orientation == Configuration.ORIENTATION_LANDSCAPE ? "LANDSCAPE" : "PORTRAIT") + "), size-based: " + isLandscapeBySize + " (" + width + "x" + height + ")");
+        Log.d("LANDSCAPE_SCHEDULE", "Orientation check - config orientation: " + orientation + " (" + (orientation == Configuration.ORIENTATION_LANDSCAPE ? "LANDSCAPE" : "PORTRAIT") + 
+              "), display metrics: " + displayWidth + "x" + displayHeight +
+              ", window size: " + windowWidth + "x" + windowHeight +
+              ", using: " + width + "x" + height +
+              ", size-based landscape: " + isLandscapeBySize);
         
         // Use either check
         isLandscape = isLandscape || isLandscapeBySize;

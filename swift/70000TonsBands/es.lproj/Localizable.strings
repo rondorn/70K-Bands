@@ -248,6 +248,14 @@
 "User Identifier" = "Identificador de usuario";
 "Build" = "Versión";
 
+// Advanced Preferences section
+"AdvancedPreferences" = "PREFERENCIAS AVANZADAS.";
+"AdvancedPreferencesWarning" = "NO MODIFICAR A MENOS QUE SEPAS LO QUE ESTÁS HACIENDO!";
+"Bands URL" = "URL de bandas";
+"Schedule URL" = "URL del calendario";
+"Pointer URL" = "URL del puntero";
+"Default" = "Predeterminado";
+
 "year_change_loading" = "Cargando datos para el nuevo año, por favor espere...";
 
 "HereAreMy" = "Aquí están mis";
