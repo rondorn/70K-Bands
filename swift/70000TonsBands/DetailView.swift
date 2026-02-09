@@ -187,95 +187,30 @@ struct DetailView: View {
     
     private var mainContent: some View {
         ZStack {
-            // Check if we should show simplified landscape layout
-            // Use actual orientation check, not just showCustomBackButton flag
-            // CRITICAL FIX: On iPad (master/detail), always show full layout with notes
+            // Determine which view to show based on orientation and schedule presence
             let isCurrentlyLandscape = UIApplication.shared.statusBarOrientation.isLandscape || 
                                        currentOrientation.isLandscape
             let isLargeDisplay = DeviceSizeManager.isLargeDisplay()
+            let hasSchedule = !viewModel.scheduleEvents.isEmpty
             
-            // For non-large display devices, use simplified calendar layout when in landscape
-            // The layout should always respond to actual device orientation, regardless of how the detail view was opened
-            // This ensures the correct portrait or landscape view is shown based on current orientation
-            if (!isLargeDisplay && isCurrentlyLandscape) {
-                // Simplified layout for landscape modal (iPhone only)
-                VStack(spacing: 0) {
-                    // Add top padding to avoid conflict with back button and band name
-                    Spacer()
-                        .frame(height: 50)
-                    
-                    ScrollView(.vertical, showsIndicators: true) {
-                        VStack(alignment: .leading, spacing: 0) {
-                            // Schedule Events - show all events (if any)
-                            if !viewModel.scheduleEvents.isEmpty {
-                                scheduleEventsSection
-                                    .padding(.top, 8)
-                            }
-                            
-                            // Band Details - Country, Genre, Last On Cruise, Note
-                            // Always show band details (country, genre, etc.) when accessed from landscape calendar
-                            bandDetailsSection
-                                .padding(.top, viewModel.scheduleEvents.isEmpty ? 8 : 16)
-                            
-                            // Add bottom padding to ensure last item is fully visible above priority widget
-                            Spacer()
-                                .frame(height: 100)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, 14)
-                        .background(Color.black)
-                    }
-                    .frame(maxHeight: .infinity)
+            // Select the appropriate view based on orientation and schedule
+            if isCurrentlyLandscape && !isLargeDisplay {
+                // Landscape mode (iPhone only)
+                if hasSchedule {
+                    // Landscape with schedule: schedule, links, band details (no logo, no notes)
+                    landscapeWithScheduleView
+                } else {
+                    // Landscape without schedule: logo, links, band details (no notes)
+                    landscapeWithoutScheduleView
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             } else {
-                // Full layout for normal detail view
-                VStack(spacing: 0) {
-                    // Compact top section - non-scrollable
-                    VStack(spacing: 0) {
-                        // CRITICAL FIX: On large display devices, show band name above logo with proper spacing
-                        let isLargeDisplay = DeviceSizeManager.isLargeDisplay()
-                        if isLargeDisplay && showCustomBackButton {
-                            // Band name text above logo (iPad only, when using custom back button)
-                            Text(viewModel.bandName)
-                                .font(.system(size: 24, weight: .bold))
-                                .foregroundColor(.white)
-                                .multilineTextAlignment(.center)
-                                .padding(.top, 8) // Space from back button
-                                .padding(.bottom, 12) // Space before logo
-                                .frame(maxWidth: .infinity)
-                        }
-                        
-                        // Band Logo - moved to very top
-                        bandLogoSection
-                        
-                        // Schedule Events - right after logo
-                        if !viewModel.scheduleEvents.isEmpty {
-                            scheduleEventsSection
-                        }
-                        
-                        // Links Section - after schedule events
-                        if viewModel.hasAnyLinks {
-                            linksSection
-                        }
-                        
-                        // Band Details - after links
-                        // Always show band details if they exist, or if schedule events are present (for iPhone)
-                        // This ensures country/genre are shown when schedule is present, regardless of orientation
-                        // Reuse isLargeDisplay declared above
-                        if (!isLargeDisplay && !viewModel.scheduleEvents.isEmpty) || viewModel.hasBandDetails {
-                            bandDetailsSection
-                        }
-                    }
-                    .padding(.horizontal, 14)
-                    .background(Color.black)
-                    
-                    // Larger space before notes section
-                    Spacer(minLength: 20)
-                    
-                    // Scrollable Notes Section - takes remaining space
-                    notesSection
-                        .frame(maxHeight: .infinity)
+                // Portrait mode (or iPad in any orientation)
+                if hasSchedule {
+                    // Portrait with schedule: logo, schedule, links, band details, notes
+                    portraitWithScheduleView
+                } else {
+                    // Portrait without schedule: logo, links, band details, notes (no schedule)
+                    portraitWithoutScheduleView
                 }
             }
             
@@ -283,13 +218,12 @@ struct DetailView: View {
             VStack(spacing: 0) {
                 Spacer()
                 
-                // Translation button - fixed above priority section (hide in simplified landscape mode)
+                // Translation button - fixed above priority section
                 // Hide translation button when in landscape mode with schedule events (iPhone only)
-                // Check actual orientation to determine visibility
                 let isCurrentlyLandscapeForTranslation = UIApplication.shared.statusBarOrientation.isLandscape || 
                                                         currentOrientation.isLandscape
                 let isLargeDisplayForTranslation = DeviceSizeManager.isLargeDisplay()
-                let shouldHideTranslation = !isLargeDisplayForTranslation && isCurrentlyLandscapeForTranslation && !viewModel.scheduleEvents.isEmpty
+                let shouldHideTranslation = !isLargeDisplayForTranslation && isCurrentlyLandscapeForTranslation && hasSchedule
                 if viewModel.showTranslationButton && !shouldHideTranslation {
                     translationButtonSection
                         .background(Color.black.opacity(0.95))
@@ -415,6 +349,155 @@ struct DetailView: View {
         }
     }
     
+    // MARK: - Four Distinct Views
+    
+    // Portrait with schedule: logo, schedule, links, band details, notes
+    private var portraitWithScheduleView: some View {
+        VStack(spacing: 0) {
+            // Compact top section - non-scrollable
+            VStack(spacing: 0) {
+                // On large display devices, show band name above logo with proper spacing
+                let isLargeDisplay = DeviceSizeManager.isLargeDisplay()
+                if isLargeDisplay && showCustomBackButton {
+                    // Band name text above logo (iPad only, when using custom back button)
+                    Text(viewModel.bandName)
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .padding(.top, 8) // Space from back button
+                        .padding(.bottom, 12) // Space before logo
+                        .frame(maxWidth: .infinity)
+                }
+                
+                // Band Logo
+                bandLogoSection
+                
+                // Schedule Events
+                scheduleEventsSection
+                
+                // Links Section
+                if viewModel.hasAnyLinks {
+                    linksSection
+                }
+                
+                // Band Details
+                bandDetailsSection
+            }
+            .padding(.horizontal, 14)
+            .background(Color.black)
+            
+            // Larger space before notes section
+            Spacer(minLength: 20)
+            
+            // Scrollable Notes Section - takes remaining space
+            notesSection
+                .frame(maxHeight: .infinity)
+        }
+    }
+    
+    // Portrait without schedule: logo, links, band details, notes (no schedule)
+    private var portraitWithoutScheduleView: some View {
+        VStack(spacing: 0) {
+            // Compact top section - non-scrollable
+            VStack(spacing: 0) {
+                // On large display devices, show band name above logo with proper spacing
+                let isLargeDisplay = DeviceSizeManager.isLargeDisplay()
+                if isLargeDisplay && showCustomBackButton {
+                    // Band name text above logo (iPad only, when using custom back button)
+                    Text(viewModel.bandName)
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .padding(.top, 8) // Space from back button
+                        .padding(.bottom, 12) // Space before logo
+                        .frame(maxWidth: .infinity)
+                }
+                
+                // Band Logo
+                bandLogoSection
+                
+                // Links Section
+                if viewModel.hasAnyLinks {
+                    linksSection
+                }
+                
+                // Band Details
+                bandDetailsSection
+            }
+            .padding(.horizontal, 14)
+            .background(Color.black)
+            
+            // Larger space before notes section
+            Spacer(minLength: 20)
+            
+            // Scrollable Notes Section - takes remaining space
+            notesSection
+                .frame(maxHeight: .infinity)
+        }
+    }
+    
+    // Landscape with schedule: schedule, band details (no logo, no links, no notes)
+    private var landscapeWithScheduleView: some View {
+        GeometryReader { geometry in
+            VStack(spacing: 0) {
+                // Minimal top padding - just 2px to ensure no overlap with back button overlay
+                Spacer()
+                    .frame(height: 2)
+                
+                // No ScrollView - content should fit in landscape without scrolling
+                VStack(alignment: .leading, spacing: 0) {
+                    // Schedule Events - positioned as high as possible
+                    scheduleEventsSection
+                        .padding(.top, 0)
+                    
+                    // Band Details (excluding notes)
+                    bandDetailsSectionWithoutNotes
+                        .padding(.top, 10)
+                    
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity, maxHeight: geometry.size.height - 2, alignment: .topLeading)
+                .padding(.horizontal, 14)
+                .background(Color.black)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        }
+    }
+    
+    // Landscape without schedule: logo, links, band details (including noteWorthy - the short 1-line note)
+    private var landscapeWithoutScheduleView: some View {
+        GeometryReader { geometry in
+            VStack(spacing: 0) {
+                // Minimal top padding - just 2px to ensure no overlap with back button overlay
+                Spacer()
+                    .frame(height: 2)
+                
+                // No ScrollView - content should fit in landscape without scrolling
+                VStack(alignment: .leading, spacing: 0) {
+                    // Band Logo - positioned as high as possible
+                    landscapeBandLogoSection
+                        .padding(.top, 0)
+                    
+                    // Links Section
+                    if viewModel.hasAnyLinks {
+                        linksSection
+                            .padding(.top, 10)
+                    }
+                    
+                    // Band Details (including noteWorthy field - Country, Genre, Last On Cruise, Note)
+                    bandDetailsSection
+                        .padding(.top, viewModel.hasAnyLinks ? 10 : 0)
+                    
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity, maxHeight: geometry.size.height - 2, alignment: .topLeading)
+                .padding(.horizontal, 14)
+                .background(Color.black)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        }
+    }
+    
     // MARK: - View Components
     
     private var bandLogoSection: some View {
@@ -447,6 +530,40 @@ struct DetailView: View {
             }
         }
         .padding(.top, 2)
+        .padding(.bottom, 0)
+    }
+    
+    // Landscape-specific logo section - positioned higher, size closer to portrait (only shrink if needed)
+    private var landscapeBandLogoSection: some View {
+        Group {
+            if let image = viewModel.bandImage {
+                Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxHeight: 80) // Slightly smaller than portrait (80px vs 90px) but still substantial
+                    .frame(maxWidth: .infinity)
+            } else if viewModel.isLoadingImage {
+                // Show small loading indicator when image is being loaded
+                ZStack {
+                    Rectangle()
+                        .fill(Color.clear)
+                        .frame(maxHeight: 80)
+                        .frame(maxWidth: .infinity)
+                    
+                    // Small centered loading spinner
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        .scaleEffect(0.75)
+                }
+            } else {
+                // Keep image area empty (no placeholder) - let the space exist but be invisible
+                Rectangle()
+                    .fill(Color.clear)
+                    .frame(maxHeight: 80)
+                    .frame(maxWidth: .infinity)
+            }
+        }
+        .padding(.top, 0)
         .padding(.bottom, 0)
     }
     
@@ -523,6 +640,24 @@ struct DetailView: View {
                 DetailRow(label: NSLocalizedString("Note", comment: "Note"), value: viewModel.noteWorthy)
             }
         }
+        .frame(minHeight: 0) // Ensure VStack doesn't collapse
+        .padding(.top, 0)
+        .padding(.bottom, 8) // Double space after info section
+    }
+    
+    private var bandDetailsSectionWithoutNotes: some View {
+        VStack(alignment: .leading, spacing: 1) {
+            if !viewModel.country.isEmpty {
+                DetailRow(label: NSLocalizedString("country", comment: "Country"), value: viewModel.country)
+            }
+            if !viewModel.genre.isEmpty {
+                DetailRow(label: NSLocalizedString("genre", comment: "Genre"), value: viewModel.genre)
+            }
+            if !viewModel.lastOnCruise.isEmpty {
+                DetailRow(label: NSLocalizedString("Last On Cruise", comment: "Last On Cruise"), value: viewModel.lastOnCruise)
+            }
+            // Note: Excluding noteWorthy field for landscape views
+        }
         .padding(.top, 0)
         .padding(.bottom, 8) // Double space after info section
     }
@@ -576,6 +711,47 @@ struct DetailView: View {
             }
         }
         .background(Color.black)
+    }
+    
+    // Notes content for inline use in ScrollView (without nested ScrollView)
+    private var notesContentInline: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if viewModel.isNotesEditable {
+                // Editable TextEditor for custom notes
+                TextEditor(text: $viewModel.customNotes)
+                    .font(.system(size: viewModel.noteFontSizeLarge ? 19 : 15))
+                    .foregroundColor(.white)
+                    .background(Color.black)
+                    .modifier(ConditionalScrollContentBackground())
+                    .frame(minHeight: 100)
+                    .onChange(of: viewModel.customNotes) { _ in
+                        viewModel.notesDidChange()
+                    }
+                    .toolbar {
+                        ToolbarItemGroup(placement: .keyboard) {
+                            keyboardToolbarButtons
+                        }
+                    }
+            } else {
+                // Read-only Text with hyperlink support (no ScrollView wrapper)
+                VStack(alignment: .leading, spacing: 0) {
+                    if viewModel.customNotes.isEmpty {
+                        Text("")
+                            .font(.system(size: viewModel.noteFontSizeLarge ? 19 : 15))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    } else {
+                        // Use hyperlink text parsing for !!!!https:// links
+                        HyperlinkTextView(
+                            text: viewModel.customNotes,
+                            fontSize: viewModel.noteFontSizeLarge ? 19 : 15
+                        )
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .textSelection(.enabled) // Allow text selection for non-link text
+                    }
+                }
+            }
+        }
     }
     
     private var prioritySection: some View {

@@ -203,24 +203,31 @@ public class preferencesHandler {
 
                         case "showMust":
                             setshowMust(Boolean.valueOf(RowData[1]));
+                            break;
 
                         case "showMight":
                             setshowMight(Boolean.valueOf(RowData[1]));
+                            break;
 
                         case "showWont":
                             setshowWont(Boolean.valueOf(RowData[1]));
+                            break;
 
                         case "showUnknown":
                             setshowUnknown(Boolean.valueOf(RowData[1]));
+                            break;
 
                         case "showWillAttend":
                             setShowWillAttend(Boolean.valueOf(RowData[1]));
+                            break;
 
                         case "alertOnlyForShowWillAttend":
                             setAlertOnlyForShowWillAttend(Boolean.valueOf(RowData[1]));
+                            break;
 
                         case "sortByTime":
                             setSortByTime(Boolean.valueOf(RowData[1]));
+                            break;
 
                         // REMOVED: showScheduleView - this is now session-only, always defaults to true
                         // case "showScheduleView":
@@ -228,9 +235,11 @@ public class preferencesHandler {
 
                         case "hideExpiredEvents":
                             setHideExpiredEvents(Boolean.valueOf(RowData[1]));
+                            break;
 
                         case "promptForAttendedStatus":
                             setPromptForAttendedStatus(Boolean.valueOf(RowData[1]));
+                            break;
 
                         case "eventYearToLoad":
                             setEventYearToLoad(String.valueOf(RowData[1]));

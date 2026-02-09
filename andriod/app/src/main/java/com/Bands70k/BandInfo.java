@@ -75,6 +75,11 @@ public class BandInfo {
 
         ArrayList<String> filteredBandNames = new ArrayList<String>();
         staticVariables.unfilteredBandCount = 0;
+        
+        // INFINITE LOOP FIX: Initialize static variables ONCE before the loop, not for every band
+        // This prevents repeated calls to preferences.loadData() which was causing the hang
+        staticVariables.staticVariablesInitialize();
+        
         for (String bandName: bandNames){
 
             String bandRank = rankStore.getRankForBand(bandName);
@@ -84,7 +89,6 @@ public class BandInfo {
             }
 
             staticVariables.unfilteredBandCount = staticVariables.unfilteredBandCount + 1;
-            staticVariables.staticVariablesInitialize();
             Log.d("filtering must see", bandName + "-" + bandRank + staticVariables.preferences.getShowMust());
 
             if (bandRank.equals(staticVariables.mustSeeIcon) && staticVariables.preferences.getShowMust() == true){
