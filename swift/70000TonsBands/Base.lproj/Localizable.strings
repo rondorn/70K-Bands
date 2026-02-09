@@ -251,6 +251,14 @@
 "User Identifier" = "User Identifier";
 "Build" = "Build";
 
+// Advanced Preferences section
+"AdvancedPreferences" = "ADVANCED PREFERENCE.";
+"AdvancedPreferencesWarning" = "DO NOT MODIFY UNLESS YOU KNOW WHAT YOUR DOING!";
+"Bands URL" = "Bands URL";
+"Schedule URL" = "Schedule URL";
+"Pointer URL" = "Pointer URL";
+"Default" = "Default";
+
 // Default description text
 "DefaultDescription70K" = "Comment text is not available yet. Please wait for Aaron to add his description. You can add your own if you choose, but when his becomes available it will not overwrite your data, and will not display.";
 "DefaultDescriptionMDF" = "Click to add your own notes";

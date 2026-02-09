@@ -247,6 +247,19 @@
 "Showing preferences from" = "Näytetään asetukset kohteesta";
 "Successfully imported" = "Tuonti onnistui";
 "Failed to import. Please try again." = "Tuonti epäonnistui. Yritä uudelleen.";
+
+// Information section
+"Information" = "Tiedot";
+"User Identifier" = "Käyttäjätunniste";
+"Build" = "Versio";
+
+// Advanced Preferences section
+"AdvancedPreferences" = "EDISTYNEET ASETUKSET.";
+"AdvancedPreferencesWarning" = "ÄLÄ MUUTA ELETTÄ TIEDÄ MITÄ TEET!";
+"Bands URL" = "Bändien URL";
+"Schedule URL" = "Aikataulun URL";
+"Pointer URL" = "Osoittimen URL";
+"Default" = "Oletus";
 "Import Successful" = "Tuonti Onnistui";
 "Profile Updated" = "Profiili Päivitetty";
 "Import Failed" = "Tuonti Epäonnistui";

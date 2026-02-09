@@ -6471,7 +6471,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     /// Downloads and updates the pointer file synchronously (blocking)
     /// Returns true if successful, false otherwise
     /// This is called at the start of every data refresh to ensure fresh pointer data
-    private func downloadAndUpdatePointerFileSync() -> Bool {
+    /// Also called when Pointer URL preference changes to download from new location
+    func downloadAndUpdatePointerFileSync() -> Bool {
         print("📍 [POINTER_SYNC] Starting synchronous pointer file download")
         
         // Check internet connectivity
