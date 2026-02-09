@@ -440,9 +440,12 @@ struct DetailView: View {
     private var landscapeWithScheduleView: some View {
         GeometryReader { geometry in
             VStack(spacing: 0) {
-                // Minimal top padding - just 2px to ensure no overlap with back button overlay
+                // Top padding to avoid overlap with back button overlay
+                // When showCustomBackButton is true, back button overlay is ~56px tall (12px top padding + 44px button)
+                // When showCustomBackButton is false, we still need minimal padding for safe area
+                let topPadding: CGFloat = showCustomBackButton ? 56 : 2
                 Spacer()
-                    .frame(height: 2)
+                    .frame(height: topPadding)
                 
                 // No ScrollView - content should fit in landscape without scrolling
                 VStack(alignment: .leading, spacing: 0) {
@@ -456,7 +459,7 @@ struct DetailView: View {
                     
                     Spacer()
                 }
-                .frame(maxWidth: .infinity, maxHeight: geometry.size.height - 2, alignment: .topLeading)
+                .frame(maxWidth: .infinity, maxHeight: geometry.size.height - topPadding, alignment: .topLeading)
                 .padding(.horizontal, 14)
                 .background(Color.black)
             }
@@ -468,9 +471,12 @@ struct DetailView: View {
     private var landscapeWithoutScheduleView: some View {
         GeometryReader { geometry in
             VStack(spacing: 0) {
-                // Minimal top padding - just 2px to ensure no overlap with back button overlay
+                // Top padding to avoid overlap with back button overlay
+                // When showCustomBackButton is true, back button overlay is ~56px tall (12px top padding + 44px button)
+                // When showCustomBackButton is false, we still need minimal padding for safe area
+                let topPadding: CGFloat = showCustomBackButton ? 56 : 2
                 Spacer()
-                    .frame(height: 2)
+                    .frame(height: topPadding)
                 
                 // No ScrollView - content should fit in landscape without scrolling
                 VStack(alignment: .leading, spacing: 0) {
@@ -490,7 +496,7 @@ struct DetailView: View {
                     
                     Spacer()
                 }
-                .frame(maxWidth: .infinity, maxHeight: geometry.size.height - 2, alignment: .topLeading)
+                .frame(maxWidth: .infinity, maxHeight: geometry.size.height - topPadding, alignment: .topLeading)
                 .padding(.horizontal, 14)
                 .background(Color.black)
             }
