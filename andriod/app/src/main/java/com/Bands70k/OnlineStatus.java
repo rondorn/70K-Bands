@@ -170,12 +170,19 @@ public class OnlineStatus {
         // - airplane mode (no network)
         // - really bad network (timeouts)
         // - cruise ship captive/limited internet (request times out or returns non-pointer HTML)
-        String pointerUrl = staticVariables.getDefaultUrls();
+        String pointerUrl = null;
         try {
-            if (staticVariables.preferences != null && "Testing".equals(staticVariables.preferences.getPointerUrl())) {
-                pointerUrl = staticVariables.getDefaultUrlTest();
+            String customPointerUrl = staticVariables.preferences != null ? staticVariables.preferences.getCustomPointerUrl() : null;
+            if (customPointerUrl != null && !customPointerUrl.trim().isEmpty()) {
+                pointerUrl = customPointerUrl.trim();
+            } else {
+                pointerUrl = staticVariables.getDefaultUrls();
+                if (staticVariables.preferences != null && "Testing".equals(staticVariables.preferences.getPointerUrl())) {
+                    pointerUrl = staticVariables.getDefaultUrlTest();
+                }
             }
         } catch (Exception ignored) {
+            pointerUrl = staticVariables.getDefaultUrls();
         }
 
         HttpURLConnection connection = null;

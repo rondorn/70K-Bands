@@ -398,9 +398,16 @@ func getPointerUrlData(keyValue: String) -> String {
     print("🔧 [POINTER_DEBUG] PointerUrl preference = '\(pointerUrlPref)' (checking for '\(testingSetting)')")
     print("🔧 [POINTER_DEBUG] Current defaultStorageUrl = '\(defaultStorageUrl)'")
     
+    // Check for custom pointer URL first
+    let customPointerUrl = UserDefaults.standard.string(forKey: "CustomPointerUrl") ?? ""
+    let usingCustomUrl = !customPointerUrl.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    
     // Determine which pointer URL should be used based on current preference
     let targetPointerUrl: String
-    if (pointerUrlPref == testingSetting) {
+    if usingCustomUrl {
+        targetPointerUrl = customPointerUrl.trimmingCharacters(in: .whitespacesAndNewlines)
+        print("🔧 [POINTER_DEBUG] Using custom pointer URL: '\(targetPointerUrl)'")
+    } else if (pointerUrlPref == testingSetting) {
         targetPointerUrl = FestivalConfig.current.defaultStorageUrlTest
         inTestEnvironment = true
     } else {

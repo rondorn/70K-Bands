@@ -293,6 +293,12 @@ public class staticVariables {
     public static void staticVariablesInitialize() {
 
         preferences.loadData();
+        
+        // Reset custom pointer URL error flag on app launch
+        if (context != null) {
+            android.content.SharedPreferences prefs = context.getSharedPreferences("PointerUrlErrors", android.content.Context.MODE_PRIVATE);
+            prefs.edit().putBoolean("CustomPointerUrlErrorShown", false).apply();
+        }
 
         if (Build.HARDWARE.contains("golfdish") || "Testing".equals(preferences.getPointerUrl())) {
             isTestingEnv = true;
@@ -784,9 +790,20 @@ public class staticVariables {
      * @return Map of URL keys to values, or null if fetch failed.
      */
     private static Map<String, String> fetchFromNetwork() {
-        String pointerUrl = getDefaultUrls();
-        if (preferences.getPointerUrl().equals("Testing")){
-            pointerUrl = getDefaultUrlTest();
+        String pointerUrl = null;
+        String customPointerUrl = preferences.getCustomPointerUrl();
+        boolean usingCustomUrl = customPointerUrl != null && !customPointerUrl.trim().isEmpty();
+        
+        if (usingCustomUrl) {
+            pointerUrl = customPointerUrl.trim();
+            Log.d("lookupUrls", "Using custom pointer URL: " + pointerUrl);
+        } else {
+            // Use hardcoded URLs based on preference
+            pointerUrl = getDefaultUrls();
+            if (preferences.getPointerUrl().equals("Testing")){
+                pointerUrl = getDefaultUrlTest();
+            }
+            Log.d("lookupUrls", "Using default pointer URL: " + pointerUrl);
         }
 
         Log.d("lookupUrls", "Fetching from network: " + pointerUrl);
@@ -845,6 +862,27 @@ public class staticVariables {
             Log.e("lookupUrls", "Network fetch error: " + error.getMessage(), error);
             Log.d("pointerUrl Error", String.valueOf(error.getCause()));
             Log.d("pointerUrl Error", String.valueOf(error.getStackTrace()));
+            
+            // If using custom pointer URL and it fails, show error message once per launch
+            if (usingCustomUrl) {
+                String errorKey = "CustomPointerUrlErrorShown";
+                android.content.SharedPreferences prefs = context.getSharedPreferences("PointerUrlErrors", android.content.Context.MODE_PRIVATE);
+                boolean alreadyShown = prefs.getBoolean(errorKey, false);
+                
+                if (!alreadyShown) {
+                    prefs.edit().putBoolean(errorKey, true).apply();
+                    // Show error message on main thread
+                    if (context != null) {
+                        new android.os.Handler(android.os.Looper.getMainLooper()).post(new Runnable() {
+                            @Override
+                            public void run() {
+                                HelpMessageHandler.showMessage("Failed to load data from Custom Pointer URL. Please check the URL or clear it to use the default.");
+                            }
+                        });
+                    }
+                }
+            }
+            
             return null;
         }
     }
