@@ -158,6 +158,128 @@
 
             </LinearLayout>
 
+            <!-- Fixed Extra Data Section (Country, Genre, etc.) - does NOT scroll -->
+            <LinearLayout
+                android:id="@+id/extra_data_section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="8dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:visibility="gone">
+
+                <!-- Country -->
+                <LinearLayout
+                    android:id="@+id/country_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="2dp"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="120dp"
+                        android:layout_height="wrap_content"
+                        android:text="@string/country"
+                        android:textColor="#CCCCCC"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/country_value"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textColor="#CCCCCC"
+                        android:textSize="14sp" />
+
+                </LinearLayout>
+
+                <!-- Genre -->
+                <LinearLayout
+                    android:id="@+id/genre_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="2dp"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="120dp"
+                        android:layout_height="wrap_content"
+                        android:text="@string/genre"
+                        android:textColor="#CCCCCC"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/genre_value"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textColor="#CCCCCC"
+                        android:textSize="14sp" />
+
+                </LinearLayout>
+
+                <!-- Last On Cruise -->
+                <LinearLayout
+                    android:id="@+id/last_cruise_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="2dp"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="120dp"
+                        android:layout_height="wrap_content"
+                        android:text="@string/LastOnCruise"
+                        android:textColor="#CCCCCC"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/last_cruise_value"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textColor="#CCCCCC"
+                        android:textSize="14sp" />
+
+                </LinearLayout>
+
+                <!-- CSV Noteworthy (small read-only field like "Act III set") -->
+                <LinearLayout
+                    android:id="@+id/csv_noteworthy_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="2dp"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="120dp"
+                        android:layout_height="wrap_content"
+                        android:text="@string/Note"
+                        android:textColor="#CCCCCC"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/csv_noteworthy_value"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textColor="#CCCCCC"
+                        android:textSize="14sp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
         </LinearLayout>
 
         <!-- Notes section: only scrollable area; grows/shrinks with available space -->
@@ -177,9 +299,9 @@
                 android:paddingEnd="16dp"
                 android:paddingBottom="8dp">
 
-                <!-- Extra Data Section -->
+                <!-- Editable Notes Section (large multi-line editable field) -->
                 <LinearLayout
-                    android:id="@+id/extra_data_section"
+                    android:id="@+id/note_row"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
@@ -187,140 +309,20 @@
                     android:layout_marginBottom="8dp"
                     android:visibility="gone">
 
-                    <!-- Country -->
-                    <LinearLayout
-                        android:id="@+id/country_row"
+                    <TextView
+                        android:id="@+id/note_value"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginBottom="2dp"
-                        android:visibility="gone">
-
-                        <TextView
-                            android:layout_width="120dp"
-                            android:layout_height="wrap_content"
-                            android:text="@string/country"
-                            android:textColor="#CCCCCC"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/country_value"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:textColor="#CCCCCC"
-                            android:textSize="14sp" />
-
-                    </LinearLayout>
-
-                    <!-- Genre -->
-                    <LinearLayout
-                        android:id="@+id/genre_row"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginBottom="2dp"
-                        android:visibility="gone">
-
-                        <TextView
-                            android:layout_width="120dp"
-                            android:layout_height="wrap_content"
-                            android:text="@string/genre"
-                            android:textColor="#CCCCCC"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/genre_value"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:textColor="#CCCCCC"
-                            android:textSize="14sp" />
-
-                    </LinearLayout>
-
-                    <!-- Last On Cruise -->
-                    <LinearLayout
-                        android:id="@+id/last_cruise_row"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginBottom="2dp"
-                        android:visibility="gone">
-
-                        <TextView
-                            android:layout_width="120dp"
-                            android:layout_height="wrap_content"
-                            android:text="@string/LastOnCruise"
-                            android:textColor="#CCCCCC"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/last_cruise_value"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:textColor="#CCCCCC"
-                            android:textSize="14sp" />
-
-                    </LinearLayout>
-
-                    <!-- CSV Noteworthy (small read-only field like "Act III set") -->
-                    <LinearLayout
-                        android:id="@+id/csv_noteworthy_row"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginBottom="2dp"
-                        android:visibility="gone">
-
-                        <TextView
-                            android:layout_width="120dp"
-                            android:layout_height="wrap_content"
-                            android:text="@string/Note"
-                            android:textColor="#CCCCCC"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/csv_noteworthy_value"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:textColor="#CCCCCC"
-                            android:textSize="14sp" />
-
-                    </LinearLayout>
-
-                    <!-- Editable Notes Section (large multi-line editable field) -->
-                    <LinearLayout
-                        android:id="@+id/note_row"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:layout_marginTop="22dp"
-                        android:layout_marginBottom="8dp"
-                        android:visibility="gone">
-
-                        <TextView
-                            android:id="@+id/note_value"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:textColor="#CCCCCC"
-                            android:textSize="16sp"
-                            android:singleLine="false"
-                            android:scrollHorizontally="false"
-                            android:justificationMode="inter_word"
-                            android:background="?android:attr/selectableItemBackground"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:padding="12dp"
-                            android:minHeight="48dp" />
-
-                    </LinearLayout>
+                        android:textColor="#CCCCCC"
+                        android:textSize="16sp"
+                        android:singleLine="false"
+                        android:scrollHorizontally="false"
+                        android:justificationMode="inter_word"
+                        android:background="?android:attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:padding="12dp"
+                        android:minHeight="48dp" />
 
                 </LinearLayout>
 
