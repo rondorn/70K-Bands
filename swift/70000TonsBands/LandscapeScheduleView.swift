@@ -484,7 +484,10 @@ struct LandscapeScheduleView: View {
             
             // Each 15-minute slot is 30px tall, so 1 hour (4 slots) = 120px
             let pixelsPerSecond: CGFloat = 120.0 / 3600.0 // 120 pixels per hour (4 slots)
-            return CGFloat(totalOffsetSeconds) * pixelsPerSecond
+            let baseOffset = CGFloat(totalOffsetSeconds) * pixelsPerSecond
+            
+            // Move down by 1/2 slot (7.5 minutes = 15 pixels)
+            return baseOffset + 15.0
         }
         
         private func calculateBlockHeight(for event: ScheduleBlock) -> CGFloat {
