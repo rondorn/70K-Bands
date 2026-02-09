@@ -12,7 +12,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="21dp"
+        android:minHeight="19dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:baselineAligned="false">
@@ -38,8 +38,8 @@
             android:gravity="center_vertical"
             android:paddingStart="8dp"
             android:paddingEnd="4dp"
-            android:paddingTop="2dp"
-            android:paddingBottom="2dp" />
+            android:paddingTop="1dp"
+            android:paddingBottom="1dp" />
 
         <!-- Attended Icon - fixed width -->
         <ImageView
@@ -66,22 +66,22 @@
             android:gravity="center_vertical|end"
             android:paddingStart="8dp"
             android:paddingEnd="4dp"
-            android:paddingTop="2dp"
-            android:paddingBottom="2dp" />
+            android:paddingTop="1dp"
+            android:paddingBottom="1dp" />
 
         <!-- Day Label - fixed width -->
         <TextView
             android:layout_width="44dp"
             android:layout_height="match_parent"
-            android:minHeight="21dp"
+            android:minHeight="19dp"
             android:text="Day"
             android:textColor="@android:color/white"
             android:textSize="11sp"
             android:maxLines="1"
             android:background="#888888"
             android:gravity="center"
-            android:paddingTop="2dp"
-            android:paddingBottom="2dp" />
+            android:paddingTop="1dp"
+            android:paddingBottom="1dp" />
 
     </LinearLayout>
 
@@ -91,7 +91,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:minHeight="21dp"
+        android:minHeight="19dp"
         android:baselineAligned="false">
 
         <!-- Venue Color Bar -->
@@ -109,8 +109,8 @@
             android:orientation="vertical"
             android:paddingStart="8dp"
             android:paddingEnd="4dp"
-            android:paddingTop="2dp"
-            android:paddingBottom="2dp">
+            android:paddingTop="1dp"
+            android:paddingBottom="1dp">
 
             <!-- Event Type -->
             <TextView
@@ -164,22 +164,22 @@
             android:gravity="center_vertical|end"
             android:paddingStart="8dp"
             android:paddingEnd="4dp"
-            android:paddingTop="2dp"
-            android:paddingBottom="2dp" />
+            android:paddingTop="1dp"
+            android:paddingBottom="1dp" />
 
         <!-- Day Number - fixed width matching Day Label -->
         <TextView
             android:id="@+id/day_number_text"
             android:layout_width="44dp"
             android:layout_height="match_parent"
-            android:minHeight="21dp"
+            android:minHeight="19dp"
             android:textColor="@android:color/white"
             android:textSize="13sp"
             android:maxLines="1"
             android:background="#888888"
             android:gravity="center"
-            android:paddingTop="2dp"
-            android:paddingBottom="2dp" />
+            android:paddingTop="1dp"
+            android:paddingBottom="1dp" />
 
     </LinearLayout>
 
