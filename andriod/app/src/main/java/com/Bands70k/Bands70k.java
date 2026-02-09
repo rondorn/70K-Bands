@@ -9,6 +9,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Configuration;
 import android.net.ConnectivityManager;
 import android.net.LinkProperties;
 import android.net.Network;
@@ -31,6 +32,18 @@ public class Bands70k extends Application implements Application.ActivityLifecyc
     private NetworkStateReceiver networkStateReceiver;
     private boolean hasCheckedMinimumVersionThisProcess = false;
     private static volatile Activity currentActivity = null;
+
+    /**
+     * Overrides font scale to prevent UI breakage from system font scaling.
+     * Forces font scale to 1.0x regardless of system settings to maintain layout integrity.
+     */
+    @Override
+    protected void attachBaseContext(Context base) {
+        Configuration config = new Configuration(base.getResources().getConfiguration());
+        config.fontScale = 1.0f; // Force normal font scale to prevent UI breakage
+        Context context = base.createConfigurationContext(config);
+        super.attachBaseContext(context);
+    }
 
     /**
      * Called when the application is created. Initializes context, online status, and proper background detection.
