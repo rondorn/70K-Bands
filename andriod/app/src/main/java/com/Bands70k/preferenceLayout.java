@@ -90,8 +90,7 @@ public class preferenceLayout  extends Activity {
     private String localCurrentEventYear = "";
     private EditText alertMin;
 
-    private EditText bandsUrl;
-    private EditText scheduleUrl;
+    private EditText customPointerUrl;
     private Spinner pointerUrl;
     private String versionString = "";
 
@@ -829,12 +828,6 @@ public class preferenceLayout  extends Activity {
         alertMin = (EditText)findViewById(R.id.minBeforeEvent);
         alertMin.setText(staticVariables.preferences.getMinBeforeToAlert().toString());
 
-        bandsUrl = (EditText)findViewById(R.id.bandsUrl);
-        bandsUrl.setText(staticVariables.preferences.getArtsistsUrl().toString());
-
-        scheduleUrl = (EditText)findViewById(R.id.scheduleUrl);
-        scheduleUrl.setText(staticVariables.preferences.getScheduleUrl().toString());
-
         pointerUrl = (Spinner)findViewById(R.id.pointerUrl);
         ArrayAdapter<String> pointerAdapter = new ArrayAdapter<>(
                 this,
@@ -847,6 +840,12 @@ public class preferenceLayout  extends Activity {
         String currentPointerSetting = staticVariables.preferences.getPointerUrl();
         int selection = "Testing".equalsIgnoreCase(currentPointerSetting) ? 1 : 0;
         pointerUrl.setSelection(selection);
+
+        customPointerUrl = (EditText)findViewById(R.id.customPointerUrl);
+        String customUrl = staticVariables.preferences.getCustomPointerUrl();
+        if (customUrl != null && !customUrl.isEmpty()) {
+            customPointerUrl.setText(customUrl);
+        }
 
         hideExpiredEvents = (Switch)findViewById(R.id.hideExpiredEvents);
         hideExpiredEvents.setChecked(staticVariables.preferences.getHideExpiredEvents());
@@ -905,9 +904,9 @@ public class preferenceLayout  extends Activity {
     public void onBackPressed() {
 
         staticVariables.preferences.setMinBeforeToAlert(Integer.valueOf(alertMin.getText().toString()));
-        staticVariables.preferences.setArtsistsUrl(bandsUrl.getText().toString());
-        staticVariables.preferences.setScheduleUrl(scheduleUrl.getText().toString());
         staticVariables.preferences.setPointerUrl(String.valueOf(pointerUrl.getSelectedItem()));
+        String customUrl = customPointerUrl.getText().toString().trim();
+        staticVariables.preferences.setCustomPointerUrl(customUrl.isEmpty() ? null : customUrl);
         staticVariables.preferences.saveData();
 
         // Removed unnecessary 70ms sleep - modern Android handles activity transitions properly

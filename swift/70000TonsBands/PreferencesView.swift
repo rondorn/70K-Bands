@@ -207,34 +207,6 @@ struct PreferencesView: View {
                 .foregroundColor(.secondary)
                 .padding(.vertical, 4)
             
-            // Bands URL
-            VStack(alignment: .leading, spacing: 4) {
-                Text(NSLocalizedString("Bands URL", comment: ""))
-                    .font(.body)
-                    .foregroundColor(.primary)
-                TextField(NSLocalizedString("Default", comment: ""), text: $viewModel.bandsUrl)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .autocapitalization(.none)
-                    .autocorrectionDisabled()
-                    .textInputAutocapitalization(.never)
-            }
-            .padding(.vertical, 4)
-            
-            // Schedule URL
-            VStack(alignment: .leading, spacing: 4) {
-                Text(NSLocalizedString("Schedule URL", comment: ""))
-                    .font(.body)
-                    .foregroundColor(.primary)
-                TextField(NSLocalizedString("Default", comment: ""), text: $viewModel.scheduleUrl)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .autocapitalization(.none)
-                    .autocorrectionDisabled()
-                    .textInputAutocapitalization(.never)
-            }
-            .padding(.vertical, 4)
-            
             // Pointer URL
             VStack(alignment: .leading, spacing: 4) {
                 Text(NSLocalizedString("Pointer URL", comment: ""))
@@ -248,6 +220,21 @@ struct PreferencesView: View {
                 .pickerStyle(MenuPickerStyle())
                 .font(.caption)
                 .foregroundColor(.secondary)
+            }
+            .padding(.vertical, 4)
+            
+            // Custom Pointer URL
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Custom Pointer URL")
+                    .font(.body)
+                    .foregroundColor(.primary)
+                TextField("Leave empty to use default", text: $viewModel.customPointerUrl)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .autocapitalization(.none)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
+                    .keyboardType(.URL)
             }
             .padding(.vertical, 4)
         } header: {
