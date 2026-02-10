@@ -30,6 +30,10 @@ var totalUpcomingEvents = Int()
 
 var scheduleIndexByCall : [String:[String:String]] = [String:[String:String]]();
 
+// Mapping for combined events: "band1/band2" -> [band1, band2]
+// Used when multiple events share same date, time, location, and event type
+var combinedEventsMap: [String: [String]] = [:]
+
 func getScheduleIndexByCall()->  [String:[String:String]]{
     return scheduleIndexByCall;
 }
@@ -471,6 +475,11 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
     
     print("🔍 DEBUG: Final event strings generated: \(eventStrings.count)")
     
+    // NOTE: Event combining is handled ONLY in landscape calendar view (LandscapeScheduleViewModel)
+    // Portrait list view shows individual events - no combining here
+    // This ensures portrait list view behavior is unchanged
+    let finalEventStrings = eventStrings
+    
     // FIX: Get bands that have NON-EXPIRED events (regardless of other filters)
     // Bands should only appear below events when they have NO non-expired events, not when just filtered by venue
     let bandsWithVisibleEvents: Set<String>
@@ -568,10 +577,10 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
     
     print("🔍 [FILTER] After band priority filtering: \(bandOnlyStrings.count) band-only entries")
     
-    print("📊 Results: \(eventStrings.count) events, \(bandOnlyStrings.count) band-only entries")
+    print("📊 Results: \(finalEventStrings.count) events, \(bandOnlyStrings.count) band-only entries")
     
     // Quick check for standalone events in final output (reduced logging)
-    let standaloneCount = eventStrings.filter { eventString in
+    let standaloneCount = finalEventStrings.filter { eventString in
         let components = eventString.components(separatedBy: ":")
         if components.count == 2 {
             let identifier = components[1]
@@ -587,7 +596,7 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
     }
     
     // Combine events and band-only entries (never both for the same band)
-    var combinedResults = eventStrings + bandOnlyStrings
+    var combinedResults = finalEventStrings + bandOnlyStrings
     
     // In bands-only mode, we don't show events, so no flagged events to count
     if !getShowScheduleView() {
@@ -626,10 +635,10 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
     }
     
     // Update global counters for UI
-    eventCount = eventStrings.count
+    eventCount = finalEventStrings.count
     bandCount = bandOnlyStrings.count
     bandCounter = bandOnlyStrings.count
-    eventCounter = eventStrings.count
+    eventCounter = finalEventStrings.count
     
     // POST-PROCESSING: Apply Bands Only filter if needed
     if !showScheduleView {
@@ -1224,6 +1233,22 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
 
     let bandName = getNameFromSortable(bands[indexRow], sortedBy: sortBy);
     
+    // Handle combined events (format: "band1/band2")
+    // For data fetching, use the first band since both events share the same details
+    var dataFetchBandName = bandName
+    if bandName.contains("/") {
+        if let individualBands = combinedEventsMap[bandName], !individualBands.isEmpty {
+            dataFetchBandName = individualBands[0] // Use first band for data fetching
+        } else {
+            // Fallback: if combined name not in map, try extracting first band from the combined name
+            let components = bandName.components(separatedBy: "/")
+            if components.count >= 2 {
+                dataFetchBandName = components[0].trimmingCharacters(in: .whitespaces)
+                print("⚠️ [COMBINED_EVENTS] Combined band '\(bandName)' not in map, using first component: '\(dataFetchBandName)'")
+            }
+        }
+    }
+    
     if (indexRow >= 1){
         previousBandName = getNameFromSortable(bands[indexRow - 1], sortedBy: sortBy);
     }
@@ -1296,16 +1321,18 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         eventTypeImageView.isHidden = false
         
         // Try legacy schedule first, then fallback to Core Data for standalone events
-        var location = schedule.getData(bandName, index:timeIndex, variable: locationField)
-        var day = monthDateRegionalFormatting(dateValue: schedule.getData(bandName, index: timeIndex, variable: dayField))
-        var startTime = schedule.getData(bandName, index: timeIndex, variable: startTimeField)
-        var endTime = schedule.getData(bandName, index: timeIndex, variable: endTimeField)
-        var event = schedule.getData(bandName, index: timeIndex, variable: typeField)
-        var notes = schedule.getData(bandName, index:timeIndex, variable: notesField)
+        // Use dataFetchBandName for data fetching (first band if combined)
+        var location = schedule.getData(dataFetchBandName, index:timeIndex, variable: locationField)
+        var day = monthDateRegionalFormatting(dateValue: schedule.getData(dataFetchBandName, index: timeIndex, variable: dayField))
+        var startTime = schedule.getData(dataFetchBandName, index: timeIndex, variable: startTimeField)
+        var endTime = schedule.getData(dataFetchBandName, index: timeIndex, variable: endTimeField)
+        var event = schedule.getData(dataFetchBandName, index: timeIndex, variable: typeField)
+        var notes = schedule.getData(dataFetchBandName, index:timeIndex, variable: notesField)
         
         // If legacy schedule doesn't have this data (standalone event), get from Core Data
+        // Use dataFetchBandName for Core Data lookup as well
         if location.isEmpty && startTime.isEmpty && event.isEmpty {
-            if let coreDataEvent = CoreDataManager.shared.fetchEvent(byTimeIndex: timeIndex, eventName: bandName, forYear: Int32(eventYear)) {
+            if let coreDataEvent = CoreDataManager.shared.fetchEvent(byTimeIndex: timeIndex, eventName: dataFetchBandName, forYear: Int32(eventYear)) {
                 location = coreDataEvent.location ?? ""
                 startTime = coreDataEvent.startTime ?? ""
                 endTime = coreDataEvent.endTime ?? ""
@@ -1338,7 +1365,9 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         scheduleText = bandName + ":" + startTimeText + ":" + locationText
         scheduleButton = false
     
-        let icon = attendedHandle.getShowAttendedIcon(band: bandName,location: location,startTime: startTime,eventType: event,eventYearString: String(eventYear));
+        // For combined events, use the combined band name for display but first band for attendance tracking
+        // This ensures the icon shows correctly (both bands would have same attendance status for same event)
+        let icon = attendedHandle.getShowAttendedIcon(band: dataFetchBandName,location: location,startTime: startTime,eventType: event,eventYearString: String(eventYear));
         
         // COUNT FLAGGED EVENTS: If GUI shows an icon, increment the count
         if !icon.isEqual(UIImage()) {
@@ -1351,7 +1380,7 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         
         scheduleIndexByCall[scheduleText] = [String:String]()
         scheduleIndexByCall[scheduleText]!["location"] = location
-        scheduleIndexByCall[scheduleText]!["bandName"] = bandName
+        scheduleIndexByCall[scheduleText]!["bandName"] = bandName // Store combined name for display
         scheduleIndexByCall[scheduleText]!["startTime"] = startTime
         scheduleIndexByCall[scheduleText]!["event"] = event
         

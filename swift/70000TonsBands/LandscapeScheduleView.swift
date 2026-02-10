@@ -95,12 +95,14 @@ struct LandscapeScheduleView: View {
     @StateObject private var viewModel: LandscapeScheduleViewModel
     @Environment(\.presentationMode) var presentationMode
     
+    let priorityManager: SQLitePriorityManager
     let onBandTapped: (String, String?) -> Void  // (bandName, currentDay)
     let attendedHandle: ShowsAttended
     let isSplitViewCapable: Bool  // iPad or similar
     let onDismissRequested: (() -> Void)?  // iPad: callback to return to list view
     
     init(priorityManager: SQLitePriorityManager, attendedHandle: ShowsAttended, initialDay: String? = nil, hideExpiredEvents: Bool = false, isSplitViewCapable: Bool = false, onDismissRequested: (() -> Void)? = nil, onBandTapped: @escaping (String, String?) -> Void) {
+        self.priorityManager = priorityManager
         self._viewModel = StateObject(wrappedValue: LandscapeScheduleViewModel(
             priorityManager: priorityManager,
             attendedHandle: attendedHandle,
@@ -211,6 +213,7 @@ struct LandscapeScheduleView: View {
                 StickyHeaderScrollView(
                     dayData: dayData,
                     onBandTapped: onBandTapped,
+                    priorityManager: priorityManager,
                     onAttendanceUpdate: { bandName, location, startTime, eventType, status in
                         // Normalize event type for database operations
                         // Event data contains "Unofficial Event" but database keys use "Cruiser Organized"
@@ -244,6 +247,7 @@ struct LandscapeScheduleView: View {
     private struct StickyHeaderScrollView: View {
         let dayData: DayScheduleData
         let onBandTapped: (String, String?) -> Void
+        let priorityManager: SQLitePriorityManager
         let onAttendanceUpdate: (String, String, String, String, String) -> Void
         let attendedHandle: ShowsAttended
         @State private var scrollOffset: CGPoint = .zero
@@ -342,55 +346,233 @@ struct LandscapeScheduleView: View {
                 
                 // Event blocks
                 ForEach(venue.events) { event in
-                    eventBlockView(event: event, dayData: dayData, columnWidth: columnWidth, onAttendanceUpdate: onAttendanceUpdate, attendedHandle: attendedHandle)
+                    eventBlockView(event: event, dayData: dayData, columnWidth: columnWidth, priorityManager: priorityManager, onAttendanceUpdate: onAttendanceUpdate, attendedHandle: attendedHandle)
                 }
             }
             .frame(width: columnWidth)
         }
         
-        private func eventBlockView(event: ScheduleBlock, dayData: DayScheduleData, columnWidth: CGFloat, onAttendanceUpdate: @escaping (String, String, String, String, String) -> Void, attendedHandle: ShowsAttended) -> some View {
+        private func eventBlockView(event: ScheduleBlock, dayData: DayScheduleData, columnWidth: CGFloat, priorityManager: SQLitePriorityManager, onAttendanceUpdate: @escaping (String, String, String, String, String) -> Void, attendedHandle: ShowsAttended) -> some View {
             let yOffset = calculateYOffset(for: event, in: dayData)
             let blockHeight = calculateBlockHeight(for: event)
             let onBandTapped = self.onBandTapped
             let currentDay = dayData.dayLabel
+            
+            // Check if this is a combined event and get individual bands
+            let isCombinedEvent = event.bandName.contains("/")
+            let individualBands: [String] = {
+                if isCombinedEvent {
+                    // Use combinedEventsMap if available, otherwise split the band name
+                    if let mappedBands = combinedEventsMap[event.bandName] {
+                        return mappedBands
+                    } else {
+                        return event.bandName.components(separatedBy: "/")
+                    }
+                } else {
+                    return []
+                }
+            }()
             
             return Button(action: {
                 print("Tapped on \(event.bandName) on \(currentDay)")
                 onBandTapped(event.bandName, currentDay)
             }) {
                 VStack(alignment: .leading, spacing: 1) {
-                    // Line 1: Band name
-                    Text(event.bandName)
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(event.isExpired ? .white.opacity(0.4) : .white)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
+                    // Check if this is a combined event (format: "band1/band2")
+                    if event.bandName.contains("/") {
+                        let bandComponents = event.bandName.components(separatedBy: "/")
+                        if bandComponents.count == 2 {
+                            // Line 1: First band name with "/"
+                            Text("\(bandComponents[0])/")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(event.isExpired ? .white.opacity(0.4) : .white)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                            
+                            // Line 2: Second band name
+                            Text(bandComponents[1])
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(event.isExpired ? .white.opacity(0.4) : .white)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                        } else {
+                            // Fallback: show combined name as-is if format is unexpected
+                            Text(event.bandName)
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(event.isExpired ? .white.opacity(0.4) : .white)
+                                .lineLimit(2)
+                                .minimumScaleFactor(0.7)
+                        }
+                    } else {
+                        // Line 1: Single band name
+                        Text(event.bandName)
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(event.isExpired ? .white.opacity(0.4) : .white)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                    }
                     
-                    // Line 2: Start time with label
+                    // Line 2 (or 3 for combined): Start time with label
                     Text("Start: \(formatTime(event.startTime))")
                         .font(.system(size: 9))
                         .foregroundColor(event.isExpired ? .white.opacity(0.4) : .white)
                     
-                    // Line 3: End time with label
+                    // Line 3 (or 4 for combined): End time with label
                     Text("End: \(formatTime(event.endTime))")
                         .font(.system(size: 9))
                         .foregroundColor(event.isExpired ? .white.opacity(0.4) : .white)
                     
-                    // Line 4: Priority and Attended icons
-                    HStack(spacing: 3) {
-                        // Priority icon - apply circle background to all priority levels (1=must, 2=might, 3=wont)
-                        if event.priority == 1 || event.priority == 2 || event.priority == 3 {
-                            // Use different circle background colors: very dark grey for must/might, lighter grey for wont
-                            ZStack {
-                                // Circle background extending 2px beyond icon
-                                // Use light grey for "won't" (priority 3) to better contrast with red "no" symbol
-                                Circle()
-                                    .fill(event.priority == 3 ? Color(white: 0.75) : Color(white: 0.2))
-                                    .frame(width: 18, height: 18)
-                                    .shadow(color: Color.black.opacity(0.2), radius: 1.5, x: 0, y: 0.5)
+                    if isCombinedEvent && individualBands.count == 2 {
+                        // Combined event layout
+                        let band1 = individualBands[0]
+                        let band2 = individualBands[1]
+                        
+                        // Get priorities for each band
+                        let priority1 = priorityManager.getPriority(for: band1, eventYear: eventYear)
+                        let priority2 = priorityManager.getPriority(for: band2, eventYear: eventYear)
+                        
+                        // Get attended status for each band
+                        let attended1 = attendedHandle.getShowAttendedStatus(
+                            band: band1,
+                            location: event.location,
+                            startTime: event.startTimeString,
+                            eventType: event.eventType,
+                            eventYearString: String(eventYear)
+                        )
+                        let attended2 = attendedHandle.getShowAttendedStatus(
+                            band: band2,
+                            location: event.location,
+                            startTime: event.startTimeString,
+                            eventType: event.eventType,
+                            eventYearString: String(eventYear)
+                        )
+                        
+                        // Check if values are populated
+                        let hasPriority1 = priority1 == 1 || priority1 == 2 || priority1 == 3
+                        let hasPriority2 = priority2 == 1 || priority2 == 2 || priority2 == 3
+                        let hasAttended1 = !attended1.isEmpty && attended1 != "sawNone"
+                        let hasAttended2 = !attended2.isEmpty && attended2 != "sawNone"
+                        
+                        // Line 4: Priority icons only
+                        // Only show if at least one has a priority
+                        if hasPriority1 || hasPriority2 {
+                            HStack(spacing: 2) {
+                                // First band priority
+                                if hasPriority1 {
+                                    ZStack {
+                                        Circle()
+                                            .fill(priority1 == 3 ? Color(white: 0.75) : Color(white: 0.2))
+                                            .frame(width: 18, height: 18)
+                                            .shadow(color: Color.black.opacity(0.2), radius: 1.5, x: 0, y: 0.5)
+                                        
+                                        Image(getPriorityIconName(priority1))
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fit)
+                                            .frame(width: 14, height: 14)
+                                            .opacity(event.isExpired ? 0.4 : 1.0)
+                                    }
+                                }
                                 
-                                // Icon on top
-                                Image(getPriorityIconName(event.priority))
+                                // Slash separator (only show if exactly one is populated)
+                                if (hasPriority1 && !hasPriority2) || (!hasPriority1 && hasPriority2) {
+                                    Text("/")
+                                        .font(.system(size: 10, weight: .medium))
+                                        .foregroundColor(event.isExpired ? .white.opacity(0.4) : .white.opacity(0.7))
+                                        .frame(width: 8)
+                                }
+                                
+                                // Second band priority
+                                if hasPriority2 {
+                                    ZStack {
+                                        Circle()
+                                            .fill(priority2 == 3 ? Color(white: 0.75) : Color(white: 0.2))
+                                            .frame(width: 18, height: 18)
+                                            .shadow(color: Color.black.opacity(0.2), radius: 1.5, x: 0, y: 0.5)
+                                        
+                                        Image(getPriorityIconName(priority2))
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fit)
+                                            .frame(width: 14, height: 14)
+                                            .opacity(event.isExpired ? 0.4 : 1.0)
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Line 5: Attended icons on their own line
+                        // Only show if at least one has an attended status
+                        if hasAttended1 || hasAttended2 {
+                            HStack(spacing: 2) {
+                                // First band attended
+                                if hasAttended1 {
+                                    Image(getAttendedIconName(attended1))
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: 14, height: 14)
+                                        .opacity(event.isExpired ? 0.4 : 1.0)
+                                }
+                                
+                                // Slash separator (only show if exactly one is populated)
+                                if (hasAttended1 && !hasAttended2) || (!hasAttended1 && hasAttended2) {
+                                    Text("/")
+                                        .font(.system(size: 10, weight: .medium))
+                                        .foregroundColor(event.isExpired ? .white.opacity(0.4) : .white.opacity(0.7))
+                                        .frame(width: 8)
+                                }
+                                
+                                // Second band attended
+                                if hasAttended2 {
+                                    Image(getAttendedIconName(attended2))
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: 14, height: 14)
+                                        .opacity(event.isExpired ? 0.4 : 1.0)
+                                }
+                            }
+                        }
+                        
+                        // Line 6: Event type (moved down one line for combined events)
+                        if !event.eventType.isEmpty {
+                            HStack(spacing: 3) {
+                                Text(localizeEventType(event.eventType))
+                                    .font(.system(size: 8))
+                                    .foregroundColor(event.isExpired ? .white.opacity(0.4) : .white)
+                                    .lineLimit(1)
+                                
+                                Image(uiImage: getEventTypeIcon(eventType: event.eventType, eventName: event.bandName))
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 12, height: 12)
+                                    .opacity(event.isExpired ? 0.4 : 1.0)
+                            }
+                        }
+                    } else {
+                        // Single event: Show normal priority and attended icons on same line
+                        // Line 4: Priority and Attended icons
+                        HStack(spacing: 3) {
+                            // Priority icon - apply circle background to all priority levels (1=must, 2=might, 3=wont)
+                            if event.priority == 1 || event.priority == 2 || event.priority == 3 {
+                                // Use different circle background colors: very dark grey for must/might, lighter grey for wont
+                                ZStack {
+                                    // Circle background extending 2px beyond icon
+                                    // Use light grey for "won't" (priority 3) to better contrast with red "no" symbol
+                                    Circle()
+                                        .fill(event.priority == 3 ? Color(white: 0.75) : Color(white: 0.2))
+                                        .frame(width: 18, height: 18)
+                                        .shadow(color: Color.black.opacity(0.2), radius: 1.5, x: 0, y: 0.5)
+                                    
+                                    // Icon on top
+                                    Image(getPriorityIconName(event.priority))
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: 14, height: 14)
+                                        .opacity(event.isExpired ? 0.4 : 1.0)
+                                }
+                            }
+                            
+                            // Attended icon
+                            if !event.attendedStatus.isEmpty && event.attendedStatus != "sawNone" {
+                                Image(getAttendedIconName(event.attendedStatus))
                                     .resizable()
                                     .aspectRatio(contentMode: .fit)
                                     .frame(width: 14, height: 14)
@@ -398,29 +580,21 @@ struct LandscapeScheduleView: View {
                             }
                         }
                         
-                        // Attended icon
-                        if !event.attendedStatus.isEmpty && event.attendedStatus != "sawNone" {
-                            Image(getAttendedIconName(event.attendedStatus))
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 14, height: 14)
-                                .opacity(event.isExpired ? 0.4 : 1.0)
-                        }
-                    }
-                    
-                    // Line 5: Event type (only if not "Show")
-                    if !event.eventType.isEmpty && event.eventType != "Show" {
-                        HStack(spacing: 3) {
-                            Text(localizeEventType(event.eventType))
-                                .font(.system(size: 8))
-                                .foregroundColor(event.isExpired ? .white.opacity(0.4) : .white)
-                                .lineLimit(1)
-                            
-                            Image(uiImage: getEventTypeIcon(eventType: event.eventType, eventName: event.bandName))
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 12, height: 12)
-                                .opacity(event.isExpired ? 0.4 : 1.0)
+                        // Line 5: Event type
+                        // For single events, only show if not "Show"
+                        if !event.eventType.isEmpty && event.eventType != "Show" {
+                            HStack(spacing: 3) {
+                                Text(localizeEventType(event.eventType))
+                                    .font(.system(size: 8))
+                                    .foregroundColor(event.isExpired ? .white.opacity(0.4) : .white)
+                                    .lineLimit(1)
+                                
+                                Image(uiImage: getEventTypeIcon(eventType: event.eventType, eventName: event.bandName))
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 12, height: 12)
+                                    .opacity(event.isExpired ? 0.4 : 1.0)
+                            }
                         }
                     }
                 }
@@ -436,36 +610,83 @@ struct LandscapeScheduleView: View {
                 )
             }
             .contextMenu {
-                // Get current status
-                let currentStatus = event.attendedStatus
-                
-                // Show "All Of Event" if not already selected
-                if currentStatus != "sawAll" {
-                    Button(action: {
-                        onAttendanceUpdate(event.bandName, event.location, event.startTimeString, event.eventType, sawAllStatus)
-                    }) {
-                        Text(NSLocalizedString("All Of Event", comment: ""))
-                        Image(systemName: "checkmark.circle.fill")
+                // Check if this is a combined event
+                if isCombinedEvent && individualBands.count == 2 {
+                    // Combined event: Show band selection menu items
+                    ForEach(individualBands, id: \.self) { bandName in
+                        Menu(bandName) {
+                            // Get current status for this specific band
+                            let currentStatus = attendedHandle.getShowAttendedStatus(
+                                band: bandName,
+                                location: event.location,
+                                startTime: event.startTimeString,
+                                eventType: event.eventType,
+                                eventYearString: String(eventYear)
+                            )
+                            
+                            // Show "All Of Event" if not already selected
+                            if currentStatus != "sawAll" {
+                                Button(action: {
+                                    onAttendanceUpdate(bandName, event.location, event.startTimeString, event.eventType, sawAllStatus)
+                                }) {
+                                    Text(NSLocalizedString("All Of Event", comment: ""))
+                                    Image(systemName: "checkmark.circle.fill")
+                                }
+                            }
+                            
+                            // Show "Part Of Event" if not already selected AND event type is "Show"
+                            if currentStatus != "sawSome" && event.eventType == "Show" {
+                                Button(action: {
+                                    onAttendanceUpdate(bandName, event.location, event.startTimeString, event.eventType, sawSomeStatus)
+                                }) {
+                                    Text(NSLocalizedString("Part Of Event", comment: ""))
+                                    Image(systemName: "checkmark.circle")
+                                }
+                            }
+                            
+                            // Show "None Of Event" if not already selected
+                            if currentStatus != "sawNone" && currentStatus != "" {
+                                Button(action: {
+                                    onAttendanceUpdate(bandName, event.location, event.startTimeString, event.eventType, sawNoneStatus)
+                                }) {
+                                    Text(NSLocalizedString("None Of Event", comment: ""))
+                                    Image(systemName: "xmark.circle")
+                                }
+                            }
+                        }
                     }
-                }
-                
-                // Show "Part Of Event" if not already selected AND event type is "Show"
-                if currentStatus != "sawSome" && event.eventType == "Show" {
-                    Button(action: {
-                        onAttendanceUpdate(event.bandName, event.location, event.startTimeString, event.eventType, sawSomeStatus)
-                    }) {
-                        Text(NSLocalizedString("Part Of Event", comment: ""))
-                        Image(systemName: "checkmark.circle")
+                } else {
+                    // Single event: Show normal attendance options
+                    let currentStatus = event.attendedStatus
+                    
+                    // Show "All Of Event" if not already selected
+                    if currentStatus != "sawAll" {
+                        Button(action: {
+                            onAttendanceUpdate(event.bandName, event.location, event.startTimeString, event.eventType, sawAllStatus)
+                        }) {
+                            Text(NSLocalizedString("All Of Event", comment: ""))
+                            Image(systemName: "checkmark.circle.fill")
+                        }
                     }
-                }
-                
-                // Show "None Of Event" if not already selected
-                if currentStatus != "sawNone" && currentStatus != "" {
-                    Button(action: {
-                        onAttendanceUpdate(event.bandName, event.location, event.startTimeString, event.eventType, sawNoneStatus)
-                    }) {
-                        Text(NSLocalizedString("None Of Event", comment: ""))
-                        Image(systemName: "xmark.circle")
+                    
+                    // Show "Part Of Event" if not already selected AND event type is "Show"
+                    if currentStatus != "sawSome" && event.eventType == "Show" {
+                        Button(action: {
+                            onAttendanceUpdate(event.bandName, event.location, event.startTimeString, event.eventType, sawSomeStatus)
+                        }) {
+                            Text(NSLocalizedString("Part Of Event", comment: ""))
+                            Image(systemName: "checkmark.circle")
+                        }
+                    }
+                    
+                    // Show "None Of Event" if not already selected
+                    if currentStatus != "sawNone" && currentStatus != "" {
+                        Button(action: {
+                            onAttendanceUpdate(event.bandName, event.location, event.startTimeString, event.eventType, sawNoneStatus)
+                        }) {
+                            Text(NSLocalizedString("None Of Event", comment: ""))
+                            Image(systemName: "xmark.circle")
+                        }
                     }
                 }
             }
