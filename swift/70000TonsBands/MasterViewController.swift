@@ -2511,6 +2511,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 
                 print("🔄 [LANDSCAPE_SCHEDULE] Band tapped: \(bandName) on day: \(currentDay ?? "unknown")")
                 
+                // Check if this is a combined event (format: "band1/band2")
+                if bandName.contains("/") {
+                    // Check if we have a mapping for this combined event
+                    if let individualBands = combinedEventsMap[bandName], individualBands.count == 2 {
+                        // Prompt user to choose which band
+                        self.promptForBandSelectionLandscape(combinedBandName: bandName, bands: individualBands, currentDay: currentDay)
+                        return
+                    }
+                }
+                
                 // Save the current day for when we return
                 if let day = currentDay {
                     self.currentViewingDay = day
@@ -4290,11 +4300,186 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             bandName = bandNameView.text ?? ""
         }
         
+        // Check if this is a combined event (format: "band1/band2")
+        if bandName.contains("/") {
+            // Check if we have a mapping for this combined event
+            if let individualBands = combinedEventsMap[bandName], individualBands.count == 2 {
+                // Prompt user to choose which band
+                promptForBandSelection(combinedBandName: bandName, bands: individualBands, cellDataText: cellDataText, indexPath: indexPath)
+                tableView.deselectRow(at: indexPath, animated: true)
+                return
+            }
+        }
+        
         print("BandName for SwiftUI Details is \(bandName)")
         detailMenuChoicesSwiftUI(cellDataText: cellDataText, bandName: bandName, indexPath: indexPath)
         
         // Deselect the row
         tableView.deselectRow(at: indexPath, animated: true)
+    }
+    
+    /// Prompts user to select which band they want to act on when multiple bands share the same event (Landscape Calendar View)
+    func promptForBandSelectionLandscape(combinedBandName: String, bands: [String], currentDay: String?) {
+        guard bands.count == 2 else {
+            print("ERROR: Expected exactly 2 bands for combined event, got \(bands.count)")
+            return
+        }
+        
+        let band1 = bands[0]
+        let band2 = bands[1]
+        
+        let alert = UIAlertController(
+            title: NSLocalizedString("Select Band", comment: "Title for band selection dialog"),
+            message: NSLocalizedString("Multiple bands share this event. Which band would you like to view?", comment: "Message for band selection dialog"),
+            preferredStyle: .actionSheet
+        )
+        
+        // Configure popover for iPad
+        if let popover = alert.popoverPresentationController {
+            popover.sourceView = self.view
+            popover.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.midY, width: 0, height: 0)
+            popover.permittedArrowDirections = []
+        }
+        
+        // Add action for first band
+        let band1Action = UIAlertAction(title: band1, style: .default) { [weak self] _ in
+            guard let self = self else { return }
+            print("User selected band: \(band1)")
+            self.navigateToBandFromLandscape(bandName: band1, currentDay: currentDay)
+        }
+        alert.addAction(band1Action)
+        
+        // Add action for second band
+        let band2Action = UIAlertAction(title: band2, style: .default) { [weak self] _ in
+            guard let self = self else { return }
+            print("User selected band: \(band2)")
+            self.navigateToBandFromLandscape(bandName: band2, currentDay: currentDay)
+        }
+        alert.addAction(band2Action)
+        
+        // Add cancel action
+        let cancelAction = UIAlertAction(title: NSLocalizedString("Cancel", comment: ""), style: .cancel) { _ in
+            print("User cancelled band selection")
+        }
+        alert.addAction(cancelAction)
+        
+        // Present from landscape view controller if available, otherwise from self
+        if let landscapeVC = landscapeScheduleViewController {
+            landscapeVC.present(alert, animated: true, completion: nil)
+        } else {
+            self.present(alert, animated: true, completion: nil)
+        }
+    }
+    
+    /// Navigates to band detail from landscape calendar view
+    private func navigateToBandFromLandscape(bandName: String, currentDay: String?) {
+        // Save the current day for when we return
+        if let day = currentDay {
+            self.currentViewingDay = day
+            print("🔄 [LANDSCAPE_SCHEDULE] Saved current viewing day: \(day)")
+        }
+        
+        // Save scroll position
+        self.savedScrollPosition = self.tableView.contentOffset
+        print("🔄 [LANDSCAPE_SCHEDULE] Saved scroll position: \(self.savedScrollPosition!)")
+        
+        // Find the band index
+        let bandIndex: Int
+        if let index = self.bands.firstIndex(where: { band in
+            getNameFromSortable(band, sortedBy: getSortedBy()) == bandName
+        }) {
+            bandIndex = index
+        } else {
+            print("⚠️ [LANDSCAPE_SCHEDULE] Band not in filtered list, using index 0")
+            bandIndex = 0
+        }
+        
+        // Set up for detail navigation (using globals from Constants.swift)
+        bandSelected = bandName
+        bandListIndexCache = bandIndex
+        
+        // Create and present detail view from the stored landscape controller with custom back button
+        let detailController = DetailHostingController(bandName: bandName, showCustomBackButton: true)
+        
+        // CRITICAL FIX: For iPad (master/detail), make the detail popup larger to accommodate band name and logo
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            // Use formSheet for a larger modal that doesn't cover the entire screen
+            detailController.modalPresentationStyle = .formSheet
+            // Set larger preferred content size to accommodate band name and logo
+            // iPad Air 11-inch width is ~820pt, so use ~75% for comfortable viewing
+            detailController.preferredContentSize = CGSize(width: 800, height: 900)
+        }
+        
+        // Present from the stored landscape view controller
+        self.landscapeScheduleViewController?.present(detailController, animated: true) {
+            print("✅ [LANDSCAPE_SCHEDULE] Detail view presented")
+        }
+    }
+    
+    /// Prompts user to select which band they want to act on when multiple bands share the same event (Portrait List View)
+    func promptForBandSelection(combinedBandName: String, bands: [String], cellDataText: String, indexPath: IndexPath) {
+        guard bands.count == 2 else {
+            print("ERROR: Expected exactly 2 bands for combined event, got \(bands.count)")
+            return
+        }
+        
+        let band1 = bands[0]
+        let band2 = bands[1]
+        
+        let alert = UIAlertController(
+            title: NSLocalizedString("Select Band", comment: "Title for band selection dialog"),
+            message: NSLocalizedString("Multiple bands share this event. Which band would you like to view?", comment: "Message for band selection dialog"),
+            preferredStyle: .actionSheet
+        )
+        
+        // Configure popover for iPad
+        if let popover = alert.popoverPresentationController {
+            if let cell = tableView.cellForRow(at: indexPath) {
+                popover.sourceView = cell
+                popover.sourceRect = cell.bounds
+            } else {
+                popover.sourceView = self.view
+                popover.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.midY, width: 0, height: 0)
+            }
+            popover.permittedArrowDirections = [.up, .down]
+        }
+        
+        // Add action for first band
+        let band1Action = UIAlertAction(title: band1, style: .default) { [weak self] _ in
+            guard let self = self else { return }
+            print("User selected band: \(band1)")
+            // Reconstruct cellDataText with the selected band name
+            // The cellDataText format is: "bandName;location;eventType;startTime"
+            var cellDataComponents = cellDataText.components(separatedBy: ";")
+            if cellDataComponents.count >= 1 {
+                cellDataComponents[0] = band1
+            }
+            let updatedCellDataText = cellDataComponents.joined(separator: ";")
+            self.detailMenuChoicesSwiftUI(cellDataText: updatedCellDataText, bandName: band1, indexPath: indexPath)
+        }
+        alert.addAction(band1Action)
+        
+        // Add action for second band
+        let band2Action = UIAlertAction(title: band2, style: .default) { [weak self] _ in
+            guard let self = self else { return }
+            print("User selected band: \(band2)")
+            // Reconstruct cellDataText with the selected band name
+            var cellDataComponents = cellDataText.components(separatedBy: ";")
+            if cellDataComponents.count >= 1 {
+                cellDataComponents[0] = band2
+            }
+            let updatedCellDataText = cellDataComponents.joined(separator: ";")
+            self.detailMenuChoicesSwiftUI(cellDataText: updatedCellDataText, bandName: band2, indexPath: indexPath)
+        }
+        alert.addAction(band2Action)
+        
+        // Add cancel action
+        let cancelAction = UIAlertAction(title: NSLocalizedString("Cancel", comment: ""), style: .cancel) { _ in
+            print("User cancelled band selection")
+        }
+        alert.addAction(cancelAction)
+        
+        self.present(alert, animated: true, completion: nil)
     }
     
     func showSharingView() {

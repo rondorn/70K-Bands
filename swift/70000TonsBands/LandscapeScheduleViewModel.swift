@@ -312,11 +312,71 @@ class LandscapeScheduleViewModel: ObservableObject {
     private func processEventsIntodays(_ events: [EventData]) -> [DayScheduleData] {
         var dayGroups: [String: [ScheduleBlock]] = [:]
         
-        // Group events by day
+        // DETECT AND COMBINE DUPLICATE EVENTS FOR LANDSCAPE CALENDAR VIEW
+        // Events that share same date, start time, end time, location, and event type (only band name differs)
+        // This only applies to landscape calendar view, NOT portrait list view
+        var eventGroups: [String: [EventData]] = [:]
+        for event in events {
+            let date = event.date ?? ""
+            let startTime = event.startTime ?? ""
+            let endTime = event.endTime ?? ""
+            let location = event.location
+            let eventType = event.eventType ?? ""
+            
+            // Create a unique key for grouping
+            let groupKey = "\(date)|\(startTime)|\(endTime)|\(location)|\(eventType)"
+            
+            if eventGroups[groupKey] == nil {
+                eventGroups[groupKey] = []
+            }
+            eventGroups[groupKey]?.append(event)
+        }
+        
+        // Create mapping for combined events: event key -> combined band name
+        var eventToCombinedName: [String: String] = [:] // "timeIndex:bandName" -> "band1/band2"
+        var eventsToSkip = Set<String>() // Events to skip (second event of a pair)
+        
+        for (_, groupEvents) in eventGroups {
+            // Only combine if exactly 2 events with different band names
+            if groupEvents.count == 2 {
+                let band1 = groupEvents[0].bandName
+                let band2 = groupEvents[1].bandName
+                
+                // Ensure they're different bands and both are non-empty
+                if band1 != band2 && !band1.isEmpty && !band2.isEmpty {
+                    // Sort band names alphabetically for consistent display
+                    let sortedBands = [band1, band2].sorted()
+                    let combinedBandName = "\(sortedBands[0])/\(sortedBands[1])"
+                    
+                    // Store mapping for both events
+                    eventToCombinedName["\(groupEvents[0].timeIndex):\(band1)"] = combinedBandName
+                    eventToCombinedName["\(groupEvents[1].timeIndex):\(band2)"] = combinedBandName
+                    
+                    // Mark second event to skip (we'll only process the first with combined name)
+                    eventsToSkip.insert("\(groupEvents[1].timeIndex):\(band2)")
+                    
+                    // Store mapping for later use (for tap handling)
+                    combinedEventsMap[combinedBandName] = sortedBands
+                    
+                    print("🔗 [LANDSCAPE_COMBINED] Combined events: '\(band1)' + '\(band2)' -> '\(combinedBandName)'")
+                }
+            }
+        }
+        
+        // Group events by day (including combined events)
         for event in events {
             guard let day = event.day else {
                 continue
             }
+            
+            // Skip second event of a combined pair
+            let eventKey = "\(event.timeIndex):\(event.bandName)"
+            if eventsToSkip.contains(eventKey) {
+                continue
+            }
+            
+            // Check if this event should use a combined name
+            let displayBandName = eventToCombinedName[eventKey] ?? event.bandName
             
             // Parse start and end times as minutes since midnight
             let startMinutes = parseTimeToMinutes(event.startTime)
@@ -360,7 +420,7 @@ class LandscapeScheduleViewModel: ObservableObject {
             }
             
             let scheduleBlock = ScheduleBlock(
-                bandName: event.bandName,
+                bandName: displayBandName, // Use combined name if this is a duplicate event
                 startTime: startDate,
                 endTime: endDate,
                 startTimeString: startTimeStr,
