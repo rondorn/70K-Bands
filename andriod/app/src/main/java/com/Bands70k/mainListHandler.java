@@ -33,8 +33,8 @@ public class mainListHandler {
     public showBands showBands;
     public Integer numberOfEvents = 0;
     public Integer numberOfUnofficalEvents = 0;
-    private Integer altNumberOfBands = 0;
-    private Integer numberOfBands = 0;
+    public Integer altNumberOfBands = 0; // Made public to allow setting from displayBandDataWithoutSchedule()
+    public Integer numberOfBands = 0; // Made public to allow setting from displayBandDataWithoutSchedule()
 
     public Integer allUpcomingEvents = 0;
 
@@ -91,6 +91,14 @@ public class mainListHandler {
         Log.d("FILTER_DEBUG", "🏁 ENTRY STATE: getShowWillAttend = " + staticVariables.preferences.getShowWillAttend());
         Log.d("loadingpopulateBandInfo", "From live data");
         arrayAdapter = new ArrayAdapter<String>(showBands, R.layout.bandlist70k, bandList);
+
+        // Reset counters at the start of each populateBandInfo call
+        numberOfBands = 0;
+        numberOfEvents = 0;
+        numberOfUnofficalEvents = 0;
+        altNumberOfBands = 0;
+        allUpcomingEvents = 0;
+        sortableBandNames.clear();
 
         List<String> bandPresent = new ArrayList<String>();
         staticVariables.showsIwillAttend = 0;
@@ -289,10 +297,18 @@ public class mainListHandler {
             // Add bands with zero events after the scheduled events
             sortableBandNames.addAll(bandsWithZeroEvents);
             
+            // FIX: When schedule exists but is empty (0 events), ensure numberOfBands is set correctly
+            // This handles the case where schedule file exists but has no records
+            if (numberOfEvents == 0 && bandsWithZeroEvents.size() > 0) {
+                numberOfBands = bandsWithZeroEvents.size();
+                Log.d("FILTER_DEBUG", "🔧 FIX: Schedule empty, setting numberOfBands to " + numberOfBands + " (bandsWithZeroEvents.size())");
+            }
+            
             Log.d("FILTER_DEBUG", "🎯 MIXED VIEW SUMMARY:");
             Log.d("FILTER_DEBUG", "  📅 Events: " + eventsList.size() + " (sorted by " + (staticVariables.preferences.getSortByTime() ? "TIME" : "ALPHABET") + ")");
             Log.d("FILTER_DEBUG", "  🎵 Bands with zero events: " + bandsWithZeroEvents.size() + " (sorted ALPHABETICALLY)");
             Log.d("FILTER_DEBUG", "  📊 Total items: " + sortableBandNames.size());
+            Log.d("FILTER_DEBUG", "  🔢 numberOfBands: " + numberOfBands + ", numberOfEvents: " + numberOfEvents);
 
         } else {
             Log.d("FILTER_DEBUG", "🚨 BandInfo.scheduleRecords is NULL or EMPTY! Using raw bandList with " + bandList.size() + " bands (no schedule released yet)");
@@ -794,6 +810,14 @@ public class mainListHandler {
         if (String.valueOf(staticVariables.preferences.getEventYearToLoad()).equals("Current") == false){
             yearDisplay = "(" + String.valueOf(staticVariables.preferences.getEventYearToLoad()) + ")";
         }
+        
+        // FIX: If numberOfBands is 0 but we have bands in sortableBandNames and no events, use sortableBandNames.size()
+        // This handles the case where schedule is empty but bands are displayed
+        if (numberOfBands == 0 && numberOfEvents == 0 && sortableBandNames != null && !sortableBandNames.isEmpty()) {
+            numberOfBands = sortableBandNames.size();
+            Log.d("HeaderText", "🔧 FIX: numberOfBands was 0 but sortableBandNames has " + numberOfBands + " items, using that count");
+        }
+        
         if (numberOfBands != 0) {
             staticVariables.showEventButtons = false;
             staticVariables.showUnofficalEventButtons = false;

@@ -2883,10 +2883,59 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         FilterButtonHandler filterButtonHandle = new FilterButtonHandler();
         filterButtonHandle.setUpFiltersButton(this);
         
-        // Update band count display
-        TextView bandCount = (TextView) this.findViewById(R.id.headerBandCount);
-        String headerText = String.valueOf(bandCount.getText());
-        Log.d("VIEW_MODE_DEBUG", "🎵 displayBandDataWithoutSchedule: Finished display " + adapter.getCount() + " bands");
+        // FIX: Update band count display header
+        // Initialize listHandler if not already initialized
+        if (listHandler == null) {
+            listHandler = new mainListHandler(showBands.this);
+        }
+        
+        // Set numberOfBands based on the bands being displayed
+        // This ensures the header shows the correct count
+        if (adapter != null && adapter.getCount() > 0) {
+            // Count actual bands (excluding empty data message)
+            int actualBandCount = 0;
+            String emptyDataMessage = getResources().getString(R.string.waiting_for_data);
+            String filterIssueMessage = getResources().getString(R.string.data_filter_issue);
+            for (int i = 0; i < adapter.getCount(); i++) {
+                try {
+                    bandListItem item = adapter.getItem(i);
+                    if (item != null) {
+                        String bandName = item.getBandName();
+                        if (bandName != null && !bandName.equals(emptyDataMessage) && !bandName.equals(filterIssueMessage)) {
+                            actualBandCount++;
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.w("HeaderText", "Error counting bands: " + e.getMessage());
+                }
+            }
+            
+            // Set the band count in listHandler so getSizeDisplay() works correctly
+            listHandler.numberOfBands = actualBandCount;
+            listHandler.numberOfEvents = 0; // No events in bands-only view
+            listHandler.altNumberOfBands = actualBandCount;
+            
+            // Get and set the header text
+            String headerText = listHandler.getSizeDisplay();
+            TextView bandCount = (TextView) this.findViewById(R.id.headerBandCount);
+            if (bandCount != null) {
+                bandCount.setText(headerText);
+                
+                // Set text color based on active profile
+                SharedPreferencesManager sharingManager = SharedPreferencesManager.getInstance();
+                String activeProfile = sharingManager.getActivePreferenceSource();
+                int profileColor = ProfileColorManager.getInstance().getColorInt(activeProfile);
+                bandCount.setTextColor(profileColor);
+                
+                Log.d("HeaderText", "✅ Set header text to: " + headerText + " (actualBandCount: " + actualBandCount + ")");
+            } else {
+                Log.w("HeaderText", "⚠️ headerBandCount TextView is null");
+            }
+        } else {
+            Log.d("HeaderText", "⚠️ Adapter is null or empty, skipping header update");
+        }
+        
+        Log.d("VIEW_MODE_DEBUG", "🎵 displayBandDataWithoutSchedule: Finished display " + (adapter != null ? adapter.getCount() : 0) + " bands");
         
         // CLICK FIX: Mark refresh as complete after a short delay to allow UI to settle
         final long refreshStartTime = lastRefreshStartTime;
