@@ -597,7 +597,8 @@ public class preferenceLayout  extends Activity {
                                                 scheduleData.DownloadScheduleFile(scheduleUrl);
 
                                         boolean scheduleFileOk = FileHandler70k.schedule.exists() && FileHandler70k.schedule.length() > 0;
-                                        boolean scheduleParsedOk = scheduleRecords != null && !scheduleRecords.isEmpty();
+                                        // Allow empty schedules - they are a valid state (e.g., schedule data not yet available)
+                                        boolean scheduleParsedOk = scheduleRecords != null;
 
                                         if (scheduleFileOk && scheduleParsedOk) {
                                             // CRITICAL: ensure event list uses the new year's schedule in-memory.
