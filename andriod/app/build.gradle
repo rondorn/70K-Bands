@@ -28,7 +28,7 @@ android {
             versionNameSuffix "-70k"
             buildConfigField "String", "FESTIVAL_TYPE", '"70K"'
             resValue "string", "app_name", "70K Bands"
-            resValue "string", "app_icon", "@drawable/ic_launcher"
+            resValue "string", "app_icon", "@mipmap/logo_70k_bands"
             resValue "string", "notification_icon", "@drawable/new_bands_70k_icon"
             resValue "string", "authorities", "com.Bands70k"
             resValue "string", "notification_publisher", "com.Bands70k.NotificationPublisher"
@@ -41,7 +41,7 @@ android {
             versionNameSuffix "-mdf"
             buildConfigField "String", "FESTIVAL_TYPE", '"MDF"'
             resValue "string", "app_name", "MDF Bands"
-            resValue "string", "app_icon", "@drawable/mdf_bands_icon"
+            resValue "string", "app_icon", "@mipmap/logo_mdf_bands"
             resValue "string", "notification_icon", "@drawable/mdf_bands_icon"
             resValue "string", "authorities", "com.rdorn.mdfbands"
             resValue "string", "notification_publisher", "com.rdorn.mdfbands.NotificationPublisher"
