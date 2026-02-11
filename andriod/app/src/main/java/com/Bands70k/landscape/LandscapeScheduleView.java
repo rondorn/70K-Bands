@@ -539,6 +539,8 @@ public class LandscapeScheduleView extends LinearLayout {
                     // Restore to the day we were on (e.g. after returning from details), else use initialDay from intent
                     boolean restored = false;
                     if (dayToRestore != null && !days.isEmpty()) {
+                        // dayToRestore is already raw day from schedule data cache
+                        Log.d(TAG, "Restoring day: '" + dayToRestore + "'");
                         for (int i = 0; i < days.size(); i++) {
                             String dayLabel = days.get(i).dayLabel;
                             if (dayLabel != null && dayLabel.trim().equals(dayToRestore.trim())) {
@@ -550,6 +552,7 @@ public class LandscapeScheduleView extends LinearLayout {
                         }
                     }
                     if (!restored && initialDay != null) {
+                        // initialDay is already raw day from schedule data cache (via extractDayFromPosition)
                         Log.d(TAG, "Looking for initial day: '" + initialDay + "'");
                         for (int i = 0; i < days.size(); i++) {
                             String dayLabel = days.get(i).dayLabel;
@@ -583,6 +586,9 @@ public class LandscapeScheduleView extends LinearLayout {
     
     private void updateDisplay() {
         Log.d(TAG, "updateDisplay: currentDayIndex=" + currentDayIndex + ", days.size()=" + days.size());
+        
+        // Refresh attended statuses before updating the display
+        refreshAttendedStatuses();
         
         // Update header
         if (days.isEmpty()) {
@@ -624,6 +630,36 @@ public class LandscapeScheduleView extends LinearLayout {
         
         // Update content
         updateContent();
+    }
+    
+    /**
+     * Refresh the attended status for all events in the current day.
+     * This ensures that when the UI is rebuilt, it shows the latest attended status.
+     */
+    private void refreshAttendedStatuses() {
+        if (days.isEmpty() || currentDayIndex < 0 || currentDayIndex >= days.size()) {
+            return;
+        }
+        
+        DayScheduleData currentDay = days.get(currentDayIndex);
+        if (staticVariables.eventYear == 0) {
+            staticVariables.ensureEventYearIsSet();
+        }
+        String eventYear = String.valueOf(staticVariables.eventYear);
+        
+        for (VenueColumn venue : currentDay.venues) {
+            for (ScheduleBlock event : venue.events) {
+                // Refresh the attended status from the current data
+                String updatedStatus = attendedHandle.getShowAttendedStatus(
+                    event.bandName,
+                    event.location,
+                    event.startTimeString,
+                    event.eventType != null ? event.eventType : "Performance",
+                    eventYear
+                );
+                event.attendedStatus = updatedStatus;
+            }
+        }
     }
     
     private void updateContent() {

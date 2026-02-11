@@ -12,6 +12,7 @@ public class bandListItem {
     private String location;
     private String locationColor;
     private String day;
+    private String rawDay;  // Raw day from scheduleHandler (before formatting) - used for matching
     private String startTime;
     private String endTime;
 
@@ -99,6 +100,23 @@ public class bandListItem {
      */
     public void setDay(String day) {
         this.day = Utilities.monthDateRegionalFormatting(day);
+    }
+    
+    /**
+     * Gets the raw day string (before formatting).
+     * @return The raw day string.
+     */
+    public String getRawDay() {
+        return rawDay;
+    }
+    
+    /**
+     * Sets the raw day string (before formatting).
+     * This should be set with the raw day from scheduleHandler.getShowDay() before calling setDay().
+     * @param rawDay The raw day string to set.
+     */
+    public void setRawDay(String rawDay) {
+        this.rawDay = rawDay;
     }
 
     /**
