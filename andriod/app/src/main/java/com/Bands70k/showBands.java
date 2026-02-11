@@ -3217,8 +3217,12 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                             String startTime = scheduleHandle.getStartTimeString();
                             String endTime = scheduleHandle.getEndTimeString();
                             String eventType = scheduleHandle.getShowType();
-                            String day = scheduleHandle.getShowDay();
+                            String day = scheduleHandle.getShowDay();  // Raw day from scheduleHandler
                             String note = scheduleHandle.getShowNotes();
+
+                            // Store raw day BEFORE formatting - this is what we'll use for matching!
+                            bandItem.setRawDay(day);
+                            Log.d("LANDSCAPE_SCHEDULE", "Stored raw day in bandListItem: '" + day + "' for " + bandName);
 
                             String attendedIcon = attendedHandler.getShowAttendedIcon(bandName, location, startTime, eventType, eventYear);
                             Log.d("ShowsAttended", "attendedIcon is " + attendedIcon + " for " + bandName + "-" + location + "-" + "-" + startTime);
@@ -3248,7 +3252,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                             bandItem.setLocation(location);
                             bandItem.setStartTime(startTime);
                             bandItem.setEndTime(endTime);
-                            bandItem.setDay(day);
+                            bandItem.setDay(day);  // This formats the day for display
 
                             if (eventImage != 0) {
                                 bandItem.setEventTypeImage(eventImage);
@@ -4975,46 +4979,39 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
      * Tries the topmost visible entries to find a valid day
      * Checks both the first visible position and the actual topmost visible view
      */
+    /**
+     * Update current viewing day from visible cells in the list
+     * Uses bandListItem from adapter to look up raw day from schedule data cache
+     * This matches the landscape view's day indexing (by raw day label)
+     */
     private void updateCurrentViewingDayFromVisibleCells() {
         if (bandNamesList == null) {
             Log.w("LANDSCAPE_SCHEDULE", "Cannot update day - bandNamesList is null");
             return;
         }
         
-        // ROOT CAUSE FIX: Use the member variable adapter directly (not from ListView.getAdapter())
-        // The ListView might return a wrapper adapter, but we know our member variable is bandListView
-        if (adapter == null) {
-            Log.w("LANDSCAPE_SCHEDULE", "Cannot update day - member adapter is null");
-            // Fallback: try to get from ListView
+        // Get adapter - use member variable if available, otherwise get from ListView
+        bandListView bandAdapter = null;
+        if (adapter != null && adapter instanceof bandListView) {
+            bandAdapter = (bandListView) adapter;
+        } else {
             android.widget.ListAdapter listAdapter = bandNamesList.getAdapter();
-            if (listAdapter == null) {
-                Log.w("LANDSCAPE_SCHEDULE", "Cannot update day - ListView adapter is also null");
+            if (listAdapter instanceof bandListView) {
+                bandAdapter = (bandListView) listAdapter;
+            } else {
+                Log.w("LANDSCAPE_SCHEDULE", "Cannot update day - adapter is not bandListView");
                 return;
             }
-            Log.d("LANDSCAPE_SCHEDULE", "Member adapter is null, using ListView adapter. Type: " + listAdapter.getClass().getName());
-            if (!(listAdapter instanceof bandListView)) {
-                Log.w("LANDSCAPE_SCHEDULE", "ListView adapter is not bandListView, cannot extract day. Actual type: " + listAdapter.getClass().getName());
-                return;
-            }
-            adapter = (bandListView) listAdapter;
         }
         
-        // Verify it's actually a bandListView (safety check)
-        if (!(adapter instanceof bandListView)) {
-            Log.w("LANDSCAPE_SCHEDULE", "Member adapter is not bandListView, cannot extract day. Actual type: " + adapter.getClass().getName());
-            return;
-        }
-        
-        bandListView bandAdapter = adapter;
         int adapterCount = bandAdapter.getCount();
         int firstVisiblePosition = bandNamesList.getFirstVisiblePosition();
-        int lastVisiblePosition = bandNamesList.getLastVisiblePosition();
         
-        Log.d("LANDSCAPE_SCHEDULE", "Updating day from adapter - firstVisible: " + firstVisiblePosition + ", lastVisible: " + lastVisiblePosition + ", adapterCount: " + adapterCount);
+        Log.d("LANDSCAPE_SCHEDULE", "Updating day from visible cells - firstVisible: " + firstVisiblePosition + ", adapterCount: " + adapterCount);
         
         if (firstVisiblePosition >= 0 && firstVisiblePosition < adapterCount) {
             // PRIORITY 1: Try the topmost visible entry (firstVisiblePosition) itself
-            // This is the entry the user sees at the top of the screen
+            // Get bandListItem from adapter and look up raw day from schedule data cache
             try {
                 bandListItem item = bandAdapter.getItem(firstVisiblePosition);
                 String rawDay = extractRawDayFromBandListItem(item);
@@ -5090,79 +5087,45 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     }
     
     /**
-     * Extract RAW day value from bandListItem by looking up schedule data
-     * This is needed because bandListItem.getDay() returns FORMATTED day, but landscape view needs RAW day
+     * Extract raw day from bandListItem - SIMPLE: just use the rawDay field we stored!
+     * This is much simpler than looking up schedule data - we already have it!
+     * When we create bandListItem, we store the raw day from scheduleHandler.getShowDay() BEFORE formatting.
      */
     private String extractRawDayFromBandListItem(bandListItem item) {
         if (item == null) {
+            Log.d("LANDSCAPE_SCHEDULE", "  Item is null");
             return null;
         }
         
-        String bandName = item.getBandName();
-        String location = item.getLocation();
-        String startTime = item.getStartTime();
-        
-        // If no location/startTime, this might be a plain band entry (not an event entry)
-        if (bandName == null || bandName.isEmpty() || location == null || location.isEmpty() || startTime == null || startTime.isEmpty()) {
-            Log.d("LANDSCAPE_SCHEDULE", "  Item missing bandName/location/startTime - not an event entry");
-            return null;
+        String rawDay = item.getRawDay();
+        if (rawDay != null && !rawDay.isEmpty()) {
+            Log.d("LANDSCAPE_SCHEDULE", "  ✅ Got raw day directly from bandListItem: '" + rawDay + "' for " + item.getBandName());
+            return rawDay;
         }
         
-        // Look up the raw day from schedule records
-        if (BandInfo.scheduleRecords != null && BandInfo.scheduleRecords.containsKey(bandName)) {
-            scheduleTimeTracker tracker = BandInfo.scheduleRecords.get(bandName);
-            if (tracker != null && tracker.scheduleByTime != null) {
-                // Clean location for matching (remove venue suffix like " 1", " 2")
-                String cleanLocation = location.trim();
-                if (cleanLocation.matches(".*\\s+\\d+$")) {
-                    // Remove trailing number (e.g., "Pool Deck 1" -> "Pool Deck")
-                    cleanLocation = cleanLocation.replaceAll("\\s+\\d+$", "");
-                }
-                
-                // Iterate through scheduleByTime to find matching location
-                // We'll match on location first, then verify with startTime if possible
-                for (Map.Entry<Long, scheduleHandler> entry : tracker.scheduleByTime.entrySet()) {
-                    scheduleHandler scheduleHandle = entry.getValue();
-                    if (scheduleHandle != null) {
-                        String scheduleLocation = scheduleHandle.getShowLocation();
-                        
-                        if (scheduleLocation != null) {
-                            // Try exact match or cleaned match
-                            boolean locationMatches = scheduleLocation.equals(location) || 
-                                                      scheduleLocation.equals(cleanLocation) ||
-                                                      location.equals(scheduleLocation) ||
-                                                      cleanLocation.equals(scheduleLocation);
-                            
-                            if (locationMatches) {
-                                // Found matching location - get the raw day
-                                // We don't need perfect startTime match since location should be unique enough
-                                String rawDay = scheduleHandle.getShowDay();
-                                if (rawDay != null && !rawDay.isEmpty()) {
-                                    Log.d("LANDSCAPE_SCHEDULE", "  Found raw day: '" + rawDay + "' for " + bandName + " at " + location + " (startTime: " + startTime + ")");
-                                    return rawDay;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        
-        Log.d("LANDSCAPE_SCHEDULE", "  Could not find raw day for " + bandName + " at " + location + " " + startTime);
+        // Fallback: if rawDay wasn't set (for older items or non-event entries), return null
+        Log.d("LANDSCAPE_SCHEDULE", "  ⚠️ No rawDay stored in bandListItem for " + item.getBandName() + " - might be a non-event entry");
         return null;
     }
     
+    
     /**
-     * Extract day from a specific position in the bandNames list
+     * Extract day from a specific position using scheduleSortedBandNames (contains "timeIndex:bandName" format)
+     * This is the correct array to use in schedule view - it contains timeIndex:bandName entries
      */
     private String extractDayFromPosition(int position) {
-        if (position < 0 || position >= bandNames.size()) {
-            Log.d("LANDSCAPE_SCHEDULE", "Position " + position + " out of bounds (size: " + bandNames.size() + ")");
+        // Use scheduleSortedBandNames if available (schedule view), otherwise fall back to bandNames
+        List<String> sourceList = (scheduleSortedBandNames != null && !scheduleSortedBandNames.isEmpty()) 
+                                   ? scheduleSortedBandNames 
+                                   : bandNames;
+        
+        if (sourceList == null || position < 0 || position >= sourceList.size()) {
+            Log.d("LANDSCAPE_SCHEDULE", "Position " + position + " out of bounds (size: " + (sourceList != null ? sourceList.size() : 0) + ")");
             return null;
         }
         
-        String bandEntry = bandNames.get(position);
-        Log.d("LANDSCAPE_SCHEDULE", "Checking position " + position + ": '" + bandEntry + "'");
+        String bandEntry = sourceList.get(position);
+        Log.d("LANDSCAPE_SCHEDULE", "Checking position " + position + ": '" + bandEntry + "' (from " + (sourceList == scheduleSortedBandNames ? "scheduleSortedBandNames" : "bandNames") + ")");
         
         // Extract day from the band entry (format: "timeIndex:bandName")
         if (bandEntry != null && bandEntry.contains(":")) {
