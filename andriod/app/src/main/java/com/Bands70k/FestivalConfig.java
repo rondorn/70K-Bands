@@ -323,6 +323,15 @@ public class FestivalConfig {
     }
     
     /**
+     * Get venue name string by partial name match (returns null if not found)
+     * This is a convenience method to avoid type visibility issues with package-private Venue class
+     */
+    public String getVenueNameByPartialName(String name) {
+        Venue venue = getVenueByPartialName(name);
+        return venue != null ? venue.name : null;
+    }
+    
+    /**
      * Get all venue names (including those not shown in filters)
      */
     public List<String> getAllVenueNames() {
