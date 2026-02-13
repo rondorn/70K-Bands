@@ -23,8 +23,6 @@ struct PreferencesView: View {
     
     private var mainContent: some View {
         Form {
-            expiredEventsSection
-            promptForAttendedSection
             alertPreferencesSection
             detailScreenSection
             miscSection
@@ -59,18 +57,6 @@ struct PreferencesView: View {
     }
     
     // MARK: - View Components
-    
-    private var expiredEventsSection: some View {
-        Section(NSLocalizedString("showHideExpiredLabel", comment: "")) {
-            Toggle(NSLocalizedString("hideExpiredEvents", comment: ""), isOn: $viewModel.hideExpiredEvents)
-        }
-    }
-    
-    private var promptForAttendedSection: some View {
-        Section("Prompt For Attended Status") {
-            Toggle("Prompt For Attended Status", isOn: $viewModel.promptForAttended)
-        }
-    }
     
     private var alertPreferencesSection: some View {
         Section(NSLocalizedString("AlertPreferences", comment: "")) {

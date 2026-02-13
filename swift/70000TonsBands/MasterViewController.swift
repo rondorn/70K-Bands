@@ -384,6 +384,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
         mainTableView.estimatedSectionHeaderHeight = 44.0
         
+        // Add long press gesture recognizer for priority/attendance menu
+        let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
+        longPressGesture.minimumPressDuration = 0.5
+        mainTableView.addGestureRecognizer(longPressGesture)
+        
         NotificationCenter.default.addObserver(self, selector: #selector(self.displayFCMToken(notification:)),
                                                name: Notification.Name("FCMToken"), object: nil)
         
@@ -2197,6 +2202,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
     }
     
+    /// Call after a filter change (e.g. Hide Expired Events) so list vs calendar is re-evaluated in landscape.
+    func recheckLandscapeScheduleAfterFilterChange() {
+        checkOrientationAndShowLandscapeIfNeeded()
+    }
+    
     private func checkOrientationAndShowLandscapeIfNeeded() {
         // CRITICAL FIX: Check orientation FIRST before any other logic
         // Phone: Use orientation-based switching
@@ -2563,6 +2573,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 self.landscapeScheduleViewController?.present(detailController, animated: true) {
                     print("✅ [LANDSCAPE_SCHEDULE] Detail view presented")
                 }
+            },
+            onLongPress: { [weak self] bandName, location, startTime, eventType, day in
+                // Handle long press - show priority/attendance menu
+                guard let self = self else { return }
+                
+                // Create cellDataText format: "bandName;location;eventType;startTime"
+                let cellDataText = "\(bandName);\(location);\(eventType);\(startTime)"
+                
+                // Show the same menu as list view
+                // Present from the landscape view controller if available, otherwise from self
+                let presentingViewController = self.landscapeScheduleViewController ?? self
+                self.showLongPressMenu(bandName: bandName, cellDataText: cellDataText, indexPath: IndexPath(row: 0, section: 0), presentingFrom: presentingViewController)
             }
         )
         
@@ -2575,6 +2597,26 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         present(hostingController, animated: true) {
             print("✅ [LANDSCAPE_SCHEDULE] Landscape schedule view presented")
         }
+    }
+    
+    private func refreshLandscapeScheduleViewIfNeeded(for bandName: String? = nil) {
+        // Refresh landscape schedule view if it's currently showing
+        guard isShowingLandscapeSchedule else {
+            return
+        }
+        
+        print("🔄 [LANDSCAPE_SCHEDULE] Posting refresh notification for band: \(bandName ?? "all")")
+        
+        // Use NotificationCenter to trigger refresh in the SwiftUI view
+        var userInfo: [String: Any] = [:]
+        if let bandName = bandName {
+            userInfo["bandName"] = bandName
+        }
+        NotificationCenter.default.post(
+            name: Notification.Name("RefreshLandscapeSchedule"),
+            object: nil,
+            userInfo: userInfo.isEmpty ? nil : userInfo
+        )
     }
     
     private func dismissLandscapeScheduleView(completion: (() -> Void)? = nil) {
@@ -4586,163 +4628,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     func detailMenuChoices(cellDataText :String, bandName :String, segue :UIStoryboardSegue, indexPath: IndexPath) {
-           
-           var cellData = cellDataText.split(separator: ";")
-           if (cellData.count == 4 && getPromptForAttended() == true){
-               
-                let cellBandName = String(cellData[0])
-                let cellLocation = String(cellData[1])
-                let cellEventType  = String(cellData[2])
-                let cellStartTime = String(cellData[3])
-
-                let currentAttendedStatusFriendly = attendedHandle.getShowAttendedStatusUserFriendly(band: cellBandName, location: cellLocation, startTime: cellStartTime, eventType: cellEventType, eventYearString: String(eventYear))
-               
-                let alert = UIAlertController.init(title: bandName, message: currentAttendedStatusFriendly, preferredStyle: .actionSheet)
-                
-                // Configure popover for iPad
-                if let popover = alert.popoverPresentationController {
-                    if let cell = tableView.cellForRow(at: indexPath) {
-                        popover.sourceView = cell
-                        popover.sourceRect = cell.bounds
-                    } else {
-                        popover.sourceView = self.view
-                        popover.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.midY, width: 0, height: 0)
-                    }
-                    popover.permittedArrowDirections = [.up, .down]
-                }
-               
-                let goToDetails = UIAlertAction.init(title: NSLocalizedString("Go To Details", comment: ""), style: .default) { _ in
-                   print("Go To Details - SwiftUI")
-                   self.goToDetailsScreenSwiftUI(bandName: bandName, indexPath: indexPath);
-                }
-                alert.addAction(goToDetails)
-
-                let currentAttendedStatus = attendedHandle.getShowAttendedStatus(band: cellBandName, location: cellLocation, startTime: cellStartTime, eventType: cellEventType, eventYearString: String(eventYear))
-
-                if (currentAttendedStatus != sawAllStatus){
-                   let attendChoice = UIAlertAction.init(title: NSLocalizedString("All Of Event", comment: ""), style: .default) { _ in
-                      print("You Attended")
-                       self.markAttendingStatus(cellDataText: cellDataText, status: sawAllStatus, correctBandName: bandName)
-                   }
-                   alert.addAction(attendChoice)
-                }
-
-                if (currentAttendedStatus != sawSomeStatus && cellEventType == showType){
-                   let partialAttend = UIAlertAction.init(title: NSLocalizedString("Part Of Event", comment: ""), style: .default) { _ in
-                       print("You Partially Attended")
-                       self.markAttendingStatus(cellDataText: cellDataText, status: sawSomeStatus, correctBandName: bandName)
-                   }
-                   alert.addAction(partialAttend)
-                }
-
-                if (currentAttendedStatus != sawNoneStatus){
-                   let notAttend = UIAlertAction.init(title: NSLocalizedString("None Of Event", comment: ""), style: .default) { _ in
-                       print("You will not Attended")
-                       self.markAttendingStatus(cellDataText: cellDataText, status: sawNoneStatus, correctBandName: bandName)
-                   }
-                   alert.addAction(notAttend)
-                }
-                
-                let disablePrompt = UIAlertAction.init(title: NSLocalizedString("disableAttendedPrompt", comment: ""), style: .default) { _ in
-                    setPromptForAttended(false)
-                }
-                alert.addAction(disablePrompt)
-            
-                let cancelDialog = UIAlertAction.init(title: NSLocalizedString("Cancel", comment: ""), style: .cancel) { _ in
-                    return
-                }
-                alert.addAction(cancelDialog)
-                
-                 if let popoverController = alert.popoverPresentationController {
-                       popoverController.sourceView = self.view
-                        popoverController.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.maxY, width: 0, height: 0)
-                       popoverController.permittedArrowDirections = []
-                }
-            
-                present(alert, animated: true, completion: nil)
-
-
-           } else {
-               print ("Go straight to the SwiftUI details screen")
-               goToDetailsScreenSwiftUI(bandName: bandName, indexPath: indexPath)
-           }
-       }
+        // Always go straight to details - popup removed, use long press instead
+        print ("Go straight to the SwiftUI details screen")
+        goToDetailsScreenSwiftUI(bandName: bandName, indexPath: indexPath)
+    }
        
        /// SwiftUI version of detailMenuChoices (replaces storyboard segue version)
        func detailMenuChoicesSwiftUI(cellDataText: String, bandName: String, indexPath: IndexPath) {
-           
-           var cellData = cellDataText.split(separator: ";")
-           if (cellData.count == 4 && getPromptForAttended() == true){
-               
-                let cellBandName = String(cellData[0])
-                let cellLocation = String(cellData[1])
-                let cellEventType  = String(cellData[2])
-                let cellStartTime = String(cellData[3])
-
-                let currentAttendedStatusFriendly = attendedHandle.getShowAttendedStatusUserFriendly(band: cellBandName, location: cellLocation, startTime: cellStartTime, eventType: cellEventType, eventYearString: String(eventYear))
-               
-                let alert = UIAlertController.init(title: bandName, message: currentAttendedStatusFriendly, preferredStyle: .actionSheet)
-                
-                // Configure popover for iPad
-                if let popover = alert.popoverPresentationController {
-                    if let cell = tableView.cellForRow(at: indexPath) {
-                        popover.sourceView = cell
-                        popover.sourceRect = cell.bounds
-                    } else {
-                        popover.sourceView = self.view
-                        popover.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.midY, width: 0, height: 0)
-                    }
-                    popover.permittedArrowDirections = [.up, .down]
-                }
-               
-                let goToDetails = UIAlertAction.init(title: NSLocalizedString("Go To Details", comment: ""), style: .default) { _ in
-                   print("Go To Details - SwiftUI")
-                   self.goToDetailsScreenSwiftUI(bandName: bandName, indexPath: indexPath);
-                }
-                alert.addAction(goToDetails)
-
-                let currentAttendedStatus = attendedHandle.getShowAttendedStatus(band: cellBandName, location: cellLocation, startTime: cellStartTime, eventType: cellEventType, eventYearString: String(eventYear))
-
-                if (currentAttendedStatus != sawAllStatus){
-                   let attendChoice = UIAlertAction.init(title: NSLocalizedString("All Of Event", comment: ""), style: .default) { _ in
-                      print("You Attended")
-                       self.markAttendingStatus(cellDataText: cellDataText, status: sawAllStatus, correctBandName: bandName)
-                   }
-                   alert.addAction(attendChoice)
-                }
-
-                if (currentAttendedStatus != sawSomeStatus && cellEventType == showType){
-                   let attendSomeChoice = UIAlertAction.init(title: NSLocalizedString("Part Of Event", comment: ""), style: .default) { _ in
-                      print("You Attended Some")
-                       self.markAttendingStatus(cellDataText: cellDataText, status: sawSomeStatus, correctBandName: bandName)
-                   }
-                   alert.addAction(attendSomeChoice)
-                }
-
-                if (currentAttendedStatus != sawNoneStatus){
-                   let didNotAttendChoice = UIAlertAction.init(title: NSLocalizedString("None Of Event", comment: ""), style: .default) { _ in
-                      print("You Did Not Attend")
-                       self.markAttendingStatus(cellDataText: cellDataText, status: sawNoneStatus, correctBandName: bandName)
-                   }
-                   alert.addAction(didNotAttendChoice)
-                }
-                
-                let disablePrompt = UIAlertAction.init(title: NSLocalizedString("disableAttendedPrompt", comment: ""), style: .default) { _ in
-                    setPromptForAttended(false)
-                }
-                alert.addAction(disablePrompt)
-
-                let cancelAction = UIAlertAction.init(title: NSLocalizedString("Cancel", comment: ""), style: .cancel) { _ in
-                   print("Cancel")
-                }
-                alert.addAction(cancelAction)
-               
-                self.present(alert, animated: true, completion: nil)
-               
-           } else {
-               print ("Go straight to the SwiftUI details screen")
-               goToDetailsScreenSwiftUI(bandName: bandName, indexPath: indexPath)
-           }
+           // Always go straight to details - popup removed, use long press instead
+           print ("Go straight to the SwiftUI details screen")
+           goToDetailsScreenSwiftUI(bandName: bandName, indexPath: indexPath)
        }
        
     func goToDetailsScreen(segue :UIStoryboardSegue, bandName :String, indexPath :IndexPath){
@@ -4844,6 +4739,206 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             // iPhone: Push onto navigation stack
             self.navigationController?.pushViewController(detailController, animated: true)
         }
+    }
+    
+    // MARK: - Long Press Gesture Handler
+    
+    @objc func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
+        guard gesture.state == .began else { return }
+        
+        let point = gesture.location(in: mainTableView)
+        guard let indexPath = mainTableView.indexPathForRow(at: point) else { return }
+        
+        guard indexPath.row < bands.count else { return }
+        
+        let bandEntry = bands[indexPath.row]
+        let bandName = getNameFromSortable(bandEntry, sortedBy: sortedBy)
+        
+        // Convert to window coordinates so the menu can position near the tap
+        let pointInWindow = mainTableView.convert(point, to: nil)
+        
+        // Get cell data to check if this is a scheduled event
+        guard let cell = mainTableView.cellForRow(at: indexPath),
+              let cellDataView = cell.viewWithTag(1) as? UILabel else {
+            // No schedule data - show priority menu only
+            showLongPressMenu(bandName: bandName, cellDataText: nil, indexPath: indexPath, sourcePointInWindow: pointInWindow)
+            return
+        }
+        
+        let cellDataText = cellDataView.text ?? ""
+        showLongPressMenu(bandName: bandName, cellDataText: cellDataText, indexPath: indexPath, sourcePointInWindow: pointInWindow)
+    }
+    
+    // Helper to get icon name for priority
+    private func getPriorityIconName(priority: Int) -> String? {
+        switch priority {
+        case 1: return mustSeeIconSmall
+        case 2: return mightSeeIconSmall
+        case 3: return wontSeeIconSmall
+        case 0: return unknownIconSmall
+        default: return nil
+        }
+    }
+    
+    // Helper to get icon name for attendance
+    private func getAttendanceIconName(status: String) -> String? {
+        switch status {
+        case sawAllStatus: return sawAllIcon
+        case sawSomeStatus: return sawSomeIcon
+        case sawNoneStatus: return nil // No icon for "won't attend"
+        default: return nil
+        }
+    }
+    
+    func showLongPressMenu(bandName: String, cellDataText: String?, indexPath: IndexPath, presentingFrom: UIViewController? = nil, sourcePointInWindow: CGPoint? = nil) {
+        // Get current priority
+        let currentPriority = priorityManager.getPriority(for: bandName)
+        
+        // Determine if this is a scheduled event
+        var isScheduledEvent = false
+        var cellBandName = ""
+        var cellLocation = ""
+        var cellEventType = ""
+        var cellStartTime = ""
+        var currentAttendedStatus = ""
+        
+        if let cellData = cellDataText, !cellData.isEmpty {
+            let cellDataArray = cellData.split(separator: ";")
+            if cellDataArray.count == 4 {
+                isScheduledEvent = true
+                cellBandName = String(cellDataArray[0])
+                cellLocation = String(cellDataArray[1])
+                cellEventType = String(cellDataArray[2])
+                cellStartTime = String(cellDataArray[3])
+                
+                currentAttendedStatus = attendedHandle.getShowAttendedStatus(
+                    band: cellBandName,
+                    location: cellLocation,
+                    startTime: cellStartTime,
+                    eventType: cellEventType,
+                    eventYearString: String(eventYear)
+                )
+            }
+        }
+        
+        // Build priority section
+        var priorityItems: [CompactActionSheetViewController.MenuItem] = []
+        
+        let mustSeeTitle = NSLocalizedString("Must", comment: "Must see priority")
+        priorityItems.append(CompactActionSheetViewController.MenuItem(
+            title: mustSeeTitle,
+            iconName: getPriorityIconName(priority: 1),
+            isSelected: currentPriority == 1,
+            action: { [weak self] in
+                self?.priorityManager.setPriority(for: bandName, priority: 1)
+                self?.refreshBandListOnly(reason: "Priority changed to Must See")
+                self?.refreshIPadDetailViewIfNeeded(for: bandName)
+                self?.refreshLandscapeScheduleViewIfNeeded(for: bandName)
+            }
+        ))
+        
+        let mightSeeTitle = NSLocalizedString("Might", comment: "Might see priority")
+        priorityItems.append(CompactActionSheetViewController.MenuItem(
+            title: mightSeeTitle,
+            iconName: getPriorityIconName(priority: 2),
+            isSelected: currentPriority == 2,
+            action: { [weak self] in
+                self?.priorityManager.setPriority(for: bandName, priority: 2)
+                self?.refreshBandListOnly(reason: "Priority changed to Might See")
+                self?.refreshIPadDetailViewIfNeeded(for: bandName)
+                self?.refreshLandscapeScheduleViewIfNeeded(for: bandName)
+            }
+        ))
+        
+        let wontSeeTitle = NSLocalizedString("Wont", comment: "Won't see priority")
+        priorityItems.append(CompactActionSheetViewController.MenuItem(
+            title: wontSeeTitle,
+            iconName: getPriorityIconName(priority: 3),
+            isSelected: currentPriority == 3,
+            action: { [weak self] in
+                self?.priorityManager.setPriority(for: bandName, priority: 3)
+                self?.refreshBandListOnly(reason: "Priority changed to Won't See")
+                self?.refreshIPadDetailViewIfNeeded(for: bandName)
+                self?.refreshLandscapeScheduleViewIfNeeded(for: bandName)
+            }
+        ))
+        
+        let unknownTitle = NSLocalizedString("Unknown", comment: "Unknown priority")
+        priorityItems.append(CompactActionSheetViewController.MenuItem(
+            title: unknownTitle,
+            iconName: getPriorityIconName(priority: 0),
+            isSelected: currentPriority == 0,
+            action: { [weak self] in
+                self?.priorityManager.setPriority(for: bandName, priority: 0)
+                self?.refreshBandListOnly(reason: "Priority changed to Unknown")
+                self?.refreshIPadDetailViewIfNeeded(for: bandName)
+                self?.refreshLandscapeScheduleViewIfNeeded(for: bandName)
+            }
+        ))
+        
+        var sections: [CompactActionSheetViewController.MenuSection] = [
+            CompactActionSheetViewController.MenuSection(
+                header: NSLocalizedString("Priority", comment: "Priority section header"),
+                items: priorityItems
+            )
+        ]
+        
+        // If this is a scheduled event, add attendance section
+        if isScheduledEvent {
+            var attendanceItems: [CompactActionSheetViewController.MenuItem] = []
+            
+            let allOfEventTitle = NSLocalizedString("All Of Event", comment: "Attended all of event")
+            attendanceItems.append(CompactActionSheetViewController.MenuItem(
+                title: allOfEventTitle,
+                iconName: getAttendanceIconName(status: sawAllStatus),
+                isSelected: currentAttendedStatus == sawAllStatus,
+            action: { [weak self] in
+                self?.markAttendingStatus(cellDataText: cellDataText!, status: sawAllStatus, correctBandName: bandName)
+                self?.refreshLandscapeScheduleViewIfNeeded(for: bandName)
+            }
+            ))
+            
+            // Only show "Partially Attended" for shows
+            if cellEventType == showType {
+                let partOfEventTitle = NSLocalizedString("Part Of Event", comment: "Partially attended event")
+                attendanceItems.append(CompactActionSheetViewController.MenuItem(
+                    title: partOfEventTitle,
+                    iconName: getAttendanceIconName(status: sawSomeStatus),
+                    isSelected: currentAttendedStatus == sawSomeStatus,
+                    action: { [weak self] in
+                        self?.markAttendingStatus(cellDataText: cellDataText!, status: sawSomeStatus, correctBandName: bandName)
+                        self?.refreshLandscapeScheduleViewIfNeeded(for: bandName)
+                    }
+                ))
+            }
+            
+            let wontAttendTitle = NSLocalizedString("Wont Attend", comment: "Won't attend")
+            attendanceItems.append(CompactActionSheetViewController.MenuItem(
+                title: wontAttendTitle,
+                iconName: nil,
+                isSelected: currentAttendedStatus == sawNoneStatus,
+                action: { [weak self] in
+                    self?.markAttendingStatus(cellDataText: cellDataText!, status: sawNoneStatus, correctBandName: bandName)
+                    self?.refreshLandscapeScheduleViewIfNeeded(for: bandName)
+                }
+            ))
+            
+            sections.append(CompactActionSheetViewController.MenuSection(
+                header: NSLocalizedString("Attended", comment: "Attended section header"),
+                items: attendanceItems
+            ))
+        }
+        
+        // Present from the specified view controller, or self if not specified
+        // Pass source point only when presenting from list (so menu appears near tap); calendar/landscape keeps bottom-anchored
+        let presentingVC = presentingFrom ?? self
+        let useSourcePoint = (presentingFrom == nil || presentingFrom === self) ? sourcePointInWindow : nil
+        CompactActionSheetViewController.present(
+            from: presentingVC,
+            title: bandName,
+            sections: sections,
+            sourcePointInWindow: useSourcePoint
+        )
     }
     
     func markAttendingStatus (cellDataText :String, status: String, correctBandName: String? = nil){
