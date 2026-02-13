@@ -765,6 +765,11 @@ func refreshAfterMenuSelected(controller: MasterViewController, message: String)
     controller.quickRefresh_Pre()
     NotificationCenter.default.post(name: Notification.Name(rawValue: "refreshGUI"), object: nil)
     
+    // Re-evaluate list vs calendar in landscape after filter change (e.g. Hide Expired Events off → calendar should appear)
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        controller.recheckLandscapeScheduleAfterFilterChange()
+    }
+    
     if (message.isEmpty == false){
         var visibleLocation: CGRect
         if #available(iOS 16.0, *) {
