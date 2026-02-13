@@ -204,6 +204,9 @@ class LandscapeScheduleViewModel: ObservableObject {
     func refreshEventData(bandName: String) {
         print("🔄 [LANDSCAPE_SCHEDULE] Refreshing all events for band: \(bandName)")
         
+        // Trigger update notification before modifying
+        objectWillChange.send()
+        
         // Find all events for this band and update their priority and attendance
         for dayIndex in 0..<days.count {
             var updatedVenues: [VenueColumn] = []
@@ -262,6 +265,9 @@ class LandscapeScheduleViewModel: ObservableObject {
                 baseTimeIndex: days[dayIndex].baseTimeIndex
             )
         }
+        
+        // Trigger update notification after modifying
+        objectWillChange.send()
     }
     
     func refreshData() {

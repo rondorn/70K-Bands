@@ -293,6 +293,9 @@
 		11C8BDC81A7D264F00037F2B /* httpHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C8BDC71A7D264F00037F2B /* httpHandler.swift */; };
 		11C8BDCA1A7D398400037F2B /* CSV.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C8BDC91A7D398400037F2B /* CSV.swift */; };
 		11CA348B1C7E71E20011C4B5 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D741A68284A00267A8F /* SystemConfiguration.framework */; };
+		11CC7FB92F3FD2CD005DF9CC /* CompactActionSheetViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11CC7FB82F3FD2CD005DF9CC /* CompactActionSheetViewController.swift */; };
+		11CC7FBA2F3FD2CD005DF9CC /* CompactActionSheetViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11CC7FB82F3FD2CD005DF9CC /* CompactActionSheetViewController.swift */; };
+		11CC7FBB2F3FD2CD005DF9CC /* CompactActionSheetViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11CC7FB82F3FD2CD005DF9CC /* CompactActionSheetViewController.swift */; };
 		11D05AAD291C545000D5B002 /* countryHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D05AAC291C545000D5B002 /* countryHandler.swift */; };
 		11D05AAE291C545000D5B002 /* countryHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D05AAC291C545000D5B002 /* countryHandler.swift */; };
 		11D05AAF291C571B00D5B002 /* countries.txt in Resources */ = {isa = PBXBuildFile; fileRef = 11D05AAB291C505200D5B002 /* countries.txt */; };
@@ -495,6 +498,7 @@
 		11C8BDC71A7D264F00037F2B /* httpHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = httpHandler.swift; sourceTree = "<group>"; };
 		11C8BDC91A7D398400037F2B /* CSV.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CSV.swift; sourceTree = "<group>"; };
 		11CA32C91C7E6AA90011C4B5 /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
+		11CC7FB82F3FD2CD005DF9CC /* CompactActionSheetViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompactActionSheetViewController.swift; sourceTree = "<group>"; };
 		11D05AAB291C505200D5B002 /* countries.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = countries.txt; sourceTree = "<group>"; };
 		11D05AAC291C545000D5B002 /* countryHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = countryHandler.swift; sourceTree = "<group>"; };
 		11D4844422418A9E00910878 /* firebaseUserWrite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = firebaseUserWrite.swift; sourceTree = "<group>"; };
@@ -634,6 +638,7 @@
 		1154F6081A575893003F4764 /* 70000TonsBands */ = {
 			isa = PBXGroup;
 			children = (
+				11CC7FB82F3FD2CD005DF9CC /* CompactActionSheetViewController.swift */,
 				11EB86AE2F353160007D5AD0 /* about-team.png */,
 				11EB86AA2F3530C8007D5AD0 /* AboutView.swift */,
 				113EB9292F243A4D00CE27BB /* DebugLogger.swift */,
@@ -1276,6 +1281,7 @@
 				11D4844E2241DED700910878 /* firebaseEventDataWrite.swift in Sources */,
 				11BE68F51A59C45100602EC7 /* webViewController.swift in Sources */,
 				110E08502AECB6E200075618 /* DropDown.swift in Sources */,
+				11CC7FBB2F3FD2CD005DF9CC /* CompactActionSheetViewController.swift in Sources */,
 				11C8BDCA1A7D398400037F2B /* CSV.swift in Sources */,
 				110FA1622E3BAF7B003A0184 /* CombinedImageListHandler.swift in Sources */,
 				11DAB49B1A5DDA9400A8B12E /* dataHandler.swift in Sources */,
@@ -1371,6 +1377,7 @@
 				11895B9D2EE4D4F1008CC4A9 /* CoreDataToSQLiteMigrator.swift in Sources */,
 				1155E3BA1A8B20BF00D51ED9 /* scheduleHandlerTest.swift in Sources */,
 				11111FA820D03DBF008E41F6 /* ShowAttendedReport.swift in Sources */,
+				11CC7FB92F3FD2CD005DF9CC /* CompactActionSheetViewController.swift in Sources */,
 				110E08512AECB6E200075618 /* DropDown.swift in Sources */,
 				1155E3A41A8B0A0700D51ED9 /* bandNamesTest.swift in Sources */,
 				110FA1612E3BAF7B003A0184 /* CombinedImageListHandler.swift in Sources */,
@@ -1466,6 +1473,7 @@
 				11895B9F2EE4D4F1008CC4A9 /* CoreDataToSQLiteMigrator.swift in Sources */,
 				1172EE062E5A1C4D006E3596 /* firebaseEventDataWrite.swift in Sources */,
 				1172EE072E5A1C4D006E3596 /* webViewController.swift in Sources */,
+				11CC7FBA2F3FD2CD005DF9CC /* CompactActionSheetViewController.swift in Sources */,
 				1172EE082E5A1C4D006E3596 /* DropDown.swift in Sources */,
 				1172EE092E5A1C4D006E3596 /* CSV.swift in Sources */,
 				1172EE0A2E5A1C4D006E3596 /* CombinedImageListHandler.swift in Sources */,
@@ -1745,7 +1753,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260210002;
+				CURRENT_PROJECT_VERSION = 20260213001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1773,7 +1781,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260210002;
+				MARKETING_VERSION = 20260213001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -1829,7 +1837,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260210002;
+				CURRENT_PROJECT_VERSION = 20260213001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1854,7 +1862,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260210002;
+				MARKETING_VERSION = 20260213001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -2051,7 +2059,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260210002;
+				CURRENT_PROJECT_VERSION = 20260213001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -2072,7 +2080,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260210002;
+				MARKETING_VERSION = 20260213001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -2128,7 +2136,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260210002;
+				CURRENT_PROJECT_VERSION = 20260213001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -2153,7 +2161,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260210002;
+				MARKETING_VERSION = 20260213001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",

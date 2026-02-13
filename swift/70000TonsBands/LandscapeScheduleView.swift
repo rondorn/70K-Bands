@@ -97,11 +97,12 @@ struct LandscapeScheduleView: View {
     
     let priorityManager: SQLitePriorityManager
     let onBandTapped: (String, String?) -> Void  // (bandName, currentDay)
+    let onLongPress: ((String, String, String, String, String) -> Void)?  // (bandName, location, startTime, eventType, day)
     let attendedHandle: ShowsAttended
     let isSplitViewCapable: Bool  // iPad or similar
     let onDismissRequested: (() -> Void)?  // iPad: callback to return to list view
     
-    init(priorityManager: SQLitePriorityManager, attendedHandle: ShowsAttended, initialDay: String? = nil, hideExpiredEvents: Bool = false, isSplitViewCapable: Bool = false, onDismissRequested: (() -> Void)? = nil, onBandTapped: @escaping (String, String?) -> Void) {
+    init(priorityManager: SQLitePriorityManager, attendedHandle: ShowsAttended, initialDay: String? = nil, hideExpiredEvents: Bool = false, isSplitViewCapable: Bool = false, onDismissRequested: (() -> Void)? = nil, onBandTapped: @escaping (String, String?) -> Void, onLongPress: ((String, String, String, String, String) -> Void)? = nil) {
         self.priorityManager = priorityManager
         self._viewModel = StateObject(wrappedValue: LandscapeScheduleViewModel(
             priorityManager: priorityManager,
@@ -110,6 +111,7 @@ struct LandscapeScheduleView: View {
             hideExpiredEvents: hideExpiredEvents
         ))
         self.onBandTapped = onBandTapped
+        self.onLongPress = onLongPress
         self.attendedHandle = attendedHandle
         self.isSplitViewCapable = isSplitViewCapable
         self.onDismissRequested = onDismissRequested
@@ -140,6 +142,16 @@ struct LandscapeScheduleView: View {
             if let bandName = notification.userInfo?["bandName"] as? String {
                 print("🔄 [LANDSCAPE_SCHEDULE] Detail screen dismissed for \(bandName), refreshing event")
                 viewModel.refreshEventData(bandName: bandName)
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("RefreshLandscapeSchedule"))) { notification in
+            // Refresh landscape schedule after priority/attendance changes
+            if let bandName = notification.userInfo?["bandName"] as? String {
+                print("🔄 [LANDSCAPE_SCHEDULE] Refreshing event data for \(bandName)")
+                viewModel.refreshEventData(bandName: bandName)
+            } else {
+                print("🔄 [LANDSCAPE_SCHEDULE] Refreshing all schedule data")
+                viewModel.refreshData()
             }
         }
     }
@@ -210,9 +222,10 @@ struct LandscapeScheduleView: View {
             
             // Sticky headers and scrollable content
             GeometryReader { geometry in
-                StickyHeaderScrollView(
+                    StickyHeaderScrollView(
                     dayData: dayData,
                     onBandTapped: onBandTapped,
+                    onLongPress: onLongPress,
                     priorityManager: priorityManager,
                     onAttendanceUpdate: { bandName, location, startTime, eventType, status in
                         // Normalize event type for database operations
@@ -242,11 +255,78 @@ struct LandscapeScheduleView: View {
         }
     }
     
+    // MARK: - Header View
+    
+    private func headerView(dayData: DayScheduleData) -> some View {
+        HStack {
+            Spacer()
+            
+            // Previous day button - only show if functional
+            if viewModel.canNavigateToPreviousDay {
+                Button(action: {
+                    viewModel.navigateToPreviousDay()
+                }) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 14))
+                        .foregroundColor(.white)
+                        .frame(width: 32, height: 32)
+                        .background(Color.gray.opacity(0.3))
+                        .cornerRadius(6)
+                }
+                .padding(.trailing, 8)
+            }
+            
+            // Day label and event count
+            VStack(spacing: 2) {
+                Text("\(dayData.dayLabel) - \(viewModel.currentDayEventCount) Events")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(.white)
+            }
+            .frame(minWidth: 200)
+            
+            // Next day button - only show if functional
+            if viewModel.canNavigateToNextDay {
+                Button(action: {
+                    viewModel.navigateToNextDay()
+                }) {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14))
+                        .foregroundColor(.white)
+                        .frame(width: 32, height: 32)
+                        .background(Color.gray.opacity(0.3))
+                        .cornerRadius(6)
+                }
+                .padding(.leading, 8)
+            }
+            
+            Spacer()
+            
+            // iPad: List view toggle button (return to list view)
+            if isSplitViewCapable, let onDismiss = onDismissRequested {
+                Button(action: {
+                    print("📱 [IPAD_TOGGLE] List button tapped in calendar view")
+                    onDismiss()
+                }) {
+                    Image(systemName: "list.bullet")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(width: 44, height: 44)
+                        .background(Color.blue.opacity(0.8))
+                        .cornerRadius(8)
+                }
+                .padding(.trailing, 16)
+            }
+        }
+        .frame(height: 60)
+        .background(Color.black)
+    }
+    
     // MARK: - Sticky Header Scroll View
     
     private struct StickyHeaderScrollView: View {
         let dayData: DayScheduleData
         let onBandTapped: (String, String?) -> Void
+        let onLongPress: ((String, String, String, String, String) -> Void)?
         let priorityManager: SQLitePriorityManager
         let onAttendanceUpdate: (String, String, String, String, String) -> Void
         let attendedHandle: ShowsAttended
@@ -346,13 +426,70 @@ struct LandscapeScheduleView: View {
                 
                 // Event blocks
                 ForEach(venue.events) { event in
-                    eventBlockView(event: event, dayData: dayData, columnWidth: columnWidth, priorityManager: priorityManager, onAttendanceUpdate: onAttendanceUpdate, attendedHandle: attendedHandle)
+                    eventBlockView(event: event, dayData: dayData, columnWidth: columnWidth, priorityManager: priorityManager, onAttendanceUpdate: onAttendanceUpdate, onLongPress: onLongPress, attendedHandle: attendedHandle)
                 }
             }
             .frame(width: columnWidth)
         }
         
-        private func eventBlockView(event: ScheduleBlock, dayData: DayScheduleData, columnWidth: CGFloat, priorityManager: SQLitePriorityManager, onAttendanceUpdate: @escaping (String, String, String, String, String) -> Void, attendedHandle: ShowsAttended) -> some View {
+        // Helper methods - defined before eventBlockView for proper scope
+        private func calculateYOffset(for event: ScheduleBlock, in dayData: DayScheduleData) -> CGFloat {
+            // Calculate offset using actual timeIndex (preserves chronological order across days)
+            // The timeline grid starts at the first event's timeIndex
+            guard let firstTimeSlot = dayData.timeSlots.first else { return 0 }
+            
+            // Calculate seconds from the grid start using timeIndex
+            let gridStartSeconds = dayData.startTime.timeIntervalSince(firstTimeSlot.time)
+            let eventStartOffsetFromBase = event.timeIndex - dayData.baseTimeIndex
+            let totalOffsetSeconds = eventStartOffsetFromBase + gridStartSeconds
+            
+            // Each 15-minute slot is 30px tall, so 1 hour (4 slots) = 120px
+            let pixelsPerSecond: CGFloat = 120.0 / 3600.0 // 120 pixels per hour (4 slots)
+            let baseOffset = CGFloat(totalOffsetSeconds) * pixelsPerSecond
+            
+            // Move down by 1/2 slot (7.5 minutes = 15 pixels)
+            return baseOffset + 15.0
+        }
+        
+        private func calculateBlockHeight(for event: ScheduleBlock) -> CGFloat {
+            let durationSeconds = event.endTime.timeIntervalSince(event.startTime)
+            // Each 15-minute slot is 30px tall, so 1 hour (4 slots) = 120px
+            let pixelsPerSecond: CGFloat = 120.0 / 3600.0 // 120 pixels per hour
+            return max(CGFloat(durationSeconds) * pixelsPerSecond, 30)
+        }
+        
+        private func formatTime(_ date: Date) -> String {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "h:mma"
+            return formatter.string(from: date).lowercased()
+        }
+        
+        private func getPriorityIconName(_ priority: Int) -> String {
+            switch priority {
+            case 1: return "icon-going-yes"     // Must see
+            case 2: return "icon-going-maybe"   // Might see
+            case 3: return "icon-going-no"      // Won't see
+            default: return ""
+            }
+        }
+        
+        private func getAttendedIconName(_ status: String) -> String {
+            switch status {
+            case "sawAll": return "icon-seen"
+            case "sawSome": return "icon-seen-partial"
+            default: return ""
+            }
+        }
+        
+        private func localizeEventType(_ eventType: String) -> String {
+            // Map database event type to display name via localization
+            if eventType == "Unofficial Event" {
+                return NSLocalizedString("Unofficial Events", comment: "")
+            }
+            return eventType
+        }
+        
+        private func eventBlockView(event: ScheduleBlock, dayData: DayScheduleData, columnWidth: CGFloat, priorityManager: SQLitePriorityManager, onAttendanceUpdate: @escaping (String, String, String, String, String) -> Void, onLongPress: ((String, String, String, String, String) -> Void)?, attendedHandle: ShowsAttended) -> some View {
             let yOffset = calculateYOffset(for: event, in: dayData)
             let blockHeight = calculateBlockHeight(for: event)
             let onBandTapped = self.onBandTapped
@@ -373,11 +510,7 @@ struct LandscapeScheduleView: View {
                 }
             }()
             
-            return Button(action: {
-                print("Tapped on \(event.bandName) on \(currentDay)")
-                onBandTapped(event.bandName, currentDay)
-            }) {
-                VStack(alignment: .leading, spacing: 1) {
+            return VStack(alignment: .leading, spacing: 1) {
                     // Check if this is a combined event (format: "band1/band2")
                     if event.bandName.contains("/") {
                         let bandComponents = event.bandName.components(separatedBy: "/")
@@ -608,223 +741,25 @@ struct LandscapeScheduleView: View {
                     RoundedRectangle(cornerRadius: 4)
                         .stroke(Color.white.opacity(event.isExpired ? 0.15 : 0.3), lineWidth: 1)
                 )
-            }
-            .contextMenu {
-                // Check if this is a combined event
-                if isCombinedEvent && individualBands.count == 2 {
-                    // Combined event: Show band selection menu items
-                    ForEach(individualBands, id: \.self) { bandName in
-                        Menu(bandName) {
-                            // Get current status for this specific band
-                            let currentStatus = attendedHandle.getShowAttendedStatus(
-                                band: bandName,
-                                location: event.location,
-                                startTime: event.startTimeString,
-                                eventType: event.eventType,
-                                eventYearString: String(eventYear)
-                            )
-                            
-                            // Show "All Of Event" if not already selected
-                            if currentStatus != "sawAll" {
-                                Button(action: {
-                                    onAttendanceUpdate(bandName, event.location, event.startTimeString, event.eventType, sawAllStatus)
-                                }) {
-                                    Text(NSLocalizedString("All Of Event", comment: ""))
-                                    Image(systemName: "checkmark.circle.fill")
-                                }
-                            }
-                            
-                            // Show "Part Of Event" if not already selected AND event type is "Show"
-                            if currentStatus != "sawSome" && event.eventType == "Show" {
-                                Button(action: {
-                                    onAttendanceUpdate(bandName, event.location, event.startTimeString, event.eventType, sawSomeStatus)
-                                }) {
-                                    Text(NSLocalizedString("Part Of Event", comment: ""))
-                                    Image(systemName: "checkmark.circle")
-                                }
-                            }
-                            
-                            // Show "None Of Event" if not already selected
-                            if currentStatus != "sawNone" && currentStatus != "" {
-                                Button(action: {
-                                    onAttendanceUpdate(bandName, event.location, event.startTimeString, event.eventType, sawNoneStatus)
-                                }) {
-                                    Text(NSLocalizedString("None Of Event", comment: ""))
-                                    Image(systemName: "xmark.circle")
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    // Single event: Show normal attendance options
-                    let currentStatus = event.attendedStatus
-                    
-                    // Show "All Of Event" if not already selected
-                    if currentStatus != "sawAll" {
-                        Button(action: {
-                            onAttendanceUpdate(event.bandName, event.location, event.startTimeString, event.eventType, sawAllStatus)
-                        }) {
-                            Text(NSLocalizedString("All Of Event", comment: ""))
-                            Image(systemName: "checkmark.circle.fill")
-                        }
-                    }
-                    
-                    // Show "Part Of Event" if not already selected AND event type is "Show"
-                    if currentStatus != "sawSome" && event.eventType == "Show" {
-                        Button(action: {
-                            onAttendanceUpdate(event.bandName, event.location, event.startTimeString, event.eventType, sawSomeStatus)
-                        }) {
-                            Text(NSLocalizedString("Part Of Event", comment: ""))
-                            Image(systemName: "checkmark.circle")
-                        }
-                    }
-                    
-                    // Show "None Of Event" if not already selected
-                    if currentStatus != "sawNone" && currentStatus != "" {
-                        Button(action: {
-                            onAttendanceUpdate(event.bandName, event.location, event.startTimeString, event.eventType, sawNoneStatus)
-                        }) {
-                            Text(NSLocalizedString("None Of Event", comment: ""))
-                            Image(systemName: "xmark.circle")
-                        }
+                .contentShape(Rectangle()) // Make entire area tappable
+                .onLongPressGesture(minimumDuration: 0.5) {
+                    // Long press - show priority/attendance menu
+                    if let onLongPress = onLongPress {
+                        onLongPress(event.bandName, event.location, event.startTimeString, event.eventType, currentDay)
                     }
                 }
-            }
-            .offset(x: 2, y: yOffset)
-        }
-        
-        private func calculateYOffset(for event: ScheduleBlock, in dayData: DayScheduleData) -> CGFloat {
-            // Calculate offset using actual timeIndex (preserves chronological order across days)
-            // The timeline grid starts at the first event's timeIndex
-            guard let firstTimeSlot = dayData.timeSlots.first else { return 0 }
-            
-            // Calculate seconds from the grid start using timeIndex
-            let gridStartSeconds = dayData.startTime.timeIntervalSince(firstTimeSlot.time)
-            let eventStartOffsetFromBase = event.timeIndex - dayData.baseTimeIndex
-            let totalOffsetSeconds = eventStartOffsetFromBase + gridStartSeconds
-            
-            // Each 15-minute slot is 30px tall, so 1 hour (4 slots) = 120px
-            let pixelsPerSecond: CGFloat = 120.0 / 3600.0 // 120 pixels per hour (4 slots)
-            let baseOffset = CGFloat(totalOffsetSeconds) * pixelsPerSecond
-            
-            // Move down by 1/2 slot (7.5 minutes = 15 pixels)
-            return baseOffset + 15.0
-        }
-        
-        private func calculateBlockHeight(for event: ScheduleBlock) -> CGFloat {
-            let durationSeconds = event.endTime.timeIntervalSince(event.startTime)
-            // Each 15-minute slot is 30px tall, so 1 hour (4 slots) = 120px
-            let pixelsPerSecond: CGFloat = 120.0 / 3600.0 // 120 pixels per hour
-            return max(CGFloat(durationSeconds) * pixelsPerSecond, 30)
-        }
-        
-        private func formatTime(_ date: Date) -> String {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "h:mma"
-            return formatter.string(from: date).lowercased()
-        }
-        
-        private func formatTimeRange(start: Date, end: Date) -> String {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "h:mma"
-            let startStr = formatter.string(from: start).lowercased()
-            let endStr = formatter.string(from: end).lowercased()
-            return "\(startStr)-\(endStr)"
-        }
-        
-        private func getPriorityIconName(_ priority: Int) -> String {
-            switch priority {
-            case 1: return "icon-going-yes"     // Must see
-            case 2: return "icon-going-maybe"   // Might see
-            case 3: return "icon-going-no"      // Won't see
-            default: return ""
-            }
-        }
-        
-        private func getAttendedIconName(_ status: String) -> String {
-            switch status {
-            case "sawAll": return "icon-seen"
-            case "sawSome": return "icon-seen-partial"
-            default: return ""
-            }
-        }
-        
-        private func localizeEventType(_ eventType: String) -> String {
-            // Map database event type to display name via localization
-            if eventType == "Unofficial Event" {
-                return NSLocalizedString("Unofficial Events", comment: "")
-            }
-            return eventType
+                .onTapGesture {
+                    // Short tap - go to details (only fires if long press didn't recognize)
+                    print("Tapped on \(event.bandName) on \(currentDay)")
+                    onBandTapped(event.bandName, currentDay)
+                }
+                .offset(x: 2, y: yOffset)
         }
     }
-    
-    // MARK: - Header View
-    
-    private func headerView(dayData: DayScheduleData) -> some View {
-        HStack {
-            Spacer()
-            
-            // Previous day button - only show if functional
-            if viewModel.canNavigateToPreviousDay {
-                Button(action: {
-                    viewModel.navigateToPreviousDay()
-                }) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 14))
-                        .foregroundColor(.white)
-                        .frame(width: 32, height: 32)
-                        .background(Color.gray.opacity(0.3))
-                        .cornerRadius(6)
-                }
-                .padding(.trailing, 8)
-            }
-            
-            // Day label and event count
-            VStack(spacing: 2) {
-                Text("\(dayData.dayLabel) - \(viewModel.currentDayEventCount) Events")
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(.white)
-            }
-            .frame(minWidth: 200)
-            
-            // Next day button - only show if functional
-            if viewModel.canNavigateToNextDay {
-                Button(action: {
-                    viewModel.navigateToNextDay()
-                }) {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 14))
-                        .foregroundColor(.white)
-                        .frame(width: 32, height: 32)
-                        .background(Color.gray.opacity(0.3))
-                        .cornerRadius(6)
-                }
-                .padding(.leading, 8)
-            }
-            
-            Spacer()
-            
-            // iPad: List view toggle button (return to list view)
-            if isSplitViewCapable, let onDismiss = onDismissRequested {
-                Button(action: {
-                    print("📱 [IPAD_TOGGLE] List button tapped in calendar view")
-                    onDismiss()
-                }) {
-                    Image(systemName: "list.bullet")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.white)
-                        .frame(width: 44, height: 44)
-                        .background(Color.blue.opacity(0.8))
-                        .cornerRadius(8)
-                }
-                .padding(.trailing, 16)
-            }
-        }
-        .frame(height: 60)
-        .background(Color.black)
-    }
-    
 }
+    
+    
+
 
 // MARK: - Preview
 

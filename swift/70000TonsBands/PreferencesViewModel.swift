@@ -24,13 +24,6 @@ class PreferencesViewModel: ObservableObject {
             writeFiltersFile()  // Immediately persist to prevent reversion
         }
     }
-    @Published var promptForAttended: Bool = false {
-        didSet { 
-            setPromptForAttended(promptForAttended)
-            writeFiltersFile()  // Immediately persist to prevent reversion
-        }
-    }
-    
     // Alert Preferences
     @Published var alertOnMustSee: Bool = true {
         didSet { 
@@ -266,7 +259,7 @@ class PreferencesViewModel: ObservableObject {
     func loadCurrentPreferences() {
         // Temporarily disable didSet observers by loading values directly
         let hideExpired = getHideExpireScheduleData()
-        let promptAttended = getPromptForAttended()
+        // Note: promptForAttended preference removed - using long press menu instead
         
         let mustSee = getMustSeeAlertValue()
         let mightSee = getMightSeeAlertValue()
@@ -299,7 +292,7 @@ class PreferencesViewModel: ObservableObject {
         
         // Now set the values (this will trigger didSet but that's ok for initial load)
         hideExpiredEvents = hideExpired
-        promptForAttended = promptAttended
+        // Note: promptForAttended removed - using long press menu instead
         alertOnMustSee = mustSee
         alertOnMightSee = mightSee
         alertOnlyForWillAttend = onlyAttended
