@@ -5,9 +5,13 @@
     <string name="must">Ja</string>
     <string name="wont">Nein ikke</string>
     <string name="unknown">Ukendt</string>
+    <string name="priority">Prioritet</string>
+    <string name="attended">Deltaget</string>
 
     <string name="Ok">Ja</string>
     <string name="Cancel">Ingen</string>
+    <string name="SelectBand">Vælg Band</string>
+    <string name="WhichBandDoYouWant">Hvilket band vil du angive prioritet eller deltagelse for?</string>
     <string name="outdated_app_version_message">Du bruger en ældre version af appen. Opdater venligst til den nyeste version i dag</string>
 
     <string name="AlertOnMustSeeBands">Notifikation ved bands der skal ses</string>
@@ -386,4 +390,20 @@
     <!-- Import/Export -->
     <string name="update_profile">Opdater Profil</string>
     <string name="update_existing_profile_message">Dette vil opdatere den eksisterende profil \"{profileName}\" med nye data:</string>
+    
+    <!-- About Screen -->
+    <string name="about">Om</string>
+    <string name="about_description1">Dette er en uofficiel open-source-applikation designet til at hjælpe brugere med at opdage bands, der optræder på !FESTIVALE_NAME!, og se begivenhedsprogrammer, tidspunkter og steder på ét sted.</string>
+    <string name="about_description2">The app allows users to browse artists, explore event listings, and stay organized while attending festivals. It is designed to work across different events without being tied to any single festival, promoter, or organizer.</string>
+    <string name="about_description3">Denne applikation er ikke tilknyttet, godkendt af eller officielt forbundet med nogen festival, begivenhedsarrangør, promoter eller kunstner. Alle kunstnernavne, begivenhedsnavne og relaterede oplysninger forbliver ejendommen til deres respektive ejere og bruges kun til informationsformål.</string>
+    <string name="about_description4">Kildekoden til denne applikation er open-source og licenseret under GNU General Public License, version 2 (GPL-2.0).</string>
+    <string name="about_copyright">Copyright © 2015–nu</string>
+    <string name="about_the_team">Holdet</string>
+    <string name="about_team_ron_dorn">Ron Dorn</string>
+    <string name="about_role_lead_developer">Hovedudvikler og skaber (center)</string>
+    <string name="about_team_robert_jan">Robert Jan de Vries</string>
+    <string name="about_role_ui_designer">UI-designer (højre)</string>
+    <string name="about_team_aaron">Aaron Copeland</string>
+    <string name="about_role_curator">70K Bands Resume-kurator (venstre)</string>
+    <string name="about_team_photo">Holdbillede</string>
 </resources>

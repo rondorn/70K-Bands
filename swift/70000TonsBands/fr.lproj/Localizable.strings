@@ -17,10 +17,16 @@
 "Must" = "Oui";
 "Might" = "Peut Être";
 "Wont" = "Non";
+"Priority" = "Priorité";
+"Attended" = "Assisté";
+"Wont Attend" = "Ne participera pas";
 "Unknown" = "Inconnu";
 
 "Ok" = "Oui";
 "Cancel" = "Non";
+
+"Select Band" = "Sélectionner un groupe";
+"Which band do you want to set priority or attendance for?" = "Pour quel groupe souhaitez-vous définir la priorité ou la présence ?";
 
 "Alert On Must See Bands"="Alerte Pour OUI Salons";
 "Alert On Might See Bands"="Alerte pour peut-être Shows";
@@ -309,3 +315,19 @@
 "Share Importable Band/Event Data" = "Partager Données Importables Groupes/Événements";
 "Share Band Report" = "Partager Rapport des Groupes";
 "Share Event Report" = "Partager Rapport des Événements";
+
+// About Screen
+"About" = "À propos";
+"AboutDescription1" = "Il s'agit d'une application non officielle et open-source conçue pour aider les utilisateurs à découvrir les groupes se produisant à !FESTIVALE_NAME!, et à consulter les horaires des événements, les heures et les lieux en un seul endroit.";
+"AboutDescription2" = "The app allows users to browse artists, explore event listings, and stay organized while attending festivals. It is designed to work across different events without being tied to any single festival, promoter, or organizer.";
+"AboutDescription3" = "Cette application n'est pas affiliée, approuvée ou officiellement connectée à un festival, organisateur d'événements, promoteur ou artiste. Tous les noms d'artistes, noms d'événements et informations connexes restent la propriété de leurs propriétaires respectifs et sont utilisés à des fins informatives uniquement.";
+"AboutDescription4" = "Le code source de cette application est open-source et sous licence GNU General Public License, version 2 (GPL-2.0).";
+"AboutCopyright" = "Copyright © 2015–présent";
+"AboutTheTeam" = "L'Équipe";
+"AboutRoleLeadDeveloper" = "Développeur principal et créateur";
+"AboutRoleUIDesigner" = "Concepteur d'interface utilisateur";
+"AboutRoleCurator" = "Curateur de résumé 70K Bands";
+"AboutPositionCenter" = "centre";
+"AboutPositionRight" = "droite";
+"AboutPositionLeft" = "gauche";
+"AboutTeamPhoto" = "Photo d'Équipe";
