@@ -132,7 +132,7 @@ struct FestivalConfig {
         #if FESTIVAL_70K
         print("🏛️ [MDF_DEBUG] Building 70K configuration")
         // 70,000 Tons of Metal configuration
-        self.festivalName = "70,000 Tons of Metal"
+        self.festivalName = "70,000 Tons Of Metal"
         self.festivalShortName = "70K"
         self.appName = "70K Bands"
         self.bundleIdentifier = "com.rdorn.-0000TonsBands"
@@ -179,7 +179,7 @@ struct FestivalConfig {
         #elseif FESTIVAL_MDF
         print("🏛️ [MDF_DEBUG] Building MDF configuration")
         // Maryland Death Fest configuration
-        self.festivalName = "Maryland Death Fest"
+        self.festivalName = "Maryland Deathfest"
         self.festivalShortName = "MDF"
         self.appName = "MDF Bands"
         self.bundleIdentifier = "com.rdorn.mdfbands"
@@ -221,7 +221,7 @@ struct FestivalConfig {
         #else
         print("🏛️ [MDF_DEBUG] Building DEFAULT (70K) configuration - no macro defined")
         // Default to 70K configuration if no macro is defined
-        self.festivalName = "70,000 Tons of Metal"
+        self.festivalName = "70,000 Tons Of Metal"
         self.festivalShortName = "70K"
         self.appName = "70K Bands"
         self.bundleIdentifier = "com.rdorn.-0000TonsBands"

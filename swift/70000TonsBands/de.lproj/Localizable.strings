@@ -18,10 +18,16 @@
 "Must"="Muss";
 "Might"="Kann";
 "Wont"="Nein";
+"Priority"="Priorität";
+"Attended"="Teilgenommen";
+"Wont Attend"="Wird nicht teilnehmen";
 "Unknown" = "Unbekannt";
 
 "Ok"="Ja";
 "Cancel"="Abbrechen";
+
+"Select Band"="Band auswählen";
+"Which band do you want to set priority or attendance for?"="Für welches Band möchten Sie Priorität oder Teilnahme festlegen?";
 
 "Alert On Must See Bands"="Alarm für 'Muss'-Bands";
 "Alert On Might See Bands"="Alarm für 'Kann'-Bands";
@@ -319,5 +325,21 @@
 "Share Importable Band/Event Data" = "Importierbare Band/Event-Daten Teilen";
 "Share Band Report" = "Band-Bericht Teilen";
 "Share Event Report" = "Event-Bericht Teilen";
+
+// About Screen
+"About" = "Über";
+"AboutDescription1" = "Dies ist eine inoffizielle Open-Source-Anwendung, die entwickelt wurde, um Benutzern zu helfen, Bands zu entdecken, die auf !FESTIVALE_NAME! auftreten, und Veranstaltungspläne, Zeiten und Orte an einem Ort anzuzeigen.";
+"AboutDescription2" = "The app allows users to browse artists, explore event listings, and stay organized while attending festivals. It is designed to work across different events without being tied to any single festival, promoter, or organizer.";
+"AboutDescription3" = "Diese Anwendung ist nicht mit einem Festival, Veranstaltungsorganisator, Promoter oder Künstler verbunden, unterstützt oder offiziell verbunden. Alle Künstlernamen, Veranstaltungsnamen und verwandte Informationen bleiben Eigentum ihrer jeweiligen Eigentümer und werden nur zu Informationszwecken verwendet.";
+"AboutDescription4" = "Der Quellcode für diese Anwendung ist Open-Source und unter der GNU General Public License, Version 2 (GPL-2.0), lizenziert.";
+"AboutCopyright" = "Copyright © 2015–heute";
+"AboutTheTeam" = "Das Team";
+"AboutRoleLeadDeveloper" = "Hauptentwickler und Schöpfer";
+"AboutRoleUIDesigner" = "UI-Designer";
+"AboutRoleCurator" = "70K Bands Zusammenfassungskurator";
+"AboutPositionCenter" = "Mitte";
+"AboutPositionRight" = "rechts";
+"AboutPositionLeft" = "links";
+"AboutTeamPhoto" = "Teamfoto";
 
 

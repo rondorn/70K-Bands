@@ -3,6 +3,7 @@ package com.Bands70k;
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.MenuItem;
+import android.widget.TextView;
 
 /**
  * About Activity - Displays information about the app, team, and licensing
@@ -19,7 +20,16 @@ public class AboutActivity extends Activity {
         // Enable the back button in the action bar
         if (getActionBar() != null) {
             getActionBar().setDisplayHomeAsUpEnabled(true);
-            getActionBar().setTitle("About");
+            getActionBar().setTitle(getString(R.string.about));
+        }
+        
+        // Replace !FESTIVALE_NAME! placeholder with actual festival name
+        TextView description1TextView = findViewById(R.id.about_description1);
+        if (description1TextView != null) {
+            String template = getString(R.string.about_description1);
+            String festivalName = FestivalConfig.getInstance().festivalName;
+            String processedText = template.replace("!FESTIVALE_NAME!", festivalName);
+            description1TextView.setText(processedText);
         }
     }
 

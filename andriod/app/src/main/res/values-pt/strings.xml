@@ -5,9 +5,13 @@
     <string name="must">Obrigatório</string>
     <string name="wont">Não</string>
     <string name="unknown">Desconhecido</string>
+    <string name="priority">Prioridade</string>
+    <string name="attended">Participou</string>
 
     <string name="Ok">Ok</string>
     <string name="Cancel">Cancelar</string>
+    <string name="SelectBand">Selecionar Banda</string>
+    <string name="WhichBandDoYouWant">Para qual banda você deseja definir prioridade ou participação?</string>
     <string name="outdated_app_version_message">Você está usando uma versão antiga do app. Atualize para a versão mais recente hoje</string>
 
     <string name="AlertOnMustSeeBands">Alerta de Shows Obrigatórios</string>
@@ -386,4 +390,20 @@
     <!-- Import/Export -->
     <string name="update_profile">Atualizar Perfil</string>
     <string name="update_existing_profile_message">Isso atualizará o perfil existente \"{profileName}\" com novos dados:</string>
+    
+    <!-- About Screen -->
+    <string name="about">Sobre</string>
+    <string name="about_description1">Este é um aplicativo não oficial e de código aberto projetado para ajudar os usuários a descobrir bandas que aparecem em !FESTIVALE_NAME!, e visualizar horários de eventos, horários e locais em um só lugar.</string>
+    <string name="about_description2">The app allows users to browse artists, explore event listings, and stay organized while attending festivals. It is designed to work across different events without being tied to any single festival, promoter, or organizer.</string>
+    <string name="about_description3">Este aplicativo não está afiliado, endossado ou oficialmente conectado a nenhum festival, organizador de eventos, promotor ou artista. Todos os nomes de artistas, nomes de eventos e informações relacionadas permanecem propriedade de seus respectivos proprietários e são usados apenas para fins informativos.</string>
+    <string name="about_description4">O código-fonte deste aplicativo é de código aberto e licenciado sob a Licença Pública Geral GNU, versão 2 (GPL-2.0).</string>
+    <string name="about_copyright">Copyright © 2015–presente</string>
+    <string name="about_the_team">A Equipe</string>
+    <string name="about_team_ron_dorn">Ron Dorn</string>
+    <string name="about_role_lead_developer">Desenvolvedor principal e criador (centro)</string>
+    <string name="about_team_robert_jan">Robert Jan de Vries</string>
+    <string name="about_role_ui_designer">Designer de interface do usuário (direita)</string>
+    <string name="about_team_aaron">Aaron Copeland</string>
+    <string name="about_role_curator">Curador de resumo 70K Bands (esquerda)</string>
+    <string name="about_team_photo">Foto da Equipe</string>
 </resources>

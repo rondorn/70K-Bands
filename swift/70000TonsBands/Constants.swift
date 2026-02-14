@@ -97,6 +97,21 @@ var inTestEnvironment = false;
 
 var webMessageHelp = String();
 
+// MARK: - Combined event delimiter (dual events in calendar)
+// ASCII Record Separator – never appears in user-visible event names. Used so "/" in descriptions is not treated as combined.
+let combinedEventDelimiter = "\u{001E}"
+
+func isCombinedEventBandName(_ bandName: String?) -> Bool {
+    guard let name = bandName else { return false }
+    return name.contains(combinedEventDelimiter)
+}
+
+func combinedEventBandParts(_ bandName: String?) -> [String]? {
+    guard let name = bandName, name.contains(combinedEventDelimiter) else { return nil }
+    let parts = name.components(separatedBy: combinedEventDelimiter)
+    return parts.count >= 2 ? parts : nil
+}
+
 var schedulingDataCacheFile = directoryPath.appendingPathComponent( "schedulingDataCacheFile")
 var schedulingDataByTimeCacheFile = directoryPath.appendingPathComponent( "schedulingDataByTimeCacheFile")
 var bandNamesCacheFile = directoryPath.appendingPathComponent( "bandNamesCacheFile")

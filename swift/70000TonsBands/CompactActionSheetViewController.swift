@@ -459,25 +459,11 @@ class CompactActionSheetViewController: UIViewController, UIGestureRecognizerDel
         button.tag = actionIndex
         button.addTarget(self, action: #selector(itemTapped(_:)), for: .touchUpInside)
         
-        // Create horizontal stack for icon, checkmark, and text - tighter spacing
+        // Create horizontal stack for icon, text, and checkmark (checkmark on the right)
         let stackView = UIStackView()
         stackView.axis = .horizontal
         stackView.spacing = 8  // Reduced from 12 for compact layout
         stackView.alignment = .center
-        
-        // Checkmark
-        if item.isSelected {
-            let checkmark = UILabel()
-            checkmark.text = "✓"
-            checkmark.font = UIFont.boldSystemFont(ofSize: 16)
-            checkmark.textColor = .systemGreen
-            checkmark.widthAnchor.constraint(equalToConstant: 16).isActive = true
-            stackView.addArrangedSubview(checkmark)
-        } else {
-            let spacer = UIView()
-            spacer.widthAnchor.constraint(equalToConstant: 16).isActive = true
-            stackView.addArrangedSubview(spacer)
-        }
         
         // Icon
         if let iconName = item.iconName, !iconName.isEmpty, let iconImage = UIImage(named: iconName) {
@@ -495,6 +481,20 @@ class CompactActionSheetViewController: UIViewController, UIGestureRecognizerDel
         label.font = UIFont.systemFont(ofSize: 16)
         label.textColor = .label
         stackView.addArrangedSubview(label)
+        
+        // Checkmark on the right
+        if item.isSelected {
+            let checkmark = UILabel()
+            checkmark.text = "✓"
+            checkmark.font = UIFont.boldSystemFont(ofSize: 16)
+            checkmark.textColor = .systemGreen
+            checkmark.widthAnchor.constraint(equalToConstant: 16).isActive = true
+            stackView.addArrangedSubview(checkmark)
+        } else {
+            let spacer = UIView()
+            spacer.widthAnchor.constraint(equalToConstant: 16).isActive = true
+            stackView.addArrangedSubview(spacer)
+        }
         
         button.addSubview(stackView)
         stackView.translatesAutoresizingMaskIntoConstraints = false

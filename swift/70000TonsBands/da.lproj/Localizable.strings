@@ -16,9 +16,15 @@
 "Must"="Skal";
 "Might"="MÂske";
 "Wont"="Skal ikke";
+"Priority"="Prioritet";
+"Attended"="Deltaget";
+"Wont Attend"="Vil ikke deltage";
 
 "Ok"="Ja";
 "Cancel"="Ingen";
+
+"Select Band"="Vælg Band";
+"Which band do you want to set priority or attendance for?"="Hvilket band vil du angive prioritet eller deltagelse for?";
 
 "Alert On Must See Bands"="Notifikation ved bands der skal ses";
 "Alert On Might See Bands"="Notifikation ved bands der mÂske skal ses";
@@ -291,3 +297,19 @@
 "Share Importable Band/Event Data" = "Del Importerbare Band/Event Data";
 "Share Band Report" = "Del Bandrapport";
 "Share Event Report" = "Del Eventrapport";
+
+// About Screen
+"About" = "Om";
+"AboutDescription1" = "Dette er en uofficiel open-source-applikation designet til at hjælpe brugere med at opdage bands, der optræder på !FESTIVALE_NAME!, og se begivenhedsprogrammer, tidspunkter og steder på ét sted.";
+"AboutDescription2" = "The app allows users to browse artists, explore event listings, and stay organized while attending festivals. It is designed to work across different events without being tied to any single festival, promoter, or organizer.";
+"AboutDescription3" = "Denne applikation er ikke tilknyttet, godkendt af eller officielt forbundet med nogen festival, begivenhedsarrangør, promoter eller kunstner. Alle kunstnernavne, begivenhedsnavne og relaterede oplysninger forbliver ejendommen til deres respektive ejere og bruges kun til informationsformål.";
+"AboutDescription4" = "Kildekoden til denne applikation er open-source og licenseret under GNU General Public License, version 2 (GPL-2.0).";
+"AboutCopyright" = "Copyright © 2015–nu";
+"AboutTheTeam" = "Holdet";
+"AboutRoleLeadDeveloper" = "Hovedudvikler og skaber";
+"AboutRoleUIDesigner" = "UI-designer";
+"AboutRoleCurator" = "70K Bands Resume-kurator";
+"AboutPositionCenter" = "center";
+"AboutPositionRight" = "højre";
+"AboutPositionLeft" = "venstre";
+"AboutTeamPhoto" = "Holdbillede";

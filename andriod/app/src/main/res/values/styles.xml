@@ -15,12 +15,12 @@
 
     <style name="AlertDialog" parent="Theme.AppCompat.Light.DarkActionBar">
         <item name="android:textColor">#FFFFFF</item>
-        <item name="android:background">#A8A8A8</item>
+        <item name="android:background">#1C1C1E</item>
+        <item name="android:windowBackground">#1C1C1E</item>
         <item name="android:textSize">15sp</item>
         <item name="android:textAlignment">center</item>
         <item name="android:gravity">center_horizontal</item>
         <item name="android:dialogMessage">?android:attr/textAppearanceMediumInverse</item>
-
     </style>
 
     <style name="splashScreenTheme" parent="Theme.AppCompat.Light.DarkActionBar">
