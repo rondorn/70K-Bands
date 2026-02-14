@@ -6,9 +6,13 @@
     <string name="must">Kyllä</string>
     <string name="wont">Ei</string>
     <string name="unknown">Tuntematon</string>
+    <string name="priority">Prioriteetti</string>
+    <string name="attended">Osallistunut</string>
 
     <string name="Ok">Kyllä</string>
     <string name="Cancel">Ei</string>
+    <string name="SelectBand">Valitse Bändi</string>
+    <string name="WhichBandDoYouWant">Mille bändille haluat asettaa prioriteetin tai osallistumisen?</string>
     <string name="outdated_app_version_message">Käytät sovelluksen vanhempaa versiota. Päivitä uusimpaan versioon tänään</string>
 
     <string name="AlertOnMustSeeBands">Hälytä Kyllä-listan yhtyeistä</string>
@@ -389,4 +393,20 @@
     <!-- Import/Export -->
     <string name="update_profile">Päivitä Profiili</string>
     <string name="update_existing_profile_message">Tämä päivittää olemassa olevan profiilin \"{profileName}\" uusilla tiedoilla:</string>
+    
+    <!-- About Screen -->
+    <string name="about">Tietoja</string>
+    <string name="about_description1">Tämä on epävirallinen avoimen lähdekoodin sovellus, joka on suunniteltu auttamaan käyttäjiä löytämään !FESTIVALE_NAME! -tapahtumassa esiintyviä bändejä ja tarkastelemaan tapahtuma-aikatauluja, aikoja ja paikkoja yhdessä paikassa.</string>
+    <string name="about_description2">The app allows users to browse artists, explore event listings, and stay organized while attending festivals. It is designed to work across different events without being tied to any single festival, promoter, or organizer.</string>
+    <string name="about_description3">Tämä sovellus ei ole yhteydessä, hyväksytty tai virallisesti yhdistetty mihinkään festivaaliin, tapahtuman järjestäjään, promoottoriin tai esiintyjään. Kaikki artistinimet, tapahtumanimet ja siihen liittyvät tiedot pysyvät niiden omistajien omaisuutena ja niitä käytetään vain tiedotustarkoituksiin.</string>
+    <string name="about_description4">Tämän sovelluksen lähdekoodi on avoimen lähdekoodin ja se on lisensoitu GNU General Public License -lisenssillä, versio 2 (GPL-2.0).</string>
+    <string name="about_copyright">Copyright © 2015–nykyhetki</string>
+    <string name="about_the_team">Tiimi</string>
+    <string name="about_team_ron_dorn">Ron Dorn</string>
+    <string name="about_role_lead_developer">Pääkehittäjä ja luoja (keskellä)</string>
+    <string name="about_team_robert_jan">Robert Jan de Vries</string>
+    <string name="about_role_ui_designer">Käyttöliittymäsuunnittelija (oikealla)</string>
+    <string name="about_team_aaron">Aaron Copeland</string>
+    <string name="about_role_curator">70K Bands Yhteenvedon kuraattori (vasemmalla)</string>
+    <string name="about_team_photo">Tiimikuva</string>
 </resources>

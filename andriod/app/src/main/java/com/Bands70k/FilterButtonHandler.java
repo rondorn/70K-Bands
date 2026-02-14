@@ -18,6 +18,8 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.util.Log;
+import android.os.Handler;
+import android.os.Looper;
 
 
 //import com.google.android.material.snackbar.Snackbar;
@@ -100,6 +102,14 @@ public class FilterButtonHandler  {
         }
         
         showBands.refreshData();
+
+        // Re-evaluate list vs calendar in landscape after filter change (e.g. Hide Expired Events off → calendar should appear)
+        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                showBands.recheckLandscapeScheduleAfterFilterChange();
+            }
+        }, 500);
 
         // View Mode Filter removed - use title button to toggle instead
         boolean hasScheduledEvents = staticVariables.showEventButtons;

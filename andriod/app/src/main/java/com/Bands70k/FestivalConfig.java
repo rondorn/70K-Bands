@@ -100,7 +100,7 @@ public class FestivalConfig {
         
         if (FESTIVAL_MDF.equals(festivalType)) {
             // Maryland Death Fest configuration
-            this.festivalName = "Maryland Death Fest";
+            this.festivalName = "Maryland Deathfest";
             this.festivalShortName = "MDF";
             this.appName = "MDF Bands";
             this.packageName = "com.mdfbands";
@@ -148,7 +148,7 @@ public class FestivalConfig {
             
         } else {
             // Default to 70K configuration
-            this.festivalName = "70,000 Tons of Metal";
+            this.festivalName = "70,000 Tons Of Metal";
             this.festivalShortName = "70K";
             this.appName = "70K Bands";
             this.packageName = "com.Bands70k";

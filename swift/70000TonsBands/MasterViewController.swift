@@ -2521,9 +2521,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 
                 print("🔄 [LANDSCAPE_SCHEDULE] Band tapped: \(bandName) on day: \(currentDay ?? "unknown")")
                 
-                // Check if this is a combined event (format: "band1/band2")
-                if bandName.contains("/") {
-                    // Check if we have a mapping for this combined event
+                // Check if this is a combined event (internal delimiter, not "/")
+                if isCombinedEventBandName(bandName) {
                     if let individualBands = combinedEventsMap[bandName], individualBands.count == 2 {
                         // Prompt user to choose which band
                         self.promptForBandSelectionLandscape(combinedBandName: bandName, bands: individualBands, currentDay: currentDay)
@@ -2578,11 +2577,24 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 // Handle long press - show priority/attendance menu
                 guard let self = self else { return }
                 
-                // Create cellDataText format: "bandName;location;eventType;startTime"
-                let cellDataText = "\(bandName);\(location);\(eventType);\(startTime)"
+                // Combined event: show band choice first, then long-press menu for selected band
+                if isCombinedEventBandName(bandName) {
+                    let individualBands = combinedEventsMap[bandName] ?? combinedEventBandParts(bandName)
+                    if let bands = individualBands, bands.count == 2 {
+                        self.promptForBandSelectionLandscapeForLongPress(
+                            combinedBandName: bandName,
+                            bands: bands,
+                            location: location,
+                            startTime: startTime,
+                            eventType: eventType,
+                            day: day
+                        )
+                        return
+                    }
+                }
                 
-                // Show the same menu as list view
-                // Present from the landscape view controller if available, otherwise from self
+                // Single event: show long-press menu directly
+                let cellDataText = "\(bandName);\(location);\(eventType);\(startTime)"
                 let presentingViewController = self.landscapeScheduleViewController ?? self
                 self.showLongPressMenu(bandName: bandName, cellDataText: cellDataText, indexPath: IndexPath(row: 0, section: 0), presentingFrom: presentingViewController)
             }
@@ -4342,9 +4354,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             bandName = bandNameView.text ?? ""
         }
         
-        // Check if this is a combined event (format: "band1/band2")
-        if bandName.contains("/") {
-            // Check if we have a mapping for this combined event
+        // Check if this is a combined event (internal delimiter, not "/")
+        if isCombinedEventBandName(bandName) {
             if let individualBands = combinedEventsMap[bandName], individualBands.count == 2 {
                 // Prompt user to choose which band
                 promptForBandSelection(combinedBandName: bandName, bands: individualBands, cellDataText: cellDataText, indexPath: indexPath)
@@ -4366,51 +4377,45 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             print("ERROR: Expected exactly 2 bands for combined event, got \(bands.count)")
             return
         }
-        
         let band1 = bands[0]
         let band2 = bands[1]
-        
-        let alert = UIAlertController(
+        let presenter = landscapeScheduleViewController ?? self
+        let vc = BandSelectionViewController(
             title: NSLocalizedString("Select Band", comment: "Title for band selection dialog"),
             message: NSLocalizedString("Multiple bands share this event. Which band would you like to view?", comment: "Message for band selection dialog"),
-            preferredStyle: .actionSheet
+            band1: band1,
+            band2: band2,
+            onSelect: { [weak self] selectedBand in
+                guard let self = self else { return }
+                self.navigateToBandFromLandscape(bandName: selectedBand, currentDay: currentDay)
+            },
+            onCancel: { }
         )
-        
-        // Configure popover for iPad
-        if let popover = alert.popoverPresentationController {
-            popover.sourceView = self.view
-            popover.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.midY, width: 0, height: 0)
-            popover.permittedArrowDirections = []
+        presenter.present(vc, animated: true, completion: nil)
+    }
+
+    /// Prompts user to select which band to apply priority/attendance to when long-pressing a combined event in landscape
+    func promptForBandSelectionLandscapeForLongPress(combinedBandName: String, bands: [String], location: String, startTime: String, eventType: String, day: String?) {
+        guard bands.count == 2 else {
+            print("ERROR: Expected exactly 2 bands for combined event, got \(bands.count)")
+            return
         }
-        
-        // Add action for first band
-        let band1Action = UIAlertAction(title: band1, style: .default) { [weak self] _ in
-            guard let self = self else { return }
-            print("User selected band: \(band1)")
-            self.navigateToBandFromLandscape(bandName: band1, currentDay: currentDay)
-        }
-        alert.addAction(band1Action)
-        
-        // Add action for second band
-        let band2Action = UIAlertAction(title: band2, style: .default) { [weak self] _ in
-            guard let self = self else { return }
-            print("User selected band: \(band2)")
-            self.navigateToBandFromLandscape(bandName: band2, currentDay: currentDay)
-        }
-        alert.addAction(band2Action)
-        
-        // Add cancel action
-        let cancelAction = UIAlertAction(title: NSLocalizedString("Cancel", comment: ""), style: .cancel) { _ in
-            print("User cancelled band selection")
-        }
-        alert.addAction(cancelAction)
-        
-        // Present from landscape view controller if available, otherwise from self
-        if let landscapeVC = landscapeScheduleViewController {
-            landscapeVC.present(alert, animated: true, completion: nil)
-        } else {
-            self.present(alert, animated: true, completion: nil)
-        }
+        let band1 = bands[0]
+        let band2 = bands[1]
+        let presentingViewController = landscapeScheduleViewController ?? self
+        let vc = BandSelectionViewController(
+            title: NSLocalizedString("Select Band", comment: "Title for band selection dialog"),
+            message: NSLocalizedString("Which band do you want to set priority or attendance for?", comment: "Long-press combined event: which band to act on"),
+            band1: band1,
+            band2: band2,
+            onSelect: { [weak self] selectedBand in
+                guard let self = self else { return }
+                let cellDataText = "\(selectedBand);\(location);\(eventType);\(startTime)"
+                self.showLongPressMenu(bandName: selectedBand, cellDataText: cellDataText, indexPath: IndexPath(row: 0, section: 0), presentingFrom: presentingViewController)
+            },
+            onCancel: { }
+        )
+        presentingViewController.present(vc, animated: true, completion: nil)
     }
     
     /// Navigates to band detail from landscape calendar view
@@ -5207,6 +5212,56 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         showSwiftUIPreferences()
     }
 
+    /// APPLE CENSORSHIP COMPLIANCE: Processes HTML to remove "Android" and "iOS" text from platform rows.
+    /// Apple has banned the use of the word "Android" anywhere in any approved iOS app.
+    /// This is an Apple censorship requirement - we must remove any "Android" text
+    /// from the stats report HTML before saving it to the filesystem.
+    /// Failure to comply would result in App Store rejection.
+    /// Simple, aggressive string replacement - replaces text anywhere it appears.
+    private func processStatsHtmlForAppleCompliance(_ htmlString: String) -> String {
+        var processed = htmlString
+        
+        // Count occurrences before replacement
+        let androidCountBefore = processed.components(separatedBy: "Android").count - 1
+        let iosCountBefore = processed.components(separatedBy: "iOS").count - 1
+        
+        print("🔍 [STATS_PROCESS] Before: Android appears \(androidCountBefore) times, iOS appears \(iosCountBefore) times")
+        
+        // AGGRESSIVE REPLACEMENT: Replace "Android" and "iOS" text anywhere they appear after the emoji
+        processed = processed.replacingOccurrences(of: "🤖 Android", with: "🤖 ")
+        processed = processed.replacingOccurrences(of: "🤖 android", with: "🤖 ")
+        processed = processed.replacingOccurrences(of: "🤖 ANDROID", with: "🤖 ")
+        processed = processed.replacingOccurrences(of: "🍎 iOS", with: "🍎 ")
+        processed = processed.replacingOccurrences(of: "🍎 ios", with: "🍎 ")
+        processed = processed.replacingOccurrences(of: "🍎 IOS", with: "🍎 ")
+        
+        // Also try with HTML structure (most common case)
+        processed = processed.replacingOccurrences(of: "<tr><td>🤖 Android</td>", with: "<tr><td>🤖 </td>")
+        processed = processed.replacingOccurrences(of: "<tr><td>🤖 android</td>", with: "<tr><td>🤖 </td>")
+        processed = processed.replacingOccurrences(of: "<tr><td>🍎 iOS</td>", with: "<tr><td>🍎 </td>")
+        processed = processed.replacingOccurrences(of: "<tr><td>🍎 ios</td>", with: "<tr><td>🍎 </td>")
+        
+        // Count occurrences after replacement
+        let androidCountAfter = processed.components(separatedBy: "Android").count - 1
+        let iosCountAfter = processed.components(separatedBy: "iOS").count - 1
+        
+        print("🔍 [STATS_PROCESS] After: Android appears \(androidCountAfter) times, iOS appears \(iosCountAfter) times")
+        
+        if androidCountBefore > 0 && androidCountAfter == 0 {
+            print("✅ [STATS_PROCESS] Successfully removed all Android text")
+        } else if androidCountAfter > 0 {
+            print("⚠️ [STATS_PROCESS] WARNING: Android still appears \(androidCountAfter) times!")
+        }
+        
+        if iosCountBefore > 0 && iosCountAfter == 0 {
+            print("✅ [STATS_PROCESS] Successfully removed all iOS text")
+        } else if iosCountAfter > 0 {
+            print("⚠️ [STATS_PROCESS] WARNING: iOS still appears \(iosCountAfter) times!")
+        }
+        
+        return processed
+    }
+    
     @objc @IBAction func statsButtonTapped(_ sender: Any) {
         let fileManager = FileManager.default
         guard let documentsUrl = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first else {
@@ -5241,7 +5296,40 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     
                     if let data = data {
                         do {
-                            try data.write(to: fileUrl)
+                            // Convert downloaded data to string
+                            guard let htmlString = String(data: data, encoding: .utf8) else {
+                                print("❌ [STATS] Failed to decode HTML data as UTF-8")
+                                if !fileExists {
+                                    DispatchQueue.main.async {
+                                        self.presentNoDataView(message: "Could not decode stats file.")
+                                    }
+                                }
+                                return
+                            }
+                            
+                            print("📥 [STATS] Downloaded \(data.count) bytes, processing for Apple compliance...")
+                            
+                            // APPLE CENSORSHIP COMPLIANCE:
+                            // Apple has banned the use of the word "Android" anywhere in any approved iOS app.
+                            // This is an Apple censorship requirement - we must remove any "Android" text
+                            // from the downloaded stats report HTML before saving it to the filesystem.
+                            // Failure to comply would result in App Store rejection.
+                            let processedHtml = self.processStatsHtmlForAppleCompliance(htmlString)
+                            
+                            // Convert processed HTML back to data and write to file
+                            guard let processedData = processedHtml.data(using: .utf8) else {
+                                print("❌ [STATS] Failed to encode processed HTML as UTF-8")
+                                if !fileExists {
+                                    DispatchQueue.main.async {
+                                        self.presentNoDataView(message: "Could not process stats file.")
+                                    }
+                                }
+                                return
+                            }
+                            
+                            try processedData.write(to: fileUrl)
+                            print("✅ [STATS] Stats file saved successfully (platform names removed)")
+                            
                             // Refresh the currently displayed web view if it exists
                             DispatchQueue.main.async {
                                 print("🔄 [STATS_REFRESH] Background download complete, attempting to refresh web view")

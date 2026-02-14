@@ -5,9 +5,13 @@
     <string name="wont">Non</string>
     <string name="must">Oui</string>
     <string name="unknown">Inconnu</string>
+    <string name="priority">Priorité</string>
+    <string name="attended">Assisté</string>
 
     <string name="Ok">Oui</string>
     <string name="Cancel">Non</string>
+    <string name="SelectBand">Sélectionner un groupe</string>
+    <string name="WhichBandDoYouWant">Pour quel groupe souhaitez-vous définir la priorité ou la présence ?</string>
     <string name="outdated_app_version_message">Vous utilisez une ancienne version de l’application. Veuillez la mettre à jour vers la dernière version dès aujourd’hui</string>
 
     <string name="AlertOnMustSeeBands">Alerte Pour OUI Salons</string>
@@ -389,4 +393,20 @@
     <!-- Import/Export -->
     <string name="update_profile">Mettre à Jour le Profil</string>
     <string name="update_existing_profile_message">Cela mettra à jour le profil existant \"{profileName}\" avec de nouvelles données:</string>
+    
+    <!-- About Screen -->
+    <string name="about">À propos</string>
+    <string name="about_description1">Il s\'agit d\'une application non officielle et open-source conçue pour aider les utilisateurs à découvrir les groupes se produisant à !FESTIVALE_NAME!, et à consulter les horaires des événements, les heures et les lieux en un seul endroit.</string>
+    <string name="about_description2">The app allows users to browse artists, explore event listings, and stay organized while attending festivals. It is designed to work across different events without being tied to any single festival, promoter, or organizer.</string>
+    <string name="about_description3">Cette application n\'est pas affiliée, approuvée ou officiellement connectée à un festival, organisateur d\'événements, promoteur ou artiste. Tous les noms d\'artistes, noms d\'événements et informations connexes restent la propriété de leurs propriétaires respectifs et sont utilisés à des fins informatives uniquement.</string>
+    <string name="about_description4">Le code source de cette application est open-source et sous licence GNU General Public License, version 2 (GPL-2.0).</string>
+    <string name="about_copyright">Copyright © 2015–présent</string>
+    <string name="about_the_team">L\'Équipe</string>
+    <string name="about_team_ron_dorn">Ron Dorn</string>
+    <string name="about_role_lead_developer">Développeur principal et créateur (centre)</string>
+    <string name="about_team_robert_jan">Robert Jan de Vries</string>
+    <string name="about_role_ui_designer">Concepteur d\'interface utilisateur (droite)</string>
+    <string name="about_team_aaron">Aaron Copeland</string>
+    <string name="about_role_curator">Curateur de résumé 70K Bands (gauche)</string>
+    <string name="about_team_photo">Photo d\'Équipe</string>
 </resources>

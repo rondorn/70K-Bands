@@ -2128,7 +2128,6 @@ class DetailViewModel: ObservableObject {
                 return
             }
             
-            // STEP 3: Save to cache and refresh display
             do {
                 try data.write(to: cacheFileURL)
                 print("✅ Stats cache updated successfully")

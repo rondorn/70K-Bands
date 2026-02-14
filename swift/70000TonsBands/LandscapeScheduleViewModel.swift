@@ -339,7 +339,7 @@ class LandscapeScheduleViewModel: ObservableObject {
         }
         
         // Create mapping for combined events: event key -> combined band name
-        var eventToCombinedName: [String: String] = [:] // "timeIndex:bandName" -> "band1/band2"
+        var eventToCombinedName: [String: String] = [:] // "timeIndex:bandName" -> combined name (band1+delimiter+band2)
         var eventsToSkip = Set<String>() // Events to skip (second event of a pair)
         
         for (_, groupEvents) in eventGroups {
@@ -350,9 +350,9 @@ class LandscapeScheduleViewModel: ObservableObject {
                 
                 // Ensure they're different bands and both are non-empty
                 if band1 != band2 && !band1.isEmpty && !band2.isEmpty {
-                    // Sort band names alphabetically for consistent display
+                    // Sort band names alphabetically for consistent display. Use internal delimiter so "/" in event names is not treated as combined.
                     let sortedBands = [band1, band2].sorted()
-                    let combinedBandName = "\(sortedBands[0])/\(sortedBands[1])"
+                    let combinedBandName = "\(sortedBands[0])\(combinedEventDelimiter)\(sortedBands[1])"
                     
                     // Store mapping for both events
                     eventToCombinedName["\(groupEvents[0].timeIndex):\(band1)"] = combinedBandName

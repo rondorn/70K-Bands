@@ -5,9 +5,13 @@
     <string name="might">Might</string>
     <string name="wont">Wont</string>
     <string name="unknown">Unknown</string>
+    <string name="priority">Priority</string>
+    <string name="attended">Attended</string>
 
     <string name="Ok">OK</string>
     <string name="Cancel">Cancel</string>
+    <string name="SelectBand">Select Band</string>
+    <string name="WhichBandDoYouWant">Which band do you want to set priority or attendance for?</string>
 
     <string name="outdated_app_version_message">You are running an older version of the app. Please update to the latest version today</string>
 
@@ -404,4 +408,20 @@
     <!-- Import/Export -->
     <string name="update_profile">Update Profile</string>
     <string name="update_existing_profile_message">This will update the existing profile \"{profileName}\" with new data:</string>
+    
+    <!-- About Screen -->
+    <string name="about">About</string>
+    <string name="about_description1">This is an unofficial, open-source application designed to help users discover bands appearing at !FESTIVALE_NAME!, and to view event schedules, times, and venues in one place.</string>
+    <string name="about_description2">The app allows users to browse artists, explore event listings, and stay organized while attending festivals. It is designed to work across different events without being tied to any single festival, promoter, or organizer.</string>
+    <string name="about_description3">This application is not affiliated with, endorsed by, or officially connected to any festival, event organizer, promoter, or performing artist. All artist names, event names, and related information remain the property of their respective owners and are used for informational purposes only.</string>
+    <string name="about_description4">The source code for this application is open-sourced and licensed under the GNU General Public License, version 2 (GPL-2.0).</string>
+    <string name="about_copyright">Copyright © 2015–present</string>
+    <string name="about_the_team">The Team</string>
+    <string name="about_team_ron_dorn">Ron Dorn</string>
+    <string name="about_role_lead_developer">Lead developer and creator (center)</string>
+    <string name="about_team_robert_jan">Robert Jan de Vries</string>
+    <string name="about_role_ui_designer">UI Designer (right)</string>
+    <string name="about_team_aaron">Aaron Copeland</string>
+    <string name="about_role_curator">70K Bands Summary Curator (left)</string>
+    <string name="about_team_photo">Team Photo</string>
 </resources>

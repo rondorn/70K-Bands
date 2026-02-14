@@ -20,9 +20,15 @@
 "Must"="Kyllä";
 "Might"="Ehkä";
 "Wont"="Ei";
+"Priority"="Prioriteetti";
+"Attended"="Osallistunut";
+"Wont Attend"="En osallistu";
 
 "Ok"="Kyllä";
 "Cancel"="Peruuta";
+
+"Select Band"="Valitse Bändi";
+"Which band do you want to set priority or attendance for?"="Mille bändille haluat asettaa prioriteetin tai osallistumisen?";
 
 "Alert On Must See Bands"="Hälytä Kyllä-listan yhtyeistä";
 "Alert On Might See Bands"="Hälytä Ehkä-listan yhtyeistä";
@@ -298,3 +304,19 @@
 "Share Importable Band/Event Data" = "Jaa Tuotavat Bändi/Tapahtuma Tiedot";
 "Share Band Report" = "Jaa Bändiraportti";
 "Share Event Report" = "Jaa Tapahtumaraportti";
+
+// About Screen
+"About" = "Tietoja";
+"AboutDescription1" = "Tämä on epävirallinen avoimen lähdekoodin sovellus, joka on suunniteltu auttamaan käyttäjiä löytämään !FESTIVALE_NAME! -tapahtumassa esiintyviä bändejä ja tarkastelemaan tapahtuma-aikatauluja, aikoja ja paikkoja yhdessä paikassa.";
+"AboutDescription2" = "The app allows users to browse artists, explore event listings, and stay organized while attending festivals. It is designed to work across different events without being tied to any single festival, promoter, or organizer.";
+"AboutDescription3" = "Tämä sovellus ei ole yhteydessä, hyväksytty tai virallisesti yhdistetty mihinkään festivaaliin, tapahtuman järjestäjään, promoottoriin tai esiintyjään. Kaikki artistinimet, tapahtumanimet ja siihen liittyvät tiedot pysyvät niiden omistajien omaisuutena ja niitä käytetään vain tiedotustarkoituksiin.";
+"AboutDescription4" = "Tämän sovelluksen lähdekoodi on avoimen lähdekoodin ja se on lisensoitu GNU General Public License -lisenssillä, versio 2 (GPL-2.0).";
+"AboutCopyright" = "Copyright © 2015–nykyhetki";
+"AboutTheTeam" = "Tiimi";
+"AboutRoleLeadDeveloper" = "Pääkehittäjä ja luoja";
+"AboutRoleUIDesigner" = "Käyttöliittymäsuunnittelija";
+"AboutRoleCurator" = "70K Bands Yhteenvedon kuraattori";
+"AboutPositionCenter" = "keskellä";
+"AboutPositionRight" = "oikealla";
+"AboutPositionLeft" = "vasemmalla";
+"AboutTeamPhoto" = "Tiimikuva";

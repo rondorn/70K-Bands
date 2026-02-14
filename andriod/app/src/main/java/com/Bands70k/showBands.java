@@ -112,6 +112,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     private static final long SCROLL_STOP_DELAY_MS = 50; // Reduced delay - only block clicks during active scrolling, not after
     private static final long SCROLL_STATE_TIMEOUT_MS = 200; // If scroll state hasn't changed in this time, treat as IDLE
     private volatile boolean isRefreshing = false; // Track if a refresh is in progress
+    private long lastLongPressTime = 0;
+    private static final long LONG_PRESS_CLICK_IGNORE_MS = 800; // Ignore any click shortly after long-press (spurious release/dismiss)
+    private volatile boolean ignoreNextListClickUntilMenuDismissed = false; // Ignore release-after-hold when menu was shown
     private int refreshCounter = 0; // Track number of concurrent refreshes for debugging
     private long lastRefreshStartTime = 0; // Track when refresh started
     private long lastRefreshEndTime = 0; // Track when refresh ended
@@ -1190,6 +1193,17 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 public void onItemClick(AdapterView<?> arg0, View v, int position, long arg3) {
                     long clickTime = System.currentTimeMillis();
                     try {
+                        // Ignore any click that occurs shortly after a long-press (spurious release or after menu dismiss)
+                        if (lastLongPressTime > 0 && (clickTime - lastLongPressTime) < LONG_PRESS_CLICK_IGNORE_MS) {
+                            lastLongPressTime = 0;
+                            return;
+                        }
+                        lastLongPressTime = 0;
+                        // Ignore the click that fires when user releases after holding (menu was shown, release can be seconds later)
+                        if (ignoreNextListClickUntilMenuDismissed) {
+                            ignoreNextListClickUntilMenuDismissed = false;
+                            return;
+                        }
                         // SCROLL STATE STUCK FIX: If scroll state says we're scrolling but it's been a long time
                         // since the last scroll stop, the scroll state callback was likely missed. Treat as IDLE.
                         long timeSinceScrollStop = (lastScrollTime > 0) ? (clickTime - lastScrollTime) : -1;
@@ -1214,6 +1228,31 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                         Log.e("CLICK_DEBUG", "Error in onItemClick at position " + position + ": " + error.toString(), error);
                         System.exit(0);
                     }
+                }
+            });
+            bandNamesList.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+                @Override
+                public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                    if (listHandler == null || scheduleSortedBandNames == null || position >= scheduleSortedBandNames.size()) {
+                        return false;
+                    }
+                    String bandIndex = scheduleSortedBandNames.get(position);
+                    String bandName = getBandNameFromIndex(bandIndex);
+                    Long timeIndex = getTimeIndexFromIndex(bandIndex);
+                    String location = null;
+                    String rawStartTime = null;
+                    String eventType = null;
+                    if (timeIndex != null && timeIndex != 0 && BandInfo.scheduleRecords != null && BandInfo.scheduleRecords.get(bandName) != null) {
+                        scheduleHandler evt = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex);
+                        if (evt != null) {
+                            rawStartTime = evt.getStartTimeString();
+                            location = listHandler.getLocation(bandName, timeIndex);
+                            eventType = listHandler.getEventType(bandName, timeIndex);
+                        }
+                    }
+                    lastLongPressTime = System.currentTimeMillis();
+                    showLongPressMenu(bandName, position, location, rawStartTime, eventType);
+                    return true;
                 }
             });
         } else {
@@ -4354,157 +4393,44 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
     }
 
+    /**
+     * Handle list item click: always go straight to details (no menu).
+     * Use long-press for Priority and Attended options.
+     */
     public void showClickChoices(final int position) {
         if (listHandler == null || listHandler.bandNamesIndex == null) {
             Log.e("CLICK_DEBUG", "listHandler or bandNamesIndex is null!");
             return;
         }
-        
-        if (position >= listHandler.bandNamesIndex.size()) {
-            Log.e("CLICK_DEBUG", "Position out of bounds: " + position);
-            return;
-        }
-
-        final String selectedBand = listHandler.bandNamesIndex.get(position);
-        currentListForDetails = listHandler.bandNamesIndex;
-        currentListPosition = position;
-
         if (scheduleSortedBandNames == null || position >= scheduleSortedBandNames.size()) {
             Log.e("CLICK_DEBUG", "scheduleSortedBandNames issue at position: " + position);
             return;
         }
-
+        // In schedule view bandNamesIndex holds raw indices (e.g. "1769540400000:Tue-Everglades Tour");
+        // details screen needs the band name, so resolve from schedule index.
         String bandIndex = scheduleSortedBandNames.get(position);
-        String bandName = getBandNameFromIndex(bandIndex);
-        Long timeIndex = getTimeIndexFromIndex(bandIndex);
+        final String selectedBand = getBandNameFromIndex(bandIndex);
+        currentListForDetails = listHandler.bandNamesIndex;
+        currentListPosition = position;
+        showDetailsScreen(position, selectedBand);
+    }
 
-        //bypass prompt if appropriate
-        if (timeIndex == 0 || preferences.getPromptForAttendedStatus() == false) {
-            showDetailsScreen(position, selectedBand);
-            return;
+    /**
+     * Show long-press menu (Priority + optional Attended). Portrait = list layout, landscape = 2 columns.
+     * @param listPosition list position for refresh; use -1 when called from landscape.
+     */
+    public void showLongPressMenu(final String bandName, final int listPosition,
+                                  final String location, final String rawStartTime, final String eventType) {
+        String currentAttended = null;
+        if (location != null && rawStartTime != null && eventType != null && listHandler != null && listPosition >= 0 && scheduleSortedBandNames != null && listPosition < scheduleSortedBandNames.size()) {
+            String startTime = listHandler.getStartTime(bandName, getTimeIndexFromIndex(scheduleSortedBandNames.get(listPosition)));
+            currentAttended = attendedHandler.getShowAttendedStatus(bandName, location, startTime, eventType, String.valueOf(eventYear));
         }
-
-        final String rawStartTime = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getStartTimeString();
-        final String location = listHandler.getLocation(bandName, timeIndex);
-        final String startTime = listHandler.getStartTime(bandName, timeIndex);
-        final String eventType = listHandler.getEventType(bandName, timeIndex);
-        final String status = attendedHandler.getShowAttendedStatus(bandName, location, startTime, eventType, eventYear.toString());
-
-        final String attendedString = getResources().getString(R.string.AllOfEvent);
-        final String partAttendedString = getResources().getString(R.string.PartOfEvent);
-        final String notAttendedString = getResources().getString(R.string.NoneOfEvent);
-        final String goToDetailsString = getResources().getString(R.string.GoToDetails);
-
-        // String array for alert dialog multi choice items
-        ArrayList<String> eventChoices = new ArrayList<String>();
-        eventChoices.add(goToDetailsString);
-
-        String titleStatus;
-        if (status.equals(sawAllStatus)) {
-            titleStatus = attendedString;
-            if (eventType.equals(show)) {
-                eventChoices.add(partAttendedString);
-            }
-            eventChoices.add(notAttendedString);
-
-        } else if (status.equals(sawSomeStatus)) {
-            titleStatus = partAttendedString;
-            eventChoices.add(attendedString);
-            eventChoices.add(notAttendedString);
-
-        } else {
-            titleStatus = notAttendedString;
-            eventChoices.add(attendedString);
-            if (eventType.equals(show)) {
-                eventChoices.add(partAttendedString);
-            }
-        }
-
-        TextView titleView = new TextView(context);
-        titleView.setText(selectedBand + "\n" + titleStatus);
-        titleView.setPadding(20, 30, 20, 30);
-        titleView.setTextSize(20F);
-        titleView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-        titleView.setGravity(Gravity.CENTER);
-        titleView.setBackgroundColor(Color.parseColor("#505050"));
-        titleView.setTextColor(Color.WHITE);
-
-        // create an alert builder
-        final AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.AlertDialog));
-        builder.setCustomTitle(titleView);
-
-        // set the custom layout
-        final View customLayout = getLayoutInflater().inflate(R.layout.prompt_show_dialog, null);
-        builder.setView(customLayout);
-
-        Button goToDetails = (Button) customLayout.findViewById(R.id.GoToDetails);
-        Button attendAll = (Button) customLayout.findViewById(R.id.AttendedAll);
-        Button attendSome = (Button) customLayout.findViewById(R.id.AttendeSome);
-        Button attendNone = (Button) customLayout.findViewById(R.id.AttendeNone);
-        Button disable = (Button) customLayout.findViewById(R.id.Disable);
-
-        if (status.equals(sawAllStatus)) {
-            attendAll.setVisibility(View.GONE);
-
-        } else if (status.equals(sawSomeStatus)) {
-            attendSome.setVisibility(View.GONE);
-
-        } else {
-            attendNone.setVisibility(View.GONE);
-        }
-
-        goToDetails.setText(getText(R.string.GoToDetails));
-        attendAll.setText(getText(R.string.AllOfEvent));
-        attendSome.setText(getText(R.string.PartOfEvent));
-        attendNone.setText(getText(R.string.NoneOfEvent));
-        disable.setText(getText(R.string.disableAttendedPrompt));
-
-
-        // add a button
-        builder.setPositiveButton(getText(R.string.Cancel), new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-
-            }
+        final Runnable onRefresh = listPosition >= 0 ? new Runnable() { @Override public void run() { saveScrollPosition(); refreshData(); } } : null;
+        ignoreNextListClickUntilMenuDismissed = true;
+        LongPressMenuHelper.show(this, bandName, currentAttended, location, rawStartTime, eventType, onRefresh, new Runnable() {
+            @Override public void run() { ignoreNextListClickUntilMenuDismissed = false; }
         });
-
-        // create and show the alert dialog
-        final AlertDialog dialog = builder.create();
-
-
-        goToDetails.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                dialog.dismiss();
-                showDetailsScreen(position, selectedBand);
-            }
-        });
-
-        attendAll.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                setAttendedStatusViaDialog(sawAllStatus, selectedBand, location, rawStartTime, eventType, dialog);
-            }
-        });
-
-        attendSome.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                setAttendedStatusViaDialog(sawSomeStatus, selectedBand, location, rawStartTime, eventType, dialog);
-            }
-        });
-
-        attendNone.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                setAttendedStatusViaDialog(sawNoneStatus, selectedBand, location, rawStartTime, eventType, dialog);
-            }
-        });
-
-        disable.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                preferences.setPromptForAttendedStatus(false);
-                dialog.dismiss();
-            }
-        });
-
-        dialog.show();
     }
 
     private void setAttendedStatusViaDialog(String desiredStatus,
@@ -4863,12 +4789,29 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     }
     
     /**
-     * Check orientation and show landscape schedule view if needed
+     * Call after a filter change (e.g. Hide Expired Events) so list vs calendar is re-evaluated in landscape.
+     * When user turns Hide Expired off in landscape, we must re-run the orientation check so calendar appears
+     * without requiring a rotation cycle. Skip window-focus check since the filter popup may still hold focus.
+     */
+    public void recheckLandscapeScheduleAfterFilterChange() {
+        checkOrientationAndShowLandscapeIfNeeded(true);
+    }
+
+    /**
+     * Check orientation and show landscape schedule view if needed (normal path; respects window focus).
      */
     private void checkOrientationAndShowLandscapeIfNeeded() {
-        // CRITICAL FIX: Don't launch landscape if we're not the top activity
+        checkOrientationAndShowLandscapeIfNeeded(false);
+    }
+
+    /**
+     * Check orientation and show landscape schedule view if needed.
+     * @param fromFilterChange if true, skip window-focus check so calendar appears after toggling Hide Expired in landscape
+     */
+    private void checkOrientationAndShowLandscapeIfNeeded(boolean fromFilterChange) {
+        // CRITICAL FIX: Don't launch landscape if we're not the top activity (unless we're re-evaluating after a filter change)
         // This prevents interfering with detail screens launched from landscape schedule
-        if (!hasWindowFocus()) {
+        if (!fromFilterChange && !hasWindowFocus()) {
             Log.d("LANDSCAPE_SCHEDULE", "checkOrientationAndShowLandscapeIfNeeded - no window focus, skipping (detail screen likely showing)");
             return;
         }
@@ -4946,7 +4889,11 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             Log.d("LANDSCAPE_SCHEDULE", "bandNames is null or empty");
         }
         
-        Log.d("LANDSCAPE_SCHEDULE", "Check orientation - Landscape: " + isLandscape + ", Schedule View: " + isScheduleView + ", Has Event Entries: " + hasEventEntries + ", Bands Count: " + (bandNames != null ? bandNames.size() : 0));
+        boolean hideExpired = staticVariables.preferences.getHideExpiredEvents();
+        // Show calendar in landscape when: schedule view is on, OR Hide Expired is off (so toggling Hide Expired off switches to calendar without rotating)
+        boolean showCalendarInLandscape = isLandscape && (isScheduleView || !hideExpired);
+        
+        Log.d("LANDSCAPE_SCHEDULE", "Check orientation - Landscape: " + isLandscape + ", Schedule View: " + isScheduleView + ", HideExpired: " + hideExpired + ", Has Event Entries: " + hasEventEntries + ", Bands Count: " + (bandNames != null ? bandNames.size() : 0));
         
         // Debug: Log first few band entries to see format
         if (bandNames != null && !bandNames.isEmpty()) {
@@ -4956,18 +4903,17 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             }
         }
         
-        // Simplified condition: If in landscape and schedule view is enabled, show landscape view
-        // Don't require hasEventEntries check - let the landscape view handle empty data
-        if (isLandscape && isScheduleView) {
-            Log.d("LANDSCAPE_SCHEDULE", "✅ Conditions met - launching landscape schedule view (Landscape: " + isLandscape + ", ScheduleView: " + isScheduleView + ")");
+        // Show landscape calendar when in landscape and (schedule view enabled OR Hide Expired off)
+        if (showCalendarInLandscape) {
+            Log.d("LANDSCAPE_SCHEDULE", "✅ Conditions met - launching landscape schedule view (Landscape: " + isLandscape + ", ScheduleView: " + isScheduleView + ", HideExpired: " + hideExpired + ")");
             // Always update current viewing day from topmost visible cell when launching landscape view
             // This ensures landscape view starts on the same day as the topmost entry in portrait list
             updateCurrentViewingDayFromVisibleCells();
             
-            // Show landscape schedule view
-            presentLandscapeScheduleView();
+            // Show landscape schedule view (pass fromFilterChange so we skip focus check when toggling Hide Expired)
+            presentLandscapeScheduleView(fromFilterChange);
         } else {
-            Log.d("LANDSCAPE_SCHEDULE", "❌ Conditions NOT met - Landscape: " + isLandscape + ", ScheduleView: " + isScheduleView + ", HasEvents: " + hasEventEntries);
+            Log.d("LANDSCAPE_SCHEDULE", "❌ Conditions NOT met - Landscape: " + isLandscape + ", ScheduleView: " + isScheduleView + ", HideExpired: " + hideExpired + ", HasEvents: " + hasEventEntries);
             // Hide landscape schedule view if showing
             // (No need to dismiss as it's a separate activity)
             isShowingLandscapeSchedule = false;
@@ -5173,18 +5119,25 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     }
     
     /**
-     * Present the landscape schedule view activity
+     * Present the landscape schedule view activity (normal path; respects window focus).
      */
     private void presentLandscapeScheduleView() {
+        presentLandscapeScheduleView(false);
+    }
+
+    /**
+     * Present the landscape schedule view activity.
+     * @param fromFilterChange when true, skip window-focus check (filter popup may hold focus when toggling Hide Expired)
+     */
+    private void presentLandscapeScheduleView(boolean fromFilterChange) {
         // Don't present if already showing
         if (isShowingLandscapeSchedule) {
             Log.d("LANDSCAPE_SCHEDULE", "Already showing landscape schedule view");
             return;
         }
         
-        // CRITICAL FIX: Don't launch if we don't have window focus
-        // This prevents launching landscape when detail screen is showing
-        if (!hasWindowFocus()) {
+        // Don't launch if we don't have window focus (unless re-evaluating after filter change; popup can hold focus)
+        if (!fromFilterChange && !hasWindowFocus()) {
             Log.d("LANDSCAPE_SCHEDULE", "No window focus - detail screen likely showing, skipping landscape launch");
             return;
         }

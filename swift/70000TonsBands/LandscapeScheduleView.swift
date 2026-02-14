@@ -495,26 +495,22 @@ struct LandscapeScheduleView: View {
             let onBandTapped = self.onBandTapped
             let currentDay = dayData.dayLabel
             
-            // Check if this is a combined event and get individual bands
-            let isCombinedEvent = event.bandName.contains("/")
+            // Check if this is a combined event and get individual bands (using internal delimiter, not "/")
+            let isCombinedEvent = isCombinedEventBandName(event.bandName)
             let individualBands: [String] = {
                 if isCombinedEvent {
-                    // Use combinedEventsMap if available, otherwise split the band name
                     if let mappedBands = combinedEventsMap[event.bandName] {
                         return mappedBands
-                    } else {
-                        return event.bandName.components(separatedBy: "/")
                     }
+                    return combinedEventBandParts(event.bandName) ?? []
                 } else {
                     return []
                 }
             }()
             
             return VStack(alignment: .leading, spacing: 1) {
-                    // Check if this is a combined event (format: "band1/band2")
-                    if event.bandName.contains("/") {
-                        let bandComponents = event.bandName.components(separatedBy: "/")
-                        if bandComponents.count == 2 {
+                    // Combined event: display as "Band1 /" and "Band2" (internal storage uses delimiter)
+                    if isCombinedEvent, let bandComponents = combinedEventBandParts(event.bandName), bandComponents.count == 2 {
                             // Line 1: First band name with "/"
                             Text("\(bandComponents[0])/")
                                 .font(.system(size: 11, weight: .semibold))
@@ -528,22 +524,21 @@ struct LandscapeScheduleView: View {
                                 .foregroundColor(event.isExpired ? .white.opacity(0.4) : .white)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.7)
-                        } else {
+                        } else if isCombinedEvent {
                             // Fallback: show combined name as-is if format is unexpected
                             Text(event.bandName)
                                 .font(.system(size: 11, weight: .semibold))
                                 .foregroundColor(event.isExpired ? .white.opacity(0.4) : .white)
                                 .lineLimit(2)
                                 .minimumScaleFactor(0.7)
+                        } else {
+                            // Line 1: Single band name
+                            Text(event.bandName)
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(event.isExpired ? .white.opacity(0.4) : .white)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
                         }
-                    } else {
-                        // Line 1: Single band name
-                        Text(event.bandName)
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundColor(event.isExpired ? .white.opacity(0.4) : .white)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.7)
-                    }
                     
                     // Line 2 (or 3 for combined): Start time with label
                     Text("Start: \(formatTime(event.startTime))")
@@ -754,12 +749,9 @@ struct LandscapeScheduleView: View {
                     onBandTapped(event.bandName, currentDay)
                 }
                 .offset(x: 2, y: yOffset)
-        }
     }
-}
-    
-    
-
+    }  // StickyHeaderScrollView
+}  // LandscapeScheduleView
 
 // MARK: - Preview
 

@@ -26,6 +26,7 @@ import com.Bands70k.scheduleHandler;
 import com.Bands70k.scheduleTimeTracker;
 import com.Bands70k.scheduleInfo;
 import com.Bands70k.rankStore;
+import com.Bands70k.LongPressMenuHelper;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -39,6 +40,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * SIMPLIFIED landscape schedule view - basic views with simple click listeners
@@ -62,6 +64,20 @@ public class LandscapeScheduleView extends LinearLayout {
     
     // Map to store combined events: combined band name -> list of individual band names
     private Map<String, List<String>> combinedEventsMap = new HashMap<>();
+
+    /** Internal delimiter for combined (two-band) events. ASCII Record Separator - never in user-visible event names. */
+    private static final String COMBINED_EVENT_DELIMITER = "\u001E";
+
+    private static boolean isCombinedEventName(String bandName) {
+        return bandName != null && bandName.contains(COMBINED_EVENT_DELIMITER);
+    }
+
+    /** Returns the two band names for a combined event, or null if not a combined event. */
+    private static String[] getCombinedEventBandParts(String bandName) {
+        if (bandName == null || !bandName.contains(COMBINED_EVENT_DELIMITER)) return null;
+        String[] parts = bandName.split(Pattern.quote(COMBINED_EVENT_DELIMITER), -1);
+        return (parts.length >= 2) ? parts : null;
+    }
     
     // Simple UI components
     private ViewGroup headerLayout;
@@ -315,6 +331,14 @@ public class LandscapeScheduleView extends LinearLayout {
         drawable.setColor(color);
         drawable.setCornerRadius(dpToPx(6)); // 6dp corner radius like iOS
         return drawable;
+    }
+    
+    /**
+     * Returns the fill color for an event block. Always uses venue color so cards match the venue;
+     * Must/Might/Wont affect only the priority icon, not the card color.
+     */
+    private int getEventBlockFillColor(ScheduleBlock event) {
+        return event.venueColor;
     }
     
     private android.graphics.drawable.Drawable getEventBlockBackground(int fillColor, boolean shouldDim) {
@@ -587,8 +611,9 @@ public class LandscapeScheduleView extends LinearLayout {
     private void updateDisplay() {
         Log.d(TAG, "updateDisplay: currentDayIndex=" + currentDayIndex + ", days.size()=" + days.size());
         
-        // Refresh attended statuses before updating the display
+        // Refresh attended statuses and priorities before updating the display
         refreshAttendedStatuses();
+        refreshPriorities();
         
         // Update header
         if (days.isEmpty()) {
@@ -658,6 +683,28 @@ public class LandscapeScheduleView extends LinearLayout {
                     eventYear
                 );
                 event.attendedStatus = updatedStatus;
+            }
+        }
+    }
+    
+    /**
+     * Refresh priority for all events in the current day from rankStore.
+     * Ensures calendar event blocks show the correct color after a priority change in the long-press menu.
+     */
+    private void refreshPriorities() {
+        if (days.isEmpty() || currentDayIndex < 0 || currentDayIndex >= days.size()) {
+            return;
+        }
+        DayScheduleData currentDay = days.get(currentDayIndex);
+        for (VenueColumn venue : currentDay.venues) {
+            for (ScheduleBlock event : venue.events) {
+                String bandName = event.bandName;
+                if (isCombinedEventName(bandName)) {
+                    String[] parts = getCombinedEventBandParts(bandName);
+                    if (parts != null) bandName = parts[0].trim();
+                }
+                String rankIcon = rankStore.getRankForBand(bandName);
+                event.priority = getPriorityFromRankIcon(rankIcon);
             }
         }
     }
@@ -971,7 +1018,8 @@ public class LandscapeScheduleView extends LinearLayout {
         eventBlock.setOrientation(LinearLayout.VERTICAL);
         eventBlock.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
         // Use drawable with white border instead of solid color, darken only if shouldDim is true
-        eventBlock.setBackground(getEventBlockBackground(event.venueColor, shouldDim));
+        int fillColor = getEventBlockFillColor(event);
+        eventBlock.setBackground(getEventBlockBackground(fillColor, shouldDim));
         eventBlock.setClickable(true);
         eventBlock.setFocusable(false);
         eventBlock.setFocusableInTouchMode(false);
@@ -1010,11 +1058,11 @@ public class LandscapeScheduleView extends LinearLayout {
         eventBlock.setLayoutParams(params);
         
         // Line 1: Band name (handle combined events)
-        boolean isCombinedEvent = event.bandName != null && event.bandName.contains("/");
+        boolean isCombinedEvent = isCombinedEventName(event.bandName);
         if (isCombinedEvent) {
-            // Split combined name and display on separate lines
-            String[] bandParts = event.bandName.split("/");
-            if (bandParts.length >= 2) {
+            // Split combined name and display on separate lines (display still uses " / ")
+            String[] bandParts = getCombinedEventBandParts(event.bandName);
+            if (bandParts != null) {
                 TextView bandName1 = new TextView(context);
                 bandName1.setText(bandParts[0] + "/");
                 bandName1.setTextColor(shouldDim ? Color.rgb(102, 102, 102) : Color.WHITE);
@@ -1079,9 +1127,9 @@ public class LandscapeScheduleView extends LinearLayout {
             // Combined event: Show priority and attended on separate lines
             List<String> individualBands = combinedEventsMap.get(event.bandName);
             if (individualBands == null || individualBands.size() != 2) {
-                // Fallback: split the name
-                String[] parts = event.bandName.split("/");
-                if (parts.length >= 2) {
+                // Fallback: split the name using internal delimiter
+                String[] parts = getCombinedEventBandParts(event.bandName);
+                if (parts != null) {
                     individualBands = new ArrayList<>();
                     individualBands.add(parts[0].trim());
                     individualBands.add(parts[1].trim());
@@ -1220,15 +1268,15 @@ public class LandscapeScheduleView extends LinearLayout {
                 DayScheduleData currentDay = days.get(currentDayIndex);
                 
                 // If combined event, prompt for band selection
-                if (finalIsCombinedEvent && eventData.bandName != null && eventData.bandName.contains("/")) {
+                if (finalIsCombinedEvent && isCombinedEventName(eventData.bandName)) {
                     List<String> individualBands = combinedEventsMap.get(eventData.bandName);
                     if (individualBands != null && individualBands.size() == 2) {
                         promptForBandSelection(eventData.bandName, individualBands, currentDay.dayLabel);
                         return;
                     } else {
-                        // Fallback: split the name
-                        String[] parts = eventData.bandName.split("/");
-                        if (parts.length >= 2) {
+                        // Fallback: split the name using internal delimiter
+                        String[] parts = getCombinedEventBandParts(eventData.bandName);
+                        if (parts != null) {
                             List<String> bands = new ArrayList<>();
                             bands.add(parts[0].trim());
                             bands.add(parts[1].trim());
@@ -1250,11 +1298,11 @@ public class LandscapeScheduleView extends LinearLayout {
             }
         });
         
-        // Long click listener for attendance menu
+        // Long click listener for Priority + Attended menu (same as list view)
         eventBlock.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                showAttendanceMenu(v, eventData, dayData);
+                showLongPressMenuForEvent(v, eventData, dayData);
                 return true; // Consume the event
             }
         });
@@ -1279,7 +1327,7 @@ public class LandscapeScheduleView extends LinearLayout {
               ", band1=" + band1 + ", band2=" + band2);
         
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(context);
-        builder.setTitle("Select Band");
+        builder.setTitle(context.getString(R.string.SelectBand));
         
         // Create custom adapter with dark theme styling
         android.widget.ArrayAdapter<String> adapter = new android.widget.ArrayAdapter<String>(context, android.R.layout.simple_list_item_1, new String[]{band1, band2}) {
@@ -1323,17 +1371,88 @@ public class LandscapeScheduleView extends LinearLayout {
         dialog.show();
     }
     
+    /**
+     * Show long-press menu (Priority + Attended) for calendar event. Portrait = list, landscape = 2 columns.
+     */
+    private void showLongPressMenuForEvent(View anchor, ScheduleBlock event, DayScheduleData dayData) {
+        boolean isCombinedEvent = isCombinedEventName(event.bandName);
+        if (isCombinedEvent) {
+            List<String> individualBands = combinedEventsMap.get(event.bandName);
+            if (individualBands == null || individualBands.size() != 2) {
+                String[] parts = getCombinedEventBandParts(event.bandName);
+                if (parts != null) {
+                    individualBands = new ArrayList<>();
+                    individualBands.add(parts[0].trim());
+                    individualBands.add(parts[1].trim());
+                } else {
+                    openLongPressMenuForBand(event, event.bandName);
+                    return;
+                }
+            }
+            if (individualBands == null || individualBands.size() != 2) {
+                openLongPressMenuForBand(event, event.bandName);
+                return;
+            }
+            final String band1 = individualBands.get(0);
+            final String band2 = individualBands.get(1);
+            final ScheduleBlock finalEvent = event;
+            android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(context);
+            builder.setTitle(context.getString(R.string.SelectBand));
+            android.widget.ArrayAdapter<String> adapter = new android.widget.ArrayAdapter<String>(context, android.R.layout.simple_list_item_1, new String[]{band1, band2}) {
+                @Override
+                public View getView(int position, View convertView, ViewGroup parent) {
+                    View view = super.getView(position, convertView, parent);
+                    TextView textView = (TextView) view.findViewById(android.R.id.text1);
+                    if (textView != null) {
+                        textView.setTextColor(Color.WHITE);
+                        textView.setTextSize(16);
+                    }
+                    view.setBackgroundColor(Color.BLACK);
+                    return view;
+                }
+            };
+            builder.setAdapter(adapter, new android.content.DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(android.content.DialogInterface dialog, int which) {
+                    String selectedBand = (which == 0) ? band1 : band2;
+                    dialog.dismiss();
+                    openLongPressMenuForBand(finalEvent, selectedBand);
+                }
+            });
+            builder.setNegativeButton("Cancel", null);
+            android.app.AlertDialog dialog = builder.create();
+            styleDialogForDarkTheme(dialog);
+            dialog.show();
+            return;
+        }
+        openLongPressMenuForBand(event, event.bandName);
+    }
+
+    private void openLongPressMenuForBand(ScheduleBlock event, String bandName) {
+        String normalizedEventType = event.eventType != null ? event.eventType : "Performance";
+        if ("Unofficial Event".equals(event.eventType)) {
+            normalizedEventType = "Cruiser Organized";
+        }
+        String currentAttended = event.attendedStatus != null ? event.attendedStatus : "";
+        if (!bandName.equals(event.bandName)) {
+            currentAttended = attendedHandle.getShowAttendedStatus(bandName, event.location, event.startTimeString, normalizedEventType, String.valueOf(staticVariables.eventYear));
+        }
+        if (!(context instanceof android.app.Activity)) return;
+        final Runnable onRefresh = new Runnable() { @Override public void run() { updateDisplay(); } };
+        LongPressMenuHelper.show((android.app.Activity) context, bandName, currentAttended, event.location, event.startTimeString, normalizedEventType, onRefresh, null);
+    }
+
     private void showAttendanceMenu(View anchor, ScheduleBlock event, DayScheduleData dayData) {
         // Check if this is a combined event
-        boolean isCombinedEvent = event.bandName != null && event.bandName.contains("/");
+        boolean isCombinedEvent = isCombinedEventName(event.bandName);
         
         if (isCombinedEvent) {
             // For combined events, first ask which band
             List<String> individualBands = combinedEventsMap.get(event.bandName);
             if (individualBands == null || individualBands.size() != 2) {
-                // Fallback: split the name
-                String[] parts = event.bandName.split("/");
-                if (parts.length >= 2) {
+                // Fallback: split the name using internal delimiter
+                String[] parts = getCombinedEventBandParts(event.bandName);
+                if (parts != null) {
                     individualBands = new ArrayList<>();
                     individualBands.add(parts[0].trim());
                     individualBands.add(parts[1].trim());
@@ -1364,7 +1483,7 @@ public class LandscapeScheduleView extends LinearLayout {
                   ", band1=" + band1 + ", band2=" + band2);
             
             android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(context);
-            builder.setTitle("Select Band");
+            builder.setTitle(context.getString(R.string.SelectBand));
             
             // Create custom adapter with dark theme styling
             android.widget.ArrayAdapter<String> adapter = new android.widget.ArrayAdapter<String>(context, android.R.layout.simple_list_item_1, new String[]{band1, band2}) {
@@ -1735,7 +1854,7 @@ public class LandscapeScheduleView extends LinearLayout {
             
             // Detect and combine duplicate events (same date, time, location, eventType, different bandName)
             combinedEventsMap.clear(); // Clear previous combined events
-            Map<String, String> eventToCombinedName = new HashMap<>(); // "timeIndex:bandName" -> "band1/band2"
+            Map<String, String> eventToCombinedName = new HashMap<>(); // "timeIndex:bandName" -> combined name (band1+delimiter+band2)
             Set<String> eventsToSkip = new HashSet<>(); // Events to skip (second event of a pair)
             
             // Group events by unique key (date|startTime|endTime|location|eventType)
@@ -1758,7 +1877,7 @@ public class LandscapeScheduleView extends LinearLayout {
                     // Check if bands are different
                     if (!event1.bandName.equals(event2.bandName)) {
                         // Create combined name
-                        String combinedName = event1.bandName + "/" + event2.bandName;
+                        String combinedName = event1.bandName + COMBINED_EVENT_DELIMITER + event2.bandName;
                         
                         // Store mapping
                         List<String> individualBands = new ArrayList<>();

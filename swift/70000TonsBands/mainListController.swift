@@ -30,7 +30,7 @@ var totalUpcomingEvents = Int()
 
 var scheduleIndexByCall : [String:[String:String]] = [String:[String:String]]();
 
-// Mapping for combined events: "band1/band2" -> [band1, band2]
+// Mapping for combined events: combined name (band1+delimiter+band2) -> [band1, band2]
 // Used when multiple events share same date, time, location, and event type
 var combinedEventsMap: [String: [String]] = [:]
 
@@ -1233,19 +1233,14 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
 
     let bandName = getNameFromSortable(bands[indexRow], sortedBy: sortBy);
     
-    // Handle combined events (format: "band1/band2")
-    // For data fetching, use the first band since both events share the same details
+    // Handle combined events (internal delimiter; display still uses " / ")
     var dataFetchBandName = bandName
-    if bandName.contains("/") {
+    if isCombinedEventBandName(bandName) {
         if let individualBands = combinedEventsMap[bandName], !individualBands.isEmpty {
-            dataFetchBandName = individualBands[0] // Use first band for data fetching
-        } else {
-            // Fallback: if combined name not in map, try extracting first band from the combined name
-            let components = bandName.components(separatedBy: "/")
-            if components.count >= 2 {
-                dataFetchBandName = components[0].trimmingCharacters(in: .whitespaces)
-                print("⚠️ [COMBINED_EVENTS] Combined band '\(bandName)' not in map, using first component: '\(dataFetchBandName)'")
-            }
+            dataFetchBandName = individualBands[0]
+        } else if let parts = combinedEventBandParts(bandName), !parts.isEmpty {
+            dataFetchBandName = parts[0].trimmingCharacters(in: .whitespaces)
+            print("⚠️ [COMBINED_EVENTS] Combined band not in map, using first component: '\(dataFetchBandName)'")
         }
     }
     

@@ -12,6 +12,9 @@
 "Must"="Must";
 "Might"="Might";
 "Wont"="Wont";
+"Priority"="Priority";
+"Attended"="Attended";
+"Wont Attend"="Wont Attend";
 "Unknown" = "Unknown";
 
 "SelectBandMessage"="Select a band from the list to view details";
@@ -20,6 +23,10 @@
 
 "Ok"="Ok";
 "Cancel"="Cancel";
+
+"Select Band"="Select Band";
+"Which band do you want to set priority or attendance for?"="Which band do you want to set priority or attendance for?";
+"Multiple bands share this event. Which band would you like to view?"="Multiple bands share this event. Which band would you like to view?";
 
 "Alert On Must See Bands"="Alert On Must See Bands";
 "Alert On Might See Bands"="Alert On Might See Bands";
@@ -264,3 +271,19 @@
 "DefaultDescriptionMDF" = "Click to add your own notes";
 
 "HereAreMy" = "Here are my";
+
+// About Screen
+"About" = "About";
+"AboutDescription1" = "This is an unofficial, open-source application designed to help users discover bands appearing at !FESTIVALE_NAME!, and to view event schedules, times, and venues in one place.";
+"AboutDescription2" = "The app allows users to browse artists, explore event listings, and stay organized while attending festivals. It is designed to work across different events without being tied to any single festival, promoter, or organizer.";
+"AboutDescription3" = "This application is not affiliated with, endorsed by, or officially connected to any festival, event organizer, promoter, or performing artist. All artist names, event names, and related information remain the property of their respective owners and are used for informational purposes only.";
+"AboutDescription4" = "The source code for this application is open-sourced and licensed under the GNU General Public License, version 2 (GPL-2.0).";
+"AboutCopyright" = "Copyright © 2015–present";
+"AboutTheTeam" = "The Team";
+"AboutRoleLeadDeveloper" = "Lead developer and creator";
+"AboutRoleUIDesigner" = "UI Designer";
+"AboutRoleCurator" = "70K Bands Summary Curator";
+"AboutPositionCenter" = "center";
+"AboutPositionRight" = "right";
+"AboutPositionLeft" = "left";
+"AboutTeamPhoto" = "Team Photo";

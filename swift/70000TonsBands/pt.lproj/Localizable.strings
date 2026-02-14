@@ -17,9 +17,15 @@
 "Must"="Obrigatório";
 "Might"="Pode ser";
 "Wont"="Não";
+"Priority"="Prioridade";
+"Attended"="Participou";
+"Wont Attend"="Não participará";
 
 "Ok"="Ok";
 "Cancel"="Cancelar";
+
+"Select Band"="Selecionar Banda";
+"Which band do you want to set priority or attendance for?"="Para qual banda você deseja definir prioridade ou participação?";
 
 "Alert On Must See Bands"="Alerta de Shows Obrigatórios";
 "Alert On Might See Bands"="Alerta de Shows Interessantes";
@@ -324,3 +330,19 @@
 "Share Importable Band/Event Data" = "Compartilhar Dados Importáveis de Bandas/Eventos";
 "Share Band Report" = "Compartilhar Relatório de Bandas";
 "Share Event Report" = "Compartilhar Relatório de Eventos";
+
+// About Screen
+"About" = "Sobre";
+"AboutDescription1" = "Este é um aplicativo não oficial e de código aberto projetado para ajudar os usuários a descobrir bandas que aparecem em !FESTIVALE_NAME!, e visualizar horários de eventos, horários e locais em um só lugar.";
+"AboutDescription2" = "The app allows users to browse artists, explore event listings, and stay organized while attending festivals. It is designed to work across different events without being tied to any single festival, promoter, or organizer.";
+"AboutDescription3" = "Este aplicativo não está afiliado, endossado ou oficialmente conectado a nenhum festival, organizador de eventos, promotor ou artista. Todos os nomes de artistas, nomes de eventos e informações relacionadas permanecem propriedade de seus respectivos proprietários e são usados apenas para fins informativos.";
+"AboutDescription4" = "O código-fonte deste aplicativo é de código aberto e licenciado sob a Licença Pública Geral GNU, versão 2 (GPL-2.0).";
+"AboutCopyright" = "Copyright © 2015–presente";
+"AboutTheTeam" = "A Equipe";
+"AboutRoleLeadDeveloper" = "Desenvolvedor principal e criador";
+"AboutRoleUIDesigner" = "Designer de interface do usuário";
+"AboutRoleCurator" = "Curador de resumo 70K Bands";
+"AboutPositionCenter" = "centro";
+"AboutPositionRight" = "direita";
+"AboutPositionLeft" = "esquerda";
+"AboutTeamPhoto" = "Foto da Equipe";

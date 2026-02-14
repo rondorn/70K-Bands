@@ -12,8 +12,12 @@
     <string name="might">Quizás</string>
     <string name="wont">No</string>
     <string name="unknown">No lo sé</string>
+    <string name="priority">Prioridad</string>
+    <string name="attended">Asistencia</string>
     <string name="Ok">Sí</string>
     <string name="Cancel">Cancelar</string>
+    <string name="SelectBand">Seleccionar Banda</string>
+    <string name="WhichBandDoYouWant">¿Para qué banda quieres establecer la prioridad o asistencia?</string>
     <string name="outdated_app_version_message">Estás usando una versión anterior de la app. Por favor actualiza a la última versión hoy</string>
     <string name="AlertOnMustSeeBands">Alerta para bandas que quiero ver</string>
     <string name="AlertOnMightSeeBands">Alerta para bandas que quizás vea</string>
@@ -376,4 +380,20 @@
     <!-- Import/Export -->
     <string name="update_profile">Actualizar Perfil</string>
     <string name="update_existing_profile_message">Esto actualizará el perfil existente \"{profileName}\" con nuevos datos:</string>
+    
+    <!-- About Screen -->
+    <string name="about">Acerca de</string>
+    <string name="about_description1">Esta es una aplicación no oficial y de código abierto diseñada para ayudar a los usuarios a descubrir bandas que aparecen en !FESTIVALE_NAME!, y ver horarios de eventos, horas y lugares en un solo lugar.</string>
+    <string name="about_description2">The app allows users to browse artists, explore event listings, and stay organized while attending festivals. It is designed to work across different events without being tied to any single festival, promoter, or organizer.</string>
+    <string name="about_description3">Esta aplicación no está afiliada, respaldada ni oficialmente conectada con ningún festival, organizador de eventos, promotor o artista. Todos los nombres de artistas, nombres de eventos e información relacionada siguen siendo propiedad de sus respectivos propietarios y se utilizan únicamente con fines informativos.</string>
+    <string name="about_description4">El código fuente de esta aplicación es de código abierto y está licenciado bajo la Licencia Pública General de GNU, versión 2 (GPL-2.0).</string>
+    <string name="about_copyright">Copyright © 2015–presente</string>
+    <string name="about_the_team">El Equipo</string>
+    <string name="about_team_ron_dorn">Ron Dorn</string>
+    <string name="about_role_lead_developer">Desarrollador principal y creador (centro)</string>
+    <string name="about_team_robert_jan">Robert Jan de Vries</string>
+    <string name="about_role_ui_designer">Diseñador de interfaz de usuario (derecha)</string>
+    <string name="about_team_aaron">Aaron Copeland</string>
+    <string name="about_role_curator">Curador de resúmenes de 70K Bands (izquierda)</string>
+    <string name="about_team_photo">Foto del Equipo</string>
 </resources>

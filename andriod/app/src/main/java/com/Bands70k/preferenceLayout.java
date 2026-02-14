@@ -69,7 +69,6 @@ public class preferenceLayout  extends Activity {
     private Switch showLoungeShows;
     private Switch showOtherShows;
 
-    private Switch hideExpiredEvents;
     private Switch promptForAttendedStatus;
     private Switch noteFontSizeLarge;
     private Switch openYouTubeApp;
@@ -508,14 +507,6 @@ public class preferenceLayout  extends Activity {
                                     // Auto-enable "Hide Expired Events" when year is set to "Current"
                                     if (isCurrentYear) {
                                         staticVariables.preferences.setHideExpiredEvents(true);
-                                        runOnUiThread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                if (hideExpiredEvents != null) {
-                                                    hideExpiredEvents.setChecked(true);
-                                                }
-                                            }
-                                        });
                                         Log.d("preferenceLayout", "Auto-enabled Hide Expired Events for Current year");
                                     }
                                     
@@ -642,9 +633,6 @@ public class preferenceLayout  extends Activity {
                                             // Force Hide Expired ON and return to main screen.
                                             if (isCurrentYear) {
                                                 staticVariables.preferences.setHideExpiredEvents(true);
-                                                if (hideExpiredEvents != null) {
-                                                    hideExpiredEvents.setChecked(true);
-                                                }
                                                 staticVariables.preferences.saveData();
                                                 onBackPressed(); // navigates up to main screen
                                                 return;
@@ -677,10 +665,6 @@ public class preferenceLayout  extends Activity {
                         // Auto-enable "Hide Expired Events" when year is set to "Current"
                         if (selectedYearValue.equals("Current") || selectedYearValue.equals(localCurrentEventYear)) {
                             staticVariables.preferences.setHideExpiredEvents(true);
-                            // Update the UI switch if it exists
-                            if (hideExpiredEvents != null) {
-                                hideExpiredEvents.setChecked(true);
-                            }
                             staticVariables.preferences.saveData();
                             Log.d("preferenceLayout", "Auto-enabled Hide Expired Events for Current year (cancel dialog)");
                         }
@@ -847,16 +831,6 @@ public class preferenceLayout  extends Activity {
         if (customUrl != null && !customUrl.isEmpty()) {
             customPointerUrl.setText(customUrl);
         }
-
-        hideExpiredEvents = (Switch)findViewById(R.id.hideExpiredEvents);
-        hideExpiredEvents.setChecked(staticVariables.preferences.getHideExpiredEvents());
-        hideExpiredEvents.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                staticVariables.preferences.setHideExpiredEvents(hideExpiredEvents.isChecked());
-            }
-        });
 
         promptForAttendedStatus = (Switch)findViewById(R.id.promptForAttendedStatus);
         promptForAttendedStatus.setChecked(staticVariables.preferences.getPromptForAttendedStatus());
