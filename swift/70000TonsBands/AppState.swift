@@ -93,11 +93,6 @@ class AppState {
     
     // MARK: - Refresh Tracking
     var lastRefreshEpicTime = Int(Date().timeIntervalSince1970)
-    
-    // MARK: - Deprecated (kept for backward compatibility)
-    /// DEPRECATED: Use eventCounterUnofficial instead
-    /// This variable is kept for backward compatibility but is no longer used
-    var unofficalEventCount = 0
 }
 
 // MARK: - Global Accessors (for backward compatibility during migration)
@@ -352,11 +347,6 @@ var iCloudCheck: Bool {
 var lastRefreshEpicTime: Int {
     get { AppState.shared.lastRefreshEpicTime }
     set { AppState.shared.lastRefreshEpicTime = newValue }
-}
-
-var unofficalEventCount: Int {
-    get { AppState.shared.unofficalEventCount }
-    set { AppState.shared.unofficalEventCount = newValue }
 }
 
 var inTestEnvironment: Bool {
