@@ -721,12 +721,10 @@ class PreferencesViewModel: ObservableObject {
         // Clear MasterViewController's cached data arrays
         masterView.clearMasterViewCachedData()
         
-        // Clear static caches to ensure fresh data
-        staticSchedule.sync {
-            cacheVariables.scheduleStaticCache = [:]
-            cacheVariables.scheduleTimeStaticCache = [:]
-            cacheVariables.bandNamesStaticCache = [:]
-        }
+        // Clear static caches to ensure fresh data - cacheVariables setters are thread-safe
+        cacheVariables.scheduleStaticCache = [:]
+        cacheVariables.scheduleTimeStaticCache = [:]
+        cacheVariables.bandNamesStaticCache = [:]
         
         // STEP 5: Use centralized full data refresh to ensure complete data loading
         print("🎯 STEP 5: Using centralized performBackgroundDataRefresh for comprehensive data loading")

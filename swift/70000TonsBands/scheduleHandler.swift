@@ -537,11 +537,9 @@ open class scheduleHandler {
         print("🔍 [SCHEDULE_DEBUG] handlePostSyncOperations: needsNetworkFetch=\(needsNetworkFetch), showedData=\(showedData)")
 
         if showedData {
-            // Update static cache
-            staticSchedule.sync {
-                cacheVariables.scheduleStaticCache = self._schedulingData
-                cacheVariables.scheduleTimeStaticCache = self._schedulingDataByTime
-            }
+            // Update static cache - cacheVariables setters are thread-safe
+            cacheVariables.scheduleStaticCache = self._schedulingData
+            cacheVariables.scheduleTimeStaticCache = self._schedulingDataByTime
         } else if needsNetworkFetch {
             // PERFORMANCE FIX: Only trigger network downloads during appropriate operations
             // Not during cache-only operations like priority changes, detail navigation, etc.
@@ -582,11 +580,9 @@ open class scheduleHandler {
             print("🔍 [SCHEDULE_DEBUG] clearCache: Cache cleared, cacheLoaded = false")
         }
         
-        // Also clear the static cache
-        staticSchedule.sync {
-            cacheVariables.scheduleStaticCache = [:]
-            cacheVariables.scheduleTimeStaticCache = [:]
-        }
+        // Also clear the static cache - cacheVariables setters are thread-safe
+        cacheVariables.scheduleStaticCache = [:]
+        cacheVariables.scheduleTimeStaticCache = [:]
     }
     
     /// Calculates SHA256 checksum of a string
@@ -790,12 +786,10 @@ open class scheduleHandler {
             dataChanged = false
         }
         
-        // Update static cache
-        staticSchedule.sync {
-            dictionaryQueue.sync {
-                cacheVariables.scheduleStaticCache = self._schedulingData
-                cacheVariables.scheduleTimeStaticCache = self._schedulingDataByTime
-            }
+        // Update static cache - cacheVariables setters are thread-safe
+        dictionaryQueue.sync {
+            cacheVariables.scheduleStaticCache = self._schedulingData
+            cacheVariables.scheduleTimeStaticCache = self._schedulingDataByTime
         }
         
         // Safe access to dictionary counts through the serial queue

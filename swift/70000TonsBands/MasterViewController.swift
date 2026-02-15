@@ -5797,16 +5797,15 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 self.clearMasterViewCachedData()
                 
                 // Clear ALL static cache variables to prevent data mixing
-                staticSchedule.sync {
-                    cacheVariables.scheduleStaticCache = [:]
-                    cacheVariables.scheduleTimeStaticCache = [:]
-                    cacheVariables.bandNamesStaticCache = [:]
-                    cacheVariables.bandNamesArrayStaticCache = []
-                    cacheVariables.bandDescriptionUrlCache = [:]
-                    cacheVariables.bandDescriptionUrlDateCache = [:]
-                    cacheVariables.attendedStaticCache = [:]
-                    cacheVariables.lastModifiedDate = nil
-                }
+                // cacheVariables setters are thread-safe, no need for sync blocks
+                cacheVariables.scheduleStaticCache = [:]
+                cacheVariables.scheduleTimeStaticCache = [:]
+                cacheVariables.bandNamesStaticCache = [:]
+                cacheVariables.bandNamesArrayStaticCache = []
+                cacheVariables.bandDescriptionUrlCache = [:]
+                cacheVariables.bandDescriptionUrlDateCache = [:]
+                cacheVariables.attendedStaticCache = [:]
+                cacheVariables.lastModifiedDate = nil
                 
                 // Clear CustomBandDescription instance caches
                 self.bandDescriptions.bandDescriptionUrl.removeAll()

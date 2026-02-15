@@ -40,48 +40,38 @@ open class ShowsAttended {
      Loads cached show attendance data, using a static cache if available.
      */
     func getCachedData(){
-        // DEADLOCK FIX: Changed staticAttended.sync() to .async to prevent blocking
-        // This method is called during ShowsAttended() initialization, which happens on main thread
-        // Using sync() can cause deadlocks, especially during year changes
-        print("📊 [DEADLOCK_FIX] getCachedData: Using async to prevent blocking")
-        var staticCacheUsed = false
-        
-        // Check cache status synchronously first (safe, no nested calls)
-        let cacheIsEmpty = staticAttended.sync { cacheVariables.attendedStaticCache.isEmpty }
+        // SQLite.swift is thread-safe, so we can access cacheVariables directly
+        // cacheVariables already has thread-safe accessors
+        let cacheIsEmpty = cacheVariables.attendedStaticCache.isEmpty
         
         if cacheIsEmpty {
             print("📊 [DEADLOCK_FIX] Cache empty, loading shows attended")
             loadShowsAttended()
         } else {
-            print("📊 [DEADLOCK_FIX] Using static cache")
-            staticCacheUsed = true
+            // Copy from static cache to instance
+            // cacheVariables is already thread-safe, so direct access is safe
+            self.showsAttendedArray = cacheVariables.attendedStaticCache
+                
+            // Even when using static cache, check if migration is needed
+            let currentArray = self.showsAttendedQueue.sync { self._showsAttendedArray }
+            var needsMigration = false
+            let currentTimestamp = String(format: "%.0f", Date().timeIntervalSince1970)
             
-            // Copy from static cache to instance - do this asynchronously
-            staticAttended.async {
-                self.showsAttendedArray = cacheVariables.attendedStaticCache
-                
-                // Even when using static cache, check if migration is needed
-                let currentArray = self.showsAttendedQueue.sync { self._showsAttendedArray }
-                var needsMigration = false
-                let currentTimestamp = String(format: "%.0f", Date().timeIntervalSince1970)
-                
-                for (key, value) in currentArray {
-                    let parts = value.split(separator: ":")
-                    if parts.count == 1 {
-                        self.mutateShowsAttendedArray { arr in arr[key] = value + ":" + currentTimestamp }
-                        needsMigration = true
-                    }
+            for (key, value) in currentArray {
+                let parts = value.split(separator: ":")
+                if parts.count == 1 {
+                    self.mutateShowsAttendedArray { arr in arr[key] = value + ":" + currentTimestamp }
+                    needsMigration = true
                 }
-                
-                if needsMigration {
-                    print("Migrated old attendance data from static cache to new format with timestamps.")
-                    self.saveShowsAttended()
-                    // Update the static cache with migrated data
-                    staticAttended.async(flags: .barrier) {
-                        for (key, value) in self.showsAttendedArray {
-                            cacheVariables.attendedStaticCache[key] = value
-                        }
-                    }
+            }
+            
+            if needsMigration {
+                print("Migrated old attendance data from static cache to new format with timestamps.")
+                self.saveShowsAttended()
+                // Update the static cache with migrated data
+                // cacheVariables setters are thread-safe
+                for (key, value) in self.showsAttendedArray {
+                    cacheVariables.attendedStaticCache[key] = value
                 }
             }
         }
@@ -131,7 +121,7 @@ open class ShowsAttended {
     func loadShowsAttended(){
         print("📊 [THREAD_SAFE] loadShowsAttended: Starting on thread: \(Thread.isMainThread ? "MAIN" : "BACKGROUND")")
         
-        // DEADLOCK FIX: Defer bandNames fetching to avoid blocking on staticBandName.sync
+        // SQLite.swift is thread-safe, so we can access data directly without blocking sync calls
         // We don't actually use 'allBands' in this method, so we can skip it entirely
         // let bandNameHandle = bandNamesHandler.shared
         // let allBands = bandNameHandle.getBandNames()  // ← This was causing deadlock!
@@ -174,10 +164,9 @@ open class ShowsAttended {
                 print("Skipping attended cache population: showsAttendedArray is empty and app is not just launched.")
                 return
             }
-            staticAttended.async(flags: .barrier) {
-                for index in afterMigrationArray {
-                    cacheVariables.attendedStaticCache[index.key] = index.value
-                }
+            // cacheVariables setters are thread-safe, no need for additional sync
+            for index in afterMigrationArray {
+                cacheVariables.attendedStaticCache[index.key] = index.value
             }
         } catch {
             // Handle missing showsAttended.data gracefully - this is expected on first install
@@ -211,9 +200,8 @@ open class ShowsAttended {
         let index = band + ":" + location + ":" + startTime + ":" + eventTypeValue + ":" + eventYearString
         let timestamp = String(format: "%.0f", newTime)
         changeShowAttendedStatus(index: index, status: status + ":" + timestamp)
-        staticLastModifiedDate.async(flags: .barrier) {
-            cacheVariables.lastModifiedDate = Date()
-        }
+        // cacheVariables setters are thread-safe
+        cacheVariables.lastModifiedDate = Date()
     }
 
     /**
@@ -321,9 +309,8 @@ open class ShowsAttended {
         mutateShowsAttendedArray { arr in arr[index] = status }
         let firebaseEventWrite = firebaseEventDataWrite();
         firebaseEventWrite.writeEvent(index: index, status: status)
-        staticAttended.async(flags: .barrier) {
-            cacheVariables.attendedStaticCache[index] = status
-        }
+        // cacheVariables setters are thread-safe
+        cacheVariables.attendedStaticCache[index] = status
         saveShowsAttended()
         DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
             // Use SQLiteiCloudSync - only syncs Default profile
@@ -348,9 +335,8 @@ open class ShowsAttended {
         mutateShowsAttendedArray { arr in arr[index] = status }
         let firebaseEventWrite = firebaseEventDataWrite();
         firebaseEventWrite.writeEvent(index: index, status: status)
-        staticAttended.async(flags: .barrier) {
-            cacheVariables.attendedStaticCache[index] = status
-        }
+        // cacheVariables setters are thread-safe
+        cacheVariables.attendedStaticCache[index] = status
         saveShowsAttended()
         
         if !skipICloud {
