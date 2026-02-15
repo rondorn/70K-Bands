@@ -38,6 +38,20 @@ class localNoticationHandler {
         }
     }
     
+    // Cache for alert checking operations
+    private var cachedActiveProfile: String?
+    private var cachedPriorities: [String: Int] = [:]
+    private var cachedAttendances: [String: String] = [:]
+    
+    /**
+     Clears the alert checking cache. Call this when preferences change or data is refreshed.
+     */
+    func clearAlertCache() {
+        cachedActiveProfile = nil
+        cachedPriorities.removeAll()
+        cachedAttendances.removeAll()
+    }
+    
     /**
      Determines if an event should be added to notifications based on band, event type, and user preferences.
      - Parameters:
@@ -48,18 +62,26 @@ class localNoticationHandler {
      - Returns: true if the event should be added to notifications, false otherwise.
      */
     func willAddToNotifications(_ bandName: String, eventType :String, startTime: String, location:String) -> Bool{
-        
-
-        print ("Checking for alert for bands " + bandName + " ... ", terminator: "")
-        
         var alertStatus = false
         
-        let attendedStatus = attendedHandle.getShowAttendedStatus(band: bandName, location: location, startTime: startTime, eventType: eventType,eventYearString: String(eventYear));
-        print ("AttendedAlertDebug: \(attendedStatus) for \(bandName) - \(location) - \(startTime) - \(eventType) - \(eventYear)")
+        // Cache active profile for this operation
+        if cachedActiveProfile == nil {
+            cachedActiveProfile = SharedPreferencesManager.shared.getActivePreferenceSource()
+        }
         
-        print ("Checking for alert for getOnlyAlertForAttendedValue \(getOnlyAlertForAttendedValue())")
+        // Build attendance index for caching
+        let attendanceIndex = bandName + ":" + location + ":" + startTime + ":" + eventType + ":" + String(eventYear)
+        
+        // Get attendance status with caching
+        let attendedStatus: String
+        if let cached = cachedAttendances[attendanceIndex] {
+            attendedStatus = cached
+        } else {
+            attendedStatus = attendedHandle.getShowAttendedStatus(band: bandName, location: location, startTime: startTime, eventType: eventType, eventYearString: String(eventYear))
+            cachedAttendances[attendanceIndex] = attendedStatus
+        }
+        
         if (getOnlyAlertForAttendedValue() == true){
-            print ("Checking for alert for attendedStatus \(attendedStatus)")
             if (attendedStatus != sawNoneStatus){
                 alertStatus = true
             }
@@ -81,7 +103,6 @@ class localNoticationHandler {
             }
             if ((eventType == unofficalEventType || eventType == unofficalEventTypeOld) && getAlertForUnofficalEventsValue() == true){
                 alertStatus = checkBandPriority(bandName, attendedStatus:attendedStatus)
-                print ("alertUnofficial is set to \(alertStatus) for \(bandName)")
             }
         }
         
@@ -90,6 +111,7 @@ class localNoticationHandler {
     
     /**
      Checks if a band should trigger an alert based on priority and attendance status.
+     Uses cached priority lookups to avoid repeated database queries.
      - Parameters:
         - bandName: The name of the band.
         - attendedStatus: The attendance status for the band.
@@ -97,11 +119,20 @@ class localNoticationHandler {
      */
     func checkBandPriority (_ bandName: String, attendedStatus: String)->Bool{
         
-        let priorityManager = SQLitePriorityManager.shared
-        if (getMustSeeAlertValue() == true && priorityManager.getPriority(for: bandName) == 1){
+        // Get priority with caching
+        let priority: Int
+        if let cached = cachedPriorities[bandName] {
+            priority = cached
+        } else {
+            let priorityManager = SQLitePriorityManager.shared
+            priority = priorityManager.getPriority(for: bandName)
+            cachedPriorities[bandName] = priority
+        }
+        
+        if (getMustSeeAlertValue() == true && priority == 1){
             return true
         }
-        if (getMightSeeAlertValue()  == true && priorityManager.getPriority(for: bandName) == 2){
+        if (getMightSeeAlertValue()  == true && priority == 2){
             return true
         }
         
@@ -242,6 +273,9 @@ class localNoticationHandler {
         
         print ("✅ [THREAD_SAFE] addNotifications: No locking needed with SQLite")
         print ("🌍 [ALERT_TIMEZONE] Scheduling alerts using current timezone: \(TimeZone.current.identifier)")
+
+        // Clear cache at start of notification generation
+        clearAlertCache()
 
         // YEAR CHANGE / CSV DOWNLOAD GUARD:
         // Avoid generating notifications while the year-change pipeline is importing schedule/band data.

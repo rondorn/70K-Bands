@@ -492,27 +492,17 @@ private func readFiltersFileInternal(){
     
     var tempCurrentTimeZone = "";
     
-    print ("🔧 [UNOFFICIAL_DEBUG] readFiltersFile() called - current showUnofficalEvents before reading: \(showUnofficalEvents)")
-    print ("Status of getWontSeeOn loading")
-    
     // Always initialize venue filters from FestivalConfig (handles festival switching)
     initializeVenueFilters()
-    print ("🏟️ [VENUE_INIT] Initialized venue filters for current festival")
     
     if (FileManager.default.fileExists(atPath:lastFilters.relativePath) == false){
-        print ("🔧 [UNOFFICIAL_DEBUG] No filters file found, establishing defaults")
         establishDefaults()
         writeFiltersFile()
-        print ("🔧 [UNOFFICIAL_DEBUG] After establishDefaults, showUnofficalEvents = \(showUnofficalEvents)")
     }
     
-
-    
     if let data = try? String(contentsOf:lastFilters, encoding: String.Encoding.utf8) {
-        print ("Status of sortedBy loading 1 " + data)
         let dataArray = data.components(separatedBy: ";")
         for record in dataArray {
-            print ("Status of getWontSeeOn loading loop")
             var valueArray = record.components(separatedBy: ":")
             
             switch valueArray[0] {
@@ -525,7 +515,6 @@ private func readFiltersFileInternal(){
            
             case "wontSeeOn":
                 setWontSeeOn(stringToBool(valueArray[1]))
-                print ("Status of getWontSeeOn load = \(valueArray[1])")
             
             case "unknownSeeOn":
                 setUnknownSeeOn(stringToBool(valueArray[1]))
