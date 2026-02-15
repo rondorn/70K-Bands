@@ -7,12 +7,11 @@
 //
 
 import UIKit
-import CoreData
 import Firebase
 import AVKit
 import SwiftUI
 
-class MasterViewController: UITableViewController, UISplitViewControllerDelegate, NSFetchedResultsControllerDelegate, UISearchBarDelegate {
+class MasterViewController: UITableViewController, UISplitViewControllerDelegate, UISearchBarDelegate {
     
     // MARK: - Year Change Thread Management
     private static var currentDataRefreshOperationId: UUID = UUID()
@@ -172,9 +171,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     let attendedHandle = ShowsAttended()
     let iCloudDataHandle = iCloudDataHandler();
     
-    // MARK: - Core Data Preload System
-    private let preloadManager = CoreDataPreloadManager.shared
-    
     var filterTextNeeded = true;
     var viewableCell = UITableViewCell()
     
@@ -183,7 +179,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     @IBOutlet weak var titleButtonArea: UINavigationItem!
     var backgroundColor = UIColor.white;
     var textColor = UIColor.black;
-    var managedObjectContext: NSManagedObjectContext? = nil
     
     var sharedMessage = ""
     var objects = NSMutableArray()
@@ -278,21 +273,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         bandSearch.setImage(UIImage(named: "70KSearch")!, for: .init(rawValue: 0)!, state: .normal)
         readFiltersFile()
         
-        // MARK: - Core Data Integration  
-        // Core Data system is now conditionally active (only if migration was needed)
-        
-        // Check if this is first install BEFORE starting Core Data preload
+        // Data loading now uses SQLite directly - no preload system needed
         let hasRunBefore = UserDefaults.standard.bool(forKey: "hasRunBefore")
         print("🎮 [MDF_DEBUG] hasRunBefore: \(hasRunBefore)")
-        
-        // CRITICAL: Only start Core Data preload on subsequent launches
-        // On first launch, Core Data may not exist (fresh install)
-        if hasRunBefore {
-            print("🚀 Starting Core Data preload system (subsequent launch)...")
-            preloadManager.start(delegate: self)
-        } else {
-            print("ℹ️  Skipping Core Data preload system (first launch - Core Data may not exist)")
-        }
         
         // Preload country data in background to ensure it's always available
         countryHandler.shared.loadCountryData { 
@@ -2870,9 +2853,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     /// Performs initial data load after year change (extracted for reuse)
     private func performInitialDataLoadAfterYearChange() {
-        // STEP 1: Wait for Core Data import to complete before loading
-        // The data refresh downloads CSVs and imports them, but import happens asynchronously
-        print("🎛️ [YEAR_CHANGE] Step 1 - Waiting for Core Data import to complete")
+        // STEP 1: Load data from SQLite (no waiting needed - SQLite is always ready)
+        print("🎛️ [YEAR_CHANGE] Step 1 - Loading data from SQLite")
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
@@ -5964,12 +5946,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 downloadGroup.leave()
             }
             
-            // Wait for core data (artists + schedule) to complete before proceeding
+            // Wait for data download to complete before proceeding
             downloadGroup.notify(queue: .main) {
                 // Step 3: Load existing priority data
-                print("⭐ Step 3: Priority data handled by Core Data (PriorityManager)")
+                print("⭐ Step 3: Priority data handled by SQLitePriorityManager")
                 // LEGACY: self.dataHandle.getCachedData()
-                print("✅ Priority data available via Core Data")
+                print("✅ Priority data available via SQLite")
                 
                 // Step 4: Load existing attendance data
                 print("✅ Step 4: Loading existing attendance data...")
@@ -6078,7 +6060,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // Pre-load priority data for all bands in a single operation
         DispatchQueue.global(qos: .utility).async {
-            // Pre-load priority data for performance (Core Data handles caching automatically)
+            // Pre-load priority data for performance (SQLite handles caching automatically)
             _ = self.priorityManager.getAllPriorities()
         }
     }
@@ -6535,7 +6517,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         print("☁️ Loading iCloud data...")
         
-        // Use new Core Data iCloud sync system
+        // Use SQLite iCloud sync system
         let sqliteiCloudSync = SQLiteiCloudSync()
         
         // First write local data to iCloud
@@ -6585,21 +6567,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     /// Optimized first launch: Skip CoreData (empty on first install), go straight to network download
     private func performOptimizedFirstLaunch() {
-        print("🚀 [MDF_DEBUG] First launch - SKIPPING CoreData (empty DB), going straight to network download")
+        print("🚀 [MDF_DEBUG] First launch - going straight to network download")
         print("🚀 [MDF_DEBUG] Festival: \(FestivalConfig.current.festivalShortName)")
-        print("🚀 FIRST LAUNCH: Triggering immediate network download (Core Data is empty on fresh install)")
+        print("🚀 FIRST LAUNCH: Triggering immediate network download")
         
-        // FIX: On fresh install, Core Data is EMPTY and still initializing
-        // Accessing persistentContainer blocks the background thread until DB is created
-        // Instead, skip Core Data entirely and go straight to network download
-        print("🔍 Skipping Core Data access (empty on first launch), starting network download...")
+        // SQLite database is always ready - proceed with network download
+        print("🔍 Starting network download...")
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else {
                 return
             }
             
-            // Skip Core Data on first launch - it's empty and still initializing!
+            // SQLite database is ready - proceed with data loading
             // Go straight to network download
             self.continueFirstLaunchAfterDataLoad()
         }
@@ -6637,16 +6617,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     private func performOptimizedSubsequentLaunch() {
         print("🚀 SUBSEQUENT LAUNCH: Step 1 - Displaying CoreData/cached data immediately (non-blocking)")
         
-        // CRITICAL: Do NOT wait for Core Data on main thread - could take 20+ seconds on slow devices
-        // Instead, load data in background once Core Data is ready
-        print("🔍 Loading data in background once Core Data is ready...")
+        // Load data in background - SQLite is always ready
+        print("🔍 Loading data in background...")
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             
-            // Wait for Core Data on BACKGROUND thread (safe - won't freeze UI)
-            _ = CoreDataManager.shared.persistentContainer
-            print("✅ Core Data ready in background")
+            // SQLite is always ready - no waiting needed
+            print("✅ SQLite database ready")
             
             // Step 1: Load database data immediately and display to user
             print("🚀 [UNIFIED_REFRESH] Subsequent launch - loading database data")
@@ -7184,11 +7162,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                                 UserDefaults.standard.synchronize()
                                 print("📡 FRESH DATA COLLECTION: Updated LastUsedPointerUrl to '\(defaultStorageUrl)'")
                                 
-                                // Notify CoreDataPreloadManager that fresh data is available
-                                // This allows it to restart if it was stuck in cache-only mode
+                                // Data is now available in SQLite - refresh display
                                 DispatchQueue.main.async {
-                                    print("📡 FRESH DATA COLLECTION: Notifying CoreDataPreloadManager of fresh data availability")
-                                    self.preloadManager.resetAndRestartIfNeeded()
+                                    print("📡 FRESH DATA COLLECTION: Fresh data available in SQLite")
+                                    self.refreshBandList(reason: "Fresh data downloaded")
                                 }
                             }
                         }
@@ -7372,74 +7349,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
 }
 
-// MARK: - CoreDataPreloadManagerDelegate
-
-extension MasterViewController: CoreDataPreloadManagerDelegate {
-    
-    func preloadManager(_ manager: CoreDataPreloadManager, didLoadInitialData bandCount: Int) {
-        print("✅ CoreDataPreloadManager: Initial data loaded - \(bandCount) bands")
-        
-        // Refresh display with the preloaded data
-        DispatchQueue.main.async { [weak self] in
-            self?.refreshBandList(reason: "Core Data preload - initial data")
-        }
-    }
-    
-    func preloadManager(_ manager: CoreDataPreloadManager, didUpdateData changeType: CoreDataPreloadManager.ChangeType) {
-        print("🔄 CoreDataPreloadManager: Data updated - \(changeType)")
-        
-        // Perform targeted UI updates based on change type
-        DispatchQueue.main.async { [weak self] in
-            switch changeType {
-            case .bandsUpdated(let added, let modified, let deleted):
-                if added > 0 || deleted > 0 {
-                    // Major changes - full refresh
-                    self?.refreshBandList(reason: "Core Data - bands added/deleted")
-                } else if modified > 0 {
-                    // Minor changes - could be optimized to just refresh table
-                    self?.tableView?.reloadData()
-                }
-                
-            case .eventsUpdated(let added, let modified, let deleted):
-                if added > 0 || deleted > 0 {
-                    // Schedule changes affect display
-                    self?.refreshBandList(reason: "Core Data - events changed")
-                } else if modified > 0 {
-                    self?.tableView?.reloadData()
-                }
-                
-            case .prioritiesUpdated(_):
-                // Priority changes just need visual refresh
-                self?.tableView?.reloadData()
-                
-            case .attendanceUpdated(_):
-                // Attendance changes just need visual refresh
-                self?.tableView?.reloadData()
-                
-            case .fullRefresh:
-                // Full refresh needed
-                self?.refreshBandList(reason: "Core Data - full refresh")
-            }
-        }
-    }
-    
-    func preloadManager(_ manager: CoreDataPreloadManager, didCompleteYearChange newYear: Int) {
-        print("✅ CoreDataPreloadManager: Year change completed - now \(newYear)")
-        
-        DispatchQueue.main.async { [weak self] in
-            // Update UI for new year
-            self?.refreshBandList(reason: "Core Data - year change to \(newYear)")
-            
-            // Update any year-specific UI elements
-            self?.updateYearSpecificUI()
-        }
-    }
-    
-    private func updateYearSpecificUI() {
-        // Update title, labels, etc. for new year
-        titleButton.title = "\(FestivalConfig.current.appName) \(eventYear)"
-    }
-}
+// CoreDataPreloadManagerDelegate removed - data now loaded directly from SQLite
 
 extension UITableViewRowAction {
     

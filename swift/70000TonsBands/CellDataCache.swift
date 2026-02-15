@@ -396,7 +396,7 @@ class CellDataCache {
             hasSchedule = true
             isScheduledEvent = true
             
-            // Try legacy schedule first, then fallback to Core Data
+            // Try legacy schedule first, then fallback to SQLite
             location = schedule.getData(bandName, index: timeIndex, variable: locationField)
             day = monthDateRegionalFormatting(dateValue: schedule.getData(bandName, index: timeIndex, variable: dayField))
             startTime = schedule.getData(bandName, index: timeIndex, variable: startTimeField)
@@ -404,14 +404,15 @@ class CellDataCache {
             event = schedule.getData(bandName, index: timeIndex, variable: typeField)
             notes = schedule.getData(bandName, index: timeIndex, variable: notesField)
             
-            // Fallback to Core Data if legacy schedule is empty
+            // Fallback to SQLite if legacy schedule is empty
             if location.isEmpty && startTime.isEmpty && event.isEmpty {
-                if let coreDataEvent = CoreDataManager.shared.fetchEvent(byTimeIndex: timeIndex, eventName: bandName, forYear: Int32(eventYear)) {
-                    location = coreDataEvent.location ?? ""
-                    startTime = coreDataEvent.startTime ?? ""
-                    endTime = coreDataEvent.endTime ?? ""
-                    event = coreDataEvent.eventType ?? ""
-                    notes = coreDataEvent.notes ?? ""
+                let sqliteEvents = DataManager.shared.fetchEvents(forYear: eventYear)
+                if let sqliteEvent = sqliteEvents.first(where: { $0.bandName == bandName && abs($0.timeIndex - timeIndex) < 0.001 }) {
+                    location = sqliteEvent.location
+                    startTime = sqliteEvent.startTime ?? ""
+                    endTime = sqliteEvent.endTime ?? ""
+                    event = sqliteEvent.eventType ?? ""
+                    notes = sqliteEvent.notes ?? ""
                     
                     // Format day from timeIndex if not available
                     if day.isEmpty {
@@ -545,7 +546,7 @@ extension CellDataCache {
         print("   Currently populating: \(stats["isPopulating"] as? Bool ?? false)")
     }
     
-    // MARK: - CoreDataPreloadManager Support
+    // MARK: - Cache Management
     
     /// Clear entire cache (used during year changes)
     func clearCache() {
@@ -578,7 +579,7 @@ extension CellDataCache {
                 for i in 0..<self.cellDataArray.count {
                     let cell = self.cellDataArray[i]
                     if cell.bandName == bandName {
-                        // Recreate cell data with fresh data from Core Data
+                        // Recreate cell data with fresh data from SQLite
                         // For now, trigger a rebuild - could be optimized for single band updates
                         updatedCount += 1
                     }

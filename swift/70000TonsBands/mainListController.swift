@@ -8,7 +8,6 @@
 
 import UIKit
 import Foundation
-import CoreData
 
 var bands = [String]() //main list of bands
 
@@ -53,27 +52,12 @@ func getBands() -> [String]{
 /// - Returns: Filtered events and bands for UI display
 func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityManager, attendedHandle: ShowsAttended) -> [String] {
     let startTime = CFAbsoluteTimeGetCurrent()
-    print("🚀 CORE DATA FILTERING START with user preferences - eventYear: \(eventYear)")
+    print("🚀 SQLITE FILTERING START with user preferences - eventYear: \(eventYear)")
     print("🔒 [THREAD_SAFETY] getFilteredScheduleData called on thread: \(Thread.current), isMain: \(Thread.isMainThread)")
     
-    // CRITICAL: This function MUST run on main thread because it accesses Core Data viewContext objects
-    // If called from background thread, dispatch to main thread synchronously
-    if !Thread.isMainThread {
-        print("⚠️ [THREAD_SAFETY] getFilteredScheduleData called from background thread - dispatching to main")
-        var result: [String] = []
-        DispatchQueue.main.sync {
-            result = getFilteredScheduleData(sortedBy: sortedBy, priorityManager: priorityManager, attendedHandle: attendedHandle)
-        }
-        return result
-    }
+    // SQLite is thread-safe - can be called from any thread
     
-    let coreDataManager = CoreDataManager.shared
-    
-    // BUILD COMPREHENSIVE FILTER PREDICATE
-    var predicates: [NSPredicate] = []
-    
-    // 1. YEAR FILTER (always required)
-    predicates.append(NSPredicate(format: "eventYear == %d", eventYear))
+    // SQLite filtering - no NSPredicate needed, filter in Swift
     
     // 2. EVENT TYPE FILTERS (EXCLUSIVE approach - show everything EXCEPT filtered out types)
     // This ensures new unknown event types appear by default
@@ -105,7 +89,7 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
     
     // 3. BANDS ONLY FILTER - Note: We handle this differently than other filters
     // In Bands Only mode, we want to show ALL bands but exclude events from the final result
-    // This is handled in the post-processing step, not in the Core Data query
+    // This is handled in the post-processing step, not in the SQLite query
     let showScheduleView = getShowScheduleView()
     print("🔍 [VIEW_MODE_DEBUG] getShowScheduleView() = \(showScheduleView)")
     if !showScheduleView {
@@ -114,13 +98,8 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
         print("🔍 [VIEW_MODE_DEBUG] ✅ SCHEDULE MODE - Including both events and bands")
     }
     
-    // Apply exclusion filter only if there are types to exclude
-    if !excludedEventTypes.isEmpty {
-        predicates.append(NSPredicate(format: "NOT (eventType IN %@)", excludedEventTypes))
-        print("🔍 [FILTER] Event types EXCLUDED: \(excludedEventTypes)")
-    } else {
-        print("🔍 [FILTER] No event types excluded - showing ALL event types")
-    }
+    // Event type filtering is done in Swift filter below (no NSPredicate needed)
+    print("🔍 [FILTER] Event types EXCLUDED: \(excludedEventTypes.isEmpty ? "none" : excludedEventTypes.joined(separator: ", "))")
     
     // 3. VENUE FILTERS (DYNAMIC approach using FestivalConfig venues)
     // This ensures new venues from different festivals are handled automatically
@@ -142,52 +121,14 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
         }
     }
     
-    // Build the venue filter predicate
-    var venuePredicateParts: [NSPredicate] = []
-    
-    // Add predicates for enabled filter venues
-    // Use BEGINSWITH for exact venue matching to avoid "Lounge" matching "Boleros Lounge"
-    for venueName in enabledFilterVenues {
-        venuePredicateParts.append(NSPredicate(format: "location BEGINSWITH[cd] %@", venueName))
-    }
-    
-    // Handle "Other" venues - if enabled, include venues not matching any filter venue
-    if getShowOtherShows() {
-        print("🔍 [FILTER] ✅ Including Other venues (venues with showInFilters=false)")
-        // If Other venues are enabled, we need to add a predicate for "NOT any filter venue"
-        // But only if there are some filter venues to exclude from "Other"
-        if !filterVenues.isEmpty {
-            var filterVenuePredicates: [NSPredicate] = []
-            for venueName in filterVenues {
-                // Use BEGINSWITH for exact venue matching
-                filterVenuePredicates.append(NSPredicate(format: "location BEGINSWITH[cd] %@", venueName))
-            }
-            let notFilterVenuesPredicate = NSCompoundPredicate(notPredicateWithSubpredicate: 
-                NSCompoundPredicate(orPredicateWithSubpredicates: filterVenuePredicates))
-            venuePredicateParts.append(notFilterVenuesPredicate)
-        }
-    } else {
-        print("🔍 [FILTER] ❌ EXCLUDING Other venues (venues with showInFilters=false)")
-    }
-    
-    // Apply the venue filter: show events that match enabled venues OR other venues (if enabled)
-    if !venuePredicateParts.isEmpty {
-        let venuePredicate = NSCompoundPredicate(orPredicateWithSubpredicates: venuePredicateParts)
-        predicates.append(venuePredicate)
-        print("🔍 [FILTER] Applied venue filter: enabled=\(enabledFilterVenues), other=\(getShowOtherShows())")
-    } else {
-        // No venues enabled and Other venues disabled = hide all venues
-        print("🔍 [FILTER] ⚠️ No venues enabled - this will show no events")
-        predicates.append(NSPredicate(value: false)) // Force no results
-    }
+    // Venue filtering is done in Swift filter below (no NSPredicate needed)
+    print("🔍 [FILTER] Venue filter: enabled=\(enabledFilterVenues), other=\(getShowOtherShows())")
     
     // 4. EXPIRATION FILTER (if enabled)
-    // Note: This NSPredicate is not actually used - filtering happens in Swift below
-    // Kept here for documentation/compatibility purposes
-    if getHideExpireScheduleData() {
-        let currentTime = Date().timeIntervalSinceReferenceDate // FIX: Use same reference as timeIndex
-        // NSPredicate doesn't handle midnight crossing or 10-min buffer - actual filtering happens in Swift filter below
-        predicates.append(NSPredicate(format: "endTimeIndex > %f", currentTime))
+    // Filtering happens in Swift filter below
+    let hideExpired = getHideExpireScheduleData()
+    if hideExpired {
+        let currentTime = Date().timeIntervalSinceReferenceDate
         print("🔍 [FILTER] Hiding expired events (with 10-min buffer, ended before) \(currentTime + 600)")
     }
     
@@ -206,11 +147,13 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
         }
         
         // 2. Venue filters
-        if venuePredicateParts.isEmpty {
+        // Check if any venues are enabled
+        if enabledFilterVenues.isEmpty && !getShowOtherShows() {
             return false // No venues enabled
         }
         
         var matchesVenue = false
+        // Check enabled filter venues
         for venueName in enabledFilterVenues {
             if location.lowercased().hasPrefix(venueName.lowercased()) {
                 matchesVenue = true
@@ -218,7 +161,7 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
             }
         }
         
-        // Check "Other" venues
+        // Check "Other" venues if enabled
         if !matchesVenue && getShowOtherShows() {
             // Check if it's NOT a filter venue
             var isFilterVenue = false
@@ -642,7 +585,7 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
     
     // POST-PROCESSING: Apply Bands Only filter if needed
     if !showScheduleView {
-        print("🔍 [VIEW_MODE_DEBUG] 🎵 Applying Bands Only filter - using Core Data query for all bands")
+        print("🔍 [VIEW_MODE_DEBUG] 🎵 Applying Bands Only filter - using SQLite query for all bands")
         
         // Use DataManager (SQLite) to get all unique band names for the current year
         // This respects all the existing filters (priority, venue, event type, expiration)
@@ -776,7 +719,7 @@ private func calculateTimeIndexForFiltering(date: String, time: String) -> Doubl
 
 
 // REMOVED: determineBandOrScheduleList function (248 lines of unused legacy code)
-// This function was replaced by getFilteredScheduleData() which uses Core Data queries
+// This function was replaced by getFilteredScheduleData() which uses SQLite queries
 // instead of loop-based processing. The old function contained debug code that was
 // causing confusion about event counting since it was never executed.
 
@@ -1315,7 +1258,7 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         attendedView.isHidden = false
         eventTypeImageView.isHidden = false
         
-        // Try legacy schedule first, then fallback to Core Data for standalone events
+        // Try legacy schedule first, then fallback to SQLite for standalone events
         // Use dataFetchBandName for data fetching (first band if combined)
         var location = schedule.getData(dataFetchBandName, index:timeIndex, variable: locationField)
         var day = monthDateRegionalFormatting(dateValue: schedule.getData(dataFetchBandName, index: timeIndex, variable: dayField))
@@ -1325,14 +1268,15 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         var notes = schedule.getData(dataFetchBandName, index:timeIndex, variable: notesField)
         
         // If legacy schedule doesn't have this data (standalone event), get from Core Data
-        // Use dataFetchBandName for Core Data lookup as well
+        // Use dataFetchBandName for SQLite lookup as well
         if location.isEmpty && startTime.isEmpty && event.isEmpty {
-            if let coreDataEvent = CoreDataManager.shared.fetchEvent(byTimeIndex: timeIndex, eventName: dataFetchBandName, forYear: Int32(eventYear)) {
-                location = coreDataEvent.location ?? ""
-                startTime = coreDataEvent.startTime ?? ""
-                endTime = coreDataEvent.endTime ?? ""
-                event = coreDataEvent.eventType ?? ""
-                notes = coreDataEvent.notes ?? ""
+            let sqliteEvents = DataManager.shared.fetchEvents(forYear: eventYear)
+            if let sqliteEvent = sqliteEvents.first(where: { $0.bandName == dataFetchBandName && abs($0.timeIndex - timeIndex) < 0.001 }) {
+                location = sqliteEvent.location
+                startTime = sqliteEvent.startTime ?? ""
+                endTime = sqliteEvent.endTime ?? ""
+                event = sqliteEvent.eventType ?? ""
+                notes = sqliteEvent.notes ?? ""
                 // Format day from timeIndex if not available
                 if day.isEmpty {
                     let dateFormatter = DateFormatter()

@@ -1,25 +1,15 @@
 import Foundation
-import CoreData
 import UIKit
 
 /// Manages band priorities using SQLite
 /// This is now a wrapper around SQLitePriorityManager for backwards compatibility
-/// Core Data is read-only and only used for migration purposes
 class PriorityManager {
     // Use SQLite as primary storage
     private let sqliteManager = SQLitePriorityManager.shared
     
-    // Keep Core Data manager ONLY for reading during migration
-    private let coreDataManager: CoreDataManager
-    
-    init(coreDataManager: CoreDataManager = CoreDataManager.shared) {
-        self.coreDataManager = coreDataManager
-        
+    init() {
         // Check for one-time migration from legacy data
         performLegacyMigrationIfNeeded()
-        
-        // Migrate from Core Data to SQLite if needed
-        migrateFromCoreDataIfNeeded()
     }
     
     // MARK: - Priority Management
@@ -111,9 +101,11 @@ class PriorityManager {
     
     // MARK: - Migration Support
     
-    /// Migrates priority data from Core Data to SQLite (one-time migration)
+    /// Migration from Core Data removed - all data now uses SQLite directly
     private func migrateFromCoreDataIfNeeded() {
-        let migrationKey = "PriorityCoreDat aToSQLiteMigrationCompleted"
+        // Core Data migration removed - all data now uses SQLite directly
+        // Mark migration as complete to prevent future checks
+        let migrationKey = "PriorityCoreDataToSQLiteMigrationCompleted"
         let migrationCompleted = UserDefaults.standard.bool(forKey: migrationKey)
         
         if migrationCompleted {
@@ -121,69 +113,15 @@ class PriorityManager {
             return
         }
         
-        // CRITICAL FIX: Check if Core Data store even exists before trying to access it
-        // On fresh install, there's nothing to migrate and we shouldn't block startup
-        let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0]
-        let coreDataStorePath = "\(documentsPath)/DataModel.sqlite"
-        
-        if !FileManager.default.fileExists(atPath: coreDataStorePath) {
-            print("ℹ️  No Core Data store found - fresh install, skipping migration")
-            // Mark migration as complete so we don't check again
-            UserDefaults.standard.set(true, forKey: migrationKey)
-            return
-        }
-        
-        print("🔄 Starting priority migration from Core Data to SQLite...")
-        
-        // Read all priorities from Core Data (read-only!)
-        let context = coreDataManager.viewContext
-        var priorities: [String: Int] = [:]
-        var timestamps: [String: Double] = [:]
-        
-        context.performAndWait {
-            let request: NSFetchRequest<UserPriority> = UserPriority.fetchRequest()
-            
-            do {
-                let coreDataPriorities = try context.fetch(request)
-                
-                for priority in coreDataPriorities {
-                    // Try bandName field first, fallback to relationship
-                    var bandName: String?
-                    
-                    if let name = priority.bandName {
-                        bandName = name
-                    } else if let name = priority.band?.bandName {
-                        bandName = name
-                    }
-                    
-                    if let name = bandName {
-                        priorities[name] = Int(priority.priorityLevel)
-                        timestamps[name] = priority.updatedAt?.timeIntervalSince1970 ?? Date().timeIntervalSince1970
-                    }
-                }
-                
-                print("📊 Found \(priorities.count) priorities in Core Data to migrate")
-            } catch {
-                print("❌ Error reading priorities from Core Data: \(error)")
-            }
-        }
-        
-        // Migrate to SQLite
-        if !priorities.isEmpty {
-            sqliteManager.migrateFromCoreData(coreDataPriorities: priorities, timestamps: timestamps)
-            print("✅ Migrated \(priorities.count) priorities from Core Data to SQLite")
-        }
-        
-        // Mark migration as completed
+        // Core Data migration removed - all data now uses SQLite directly
+        // Mark migration as complete to prevent future checks
         UserDefaults.standard.set(true, forKey: migrationKey)
-        UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "PriorityCoreDataToSQLiteMigrationTimestamp")
         UserDefaults.standard.synchronize()
     }
     
-    /// Performs one-time migration from legacy data sources to Core Data
+    /// Performs one-time migration from legacy data sources to SQLite
     private func performLegacyMigrationIfNeeded() {
-        // NOTE: Legacy file migration is now handled by CoreDataToSQLiteMigrator
-        // which runs during app startup and migrates directly to SQLite
+        // Legacy file migration removed - all data now uses SQLite directly
         // This function now just marks migration as complete for backwards compatibility
         
         let migrationCompleted = UserDefaults.standard.bool(forKey: "PriorityMigrationCompleted")
@@ -196,7 +134,7 @@ class PriorityManager {
         // Check if the new SQLite migrator handled the file migration
         let sqliteMigrationCompleted = UserDefaults.standard.bool(forKey: "hasCompletedFileToSQLiteMigration_v1")
         if sqliteMigrationCompleted {
-            print("✅ Legacy priorities migrated to SQLite by CoreDataToSQLiteMigrator")
+            print("✅ Legacy priorities migrated to SQLite")
             UserDefaults.standard.set(true, forKey: "PriorityMigrationCompleted")
             UserDefaults.standard.synchronize()
             return
@@ -217,8 +155,8 @@ class PriorityManager {
             return
         }
         
-        // LEGACY DATA EXISTS: Proceed with migration (whether Core Data exists or not)
-        print("📦 Legacy data found - proceeding with migration (Core Data count: \(coreDataCount))")
+        // LEGACY DATA EXISTS: Proceed with migration
+        print("📦 Legacy data found - proceeding with migration (SQLite count: \(coreDataCount))")
         
         print("🔄 Starting legacy priority data migration...")
         
@@ -787,25 +725,5 @@ class PriorityManager {
     
     // MARK: - Private Helpers
     
-    private func getUserPriority(for band: Band) -> UserPriority? {
-        let request: NSFetchRequest<UserPriority> = UserPriority.fetchRequest()
-        request.predicate = NSPredicate(format: "band == %@", band)
-        request.fetchLimit = 1
-        
-        do {
-            return try coreDataManager.context.fetch(request).first
-        } catch {
-            print("❌ Error fetching user priority: \(error)")
-            return nil
-        }
-    }
-    
-    private func createUserPriority(for band: Band) -> UserPriority {
-        let userPriority = UserPriority(context: coreDataManager.context)
-        userPriority.band = band
-        userPriority.priorityLevel = 0
-        userPriority.createdAt = Date()
-        userPriority.updatedAt = Date()
-        return userPriority
-    }
+    // Core Data methods removed - all data now uses SQLite directly
 }

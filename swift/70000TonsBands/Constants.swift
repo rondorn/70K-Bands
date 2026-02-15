@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import CoreData
 import SystemConfiguration
 import UIKit
 import Network
@@ -458,9 +457,11 @@ func getPointerUrlData(keyValue: String) -> String {
             }
         }
         
-        // 3. Clear year-specific Core Data (bands and events, but preserve user priorities/attendance)
-        print("🔧 [POINTER_DEBUG] 🗑️ Clearing Core Data bands and events")
-        CoreDataManager.shared.clearYearSpecificData()
+        // 3. Clear year-specific data (bands and events, but preserve user priorities/attendance)
+        print("🔧 [POINTER_DEBUG] 🗑️ Clearing year-specific bands and events")
+        // Delete all events for the year - SQLiteDataManager handles this internally
+        // Note: Year-specific data clearing is handled automatically when new data is imported
+        // User priorities and attendance are preserved in separate tables
         
         // 4. Delete band and schedule cache files to force re-download
         let bandFile = getDocumentsDirectory().appendingPathComponent("bandFile.txt")
@@ -906,15 +907,7 @@ func readPointDataOptimized(dataArray: [String], pointerValues: [String:[String:
 /// Loads user defaults and venue locations, and sets the current event year from pointer data.
 func setupDefaults(runMigrationCheck: Bool = true) {
     
-    // CRITICAL: Migration must NOT be triggered by year changes.
-    // This can be invoked from multiple code paths; only run when explicitly allowed.
-    if runMigrationCheck {
-        print("🔄 Starting Core Data → SQLite migration check...")
-        CoreDataToSQLiteMigrator.shared.migrateIfNeeded()
-        print("✅ Migration check complete")
-    } else {
-        print("🚫 [MIGRATION] setupDefaults: Skipping Core Data → SQLite migration check (runMigrationCheck=false)")
-    }
+    // Migration system removed - all data now uses SQLite directly
         
     readFiltersFile()
     setupVenueLocations()
@@ -963,7 +956,7 @@ func setupDefaults(runMigrationCheck: Bool = true) {
         }
     }
 
-    // Priority data migration to Core Data completed - utility removed
+    // All data now uses SQLite directly
 
     didVersionChangeFunction();
 }
@@ -1305,8 +1298,7 @@ let cacheVariablesQueue = DispatchQueue(label: "com.70kbands.cacheVariables", at
 
 struct cacheVariables {
     
-    // LEGACY: These cache variables are still used by some components during Core Data transition
-    // TODO: Remove once all schedule/priority operations are fully migrated to Core Data
+    // Cache variables for performance optimization
     
     // Thread-safe cache access using concurrent queue with barriers for writes
     private static var _bandPriorityStorageCache = [String:Int]()

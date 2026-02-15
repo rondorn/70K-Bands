@@ -8,7 +8,6 @@
 
 import Foundation
 import Firebase
-import CoreData
 
 
 class firebaseBandDataWrite {
@@ -86,21 +85,12 @@ class firebaseBandDataWrite {
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
-    /// Gets sanitized name for a band from Core Data, fallback to computing it
+    /// Gets sanitized name for a band from SQLite, fallback to computing it
     private func getSanitizedNameForBand(_ bandName: String) -> String {
-        let context = CoreDataManager.shared.viewContext
-        let request: NSFetchRequest<Band> = Band.fetchRequest()
-        request.predicate = NSPredicate(format: "bandName == %@ AND eventYear == %d", bandName, Int32(eventYear))
-        request.fetchLimit = 1
-        
-        do {
-            if let band = try context.fetch(request).first,
-               let sanitizedName = band.sanitizedName,
-               !sanitizedName.isEmpty {
-                return sanitizedName
-            }
-        } catch {
-            print("⚠️ Error fetching sanitized name for \(bandName): \(error)")
+        // Get band from SQLite
+        if let band = DataManager.shared.fetchBand(byName: bandName, eventYear: eventYear) {
+            // SQLite bands don't have sanitizedName stored, so compute it
+            return sanitizeBandNameForFirebase(bandName)
         }
         
         // Fallback to computing it

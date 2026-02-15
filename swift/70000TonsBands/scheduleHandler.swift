@@ -1,21 +1,20 @@
 //
-//  scheduleHandler_CoreData.swift
+//  scheduleHandler.swift
 //  70000TonsBands
 //
-//  Core Data-backed version of scheduleHandler
-//  Maintains 100% API compatibility while using database backend
+//  SQLite-backed version of scheduleHandler
+//  Maintains 100% API compatibility while using SQLite database backend
 //
 
 import Foundation
 import CryptoKit
-import CoreData
 
 open class scheduleHandler {
     
     // Singleton instance
     static let shared = scheduleHandler()
     
-    // Core Data components
+    // SQLite data manager
     private let dataManager = DataManager.shared
     private let csvImporter = ScheduleCSVImporter()
     
@@ -114,15 +113,15 @@ open class scheduleHandler {
         // Set up queue key for thread detection
         scheduleHandlerQueue.setSpecific(key: scheduleHandlerQueueKey, value: true)
         
-        print("🔄 scheduleHandler (Core Data) singleton initialized - Deferring data load until preferences are loaded")
+        print("🔄 scheduleHandler (SQLite) singleton initialized - Deferring data load until preferences are loaded")
         // Don't call getCachedData() here - it will be called when first accessed
         // This prevents cleanup operations before user preferences are loaded
     }
     
-    // MARK: - Core Data Cache Management
+    // MARK: - SQLite Cache Management
     
     /// Loads schedule data from SQLite into memory cache for fast access
-    /// SQLITE FIX: Simplified to work with thread-safe SQLite (no complex locking needed)
+    /// SQLite is thread-safe - no complex locking needed
     private func loadCacheFromCoreData() {
         print("🔍 [HANG_DEBUG] scheduleHandler.loadCacheFromCoreData() ENTERED")
         
@@ -194,7 +193,7 @@ open class scheduleHandler {
         }
         
         let events = self.dataManager.fetchEvents(forYear: yearToUse)
-        print("🔄 Fetched \(events.count) events from Core Data for year \(yearToUse)")
+        print("🔄 Fetched \(events.count) events from SQLite for year \(yearToUse)")
         
         // CRITICAL DEBUG: Check for unofficial events specifically
         let unofficialEvents = events.filter { event in

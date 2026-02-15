@@ -708,10 +708,9 @@ class PreferencesViewModel: ObservableObject {
         print("🔍 [YEAR_CHANGE_DEBUG] Target year (eventYearChangeAttempt): \(eventYearChangeAttempt)")
         print("🔍 [YEAR_CHANGE_DEBUG] Resolved target year: \(resolveYearToNumber(eventYearChangeAttempt))")
         
-        // CRITICAL: Clear year-specific Core Data (preserve user priorities)
-        print("🔍 [YEAR_CHANGE_DEBUG] About to call clearYearSpecificData()")
-        CoreDataManager.shared.clearYearSpecificData()
-        print("🔍 [YEAR_CHANGE_DEBUG] clearYearSpecificData() completed")
+        // CRITICAL: Clear year-specific data (preserve user priorities)
+        print("🔍 [YEAR_CHANGE_DEBUG] Year-specific data will be cleared when new data is imported")
+        // SQLite data is cleared automatically when new data is imported
         
         // Clear static caches
         bandNamesHandler.shared.clearCachedData()
@@ -755,10 +754,9 @@ class PreferencesViewModel: ObservableObject {
                 return
             }
             
-            print("🎯 Centralized data refresh completed - now waiting for Core Data population")
+            print("🎯 Centralized data refresh completed - data now in SQLite")
             
-            // CRITICAL FIX: Wait for Core Data to be fully populated before continuing
-            // The data refresh completion only means CSV download is done, not Core Data import
+            // SQLite data is populated immediately during CSV import - no waiting needed
             Task { @MainActor in
                 await self.waitForCoreDataPopulationAndContinueYearChange()
             }
@@ -1010,8 +1008,8 @@ class PreferencesViewModel: ObservableObject {
         // Clear caches and restore previous year's data
         print("🔄 Clearing caches and restoring previous year's data")
         
-        // Clear the failed year's data from Core Data
-        CoreDataManager.shared.clearYearSpecificData()
+        // Clear the failed year's data from SQLite
+        // SQLite data is cleared automatically when new data is imported
         
         // Trigger a refresh to reload the previous year's data
         if let masterView = masterView {
