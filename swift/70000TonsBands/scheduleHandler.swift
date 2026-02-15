@@ -200,7 +200,7 @@ open class scheduleHandler {
             let eventType = event.eventType ?? ""
             return eventType == "Unofficial Event" || eventType == "Cruiser Organized"
         }
-        print("🔧 [UNOFFICIAL_DEBUG] ⚠️ FOUND \(unofficialEvents.count) unofficial events in Core Data for year \(yearToUse)")
+        print("🔧 [UNOFFICIAL_DEBUG] ⚠️ FOUND \(unofficialEvents.count) unofficial events in SQLite for year \(yearToUse)")
         if unofficialEvents.count > 0 {
             for event in unofficialEvents.prefix(3) {
                 let bandName = event.bandName
@@ -208,19 +208,19 @@ open class scheduleHandler {
                 print("🔧 [UNOFFICIAL_DEBUG] - Event: band='\(bandName)', type='\(eventType)', timeIndex=\(event.timeIndex)")
             }
             } else {
-            print("🔧 [UNOFFICIAL_DEBUG] ❌ NO unofficial events found in Core Data after fetchEvents(forYear:)")
+            print("🔧 [UNOFFICIAL_DEBUG] ❌ NO unofficial events found in SQLite after fetchEvents(forYear:)")
         }
         
-        // Debug: Check if there are any events at all in Core Data
+        // Debug: Check if there are any events at all in SQLite
         let allEvents = self.dataManager.fetchEvents()
-        print("🔍 DEBUG: Total events in Core Data (all years): \(allEvents.count)")
+        print("🔍 DEBUG: Total events in SQLite (all years): \(allEvents.count)")
         
         // CRITICAL DEBUG: Check for unofficial events across ALL years
         let allUnofficialEvents = allEvents.filter { event in
             let eventType = event.eventType ?? ""
             return eventType == "Unofficial Event" || eventType == "Cruiser Organized"
         }
-        print("🔧 [UNOFFICIAL_DEBUG] ⚠️ FOUND \(allUnofficialEvents.count) unofficial events in Core Data (ALL YEARS)")
+            print("🔧 [UNOFFICIAL_DEBUG] ⚠️ FOUND \(allUnofficialEvents.count) unofficial events in SQLite (ALL YEARS)")
         if allUnofficialEvents.count > 0 {
             for event in allUnofficialEvents.prefix(3) {
                 let bandName = event.bandName
@@ -230,7 +230,7 @@ open class scheduleHandler {
         }
         if allEvents.count > 0 {
             let eventYears = Set(allEvents.compactMap { $0.eventYear })
-            print("🔍 DEBUG: Event years in Core Data: \(eventYears.sorted())")
+            print("🔍 DEBUG: Event years in SQLite: \(eventYears.sorted())")
             
             // Debug: Show event type distribution
             let eventTypes = allEvents.compactMap { $0.eventType }
@@ -305,7 +305,7 @@ open class scheduleHandler {
                         
                         let timeIndex = event.timeIndex
                         
-                        // Map Core Data fields to legacy dictionary format
+                        // Map SQLite fields to legacy dictionary format
                         var eventData = [String : String]()
                         eventData[bandField] = fakeBandName
                         eventData[locationField] = event.location ?? ""
@@ -343,7 +343,7 @@ open class scheduleHandler {
                 // Debug: Track timeIndex distribution
                 timeIndexCounts[timeIndex, default: 0] += 1
                 
-                // Map Core Data fields to legacy dictionary format
+                // Map SQLite fields to legacy dictionary format
                 var eventData = [String : String]()
                 eventData[bandField] = bandName
                 eventData[locationField] = event.location ?? ""
@@ -437,7 +437,7 @@ open class scheduleHandler {
             self.cacheLoaded = true
         }
         
-        print("✅ Loaded \(events.count) events from Core Data into cache")
+        print("✅ Loaded \(events.count) events from SQLite into cache")
     }
     
     // MARK: - Original API Methods (100% Compatible)
@@ -450,7 +450,7 @@ open class scheduleHandler {
         // Year synchronization is now handled by loadCacheFromCoreData() - no need to duplicate
         print("🚀 scheduleHandler: Year resolution will be handled by loadCacheFromCoreData() if needed")
         
-        // Load from Core Data cache immediately (thread-safe)
+        // Load from SQLite cache immediately (thread-safe)
         print("🔍 [HANG_DEBUG] About to enter scheduleHandlerQueue.sync")
         var eventCount = 0
         scheduleHandlerQueue.sync {
@@ -472,7 +472,7 @@ open class scheduleHandler {
     }
     
     func getCachedData() {
-        print("Loading schedule data cache (Core Data backend)")
+        print("Loading schedule data cache (SQLite backend)")
         print("🔍 DEBUG: Current eventYear = \(eventYear)")
         print("🔍 DEBUG: cacheLoaded = \(cacheLoaded)")
         print("🔍 [SCHEDULE_DEBUG] getCachedData: Starting method")
@@ -500,7 +500,7 @@ open class scheduleHandler {
     
     private func getCachedDataInternal(needsNetworkFetch: inout Bool, showedData: inout Bool) {
         print("🔍 [SCHEDULE_DEBUG] getCachedDataInternal: Starting")
-        // Load from Core Data if cache not loaded (thread-safe)
+        // Load from SQLite if cache not loaded (thread-safe)
         if !cacheLoaded {
             print("🔍 DEBUG: Cache not loaded, calling loadCacheFromCoreData()")
             print("🔍 [SCHEDULE_DEBUG] getCachedDataInternal: About to call loadCacheFromCoreData()")
@@ -513,7 +513,7 @@ open class scheduleHandler {
         let hasData = dictionaryQueue.sync { return !self._schedulingData.isEmpty }
         if hasData {
             // Cache is available, show immediately
-            print("Loading schedule data cache, from Core Data cache")
+            print("Loading schedule data cache, from SQLite cache")
             showedData = true
         } else if !cacheVariables.scheduleStaticCache.isEmpty {
             // cacheVariables has data, load into memory and show immediately
@@ -556,7 +556,7 @@ open class scheduleHandler {
                     self.populateSchedule(forceDownload: true, isYearChangeOperation: false)
                 }
             } else {
-                print("No cached/Core Data data available - this should only happen during app launch or explicit refreshes")
+                print("No cached/SQLite data available - this should only happen during app launch or explicit refreshes")
                 print("Skipping automatic network download - network loading should only happen during app launch, foreground return, or pull-to-refresh")
                 // DO NOT automatically trigger network downloads here - let only the appropriate triggers handle it
             }
@@ -676,7 +676,7 @@ open class scheduleHandler {
             // Clear current data only when we're actually downloading new data
             print("🔍 [SCHEDULE_DEBUG] populateSchedule: Clearing cache before download")
             clearCache()
-            print("DEBUG_MARKER: Starting CSV download process (Core Data backend)")
+            print("DEBUG_MARKER: Starting CSV download process (SQLite backend)")
             print("DEBUG_MARKER: Event year: \(eventYear)")
             
             let scheduleUrl = getPointerUrlData(keyValue: "scheduleUrl") ?? ""
@@ -741,18 +741,18 @@ open class scheduleHandler {
                 // Smart import detection: Force import if we have large CSV but few events
                 let currentEventCount = dataManager.fetchEvents(forYear: eventYear).count
                 if httpData.count > 1000 && currentEventCount < 5 {
-                    print("DEBUG_MARKER: Smart import triggered - Downloaded \(httpData.count) chars but only \(currentEventCount) events in Core Data")
+                    print("DEBUG_MARKER: Smart import triggered - Downloaded \(httpData.count) chars but only \(currentEventCount) events in SQLite")
                     storedChecksum = nil // Force import
                 }
                 
                 // Compare checksums to determine if data has changed
                 if storedChecksum != newChecksum {
-                    print("DEBUG_MARKER: Data has changed - importing to Core Data")
+                    print("DEBUG_MARKER: Data has changed - importing to SQLite")
                     print("DEBUG_MARKER: Old checksum: \(storedChecksum?.prefix(8) ?? "none")")
                     print("DEBUG_MARKER: New checksum: \(newChecksum.prefix(8))")
                     dataChanged = true
                     
-                    // Import new data to Core Data with smart update/delete logic
+                    // Import new data to SQLite with smart update/delete logic
                     print("DEBUG_MARKER: Calling smart CSV import")
                     let importSuccess = csvImporter.importEventsFromCSVString(httpData)
                     print("DEBUG_MARKER: Smart CSV import result: \(importSuccess)")
@@ -760,9 +760,9 @@ open class scheduleHandler {
                     if importSuccess {
                         // Store new checksum only if import was successful
                         storeChecksum(newChecksum)
-                        print("DEBUG_MARKER: Successfully updated Core Data and stored new checksum")
+                        print("DEBUG_MARKER: Successfully updated SQLite and stored new checksum")
                         
-                        // Reload cache from Core Data
+                        // Reload cache from SQLite
                         cacheLoaded = false
                         loadCacheFromCoreData()
                 } else {
@@ -778,7 +778,7 @@ open class scheduleHandler {
                 dataChanged = false
             }
         } else if !forceDownload {
-            print("📖 populateSchedule called without forceDownload - only reading from Core Data cache")
+            print("📖 populateSchedule called without forceDownload - only reading from SQLite cache")
             loadCacheFromCoreData()
         } else {
             print("📡 No internet available, keeping existing data")
@@ -881,15 +881,15 @@ open class scheduleHandler {
                 }
             }
             
-            // Import directly to Core Data instead of writing to file
+            // Import directly to SQLite instead of writing to file
             print("🔧 [UNOFFICIAL_DEBUG] 🚀 STARTING CSV IMPORT PROCESS...")
             print("🔧 [YEAR_SYNC_DEBUG] Pre-import: global eventYear = \(eventYear), using captured year \(capturedEventYear)")
             
-            // OPTION D: Force CSV import to main thread during year changes to prevent Core Data crashes
+            // OPTION D: Force CSV import to main thread during year changes to prevent SQLite crashes
             // This is safe because we're showing a loading indicator on the preferences screen
             let importSuccess: Bool
             if forceMainThread && !Thread.isMainThread {
-                print("🧵 [OPTION_D] Forcing CSV import to main thread to prevent Core Data crashes")
+                print("🧵 [OPTION_D] Forcing CSV import to main thread to prevent SQLite crashes")
                 print("🧵 [OPTION_D] User will wait on preferences screen while data loads safely")
                 
                 var result = false
@@ -929,7 +929,7 @@ open class scheduleHandler {
             print("🔧 [UNOFFICIAL_DEBUG] 📊 CSV IMPORT RESULT: \(importSuccess ? "SUCCESS" : "FAILED")")
             
             if importSuccess {
-                print("🔧 [UNOFFICIAL_DEBUG] CSV import completed successfully - checking Core Data...")
+                print("🔧 [UNOFFICIAL_DEBUG] CSV import completed successfully - checking SQLite...")
                 
                 // CRITICAL FIX: Wait for context merge to complete
                 // The background import just completed, but the view context may not have merged changes yet
@@ -944,24 +944,24 @@ open class scheduleHandler {
                     // access the view context directly. The main thread IS the viewContext's thread.
                     print("🔧 [DEADLOCK_FIX] Skipping performAndWait - already on main thread")
                     
-                    // Now check Core Data after context synchronization using captured year
+                    // Now check SQLite after context synchronization using captured year
                     print("🔧 [YEAR_SYNC_DEBUG] Using captured year \(capturedEventYear) for post-import check (global eventYear = \(eventYear))")
                     let justImportedEvents = self.dataManager.fetchEvents(forYear: capturedEventYear)
                     let justImportedUnofficial = justImportedEvents.filter { event in
                         let eventType = event.eventType ?? ""
                         return eventType == "Unofficial Event" || eventType == "Cruiser Organized"
                     }
-                    print("🔧 [CONTEXT_DEBUG] After context sync: \(justImportedUnofficial.count) unofficial events in Core Data")
+                    print("🔧 [CONTEXT_DEBUG] After context sync: \(justImportedUnofficial.count) unofficial events in SQLite")
                     if justImportedUnofficial.count > 0 {
                         for event in justImportedUnofficial.prefix(3) {
                             print("🔧 [CONTEXT_DEBUG] - Event: \(event.bandName), type: \(event.eventType ?? "nil")")
                         }
                     }
                     
-                    print("🔧 [CONTEXT_DEBUG] About to reload cache from Core Data...")
+                    print("🔧 [CONTEXT_DEBUG] About to reload cache from SQLite...")
                     print("🔧 [CONTEXT_DEBUG] Setting cacheLoaded = false")
                     
-                    // Reload cache from Core Data using captured year to prevent race condition
+                    // Reload cache from SQLite using captured year to prevent race condition
                     self.cacheLoaded = false
                     
                     print("🔧 [CONTEXT_DEBUG] Calling loadCacheFromCoreData() with captured year \(capturedEventYear)...")
@@ -969,7 +969,7 @@ open class scheduleHandler {
                     
                     print("🔧 [CONTEXT_DEBUG] loadCacheFromCoreData() completed")
                     print("🔧 [SCHEDULE_DEBUG] ========== SCHEDULE CSV DownloadCsv() COMPLETED ==========")
-                    print("Successfully downloaded and imported schedule data to Core Data")
+                    print("Successfully downloaded and imported schedule data to SQLite")
             }
         } else {
                 print("🔧 [SCHEDULE_DEBUG] ❌ SCHEDULE CSV DownloadCsv() FAILED (import failed)")
@@ -1182,7 +1182,7 @@ open class scheduleHandler {
     
     // MARK: - Band-Specific Event Queries
     
-    /// Gets all events for a specific band directly from Core Data
+    /// Gets all events for a specific band directly from SQLite
     /// This method is intended for use by the details view to show all events for a band
     /// - Parameters:
     ///   - bandName: The name of the band to get events for
@@ -1191,7 +1191,7 @@ open class scheduleHandler {
     func getEventsForBand(_ bandName: String, includeExpired: Bool = true) -> [[String: String]] {
         print("🔍 [BAND_EVENTS_DEBUG] Getting events for band: '\(bandName)', includeExpired: \(includeExpired)")
         
-        // Get events directly from Core Data
+        // Get events directly from SQLite
         let events = dataManager.fetchEventsForBand(bandName, forYear: eventYear)
         var eventDataArray: [[String: String]] = []
         

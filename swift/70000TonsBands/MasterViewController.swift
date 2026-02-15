@@ -2689,41 +2689,26 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             appDelegate.refreshPointerFileForUserInitiatedRefresh { [weak self] _ in
                 guard let self = self else { return }
                 
-                print("🔄 PULL-TO-REFRESH: Pointer refresh complete - checking throttling before data refresh")
+                print("🔄 PULL-TO-REFRESH: Pointer refresh complete - user-initiated gesture always honored")
+                // User-initiated pull-to-refresh always downloads fresh data (bypasses throttling)
+                // Throttling only applies to automatic/background refreshes, not user gestures
                 if isWaitingForData {
-                    print("🔄 PULL-TO-REFRESH: ⚠️ Forcing full data refresh due to empty state (bypasses throttling)")
+                    print("🔄 PULL-TO-REFRESH: Empty state detected - forcing full data refresh")
                     self.refreshData(isUserInitiated: true, forceDownload: true)
                 } else {
-                    // Respect 5-minute throttling for pull-to-refresh
-                    if self.shouldDownloadSchedule(force: false) {
-                        print("🔄 PULL-TO-REFRESH: Throttling check passed - launching unified data refresh")
-                        self.performUnifiedDataRefresh(reason: "Pull-to-refresh")
-                    } else {
-                        print("🔄 PULL-TO-REFRESH: Throttled - less than 5 minutes since last download, skipping fresh download")
-                        // Still refresh UI from cache
-                        DispatchQueue.main.async {
-                            self.refreshBandList(reason: "Pull-to-refresh - throttled, showing cached data")
-                        }
-                    }
+                    print("🔄 PULL-TO-REFRESH: User gesture honored - launching unified data refresh")
+                    self.performUnifiedDataRefresh(reason: "Pull-to-refresh")
                 }
             }
         } else {
             // Fallback: should never happen, but keep existing behavior.
             print("🔄 PULL-TO-REFRESH: ⚠️ No AppDelegate instance - proceeding without pointer refresh")
+            // User-initiated pull-to-refresh always downloads fresh data (bypasses throttling)
             if isWaitingForData {
                 refreshData(isUserInitiated: true, forceDownload: true)
             } else {
-                // Respect 5-minute throttling for pull-to-refresh
-                if shouldDownloadSchedule(force: false) {
-                    print("🔄 PULL-TO-REFRESH: Throttling check passed - launching unified data refresh")
-                    performUnifiedDataRefresh(reason: "Pull-to-refresh")
-                } else {
-                    print("🔄 PULL-TO-REFRESH: Throttled - less than 5 minutes since last download, skipping fresh download")
-                    // Still refresh UI from cache
-                    DispatchQueue.main.async {
-                        self.refreshBandList(reason: "Pull-to-refresh - throttled, showing cached data")
-                    }
-                }
+                print("🔄 PULL-TO-REFRESH: User gesture honored - launching unified data refresh")
+                performUnifiedDataRefresh(reason: "Pull-to-refresh")
             }
         }
     }
@@ -5533,18 +5518,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 self.attendedHandle.loadShowsAttended()
                 print("✅ Attendance data loaded")
                 
-                // Step 5: Load iCloud data (only after core data is available)
+                // Step 5: Load iCloud data (only after SQLite data is available)
                 print("☁️ Step 5: Loading iCloud data...")
                 self.loadICloudData {
                     print("✅ iCloud data loaded")
                     
-                    // Step 6: Load description map (only after core data is available)
+                    // Step 6: Load description map (only after SQLite data is available)
                     print("📝 Step 6: Loading description map...")
                     self.bandDescriptions.getDescriptionMapFile()
                     self.bandDescriptions.getDescriptionMap()
                     print("✅ Description map loaded")
                     
-                    // Step 7: Load combined image URL map (only after core data is available)
+                    // Step 7: Load combined image URL map (only after SQLite data is available)
                     print("🖼️ Step 7: Loading combined image URL map...")
                     self.loadCombinedImageList()
                     print("✅ Combined image list loaded")
@@ -6083,7 +6068,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
     }
     
-    /// Load iCloud data after core data is available
+    /// Load iCloud data after SQLite data is available
     private func loadICloudData(completion: (() -> Void)? = nil) {
         // CRITICAL: Skip iCloud operations during profile switches
         let isProfileSwitching = UserDefaults.standard.bool(forKey: "ProfileSwitchInProgress")
@@ -6130,7 +6115,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     private func loadCombinedImageList() {
         print("🖼️ Loading combined image list...")
         
-        // Now that we have core data, we can safely load the combined image list
+        // Now that we have SQLite data, we can safely load the combined image list
         // Use the shared singleton instance instead of creating a new one
         let combinedImageHandler = CombinedImageListHandler.shared
         
@@ -6143,7 +6128,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     // MARK: - PERFORMANCE OPTIMIZED LAUNCH METHODS
     
-    /// Optimized first launch: Skip CoreData (empty on first install), go straight to network download
+    /// Optimized first launch: Skip database cache (empty on first install), go straight to network download
     private func performOptimizedFirstLaunch() {
         print("🚀 [MDF_DEBUG] First launch - going straight to network download")
         print("🚀 [MDF_DEBUG] Festival: \(FestivalConfig.current.festivalShortName)")
@@ -6191,9 +6176,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
     }
     
-    /// Optimized subsequent launch: Show CoreData immediately, then refresh with parallel downloads
+    /// Optimized subsequent launch: Show cached SQLite data immediately, then refresh with parallel downloads
     private func performOptimizedSubsequentLaunch() {
-        print("🚀 SUBSEQUENT LAUNCH: Step 1 - Displaying CoreData/cached data immediately (non-blocking)")
+        print("🚀 SUBSEQUENT LAUNCH: Step 1 - Displaying cached SQLite data immediately (non-blocking)")
         
         // Load data in background - SQLite is always ready
         print("🔍 Loading data in background...")
@@ -6568,7 +6553,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     // MARK: - Background Network Testing & Fresh Data Collection
     
     /// Performs a background network test with completion handler - never blocks GUI
-    /// This is the key method that enables the pattern: show CoreData immediately, test network, then fresh data collection
+    /// This is the key method that enables the pattern: show cached SQLite data immediately, test network, then fresh data collection
     /// - Parameter completion: Called with true if network is good, false if network is bad or unavailable
     private func performBackgroundNetworkTestWithCompletion(completion: @escaping (Bool) -> Void) {
         print("🌐 BACKGROUND NETWORK TEST: Starting ROBUST network test with completion handler")

@@ -217,13 +217,13 @@ class PriorityManager {
         // 3. Check iCloud as last resort (but be careful not to overwrite local data)
         if !legacyDataFound {
             print("☁️ No local data found, attempting iCloud recovery...")
-            // Only attempt iCloud recovery if we haven't already migrated and there's no Core Data
-            let currentCoreDataCount = getBandsWithPriorities([1, 2, 3]).count
-            if currentCoreDataCount == 0 {
-                print("☁️ Core Data is empty, safe to attempt iCloud recovery")
+            // Only attempt iCloud recovery if we haven't already migrated and there's no SQLite data
+            let currentSQLiteCount = getBandsWithPriorities([1, 2, 3]).count
+            if currentSQLiteCount == 0 {
+                print("☁️ SQLite database is empty, safe to attempt iCloud recovery")
                 attemptICloudRecovery()
             } else {
-                print("☁️ Core Data already has \(currentCoreDataCount) priorities, skipping iCloud recovery to prevent overwrite")
+                print("☁️ SQLite database already has \(currentSQLiteCount) priorities, skipping iCloud recovery to prevent overwrite")
             }
         }
         
@@ -232,7 +232,7 @@ class PriorityManager {
         
         // Add final issue if we expected data but didn't find it
         if migrationCompleted && finalCoreDataCount == 0 && !legacyDataFound {
-            migrationIssues.append("Migration marked complete but no data found in Core Data")
+            migrationIssues.append("Migration marked complete but no data found in SQLite")
         }
         
         // ALWAYS show detailed migration results to user (for debugging and transparency)

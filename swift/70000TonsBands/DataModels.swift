@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import CoreData
 
 /// Band data model - thread-safe struct (no Core Data dependencies)
 public struct BandData: Codable, Equatable, Hashable {
