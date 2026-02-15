@@ -320,7 +320,6 @@ class SharedPreferencesManager {
     /// - Returns: "Default" for user's own, or the name of a shared set
     func getActivePreferenceSource() -> String {
         let source = UserDefaults.standard.string(forKey: activeSourceKey) ?? "Default"
-        print("🔍 [PROFILE_DEBUG] getActivePreferenceSource() returning: '\(source)'")
         return source
     }
     

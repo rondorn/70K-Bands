@@ -111,23 +111,22 @@ class MasterViewModel {
                 return
             }
             
-            print("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] Background refresh (\(reason)): Starting data download")
+            print("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] Background refresh (\(reason)): Checking throttling before data download")
             
-            // Perform the same operations as refreshData but in background
-            // Force download for certain high-priority reasons
-            let shouldForceDownload = reason.contains("foreground") || reason.contains("notification") || reason.contains("timer")
-            let shouldDownload = self.shouldDownloadSchedule(force: shouldForceDownload)
+            // Check throttling - all scenarios use 5-minute throttling
+            let shouldDownload = self.shouldDownloadSchedule(force: false)
             
             let downloadStartTime = CFAbsoluteTimeGetCurrent()
             if shouldDownload {
-                print("🕐 [\(String(format: "%.3f", downloadStartTime))] Starting CSV download")
-                print("🕐 [\(String(format: "%.3f", downloadStartTime))] Deferring CSV download to proper loading sequence")
+                print("🕐 [\(String(format: "%.3f", downloadStartTime))] Throttling check passed - starting CSV download")
                 self.lastScheduleDownload = Date()
+            } else {
+                print("🕐 [\(String(format: "%.3f", downloadStartTime))] Throttled - less than 5 minutes since last download, skipping CSV download")
             }
             
             let populateStartTime = CFAbsoluteTimeGetCurrent()
             print("🕐 [\(String(format: "%.3f", populateStartTime))] Starting schedule population")
-            self.schedule.populateSchedule(forceDownload: shouldForceDownload)
+            self.schedule.populateSchedule(forceDownload: shouldDownload)
             let populateEndTime = CFAbsoluteTimeGetCurrent()
             print("🕐 [\(String(format: "%.3f", populateEndTime))] Schedule population END - time: \(String(format: "%.3f", (populateEndTime - populateStartTime) * 1000))ms")
             

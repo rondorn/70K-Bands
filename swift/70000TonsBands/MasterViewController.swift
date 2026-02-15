@@ -2689,12 +2689,22 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             appDelegate.refreshPointerFileForUserInitiatedRefresh { [weak self] _ in
                 guard let self = self else { return }
                 
-                print("🔄 PULL-TO-REFRESH: Pointer refresh complete - launching unified data refresh (3 parallel threads)")
+                print("🔄 PULL-TO-REFRESH: Pointer refresh complete - checking throttling before data refresh")
                 if isWaitingForData {
-                    print("🔄 PULL-TO-REFRESH: ⚠️ Forcing full data refresh due to empty state")
+                    print("🔄 PULL-TO-REFRESH: ⚠️ Forcing full data refresh due to empty state (bypasses throttling)")
                     self.refreshData(isUserInitiated: true, forceDownload: true)
                 } else {
-                    self.performUnifiedDataRefresh(reason: "Pull-to-refresh")
+                    // Respect 5-minute throttling for pull-to-refresh
+                    if self.shouldDownloadSchedule(force: false) {
+                        print("🔄 PULL-TO-REFRESH: Throttling check passed - launching unified data refresh")
+                        self.performUnifiedDataRefresh(reason: "Pull-to-refresh")
+                    } else {
+                        print("🔄 PULL-TO-REFRESH: Throttled - less than 5 minutes since last download, skipping fresh download")
+                        // Still refresh UI from cache
+                        DispatchQueue.main.async {
+                            self.refreshBandList(reason: "Pull-to-refresh - throttled, showing cached data")
+                        }
+                    }
                 }
             }
         } else {
@@ -2703,7 +2713,17 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             if isWaitingForData {
                 refreshData(isUserInitiated: true, forceDownload: true)
             } else {
-                performUnifiedDataRefresh(reason: "Pull-to-refresh")
+                // Respect 5-minute throttling for pull-to-refresh
+                if shouldDownloadSchedule(force: false) {
+                    print("🔄 PULL-TO-REFRESH: Throttling check passed - launching unified data refresh")
+                    performUnifiedDataRefresh(reason: "Pull-to-refresh")
+                } else {
+                    print("🔄 PULL-TO-REFRESH: Throttled - less than 5 minutes since last download, skipping fresh download")
+                    // Still refresh UI from cache
+                    DispatchQueue.main.async {
+                        self.refreshBandList(reason: "Pull-to-refresh - throttled, showing cached data")
+                    }
+                }
             }
         }
     }
@@ -5587,9 +5607,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
         }
         
-        // STEP 2: Launch unified data refresh (3 parallel threads)
-        print("🔄 FOREGROUND-REFRESH: Step 2 - Launching unified data refresh (3 parallel threads)")
-        performUnifiedDataRefresh(reason: "Foreground refresh")
+        // STEP 2: Launch unified data refresh (3 parallel threads) with throttling check
+        print("🔄 FOREGROUND-REFRESH: Step 2 - Checking throttling before unified data refresh")
+        if shouldDownloadSchedule(force: false) {
+            print("🔄 FOREGROUND-REFRESH: Throttling check passed - launching unified data refresh")
+            performUnifiedDataRefresh(reason: "Foreground refresh")
+        } else {
+            print("🔄 FOREGROUND-REFRESH: Throttled - less than 5 minutes since last download, skipping fresh download")
+        }
     }
     
     // Helper to deduplicate while preserving order
@@ -6189,8 +6214,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 self.refreshBandList(reason: "Subsequent launch - immediate database display", skipDataLoading: true)
             }
             
-            // Step 2: Launch parallel download threads
-            self.performUnifiedDataRefresh(reason: "Subsequent launch")
+            // Step 2: Launch parallel download threads (with throttling check)
+            // Check throttling before downloading fresh data
+            if self.shouldDownloadSchedule(force: false) {
+                print("🚀 SUBSEQUENT LAUNCH: Throttling check passed - launching unified data refresh")
+                self.performUnifiedDataRefresh(reason: "Subsequent launch")
+            } else {
+                print("🚀 SUBSEQUENT LAUNCH: Throttled - less than 5 minutes since last download, skipping fresh download")
+            }
         }
     }
     
@@ -6204,6 +6235,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     ///   - Thread 2: Events CSV  
     ///   - Thread 3: iCloud data + build image map
     /// STEP 4: Updates display once all three threads complete
+    /// NOTE: Throttling should be checked by callers before invoking this method.
+    /// First launch bypasses throttling, other scenarios should check shouldDownloadSchedule() first.
     /// - Parameter reason: Description of why refresh is occurring
     private func performUnifiedDataRefresh(reason: String) {
         print("🔄 [UNIFIED_REFRESH] Starting unified data refresh - \(reason)")
@@ -6488,20 +6521,15 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
         }
         
-        // Step 2: Check if we need background updates
+        // Step 2: Check if we need background updates (using 5-minute throttling)
         let forceDownload = UserDefaults.standard.bool(forKey: "ForceCSVDownload")
-        let lastLaunchKey = "LastAppLaunchDate"
-        let now = Date()
-        let lastLaunch = UserDefaults.standard.object(forKey: lastLaunchKey) as? Date
-        let shouldUpdateData = forceDownload || lastLaunch == nil || now.timeIntervalSince(lastLaunch!) > 24 * 60 * 60 // 24 hours
-        
-        UserDefaults.standard.set(now, forKey: lastLaunchKey)
+        let shouldUpdateData = forceDownload || self.shouldDownloadSchedule(force: false)
         
         if shouldUpdateData {
             if forceDownload {
                 print("🚀 SUBSEQUENT LAUNCH: Step 2 - FORCED CSV download due to pointer URL change")
             } else {
-                print("🚀 SUBSEQUENT LAUNCH: Step 2 - Starting background network test for 24h data update")
+                print("🚀 SUBSEQUENT LAUNCH: Step 2 - Starting background network test for data update (5-minute throttling)")
             }
             
             // Test network first, then do fresh data collection including description map
@@ -6510,7 +6538,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 
                 if networkIsGood {
                     print("🚀 SUBSEQUENT LAUNCH: Network test passed - proceeding with fresh data collection")
-                    self.performFreshDataCollection(reason: "Subsequent launch - forced or 24h network-verified update")
+                    self.performFreshDataCollection(reason: "Subsequent launch - forced or throttled update")
                     
                     // Clear the force flag after successful download
                     if forceDownload {
@@ -6524,7 +6552,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                         print("🚀 SUBSEQUENT LAUNCH: Updated LastUsedPointerUrl to '\(defaultStorageUrl)'")
                     }
                 } else {
-                    print("🚀 SUBSEQUENT LAUNCH: Network test failed - staying with CoreData, no fresh data collection")
+                    print("🚀 SUBSEQUENT LAUNCH: Network test failed - staying with cached data, no fresh data collection")
                     print("🚀 SUBSEQUENT LAUNCH: User will continue seeing cached data until network improves")
                     // Keep the force flag set so it will retry next time
                     if forceDownload {
@@ -6533,7 +6561,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 }
             }
         } else {
-            print("🚀 SUBSEQUENT LAUNCH: Step 2 - Skipping background update (recent data)")
+            print("🚀 SUBSEQUENT LAUNCH: Step 2 - Skipping background update (throttled - less than 5 minutes since last download)")
         }
     }
     

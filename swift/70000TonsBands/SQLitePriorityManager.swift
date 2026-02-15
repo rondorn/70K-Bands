@@ -279,9 +279,6 @@ class SQLitePriorityManager {
                 
                 if let row = try db.pluck(query) {
                     result = row[self.priority]
-                    print("🔍 [PRIORITY_DEBUG] Found priority for \(bandNameStr) = \(result) (profile: \(currentProfile))")
-                } else {
-                    print("🔍 [PRIORITY_DEBUG] No priority found for \(bandNameStr) (profile: \(currentProfile))")
                 }
             } catch {
                 print("❌ SQLitePriorityManager: Failed to get priority: \(error)")
