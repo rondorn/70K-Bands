@@ -7,7 +7,6 @@
 //
 
 import UIKit
-import CoreData
 import UserNotifications
 import Firebase
 import FirebaseCore
@@ -325,11 +324,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         print("🚀 [MDF_DEBUG] App Name: \(FestivalConfig.current.appName)")
         print("🚀 [MDF_DEBUG] Bundle ID: \(FestivalConfig.current.bundleIdentifier)")
     
-        // MIGRATION: Perform one-time migration from Core Data to SQLite
-        // This is safe to call every launch - it only runs once
-        print("🔄 Checking for Core Data to SQLite migration...")
-        CoreDataToSQLiteMigrationHelper.shared.performMigrationIfNeeded()
-        print("✅ Migration check complete")
+        // Core Data migration removed - all data now uses SQLite directly
         
         // Reset custom pointer URL error flag on app launch
         UserDefaults.standard.set(false, forKey: "CustomPointerUrlErrorShown")
@@ -353,7 +348,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                 // Set up master view controller
                 if let masterNavigationController = splitViewController.viewControllers.first as? UINavigationController,
                    let controller = masterNavigationController.viewControllers.first as? MasterViewController {
-                    controller.managedObjectContext = self.managedObjectContext
                     setupDefaults()
                 } else {
                     print("Error: Could not get MasterViewController from navigation stack.")
@@ -393,7 +387,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                 self.window?.rootViewController = navigationController
                 
                 // Configure the master view controller
-                masterViewController.managedObjectContext = self.managedObjectContext
                 setupDefaults()
                 
                 self.window?.makeKeyAndVisible()
@@ -1229,9 +1222,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     func applicationWillTerminate(_ application: UIApplication) {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
-        // Saves changes in the application's managed object context before the application terminates.
-
-        self.saveContext()
+        // SQLite automatically persists data, no manual save needed
         
         // Download all missing descriptions and replace obsolete cached files
         bandDescriptions.downloadAllDescriptionsOnAppExit()
@@ -1286,66 +1277,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         }
         return false
     }
-    // MARK: - Core Data stack
-
-    lazy var applicationDocumentsDirectory: URL = {
-        // The directory the application uses to store the Core Data store file. This code uses a directory named "com.rdorn._0000TonsBands" in the application's documents Application Support directory.
-        let urls = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
-        return urls[urls.count-1]
-    }()
-
-    lazy var managedObjectModel: NSManagedObjectModel = {
-        let modelURL = Bundle.main.url(forResource: "_0000TonsBands", withExtension: "momd")
-        guard let url = modelURL else {
-            fatalError("Failed to find model URL for _0000TonsBands.momd")
-        }
-        guard let model = NSManagedObjectModel(contentsOf: url) else {
-            fatalError("Failed to load managed object model from \(url)")
-        }
-        return model
-    }()
-
-    lazy var persistentStoreCoordinator: NSPersistentStoreCoordinator? = {
-        let coordinator = NSPersistentStoreCoordinator(managedObjectModel: self.managedObjectModel)
-        let url = self.applicationDocumentsDirectory.appendingPathComponent("_0000TonsBands.sqlite")
-        do {
-            try coordinator.addPersistentStore(ofType: NSSQLiteStoreType, configurationName: nil, at: url, options: nil)
-        } catch {
-            print("Unresolved error adding persistent store: \(error)")
-            return nil
-        }
-        return coordinator
-    }()
-
-    lazy var managedObjectContext: NSManagedObjectContext? = {
-        // Returns the managed object context for the application (which is already bound to the persistent store coordinator for the application.) This property is optional since there are legitimate error conditions that could cause the creation of the context to fail.
-        let coordinator = self.persistentStoreCoordinator
-        if coordinator == nil {
-            return nil
-        }
-        var managedObjectContext = NSManagedObjectContext()
-        managedObjectContext.persistentStoreCoordinator = coordinator
-        return managedObjectContext
-    }()
-
-    // MARK: - Core Data Saving support
-
-    func saveContext () {
-        if let moc = self.managedObjectContext {
-            var error: NSError? = nil
-            if moc.hasChanges {
-                do {
-                    try moc.save()
-                } catch let error1 as NSError {
-                    error = error1
-                    // Replace this implementation with code to handle the error appropriately.
-                    // abort() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-                    //NSLog("Unresolved error \(error), \(error!.userInfo)")
-                    abort()
-                }
-            }
-        }
-    }
+    // Core Data stack removed - all data now uses SQLite directly
     
     // MARK: - Shared Preferences Import Support
     

@@ -8,7 +8,6 @@
 
 import Foundation
 import Firebase
-import CoreData
 
 class firebaseEventDataWrite {
     
@@ -79,25 +78,10 @@ class firebaseEventDataWrite {
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
-    /// Gets sanitized identifier for an event from Core Data, fallback to computing it
+    /// Gets sanitized identifier for an event from SQLite, fallback to computing it
     private func getSanitizedIdentifierForEvent(_ originalIndex: String) -> String {
-        // Try to find the event in Core Data by its original identifier
-        let context = CoreDataManager.shared.viewContext
-        let request: NSFetchRequest<Event> = Event.fetchRequest()
-        request.predicate = NSPredicate(format: "identifier == %@", originalIndex)
-        request.fetchLimit = 1
-        
-        do {
-            if let event = try context.fetch(request).first,
-               let sanitizedIdentifier = event.sanitizedIdentifier,
-               !sanitizedIdentifier.isEmpty {
-                return sanitizedIdentifier
-            }
-        } catch {
-            print("⚠️ Error fetching sanitized identifier for event: \(error)")
-        }
-        
-        // Fallback to sanitizing the original index
+        // SQLite doesn't store sanitized identifiers - compute it directly
+        // This is more efficient than storing redundant data
         return sanitizeForFirebase(originalIndex)
     }
             

@@ -1,21 +1,13 @@
 import Foundation
-import CoreData
 
 /// Manages event attendance using SQLite
 /// This is now a wrapper around SQLiteAttendanceManager for backwards compatibility
-/// Core Data is read-only and only used for migration purposes
 class AttendanceManager {
     // Use SQLite as primary storage
     private let sqliteManager = SQLiteAttendanceManager.shared
     
-    // Keep Core Data manager ONLY for reading during migration
-    private let coreDataManager: CoreDataManager
-    
-    init(coreDataManager: CoreDataManager = CoreDataManager.shared) {
-        self.coreDataManager = coreDataManager
-        
-        // Migrate from Core Data to SQLite if needed
-        migrateFromCoreDataIfNeeded()
+    init() {
+        // All data now uses SQLite directly - no migration needed
     }
     
     // MARK: - Attendance Management (SQLite-backed)
@@ -113,71 +105,12 @@ class AttendanceManager {
     
     // MARK: - Migration Support
     
-    /// Migrates attendance data from Core Data to SQLite (one-time migration)
+    /// Core Data migration removed - all data now uses SQLite directly
     private func migrateFromCoreDataIfNeeded() {
+        // Core Data migration removed - all data now uses SQLite directly
+        // Mark migration as complete to prevent future checks
         let migrationKey = "AttendanceCoreDataToSQLiteMigrationCompleted"
-        let migrationCompleted = UserDefaults.standard.bool(forKey: migrationKey)
-        
-        if migrationCompleted {
-            print("✅ Attendance Core Data to SQLite migration already completed")
-            return
-        }
-        
-        // CRITICAL FIX: Check if Core Data store even exists before trying to access it
-        // On fresh install, there's nothing to migrate and we shouldn't block startup
-        let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0]
-        let coreDataStorePath = "\(documentsPath)/DataModel.sqlite"
-        
-        if !FileManager.default.fileExists(atPath: coreDataStorePath) {
-            print("ℹ️  No Core Data store found - fresh install, skipping migration")
-            // Mark migration as complete so we don't check again
-            UserDefaults.standard.set(true, forKey: migrationKey)
-            return
-        }
-        
-        print("🔄 Starting attendance migration from Core Data to SQLite...")
-        
-        // Read all attendance records from Core Data (read-only!)
-        let context = coreDataManager.viewContext
-        var attendances: [[String: Any]] = []
-        
-        context.performAndWait {
-            let request: NSFetchRequest<UserAttendance> = UserAttendance.fetchRequest()
-            
-            do {
-                let coreDataAttendances = try context.fetch(request)
-                
-                for attendance in coreDataAttendances {
-                    guard let event = attendance.event,
-                          let bandName = event.band?.bandName else { continue }
-                    
-                    let attendanceData: [String: Any] = [
-                        "bandName": bandName,
-                        "status": Int(attendance.attendanceStatus),
-                        "timeIndex": event.timeIndex,
-                        "eventYear": Int(attendance.eventYear),
-                        "index": attendance.index ?? "",
-                        "lastModified": attendance.updatedAt?.timeIntervalSince1970 ?? Date().timeIntervalSince1970
-                    ]
-                    
-                    attendances.append(attendanceData)
-                }
-                
-                print("📊 Found \(attendances.count) attendance records in Core Data to migrate")
-            } catch {
-                print("❌ Error reading attendance from Core Data: \(error)")
-            }
-        }
-        
-        // Migrate to SQLite
-        if !attendances.isEmpty {
-            sqliteManager.migrateFromCoreData(coreDataAttendances: attendances)
-            print("✅ Migrated \(attendances.count) attendance records from Core Data to SQLite")
-        }
-        
-        // Mark migration as completed
         UserDefaults.standard.set(true, forKey: migrationKey)
-        UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "AttendanceCoreDataToSQLiteMigrationTimestamp")
         UserDefaults.standard.synchronize()
     }
     
