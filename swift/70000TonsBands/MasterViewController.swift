@@ -4872,16 +4872,29 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // If this is a scheduled event, add attendance section
         if isScheduledEvent {
+            // Capture cellDataText explicitly to ensure it's available in closures
+            guard let capturedCellDataText = cellDataText else {
+                // Should not happen since isScheduledEvent is true, but safety check
+                print("ERROR: cellDataText is nil but isScheduledEvent is true")
+                return
+            }
+            
             var attendanceItems: [CompactActionSheetViewController.MenuItem] = []
+            
+            // Capture status constants explicitly to ensure they're available
+            let sawAllStatusValue = sawAllStatus
+            let sawSomeStatusValue = sawSomeStatus
+            let sawNoneStatusValue = sawNoneStatus
             
             let allOfEventTitle = NSLocalizedString("All Of Event", comment: "Attended all of event")
             attendanceItems.append(CompactActionSheetViewController.MenuItem(
                 title: allOfEventTitle,
-                iconName: getAttendanceIconName(status: sawAllStatus),
-                isSelected: currentAttendedStatus == sawAllStatus,
+                iconName: getAttendanceIconName(status: sawAllStatusValue),
+                isSelected: currentAttendedStatus == sawAllStatusValue,
             action: { [weak self] in
-                self?.markAttendingStatus(cellDataText: cellDataText!, status: sawAllStatus, correctBandName: bandName)
-                self?.refreshLandscapeScheduleViewIfNeeded(for: bandName)
+                guard let self = self else { return }
+                self.markAttendingStatus(cellDataText: capturedCellDataText, status: sawAllStatusValue, correctBandName: bandName)
+                self.refreshLandscapeScheduleViewIfNeeded(for: bandName)
             }
             ))
             
@@ -4890,11 +4903,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 let partOfEventTitle = NSLocalizedString("Part Of Event", comment: "Partially attended event")
                 attendanceItems.append(CompactActionSheetViewController.MenuItem(
                     title: partOfEventTitle,
-                    iconName: getAttendanceIconName(status: sawSomeStatus),
-                    isSelected: currentAttendedStatus == sawSomeStatus,
+                    iconName: getAttendanceIconName(status: sawSomeStatusValue),
+                    isSelected: currentAttendedStatus == sawSomeStatusValue,
                     action: { [weak self] in
-                        self?.markAttendingStatus(cellDataText: cellDataText!, status: sawSomeStatus, correctBandName: bandName)
-                        self?.refreshLandscapeScheduleViewIfNeeded(for: bandName)
+                        guard let self = self else { return }
+                        self.markAttendingStatus(cellDataText: capturedCellDataText, status: sawSomeStatusValue, correctBandName: bandName)
+                        self.refreshLandscapeScheduleViewIfNeeded(for: bandName)
                     }
                 ))
             }
@@ -4903,10 +4917,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             attendanceItems.append(CompactActionSheetViewController.MenuItem(
                 title: wontAttendTitle,
                 iconName: nil,
-                isSelected: currentAttendedStatus == sawNoneStatus,
+                isSelected: currentAttendedStatus == sawNoneStatusValue,
                 action: { [weak self] in
-                    self?.markAttendingStatus(cellDataText: cellDataText!, status: sawNoneStatus, correctBandName: bandName)
-                    self?.refreshLandscapeScheduleViewIfNeeded(for: bandName)
+                    guard let self = self else { return }
+                    self.markAttendingStatus(cellDataText: capturedCellDataText, status: sawNoneStatusValue, correctBandName: bandName)
+                    self.refreshLandscapeScheduleViewIfNeeded(for: bandName)
                 }
             ))
             
