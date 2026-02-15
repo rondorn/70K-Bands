@@ -34,63 +34,6 @@
                 android:gravity="center" />
         </LinearLayout>
 
-        <!-- PROMPT FOR ATTENDED STATUS Section -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginTop="35dp">
-
-            <!-- Section Header -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/PromptForAttendedStatusHeader"
-                android:textSize="13sp"
-                android:textColor="#8E8E93"
-                android:textStyle="normal"
-                android:paddingLeft="16dp"
-                android:paddingRight="16dp"
-                android:paddingBottom="8dp"
-                android:textAllCaps="true" />
-
-            <!-- Section Content -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="#2C2C2E"
-                android:layout_marginLeft="16dp"
-                android:layout_marginRight="16dp"
-                android:elevation="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:paddingLeft="16dp"
-                    android:paddingRight="16dp"
-                    android:paddingTop="12dp"
-                    android:paddingBottom="12dp"
-                    android:gravity="center_vertical">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/PromptForAttendedStatus"
-                        android:textSize="17sp"
-                        android:textColor="#FFFFFF" />
-
-                    <Switch
-                        android:id="@+id/promptForAttendedStatus"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:theme="@style/ModernSwitch" />
-                </LinearLayout>
-            </LinearLayout>
-        </LinearLayout>
-
         <!-- ALERT PREFERENCES Section -->
         <LinearLayout
             android:layout_width="match_parent"
