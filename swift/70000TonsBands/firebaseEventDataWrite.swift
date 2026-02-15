@@ -18,7 +18,7 @@ class firebaseEventDataWrite {
     let attended = ShowsAttended()
     let variableStoreHandle = variableStore();
     
-    // NEW: Use Core Data AttendanceManager to read attendance data
+    // Use SQLite AttendanceManager to read attendance data
     let attendanceManager = SQLiteAttendanceManager.shared
     private var initializationAttempts = 0
     private let maxInitAttempts = 3
@@ -119,7 +119,7 @@ class firebaseEventDataWrite {
             
             let uid = (UIDevice.current.identifierForVendor?.uuidString)!
             
-            // Get sanitized identifier from Core Data, fallback to computation
+            // Get sanitized identifier from SQLite, fallback to computation
             let sanitizedIndex = self.getSanitizedIdentifierForEvent(index)
             print("🔥 firebase EVENT_WRITE: Sanitized index: \(sanitizedIndex)")
             
@@ -171,18 +171,18 @@ class firebaseEventDataWrite {
                 print("🔥 firebase EVENT_WRITE: Device UID = \(uid)")
                 
                 if (uid.isEmpty == false){
-                    print("🔥 firebase EVENT_WRITE: UID is valid, getting attended events from Core Data")
+                    print("🔥 firebase EVENT_WRITE: UID is valid, getting attended events from SQLite")
                     
                     // Get current year from global eventYear variable
                     let currentYear = eventYear
                     print("🔥 firebase EVENT_WRITE: Filtering for current year: \(currentYear)")
                     
-                    // NEW: Read attendance data from Core Data instead of old file system
+                    // Read attendance data from SQLite instead of old file system
                     let attendanceData = self.attendanceManager.getAllAttendanceDataByIndex()
-                    print("🔥 firebase EVENT_WRITE: Found \(attendanceData.count) total attendance records in Core Data")
+                    print("🔥 firebase EVENT_WRITE: Found \(attendanceData.count) total attendance records in SQLite")
                     
-                    // Convert Core Data format to format expected by Firebase write code
-                    // Core Data format: [index: ["status": Int, "eventYear": Int, "lastModified": Double]]
+                    // Convert SQLite format to format expected by Firebase write code
+                    // SQLite format: [index: ["status": Int, "eventYear": Int, "lastModified": Double]]
                     // Expected format: [index: "statusValue"]
                     // FILTER: Only include events for the current year
                     var showsAttendedArray: [String: String] = [:]
