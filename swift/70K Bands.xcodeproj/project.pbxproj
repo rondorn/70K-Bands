@@ -125,6 +125,27 @@
 		11615BB82E4644ED007BD3D5 /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11615BB12E4644ED007BD3D5 /* PreferencesView.swift */; };
 		1169374520F555CD00038DA5 /* Reachability.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1169374420F555CD00038DA5 /* Reachability.swift */; };
 		1169374620F555D400038DA5 /* Reachability.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1169374420F555CD00038DA5 /* Reachability.swift */; };
+		116C9D802F415D370036743C /* FilePaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D7C2F415D370036743C /* FilePaths.swift */; };
+		116C9D812F415D370036743C /* CSVFields.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D7A2F415D370036743C /* CSVFields.swift */; };
+		116C9D822F415D370036743C /* VenueConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D7F2F415D370036743C /* VenueConstants.swift */; };
+		116C9D832F415D370036743C /* EventTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D7B2F415D370036743C /* EventTypes.swift */; };
+		116C9D842F415D370036743C /* iCloudConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D7D2F415D370036743C /* iCloudConstants.swift */; };
+		116C9D852F415D370036743C /* UIConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D7E2F415D370036743C /* UIConstants.swift */; };
+		116C9D862F415D370036743C /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D792F415D370036743C /* AppState.swift */; };
+		116C9D872F415D370036743C /* FilePaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D7C2F415D370036743C /* FilePaths.swift */; };
+		116C9D882F415D370036743C /* CSVFields.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D7A2F415D370036743C /* CSVFields.swift */; };
+		116C9D892F415D370036743C /* VenueConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D7F2F415D370036743C /* VenueConstants.swift */; };
+		116C9D8A2F415D370036743C /* EventTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D7B2F415D370036743C /* EventTypes.swift */; };
+		116C9D8B2F415D370036743C /* iCloudConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D7D2F415D370036743C /* iCloudConstants.swift */; };
+		116C9D8C2F415D370036743C /* UIConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D7E2F415D370036743C /* UIConstants.swift */; };
+		116C9D8D2F415D370036743C /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D792F415D370036743C /* AppState.swift */; };
+		116C9D8E2F415D370036743C /* FilePaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D7C2F415D370036743C /* FilePaths.swift */; };
+		116C9D8F2F415D370036743C /* CSVFields.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D7A2F415D370036743C /* CSVFields.swift */; };
+		116C9D902F415D370036743C /* VenueConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D7F2F415D370036743C /* VenueConstants.swift */; };
+		116C9D912F415D370036743C /* EventTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D7B2F415D370036743C /* EventTypes.swift */; };
+		116C9D922F415D370036743C /* iCloudConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D7D2F415D370036743C /* iCloudConstants.swift */; };
+		116C9D932F415D370036743C /* UIConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D7E2F415D370036743C /* UIConstants.swift */; };
+		116C9D942F415D370036743C /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D792F415D370036743C /* AppState.swift */; };
 		1172A2391B5AC7DC00C28AB3 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1172A2251B5AADC900C28AB3 /* Localizable.strings */; };
 		1172EDF82E5A1C4D006E3596 /* UtilityHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ED61801A9103C100D29A5B /* UtilityHandler.swift */; };
 		1172EDF92E5A1C4D006E3596 /* ToastMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1187BE1120D6AFC8002F070F /* ToastMessages.swift */; };
@@ -420,6 +441,13 @@
 		11615BB12E4644ED007BD3D5 /* PreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesView.swift; sourceTree = "<group>"; };
 		11615BB22E4644ED007BD3D5 /* PreferencesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesViewModel.swift; sourceTree = "<group>"; };
 		1169374420F555CD00038DA5 /* Reachability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Reachability.swift; sourceTree = "<group>"; };
+		116C9D792F415D370036743C /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		116C9D7A2F415D370036743C /* CSVFields.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVFields.swift; sourceTree = "<group>"; };
+		116C9D7B2F415D370036743C /* EventTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventTypes.swift; sourceTree = "<group>"; };
+		116C9D7C2F415D370036743C /* FilePaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilePaths.swift; sourceTree = "<group>"; };
+		116C9D7D2F415D370036743C /* iCloudConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iCloudConstants.swift; sourceTree = "<group>"; };
+		116C9D7E2F415D370036743C /* UIConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIConstants.swift; sourceTree = "<group>"; };
+		116C9D7F2F415D370036743C /* VenueConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VenueConstants.swift; sourceTree = "<group>"; };
 		1172A2241B5AADC900C28AB3 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		1172A2291B5AAEC400C28AB3 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
 		1172A22D1B5AB04B00C28AB3 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -610,26 +638,27 @@
 		1154F6081A575893003F4764 /* 70000TonsBands */ = {
 			isa = PBXGroup;
 			children = (
-				11CC7FB82F3FD2CD005DF9CC /* CompactActionSheetViewController.swift */,
-				11CC7FBC2F3FD2CD005DF9CC /* BandSelectionViewController.swift */,
-				11EB86AE2F353160007D5AD0 /* about-team.png */,
-				11EB86AA2F3530C8007D5AD0 /* AboutView.swift */,
-				113EB9292F243A4D00CE27BB /* DebugLogger.swift */,
 				1154F60D1A575893003F4764 /* _0000TonsBands.xcdatamodeld */,
 				113C3B9C1A62CBDA000E8D9A /* 70000TonsBands.entitlements */,
+				11EB86AE2F353160007D5AD0 /* about-team.png */,
+				11EB86AA2F3530C8007D5AD0 /* AboutView.swift */,
 				1154F60B1A575893003F4764 /* AppDelegate.swift */,
+				116C9D792F415D370036743C /* AppState.swift */,
 				11E2F2432E8D78530004D6F4 /* AttendanceManager.swift */,
 				1147D6DC2E63C549000A98B0 /* BandCSVImporter.swift */,
 				1147D6E82E63C879000A98B0 /* BandDataManager.swift */,
 				114B5C082E468DCE0030CA9D /* BandDescriptionTranslator.swift */,
 				1154F6321A5758D3003F4764 /* bandNamesHandler.swift */,
 				1147D6FD2E63CF51000A98B0 /* BandNamesHandlerProtocol.swift */,
+				11CC7FBC2F3FD2CD005DF9CC /* BandSelectionViewController.swift */,
 				1145F0D42E69ED1A002B7511 /* CellDataCache.swift */,
 				110FA1602E3BAF7B003A0184 /* CombinedImageListHandler.swift */,
+				11CC7FB82F3FD2CD005DF9CC /* CompactActionSheetViewController.swift */,
 				1172EE512E5A292E006E3596 /* ConfigurationTest.swift */,
 				11DCE9BC1A86F9E000A25FB8 /* Constants.swift */,
 				11D05AAC291C545000D5B002 /* countryHandler.swift */,
 				11C8BDC91A7D398400037F2B /* CSV.swift */,
+				116C9D7A2F415D370036743C /* CSVFields.swift */,
 				110924351F748601002237AB /* CustomBandDescription.swift */,
 				119434B32B1FCFA000DA3F87 /* CustomListEntry.swift */,
 				11E6F4142AEC6C47007C1387 /* CustomListEntry.xib */,
@@ -638,12 +667,11 @@
 				11895B962EE4C8EB008CC4A9 /* DataManager.swift */,
 				1147D6D72E63A8C3000A98B0 /* DataModel.xcdatamodeld */,
 				11895BA22EE4F0DB008CC4A9 /* DataModels.swift */,
+				113EB9292F243A4D00CE27BB /* DebugLogger.swift */,
 				1175C9382E4D2C5A0074E2F2 /* DetailHostingController.swift */,
 				1175C9392E4D2C5A0074E2F2 /* DetailView.swift */,
 				1175C93A2E4D2C5A0074E2F2 /* DetailViewModel.swift */,
 				1175C93A2E4D2C5A0074E2F3 /* DeviceSizeManager.swift */,
-				8CA018E4476A45C994ED91C0 /* LandscapeScheduleView.swift */,
-				8DDB7E0B0AC440BA94B56DBD /* LandscapeScheduleViewModel.swift */,
 				110E084B2AECB6E100075618 /* DPDConstants.swift */,
 				110E08492AECB6E100075618 /* DPDKeyboardListener.swift */,
 				110E084C2AECB6E200075618 /* DPDUIView+Extension.swift */,
@@ -653,17 +681,22 @@
 				110E08472AECB6E100075618 /* DropDownCell.xib */,
 				11C62E8B2E6661F0000D9AF2 /* EventCSVImporter.swift */,
 				11C62E872E6661C9000D9AF2 /* EventManager.swift */,
+				116C9D7B2F415D370036743C /* EventTypes.swift */,
 				1172EE522E5A292E006E3596 /* FestivalConfig.swift */,
+				116C9D7C2F415D370036743C /* FilePaths.swift */,
 				11D4844A2241DA0C00910878 /* firebaseBandDataWrite.swift */,
 				11D4844D2241DED700910878 /* firebaseEventDataWrite.swift */,
 				11D4844422418A9E00910878 /* firebaseUserWrite.swift */,
 				1156B4F21A660BE500D48D12 /* guiIcons.swift */,
 				11C8BDC71A7D264F00037F2B /* httpHandler.swift */,
+				116C9D7D2F415D370036743C /* iCloudConstants.swift */,
 				119A867322D12FA700D23233 /* iCloudDataHandler.swift */,
 				1154F6301A5758BF003F4764 /* imageHandler.swift */,
 				1154F6171A575893003F4764 /* Images.xcassets */,
 				1172EE532E5A292E006E3596 /* Info-70K.plist */,
 				1172EE542E5A292E006E3596 /* Info-MDF.plist */,
+				8CA018E4476A45C994ED91C0 /* LandscapeScheduleView.swift */,
+				8DDB7E0B0AC440BA94B56DBD /* LandscapeScheduleViewModel.swift */,
 				11DCE9B51A85B9FF00A25FB8 /* localNotificationHandler.swift */,
 				114CC0701C79204100CF5BF1 /* Main.storyboard */,
 				11DCE9B31A856EE600A25FB8 /* mainListController.swift */,
@@ -699,12 +732,14 @@
 				1154F6091A575893003F4764 /* Supporting Files */,
 				111A936C2E4F8FAB00EA4ABD /* SwiftUITranslationHelper.swift */,
 				1187BE1120D6AFC8002F070F /* ToastMessages.swift */,
+				116C9D7E2F415D370036743C /* UIConstants.swift */,
 				1154F6191A575893003F4764 /* UILaunchScreen.xib */,
 				1172EE652E5A3486006E3596 /* UILaunchScreen-MDF.xib */,
 				1156B4F41A6613E700D48D12 /* urlStorage.swift */,
 				11ABAA5F222C7EFF00A04397 /* userDataHandler.swift */,
 				11ED61801A9103C100D29A5B /* UtilityHandler.swift */,
 				115213282A69E23C0017DD9F /* variableStore.swift */,
+				116C9D7F2F415D370036743C /* VenueConstants.swift */,
 				11BE68F41A59C45100602EC7 /* webViewController.swift */,
 			);
 			path = 70000TonsBands;
@@ -1242,6 +1277,13 @@
 				11D4844E2241DED700910878 /* firebaseEventDataWrite.swift in Sources */,
 				11BE68F51A59C45100602EC7 /* webViewController.swift in Sources */,
 				110E08502AECB6E200075618 /* DropDown.swift in Sources */,
+				116C9D872F415D370036743C /* FilePaths.swift in Sources */,
+				116C9D882F415D370036743C /* CSVFields.swift in Sources */,
+				116C9D892F415D370036743C /* VenueConstants.swift in Sources */,
+				116C9D8A2F415D370036743C /* EventTypes.swift in Sources */,
+				116C9D8B2F415D370036743C /* iCloudConstants.swift in Sources */,
+				116C9D8C2F415D370036743C /* UIConstants.swift in Sources */,
+				116C9D8D2F415D370036743C /* AppState.swift in Sources */,
 				11CC7FBB2F3FD2CD005DF9CC /* CompactActionSheetViewController.swift in Sources */,
 				11CC7FBD2F3FD2CD005DF9CC /* BandSelectionViewController.swift in Sources */,
 				11C8BDCA1A7D398400037F2B /* CSV.swift in Sources */,
@@ -1331,6 +1373,13 @@
 				11895B9C2EE4D4F1008CC4A9 /* SQLiteDataManager.swift in Sources */,
 				1155E3BA1A8B20BF00D51ED9 /* scheduleHandlerTest.swift in Sources */,
 				11111FA820D03DBF008E41F6 /* ShowAttendedReport.swift in Sources */,
+				116C9D8E2F415D370036743C /* FilePaths.swift in Sources */,
+				116C9D8F2F415D370036743C /* CSVFields.swift in Sources */,
+				116C9D902F415D370036743C /* VenueConstants.swift in Sources */,
+				116C9D912F415D370036743C /* EventTypes.swift in Sources */,
+				116C9D922F415D370036743C /* iCloudConstants.swift in Sources */,
+				116C9D932F415D370036743C /* UIConstants.swift in Sources */,
+				116C9D942F415D370036743C /* AppState.swift in Sources */,
 				11CC7FB92F3FD2CD005DF9CC /* CompactActionSheetViewController.swift in Sources */,
 				11CC7FBE2F3FD2CD005DF9CC /* BandSelectionViewController.swift in Sources */,
 				110E08512AECB6E200075618 /* DropDown.swift in Sources */,
@@ -1420,6 +1469,13 @@
 				11895B9E2EE4D4F1008CC4A9 /* SQLiteDataManager.swift in Sources */,
 				1172EE062E5A1C4D006E3596 /* firebaseEventDataWrite.swift in Sources */,
 				1172EE072E5A1C4D006E3596 /* webViewController.swift in Sources */,
+				116C9D802F415D370036743C /* FilePaths.swift in Sources */,
+				116C9D812F415D370036743C /* CSVFields.swift in Sources */,
+				116C9D822F415D370036743C /* VenueConstants.swift in Sources */,
+				116C9D832F415D370036743C /* EventTypes.swift in Sources */,
+				116C9D842F415D370036743C /* iCloudConstants.swift in Sources */,
+				116C9D852F415D370036743C /* UIConstants.swift in Sources */,
+				116C9D862F415D370036743C /* AppState.swift in Sources */,
 				11CC7FBA2F3FD2CD005DF9CC /* CompactActionSheetViewController.swift in Sources */,
 				11CC7FBF2F3FD2CD005DF9CC /* BandSelectionViewController.swift in Sources */,
 				1172EE082E5A1C4D006E3596 /* DropDown.swift in Sources */,
