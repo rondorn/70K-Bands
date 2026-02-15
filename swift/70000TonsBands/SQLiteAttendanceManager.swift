@@ -328,9 +328,6 @@ class SQLiteAttendanceManager {
                 
                 if let row = try db.pluck(query) {
                     result = row[self.status]
-                    print("🔍 [ATTENDANCE_DEBUG] Found attendance for \(index) = \(result) (profile: \(currentProfile))")
-                } else {
-                    print("🔍 [ATTENDANCE_DEBUG] No attendance found for \(index) (profile: \(currentProfile))")
                 }
             } catch {
                 print("❌ SQLiteAttendanceManager: Failed to get attendance: \(error)")

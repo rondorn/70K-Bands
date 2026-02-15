@@ -379,17 +379,17 @@ open class scheduleHandler {
                 }
                 self._schedulingDataByTime[timeIndex]!.append(eventData)
                 
-                print("🔍 [CORE_DATA_CONVERSION] Converted event: '\(bandName)' - '\(eventData[typeField] ?? "unknown type")' at timeIndex \(timeIndex)")
+                // Per-event logging removed for performance - see summary logs below
                 if eventData[typeField] == "Show" {
                     print("🔍 [SHOW_EVENT_DEBUG] ✅ LOADING Show event into cache for '\(bandName)' at '\(eventData[locationField] ?? "nil")' - timeIndex: \(timeIndex)")
                 }
-                print("🔍 [CORE_DATA_CONVERSION] Event data: \(eventData)")
+                // Per-event data logging removed for performance
                 
                 // Debug: Check if the data was actually stored correctly
                 if let storedData = self._schedulingData[bandName]?[timeIndex] {
-                    print("🔍 [CORE_DATA_CONVERSION] ✅ Successfully stored data for \(bandName) at \(timeIndex)")
-            } else {
-                    print("🔍 [CORE_DATA_CONVERSION] ❌ Failed to store data for \(bandName) at \(timeIndex)")
+                    // Successfully stored
+                } else {
+                    // Failed to store (error logged elsewhere if needed)
                 }
             }
             
