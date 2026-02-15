@@ -69,7 +69,6 @@ public class preferenceLayout  extends Activity {
     private Switch showLoungeShows;
     private Switch showOtherShows;
 
-    private Switch promptForAttendedStatus;
     private Switch noteFontSizeLarge;
     private Switch openYouTubeApp;
     private Switch allLinksOpenInExternalBrowser;
@@ -832,15 +831,6 @@ public class preferenceLayout  extends Activity {
             customPointerUrl.setText(customUrl);
         }
 
-        promptForAttendedStatus = (Switch)findViewById(R.id.promptForAttendedStatus);
-        promptForAttendedStatus.setChecked(staticVariables.preferences.getPromptForAttendedStatus());
-        promptForAttendedStatus.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                staticVariables.preferences.setPromptForAttendedStatus(promptForAttendedStatus.isChecked());
-            }
-        });
         
         noteFontSizeLarge = (Switch)findViewById(R.id.noteFontSizeLarge);
         noteFontSizeLarge.setChecked(staticVariables.preferences.getNoteFontSizeLarge());
