@@ -146,6 +146,9 @@
 		116C9D922F415D370036743C /* iCloudConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D7D2F415D370036743C /* iCloudConstants.swift */; };
 		116C9D932F415D370036743C /* UIConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D7E2F415D370036743C /* UIConstants.swift */; };
 		116C9D942F415D370036743C /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D792F415D370036743C /* AppState.swift */; };
+		116C9D952F415D370036743C /* YearManagementService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D802F415D370036743D /* YearManagementService.swift */; };
+		116C9D962F415D370036743C /* YearManagementService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D802F415D370036743D /* YearManagementService.swift */; };
+		116C9D972F415D370036743C /* YearManagementService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D802F415D370036743D /* YearManagementService.swift */; };
 		1172A2391B5AC7DC00C28AB3 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1172A2251B5AADC900C28AB3 /* Localizable.strings */; };
 		1172EDF82E5A1C4D006E3596 /* UtilityHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ED61801A9103C100D29A5B /* UtilityHandler.swift */; };
 		1172EDF92E5A1C4D006E3596 /* ToastMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1187BE1120D6AFC8002F070F /* ToastMessages.swift */; };
@@ -448,6 +451,7 @@
 		116C9D7D2F415D370036743C /* iCloudConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iCloudConstants.swift; sourceTree = "<group>"; };
 		116C9D7E2F415D370036743C /* UIConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIConstants.swift; sourceTree = "<group>"; };
 		116C9D7F2F415D370036743C /* VenueConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VenueConstants.swift; sourceTree = "<group>"; };
+		116C9D802F415D370036743D /* YearManagementService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YearManagementService.swift; sourceTree = "<group>"; };
 		1172A2241B5AADC900C28AB3 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		1172A2291B5AAEC400C28AB3 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
 		1172A22D1B5AB04B00C28AB3 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -684,6 +688,7 @@
 				116C9D7B2F415D370036743C /* EventTypes.swift */,
 				1172EE522E5A292E006E3596 /* FestivalConfig.swift */,
 				116C9D7C2F415D370036743C /* FilePaths.swift */,
+				116C9D802F415D370036743D /* YearManagementService.swift */,
 				11D4844A2241DA0C00910878 /* firebaseBandDataWrite.swift */,
 				11D4844D2241DED700910878 /* firebaseEventDataWrite.swift */,
 				11D4844422418A9E00910878 /* firebaseUserWrite.swift */,
@@ -1281,6 +1286,7 @@
 				116C9D882F415D370036743C /* CSVFields.swift in Sources */,
 				116C9D892F415D370036743C /* VenueConstants.swift in Sources */,
 				116C9D8A2F415D370036743C /* EventTypes.swift in Sources */,
+				116C9D962F415D370036743C /* YearManagementService.swift in Sources */,
 				116C9D8B2F415D370036743C /* iCloudConstants.swift in Sources */,
 				116C9D8C2F415D370036743C /* UIConstants.swift in Sources */,
 				116C9D8D2F415D370036743C /* AppState.swift in Sources */,
@@ -1379,6 +1385,7 @@
 				116C9D912F415D370036743C /* EventTypes.swift in Sources */,
 				116C9D922F415D370036743C /* iCloudConstants.swift in Sources */,
 				116C9D932F415D370036743C /* UIConstants.swift in Sources */,
+				116C9D972F415D370036743C /* YearManagementService.swift in Sources */,
 				116C9D942F415D370036743C /* AppState.swift in Sources */,
 				11CC7FB92F3FD2CD005DF9CC /* CompactActionSheetViewController.swift in Sources */,
 				11CC7FBE2F3FD2CD005DF9CC /* BandSelectionViewController.swift in Sources */,
@@ -1475,6 +1482,7 @@
 				116C9D832F415D370036743C /* EventTypes.swift in Sources */,
 				116C9D842F415D370036743C /* iCloudConstants.swift in Sources */,
 				116C9D852F415D370036743C /* UIConstants.swift in Sources */,
+				116C9D952F415D370036743C /* YearManagementService.swift in Sources */,
 				116C9D862F415D370036743C /* AppState.swift in Sources */,
 				11CC7FBA2F3FD2CD005DF9CC /* CompactActionSheetViewController.swift in Sources */,
 				11CC7FBF2F3FD2CD005DF9CC /* BandSelectionViewController.swift in Sources */,
