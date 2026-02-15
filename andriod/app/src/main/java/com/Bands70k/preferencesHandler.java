@@ -52,7 +52,6 @@ public class preferencesHandler {
     private Boolean showUnknown = true;
 
     private Boolean hideExpiredEvents = true;
-    private Boolean promptForAttendedStatus = true;
     
     private Boolean noteFontSizeLarge = false;
     private Boolean openYouTubeApp = true;
@@ -237,10 +236,6 @@ public class preferencesHandler {
                             setHideExpiredEvents(Boolean.valueOf(RowData[1]));
                             break;
 
-                        case "promptForAttendedStatus":
-                            setPromptForAttendedStatus(Boolean.valueOf(RowData[1]));
-                            break;
-
                         case "eventYearToLoad":
                             setEventYearToLoad(String.valueOf(RowData[1]));
                             break;
@@ -392,7 +387,6 @@ public class preferencesHandler {
         // REMOVED: showScheduleView - session-only, never saved to disk
         // dataString += "showScheduleView," + getShowScheduleView().toString() + "\n";
         dataString += "hideExpiredEvents," + hideExpiredEvents.toString() + "\n";
-        dataString += "promptForAttendedStatus," + promptForAttendedStatus.toString() + "\n";
         dataString += "noteFontSizeLarge," + noteFontSizeLarge.toString() + "\n";
         dataString += "openYouTubeApp," + openYouTubeApp.toString() + "\n";
         dataString += "allLinksOpenInExternalBrowser," + allLinksOpenInExternalBrowser.toString() + "\n";
@@ -633,7 +627,6 @@ public class preferencesHandler {
     public Boolean getHideExpiredEvents() {
         return this.hideExpiredEvents;
     }
-    public Boolean getPromptForAttendedStatus() { return this.promptForAttendedStatus;}
 
     public String getEventYearToLoad() { return this.eventYearToLoad;}
 
@@ -685,9 +678,6 @@ public class preferencesHandler {
 
     public void setHideExpiredEvents(Boolean value) {
         this.hideExpiredEvents = value;
-    }
-    public void setPromptForAttendedStatus(Boolean value) {
-        this.promptForAttendedStatus = value;
     }
 
     public void setEventYearToLoad(String value) {

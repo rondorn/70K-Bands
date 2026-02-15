@@ -113,7 +113,7 @@ class CompactActionSheetViewController: UIViewController, UIGestureRecognizerDel
     
     private func setupBaseConstraints() {
         containerView.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
-        containerView.widthAnchor.constraint(equalToConstant: view.bounds.width - 40).isActive = true
+        containerView.widthAnchor.constraint(equalToConstant: view.bounds.width - 80).isActive = true
         containerBottomConstraint = containerView.bottomAnchor.constraint(equalTo: cancelButton.topAnchor, constant: -spacing)
         containerBottomConstraint?.isActive = true
         
