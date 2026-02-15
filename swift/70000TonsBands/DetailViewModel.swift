@@ -1013,7 +1013,7 @@ class DetailViewModel: ObservableObject {
     // MARK: - Private Methods
     
     private func loadInitialData() {
-        // LEGACY: Priorities are now handled by PriorityManager via Core Data
+        // Priorities are now handled by SQLitePriorityManager
         attendedHandle.loadShowsAttended()
     }
     
@@ -1644,9 +1644,9 @@ class DetailViewModel: ObservableObject {
     private func savePriority() {
         print("DEBUG: savePriority() called for '\(bandName)' with priority: \(selectedPriority)")
         
-        // Priority is now managed entirely by Core Data via PriorityManager
+        // Priority is now managed entirely by SQLitePriorityManager
         
-        // THREAD SAFETY FIX: Perform Core Data operations on background thread to prevent crashes
+        // SQLite is thread-safe - can be called from any thread
         let bandNameCopy = bandName
         let priorityCopy = selectedPriority
         

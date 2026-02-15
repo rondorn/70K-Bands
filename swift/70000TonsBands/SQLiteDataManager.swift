@@ -8,7 +8,6 @@
 
 import Foundation
 import SQLite
-import CoreData
 
 /// SQLite implementation of the data manager
 /// Fully thread-safe - can be called from any thread without restrictions
