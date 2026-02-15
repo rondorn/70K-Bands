@@ -11,6 +11,10 @@ import SystemConfiguration
 import UIKit
 import Network
 
+// MARK: - Imports from Refactored Files
+// These imports provide access to constants and utilities that were extracted from this file
+// See: FilePaths.swift, EventTypes.swift, AppState.swift, UIConstants.swift, CSVFields.swift, VenueConstants.swift, iCloudConstants.swift
+
 // MARK: - Network timeout policy (Android parity)
 //
 // Requirement:
@@ -26,95 +30,45 @@ enum NetworkTimeoutPolicy {
         return Thread.isMainThread ? guiThreadTimeout : backgroundTimeout
     }
 }
-//prevent alerts from being re-added all the time
-var alertTracker = [String]()
 
-//file locations
-var showsAttendedFileName = "showsAttended.data";
+// MARK: - UI Menu
+var filterMenu: UIMenu = UIMenu()
 
-//icloud data types
-var PRIORITY = "priority";  
-var ATTENDED = "attended";
-var NOTE = "note";
+// MARK: - Firebase Cloud Messaging
+var FCMnumber = ""
 
-var filterMenu:UIMenu  = UIMenu()
+// MARK: - Legacy File Path Accessors (for backward compatibility)
+// These are kept for backward compatibility during migration
+// TODO: Update all references to use FilePaths directly
+var showsAttendedFileName: String { FilePaths.showsAttendedFileName }
+var directoryPath: URL { FilePaths.directoryPath }
+var storageFile: URL { FilePaths.storageFile }
+var dateFile: URL { FilePaths.dateFile }
+var bandsFile: URL { FilePaths.bandsFile }
+var lastFilters: URL { FilePaths.lastFilters }
+var defaultUrlConverFlagString: String { FilePaths.defaultUrlConverFlagString }
+var defaultUrlConverFlagUrl: URL { FilePaths.defaultUrlConverFlagUrl }
+var showsAttended: URL { FilePaths.showsAttended }
+let bandFile: String = FilePaths.bandFile
+let countryFile: URL = FilePaths.countryFile
+let lastiCloudDataWriteFile: URL = FilePaths.lastiCloudDataWriteFile
+let lastPriorityDataWriteFile: URL = FilePaths.lastPriorityDataWriteFile
+let lastScheduleDataWriteFile: URL = FilePaths.lastScheduleDataWriteFile
+var schedulingDataCacheFile: URL { FilePaths.schedulingDataCacheFile }
+var schedulingDataByTimeCacheFile: URL { FilePaths.schedulingDataByTimeCacheFile }
+var bandNamesCacheFile: URL { FilePaths.bandNamesCacheFile }
 
-var FCMnumber = "";
-var refreshDataCounter = 0;
-var defaultUrlConverFlagString = "defaultUrlConverFlag.txt"
-var directoryPath = URL(fileURLWithPath:dirs[0])
-var storageFile = directoryPath.appendingPathComponent( "data.txt")
-var dateFile = directoryPath.appendingPathComponent( "date.txt")
-var bandsFile = directoryPath.appendingPathComponent( "bands.txt")
-var lastFilters = directoryPath.appendingPathComponent("lastFilters.txt")
-var defaultUrlConverFlagUrl = directoryPath.appendingPathComponent(defaultUrlConverFlagString)
-var showsAttended = directoryPath.appendingPathComponent(showsAttendedFileName)
-let bandFile = getDocumentsDirectory().appendingPathComponent("bandFile")
-let countryFile = directoryPath.appendingPathComponent("countryFile")
-
-let lastiCloudDataWriteFile = directoryPath.appendingPathComponent("iCloudDataWrite.txt")
-let lastPriorityDataWriteFile = directoryPath.appendingPathComponent("PriorityDataWrite.txt")
-let lastScheduleDataWriteFile = directoryPath.appendingPathComponent("ScheduleDataWrite.txt")
-
-var listCount = 0
-var noEntriesFlag = false
-var bandCounter = 0
-var eventCounter = 0
-var eventCounterUnoffical = 0
-private var _iCloudDataisLoading = false
-private var _iCloudScheduleDataisLoading = false
-private let iCloudLoadingQueue = DispatchQueue(label: "com.yourapp.iCloudLoadingQueue")
-
-var iCloudDataisLoading: Bool {
-    get { iCloudLoadingQueue.sync { _iCloudDataisLoading } }
-    set { iCloudLoadingQueue.sync { _iCloudDataisLoading = newValue } }
-}
-
-var iCloudScheduleDataisLoading: Bool {
-    get { iCloudLoadingQueue.sync { _iCloudScheduleDataisLoading } }
-    set { iCloudLoadingQueue.sync { _iCloudScheduleDataisLoading = newValue } }
-}
-
-var numberOfFilteredRecords = 0;
-var readingBandFile = false;
-
-var touchedThebottom = false;
-
-var refreshAfterMenuIsGoneFlag = false
-var isFilterMenuVisible = false
-
-var currentBandList = [String]()
-
-var downloadingAllComments = false
-var downloadingAllImages = false
-var bandSelected = String();
-var eventSelectedIndex = String();
-
-var timeIndexMap : [String:String] = [String:String]();
-
-var inTestEnvironment = false;
-
-var webMessageHelp = String();
-
-// MARK: - Combined event delimiter (dual events in calendar)
-// ASCII Record Separator – never appears in user-visible event names. Used so "/" in descriptions is not treated as combined.
-let combinedEventDelimiter = "\u{001E}"
-
+// MARK: - Legacy Event Type Functions (for backward compatibility)
+// TODO: Update all references to use EventTypes directly
 func isCombinedEventBandName(_ bandName: String?) -> Bool {
-    guard let name = bandName else { return false }
-    return name.contains(combinedEventDelimiter)
+    return EventTypes.isCombinedEventBandName(bandName)
 }
 
 func combinedEventBandParts(_ bandName: String?) -> [String]? {
-    guard let name = bandName, name.contains(combinedEventDelimiter) else { return nil }
-    let parts = name.components(separatedBy: combinedEventDelimiter)
-    return parts.count >= 2 ? parts : nil
+    return EventTypes.combinedEventBandParts(bandName)
 }
 
-var schedulingDataCacheFile = directoryPath.appendingPathComponent( "schedulingDataCacheFile")
-var schedulingDataByTimeCacheFile = directoryPath.appendingPathComponent( "schedulingDataByTimeCacheFile")
-var bandNamesCacheFile = directoryPath.appendingPathComponent( "bandNamesCacheFile")
-
+// MARK: - Dispatch Queues
 let staticLastModifiedDate = DispatchQueue(label: "staticLastModifiedDate")
 let staticSchedule = DispatchQueue(label: "staticSchedule")
 let staticAttended = DispatchQueue(label: "staticAttended")
@@ -126,56 +80,18 @@ let storePointerLock = DispatchQueue(label: "storePointerLock")
 let bandDescriptionLock = DispatchQueue(label: "bandDescriptionLock")
 let eventYearArrayLock = DispatchQueue(label: "eventYearArrayLock") // Thread-safe access to eventYearArray
 
-var iCloudCheck = false;
-var internetCheckCache = ""
-var internetCheckCacheDate = NSDate().timeIntervalSince1970
-
-//prevent mutiple threads doing the same thing
-var isAlertGenerationRunning = false
-var isLoadingBandData = false
-var isLoadingSchedule = false
-var isLoadingCommentData = false
-var isPerformingQuickLoad = false
-var isReadingBandFile = false;
-var isGetFilteredBands = false;
-
-var refreshDataLock = false;
-
 let scheduleQueue = DispatchQueue(label: "scheduleQueue")
 let bandNameQueue = DispatchQueue(label: "bandNameQueue")
 let bandPriorityQueue = DispatchQueue(label: "bandPriorityQueue")
 let showsAttendedQueue = DispatchQueue(label: "showsAttendedQueue")
 
-var localTimeZoneAbbreviation :String = TimeZone.current.abbreviation()!
+// MARK: - Time Zone
+var localTimeZoneAbbreviation: String = TimeZone.current.abbreviation()!
 
-var loadingiCloud = false;
-var savingiCloud = false;
-
-//CSV field names
-var typeField = "Type"
-var showField = "Show"
-var bandField = "Band"
-var locationField = "Location"
-var dayField = "Day"
-var dateField = "Date"
-var startTimeField = "Start Time"
-var endTimeField = "End Time"
-var notesField = "Notes"
-var urlField = "URL"
-var urlDateField = "Date"
-var descriptionUrlField = "Description URL"
-var imageUrlField = "ImageURL"
-var imageUrlDateField = "ImageDate"
-
-var loadUrlCounter = 0
-
+// MARK: - Version Information
 var versionInformation = Bundle.main.infoDictionary?["CFBundleVersion"] as! String
-var didVersionChange = false
 
-var lastRefreshEpicTime = Int(Date().timeIntervalSince1970)
-var lastRefreshCount = 0
-
-//link containers
+// MARK: - Link Containers
 var wikipediaLink = [String: String]()
 var youtubeLinks = [String: String]()
 var metalArchiveLinks = [String: String]()
@@ -183,53 +99,16 @@ var bandCountry = [String: String]()
 var bandGenre = [String: String]()
 var bandNoteWorthy = [String: String]()
 
-//var band list placeHolder
-var bandListIndexCache = 0
-
-//number of unoffical events
-// DEPRECATED: Use eventCounterUnoffical instead (defined at line 48)
-// This variable is kept for backward compatibility but is no longer used
-var unofficalEventCount = 0
-
-let chevronRight = UIImage(systemName: "chevron.right")
-let chevronDown = UIImage(systemName: "chevron.down")
-
-//valid event types
-var showType = "Show"
-var meetAndGreetype = "Meet and Greet"
-var clinicType = "Clinic"
-var listeningPartyType = "Listening Party"
-var specialEventType = "Special Event"
-var unofficalEventTypeOld = "Unofficial Event"
-var unofficalEventType = "Cruiser Organized"
-var karaokeEventType = "Karaoke";
-
-var poolVenueText = "Pool"
-var rinkVenueText = "Rink"
-var loungeVenueText = "Lounge"
-var theaterVenueText = "Theater"
-
-var venueLocation = [String:String]()
-
-//links to external site
-var officalSiteButtonName = "Offical Web Site"
-var wikipediaButtonName = "Wikipedia"
-var youTubeButtonName = "YouTube"
-var metalArchivesButtonName = "Metal Archives"
-
-var descriptionLock = false;
-
-let venuePoolKey:String = "Pool";
-let venueTheaterKey:String = "Theater";
-let venueLoungeKey:String = "Lounge";
-let venueRinkKey:String = "Rink";
-
-let sawAllColor = hexStringToUIColor(hex: "#67C10C")
-let sawSomeColor = hexStringToUIColor(hex: "#F0D905")
-let sawNoneColor = hexStringToUIColor(hex: "#5DADE2")
-let sawAllStatus = "sawAll";
-let sawSomeStatus = "sawSome";
-let sawNoneStatus = "sawNone";
+// MARK: - Legacy Event Type Accessors (for backward compatibility)
+// TODO: Update all references to use EventTypes directly
+var showType: String { EventTypes.show }
+var meetAndGreetype: String { EventTypes.meetAndGreet }
+var clinicType: String { EventTypes.clinic }
+var listeningPartyType: String { EventTypes.listeningParty }
+var specialEventType: String { EventTypes.specialEvent }
+var unofficalEventTypeOld: String { EventTypes.unofficialEventOld }
+var unofficalEventType: String { EventTypes.unofficialEvent }
+var karaokeEventType: String { EventTypes.karaoke }
 
 var eventYearArray = [String]();
 
@@ -238,15 +117,13 @@ let subscriptionTopic = FestivalConfig.current.subscriptionTopic
 let subscriptionTopicTest = FestivalConfig.current.subscriptionTopicTest
 let subscriptionUnofficalTopic = FestivalConfig.current.subscriptionUnofficalTopic
 
-//file names
-let dirs = NSSearchPathForDirectoriesInDomains(FileManager.SearchPathDirectory.documentDirectory, FileManager.SearchPathDomainMask.allDomainsMask, true)
-
-let scheduleFile = getDocumentsDirectory().appendingPathComponent("scheduleFile.txt")
-let descriptionMapFile = getDocumentsDirectory().appendingPathComponent("descriptionMapFile.csv")
-
-let eventYearFile = getDocumentsDirectory().appendingPathComponent("eventYearFile")
-let versionInfoFile = getDocumentsDirectory().appendingPathComponent("versionInfoFile")
-let eventYearsInfoFile = "eventYearsInfoFile"
+// MARK: - Legacy File Path Accessors (for backward compatibility)
+// TODO: Update all references to use FilePaths directly
+let scheduleFile: String = FilePaths.scheduleFile
+let descriptionMapFile: String = FilePaths.descriptionMapFile
+let eventYearFile: String = FilePaths.eventYearFile
+let versionInfoFile: String = FilePaths.versionInfoFile
+let eventYearsInfoFile: String = FilePaths.eventYearsInfoFile
 
 // CRITICAL: eventYear should NEVER be 0 except temporarily on first install
 // before pointer file is downloaded. Always use cache and update when needed.
@@ -306,8 +183,7 @@ let defaultPrefsValue = "Default";
 
 let testingSetting = "Testing"
 
-var userCountry = ""
-var didNotFindMarkedEventsCount = 0
+// MARK: - Storage URLs
 var defaultStorageUrl = FestivalConfig.current.defaultStorageUrl
 let defaultStorageUrlTest = FestivalConfig.current.defaultStorageUrlTest
 // IMPORTANT: Do not resolve pointer-derived URLs at global init time.
@@ -316,24 +192,8 @@ var statsUrl: String {
     return getPointerUrlData(keyValue: "reportUrl")
 }
 
-//var defaultStorageUrl = "https://www.dropbox.com/s/f3raj8hkfbd81mp/productionPointer2024-Test.txt?raw=1"
-
-
+// MARK: - Internet Availability
 var internetAvailble = isInternetAvailable();
-
-var hasScheduleData = false;
-
-var byPassCsvDownloadCheck = false
-//var listOfVenues = [String]()
-var scheduleReleased = false
-
-var filterMenuNeedsUpdating = false;
-
-var filteredBandCount = 0
-var unfilteredBandCount = 0
-var unfilteredEventCount = 0
-var unfilteredCruiserEventCount = 0
-var unfilteredCurrentEventCount = 0
 
 var masterView: MasterViewController!
 
@@ -365,10 +225,10 @@ func resolvePriorityNumber (priority: String)->String {
 
 /// Returns the path to the app's documents directory as an NSString.
 /// - Returns: The documents directory path.
+/// NOTE: This function is now a wrapper around FilePaths.getDocumentsDirectory()
+/// TODO: Update all references to use FilePaths.getDocumentsDirectory() directly
 func getDocumentsDirectory() -> NSString {
-    let paths = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)
-    let documentsDirectory = paths[0]
-    return documentsDirectory as NSString
+    return FilePaths.getDocumentsDirectory()
 }
 
 /// Retrieves pointer URL data for a given key, using cache if available, otherwise fetching and parsing remote data.
@@ -447,7 +307,7 @@ func getPointerUrlData(keyValue: String) -> String {
         cacheVariables.storePointerData = [String:String]()
         
         // 2. Delete cached pointer file
-        let cachedPointerFile = getDocumentsDirectory().appendingPathComponent("cachedPointerData.txt")
+        let cachedPointerFile = FilePaths.cachedPointerFile
         if FileManager.default.fileExists(atPath: cachedPointerFile) {
             do {
                 try FileManager.default.removeItem(atPath: cachedPointerFile)
@@ -541,7 +401,7 @@ func getPointerUrlData(keyValue: String) -> String {
     
     print("getPointerUrlData: ⚠️ Cache miss for \(actualKeyValue) (\(cacheKey)) - reading cached pointer file from disk")
     var pointerValues : [String:[String:String]] = [String:[String:String]]()
-    let cachedPointerFile = getDocumentsDirectory().appendingPathComponent("cachedPointerData.txt")
+    let cachedPointerFile = FilePaths.cachedPointerFile
     if FileManager.default.fileExists(atPath: cachedPointerFile) {
         do {
             let cachedData = try String(contentsOfFile: cachedPointerFile, encoding: .utf8)
@@ -725,7 +585,7 @@ func triggerBackgroundPointerUpdate() {
         
         if !httpData.isEmpty {
             // Cache the new data for next launch
-            let cachedPointerFile = getDocumentsDirectory().appendingPathComponent("cachedPointerData.txt")
+            let cachedPointerFile = FilePaths.cachedPointerFile
             do {
                 try httpData.write(toFile: cachedPointerFile, atomically: true, encoding: .utf8)
                 print("🚀 LAUNCH OPTIMIZATION: Background pointer update completed and cached")
@@ -1117,7 +977,7 @@ func checkForYearChangeInPointerFile(cachedYear: String) {
     }
     
     // POLICY: Do not download pointer data here. Only use cached pointer data on disk.
-    let cachedPointerFile = getDocumentsDirectory().appendingPathComponent("cachedPointerData.txt")
+    let cachedPointerFile = FilePaths.cachedPointerFile
     guard FileManager.default.fileExists(atPath: cachedPointerFile) else {
         print("📅 No cached pointer file on disk - skipping year check")
         return
@@ -1236,55 +1096,13 @@ func didVersionChangeFunction(){
     }
 }
 
-
-/// Populates the venueLocation dictionary with mappings from venue names to deck locations.
-/// Now uses FestivalConfig instead of hardcoded values.
-func setupVenueLocations(){
-    
-    // Clear any existing venue locations
-    venueLocation.removeAll()
-    
-    // Populate from FestivalConfig
-    let config = FestivalConfig.current
-    for venue in config.venues {
-        venueLocation[venue.name] = venue.location
-    }
-    
-    // Legacy compatibility - also add by the old text constants
-    venueLocation[poolVenueText] = config.getVenueLocation(for: "Pool")
-    venueLocation[rinkVenueText] = config.getVenueLocation(for: "Rink")
-    venueLocation[loungeVenueText] = config.getVenueLocation(for: "Lounge")
-    venueLocation[theaterVenueText] = config.getVenueLocation(for: "Theater")
-}
-
 /// Converts an event type string to a localized version for display.
 /// - Parameter eventType: The event type string to localize.
 /// - Returns: The localized event type string.
-func convertEventTypeToLocalLanguage(eventType: String)->String{
-    
-    var localEventType = eventType
-    
-    print ("Recieved an eventType of \(eventType)")
-    if eventType == "Cruiser Organized" {
-        localEventType = NSLocalizedString("Unofficial Events", comment: "")
-        
-    } else if eventType == "Listening Party" {
-        localEventType = NSLocalizedString(eventType, comment: "")
-    
-    } else if eventType == "Clinic"{
-        localEventType = NSLocalizedString(eventType, comment: "")
-        
-    } else if eventType == "Meet and Greet"{
-        localEventType = NSLocalizedString(eventType, comment: "")
-        
-    } else if eventType == "Special Event"{
-        localEventType = NSLocalizedString(eventType, comment: "")
-        
-    }
-    
-    print ("Recieved an eventType and returned \(localEventType)")
-    return localEventType;
-    
+/// NOTE: This function is now a wrapper around EventTypes.convertToLocalLanguage()
+/// TODO: Update all references to use EventTypes.convertToLocalLanguage() directly
+func convertEventTypeToLocalLanguage(eventType: String) -> String {
+    return EventTypes.convertToLocalLanguage(eventType: eventType)
 }
 
 /// Checks if the device currently has internet access using the global NetworkStatusManager.

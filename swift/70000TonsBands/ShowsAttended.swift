@@ -203,7 +203,12 @@ open class ShowsAttended {
         - newTime: The timestamp to use (Double, seconds since epoch).
      */
     func addShowsAttendedWithStatusAndTime(band: String, location: String, startTime: String, eventType: String, eventYearString: String, status: String, newTime: Double) {
-        let index = band + ":" + location + ":" + startTime + ":" + eventType + ":" + eventYearString
+        // Normalize event type: "Unofficial Event" -> "Cruiser Organized" (for consistency with getShowAttendedStatus)
+        var eventTypeValue = eventType
+        if eventType == unofficalEventTypeOld {
+            eventTypeValue = unofficalEventType
+        }
+        let index = band + ":" + location + ":" + startTime + ":" + eventTypeValue + ":" + eventYearString
         let timestamp = String(format: "%.0f", newTime)
         changeShowAttendedStatus(index: index, status: status + ":" + timestamp)
         staticLastModifiedDate.async(flags: .barrier) {
