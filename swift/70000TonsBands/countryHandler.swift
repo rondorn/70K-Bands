@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import CoreData
 import CloudKit
 
 /// Data structure for caching country mappings

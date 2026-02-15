@@ -6,12 +6,11 @@
 //
 import Foundation
 import UIKit
-import CoreData
 
 open class ShowsAttended {
 
     let iCloudHandle = iCloudDataHandler()
-    // NEW: Use Core Data AttendanceManager for all operations
+    // Use SQLite AttendanceManager for all operations
     private let attendanceManager = SQLiteAttendanceManager.shared
     
     // Thread-safe queue and backing store for showsAttendedArray
@@ -236,7 +235,7 @@ open class ShowsAttended {
         }
         let index = band + ":" + location + ":" + startTime + ":" + eventTypeValue + ":" + eventYearString
         
-        // NEW: Use Core Data AttendanceManager instead of old system
+        // Use SQLite AttendanceManager instead of old system
         let currentStatus = attendanceManager.getAttendanceStatusByIndex(index: index)
         print("🔍 [ShowsAttended] addShowsAttended - currentStatus: \(currentStatus) for '\(band)'")
         
@@ -260,7 +259,7 @@ open class ShowsAttended {
             print("🔍 [ShowsAttended] Fallback: setting to Will Attend (2)")
         }
         
-        // Update using Core Data (all profiles are now editable)
+        // Update using SQLite (all profiles are now editable)
         attendanceManager.setAttendanceStatusByIndex(index: index, status: newStatus)
         
         // Convert to string status for return value
@@ -302,7 +301,7 @@ open class ShowsAttended {
             numericStatus = 0
         }
         
-        // NEW: Use Core Data AttendanceManager
+        // Use SQLite AttendanceManager
         attendanceManager.setAttendanceStatusByIndex(index: index, status: numericStatus)
         
         // Keep old system for backward compatibility (legacy cache)
@@ -425,7 +424,7 @@ open class ShowsAttended {
             eventTypeVariable = unofficalEventType;
         }
         
-        // NEW: Use Core Data AttendanceManager instead of old system
+        // Use SQLite AttendanceManager instead of old system
         let index = band + ":" + location + ":" + startTime + ":" + eventTypeVariable + ":" + eventYearString
         let status = attendanceManager.getAttendanceStatusByIndex(index: index)
         

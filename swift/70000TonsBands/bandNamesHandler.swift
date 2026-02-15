@@ -2,20 +2,19 @@
 //  bandNamesHandler.swift
 //  70000TonsBands
 //
-//  Core Data-backed version of bandNamesHandler
-//  Maintains 100% API compatibility while using database backend
+//  SQLite-backed version of bandNamesHandler
+//  Maintains 100% API compatibility while using SQLite database backend
 //
 
 import Foundation
 import CryptoKit
-import CoreData
 
 open class bandNamesHandler {
     
     // Singleton instance
     static let shared = bandNamesHandler()
     
-    // Core Data components
+    // SQLite database components
     private let dataManager = DataManager.shared
     private let csvImporter = BandCSVImporter()
     
@@ -169,7 +168,7 @@ open class bandNamesHandler {
         print("📅 [BAND_INIT] No cached year, using current year: \(eventYear)")
     }
     
-    // MARK: - Core Data Cache Management
+    // MARK: - SQLite Cache Management
     
     /// Loads band data from SQLite into memory cache for fast access
     private func loadCacheFromCoreData() {
@@ -267,7 +266,7 @@ open class bandNamesHandler {
     
     // MARK: - Original API Methods (100% Compatible)
     
-    /// Loads band name data from cache if available, otherwise loads from Core Data.
+    /// Loads band name data from cache if available, otherwise loads from SQLite.
     /// PERFORMANCE OPTIMIZED: Load data from cache immediately (no network calls)
     func loadCachedDataImmediately() {
         print("🚀 bandNamesHandler: Loading cached data immediately (no network calls)")
@@ -275,7 +274,7 @@ open class bandNamesHandler {
         // Use eventYear as-is (should be set correctly during app launch or year change)
         print("🔄 Using eventYear = \(eventYear) (set by proper resolution chain)")
         
-        // Load from Core Data cache immediately
+        // Load from SQLite cache immediately
         loadCacheFromCoreData()
         
         var isEmpty = false
@@ -294,14 +293,14 @@ open class bandNamesHandler {
         }
     }
     
-    /// Always shows cached/Core Data data immediately except on first launch or explicit refresh.
+    /// Always shows cached/SQLite data immediately except on first launch or explicit refresh.
     /// Triggers background update if needed.
     func getCachedData(forceNetwork: Bool = false, completion: (() -> Void)? = nil) {
-        print("Loading bandName Data cache (Core Data backend)")
+        print("Loading bandName Data cache (SQLite backend)")
         var needsNetworkFetch = false
         var showedData = false
 
-        // Load from Core Data if cache not loaded
+        // Load from SQLite if cache not loaded
         if !cacheLoaded {
             loadCacheFromCoreData()
         }
@@ -309,7 +308,7 @@ open class bandNamesHandler {
         staticBandName.sync {
             if !self.bandNames.isEmpty {
                 // Cache is available, show immediately
-                print("Loading bandName Data cache, from Core Data cache")
+                print("Loading bandName Data cache, from SQLite cache")
                 showedData = true
             } else if !cacheVariables.bandNamesStaticCache.isEmpty {
                 // cacheVariables has data, load into memory and show immediately
@@ -368,7 +367,7 @@ open class bandNamesHandler {
                 }
             } else {
                 // Cache is empty but network not explicitly requested - skip automatic download
-                print("No cached/Core Data data available, but network fetch not explicitly requested")
+                print("No cached/SQLite data available, but network fetch not explicitly requested")
                 print("Skipping automatic network download - network loading should only happen during app launch, foreground return, or pull-to-refresh")
                 completion?()
             }
@@ -431,7 +430,7 @@ open class bandNamesHandler {
         }
     }
     
-    /// Gathers band data from the internet if available, writes it to Core Data, and populates the cache.
+    /// Gathers band data from the internet if available, writes it to SQLite, and populates the cache.
     /// Uses checksum comparison to avoid unnecessary cache rebuilds when data hasn't changed.
     /// Calls completion handler when done.
     /// - Parameter forceDownload: If true, forces download from network. If false, only reads from cache.
@@ -462,7 +461,7 @@ open class bandNamesHandler {
         // Only download from network if explicitly forced
         if forceDownload && isInternetAvailable() == true {
             // Use eventYear as-is (should be set correctly during app launch or year change)
-            print("DEBUG_MARKER: Starting CSV download process (Core Data backend)")
+            print("DEBUG_MARKER: Starting CSV download process (SQLite backend)")
             print("DEBUG_MARKER: Event year: \(eventYear)")
             
             let defaultUrl = defaultStorageUrl
@@ -519,19 +518,19 @@ open class bandNamesHandler {
                 // Smart import detection: Force import if we have large CSV but few bands for current year
                 let currentBandCount = DataManager.shared.fetchBands(forYear: eventYear).count
                 if httpData.count > 10000 && currentBandCount < 20 {
-                    print("DEBUG_MARKER: Smart import triggered - Downloaded \(httpData.count) chars but only \(currentBandCount) bands in Core Data")
+                    print("DEBUG_MARKER: Smart import triggered - Downloaded \(httpData.count) chars but only \(currentBandCount) bands in SQLite")
                     clearStoredChecksum()
                     storedChecksum = getStoredChecksum() // Refresh after clearing
                 }
                 
                 // Compare checksums to determine if data has changed
                 if storedChecksum != newChecksum {
-                    print("DEBUG_MARKER: Data has changed - importing to Core Data")
+                    print("DEBUG_MARKER: Data has changed - importing to SQLite")
                     print("DEBUG_MARKER: Old checksum: \(storedChecksum?.prefix(8) ?? "none")")
                     print("DEBUG_MARKER: New checksum: \(newChecksum.prefix(8))")
                     dataChanged = true
                     
-                    // Import new data to Core Data with smart update/delete logic
+                    // Import new data to SQLite with smart update/delete logic
                     print("DEBUG_MARKER: Calling smart CSV import")
                     let importSuccess = csvImporter.importBandsFromCSVString(httpData)
                     print("DEBUG_MARKER: Smart CSV import result: \(importSuccess)")
@@ -542,7 +541,7 @@ open class bandNamesHandler {
                         print("DEBUG_MARKER: Reset cacheLoaded flag after successful CSV import")
                         // Store new checksum only if import was successful
                         storeChecksum(newChecksum)
-                        print("DEBUG_MARKER: Successfully updated Core Data and stored new checksum")
+                        print("DEBUG_MARKER: Successfully updated SQLite and stored new checksum")
                     } else {
                         print("DEBUG_MARKER: Import failed - keeping old checksum")
                     }
@@ -552,13 +551,13 @@ open class bandNamesHandler {
                     dataChanged = false
                     
                     // Even if data hasn't changed, we should run cleanup to remove invalid bands
-                    // This handles cases where test data or old bands exist in Core Data
+                    // This handles cases where test data or old bands exist in SQLite
                     let currentBandCount = DataManager.shared.fetchBands(forYear: eventYear).count
                     let csvLineCount = httpData.components(separatedBy: .newlines).count - 1 // Subtract header
                     
                     if currentBandCount != csvLineCount {
-                        print("DEBUG_MARKER: Band count mismatch - Core Data: \(currentBandCount), CSV: \(csvLineCount)")
-                        print("DEBUG_MARKER: Running cleanup to sync Core Data with CSV")
+                        print("DEBUG_MARKER: Band count mismatch - SQLite: \(currentBandCount), CSV: \(csvLineCount)")
+                        print("DEBUG_MARKER: Running cleanup to sync SQLite with CSV")
                         
                         let cleanupSuccess = csvImporter.importBandsFromCSVString(httpData)
                         print("DEBUG_MARKER: Cleanup import result: \(cleanupSuccess)")
@@ -578,14 +577,14 @@ open class bandNamesHandler {
                 dataChanged = false
             }
         } else if !forceDownload {
-            print("📖 gatherData called without forceDownload - only reading from Core Data cache")
+            print("📖 gatherData called without forceDownload - only reading from SQLite cache")
         } else {
             print("📡 No internet available, keeping existing data")
             newDataValid = false
             dataChanged = false
         }
         
-        // Always read from Core Data (either new or existing)
+        // Always read from SQLite (either new or existing)
         loadCacheFromCoreData()
         var isEmpty = false
         staticBandName.sync {
@@ -604,7 +603,7 @@ open class bandNamesHandler {
         if isEmpty && forceDownload {
             print("Band data cache is empty after forced download/import. Will retry SQLite visibility without additional network downloads.")
             
-            // Give Core Data/SQLite a moment to surface the newly imported rows (edge-case timing).
+            // Give SQLite a moment to surface the newly imported rows (edge-case timing).
             // Retry quickly a few times without touching the network.
             let maxVisibilityRetries = 10
             for attempt in 1...maxVisibilityRetries {
@@ -626,7 +625,7 @@ open class bandNamesHandler {
                 }
             }
         } else if isEmpty && !forceDownload {
-            print("Core Data is empty but forceDownload is false. Skipping retry logic.")
+            print("SQLite database is empty but forceDownload is false. Skipping retry logic.")
         }
         
         // If we have data (either new or existing), proceed
@@ -687,7 +686,7 @@ open class bandNamesHandler {
     /// Populates the static cache variables with the current bandNames dictionary.
     /// Posts a notification when the cache is ready and calls the completion handler.
     func populateCache(completion: (() -> Void)? = nil) {
-        print("Starting population of cacheVariables.bandNamesStaticCache (Core Data backend)")
+        print("Starting population of cacheVariables.bandNamesStaticCache (SQLite backend)")
         staticBandName.async(flags: .barrier) {
             cacheVariables.bandNamesStaticCache = [String: [String: String]]()
             cacheVariables.bandNamesArrayStaticCache = [String]()
@@ -709,24 +708,24 @@ open class bandNamesHandler {
         }
     }
     
-    /// Writes the provided HTTP data string to Core Data instead of file.
-    /// - Parameter httpData: The string data to import to Core Data.
+    /// Writes the provided HTTP data string to SQLite instead of file.
+    /// - Parameter httpData: The string data to import to SQLite.
     func writeBandFile(_ httpData: String) {
-        print("write to Core Data instead of file");
+        print("write to SQLite instead of file");
         print(httpData);
         
-        // Import to Core Data instead of writing to file
+        // Import to SQLite instead of writing to file
         csvImporter.importBandsFromCSVString(httpData)
         
         // Reset cache loaded flag to force reload of new data
         self.cacheLoaded = false
         print("DEBUG_MARKER: Reset cacheLoaded flag after writeBandFile CSV import")
         
-        print("Just imported data to Core Data");
+        print("Just imported data to SQLite");
     }
 
-    /// Reads the band data from Core Data and populates the bandNames and bandNamesArray dictionaries.
-    /// Handles parsing of Core Data entities and extraction of band properties.
+    /// Reads the band data from SQLite and populates the bandNames and bandNamesArray dictionaries.
+    /// Handles parsing of SQLite data and extraction of band properties.
     func readBandFile() {
         let now = Date()
         if let last = Self.lastReadBandFileCallTime, now.timeIntervalSince(last) < 2 {
@@ -735,16 +734,16 @@ open class bandNamesHandler {
             Self.readBandFileCallCount = 1
         }
         Self.lastReadBandFileCallTime = now
-        print("readBandFile called (\(Self.readBandFileCallCount)) at \(now) (Core Data backend)")
+        print("readBandFile called (\(Self.readBandFileCallCount)) at \(now) (SQLite backend)")
         if Self.readBandFileCallCount > 10 {
             print("Aborting: readBandFile called too many times in a short period. Possible infinite loop.")
             return
         }
         if readingBandFile == false {
             readingBandFile = true
-            print("Loading bandName Data readBandFile (Core Data backend)")
+            print("Loading bandName Data readBandFile (SQLite backend)")
             
-            // Load from Core Data instead of file
+            // Load from SQLite instead of file
             loadCacheFromCoreData()
             
             readingBandFile = false
@@ -755,7 +754,7 @@ open class bandNamesHandler {
         }
     }
 
-    /// Force read the Core Data and populate cache, bypassing the recursion/loop guard
+    /// Force read the SQLite database and populate cache, bypassing the recursion/loop guard
     func forceReadBandFileAndPopulateCache(completion: (() -> Void)? = nil) {
         self._readingBandFile = true
         self.readBandFile()
@@ -793,7 +792,7 @@ open class bandNamesHandler {
                 result = Array(self.bandNames.keys).sorted()
             }
         }
-        print("bandNamesArray data is \(result) (Core Data backend)")
+        print("bandNamesArray data is \(result) (SQLite backend)")
         return result
     }
 

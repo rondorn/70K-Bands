@@ -2,7 +2,7 @@
 //  BandCSVImporter.swift
 //  70000TonsBands
 //
-//  Imports band data from CSV files into Core Data
+//  Imports band data from CSV files into SQLite
 //  Replaces the existing bandNamesHandler CSV parsing
 //
 
