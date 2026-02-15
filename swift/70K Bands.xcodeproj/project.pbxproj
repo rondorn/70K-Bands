@@ -148,7 +148,19 @@
 		116C9D942F415D370036743C /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D792F415D370036743C /* AppState.swift */; };
 		116C9D952F415D370036743C /* YearManagementService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D802F415D370036743D /* YearManagementService.swift */; };
 		116C9D962F415D370036743C /* YearManagementService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D802F415D370036743D /* YearManagementService.swift */; };
+		116C9D962F4162110036743C /* PointerDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D952F4162110036743C /* PointerDataService.swift */; };
 		116C9D972F415D370036743C /* YearManagementService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D802F415D370036743D /* YearManagementService.swift */; };
+		116C9D972F4162110036743C /* PointerDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D952F4162110036743C /* PointerDataService.swift */; };
+		116C9D982F415D370036743E /* MasterViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D812F415D370036743E /* MasterViewModel.swift */; };
+		116C9D982F4162110036743C /* PointerDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D952F4162110036743C /* PointerDataService.swift */; };
+		116C9D992F415D370036743E /* MasterViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D812F415D370036743E /* MasterViewModel.swift */; };
+		116C9D9A2F415D370036743E /* MasterViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D812F415D370036743E /* MasterViewModel.swift */; };
+		116C9D9B2F415D370036743F /* MasterViewCacheManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D822F415D370036743F /* MasterViewCacheManager.swift */; };
+		116C9D9C2F415D370036743F /* MasterViewCacheManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D822F415D370036743F /* MasterViewCacheManager.swift */; };
+		116C9D9D2F415D370036743F /* MasterViewCacheManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D822F415D370036743F /* MasterViewCacheManager.swift */; };
+		116C9D9E2F415D3700367440 /* MasterViewUIManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D832F415D3700367440 /* MasterViewUIManager.swift */; };
+		116C9D9F2F415D3700367440 /* MasterViewUIManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D832F415D3700367440 /* MasterViewUIManager.swift */; };
+		116C9DA02F415D3700367440 /* MasterViewUIManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D832F415D3700367440 /* MasterViewUIManager.swift */; };
 		1172A2391B5AC7DC00C28AB3 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1172A2251B5AADC900C28AB3 /* Localizable.strings */; };
 		1172EDF82E5A1C4D006E3596 /* UtilityHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ED61801A9103C100D29A5B /* UtilityHandler.swift */; };
 		1172EDF92E5A1C4D006E3596 /* ToastMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1187BE1120D6AFC8002F070F /* ToastMessages.swift */; };
@@ -452,6 +464,10 @@
 		116C9D7E2F415D370036743C /* UIConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIConstants.swift; sourceTree = "<group>"; };
 		116C9D7F2F415D370036743C /* VenueConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VenueConstants.swift; sourceTree = "<group>"; };
 		116C9D802F415D370036743D /* YearManagementService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YearManagementService.swift; sourceTree = "<group>"; };
+		116C9D812F415D370036743E /* MasterViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MasterViewModel.swift; sourceTree = "<group>"; };
+		116C9D822F415D370036743F /* MasterViewCacheManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MasterViewCacheManager.swift; sourceTree = "<group>"; };
+		116C9D832F415D3700367440 /* MasterViewUIManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MasterViewUIManager.swift; sourceTree = "<group>"; };
+		116C9D952F4162110036743C /* PointerDataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointerDataService.swift; sourceTree = "<group>"; };
 		1172A2241B5AADC900C28AB3 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		1172A2291B5AAEC400C28AB3 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
 		1172A22D1B5AB04B00C28AB3 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -688,7 +704,6 @@
 				116C9D7B2F415D370036743C /* EventTypes.swift */,
 				1172EE522E5A292E006E3596 /* FestivalConfig.swift */,
 				116C9D7C2F415D370036743C /* FilePaths.swift */,
-				116C9D802F415D370036743D /* YearManagementService.swift */,
 				11D4844A2241DA0C00910878 /* firebaseBandDataWrite.swift */,
 				11D4844D2241DED700910878 /* firebaseEventDataWrite.swift */,
 				11D4844422418A9E00910878 /* firebaseUserWrite.swift */,
@@ -705,11 +720,15 @@
 				11DCE9B51A85B9FF00A25FB8 /* localNotificationHandler.swift */,
 				114CC0701C79204100CF5BF1 /* Main.storyboard */,
 				11DCE9B31A856EE600A25FB8 /* mainListController.swift */,
+				116C9D822F415D370036743F /* MasterViewCacheManager.swift */,
 				1154F6101A575893003F4764 /* MasterViewController.swift */,
+				116C9D812F415D370036743E /* MasterViewModel.swift */,
+				116C9D832F415D3700367440 /* MasterViewUIManager.swift */,
 				B0B1C2D3E4F5061728394A5B /* MinimumVersionWarningManager.swift */,
 				1122E3ED23DC8E38005EE50D /* NetworkTesting.swift */,
 				11FBBE1D232F26E000109035 /* NotificationPayload.apns */,
 				11DCE9BE1A87058000A25FB8 /* OnMyWayToDeath.wav */,
+				116C9D952F4162110036743C /* PointerDataService.swift */,
 				1172EE552E5A292E006E3596 /* preferenceDefault.swift */,
 				11615BB02E4644ED007BD3D5 /* PreferencesHostingController.swift */,
 				11615BB12E4644ED007BD3D5 /* PreferencesView.swift */,
@@ -746,6 +765,7 @@
 				115213282A69E23C0017DD9F /* variableStore.swift */,
 				116C9D7F2F415D370036743C /* VenueConstants.swift */,
 				11BE68F41A59C45100602EC7 /* webViewController.swift */,
+				116C9D802F415D370036743D /* YearManagementService.swift */,
 			);
 			path = 70000TonsBands;
 			sourceTree = "<group>";
@@ -1287,6 +1307,9 @@
 				116C9D892F415D370036743C /* VenueConstants.swift in Sources */,
 				116C9D8A2F415D370036743C /* EventTypes.swift in Sources */,
 				116C9D962F415D370036743C /* YearManagementService.swift in Sources */,
+				116C9D982F415D370036743E /* MasterViewModel.swift in Sources */,
+				116C9D9B2F415D370036743F /* MasterViewCacheManager.swift in Sources */,
+				116C9D9E2F415D3700367440 /* MasterViewUIManager.swift in Sources */,
 				116C9D8B2F415D370036743C /* iCloudConstants.swift in Sources */,
 				116C9D8C2F415D370036743C /* UIConstants.swift in Sources */,
 				116C9D8D2F415D370036743C /* AppState.swift in Sources */,
@@ -1297,6 +1320,7 @@
 				11DAB49B1A5DDA9400A8B12E /* dataHandler.swift in Sources */,
 				110E08522AECB6E200075618 /* DPDKeyboardListener.swift in Sources */,
 				110E08562AECB6E200075618 /* DPDConstants.swift in Sources */,
+				116C9D982F4162110036743C /* PointerDataService.swift in Sources */,
 				1129139C2EE77A11008472A3 /* SQLiteProfileManager.swift in Sources */,
 				11111FA720D03D77008E41F6 /* ShowAttendedReport.swift in Sources */,
 				1154F60F1A575893003F4764 /* _0000TonsBands.xcdatamodeld in Sources */,
@@ -1386,6 +1410,9 @@
 				116C9D922F415D370036743C /* iCloudConstants.swift in Sources */,
 				116C9D932F415D370036743C /* UIConstants.swift in Sources */,
 				116C9D972F415D370036743C /* YearManagementService.swift in Sources */,
+				116C9D992F415D370036743E /* MasterViewModel.swift in Sources */,
+				116C9D9C2F415D370036743F /* MasterViewCacheManager.swift in Sources */,
+				116C9D9F2F415D3700367440 /* MasterViewUIManager.swift in Sources */,
 				116C9D942F415D370036743C /* AppState.swift in Sources */,
 				11CC7FB92F3FD2CD005DF9CC /* CompactActionSheetViewController.swift in Sources */,
 				11CC7FBE2F3FD2CD005DF9CC /* BandSelectionViewController.swift in Sources */,
@@ -1394,6 +1421,7 @@
 				110FA1612E3BAF7B003A0184 /* CombinedImageListHandler.swift in Sources */,
 				1155E3AD1A8B121000D51ED9 /* urlStorage.swift in Sources */,
 				110E08532AECB6E200075618 /* DPDKeyboardListener.swift in Sources */,
+				116C9D972F4162110036743C /* PointerDataService.swift in Sources */,
 				110E08572AECB6E200075618 /* DPDConstants.swift in Sources */,
 				1129139D2EE77A11008472A3 /* SQLiteProfileManager.swift in Sources */,
 				1155E3A61A8B121000D51ED9 /* Constants.swift in Sources */,
@@ -1483,6 +1511,9 @@
 				116C9D842F415D370036743C /* iCloudConstants.swift in Sources */,
 				116C9D852F415D370036743C /* UIConstants.swift in Sources */,
 				116C9D952F415D370036743C /* YearManagementService.swift in Sources */,
+				116C9D9A2F415D370036743E /* MasterViewModel.swift in Sources */,
+				116C9D9D2F415D370036743F /* MasterViewCacheManager.swift in Sources */,
+				116C9DA02F415D3700367440 /* MasterViewUIManager.swift in Sources */,
 				116C9D862F415D370036743C /* AppState.swift in Sources */,
 				11CC7FBA2F3FD2CD005DF9CC /* CompactActionSheetViewController.swift in Sources */,
 				11CC7FBF2F3FD2CD005DF9CC /* BandSelectionViewController.swift in Sources */,
@@ -1491,6 +1522,7 @@
 				1172EE0A2E5A1C4D006E3596 /* CombinedImageListHandler.swift in Sources */,
 				1172EE0B2E5A1C4D006E3596 /* dataHandler.swift in Sources */,
 				1172EE0C2E5A1C4D006E3596 /* DPDKeyboardListener.swift in Sources */,
+				116C9D962F4162110036743C /* PointerDataService.swift in Sources */,
 				1172EE0D2E5A1C4D006E3596 /* DPDConstants.swift in Sources */,
 				1129139B2EE77A11008472A3 /* SQLiteProfileManager.swift in Sources */,
 				1172EE0E2E5A1C4D006E3596 /* ShowAttendedReport.swift in Sources */,
@@ -1789,7 +1821,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260214002;
+				MARKETING_VERSION = 20260214003;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -1870,7 +1902,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260214002;
+				MARKETING_VERSION = 20260214003;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
