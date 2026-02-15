@@ -145,7 +145,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     @IBOutlet weak var shareButton: UIBarButtonItem!
     
     @IBOutlet weak var contentController: UIView!
-    //@IBOutlet weak var scheduleButton: UIButton!
     @IBOutlet weak var settingsButton: UIButton!
     @IBOutlet weak var blankScreenActivityIndicator: UIActivityIndicatorView!
     
@@ -310,8 +309,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print("🔧 [INIT_DEBUG] updateTitleForActivePreferenceSource() completed")
         
         bandSearch.placeholder = NSLocalizedString("SearchCriteria", comment: "")
-        //bandSearch.backgroundImage = UIImage(named: "70KSearch")!
-        //bandSearch.setImage(UIImage(named: "70KSearch")!, for: <#UISearchBar.Icon#>, state: UIControl.State.normal)
         bandSearch.setImage(UIImage(named: "70KSearch")!, for: .init(rawValue: 0)!, state: .normal)
         readFiltersFile()
         
@@ -364,7 +361,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         refreshControl.tintColor = UIColor.red;
         self.refreshControl = refreshControl
         
-        //scheduleButton.setImage(getSortButtonImage(), for: UIControl.State.normal)
         mainTableView.separatorColor = UIColor.lightGray
         mainTableView.tableFooterView = UIView() // Remove separators for empty rows
         
@@ -1204,7 +1200,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 print ("countryValue Acceptable country of " + countryValue! + " found")
                 
                 do {
-                    //let countryFileUrl = URL(string: countryFile)
                     print ("countryValue writing Acceptable country of " + countryValue! + " found")
                     try countryValue!.write(to: countryFile, atomically: false, encoding: String.Encoding.utf8)
                 } catch {
@@ -1654,8 +1649,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             
-            // LEGACY: Priority data now handled by Core Data (PriorityManager)
-            // self.dataHandle.getCachedData()
+            // Priority data now handled by SQLitePriorityManager
             
             // Update GUI on main thread after data loading is complete
             DispatchQueue.main.async {
@@ -1707,7 +1701,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
 
         DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
-            //if #available(iOS 10.0, *) {
             print ("FCM alert")
                 let localNotication = localNoticationHandler()
                 localNotication.addNotifications()
@@ -1951,8 +1944,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                 guard let self = self else { return }
                 
-                // LEGACY: Priority data now handled by Core Data (PriorityManager)
-                // self.dataHandle.getCachedData()
+                // Priority data now handled by SQLitePriorityManager
                 
                 DispatchQueue.main.async {
                     print("Calling refreshBandList from quickRefresh_Pre with reason: Quick refresh")
@@ -3824,157 +3816,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         )
     }
     
-    // MARK: - Cache-Optimized Cell Configuration (Legacy - now handled by UIManager)
-    
-    /// Configure cell using pre-computed cached data (NO database calls during scrolling!)
-    /// NOTE: This method is now handled by UIManager.configureCellFromCache()
-    /// Kept for backward compatibility if needed
-    private func configureCellFromCache(_ cell: UITableViewCell, with cachedData: CellDataModel) {
-        // Get UI elements by tags
-        let indexForCell = cell.viewWithTag(1) as! UILabel
-        let bandNameView = cell.viewWithTag(2) as! UILabel
-        let locationView = cell.viewWithTag(3) as! UILabel
-        let eventTypeImageView = cell.viewWithTag(4) as! UIImageView
-        let rankImageView = cell.viewWithTag(5) as! UIImageView
-        let attendedView = cell.viewWithTag(6) as! UIImageView
-        let rankImageViewNoSchedule = cell.viewWithTag(7) as! UIImageView
-        let startTimeView = cell.viewWithTag(14) as! UILabel
-        let endTimeView = cell.viewWithTag(8) as! UILabel
-        let dayLabelView = cell.viewWithTag(9) as! UILabel
-        let dayView = cell.viewWithTag(10) as! UILabel
-        let bandNameNoSchedule = cell.viewWithTag(12) as! UILabel
-        
-        // Configure cell colors
-        cell.backgroundColor = UIColor.black
-        cell.textLabel?.textColor = UIColor.white
-        
-        // CRITICAL FIX: Set indexText for swipe action parsing
-        // The swipe action reads cell.textLabel?.text and expects format: "bandName;location;event;startTime"
-        cell.textLabel?.text = cachedData.indexText
-        
-        // Configure text colors (from cached data)
-        bandNameView.textColor = cachedData.bandNameColor
-        // Don't set locationView.textColor here - it will be set via attributed string foregroundColor
-        startTimeView.textColor = UIColor.white
-        endTimeView.textColor = hexStringToUIColor(hex: "#797D7F")
-        dayView.textColor = UIColor.white
-        bandNameNoSchedule.textColor = UIColor.white
-        
-        // Set text from cached data with venue colors
-        // For bandNameView: Create attributed string with venue color marker if has schedule
-        if cachedData.hasSchedule {
-            if cachedData.isPartialInfo {
-                // Partial info: "   " + location (colored marker on 2nd space)
-                let locationString = "   " + cachedData.location
-                let venueString = NSMutableAttributedString(string: locationString)
-                // Second space - colored marker with fixed 17pt font
-                venueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location: 1, length: 1))
-                venueString.addAttribute(NSAttributedString.Key.backgroundColor, value: cachedData.venueBackgroundColor, range: NSRange(location: 1, length: 1))
-                // Location text (after the three spaces) - variable size font
-                if cachedData.location.count > 0 {
-                    let locationTextSize = calculateOptimalFontSize(for: cachedData.location, in: bandNameView, markerWidth: 17, maxSize: 16, minSize: 12)
-                    venueString.addAttribute(NSAttributedString.Key.font, value: UIFont.systemFont(ofSize: locationTextSize), range: NSRange(location: 3, length: cachedData.location.count))
-                    venueString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location: 3, length: cachedData.location.count))
-                }
-                bandNameView.adjustsFontSizeToFitWidth = false
-                bandNameView.backgroundColor = UIColor.clear
-                bandNameView.attributedText = venueString
-                
-                // Also set locationView with venue color for partial info
-                var locationOfVenue = "  " + (venueLocation[cachedData.location] ?? "")
-                if !cachedData.notes.isEmpty && cachedData.notes != " " {
-                    locationOfVenue += " " + cachedData.notes
-                }
-                let locationOfVenueString = NSMutableAttributedString(string: locationOfVenue)
-                // First space - colored marker with fixed 17pt font
-                locationOfVenueString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location: 0, length: 1))
-                locationOfVenueString.addAttribute(NSAttributedString.Key.backgroundColor, value: cachedData.venueBackgroundColor, range: NSRange(location: 0, length: 1))
-                // Venue text (after the two spaces) - variable size font
-                if locationOfVenue.count > 2 {
-                    let venueText = String(locationOfVenue.dropFirst(2))
-                    let venueTextSize = calculateOptimalFontSize(for: venueText, in: locationView, markerWidth: 17, maxSize: 16, minSize: 12)
-                    locationOfVenueString.addAttribute(NSAttributedString.Key.font, value: UIFont.systemFont(ofSize: venueTextSize), range: NSRange(location: 2, length: locationOfVenue.count - 2))
-                    locationOfVenueString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location: 2, length: locationOfVenue.count - 2))
-                }
-                locationView.adjustsFontSizeToFitWidth = false
-                locationView.backgroundColor = UIColor.clear
-                locationView.attributedText = locationOfVenueString
-            } else {
-                // Full info: "  " + locationText (colored marker on 1st space)
-                let locationString = "  " + cachedData.locationText
-                let myMutableString = NSMutableAttributedString(string: locationString)
-                // First space - colored marker with fixed 17pt font
-                myMutableString.addAttribute(NSAttributedString.Key.font, value: UIFont.boldSystemFont(ofSize: 17), range: NSRange(location: 0, length: 1))
-                myMutableString.addAttribute(NSAttributedString.Key.backgroundColor, value: cachedData.venueBackgroundColor, range: NSRange(location: 0, length: 1))
-                // Location text (after the two spaces) - variable size font
-                if cachedData.locationText.count > 0 {
-                    let locationTextSize = calculateOptimalFontSize(for: cachedData.locationText, in: locationView, markerWidth: 17, maxSize: 16, minSize: 12)
-                    myMutableString.addAttribute(NSAttributedString.Key.font, value: UIFont.systemFont(ofSize: locationTextSize), range: NSRange(location: 2, length: cachedData.locationText.count))
-                    myMutableString.addAttribute(NSAttributedString.Key.foregroundColor, value: UIColor.lightGray, range: NSRange(location: 2, length: cachedData.locationText.count))
-                }
-                locationView.adjustsFontSizeToFitWidth = false
-                locationView.backgroundColor = UIColor.clear
-                locationView.attributedText = myMutableString
-                bandNameView.text = cachedData.bandName
-            }
-        } else {
-            // No schedule - just plain text
-            bandNameView.text = cachedData.bandName
-            locationView.text = cachedData.locationText
-        }
-        
-        startTimeView.text = cachedData.startTimeText
-        endTimeView.text = cachedData.endTimeText
-        dayView.text = cachedData.dayText
-        bandNameNoSchedule.text = cachedData.bandName
-        
-        // Set images from cached data
-        eventTypeImageView.image = cachedData.eventIcon
-        rankImageView.image = cachedData.priorityIcon
-        attendedView.image = cachedData.attendedIcon
-        rankImageViewNoSchedule.image = cachedData.priorityIcon
-        
-        // Configure visibility based on cached data
-        if cachedData.hasSchedule {
-            // Has schedule - show schedule elements
-            locationView.isHidden = false
-            startTimeView.isHidden = false
-            endTimeView.isHidden = false
-            dayView.isHidden = false
-            dayLabelView.isHidden = false
-            attendedView.isHidden = false
-            eventTypeImageView.isHidden = false
-            rankImageView.isHidden = false
-            bandNameView.isHidden = false
-            rankImageViewNoSchedule.isHidden = true
-            bandNameNoSchedule.isHidden = true
-            indexForCell.isHidden = true
-        } else {
-            // No schedule - show band name only elements
-            locationView.isHidden = true
-            startTimeView.isHidden = true
-            endTimeView.isHidden = true
-            dayView.isHidden = true
-            dayLabelView.isHidden = true
-            attendedView.isHidden = true
-            eventTypeImageView.isHidden = true
-            rankImageView.isHidden = true
-            bandNameView.isHidden = true
-            rankImageViewNoSchedule.isHidden = false
-            bandNameNoSchedule.isHidden = false
-            indexForCell.isHidden = true
-        }
-        
-        // Configure separator visibility from cached data
-        if cachedData.shouldHideSeparator {
-            cell.separatorInset = UIEdgeInsets(top: 0, left: cell.bounds.size.width, bottom: 0, right: 0)
-        } else {
-            cell.separatorInset = UIEdgeInsets(top: 0, left: 15, bottom: 0, right: 0)
-        }
-        
-        // Keep black background for all cells (venue colors not used in list view)
-        // cell.backgroundColor is already set to UIColor.black above at line 2471
-    }
     
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
@@ -5493,8 +5334,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             guard let self = self else { return }
             
             self.bandNameHandle.readBandFile()
-            // LEGACY: Priority data now handled by Core Data (PriorityManager)
-            // self.dataHandle.getCachedData()
+            // Priority data now handled by SQLitePriorityManager
             self.attendedHandle.getCachedData()
             self.schedule.getCachedData()
             
@@ -5581,12 +5421,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
     }
     
-        /*
-    @objc func bandNamesCacheReadyHandler() {
-        print("Calling refreshBandList from bandNamesCacheReadyHandler with reason: Band names cache ready")
-        refreshBandList(reason: "Band names cache ready")
-    }
-    */
     @objc func handleDataReady() {
         // Ensure refreshBandList is called on main thread to avoid UI access issues
         if Thread.isMainThread {
@@ -5671,7 +5505,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             downloadGroup.notify(queue: .main) {
                 // Step 3: Load existing priority data
                 print("⭐ Step 3: Priority data handled by SQLitePriorityManager")
-                // LEGACY: self.dataHandle.getCachedData()
+                // Priority data handled by SQLitePriorityManager
                 print("✅ Priority data available via SQLite")
                 
                 // Step 4: Load existing attendance data
@@ -5955,7 +5789,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 // 3d. Clear ALL caches comprehensively only if content changed
                 print("Full data refresh (\(reason)): Step 3d - Content changed, clearing all caches")
                 self.bandNameHandle.clearCachedData()
-                // LEGACY: Priority cache clearing now handled by PriorityManager if needed
+                // Priority cache clearing handled by SQLitePriorityManager
                 self.dataHandle.clearCachedData()
                 self.schedule.clearCache()
                 

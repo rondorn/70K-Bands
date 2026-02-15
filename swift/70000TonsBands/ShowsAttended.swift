@@ -537,7 +537,6 @@ open class ShowsAttended {
         let currentTime = String(Date().timeIntervalSince1970)
        
         do {
-            //try FileManager.default.removeItem(at: storageFile)
             try currentTime.write(to:lastScheduleDataWriteFile, atomically: false, encoding: String.Encoding.utf8)
             print ("writing ScheduleData Date")
         } catch _ {
