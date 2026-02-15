@@ -69,11 +69,12 @@ func combinedEventBandParts(_ bandName: String?) -> [String]? {
 }
 
 // MARK: - Dispatch Queues
+// NOTE: Many of these queues were used for Core Data thread safety.
+// With SQLite.swift being thread-safe, we've simplified cacheVariables access to use its built-in thread-safe accessors.
+// Remaining queues are still used for instance state protection (e.g., bandNamesHandler, scheduleHandler instance variables).
 let staticLastModifiedDate = DispatchQueue(label: "staticLastModifiedDate")
 let staticSchedule = DispatchQueue(label: "staticSchedule")
 let staticAttended = DispatchQueue(label: "staticAttended")
-// TODO: OPTIMIZATION - Remove all sync blocks since SQLite.swift is thread-safe
-// Keeping for now to avoid breaking existing code, but they're no longer needed
 let staticBandName = DispatchQueue(label: "staticBandName")
 let staticData = DispatchQueue(label: "staticData")
 let storePointerLock = DispatchQueue(label: "storePointerLock")

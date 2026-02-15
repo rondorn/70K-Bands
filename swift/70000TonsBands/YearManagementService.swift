@@ -231,12 +231,10 @@ class YearManagementService {
                 masterView.clearMasterViewCachedData()
             }
             
-            // Clear static caches
-            staticSchedule.sync {
-                cacheVariables.scheduleStaticCache = [:]
-                cacheVariables.scheduleTimeStaticCache = [:]
-                cacheVariables.bandNamesStaticCache = [:]
-            }
+            // Clear static caches - cacheVariables setters are thread-safe
+            cacheVariables.scheduleStaticCache = [:]
+            cacheVariables.scheduleTimeStaticCache = [:]
+            cacheVariables.bandNamesStaticCache = [:]
             
             print("checkAndHandleYearChange: Year change process completed for \(newYear)")
         }
