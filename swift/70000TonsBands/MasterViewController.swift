@@ -171,6 +171,37 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     let attendedHandle = ShowsAttended()
     let iCloudDataHandle = iCloudDataHandler();
     
+    // MARK: - Service Classes
+    private lazy var viewModel: MasterViewModel = {
+        MasterViewModel(
+            schedule: schedule,
+            bandNameHandle: bandNameHandle,
+            dataHandle: dataHandle,
+            priorityManager: priorityManager,
+            attendedHandle: attendedHandle,
+            iCloudDataHandle: iCloudDataHandle
+        )
+    }()
+    
+    private lazy var cacheManager: MasterViewCacheManager = {
+        MasterViewCacheManager(
+            schedule: schedule,
+            bandNameHandle: bandNameHandle,
+            dataHandle: dataHandle,
+            attendedHandle: attendedHandle,
+            bandDescriptions: bandDescriptions
+        )
+    }()
+    
+    private lazy var uiManager: MasterViewUIManager = {
+        MasterViewUIManager(
+            schedule: schedule,
+            dataHandle: dataHandle,
+            priorityManager: priorityManager,
+            attendedHandle: attendedHandle
+        )
+    }()
+    
     var filterTextNeeded = true;
     var viewableCell = UITableViewCell()
     
@@ -201,14 +232,32 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     var playerLayer = AVPlayerLayer()
     
     // --- ADDED: Timer and download state ---
-    var lastScheduleDownload: Date? = nil
+    // NOTE: Schedule download state is now managed by ViewModel internally
+    // This property is kept for backward compatibility but shouldDownloadSchedule() uses ViewModel
+    var lastScheduleDownload: Date? = nil {
+        didSet {
+            // Sync with ViewModel when updated
+            if lastScheduleDownload != nil {
+                viewModel.updateLastScheduleDownload()
+            }
+        }
+    }
     var scheduleRefreshTimer: Timer? = nil
     let scheduleDownloadInterval: TimeInterval = 5 * 60 // 5 minutes
     let minDownloadInterval: TimeInterval = 60 // 1 minute
     // --- END ADDED ---
     
+    // MARK: - Legacy State (managed by service classes)
+    // These are kept for backward compatibility but should use service classes
     var lastRefreshDataRun: Date? = nil
-    var lastBandNamesCacheRefresh: Date? = nil
+    var lastBandNamesCacheRefresh: Date? = nil {
+        didSet {
+            // Sync with CacheManager if needed
+            if let date = lastBandNamesCacheRefresh {
+                cacheManager.resetCacheRefreshThrottle()
+            }
+        }
+    }
     
     // Add the missing property
     var isPerformingQuickLoad = false
@@ -252,15 +301,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print("🎮 [MDF_DEBUG] Festival: \(FestivalConfig.current.festivalShortName)")
         print("🎮 [MDF_DEBUG] App Name: \(FestivalConfig.current.appName)")
         
-        // Configure CellDataCache dependencies for performance
-        print("🔧 [CACHE_CONFIG] Configuring CellDataCache dependencies")
-        CellDataCache.shared.configure(
-            schedule: schedule,
-            dataHandle: dataHandle,
-            priorityManager: priorityManager,
-            attendedHandle: attendedHandle
-        )
-        print("🔧 [CACHE_CONFIG] CellDataCache configured successfully")
+        // Configure CellDataCache dependencies for performance using CacheManager
+        cacheManager.configureCellDataCache(priorityManager: priorityManager)
         
         // Set initial title to app name before data loads
         print("🔧 [INIT_DEBUG] About to call updateTitleForActivePreferenceSource()")
@@ -490,12 +532,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
         
         // Prevent infinite loop: only refresh if we haven't already refreshed recently
-        let now = Date()
-        if let lastBandNamesRefresh = lastBandNamesCacheRefresh, now.timeIntervalSince(lastBandNamesRefresh) < 2.0 {
-            print("Skipping bandNamesCacheReadyHandler: Last refresh was too recent (\(now.timeIntervalSince(lastBandNamesRefresh)) seconds ago)")
+        // Use CacheManager for throttling
+        if cacheManager.shouldThrottleCacheRefresh() {
             return
         }
-        lastBandNamesCacheRefresh = now
+        lastBandNamesCacheRefresh = Date()
         print("Calling refreshBandList from bandNamesCacheReadyHandler with reason: Band names cache ready")
         
         // Ensure refreshBandList is called on main thread to avoid UI access issues
@@ -1246,122 +1287,25 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     // Centralized background refresh with immediate GUI update
     func refreshDataWithBackgroundUpdate(reason: String) {
-        let startTime = CFAbsoluteTimeGetCurrent()
-        print("🕐 [\(String(format: "%.3f", startTime))] refreshDataWithBackgroundUpdate START - reason: '\(reason)'")
-        
-        // Immediately refresh GUI from cache on main thread
-        let immediateStartTime = CFAbsoluteTimeGetCurrent()
-        print("🕐 [\(String(format: "%.3f", immediateStartTime))] Starting immediate cache refresh")
-        
-        // Ensure refreshBandList is called on main thread to avoid UI access issues
-        if Thread.isMainThread {
-        refreshBandList(reason: "\(reason) - immediate cache refresh")
-        let immediateEndTime = CFAbsoluteTimeGetCurrent()
-        print("🕐 [\(String(format: "%.3f", immediateEndTime))] Immediate cache refresh END - time: \(String(format: "%.3f", (immediateEndTime - immediateStartTime) * 1000))ms")
-        } else {
-            DispatchQueue.main.async {
-                self.refreshBandList(reason: "\(reason) - immediate cache refresh")
-                let immediateEndTime = CFAbsoluteTimeGetCurrent()
-                print("🕐 [\(String(format: "%.3f", immediateEndTime))] Immediate cache refresh END - time: \(String(format: "%.3f", (immediateEndTime - immediateStartTime) * 1000))ms")
-            }
-        }
-        
-        // Check if background refresh is already in progress
-        MasterViewController.backgroundRefreshLock.lock()
-        if MasterViewController.isBackgroundRefreshInProgress {
-            print("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] Background refresh (\(reason)): Skipping - another refresh already in progress")
-            MasterViewController.backgroundRefreshLock.unlock()
-            return
-        }
-        MasterViewController.isBackgroundRefreshInProgress = true
-        MasterViewController.backgroundRefreshLock.unlock()
-        
-        let lockTime = CFAbsoluteTimeGetCurrent()
-        print("🕐 [\(String(format: "%.3f", lockTime))] Background refresh lock acquired, starting background operations")
-        
-        // Trigger background refresh
-        DispatchQueue.global(qos: .utility).async { [weak self] in
-            guard let self = self else { 
-                let errorTime = CFAbsoluteTimeGetCurrent()
-                print("🕐 [\(String(format: "%.3f", errorTime))] Background refresh ERROR - self is nil")
-                MasterViewController.backgroundRefreshLock.lock()
-                MasterViewController.isBackgroundRefreshInProgress = false
-                MasterViewController.backgroundRefreshLock.unlock()
-                return 
-            }
-            
-            let backgroundStartTime = CFAbsoluteTimeGetCurrent()
-            print("🕐 [\(String(format: "%.3f", backgroundStartTime))] Background thread START - reason: '\(reason)'")
-            
-            // Check network before attempting downloads
-            let networkCheckStartTime = CFAbsoluteTimeGetCurrent()
-            let internetAvailable = NetworkStatusManager.shared.isInternetAvailable
-            let networkCheckEndTime = CFAbsoluteTimeGetCurrent()
-            print("🕐 [\(String(format: "%.3f", networkCheckEndTime))] Network check complete - available: \(internetAvailable) - time: \(String(format: "%.3f", (networkCheckEndTime - networkCheckStartTime) * 1000))ms")
-            
-            if !internetAvailable {
-                print("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] Background refresh (\(reason)): No network, skipping data download")
-                MasterViewController.backgroundRefreshLock.lock()
-                MasterViewController.isBackgroundRefreshInProgress = false
-                MasterViewController.backgroundRefreshLock.unlock()
-                return
-            }
-            
-            print("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] Background refresh (\(reason)): Starting data download")
-            
-            // Perform the same operations as refreshData but in background
-            // Force download for certain high-priority reasons
-            let shouldForceDownload = reason.contains("foreground") || reason.contains("notification") || reason.contains("timer")
-            let shouldDownload = self.shouldDownloadSchedule(force: shouldForceDownload)
-            
-            let downloadStartTime = CFAbsoluteTimeGetCurrent()
-            if shouldDownload {
-                print("🕐 [\(String(format: "%.3f", downloadStartTime))] Starting CSV download")
-                // Don't call DownloadCsv directly - use the proper loading sequence instead
-                print("🕐 [\(String(format: "%.3f", downloadStartTime))] Deferring CSV download to proper loading sequence")
-                self.lastScheduleDownload = Date()
-                
-                // Also refresh band data when forcing downloads
-                if shouldForceDownload {
-                    print("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] Starting band data refresh")
-                    // Don't call gatherData directly - use the proper loading sequence instead
-                    print("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] Deferring to proper loading sequence")
+        // Delegate to ViewModel
+        viewModel.refreshDataWithBackgroundUpdate(
+            reason: reason,
+            onCacheRefresh: { [weak self] in
+                guard let self = self else { return }
+                // Ensure refreshBandList is called on main thread to avoid UI access issues
+                if Thread.isMainThread {
+                    self.refreshBandList(reason: "\(reason) - immediate cache refresh")
+                } else {
+                    DispatchQueue.main.async {
+                        self.refreshBandList(reason: "\(reason) - immediate cache refresh")
+                    }
                 }
-            }
-            
-            let populateStartTime = CFAbsoluteTimeGetCurrent()
-            print("🕐 [\(String(format: "%.3f", populateStartTime))] Starting schedule population")
-            self.schedule.populateSchedule(forceDownload: shouldForceDownload)
-            let populateEndTime = CFAbsoluteTimeGetCurrent()
-            print("🕐 [\(String(format: "%.3f", populateEndTime))] Schedule population END - time: \(String(format: "%.3f", (populateEndTime - populateStartTime) * 1000))ms")
-            
-            let downloadEndTime = CFAbsoluteTimeGetCurrent()
-            if shouldDownload {
-                print("🕐 [\(String(format: "%.3f", downloadEndTime))] CSV download END - time: \(String(format: "%.3f", (downloadEndTime - downloadStartTime) * 1000))ms")
-            }
-            
-            // Update UI on main thread when complete
-            let uiUpdateStartTime = CFAbsoluteTimeGetCurrent()
-            print("🕐 [\(String(format: "%.3f", uiUpdateStartTime))] Starting UI update on main thread")
-            DispatchQueue.main.async {
-                let mainThreadStartTime = CFAbsoluteTimeGetCurrent()
-                print("🕐 [\(String(format: "%.3f", mainThreadStartTime))] Main thread UI update START")
+            },
+            onBackgroundComplete: { [weak self] in
+                guard let self = self else { return }
                 self.refreshBandList(reason: "\(reason) - background refresh complete")
-                let mainThreadEndTime = CFAbsoluteTimeGetCurrent()
-                print("🕐 [\(String(format: "%.3f", mainThreadEndTime))] Main thread UI update END - time: \(String(format: "%.3f", (mainThreadEndTime - mainThreadStartTime) * 1000))ms")
             }
-            
-            let backgroundEndTime = CFAbsoluteTimeGetCurrent()
-            print("🕐 [\(String(format: "%.3f", backgroundEndTime))] Background thread END - total time: \(String(format: "%.3f", (backgroundEndTime - backgroundStartTime) * 1000))ms")
-            
-            // Mark background refresh as complete
-            MasterViewController.backgroundRefreshLock.lock()
-            MasterViewController.isBackgroundRefreshInProgress = false
-            MasterViewController.backgroundRefreshLock.unlock()
-            
-            let totalTime = CFAbsoluteTimeGetCurrent()
-            print("🕐 [\(String(format: "%.3f", totalTime))] refreshDataWithBackgroundUpdate END - total time: \(String(format: "%.3f", (totalTime - startTime) * 1000))ms")
-        }
+        )
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -1648,13 +1592,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     func clearAllCachesAndRefresh() {
         print("🔄 [PROFILE] Forcing complete data refresh...")
         
-        // Clear all caches
-        bands.removeAll()
-        bandsByTime.removeAll()
-        bandsByName.removeAll()
-        cacheVariables.bandNamesStaticCache.removeAll()
-        cacheVariables.bandNamesArrayStaticCache.removeAll()
-        CellDataCache.shared.clearCache()
+        // Clear all caches using CacheManager
+        cacheManager.clearAllCachesAndMasterViewData(
+            objects: &objects,
+            bands: &bands,
+            bandsByTime: &bandsByTime,
+            bandsByName: &bandsByName
+        )
         
         // Force refresh with user-initiated flag to bypass throttle
         refreshData(isUserInitiated: true, forceDownload: false)
@@ -1830,25 +1774,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             let backgroundStartTime = CFAbsoluteTimeGetCurrent()
             print("🕐 [\(String(format: "%.3f", backgroundStartTime))] refreshBandList background thread START")
             
-            // Perform all data loading in background
-            let bandFileStartTime = CFAbsoluteTimeGetCurrent()
-            print("🕐 [\(String(format: "%.3f", bandFileStartTime))] Starting band file read")
-            self.bandNameHandle.readBandFile()
-            let bandFileEndTime = CFAbsoluteTimeGetCurrent()
-            print("🕐 [\(String(format: "%.3f", bandFileEndTime))] Band file read END - time: \(String(format: "%.3f", (bandFileEndTime - bandFileStartTime) * 1000))ms")
-            
-            let scheduleStartTime = CFAbsoluteTimeGetCurrent()
-            print("🕐 [\(String(format: "%.3f", scheduleStartTime))] Starting schedule getCachedData")
-            self.schedule.getCachedData()
-            let scheduleEndTime = CFAbsoluteTimeGetCurrent()
-            print("🕐 [\(String(format: "%.3f", scheduleEndTime))] Schedule getCachedData END - time: \(String(format: "%.3f", (scheduleEndTime - scheduleStartTime) * 1000))ms")
-            
-            let dataStartTime = CFAbsoluteTimeGetCurrent()
-            // LEGACY: Priority data now handled by Core Data (PriorityManager)
-            // print("🕐 [\(String(format: "%.3f", dataStartTime))] Starting dataHandle getCachedData")
-            // self.dataHandle.getCachedData()
-            // let dataEndTime = CFAbsoluteTimeGetCurrent()
-            // print("🕐 [\(String(format: "%.3f", dataEndTime))] dataHandle getCachedData END - time: \(String(format: "%.3f", (dataEndTime - dataStartTime) * 1000))ms")
+            // Perform all data loading in background using CacheManager
+            cacheManager.loadCachedData()
             
             let backgroundEndTime = CFAbsoluteTimeGetCurrent()
             print("🕐 [\(String(format: "%.3f", backgroundEndTime))] refreshBandList background thread END - total time: \(String(format: "%.3f", (backgroundEndTime - backgroundStartTime) * 1000))ms")
@@ -1962,14 +1889,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             let updateCountEndTime = CFAbsoluteTimeGetCurrent()
             print("🕐 [\(String(format: "%.3f", updateCountEndTime))] updateCountLable END - time: \(String(format: "%.3f", (updateCountEndTime - tableReloadStartTime) * 1000))ms")
             
-            // Move attendedHandle.getCachedData() to background to avoid blocking GUI
-            DispatchQueue.global(qos: .utility).async {
-                let attendedStartTime = CFAbsoluteTimeGetCurrent()
-                print("🕐 [\(String(format: "%.3f", attendedStartTime))] Starting attended data load in background")
-                self.attendedHandle.getCachedData()
-                let attendedEndTime = CFAbsoluteTimeGetCurrent()
-                print("🕐 [\(String(format: "%.3f", attendedEndTime))] Attended data load END - time: \(String(format: "%.3f", (attendedEndTime - attendedStartTime) * 1000))ms")
-            }
+            // Move attendedHandle.getCachedData() to background using CacheManager
+            self.cacheManager.loadAttendedDataInBackground()
             
             // Auto-select first band for iPad after data is loaded (only once and only on initial load)
             if UIDevice.current.userInterfaceIdiom == .pad && !self.bands.isEmpty && !self.hasAutoSelectedForIPad && reason.contains("Initial") {
@@ -2288,22 +2209,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     private func updateCurrentViewingDayFromVisibleCells() {
-        guard let visibleIndexPaths = tableView.indexPathsForVisibleRows,
-              let firstVisibleIndexPath = visibleIndexPaths.first,
-              firstVisibleIndexPath.row < bands.count else {
-            return
-        }
-        
-        let bandEntry = bands[firstVisibleIndexPath.row]
-        
-        // Extract day from the band entry (format: "timeIndex:bandName")
-        if let timeIndex = bandEntry.components(separatedBy: ":").first?.doubleValue {
-            let events = schedule.schedulingDataByTime[timeIndex] ?? []
-            if let firstEvent = events.first, let day = firstEvent["Day"] {
-                currentViewingDay = day
-                print("🔄 [LANDSCAPE_SCHEDULE] Updated viewing day from visible cells: \(day)")
-            }
-        }
+        // Delegate to UIManager
+        uiManager.updateCurrentViewingDayFromVisibleCells(
+            tableView: tableView,
+            bands: bands,
+            currentViewingDay: &currentViewingDay
+        )
     }
     
     // MARK: - iPad Split View Detection
@@ -2661,63 +2572,54 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     ///    - Refresh all data (band names, schedule, descriptionMap) from URLs
     ///    - Once all data is loaded, refresh the GUI
     func performFullDataRefresh(reason: String, shouldScrollToTop: Bool = false, endRefreshControl: Bool = false) {
-        print("Performing full data refresh: \(reason)")
-        
         if shouldScrollToTop {
             shouldSnapToTopAfterRefresh = true
         }
         
-        // STEP 1: Refresh from cache first (immediate UI update)
-        print("Full data refresh (\(reason)): Step 1 - Refreshing from cache")
-        refreshBandList(reason: "\(reason) - cache refresh")
-        
-        // STEP 2: Confirm internet access
-        print("Full data refresh (\(reason)): Step 2 - Confirming internet access")
-        
-        // Move network test to background to prevent main thread blocking
-        DispatchQueue.global(qos: .utility).async { [weak self] in
-            guard let self = self else { return }
-            
-            let networkTesting = NetworkTesting()
-            let hasNetwork = networkTesting.forgroundNetworkTest(callingGui: self)
-            
-            if !hasNetwork {
-                print("Full data refresh (\(reason)): No network connectivity detected, staying with cached data")
-                DispatchQueue.main.async {
+        // Delegate to ViewModel
+        viewModel.performFullDataRefresh(
+            reason: reason,
+            onCacheRefresh: { [weak self] in
+                guard let self = self else { return }
+                self.refreshBandList(reason: "\(reason) - cache refresh")
+            },
+            onNetworkTest: { [weak self] hasNetwork in
+                guard let self = self else { return }
+                if !hasNetwork {
                     if endRefreshControl {
                         self.refreshControl?.endRefreshing()
                     }
                 }
-                return
+            },
+            onBackgroundRefresh: { [weak self] in
+                guard let self = self else { return }
+                // STEP 3: Start background process
+                self.performBackgroundDataRefresh(reason: reason, endRefreshControl: endRefreshControl, shouldScrollToTop: shouldScrollToTop)
             }
-            
-            print("Full data refresh (\(reason)): Internet confirmed, proceeding with background refresh")
-            
-            // STEP 3: Start background process
-            self.performBackgroundDataRefresh(reason: reason, endRefreshControl: endRefreshControl, shouldScrollToTop: shouldScrollToTop)
-        }
+        )
     }
     
     /// Background data refresh that follows the network-test-first pattern
     /// Shows cached data immediately, tests network, then does fresh data collection if network is good
     func performBackgroundOnlyDataRefresh(reason: String) {
-        print("🌐 BACKGROUND-ONLY REFRESH: \(reason) - Using network-test-first pattern")
-        
-        // STEP 1: Always show cached data first (immediate)
-        refreshBandList(reason: "\(reason) - cached display")
-        
-        // STEP 2: Test network first, then do fresh data collection
-        self.performBackgroundNetworkTestWithCompletion { [weak self] networkIsGood in
-            guard let self = self else { return }
-            
-            if networkIsGood {
-                print("🌐 BACKGROUND-ONLY REFRESH: Network test passed - proceeding with fresh data collection")
+        // Delegate to ViewModel
+        viewModel.performBackgroundOnlyDataRefresh(
+            reason: reason,
+            onCacheRefresh: { [weak self] in
+                guard let self = self else { return }
+                self.refreshBandList(reason: "\(reason) - cached display")
+            },
+            onNetworkTest: { [weak self] networkIsGood in
+                guard let self = self else { return }
+                if networkIsGood {
+                    self.performFreshDataCollection(reason: reason)
+                }
+            },
+            onFreshDataCollection: { [weak self] in
+                guard let self = self else { return }
                 self.performFreshDataCollection(reason: reason)
-            } else {
-                print("🌐 BACKGROUND-ONLY REFRESH: Network test failed - staying with cached data")
-                print("🌐 BACKGROUND-ONLY REFRESH: User will continue seeing cached data until network improves")
             }
-        }
+        )
     }
     
     @objc func pullTorefreshData(){
@@ -2749,9 +2651,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             
-            // Load all data from database immediately
-            self.bandNameHandle.loadCachedDataImmediately()
-            self.schedule.loadCachedDataImmediately()
+            // Load all data from database immediately using CacheManager
+            self.cacheManager.loadCachedDataImmediately()
             
             // Check again after reload
             let reloadedBandCount = self.bandNameHandle.getBandNames().count
@@ -2872,9 +2773,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 print("🔍 [YEAR_CHANGE_DEBUG]   Current eventYear = \(eventYear)")
                 print("🔍 [YEAR_CHANGE_DEBUG]   About to load cached data...")
                 
-                // Try loading cached data
-                self.bandNameHandle.loadCachedDataImmediately()
-                self.schedule.loadCachedDataImmediately()
+                // Try loading cached data using CacheManager
+                self.cacheManager.loadCachedDataImmediately()
                 
                 // Check if data is now available
                 let bandCount = self.bandNameHandle.getBandNames().count
@@ -2922,78 +2822,31 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     
     @objc func refreshData(isUserInitiated: Bool = false, forceDownload: Bool = false) {
-        // Throttle: Only allow if 60 seconds have passed, unless user-initiated (pull to refresh)
-        let now = Date()
-        if !isUserInitiated {
-            if let lastRun = lastRefreshDataRun, now.timeIntervalSince(lastRun) < 60 {
-                print("refreshData throttled: Only one run per 60 seconds unless user-initiated.")
-                return
+        // Delegate to ViewModel
+        viewModel.refreshData(
+            isUserInitiated: isUserInitiated,
+            forceDownload: forceDownload,
+            onCacheRefresh: { [weak self] in
+                guard let self = self else { return }
+                self.refreshBandList(reason: "Cache refresh - showing cached data")
+            },
+            onBackgroundRefresh: { [weak self] in
+                guard let self = self else { return }
+                // Call the proper loading sequence method
+                self.performBackgroundDataRefresh(reason: "Data refresh from refreshData method", endRefreshControl: false, shouldScrollToTop: false)
             }
-        }
-        lastRefreshDataRun = now
-        
-        print("🔄 refreshData START - isUserInitiated: \(isUserInitiated), forceDownload: \(forceDownload)")
-        
-        // Step 1: Display cached data immediately (user sees current data)
-        print("📱 Step 1: Displaying cached data immediately")
-        refreshBandList(reason: "Cache refresh - showing cached data")
-        
-        // Step 2: Start background thread for data refresh
-        print("🔄 Step 2: Starting background thread for data refresh")
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let self = self else { return }
-            
-            // Step 3: Verify internet connection
-            print("🌐 Step 3: Verifying internet connection")
-            let internetAvailable = NetworkStatusManager.shared.isInternetAvailable
-            if !internetAvailable {
-                print("❌ No internet connection available, skipping background refresh")
-                DispatchQueue.main.async {
-                    self.refreshControl?.endRefreshing()
-                }
-                return
-            }
-            print("✅ Internet connection verified")
-            
-            // Step 4: Use the proper loading sequence instead of direct downloads
-            print("📥 Step 4: Using proper loading sequence for data refresh")
-            
-            // Call the proper loading sequence method I implemented
-            self.performBackgroundDataRefresh(reason: "Data refresh from refreshData method", endRefreshControl: false, shouldScrollToTop: false)
-        }
+        )
     }
     
     /// Clears all caches comprehensively - used during data refresh
     private func clearAllCaches() {
-        print("🧹 Clearing all caches comprehensively")
-        
-        // Clear handler caches
-        self.bandNameHandle.clearCachedData()
-        // LEGACY: Priority cache clearing now handled by PriorityManager if needed
-        self.dataHandle.clearCachedData()
-        self.schedule.clearCache()
-        
-        // Clear MasterViewController cached arrays (but not bands array yet)
-        self.clearMasterViewCachedData()
-        
-        // ✅ DEADLOCK FIX: Clear cache without sync block - SQLite is thread-safe
-        // Clear ALL static cache variables to prevent data mixing
-        cacheVariables.scheduleStaticCache = [:]
-        cacheVariables.scheduleTimeStaticCache = [:]
-        cacheVariables.bandNamesStaticCache = [:]
-        cacheVariables.bandNamesArrayStaticCache = []
-        cacheVariables.bandDescriptionUrlCache = [:]
-        cacheVariables.bandDescriptionUrlDateCache = [:]
-        cacheVariables.attendedStaticCache = [:]
-        cacheVariables.lastModifiedDate = nil
-        
-        // Clear CustomBandDescription instance caches
-        self.bandDescriptions.bandDescriptionUrl.removeAll()
-        self.bandDescriptions.bandDescriptionUrlDate.removeAll()
-        
-        // Clear the bands array only when we're ready to immediately repopulate it
-        // This prevents race conditions with the table view
-        print("🧹 All caches cleared successfully (bands array will be safely repopulated)")
+        // Delegate to CacheManager
+        cacheManager.clearAllCaches()
+        cacheManager.clearMasterViewCachedData(
+            objects: &objects,
+            bandsByTime: &bandsByTime,
+            bandsByName: &bandsByName
+        )
         
         // Clear the bands array immediately before refreshing to ensure atomicity
         print("🧹 Clearing bands array before refresh")
@@ -3001,85 +2854,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     func setFilterTitleText(){
-        print("🔧 [INIT_DEBUG] setFilterTitleText() ENTERED")
-        
-        // FIXED: Determine if filters are active by checking actual filter settings, not counts
-        print("🔍 [FILTER_STATUS] Checking filter status...")
-        
-        // Check if ANY filters are active (non-default state)
-        // DEFAULT STATE: All filters ON except attendance filter OFF
-        let priorityFiltersActive = !(getMustSeeOn() == true && getMightSeeOn() == true && getWontSeeOn() == true && getUnknownSeeOn() == true)
-        // FIXED: Use dynamic venue system instead of hardcoded venue functions
-        // SAFETY: Add guard to prevent hang during app initialization
-        var venueFiltersActive = false
-        
-        // SAFETY: Check if we're in early app initialization to prevent hang
-        if bands.isEmpty && listCount == 0 {
-            print("🔍 [FILTER_STATUS] ⚠️ Early initialization detected (no band data), using hardcoded fallback for venue filters")
-            // Use hardcoded detection during early initialization to prevent hang
-            venueFiltersActive = !(getShowPoolShows() && getShowRinkShows() && getShowOtherShows() && getShowLoungeShows() && getShowTheaterShows())
-        } else {
-            // Normal operation - use dynamic venue system
-            // Only check filter venues (showInFilters=true) - other venues are handled by "Other Venues"
-            let configuredVenues = FestivalConfig.current.getFilterVenueNames()
-            print("🔍 [FILTER_STATUS] Successfully accessed FestivalConfig filter venues: \(configuredVenues)")
-            
-            // Check all filter venues from FestivalConfig
-            for venueName in configuredVenues {
-                if !getShowVenueEvents(venueName: venueName) {
-                    venueFiltersActive = true
-                    break
-                }
-            }
-            
-            // Also check if "Other" venues are disabled
-            if !getShowOtherShows() {
-                venueFiltersActive = true
-            }
-        }
-        let eventTypeFiltersActive = !(getShowSpecialEvents() == true && getShowUnofficalEvents() == true && getShowMeetAndGreetEvents() == true)
-        let attendanceFilterActive = getShowOnlyWillAttened() == true  // Default is false, so true means active
-        let searchActive = bandSearch.text?.isEmpty == false
-        
-        print("🔍 [FILTER_STATUS] ===== FILTER DETECTION =====")
-        print("🔍 [FILTER_STATUS] Priority filters - Must:\(getMustSeeOn()), Might:\(getMightSeeOn()), Wont:\(getWontSeeOn()), Unknown:\(getUnknownSeeOn())")
-        print("🔍 [FILTER_STATUS] Priority filters active: \(priorityFiltersActive)")
-        
-        // Only show venue details if we accessed FestivalConfig (not in early initialization)
-        if !bands.isEmpty || listCount != 0 {
-            let configuredVenues = FestivalConfig.current.getAllVenueNames()
-            print("🔍 [FILTER_STATUS] Configured venues: \(configuredVenues)")
-            print("🔍 [FILTER_STATUS] Venue filter states: \(configuredVenues.map { "\($0):\(getShowVenueEvents(venueName: $0))" })")
-        } else {
-            print("🔍 [FILTER_STATUS] Early initialization mode - venue details skipped for safety")
-        }
-        
-        print("🔍 [FILTER_STATUS] Other venues enabled: \(getShowOtherShows())")
-        print("🔍 [FILTER_STATUS] Venue filters active: \(venueFiltersActive)")  
-        print("🔍 [FILTER_STATUS] Event type filters active: \(eventTypeFiltersActive)")
-        print("🔍 [FILTER_STATUS] Unofficial events: \(getShowUnofficalEvents())")
-        print("🔍 [FILTER_STATUS] Attendance filter active: \(attendanceFilterActive)")
-        print("🔍 [FILTER_STATUS] Search active: \(searchActive)")
-        
-        // Enable Clear Filters if ANY filter is active (non-default)
-        let anyFiltersActive = priorityFiltersActive || venueFiltersActive || eventTypeFiltersActive || attendanceFilterActive || searchActive
-        filterTextNeeded = anyFiltersActive  // CORRECTED: Clear Filters enabled when filters are active
-        
-        print("🔍 [FILTER_STATUS] anyFiltersActive: \(anyFiltersActive)")
-        print("🔍 [FILTER_STATUS] filterTextNeeded: \(filterTextNeeded)")
-        print("🔍 [FILTER_STATUS] Summary: Clear All Filters should be \(filterTextNeeded ? "ENABLED" : "DISABLED")")
-        
-        print("🔍 [FILTER_STATUS] Final filterTextNeeded: \(filterTextNeeded)")
-        
-        
-        // Set the filter text based on whether any filters are active
-        if (filterTextNeeded == true){
-            filtersOnText = "(" + NSLocalizedString("Filtering", comment: "") + ")"
-        } else {
-            filtersOnText = ""
-        }
-        
-        print("🔍 [FILTER_STATUS] filtersOnText set to: '\(filtersOnText)'")
+        // Delegate to UIManager
+        uiManager.setFilterTitleText(
+            bands: bands,
+            listCount: listCount,
+            searchText: bandSearch.text,
+            filterTextNeeded: &filterTextNeeded,
+            filtersOnText: &filtersOnText
+        )
     }
     
     func decideIfScheduleMenuApplies()->Bool{
@@ -3846,20 +3628,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        let timestamp = CFAbsoluteTimeGetCurrent()
-        print("📊 [TABLE_VIEW] numberOfRowsInSection CALLED at \(timestamp)")
-        print("📊 [TABLE_VIEW] Current thread: \(Thread.current.isMainThread ? "MAIN" : "BACKGROUND")")
-        print("📊 [TABLE_VIEW] bands.count = \(bands.count)")
-        print("bands type:", type(of: bands))
-        
-        // Add safety check for empty bands array during data refresh
-        if bands.isEmpty {
-            print("⚠️ Bands array is empty in numberOfRowsInSection - this may happen during data refresh")
-            return 0
-        }
-        
-        print("📊 [TABLE_VIEW] Returning \(bands.count) rows")
-        return bands.count
+        // Delegate to UIManager
+        return uiManager.numberOfRows(bands: bands)
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -3870,18 +3640,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     override func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        // Track the currently visible day when in schedule view mode
-        if getShowScheduleView() && indexPath.row < bands.count {
-            let bandEntry = bands[indexPath.row]
-            
-            // Extract day from the band entry (format: "timeIndex:bandName")
-            if let timeIndex = bandEntry.components(separatedBy: ":").first?.doubleValue {
-                let events = schedule.schedulingDataByTime[timeIndex] ?? []
-                if let firstEvent = events.first, let day = firstEvent["Day"] {
-                    currentViewingDay = day
-                }
-            }
-        }
+        // Delegate to UIManager
+        uiManager.willDisplayCell(
+            cell: cell,
+            forRowAt: indexPath,
+            bands: bands,
+            showScheduleView: getShowScheduleView(),
+            currentViewingDay: &currentViewingDay
+        )
     }
     
     override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
@@ -3905,25 +3671,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     //swip code start
     
-    func currentlySectionBandName(_ rowNumber: Int) -> String{
-        print("bands type in currentlySectionBandName:", type(of: bands))
-        var bandName = "";
-    
-        print ("SelfBandCount is " + String(self.bands.count) + " rowNumber is " + String(rowNumber));
-        
-        // Add safety check for empty bands array during data refresh
-        guard !bands.isEmpty else {
-            print("ERROR: Bands array is empty in currentlySectionBandName - this may happen during data refresh")
-            return ""
-        }
-        
-        if (self.bands.count > rowNumber && rowNumber >= 0){
-            bandName = self.bands[rowNumber]
-        } else {
-            print("ERROR: Invalid rowNumber \(rowNumber) for bands array (count: \(self.bands.count))")
-        }
-        
-        return bandName
+    func currentlySectionBandName(_ rowNumber: Int) -> String {
+        // Delegate to UIManager
+        return uiManager.currentlySectionBandName(rowNumber, bands: bands)
     }
 
     class TableViewRowAction: UITableViewRowAction
@@ -4064,57 +3814,21 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     //swip code end
     
     func configureCell(_ cell: UITableViewCell, atIndexPath indexPath: IndexPath) {
-        
-        // Add comprehensive bounds checking to prevent crash
-        guard indexPath.row >= 0 else {
-            print("ERROR: Negative index \(indexPath.row) in configureCell")
-            cell.separatorInset = UIEdgeInsets(top: 0, left: 15, bottom: 0, right: 0)
-            return
-        }
-        
-        guard indexPath.row < bands.count else {
-            print("ERROR: Index \(indexPath.row) out of bounds for bands array (count: \(bands.count))")
-            // Set default separator style and return early
-            cell.separatorInset = UIEdgeInsets(top: 0, left: 15, bottom: 0, right: 0)
-            return
-        }
-        
-        // Ensure bands array is not empty
-        guard !bands.isEmpty else {
-            print("ERROR: Bands array is empty in configureCell - this may happen during data refresh")
-            cell.separatorInset = UIEdgeInsets(top: 0, left: 15, bottom: 0, right: 0)
-            return
-        }
-        
+        // Delegate to UIManager
         setBands(bands)
-        
-        // PERFORMANCE FIX: Use cached cell data to prevent database lookups during scrolling
-        if let cachedData = CellDataCache.shared.getCellData(at: indexPath.row) {
-            // Configure cell with pre-computed cached data (NO database calls!)
-            configureCellFromCache(cell, with: cachedData)
-        } else {
-            // Fallback: Use original method if cache miss (shouldn't happen with proper preload)
-            getCellValue(indexPath.row, schedule: schedule, sortBy: getSortedBy(), cell: cell, dataHandle: dataHandle, priorityManager: priorityManager, attendedHandle: attendedHandle)
-        }
-        
-        // Configure separator immediately to avoid async access issues
-        // Hide separator for band names only (plain strings without time index)
-        let bandEntry = bands[indexPath.row]
-        let isScheduledEvent = bandEntry.contains(":") && bandEntry.components(separatedBy: ":").first?.doubleValue != nil
-        
-        if !isScheduledEvent {
-            // This is a band name only - hide separator
-            cell.separatorInset = UIEdgeInsets(top: 0, left: cell.bounds.size.width, bottom: 0, right: 0)
-        } else {
-            // This is a scheduled event - show separator normally
-            cell.separatorInset = UIEdgeInsets(top: 0, left: 15, bottom: 0, right: 0)
-        }
-        
+        uiManager.configureCell(
+            cell,
+            atIndexPath: indexPath,
+            bands: bands,
+            sortBy: getSortedBy()
+        )
     }
     
-    // MARK: - Cache-Optimized Cell Configuration
+    // MARK: - Cache-Optimized Cell Configuration (Legacy - now handled by UIManager)
     
     /// Configure cell using pre-computed cached data (NO database calls during scrolling!)
+    /// NOTE: This method is now handled by UIManager.configureCellFromCache()
+    /// Kept for backward compatibility if needed
     private func configureCellFromCache(_ cell: UITableViewCell, with cachedData: CellDataModel) {
         // Get UI elements by tags
         let indexForCell = cell.viewWithTag(1) as! UILabel
@@ -5585,14 +5299,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     func shouldDownloadSchedule(force: Bool = false) -> Bool {
-        let now = Date()
-        if force { return true }
-        if let last = lastScheduleDownload {
-            if now.timeIntervalSince(last) < minDownloadInterval {
-                return false
-            }
-        }
-        return true
+        // Delegate to ViewModel
+        return viewModel.shouldDownloadSchedule(force: force)
     }
     
     @objc func handlePushNotificationReceived() {
@@ -5607,16 +5315,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     /// Clears all cached data arrays in MasterViewController - should be called during year changes
     /// This method should only be called when we're ready to immediately populate the arrays with new data
     func clearMasterViewCachedData() {
-        print("[YEAR_CHANGE_DEBUG] Clearing MasterViewController cached data arrays")
-        
-        // Clear other arrays that don't affect the table view
-        objects.removeAllObjects()
-        bandsByTime.removeAll()
-        bandsByName.removeAll()
-        
-        // Don't clear the bands array here - it should be cleared and immediately repopulated
-        // in the calling method to prevent race conditions
-        print("[YEAR_CHANGE_DEBUG] Note: bands array should be cleared and repopulated atomically")
+        // Delegate to CacheManager
+        cacheManager.clearMasterViewCachedData(
+            objects: &objects,
+            bandsByTime: &bandsByTime,
+            bandsByName: &bandsByName
+        )
     }
     
     /// Safely clears and repopulates the bands array atomically
@@ -5953,7 +5657,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     print("📅 Downloading schedule data using proper sequence...")
                     // Don't force download here - let the proper sequence handle it
                     print("📅 Deferring schedule download to proper loading sequence")
+                    // Update both MasterViewController and ViewModel state
                     self.lastScheduleDownload = Date()
+                    self.viewModel.updateLastScheduleDownload()
                     newDataDownloaded = true
                     print("✅ Schedule data download deferred to proper sequence")
                 }
@@ -6039,8 +5745,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             guard let self = self else { return }
             
             // Load all data from database (Bands, Events, Priorities, Attended)
-            self.bandNameHandle.loadCachedDataImmediately()
-            self.schedule.loadCachedDataImmediately()
+            self.cacheManager.loadCachedDataImmediately()
             
             // Display to user on main thread
             DispatchQueue.main.async {
@@ -6644,8 +6349,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             // Step 1: Load database data immediately and display to user
             print("🚀 [UNIFIED_REFRESH] Subsequent launch - loading database data")
             print("🚀 [UNIFIED_REFRESH] Festival: \(FestivalConfig.current.festivalShortName)")
-            self.bandNameHandle.loadCachedDataImmediately()
-            self.schedule.loadCachedDataImmediately()
+            self.cacheManager.loadCachedDataImmediately()
             
             // Update UI on main thread with database data
             DispatchQueue.main.async {
@@ -7368,8 +7072,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
 
 extension UITableViewRowAction {
     
-    func setIcon(iconImage: UIImage, backColor: UIColor, cellHeight: CGFloat, cellWidth:CGFloat) ///, iconSizePercentage: CGFloat)
-    {
+    func setIcon(iconImage: UIImage, backColor: UIColor, cellHeight: CGFloat, cellWidth:CGFloat) {
+        // NOTE: This is an extension method for UITableViewRowAction, not MasterViewController
+        // It sets the backgroundColor property of the UITableViewRowAction instance itself
+        // Original implementation preserved - this is UI logic specific to UITableViewRowAction
         let cellFrame = CGRect(origin: .zero, size: CGSize(width: cellWidth*0.5, height: cellHeight))
         let imageFrame = CGRect(x:0, y:0,width:iconImage.size.width, height: iconImage.size.height)
         let insetFrame = cellFrame.insetBy(dx: ((cellFrame.size.width - imageFrame.size.width) / 2), dy: ((cellFrame.size.height - imageFrame.size.height) / 2))

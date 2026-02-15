@@ -475,27 +475,6 @@ class PointerDataService {
     }
 }
 
-// MARK: - Global Accessors (for backward compatibility)
-func getPointerUrlData(keyValue: String) -> String {
-    return PointerDataService.shared.getPointerUrlData(keyValue: keyValue)
-}
-
-func getDefaultPointerValue(for keyValue: String) -> String {
-    return PointerDataService.shared.getDefaultPointerValue(for: keyValue)
-}
-
-func triggerBackgroundPointerUpdate() {
-    PointerDataService.shared.triggerBackgroundPointerUpdate()
-}
-
-func getLanguageSpecificKey(keyValue: String) -> String {
-    return PointerDataService.shared.getLanguageSpecificKey(keyValue: keyValue)
-}
-
-func readPointData(pointData: String, pointerValues: [String:[String:String]], pointerIndex: String) -> [String:[String:String]] {
-    return PointerDataService.shared.readPointData(pointData: pointData, pointerValues: pointerValues, pointerIndex: pointerIndex)
-}
-
-func readPointDataOptimized(dataArray: [String], pointerValues: [String:[String:String]], pointerIndex: String, targetKeyValue: String) -> [String:[String:String]] {
-    return PointerDataService.shared.readPointDataOptimized(dataArray: dataArray, pointerValues: pointerValues, pointerIndex: pointerIndex, targetKeyValue: targetKeyValue)
-}
+// MARK: - Note on Global Accessors
+// Global accessor functions for backward compatibility are defined in Constants.swift
+// This ensures they are accessible throughout the codebase without requiring imports

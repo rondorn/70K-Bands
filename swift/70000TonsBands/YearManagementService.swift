@@ -292,6 +292,34 @@ class YearManagementService {
         }
     }
     
+    // MARK: - Event Year Resolution from Pointer
+    
+    /// Resolves eventYear from pointer values dictionary
+    /// Tries user preference first, then "Current", then "Default"
+    /// - Parameters:
+    ///   - pointerValues: Dictionary of pointer values parsed from pointer file
+    ///   - pointerIndex: The user's year preference (e.g., "Current", "2025")
+    /// - Returns: The resolved eventYear string, or empty string if not found
+    func resolveEventYearFromPointer(pointerValues: [String:[String:String]], pointerIndex: String) -> String {
+        // Try user's preference first
+        if let userYearPreference = pointerValues[pointerIndex]?["eventYear"], !userYearPreference.isEmpty {
+            return userYearPreference
+        }
+        
+        // Fallback to "Current" if user preference not found
+        if let currentYear = pointerValues["Current"]?["eventYear"], !currentYear.isEmpty {
+            return currentYear
+        }
+        
+        // Final fallback to "Default"
+        if let defaultYear = pointerValues["Default"]?["eventYear"], !defaultYear.isEmpty {
+            return defaultYear
+        }
+        
+        // No eventYear found in pointer values
+        return ""
+    }
+    
     // MARK: - Priority Resolution
     
     /// Resolves a priority number string to its human-readable name.
