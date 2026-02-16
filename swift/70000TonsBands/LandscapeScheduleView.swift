@@ -391,13 +391,16 @@ struct LandscapeScheduleView: View {
                         .frame(width: 60, height: 30, alignment: .leading)
                         .padding(.leading, 4)
                         .background(Color.black.opacity(0.95))
-                        .overlay(
-                            Rectangle()
-                                .stroke(Color.gray.opacity(0.3), lineWidth: 0.5)
-                        )
                 }
             }
             .frame(width: 60)
+            // Single vertical separator so grid lines visually start after the time column
+            .overlay(alignment: .trailing) {
+                Rectangle()
+                    .fill(Color.gray.opacity(0.3))
+                    .frame(width: 0.5)
+                    .frame(maxHeight: .infinity)
+            }
         }
         
         private func venueHeaderViewSticky(venue: VenueColumn, columnWidth: CGFloat) -> some View {
@@ -415,12 +418,18 @@ struct LandscapeScheduleView: View {
         
         private func venueColumnContentView(venue: VenueColumn, dayData: DayScheduleData, columnWidth: CGFloat) -> some View {
             ZStack(alignment: .topLeading) {
-                // Background grid
+                // Background grid: horizontal lines at center of each time row (middle of "7:00pm" text)
                 VStack(spacing: 0) {
-                    ForEach(dayData.timeSlots) { slot in
-                        Rectangle()
-                            .stroke(Color.gray.opacity(0.2), lineWidth: 0.5)
-                            .frame(width: columnWidth, height: 30)
+                    ForEach(dayData.timeSlots) { _ in
+                        ZStack(alignment: .top) {
+                            Color.clear.frame(height: 30)
+                            Rectangle()
+                                .fill(Color.gray.opacity(0.2))
+                                .frame(height: 0.5)
+                                .frame(maxWidth: .infinity)
+                                .offset(y: 15)
+                        }
+                        .frame(width: columnWidth, height: 30)
                     }
                 }
                 
@@ -447,8 +456,9 @@ struct LandscapeScheduleView: View {
             let pixelsPerSecond: CGFloat = 120.0 / 3600.0 // 120 pixels per hour (4 slots)
             let baseOffset = CGFloat(totalOffsetSeconds) * pixelsPerSecond
             
-            // Move down by 1/2 slot (7.5 minutes = 15 pixels)
-            return baseOffset + 15.0
+            // Align event start with grid line at vertical center of time label (middle of "7:00pm")
+            let halfSlot: CGFloat = 15.0
+            return baseOffset + halfSlot
         }
         
         private func calculateBlockHeight(for event: ScheduleBlock) -> CGFloat {
