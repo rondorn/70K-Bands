@@ -969,14 +969,15 @@ public class LandscapeScheduleView extends LinearLayout {
             LayoutParams.MATCH_PARENT, contentHeight
         ));
         
-        // Add grid lines
+        // Add grid lines at vertical center of each time row (middle of "7:00pm" text)
+        int halfSlotPx = dpToPx(15);
         for (TimeSlot slot : dayData.timeSlots) {
             View gridLine = new View(context);
             gridLine.setBackgroundColor(Color.GRAY);
             RelativeLayout.LayoutParams gridParams = new RelativeLayout.LayoutParams(
                 LayoutParams.MATCH_PARENT, 1
             );
-            int yPos = calculateYPosition(slot.time, dayData);
+            int yPos = calculateYPosition(slot.time, dayData) + halfSlotPx;
             gridParams.topMargin = yPos;
             gridLine.setLayoutParams(gridParams);
             gridLine.setAlpha(0.2f);
@@ -1046,14 +1047,13 @@ public class LandscapeScheduleView extends LinearLayout {
         
         double pixelsPerSecond = dpToPx(120) / 3600.0;
         int blockHeight = Math.max((int)(durationSeconds * pixelsPerSecond), dpToPx(30));
-        // Use date-based positioning (normalized within the day)
-        int yPosition = calculateYPosition(eventStartTime, dayData);
+        // Use date-based positioning; add half-slot so event start aligns with grid line at center of time label
+        int yPosition = calculateYPosition(eventStartTime, dayData) + dpToPx(15);
         
         RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
             columnWidth - dpToPx(4), blockHeight
         );
         params.leftMargin = dpToPx(2);
-        // Position exactly at calculated Y position to align with time text
         params.topMargin = yPosition;
         eventBlock.setLayoutParams(params);
         
