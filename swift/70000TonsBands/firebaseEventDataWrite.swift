@@ -182,29 +182,41 @@ class firebaseEventDataWrite {
                     print("🔥 firebase EVENT_WRITE: Found \(attendanceData.count) total attendance records in SQLite")
                     
                     // Convert SQLite format to format expected by Firebase write code
-                    // SQLite format: [index: ["status": Int, "eventYear": Int, "lastModified": Double]]
+                    // SQLite format: [index: ["status": Int, "lastModified": Double]]
                     // Expected format: [index: "statusValue"]
                     // FILTER: Only include events for the current year
+                    // NOTE: eventYear is parsed from the index string (format: "bandName:location:time:eventType:year")
                     var showsAttendedArray: [String: String] = [:]
                     var filteredOutCount = 0
                     
                     for (index, data) in attendanceData {
-                        // Filter by year - only include current year
-                        if let recordYear = data["eventYear"] as? Int, recordYear == currentYear {
-                            if let status = data["status"] as? Int {
-                                // Convert status to EVENT status string (not band priority)
-                                // Event statuses: sawAll, sawSome, sawNone
-                                let statusString: String
-                                switch status {
-                                case 1: statusString = sawSomeStatus  // Will Attend Some -> "sawSome"
-                                case 2: statusString = sawAllStatus   // Will Attend / Attended -> "sawAll"
-                                case 3: statusString = sawNoneStatus  // Won't Attend -> "sawNone"
-                                default: statusString = sawNoneStatus // Unknown defaults to sawNone
-                                }
-                                showsAttendedArray[index] = statusString
-                            }
-                        } else {
+                        // Parse year from index string (format: "bandName:location:time:eventType:year")
+                        let indexComponents = index.split(separator: ":")
+                        guard indexComponents.count >= 5 else {
+                            print("🔥 firebase EVENT_WRITE: ⚠️ Skipping invalid index format: \(index)")
                             filteredOutCount += 1
+                            continue
+                        }
+                        
+                        // Extract year from index (last component)
+                        let yearString = String(indexComponents[indexComponents.count - 1])
+                        guard let recordYear = Int(yearString), recordYear == currentYear else {
+                            filteredOutCount += 1
+                            continue
+                        }
+                        
+                        // Filter by year - only include current year
+                        if let status = data["status"] as? Int {
+                            // Convert status to EVENT status string (not band priority)
+                            // Event statuses: sawAll, sawSome, sawNone
+                            let statusString: String
+                            switch status {
+                            case 1: statusString = sawSomeStatus  // Will Attend Some -> "sawSome"
+                            case 2: statusString = sawAllStatus   // Will Attend / Attended -> "sawAll"
+                            case 3: statusString = sawNoneStatus  // Won't Attend -> "sawNone"
+                            default: statusString = sawNoneStatus // Unknown defaults to sawNone
+                            }
+                            showsAttendedArray[index] = statusString
                         }
                     }
                     print("🔥 firebase EVENT_WRITE: Filtered to \(showsAttendedArray.count) events for year \(currentYear) (excluded \(filteredOutCount) from other years)")
