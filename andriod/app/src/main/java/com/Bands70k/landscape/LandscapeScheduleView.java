@@ -897,16 +897,20 @@ public class LandscapeScheduleView extends LinearLayout {
             LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT
         ));
         
+        // Grid line color to match iOS: subtle light grey (horizontal and vertical)
+        final int gridLineColor = Color.argb(100, 200, 200, 200);
+
         // Add time column first (without header) - pass header height for spacer
         LinearLayout timeColumn = createTimeColumn(currentDay, maxHeaderHeight);
         columnsContainer.addView(timeColumn);
-        
-        // Add venue columns (without headers) - pass header height for spacer
+
+        // Vertical grid lines between columns (match iOS: thin separators between Time and venues, and between each venue)
         for (VenueColumn venue : currentDay.venues) {
-            LinearLayout venueColumn = createVenueColumn(venue, currentDay, columnWidth, maxHeaderHeight);
+            columnsContainer.addView(createVerticalGridLine(gridLineColor));
+            LinearLayout venueColumn = createVenueColumn(venue, currentDay, columnWidth, maxHeaderHeight, gridLineColor);
             columnsContainer.addView(venueColumn);
         }
-        
+
         contentLayout.addView(columnsContainer);
     }
     
@@ -947,13 +951,23 @@ public class LandscapeScheduleView extends LinearLayout {
         return timeColumn;
     }
     
-    private LinearLayout createVenueColumn(VenueColumn venue, DayScheduleData dayData, int columnWidth, int headerHeight) {
+    /** Creates a thin vertical divider for the grid (0.5px when possible, match iOS). */
+    private View createVerticalGridLine(int gridLineColor) {
+        View line = new View(context);
+        line.setBackgroundColor(gridLineColor);
+        line.setLayoutParams(new LinearLayout.LayoutParams(1, LayoutParams.MATCH_PARENT)); // 1px layout, draw at 0.5px
+        line.setScaleX(0.5f);
+        line.setPivotX(0.5f); // scale from center so 0.5px line is centered in 1px slot
+        return line;
+    }
+
+    private LinearLayout createVenueColumn(VenueColumn venue, DayScheduleData dayData, int columnWidth, int headerHeight, int gridLineColor) {
         LinearLayout venueColumn = new LinearLayout(context);
         venueColumn.setOrientation(LinearLayout.VERTICAL);
         venueColumn.setLayoutParams(new LinearLayout.LayoutParams(
             columnWidth, LayoutParams.WRAP_CONTENT
         ));
-        
+
         // Spacer for fixed header (same height as header)
         View headerSpacer = new View(context);
         headerSpacer.setLayoutParams(new LinearLayout.LayoutParams(
@@ -961,26 +975,26 @@ public class LandscapeScheduleView extends LinearLayout {
         ));
         headerSpacer.setBackgroundColor(Color.BLACK);
         venueColumn.addView(headerSpacer);
-        
+
         // Content area with events positioned by time
         RelativeLayout contentArea = new RelativeLayout(context);
         int contentHeight = dayData.timeSlots.size() * dpToPx(30);
         contentArea.setLayoutParams(new LinearLayout.LayoutParams(
             LayoutParams.MATCH_PARENT, contentHeight
         ));
-        
-        // Add grid lines at vertical center of each time row (middle of "7:00pm" text)
+
+        // Horizontal grid lines at vertical center of each time row (match iOS: middle of "7:00pm" text)
+        // Use 1px height so lines remain visible; 0.5px scaled lines disappear on many devices
         int halfSlotPx = dpToPx(15);
         for (TimeSlot slot : dayData.timeSlots) {
             View gridLine = new View(context);
-            gridLine.setBackgroundColor(Color.GRAY);
+            gridLine.setBackgroundColor(gridLineColor);
             RelativeLayout.LayoutParams gridParams = new RelativeLayout.LayoutParams(
                 LayoutParams.MATCH_PARENT, 1
             );
             int yPos = calculateYPosition(slot.time, dayData) + halfSlotPx;
             gridParams.topMargin = yPos;
             gridLine.setLayoutParams(gridParams);
-            gridLine.setAlpha(0.2f);
             contentArea.addView(gridLine);
         }
         
