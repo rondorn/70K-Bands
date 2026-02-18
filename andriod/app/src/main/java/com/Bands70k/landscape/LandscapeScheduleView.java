@@ -2,6 +2,7 @@ package com.Bands70k.landscape;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.text.format.DateFormat;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.TypedValue;
@@ -27,6 +28,7 @@ import com.Bands70k.scheduleTimeTracker;
 import com.Bands70k.scheduleInfo;
 import com.Bands70k.rankStore;
 import com.Bands70k.LongPressMenuHelper;
+import com.Bands70k.Utilities;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -1106,7 +1108,6 @@ public class LandscapeScheduleView extends LinearLayout {
             // Single event: show normally
             TextView bandName = new TextView(context);
             bandName.setText(event.bandName);
-            // Use darker grey for expired events only if shouldDim is true
             bandName.setTextColor(shouldDim ? Color.rgb(102, 102, 102) : Color.WHITE);
             bandName.setTextSize(11);
             bandName.setTypeface(null, android.graphics.Typeface.BOLD);
@@ -1114,11 +1115,11 @@ public class LandscapeScheduleView extends LinearLayout {
             eventBlock.addView(bandName);
         }
         
-        // Line 2: Start time with label
+        // Line 2: Start (localized): start time (respect OS 24-hour setting like list view)
         TextView startTimeText = new TextView(context);
-        SimpleDateFormat timeFormat = new SimpleDateFormat("h:mma", Locale.US);
+        java.text.DateFormat timeFormat = DateFormat.getTimeFormat(context);
         if (event.startTime != null) {
-            startTimeText.setText("Start: " + timeFormat.format(event.startTime).toLowerCase());
+            startTimeText.setText(context.getString(R.string.calendar_start) + ": " + timeFormat.format(event.startTime));
         }
         // Use darker grey for expired events only if shouldDim is true
         startTimeText.setTextColor(shouldDim ? Color.rgb(102, 102, 102) : Color.WHITE);
@@ -1126,10 +1127,10 @@ public class LandscapeScheduleView extends LinearLayout {
         startTimeText.setMaxLines(1);
         eventBlock.addView(startTimeText);
         
-        // Line 3: End time with label
+        // Line 3: End (localized): end time (respect OS 24-hour setting like list view)
         TextView endTimeText = new TextView(context);
         if (event.endTime != null) {
-            endTimeText.setText("End: " + timeFormat.format(event.endTime).toLowerCase());
+            endTimeText.setText(context.getString(R.string.calendar_end) + ": " + timeFormat.format(event.endTime));
         }
         // Use darker grey for expired events only if shouldDim is true
         endTimeText.setTextColor(shouldDim ? Color.rgb(102, 102, 102) : Color.WHITE);
@@ -1233,14 +1234,27 @@ public class LandscapeScheduleView extends LinearLayout {
                     eventBlock.addView(attendedRow);
                 }
                 
-                // Line 6: Event type (moved down one line for combined events)
-                if (event.eventType != null && !event.eventType.isEmpty()) {
+                // Line 6: Event type (localized) + drawable icon after - only for non-Show types
+                if (event.eventType != null && !event.eventType.isEmpty() && !event.eventType.equals(staticVariables.show)) {
+                    LinearLayout eventTypeRow = new LinearLayout(context);
+                    eventTypeRow.setOrientation(LinearLayout.HORIZONTAL);
+                    eventTypeRow.setBaselineAligned(false);
                     TextView eventTypeText = new TextView(context);
-                    eventTypeText.setText(event.eventType);
+                    eventTypeText.setText(Utilities.convertEventTypeToLocalLanguage(event.eventType));
                     eventTypeText.setTextColor(shouldDim ? Color.rgb(102, 102, 102) : Color.WHITE);
                     eventTypeText.setTextSize(8);
                     eventTypeText.setMaxLines(1);
-                    eventBlock.addView(eventTypeText);
+                    eventTypeRow.addView(eventTypeText);
+                    int eventIconResId = iconResolve.getEventIcon(event.eventType, event.bandName);
+                    if (eventIconResId != 0) {
+                        ImageView eventTypeIcon = new ImageView(context);
+                        eventTypeIcon.setImageResource(eventIconResId);
+                        eventTypeIcon.setLayoutParams(new LinearLayout.LayoutParams(dpToPx(14), dpToPx(14)));
+                        eventTypeIcon.setAlpha(shouldDim ? 0.4f : 1.0f);
+                        eventTypeIcon.setPadding(dpToPx(4), 0, 0, 0);
+                        eventTypeRow.addView(eventTypeIcon);
+                    }
+                    eventBlock.addView(eventTypeRow);
                 }
             } else {
                 // Fallback: show normal layout
@@ -1250,14 +1264,27 @@ public class LandscapeScheduleView extends LinearLayout {
             // Single event: Show normal priority and attended icons on same line
             addNormalIconRow(eventBlock, event, shouldDim);
             
-            // Line 5: Event type (only if not "Show")
+            // Line 5: Event type (localized) + drawable icon after - only for non-Show types
             if (event.eventType != null && !event.eventType.isEmpty() && !event.eventType.equals(staticVariables.show)) {
+                LinearLayout eventTypeRow = new LinearLayout(context);
+                eventTypeRow.setOrientation(LinearLayout.HORIZONTAL);
+                eventTypeRow.setBaselineAligned(false);
                 TextView eventTypeText = new TextView(context);
-                eventTypeText.setText(event.eventType);
+                eventTypeText.setText(Utilities.convertEventTypeToLocalLanguage(event.eventType));
                 eventTypeText.setTextColor(shouldDim ? Color.rgb(102, 102, 102) : Color.WHITE);
                 eventTypeText.setTextSize(8);
                 eventTypeText.setMaxLines(1);
-                eventBlock.addView(eventTypeText);
+                eventTypeRow.addView(eventTypeText);
+                int eventIconResId = iconResolve.getEventIcon(event.eventType, event.bandName);
+                if (eventIconResId != 0) {
+                    ImageView eventTypeIcon = new ImageView(context);
+                    eventTypeIcon.setImageResource(eventIconResId);
+                    eventTypeIcon.setLayoutParams(new LinearLayout.LayoutParams(dpToPx(14), dpToPx(14)));
+                    eventTypeIcon.setAlpha(shouldDim ? 0.4f : 1.0f);
+                    eventTypeIcon.setPadding(dpToPx(4), 0, 0, 0);
+                    eventTypeRow.addView(eventTypeIcon);
+                }
+                eventBlock.addView(eventTypeRow);
             }
         }
         
@@ -2293,8 +2320,14 @@ public class LandscapeScheduleView extends LinearLayout {
             cal.add(Calendar.HOUR_OF_DAY, -1);
         }
         
-        SimpleDateFormat hourFormatter = new SimpleDateFormat("h:mma", Locale.US);
-        SimpleDateFormat quarterFormatter = new SimpleDateFormat(":mm", Locale.US);
+        // Respect OS 24-hour setting for time column labels (like list view)
+        final SimpleDateFormat hourFormatter;
+        if (DateFormat.is24HourFormat(context)) {
+            hourFormatter = new SimpleDateFormat("H:mm", Locale.getDefault());
+        } else {
+            hourFormatter = new SimpleDateFormat("h:mma", Locale.getDefault());
+        }
+        SimpleDateFormat quarterFormatter = new SimpleDateFormat(":mm", Locale.getDefault());
         
         int maxIterations = 1000;
         int iterations = 0;
@@ -2306,7 +2339,8 @@ public class LandscapeScheduleView extends LinearLayout {
             
             int minute = cal.get(Calendar.MINUTE);
             if (minute == 0) {
-                slot.label = hourFormatter.format(cal.getTime()).toLowerCase();
+                String label = hourFormatter.format(cal.getTime());
+                slot.label = DateFormat.is24HourFormat(context) ? label : label.toLowerCase();
             } else {
                 slot.label = quarterFormatter.format(cal.getTime());
             }

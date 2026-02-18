@@ -2262,13 +2262,14 @@ public class showBandDetails extends Activity {
     }
     
     /**
-     * Updates the translation button text and visibility
+     * Updates the translation button text and visibility.
+     * Show button only when: comments are shown, device is not in English, and OS translation is available.
+     * Hide when: no comments displayed (e.g. landscape), OS is English, or translation not available for that language.
      */
     private void updateTranslationButton() {
         if (translator == null || translationButton == null || translationButtonContainer == null) {
             Log.d("Translation", "updateTranslationButton: Missing components - translator=" + translator + 
                   ", translationButton=" + translationButton + ", translationButtonContainer=" + translationButtonContainer);
-            // Hide the button container if translation is not supported/available
             if (translationButtonContainer != null) {
                 translationButtonContainer.setVisibility(View.GONE);
             }
@@ -2284,7 +2285,26 @@ public class showBandDetails extends Activity {
         Log.d("Translation", "Current language code: " + currentLang);
         Log.d("Translation", "Translation supported: " + isSupported);
         
-        // Always show the container for now (since we know the UI works)
+        // Only show when comments are displayed (portrait); in landscape notes section is hidden
+        boolean commentsShown = noteRow != null && noteRow.getVisibility() == View.VISIBLE;
+        if (!commentsShown) {
+            Log.d("Translation", "Comments not shown (e.g. landscape), hiding translation button");
+            translationButtonContainer.setVisibility(View.GONE);
+            return;
+        }
+        // Do not show if OS is in English
+        if ("en".equals(deviceLanguage)) {
+            Log.d("Translation", "Device language is English, hiding translation button");
+            translationButtonContainer.setVisibility(View.GONE);
+            return;
+        }
+        // Do not show if translation is not available for this language
+        if (!isSupported) {
+            Log.d("Translation", "Translation not available for language, hiding translation button");
+            translationButtonContainer.setVisibility(View.GONE);
+            return;
+        }
+        
         Log.d("Translation", "Showing translation button container");
         translationButtonContainer.setVisibility(View.VISIBLE);
         
@@ -3127,7 +3147,8 @@ public class showBandDetails extends Activity {
     }
     
     /**
-     * Determines which of the 4 views to show based on orientation and schedule presence
+     * Determines which of the 4 views to show based on orientation and schedule presence.
+     * On tablets, orientation is ignored so full content (notes, links, etc.) is always shown.
      * Returns: "portrait_with_schedule", "portrait_without_schedule", "landscape_with_schedule", "landscape_without_schedule"
      */
     private String getViewType() {
@@ -3135,7 +3156,7 @@ public class showBandDetails extends Activity {
         boolean isLandscape = orientation.equals("landscape");
         boolean isTablet = alwaysShowFullDetails;
         
-        // Tablets always show full details regardless of orientation
+        // Tablets: ignore orientation (assume less space constraints), always use portrait-style view so everything is shown
         if (isTablet) {
             return hasSchedule ? "portrait_with_schedule" : "portrait_without_schedule";
         }

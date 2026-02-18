@@ -81,6 +81,8 @@
     <string name="AlreadyAtStart">Allerede ved start af listen</string>
     <string name="Next">Næste</string>
     <string name="Previous">Tidligere</string>
+    <string name="calendar_start">Start</string>
+    <string name="calendar_end">Slut</string>
 
     <string name="ImportDataBackup">Importer Sikkerhedskopiering Af Data</string>
     <string name="ShareTitle">Hvad vil du dele?</string>
