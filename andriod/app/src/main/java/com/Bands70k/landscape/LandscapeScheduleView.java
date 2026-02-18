@@ -711,6 +711,15 @@ public class LandscapeScheduleView extends LinearLayout {
         }
     }
     
+    /**
+     * Call when padding (e.g. system bar insets) has changed so the grid is rebuilt with the correct width.
+     */
+    public void refreshCurrentDayContent() {
+        if (!days.isEmpty() && currentDayIndex >= 0 && currentDayIndex < days.size()) {
+            updateContent();
+        }
+    }
+
     private void updateContent() {
         contentLayout.removeAllViews();
         venueHeaderRow.removeAllViews();
@@ -727,12 +736,13 @@ public class LandscapeScheduleView extends LinearLayout {
         
         DayScheduleData currentDay = days.get(currentDayIndex);
         
-        // Calculate column widths
-        // CRITICAL FIX: Use actual view width instead of display metrics for foldable devices
-        // On Pixel Fold front display, display metrics may be stale during rotation
-        int screenWidth = getWidth() > 0 ? getWidth() : getResources().getDisplayMetrics().widthPixels;
+        // Calculate column widths using padded width so content does not draw under system nav/status bars
+        int viewWidth = getWidth() > 0 ? getWidth() : getResources().getDisplayMetrics().widthPixels;
+        int paddedWidth = viewWidth - getPaddingLeft() - getPaddingRight();
+        if (paddedWidth <= 0) paddedWidth = viewWidth;
+        int screenWidth = paddedWidth;
         int availableWidth = screenWidth - dpToPx(60); // Subtract time column width
-        Log.d(TAG, "Screen width calculation - view width: " + getWidth() + ", display metrics width: " + getResources().getDisplayMetrics().widthPixels + ", using: " + screenWidth);
+        Log.d(TAG, "Screen width calculation - view width: " + viewWidth + ", padded: " + paddedWidth + ", using: " + screenWidth);
         
         // Always divide width by venue count so content fits on screen (no horizontal scroll, no hidden content)
         int columnWidth = currentDay.venues.isEmpty() ? availableWidth : availableWidth / currentDay.venues.size();
