@@ -80,6 +80,8 @@
     <string name="AlreadyAtStart">Ya en el inicio de la lista</string>
     <string name="Next">Siguiente</string>
     <string name="Previous">Anterior</string>
+    <string name="calendar_start">Inicio</string>
+    <string name="calendar_end">Fin</string>
 
     <string name="ShareBandChoices">Compartir elecciones de bandas</string>
     <string name="ShareShowChoices">Compartir elecciones de conciertos</string>
