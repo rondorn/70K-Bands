@@ -85,6 +85,10 @@
     <string name="Next">Next</string>
     <string name="Previous">Previous</string>
 
+    <!-- Calendar view event cell labels -->
+    <string name="calendar_start">Start</string>
+    <string name="calendar_end">End</string>
+
     <string name="ImportDataBackup">Import Data Backup</string>
 
     <string name="ShareTitle">What do you want to share?</string>

@@ -82,6 +82,8 @@
     <string name="AlreadyAtStart">Déjà au début de la liste</string>
     <string name="Next">Prochain</string>
     <string name="Previous">Précédent</string>
+    <string name="calendar_start">Début</string>
+    <string name="calendar_end">Fin</string>
 
     <string name="ImportDataBackup">Importer une sauvegarde de données</string>
     <string name="ShareTitle">Que veux tu partager?</string>

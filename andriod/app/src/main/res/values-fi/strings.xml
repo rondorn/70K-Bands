@@ -82,6 +82,8 @@
     <string name="AlreadyAtStart">Jo luettelon alussa</string>
     <string name="Next">Seuraava</string>
     <string name="Previous">Edellinen</string>
+    <string name="calendar_start">Alku</string>
+    <string name="calendar_end">Loppu</string>
 
     <string name="ImportDataBackup">Tuo tietojen varmuuskopio</string>
     <string name="ShareTitle">Mitä haluat jakaa?</string>
