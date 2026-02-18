@@ -3,10 +3,15 @@ package com.Bands70k.landscape;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import com.Bands70k.R;
@@ -33,12 +38,13 @@ public class LandscapeScheduleActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-        // Ensure system UI doesn't interfere with touches
+        // Receive window insets so we can apply Theme A vs Theme B only when needed
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         getWindow().getDecorView().setSystemUiVisibility(
             View.SYSTEM_UI_FLAG_LAYOUT_STABLE
             | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
         );
-        
+
         // CRITICAL: Update DeviceSizeManager on activity creation (handles foldable devices)
         DeviceSizeManager.getInstance(this).updateDeviceSize();
         
@@ -87,6 +93,30 @@ public class LandscapeScheduleActivity extends Activity {
         setupDismissListener(isSplitViewCapable);
         
         setContentView(scheduleView);
+        // Theme A (full display): no insets → no padding, full screen.
+        // Theme B (nav/status bar present): insets > 0 → translucent bar + padding so content doesn't sit under bar.
+        ViewCompat.setOnApplyWindowInsetsListener(scheduleView, (v, windowInsets) -> {
+            var insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            boolean hasSystemBars = insets.top > 0 || insets.bottom > 0 || insets.left > 0 || insets.right > 0;
+            if (hasSystemBars) {
+                // Theme B: navigation elements present – make nav bar translucent and inset content
+                getWindow().setNavigationBarColor(Color.TRANSPARENT);
+                getWindow().setStatusBarColor(Color.TRANSPARENT);
+                v.setPadding(insets.left, insets.top, insets.right, insets.bottom);
+                Log.d(TAG, "Theme B: system bars present, applied insets padding and translucent bars");
+                // Rebuild grid with padded width so content does not draw under the bar
+                scheduleView.post(() -> scheduleView.refreshCurrentDayContent());
+            } else {
+                // Theme A: full display – no padding, use full screen
+                getWindow().setNavigationBarColor(Color.BLACK);
+                getWindow().setStatusBarColor(Color.BLACK);
+                v.setPadding(0, 0, 0, 0);
+                Log.d(TAG, "Theme A: full display, no insets padding");
+                scheduleView.post(() -> scheduleView.refreshCurrentDayContent());
+            }
+            return windowInsets;
+        });
+        ViewCompat.requestApplyInsets(scheduleView);
     }
     
     @Override
