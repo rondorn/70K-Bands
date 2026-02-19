@@ -17,17 +17,22 @@ class LandscapeScheduleViewModel: ObservableObject {
     @Published var currentDayIndex: Int = 0
     @Published var days: [DayScheduleData] = []
     @Published var totalEventCount: Int = 0
-    /// Venues hidden by the user in the calendar filter. When a venue is in this set, its column is not shown.
-    @Published var hiddenVenueNames: Set<String> = []
+    /// Venue show state (lowercase name -> show). Synced with persisted getShowVenueEvents/setShowVenueEvents so list and calendar share the same filters.
+    @Published var venueVisibility: [String: Bool] = [:]
     
     // MARK: - Computed Properties
     
+    /// Set of venue names (lowercase) that are currently hidden. Used for calendar column visibility.
+    var hiddenVenueNames: Set<String> {
+        Set(venueVisibility.filter { !$0.value }.map { $0.key })
+    }
+    
     var hasHiddenVenues: Bool {
-        !hiddenVenueNames.isEmpty
+        venueVisibility.values.contains(false)
     }
     
     var hiddenVenueCount: Int {
-        hiddenVenueNames.count
+        venueVisibility.values.filter { !$0 }.count
     }
     
     var currentDayData: DayScheduleData? {
@@ -101,9 +106,10 @@ class LandscapeScheduleViewModel: ObservableObject {
                 print("🔍 [LANDSCAPE_SCHEDULE] Showing all \(processedDays.count) days (hideExpiredEvents: false)")
             }
             
-            DispatchQueue.main.async {
+                DispatchQueue.main.async {
                 self.days = processedDays
                 self.totalEventCount = allEvents.count
+                self.venueVisibility = getAllVenueFilterStates()
                 
                 if processedDays.isEmpty {
                     print("⚠️ [LANDSCAPE_SCHEDULE] No days available after processing/filtering")
@@ -285,18 +291,24 @@ class LandscapeScheduleViewModel: ObservableObject {
         loadScheduleData()
     }
     
-    /// Toggles whether a venue is hidden in the calendar. Hidden venues are excluded from the grid.
-    func setVenueHidden(_ venueName: String, hidden: Bool) {
-        if hidden {
-            hiddenVenueNames.insert(venueName)
-        } else {
-            hiddenVenueNames.remove(venueName)
-        }
+    /// Sync venue visibility from persisted settings (e.g. after returning from list view or app launch).
+    func refreshVenueVisibility() {
+        venueVisibility = getAllVenueFilterStates()
     }
     
-    /// Returns true if the venue is currently hidden in the calendar.
+    /// Sets whether a venue is hidden. Persists via setShowVenueEvents and writeFiltersFile so list and calendar share the same filters.
+    func setVenueHidden(_ venueName: String, hidden: Bool) {
+        let key = venueName.lowercased()
+        let show = !hidden
+        venueVisibility[key] = show
+        setShowVenueEvents(venueName: venueName, show: show)
+        writeFiltersFile()
+        NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
+    }
+    
+    /// Returns true if the venue is currently hidden (not shown in list or calendar).
     func isVenueHidden(_ venueName: String) -> Bool {
-        hiddenVenueNames.contains(venueName)
+        !venueVisibility[venueName.lowercased(), default: true]
     }
     
     // MARK: - Private Methods

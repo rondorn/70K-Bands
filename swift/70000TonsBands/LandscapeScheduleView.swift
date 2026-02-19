@@ -140,6 +140,7 @@ struct LandscapeScheduleView: View {
         .preferredColorScheme(.dark)
         .onAppear {
             viewModel.loadScheduleData()
+            viewModel.refreshVenueVisibility()
         }
         .onReceive(NotificationCenter.default.publisher(for: Notification.Name("DetailScreenDismissed"))) { notification in
             // Refresh the event that was just viewed in the detail screen
@@ -263,7 +264,7 @@ struct LandscapeScheduleView: View {
     // MARK: - Header View
     
     private func headerView(dayData: DayScheduleData) -> some View {
-        let visibleVenues = dayData.venues.filter { !viewModel.hiddenVenueNames.contains($0.name) }
+        let visibleVenues = dayData.venues.filter { !viewModel.hiddenVenueNames.contains($0.name.lowercased()) }
         let visibleEventCount = visibleVenues.reduce(0) { $0 + $1.events.count }
         
         return HStack {
@@ -356,7 +357,7 @@ struct LandscapeScheduleView: View {
         .background(Color.black)
     }
     
-    // MARK: - Venue Filter Sheet (separate struct so it observes viewModel for toggle updates)
+    // MARK: - Venue Filter Sheet (only current day's venues; same Show/Hide settings as list—hidden in list is hidden in calendar)
     
     private struct VenueFilterSheetView: View {
         let dayData: DayScheduleData?
@@ -368,17 +369,17 @@ struct LandscapeScheduleView: View {
             return NavigationView {
                 List {
                     Section {
-                        Text("Tap to hide or show venues in the calendar. Hidden venues are not removed from your schedule—they are only hidden from this view.")
+                        Text("Show or hide venues. Same settings as the list view—if a venue is hidden in the list, it is hidden in the calendar and vice versa.")
                             .font(.system(size: 14))
                             .foregroundColor(.secondary)
                     }
-                    Section(header: Text("Venues")) {
+                    Section(header: Text("Location Filters")) {
                         ForEach(venues) { venue in
                             HStack(spacing: 12) {
                                 RoundedRectangle(cornerRadius: 4)
                                     .fill(venue.color)
                                     .frame(width: 24, height: 24)
-                                Toggle(venue.name, isOn: Binding(
+                                Toggle(venueDisplayName(for: venue.name), isOn: Binding(
                                     get: { !viewModel.isVenueHidden(venue.name) },
                                     set: { viewModel.setVenueHidden(venue.name, hidden: !$0) }
                                 ))
@@ -386,10 +387,20 @@ struct LandscapeScheduleView: View {
                         }
                     }
                 }
-                .navigationTitle("Filter Venues")
+                .navigationTitle("Location Filters")
                 .navigationBarTitleDisplayMode(.inline)
                 .preferredColorScheme(.dark)
                 .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Clear All Filters") {
+                            setVenueFilters(venueNames: getVenueNamesInUseForList(), show: true)
+                            writeFiltersFile()
+                            viewModel.refreshVenueVisibility()
+                            NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
+                        }
+                        .font(.system(size: 17, weight: .regular))
+                        .disabled(!viewModel.hasHiddenVenues)
+                    }
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Done") {
                             dismiss()
@@ -414,7 +425,7 @@ struct LandscapeScheduleView: View {
         @State private var scrollOffset: CGPoint = .zero
         
         private var visibleVenues: [VenueColumn] {
-            dayData.venues.filter { !hiddenVenueNames.contains($0.name) }
+            dayData.venues.filter { !hiddenVenueNames.contains($0.name.lowercased()) }
         }
         
         var body: some View {
@@ -517,7 +528,7 @@ struct LandscapeScheduleView: View {
         
         private func venueHeaderViewSticky(venue: VenueColumn, columnWidth: CGFloat) -> some View {
             VStack(spacing: 2) {
-                Text(venue.name)
+                Text(venueDisplayName(for: venue.name))
                     .font(.system(size: 14, weight: .bold))
                     .foregroundColor(.white)
                     .lineLimit(2)

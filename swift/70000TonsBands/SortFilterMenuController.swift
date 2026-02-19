@@ -34,6 +34,41 @@ func hasExpiredEvents() -> Bool {
     }
 }
 
+/// Venues that appear in the list view (have at least one event this year). Used for the portrait "Location Filters" section.
+/// Includes: (1) configured venues (FestivalConfig) that have at least one matching event, and (2) discovered venues — event locations that don't match any configured venue (so they can be toggled in the menu and filtered correctly).
+func getVenueNamesInUseForList() -> [String] {
+    let allEvents = DataManager.shared.fetchEvents(forYear: eventYear)
+    let allLocations = allEvents.map { $0.location }
+    let configuredVenueNames = FestivalConfig.current.getAllVenueNames()
+
+    // Configured venues that have at least one event (prefix match)
+    let configuredInUse = configuredVenueNames.filter { venueName in
+        allLocations.contains { $0.lowercased().hasPrefix(venueName.lowercased()) }
+    }
+
+    // Discovered venues: event locations that do NOT prefix-match any configured venue
+    var discovered = Set<String>()
+    for location in allLocations {
+        let matchesConfigured = configuredVenueNames.contains { venueName in
+            location.lowercased().hasPrefix(venueName.lowercased())
+        }
+        if !matchesConfigured {
+            discovered.insert(location)
+        }
+    }
+    let discoveredSorted = discovered.sorted()
+
+    // Ensure discovered venues have a filter state (default on) so toggles and list filtering work
+    ensureVenueFilterStates(venueNames: discoveredSorted)
+
+    return configuredInUse + discoveredSorted
+}
+
+/// Returns the venue name with any parenthesized part removed, for menu display only. Filtering still uses the full location name.
+func venueDisplayName(for venueName: String) -> String {
+    venueName.components(separatedBy: " (").first?.trimmingCharacters(in: .whitespaces) ?? venueName
+}
+
 func createrFilterMenu( controller: MasterViewController){
     
     controller.refreshData()
@@ -105,15 +140,13 @@ func createrFilterMenu( controller: MasterViewController){
         }
     }
     
-    // VENUE FILTERS: Only show when in Schedule mode AND scheduled events exist
+    // LOCATION FILTERS: Venues that are in use in the list view (have events this year). Same Show/Hide settings as calendar.
     if showScheduleFilters {
-        // Dynamically add venue options based on FestivalConfig (only venues with showInFilters=true)
-        let configuredVenues = FestivalConfig.current.getFilterVenueNames()
-        for venueName in configuredVenues {
+        controller.filterMenu.dataSource.append("Location Filters")
+        let venuesInUse = getVenueNamesInUseForList()
+        for venueName in venuesInUse {
             controller.filterMenu.dataSource.append("\(venueName) Venue")
         }
-        
-        controller.filterMenu.dataSource.append("Other Venue")        
     }
         
     controller.filterMenu.width = 300
@@ -183,6 +216,8 @@ func setupHeadersAndMisc(controller: MasterViewController, item: String, cellRow
         
     } else if (item == "Venue Filters"){
         setupCell(header: true, titleText: NSLocalizedString("Venue Filters", comment: ""), cellData: cellRow, imageName: "", disabled: false)
+    } else if (item == "Location Filters"){
+        setupCell(header: true, titleText: NSLocalizedString("Location Filters", comment: ""), cellData: cellRow, imageName: "Location-Generic-Going-wBox", disabled: false)
     } else if (item == "Expired Events Header"){
         setupCell(header: true, titleText: NSLocalizedString("Expired Events", comment: ""), cellData: cellRow, imageName: "", disabled: false)
     }
@@ -343,8 +378,8 @@ func setupClearClickResponse(controller: MasterViewController, item: String){
         setShowOnlyWillAttened(false)
         setHideExpireScheduleData(false) // Reset Hide Expired Events filter
         
-        // Reset all dynamic venues to true
-        setAllVenueFilters(show: true)
+        // Reset all location filters (configured + discovered) so every venue in the menu is shown
+        setVenueFilters(venueNames: getVenueNamesInUseForList(), show: true)
         
         // Also reset the legacy hardcoded venue settings for backward compatibility
         setShowPoolShows(true)
@@ -384,15 +419,15 @@ func setupClearAllMenuChoices(controller: MasterViewController, item: String, ce
 
 func setupVenueClickResponse(controller: MasterViewController, item: String){
     
-    // Handle dynamic venues from FestivalConfig (only venues with showInFilters=true)
-    let configuredVenues = FestivalConfig.current.getFilterVenueNames()
-    
-    for venueName in configuredVenues {
-        if (item == "\(venueName) Venue" && blockTurningAllFiltersOn(controller:controller) == false){
-            var message = "\(venueName) Venue Filter Off"
+    // Venues in use in the list view (same set as Location Filters section)
+    let venuesInUse = getVenueNamesInUseForList()
+    for venueName in venuesInUse {
+        if (item == "\(venueName) Venue" && blockTurningAllFiltersOn(controller: controller) == false){
+            let displayName = venueDisplayName(for: venueName)
+            var message = "\(displayName) Venue Filter Off"
             if (getShowVenueEvents(venueName: venueName) == true){
                 setShowVenueEvents(venueName: venueName, show: false)
-                message = "\(venueName) Venue Filter On"
+                message = "\(displayName) Venue Filter On"
             } else {
                 setShowVenueEvents(venueName: venueName, show: true)
             }
@@ -422,59 +457,34 @@ func setupVenueClickResponse(controller: MasterViewController, item: String){
         }
     }
     
-    if (item == "Other Venue" && blockTurningAllFiltersOn(controller:controller) == false){
-        var message = NSLocalizedString("Other Venue Filter Off", comment: "")
-        if (getShowOtherShows() == true){
-            setShowOtherShows(false)
-            message = NSLocalizedString("Other Venue Filter On", comment: "")
-        } else {
-            setShowOtherShows(true)
-        }
-        if (blockTurningAllFiltersOn(controller: controller) == true){
-            setShowOtherShows(true)
-        } else {
-            refreshAfterMenuSelected(controller: controller, message: message)
-        }
-    }
 }
 
 func setupVenueMenuChoices(controller: MasterViewController, item: String, cellRow: CustomListEntry){
     
-    // Handle dynamic venues from FestivalConfig (only venues with showInFilters=true)
-    let configuredVenues = FestivalConfig.current.getFilterVenueNames()
+    // Same approach as main venues: two assets per venue — one colorful (Going), one muted (NotGoing). Pick which to show by filter state; call setupCell once.
+    let venuesInUse = getVenueNamesInUseForList()
+    let genericLocationIconShown = "Location-Generic-Going-wBox"   // colorful, when venue is shown
+    let genericLocationIconHidden = "Location-Generic-NotGoing-wBox" // muted, when venue is hidden
     
-    for venueName in configuredVenues {
+    for venueName in venuesInUse {
         if (item == "\(venueName) Venue"){
             let venue = FestivalConfig.current.getVenue(named: venueName)
-            var currentIcon = venue?.notGoingIcon ?? "Unknown-NotGoing-wBox"
-            var currentText = "Show \(venueName) Events"
-            
-            if (getShowVenueEvents(venueName: venueName) == true){
-                currentIcon = venue?.goingIcon ?? "Unknown-Going-wBox"
-                currentText = "Hide \(venueName) Events"
+            let hasEstablishedIcon = venue.map { !$0.goingIcon.lowercased().contains("unknown") } ?? false
+            let displayName = venueDisplayName(for: venueName)
+            var currentIcon: String
+            var currentText = "Show \(displayName)"
+            if getShowVenueEvents(venueName: venueName) == true {
+                currentText = "Hide \(displayName)"
+                currentIcon = (hasEstablishedIcon ? venue?.goingIcon : nil) ?? genericLocationIconShown
+            } else {
+                currentIcon = (hasEstablishedIcon ? venue?.notGoingIcon : nil) ?? genericLocationIconHidden
             }
-            
-            setupCell(header: false, titleText: currentText , cellData: cellRow, imageName: currentIcon, disabled: false)
-            if (getShowOnlyWillAttened() == true){
-                setupCell(header: false, titleText: currentText , cellData: cellRow, imageName: venue?.notGoingIcon ?? "Unknown-NotGoing-wBox", disabled: true)
+            let isDisabled = getShowOnlyWillAttened()
+            setupCell(header: false, titleText: currentText, cellData: cellRow, imageName: currentIcon, disabled: isDisabled)
+            if isDisabled {
                 cellRow.optionLabel.textColor = UIColor.darkGray
             }
             return // Exit early once we found the matching venue
-        }
-    }
-    
-    // Handle "Other Venue" (catch-all for non-configured venues)
-    if (item == "Other Venue"){
-        var currentIcon = unknownIconAlt
-        var currentText = NSLocalizedString("Show Other Venues", comment: "")
-        if (getShowOtherShows() == true){
-            currentIcon = unknownIcon
-            currentText = NSLocalizedString("Hide Other Venues", comment: "")
-        }
-        setupCell(header: false, titleText: currentText , cellData: cellRow, imageName: currentIcon, disabled: false)
-        if (getShowOnlyWillAttened() == true){
-            setupCell(header: false, titleText: currentText , cellData: cellRow, imageName: unknownIconAlt, disabled: true)
-            cellRow.optionLabel.textColor = UIColor.darkGray
         }
     }
 }
@@ -713,21 +723,14 @@ func blockTurningAllFiltersOn(controller: MasterViewController)->Bool{
     var message = ""
     var venueCouner = 0
     
-    // Check if all dynamic venues are disabled (only venues with showInFilters=true)
-    let configuredVenues = FestivalConfig.current.getFilterVenueNames()
+    // Check if all locations (venues in use in the list) would be disabled
+    let venuesInUse = getVenueNamesInUseForList()
     var allVenuesDisabled = true
-    
-    // Check dynamic venues
-    for venueName in configuredVenues {
+    for venueName in venuesInUse {
         if getShowVenueEvents(venueName: venueName) == true {
             allVenuesDisabled = false
             break
         }
-    }
-    
-    // Also check "Other" shows
-    if getShowOtherShows() == true {
-        allVenuesDisabled = false
     }
     
     if allVenuesDisabled {

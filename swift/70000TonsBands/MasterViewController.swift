@@ -515,6 +515,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // Listen for when returning from preferences screen after year change (no additional refresh needed)
         NotificationCenter.default.addObserver(self, selector: #selector(handleReturnFromPreferencesAfterYearChange), name: Notification.Name("DismissPreferencesScreenAfterYearChange"), object: nil)
         
+        // When venue filters change (e.g. from calendar filter sheet), refresh list so it uses same persistence
+        NotificationCenter.default.addObserver(self, selector: #selector(handleVenueFiltersDidChange), name: Notification.Name("VenueFiltersDidChange"), object: nil)
+        
         
         // Legacy initialization code removed - now handled by optimized launch methods in performOptimizedFirstLaunch() and performOptimizedSubsequentLaunch()
     }
@@ -1526,6 +1529,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 dismissLandscapeScheduleView()
             }
         }
+    }
+
+    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+        super.viewWillTransition(to: size, with: coordinator)
+        // Dismiss the filter menu before the display rotates so it doesn't appear in the wrong layout
+        filterMenu.hide()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -2726,6 +2735,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         refreshBandList(reason: "Return from preferences - cache refresh only")
     }
     
+    /// Called when venue filters change (e.g. from calendar filter sheet). List and calendar share the same persistence.
+    @objc func handleVenueFiltersDidChange() {
+        DispatchQueue.main.async { [weak self] in
+            self?.refreshBandList(reason: "Venue filters changed (calendar or list)")
+        }
+    }
+    
     /// Called when returning from preferences screen after year change (data already refreshed)
     @objc func handleReturnFromPreferencesAfterYearChange() {
         lastPreferenceReturnTime = Date().timeIntervalSince1970
@@ -2966,32 +2982,22 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             return !excludedEventTypes.contains(eventType)
         }
         
-        // 2. Venue filtering
-        let filterVenues = FestivalConfig.current.getFilterVenueNames()
-        let enabledFilterVenues = filterVenues.filter { getShowVenueEvents(venueName: $0) }
-        
-        if !enabledFilterVenues.isEmpty || getShowOtherShows() {
-            filteredEvents = filteredEvents.filter { event in
-                let location = event.location
-                let matchesFilterVenue = enabledFilterVenues.contains { venueName in
-                    location.lowercased().hasPrefix(venueName.lowercased())
+        // 2. Venue filtering (per-venue state: configured prefix match or discovered = full location; same persistence as list/calendar)
+        let filterVenues = FestivalConfig.current.getAllVenueNames()
+        filteredEvents = filteredEvents.filter { event in
+            let location = event.location
+            var venueNameToCheck: String?
+            for venueName in filterVenues {
+                if location.lowercased().hasPrefix(venueName.lowercased()) {
+                    venueNameToCheck = venueName
+                    break
                 }
-                
-                if matchesFilterVenue {
-                    return true
-                }
-                
-                if !matchesFilterVenue && getShowOtherShows() {
-                    let isFilterVenue = filterVenues.contains { venueName in
-                        location.lowercased().hasPrefix(venueName.lowercased())
-                    }
-                    return !isFilterVenue
-                }
-                
-                return false
             }
-        } else {
-            filteredEvents = []
+            if venueNameToCheck == nil {
+                venueNameToCheck = location
+            }
+            guard let name = venueNameToCheck else { return false }
+            return getShowVenueEvents(venueName: name)
         }
         
         // 3. Expiration filtering
@@ -3083,32 +3089,22 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             return !excludedEventTypes.contains(eventType)
         }
         
-        // 2. Venue filtering
-        let filterVenues = FestivalConfig.current.getFilterVenueNames()
-        let enabledFilterVenues = filterVenues.filter { getShowVenueEvents(venueName: $0) }
-        
-        if !enabledFilterVenues.isEmpty || getShowOtherShows() {
-            filteredEvents = filteredEvents.filter { event in
-                let location = event.location
-                let matchesFilterVenue = enabledFilterVenues.contains { venueName in
-                    location.lowercased().hasPrefix(venueName.lowercased())
+        // 2. Venue filtering (per-venue state: configured prefix match or discovered = full location; same persistence as list/calendar)
+        let filterVenues = FestivalConfig.current.getAllVenueNames()
+        filteredEvents = filteredEvents.filter { event in
+            let location = event.location
+            var venueNameToCheck: String?
+            for venueName in filterVenues {
+                if location.lowercased().hasPrefix(venueName.lowercased()) {
+                    venueNameToCheck = venueName
+                    break
                 }
-                
-                if matchesFilterVenue {
-                    return true
-                }
-                
-                if !matchesFilterVenue && getShowOtherShows() {
-                    let isFilterVenue = filterVenues.contains { venueName in
-                        location.lowercased().hasPrefix(venueName.lowercased())
-                    }
-                    return !isFilterVenue
-                }
-                
-                return false
             }
-        } else {
-            filteredEvents = []
+            if venueNameToCheck == nil {
+                venueNameToCheck = location
+            }
+            guard let name = venueNameToCheck else { return false }
+            return getShowVenueEvents(venueName: name)
         }
         
         // 3. Expiration filtering

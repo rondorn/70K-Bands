@@ -155,6 +155,9 @@
 "Show Schedule" = "Show Schedule"; //menu option
 "Event Type Filters" = "Event Type Filters"; //menu header
 "Venue Filters" = "Venue Filters"; //menu header
+"Event Location Filter" = "Event Location Filter"; //menu header (legacy)
+"Locations" = "Locations"; //legacy
+"Location Filters" = "Location Filters"; //menu header
 
 "Can not hide all venues" = "Can not hide all venues"; //help text
 "Can not hide all statuses" = "Can not hide all status"; //help text

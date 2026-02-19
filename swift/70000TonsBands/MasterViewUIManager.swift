@@ -374,33 +374,12 @@ class MasterViewUIManager {
         // Check if ANY filters are active (non-default state)
         // DEFAULT STATE: All filters ON except attendance filter OFF
         let priorityFiltersActive = !(getMustSeeOn() == true && getMightSeeOn() == true && getWontSeeOn() == true && getUnknownSeeOn() == true)
-        // FIXED: Use dynamic venue system instead of hardcoded venue functions
-        // SAFETY: Add guard to prevent hang during app initialization
-        var venueFiltersActive = false
-        
-        // SAFETY: Check if we're in early app initialization to prevent hang
-        if bands.isEmpty && listCount == 0 {
-            print("🔍 [FILTER_STATUS] ⚠️ Early initialization detected (no band data), using hardcoded fallback for venue filters")
-            // Use hardcoded detection during early initialization to prevent hang
-            venueFiltersActive = !(getShowPoolShows() && getShowRinkShows() && getShowOtherShows() && getShowLoungeShows() && getShowTheaterShows())
-        } else {
-            // Normal operation - use dynamic venue system
-            // Only check filter venues (showInFilters=true) - other venues are handled by "Other Venues"
-            let configuredVenues = FestivalConfig.current.getFilterVenueNames()
-            print("🔍 [FILTER_STATUS] Successfully accessed FestivalConfig filter venues: \(configuredVenues)")
-            
-            // Check all filter venues from FestivalConfig
-            for venueName in configuredVenues {
-                if !getShowVenueEvents(venueName: venueName) {
-                    venueFiltersActive = true
-                    break
-                }
-            }
-            
-            // Also check if "Other" venues are disabled
-            if !getShowOtherShows() {
-                venueFiltersActive = true
-            }
+        // Use persisted venue filter state: any venue (configured or discovered) with show: false means venue filters are active
+        let allVenueStates = getAllVenueFilterStates()
+        let venueFiltersActive = allVenueStates.values.contains(false)
+        if !allVenueStates.isEmpty {
+            let hiddenCount = allVenueStates.values.filter { !$0 }.count
+            print("🔍 [FILTER_STATUS] Venue filter states: \(allVenueStates.count) total, \(hiddenCount) hidden")
         }
         let eventTypeFiltersActive = !(getShowSpecialEvents() == true && getShowUnofficalEvents() == true && getShowMeetAndGreetEvents() == true)
         let attendanceFilterActive = getShowOnlyWillAttened() == true  // Default is false, so true means active
@@ -409,17 +388,6 @@ class MasterViewUIManager {
         print("🔍 [FILTER_STATUS] ===== FILTER DETECTION =====")
         print("🔍 [FILTER_STATUS] Priority filters - Must:\(getMustSeeOn()), Might:\(getMightSeeOn()), Wont:\(getWontSeeOn()), Unknown:\(getUnknownSeeOn())")
         print("🔍 [FILTER_STATUS] Priority filters active: \(priorityFiltersActive)")
-        
-        // Only show venue details if we accessed FestivalConfig (not in early initialization)
-        if !bands.isEmpty || listCount != 0 {
-            let configuredVenues = FestivalConfig.current.getAllVenueNames()
-            print("🔍 [FILTER_STATUS] Configured venues: \(configuredVenues)")
-            print("🔍 [FILTER_STATUS] Venue filter states: \(configuredVenues.map { "\($0):\(getShowVenueEvents(venueName: $0))" })")
-        } else {
-            print("🔍 [FILTER_STATUS] Early initialization mode - venue details skipped for safety")
-        }
-        
-        print("🔍 [FILTER_STATUS] Other venues enabled: \(getShowOtherShows())")
         print("🔍 [FILTER_STATUS] Venue filters active: \(venueFiltersActive)")  
         print("🔍 [FILTER_STATUS] Event type filters active: \(eventTypeFiltersActive)")
         print("🔍 [FILTER_STATUS] Unofficial events: \(getShowUnofficalEvents())")
