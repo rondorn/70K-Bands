@@ -99,10 +99,10 @@ class WebViewController: UIViewController, WKNavigationDelegate {
     }
 
     func updateSplitViewDisplayMode(for size: CGSize) {
-        if UIDevice.current.userInterfaceIdiom == .pad {
-            if size.width > size.height { // Landscape
+        if DeviceSizeManager.isLargeDisplay() {
+            if size.width > size.height {
                 splitViewController?.preferredDisplayMode = .allVisible
-            } else { // Portrait
+            } else {
                 splitViewController?.preferredDisplayMode = .primaryHidden
             }
         }

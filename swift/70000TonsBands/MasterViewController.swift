@@ -344,7 +344,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         masterView = self;
         
         // Do any additional setup after loading the view, typically from a nib.
-        if UIDevice.current.userInterfaceIdiom == .pad {
+        if isSplitViewCapable() {
             splitViewController?.preferredDisplayMode = UISplitViewController.DisplayMode.allVisible
             splitViewController?.preferredPrimaryColumnWidth = 400 // Make left column wider (default ~320)
         }
@@ -1271,7 +1271,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     override func awakeFromNib() {
         super.awakeFromNib()
         print ("The awakeFromNib was called");
-        if UIDevice.current.userInterfaceIdiom == .pad {
+        if isSplitViewCapable() {
             self.clearsSelectionOnViewWillAppear = false
             self.preferredContentSize = CGSize(width: 320.0, height: 600.0)
         }
@@ -1554,9 +1554,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         let navController = UINavigationController(rootViewController: pickerVC)
         
-        // Check if we're on iPad
-        if UIDevice.current.userInterfaceIdiom == .pad {
-            // iPad: Use popover for proper split view support
+        if isSplitViewCapable() {
+            // Large display: Use popover for proper split view support
             navController.modalPresentationStyle = .popover
             
             if let popover = navController.popoverPresentationController {
@@ -1885,8 +1884,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             // Move attendedHandle.getCachedData() to background using CacheManager
             self.cacheManager.loadAttendedDataInBackground()
             
-            // Auto-select first band for iPad after data is loaded (only once and only on initial load)
-            if UIDevice.current.userInterfaceIdiom == .pad && !self.bands.isEmpty && !self.hasAutoSelectedForIPad && reason.contains("Initial") {
+            // Auto-select first band for large display (split view) after data is loaded (only once and only on initial load)
+                if self.isSplitViewCapable() && !self.bands.isEmpty && !self.hasAutoSelectedForIPad && reason.contains("Initial") {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                     self.autoSelectFirstValidBandForIPad()
                 }
@@ -2445,12 +2444,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 // Create and present detail view from the stored landscape controller with custom back button
                 let detailController = DetailHostingController(bandName: bandName, showCustomBackButton: true)
                 
-                // CRITICAL FIX: For iPad (master/detail), make the detail popup larger to accommodate band name and logo
-                if UIDevice.current.userInterfaceIdiom == .pad {
+                // CRITICAL FIX: For large display (master/detail), make the detail popup larger to accommodate band name and logo
+                if isSplitViewCapable() {
                     // Use formSheet for a larger modal that doesn't cover the entire screen
                     detailController.modalPresentationStyle = .formSheet
                     // Set larger preferred content size to accommodate band name and logo
-                    // iPad Air 11-inch width is ~820pt, so use ~75% for comfortable viewing
                     detailController.preferredContentSize = CGSize(width: 800, height: 900)
                 }
                 
@@ -3846,12 +3844,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
         }
         self.splitViewController!.delegate = self;
-        
-        if UIDevice.current.userInterfaceIdiom == .pad {
+
+        if isSplitViewCapable() {
             self.splitViewController!.preferredDisplayMode = UISplitViewController.DisplayMode.allVisible
             self.splitViewController!.preferredPrimaryColumnWidth = 400 // Make left column wider (default ~320)
         }
-        
+
         self.extendedLayoutIncludesOpaqueBars = true
         
         // Note: "showDetail" segue has been replaced with SwiftUI navigation
@@ -3990,12 +3988,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // Create and present detail view from the stored landscape controller with custom back button
         let detailController = DetailHostingController(bandName: bandName, showCustomBackButton: true)
         
-        // CRITICAL FIX: For iPad (master/detail), make the detail popup larger to accommodate band name and logo
-        if UIDevice.current.userInterfaceIdiom == .pad {
+        // CRITICAL FIX: For large display (master/detail), make the detail popup larger to accommodate band name and logo
+        if isSplitViewCapable() {
             // Use formSheet for a larger modal that doesn't cover the entire screen
             detailController.modalPresentationStyle = .formSheet
             // Set larger preferred content size to accommodate band name and logo
-            // iPad Air 11-inch width is ~820pt, so use ~75% for comfortable viewing
             detailController.preferredContentSize = CGSize(width: 800, height: 900)
         }
         
@@ -4073,11 +4070,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     func showSharingView() {
         let sharingView = SharingHostingController()
-        if UIDevice.current.userInterfaceIdiom == .pad {
-            // iPad: Show as modal
+        if DeviceSizeManager.isLargeDisplay() {
             sharingView.modalPresentationStyle = .formSheet
         } else {
-            // iPhone: Show as full screen
             sharingView.modalPresentationStyle = .fullScreen
         }
         self.present(sharingView, animated: true)
@@ -4200,14 +4195,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             // Create SwiftUI DetailHostingController instead of using storyboard segue
             let detailController = DetailHostingController(bandName: bandName)
             
-            // Configure for split view if needed
-            if UIDevice.current.userInterfaceIdiom == .pad {
+            if isSplitViewCapable() {
                 detailController.configureSplitViewPresentation()
             }
-            
-            // Push the SwiftUI detail view controller
-            if UIDevice.current.userInterfaceIdiom == .pad {
-                // iPad: Replace detail view in split view
+
+            if isSplitViewCapable() {
+                // Replace detail view in split view
                 if let splitVC = self.splitViewController,
                    let navController = splitVC.viewControllers.last as? UINavigationController {
                     navController.setViewControllers([detailController], animated: true)
@@ -4271,11 +4264,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // Create SwiftUI DetailHostingController
         let detailController = DetailHostingController(bandName: bandName)
         
-        // Configure for split view if needed
-        if UIDevice.current.userInterfaceIdiom == .pad {
+        if isSplitViewCapable() {
             detailController.configureSplitViewPresentation()
-            
-            // iPad: Replace detail view in split view
+
             if let splitVC = self.splitViewController,
                let navController = splitVC.viewControllers.last as? UINavigationController {
                 navController.setViewControllers([detailController], animated: true)
@@ -4576,7 +4567,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     // MARK: - iPad Auto-Selection
     
     func autoSelectFirstBandForIPad() {
-        guard UIDevice.current.userInterfaceIdiom == .pad else { return }
+        guard isSplitViewCapable() else { return }
         guard !bands.isEmpty else {
             print("DEBUG: No bands available for auto-selection")
             return
@@ -4597,7 +4588,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     func autoSelectFirstValidBandForIPad() {
-        guard UIDevice.current.userInterfaceIdiom == .pad else { return }
+        guard isSplitViewCapable() else { return }
         guard !bands.isEmpty else {
             print("DEBUG: No bands available for auto-selection")
             return
@@ -4685,8 +4676,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     func refreshIPadDetailViewIfNeeded(for bandName: String) {
         print("DEBUG: refreshIPadDetailViewIfNeeded called for band: '\(bandName)'")
         
-        guard UIDevice.current.userInterfaceIdiom == .pad else {
-            print("DEBUG: Not iPad, skipping refresh")
+        guard isSplitViewCapable() else {
             return
         }
         
@@ -4741,8 +4731,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // Use the reliable PreferencesHostingController approach
         let preferencesController = PreferencesHostingController()
         
-        if UIDevice.current.userInterfaceIdiom == .pad {
-            // For iPad split view, use a well-sized modal that doesn't obscure everything
+        if DeviceSizeManager.isLargeDisplay() {
             preferencesController.modalPresentationStyle = .formSheet
             // Increased height to accommodate all sections without scrolling
             // Based on actual content: Expired(~80), Attended(~80), Alerts(~450), Details(~80), Misc(~150), Navigation(~70), Padding(~40) = ~950
@@ -4933,7 +4922,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     // Helper function to get the current web view controller if it's displayed
     func getCurrentWebViewController() -> WebViewController? {
-        if UIDevice.current.userInterfaceIdiom == .pad {
+        if isSplitViewCapable() {
             if let splitViewController = self.splitViewController,
                let detailNavigationController = splitViewController.viewControllers.last as? UINavigationController,
                let webViewController = detailNavigationController.topViewController as? WebViewController {
@@ -5023,7 +5012,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     let backItem = UIBarButtonItem()
                     backItem.title = "Back"
 
-                    if UIDevice.current.userInterfaceIdiom == .pad {
+                    if self.isSplitViewCapable() {
                         if let splitViewController = self.splitViewController,
                            let detailNavigationController = splitViewController.viewControllers.last as? UINavigationController {
                             detailNavigationController.topViewController?.navigationItem.backBarButtonItem = backItem
@@ -5118,7 +5107,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     }
                 }
 
-                if UIDevice.current.userInterfaceIdiom == .pad {
+                if self.isSplitViewCapable() {
                     if let splitViewController = self.splitViewController,
                        let detailNavigationController = splitViewController.viewControllers.last as? UINavigationController {
                         detailNavigationController.topViewController?.navigationItem.backBarButtonItem = backItem

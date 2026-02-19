@@ -71,7 +71,7 @@ class DetailHostingController: UIHostingController<AnyView> {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
-        if UIDevice.current.userInterfaceIdiom == .pad {
+        if DeviceSizeManager.isLargeDisplay() {
             splitViewController?.preferredDisplayMode = UISplitViewController.DisplayMode.allVisible
         }
         
@@ -182,15 +182,11 @@ extension DetailHostingController {
     static func presentDetail(for bandName: String, from viewController: UIViewController) {
         let detailController = DetailHostingController(bandName: bandName)
         
-        if UIDevice.current.userInterfaceIdiom == .pad {
-            // iPad: Present modally with larger size to accommodate band name and logo
+        if DeviceSizeManager.isLargeDisplay() {
             detailController.modalPresentationStyle = .formSheet
-            // Set larger preferred content size to accommodate band name and logo
-            // iPad Air 11-inch width is ~820pt, so use ~75% for comfortable viewing
             detailController.preferredContentSize = CGSize(width: 800, height: 900)
             viewController.present(detailController, animated: true)
         } else {
-            // iPhone: Push onto navigation stack
             viewController.navigationController?.pushViewController(detailController, animated: true)
         }
     }

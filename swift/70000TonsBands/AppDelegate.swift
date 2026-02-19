@@ -334,66 +334,41 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         self.window = UIWindow(frame: UIScreen.main.bounds)
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
         
-        if UIDevice.current.userInterfaceIdiom == .pad {
-            // iPad: Use split view controller for optimal experience
-            if let splitViewController = storyboard.instantiateInitialViewController() as? UISplitViewController {
-                self.window?.rootViewController = splitViewController
-                
-                // Set up split view controller
-                splitViewController.delegate = self
-                splitViewController.preferredDisplayMode = .oneBesideSecondary
-                
-                self.window?.makeKeyAndVisible()
-                
-                // Set up master view controller
-                if let masterNavigationController = splitViewController.viewControllers.first as? UINavigationController,
-                   let controller = masterNavigationController.viewControllers.first as? MasterViewController {
-                    setupDefaults()
-                } else {
-                    print("Error: Could not get MasterViewController from navigation stack.")
-                }
-                
-                // Set up detail view controller - create placeholder for iPad initially
-                let placeholderDetailController = createPlaceholderDetailViewController()
-                let detailNavigationController = UINavigationController(rootViewController: placeholderDetailController)
-                
-                // Configure navigation controller to be completely transparent to avoid white bar
-                detailNavigationController.navigationBar.isTranslucent = true
-                detailNavigationController.navigationBar.backgroundColor = UIColor.clear
-                detailNavigationController.navigationBar.barTintColor = UIColor.clear
-                detailNavigationController.navigationBar.shadowImage = UIImage()
-                detailNavigationController.navigationBar.setBackgroundImage(UIImage(), for: .default)
-                detailNavigationController.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
-                
-                // If there's already a detail view controller, replace it
-                if splitViewController.viewControllers.count > 1 {
-                    splitViewController.viewControllers = [splitViewController.viewControllers[0], detailNavigationController]
-                } else {
-                    splitViewController.viewControllers.append(detailNavigationController)
-                }
-                
-                // Auto-selection now happens after data is loaded in refreshBandList
+        // Use split view controller on all devices. System collapses to one column when
+        // horizontal size class is compact (e.g. iPhone portrait); regular width (e.g. iPad,
+        // iPhone 17 Pro Max landscape) shows master/detail side-by-side.
+        if let splitViewController = storyboard.instantiateInitialViewController() as? UISplitViewController {
+            self.window?.rootViewController = splitViewController
+
+            splitViewController.delegate = self
+            splitViewController.preferredDisplayMode = .oneBesideSecondary
+
+            self.window?.makeKeyAndVisible()
+
+            if let masterNavigationController = splitViewController.viewControllers.first as? UINavigationController,
+               masterNavigationController.viewControllers.first is MasterViewController {
+                setupDefaults()
             } else {
-                print("Error: Could not instantiate UISplitViewController from storyboard.")
+                print("Error: Could not get MasterViewController from navigation stack.")
+            }
+
+            let placeholderDetailController = createPlaceholderDetailViewController()
+            let detailNavigationController = UINavigationController(rootViewController: placeholderDetailController)
+
+            detailNavigationController.navigationBar.isTranslucent = true
+            detailNavigationController.navigationBar.backgroundColor = UIColor.clear
+            detailNavigationController.navigationBar.barTintColor = UIColor.clear
+            detailNavigationController.navigationBar.shadowImage = UIImage()
+            detailNavigationController.navigationBar.setBackgroundImage(UIImage(), for: .default)
+            detailNavigationController.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
+
+            if splitViewController.viewControllers.count > 1 {
+                splitViewController.viewControllers = [splitViewController.viewControllers[0], detailNavigationController]
+            } else {
+                splitViewController.viewControllers.append(detailNavigationController)
             }
         } else {
-            // iPhone (including Max models): Use simple navigation controller to avoid split view issues
-            if let splitViewController = storyboard.instantiateInitialViewController() as? UISplitViewController,
-               let masterNavigationController = splitViewController.viewControllers.first as? UINavigationController,
-               let masterViewController = masterNavigationController.viewControllers.first as? MasterViewController {
-                
-                // Extract the master view controller and use it as the root of a standard navigation controller
-                let navigationController = UINavigationController(rootViewController: masterViewController)
-                self.window?.rootViewController = navigationController
-                
-                // Configure the master view controller
-                setupDefaults()
-                
-                self.window?.makeKeyAndVisible()
-                print("iPhone: Using standard navigation controller instead of split view for better experience")
-            } else {
-                print("Error: Could not extract MasterViewController from storyboard for iPhone setup.")
-            }
+            print("Error: Could not instantiate UISplitViewController from storyboard.")
         }
         
         // Register default UserDefaults values including iCloud setting
