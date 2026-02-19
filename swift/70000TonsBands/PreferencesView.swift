@@ -328,8 +328,9 @@ struct LifecycleModifiers: ViewModifier {
 }
 
 struct ConditionalToolbarModifier: ViewModifier {
+    @EnvironmentObject private var deviceSize: DeviceSizeManager
     func body(content: Content) -> some View {
-        if UIDevice.current.userInterfaceIdiom == .pad {
+        if deviceSize.isLargeDisplay {
             content
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
@@ -347,7 +348,7 @@ struct ConditionalToolbarModifier: ViewModifier {
 }
 
 #Preview {
-    PreferencesView()
+    PreferencesView().environmentObject(DeviceSizeManager.shared)
 }
 
 // Note: String.isYearString extension is defined in PreferencesViewModel.swift
