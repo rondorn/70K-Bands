@@ -94,6 +94,7 @@ struct TimeSlot: Identifiable {
 struct LandscapeScheduleView: View {
     @StateObject private var viewModel: LandscapeScheduleViewModel
     @Environment(\.presentationMode) var presentationMode
+    @State private var showVenueFilterSheet: Bool = false
     
     let priorityManager: SQLitePriorityManager
     let onBandTapped: (String, String?) -> Void  // (bandName, currentDay)
@@ -132,6 +133,9 @@ struct LandscapeScheduleView: View {
             } else {
                 noDataView
             }
+        }
+        .sheet(isPresented: $showVenueFilterSheet) {
+            VenueFilterSheetView(dayData: viewModel.currentDayData, viewModel: viewModel)
         }
         .preferredColorScheme(.dark)
         .onAppear {
@@ -220,10 +224,11 @@ struct LandscapeScheduleView: View {
             // Header with day navigation - stays fixed
             headerView(dayData: dayData)
             
-            // Sticky headers and scrollable content
+            // Sticky headers and scrollable content (only visible venues shown when filter active)
             GeometryReader { geometry in
                     StickyHeaderScrollView(
                     dayData: dayData,
+                    hiddenVenueNames: viewModel.hiddenVenueNames,
                     onBandTapped: onBandTapped,
                     onLongPress: onLongPress,
                     priorityManager: priorityManager,
@@ -258,7 +263,10 @@ struct LandscapeScheduleView: View {
     // MARK: - Header View
     
     private func headerView(dayData: DayScheduleData) -> some View {
-        HStack {
+        let visibleVenues = dayData.venues.filter { !viewModel.hiddenVenueNames.contains($0.name) }
+        let visibleEventCount = visibleVenues.reduce(0) { $0 + $1.events.count }
+        
+        return HStack {
             Spacer()
             
             // Previous day button - only show if functional
@@ -276,11 +284,16 @@ struct LandscapeScheduleView: View {
                 .padding(.trailing, 8)
             }
             
-            // Day label and event count
+            // Day label and event count (uses visible venues when filter is active)
             VStack(spacing: 2) {
-                Text("\(dayData.dayLabel) - \(viewModel.currentDayEventCount) Events")
+                Text("\(dayData.dayLabel) - \(visibleEventCount) Events")
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.white)
+                if viewModel.hasHiddenVenues {
+                    Text("\(viewModel.hiddenVenueCount) venue\(viewModel.hiddenVenueCount == 1 ? "" : "s") hidden")
+                        .font(.system(size: 12))
+                        .foregroundColor(.orange)
+                }
             }
             .frame(minWidth: 200)
             
@@ -301,6 +314,28 @@ struct LandscapeScheduleView: View {
             
             Spacer()
             
+            // Venue filter button (system-standard filter affordance)
+            Button(action: {
+                showVenueFilterSheet = true
+            }) {
+                ZStack(alignment: .topTrailing) {
+                    Image(systemName: "line.3.horizontal.decrease.circle")
+                        .font(.system(size: 22))
+                        .foregroundColor(viewModel.hasHiddenVenues ? .orange : .white)
+                    if viewModel.hasHiddenVenues {
+                        Text("\(viewModel.hiddenVenueCount)")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(.black)
+                            .frame(minWidth: 16, minHeight: 16)
+                            .background(Color.orange)
+                            .clipShape(Circle())
+                            .offset(x: 8, y: -8)
+                    }
+                }
+                .frame(width: 44, height: 44)
+            }
+            .padding(.trailing, 8)
+            
             // iPad: List view toggle button (return to list view)
             if isSplitViewCapable, let onDismiss = onDismissRequested {
                 Button(action: {
@@ -317,14 +352,60 @@ struct LandscapeScheduleView: View {
                 .padding(.trailing, 16)
             }
         }
-        .frame(height: 60)
+        .frame(height: viewModel.hasHiddenVenues ? 76 : 60)
         .background(Color.black)
+    }
+    
+    // MARK: - Venue Filter Sheet (separate struct so it observes viewModel for toggle updates)
+    
+    private struct VenueFilterSheetView: View {
+        let dayData: DayScheduleData?
+        @ObservedObject var viewModel: LandscapeScheduleViewModel
+        @Environment(\.dismiss) private var dismiss
+        
+        var body: some View {
+            let venues = dayData?.venues ?? []
+            return NavigationView {
+                List {
+                    Section {
+                        Text("Tap to hide or show venues in the calendar. Hidden venues are not removed from your schedule—they are only hidden from this view.")
+                            .font(.system(size: 14))
+                            .foregroundColor(.secondary)
+                    }
+                    Section(header: Text("Venues")) {
+                        ForEach(venues) { venue in
+                            HStack(spacing: 12) {
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(venue.color)
+                                    .frame(width: 24, height: 24)
+                                Toggle(venue.name, isOn: Binding(
+                                    get: { !viewModel.isVenueHidden(venue.name) },
+                                    set: { viewModel.setVenueHidden(venue.name, hidden: !$0) }
+                                ))
+                            }
+                        }
+                    }
+                }
+                .navigationTitle("Filter Venues")
+                .navigationBarTitleDisplayMode(.inline)
+                .preferredColorScheme(.dark)
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") {
+                            dismiss()
+                        }
+                        .font(.system(size: 17, weight: .semibold))
+                    }
+                }
+            }
+        }
     }
     
     // MARK: - Sticky Header Scroll View
     
     private struct StickyHeaderScrollView: View {
         let dayData: DayScheduleData
+        let hiddenVenueNames: Set<String>
         let onBandTapped: (String, String?) -> Void
         let onLongPress: ((String, String, String, String, String) -> Void)?
         let priorityManager: SQLitePriorityManager
@@ -332,10 +413,15 @@ struct LandscapeScheduleView: View {
         let attendedHandle: ShowsAttended
         @State private var scrollOffset: CGPoint = .zero
         
+        private var visibleVenues: [VenueColumn] {
+            dayData.venues.filter { !hiddenVenueNames.contains($0.name) }
+        }
+        
         var body: some View {
             GeometryReader { geometry in
                 let availableWidth = geometry.size.width - 60 // Subtract time column width
-                let columnWidth = availableWidth / CGFloat(dayData.venues.count)
+                let venueCount = max(visibleVenues.count, 1)
+                let columnWidth = availableWidth / CGFloat(venueCount)
                 
                 ZStack(alignment: .topLeading) {
                     // Main scrollable content (vertical only)
@@ -344,14 +430,32 @@ struct LandscapeScheduleView: View {
                             // Spacer for headers
                             Color.clear.frame(height: 44)
                             
-                            // Content
-                            HStack(alignment: .top, spacing: 0) {
-                                // Time column content
-                                timeColumnContentView(dayData: dayData)
-                                
-                                // Venue columns
-                                ForEach(dayData.venues) { venue in
-                                    venueColumnContentView(venue: venue, dayData: dayData, columnWidth: columnWidth)
+                            if visibleVenues.isEmpty {
+                                // All venues hidden: prompt to show some
+                                HStack(alignment: .top, spacing: 0) {
+                                    timeColumnContentView(dayData: dayData)
+                                    VStack(spacing: 8) {
+                                        Text("All venues hidden")
+                                            .font(.system(size: 16, weight: .medium))
+                                            .foregroundColor(.white)
+                                        Text("Tap the filter icon above to show venues again.")
+                                            .font(.system(size: 14))
+                                            .foregroundColor(.gray)
+                                            .multilineTextAlignment(.center)
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                    .padding(.top, 40)
+                                }
+                            } else {
+                                // Content
+                                HStack(alignment: .top, spacing: 0) {
+                                    // Time column content
+                                    timeColumnContentView(dayData: dayData)
+                                    
+                                    // Venue columns (only visible)
+                                    ForEach(visibleVenues) { venue in
+                                        venueColumnContentView(venue: venue, dayData: dayData, columnWidth: columnWidth)
+                                    }
                                 }
                             }
                         }
@@ -367,9 +471,17 @@ struct LandscapeScheduleView: View {
                                 .frame(width: 60, height: 44)
                                 .background(Color.gray.opacity(0.3))
                             
-                            // Venue headers (no horizontal scrolling needed)
-                            ForEach(dayData.venues) { venue in
-                                venueHeaderViewSticky(venue: venue, columnWidth: columnWidth)
+                            if visibleVenues.isEmpty {
+                                Text("Venues")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(.gray)
+                                    .frame(maxWidth: .infinity, minHeight: 44, maxHeight: 44)
+                                    .background(Color.gray.opacity(0.2))
+                            } else {
+                                // Venue headers (only visible)
+                                ForEach(visibleVenues) { venue in
+                                    venueHeaderViewSticky(venue: venue, columnWidth: columnWidth)
+                                }
                             }
                         }
                         .background(Color.black)
