@@ -50,12 +50,33 @@ func getAllVenueFilterStates() -> [String: Bool] {
     }
 }
 
-// Helper function to set all venues to a specific state - Thread Safe
+// Helper function to set all configured venues to a specific state - Thread Safe
 func setAllVenueFilters(show: Bool) {
     let venues = FestivalConfig.current.getAllVenueNames()
     venueSettingsQueue.async(flags: .barrier) {
         for venue in venues {
             venueFilterSettings[venue.lowercased()] = show
+        }
+    }
+}
+
+/// Set venue filter state for a specific list of venue names (e.g. configured + discovered). Use when clearing all filters so every venue in the menu is reset. Sync so refresh after clear sees updated state.
+func setVenueFilters(venueNames: [String], show: Bool) {
+    venueSettingsQueue.sync(flags: .barrier) {
+        for name in venueNames {
+            venueFilterSettings[name.lowercased()] = show
+        }
+    }
+}
+
+/// Ensure filter state exists for venue names (e.g. discovered from event data). Missing entries default to true. Thread-safe; sync so menu has state when built.
+func ensureVenueFilterStates(venueNames: [String]) {
+    venueSettingsQueue.sync(flags: .barrier) {
+        for name in venueNames {
+            let key = name.lowercased()
+            if venueFilterSettings[key] == nil {
+                venueFilterSettings[key] = true
+            }
         }
     }
 }

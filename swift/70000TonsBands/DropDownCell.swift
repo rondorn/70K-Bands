@@ -30,6 +30,8 @@ extension  DropDownCell {
         super.awakeFromNib()
         
         backgroundColor = .clear
+        selectionStyle = .none
+        selectedBackgroundView = nil
     }
     
     override open var isSelected: Bool {

@@ -161,6 +161,9 @@
 "Show Schedule" = "Show Schedule"; //menu option
 "Event Type Filters" = "Event Type Filters"; //menu header
 "Venue Filters" = "Venue Filters"; //menu header
+"Event Location Filter" = "Event Location Filter"; //menu header (legacy)
+"Locations" = "Locations"; //legacy
+"Location Filters" = "Location Filters"; //menu header (portrait + calendar: venues in use)
 
 "Can not hide all venues" = "Can not hide all venues"; //help text
 "Can not hide all statuses" = "Can not hide all status"; //help text
@@ -192,6 +195,8 @@
 
 "Show Other Venues" = "Show Other Venues"; //menu choice
 "Hide Other Venues" = "Hide Other Venues"; //menu choice
+"Show Other" = "Show Other"; //location filter (no "Events")
+"Hide Other" = "Hide Other"; //location filter (no "Events")
 "Other Venue Filter On" = "Other Venue Filter On"; //help text
 "Other Venue Filter Off" = "Other Venue Filter Off"; //help text
 

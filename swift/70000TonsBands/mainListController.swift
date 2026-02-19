@@ -104,25 +104,18 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
     // 3. VENUE FILTERS (DYNAMIC approach using FestivalConfig venues)
     // This ensures new venues from different festivals are handled automatically
     
-    // Get the filter venues from FestivalConfig (only venues with showInFilters=true)
-    let filterVenues = FestivalConfig.current.getFilterVenueNames()
+    // Get all configured venues for filtering (discovered filters; list and calendar share same persistence)
+    let filterVenues = FestivalConfig.current.getAllVenueNames()
     
-    // Build list of enabled filter venues
-    var enabledFilterVenues: [String] = []
-    var disabledFilterVenues: [String] = []
-    
+    // Venue filtering uses per-venue state (configured + discovered) in the filter closure below
     for venueName in filterVenues {
         if getShowVenueEvents(venueName: venueName) {
-            enabledFilterVenues.append(venueName)
             print("🔍 [FILTER] ✅ Including \(venueName) venues")
         } else {
-            disabledFilterVenues.append(venueName)
             print("🔍 [FILTER] ❌ EXCLUDING \(venueName) venues")
         }
     }
-    
-    // Venue filtering is done in Swift filter below (no NSPredicate needed)
-    print("🔍 [FILTER] Venue filter: enabled=\(enabledFilterVenues), other=\(getShowOtherShows())")
+    print("🔍 [FILTER] Venue filter: configured venues checked; discovered venues use per-location state")
     
     // 4. EXPIRATION FILTER (if enabled)
     // Filtering happens in Swift filter below
@@ -146,37 +139,18 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
             return false
         }
         
-        // 2. Venue filters
-        // Check if any venues are enabled
-        if enabledFilterVenues.isEmpty && !getShowOtherShows() {
-            return false // No venues enabled
-        }
-        
-        var matchesVenue = false
-        // Check enabled filter venues
-        for venueName in enabledFilterVenues {
+        // 2. Venue filters: each event matches one venue (configured prefix or discovered = full location). Show iff that venue is enabled.
+        var venueNameToCheck: String?
+        for venueName in filterVenues {
             if location.lowercased().hasPrefix(venueName.lowercased()) {
-                matchesVenue = true
+                venueNameToCheck = venueName
                 break
             }
         }
-        
-        // Check "Other" venues if enabled
-        if !matchesVenue && getShowOtherShows() {
-            // Check if it's NOT a filter venue
-            var isFilterVenue = false
-            for venueName in filterVenues {
-                if location.lowercased().hasPrefix(venueName.lowercased()) {
-                    isFilterVenue = true
-                    break
-                }
-            }
-            if !isFilterVenue {
-                matchesVenue = true
-            }
+        if venueNameToCheck == nil {
+            venueNameToCheck = location // Discovered venue: use full location string as the filter key
         }
-        
-        if !matchesVenue {
+        if let name = venueNameToCheck, !getShowVenueEvents(venueName: name) {
             return false
         }
         
@@ -1115,49 +1089,21 @@ func eventTypeFiltering(_ eventType: String) -> Bool{
 }
 
 func venueFiltering(_ venue: String) -> Bool {
-    
-    print("🔍 [VENUE_DEBUG] Filtering venue: '\(venue)'")
-    
-    // Get filter venues (only venues with showInFilters=true)
-    let filterVenues = FestivalConfig.current.getFilterVenueNames()
-    print("🔍 [VENUE_DEBUG] Filter venues (showInFilters=true): \(filterVenues)")
-
-    var showVenue = false
-    var matchedFilterVenue = false
-    
-    // Check if this venue matches any filter venue (showInFilters=true)
-    // Use BEGINSWITH to match venue name at the start of location string
+    let filterVenues = FestivalConfig.current.getAllVenueNames()
+    var venueNameToCheck: String?
     for filterVenueName in filterVenues {
         if venue.lowercased().hasPrefix(filterVenueName.lowercased()) {
-            // This is a filter venue - check if its filter is enabled
-            matchedFilterVenue = true
-            if getShowVenueEvents(venueName: filterVenueName) {
-                showVenue = true
-                print("🔍 [VENUE_DEBUG] ✅ Filter venue '\(venue)' (\(filterVenueName)) ALLOWED - filter enabled")
-            } else {
-                showVenue = false
-                print("🔍 [VENUE_DEBUG] ❌ Filter venue '\(venue)' (\(filterVenueName)) REJECTED - filter disabled")
-            }
+            venueNameToCheck = filterVenueName
             break
         }
     }
-    
-    // If it didn't match any filter venue, treat as "Other"
-    if !matchedFilterVenue {
-        if getShowOtherShows() {
-            showVenue = true
-            print("🔍 [VENUE_DEBUG] ✅ Other venue '\(venue)' ALLOWED - Other venues enabled")
-        } else {
-            showVenue = false
-            print("🔍 [VENUE_DEBUG] ❌ Other venue '\(venue)' REJECTED - Other venues disabled")
-        }
+    if venueNameToCheck == nil {
+        venueNameToCheck = venue
     }
-    
+    let showVenue = venueNameToCheck.map { getShowVenueEvents(venueName: $0) } ?? false
     if !showVenue {
         numberOfFilteredRecords = numberOfFilteredRecords + 1
     }
-    
-    print("🔍 [VENUE_DEBUG] Final result for venue '\(venue)': \(showVenue ? "ALLOW" : "REJECT")")
     return showVenue
 }
 

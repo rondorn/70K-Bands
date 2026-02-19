@@ -217,45 +217,22 @@ class EventManager {
             print("🔍 DEBUG: No event types excluded - showing ALL event types")
         }
         
-        // 3. VENUE FILTERING (DYNAMIC approach using FestivalConfig venues)
-        let filterVenues = FestivalConfig.current.getFilterVenueNames()
-        var enabledFilterVenues: [String] = []
-        
-        for venueName in filterVenues {
-            if getShowVenueEvents(venueName: venueName) {
-                enabledFilterVenues.append(venueName)
-                print("🔍 DEBUG: ✅ Including \(venueName) venues")
-            } else {
-                print("🔍 DEBUG: ❌ EXCLUDING \(venueName) venues")
+        // 3. VENUE FILTERING (per-venue state: configured prefix match or discovered = full location; same as list/calendar)
+        let filterVenues = FestivalConfig.current.getAllVenueNames()
+        filteredEvents = filteredEvents.filter { event in
+            let location = event.location
+            var venueNameToCheck: String?
+            for venueName in filterVenues {
+                if location.lowercased().hasPrefix(venueName.lowercased()) {
+                    venueNameToCheck = venueName
+                    break
+                }
             }
-        }
-        
-        // Apply venue filtering (EXACT match only, case-insensitive)
-        if !enabledFilterVenues.isEmpty || getShowOtherShows() {
-            filteredEvents = filteredEvents.filter { event in
-                // Check if location matches any enabled filter venue (EXACT match)
-                let matchesFilterVenue = enabledFilterVenues.contains { venueName in
-                    event.location.localizedCaseInsensitiveCompare(venueName) == .orderedSame
-                }
-                
-                if matchesFilterVenue {
-                    return true
-                }
-                
-                // Check if it's an "Other" venue (not matching any filter venue)
-                if getShowOtherShows() {
-                    let matchesAnyFilterVenue = filterVenues.contains { venueName in
-                        event.location.localizedCaseInsensitiveCompare(venueName) == .orderedSame
-                    }
-                    return !matchesAnyFilterVenue
-                }
-                
-                return false
+            if venueNameToCheck == nil {
+                venueNameToCheck = location
             }
-        } else {
-            // No venues enabled and Other venues disabled = hide all venues
-            print("🔍 DEBUG: ⚠️ No venues enabled - this will show no events")
-            filteredEvents = []
+            guard let name = venueNameToCheck else { return false }
+            return getShowVenueEvents(venueName: name)
         }
         
         // 4. TIME FILTERING (upcoming events only if hideExpiredScheduleData is enabled)
