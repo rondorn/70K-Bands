@@ -17,8 +17,18 @@ class LandscapeScheduleViewModel: ObservableObject {
     @Published var currentDayIndex: Int = 0
     @Published var days: [DayScheduleData] = []
     @Published var totalEventCount: Int = 0
+    /// Venues hidden by the user in the calendar filter. When a venue is in this set, its column is not shown.
+    @Published var hiddenVenueNames: Set<String> = []
     
     // MARK: - Computed Properties
+    
+    var hasHiddenVenues: Bool {
+        !hiddenVenueNames.isEmpty
+    }
+    
+    var hiddenVenueCount: Int {
+        hiddenVenueNames.count
+    }
     
     var currentDayData: DayScheduleData? {
         guard currentDayIndex >= 0 && currentDayIndex < days.count else { return nil }
@@ -273,6 +283,20 @@ class LandscapeScheduleViewModel: ObservableObject {
     func refreshData() {
         print("🔄 [LANDSCAPE_SCHEDULE] Refreshing data due to filter change")
         loadScheduleData()
+    }
+    
+    /// Toggles whether a venue is hidden in the calendar. Hidden venues are excluded from the grid.
+    func setVenueHidden(_ venueName: String, hidden: Bool) {
+        if hidden {
+            hiddenVenueNames.insert(venueName)
+        } else {
+            hiddenVenueNames.remove(venueName)
+        }
+    }
+    
+    /// Returns true if the venue is currently hidden in the calendar.
+    func isVenueHidden(_ venueName: String) -> Bool {
+        hiddenVenueNames.contains(venueName)
     }
     
     // MARK: - Private Methods
