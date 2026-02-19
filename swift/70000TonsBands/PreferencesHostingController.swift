@@ -18,17 +18,15 @@ class PreferencesHostingController: UIHostingController<AnyView> {
     init() {
         // Determine if we need NavigationView based on device and presentation
         let rootView: AnyView
-        if UIDevice.current.userInterfaceIdiom == .pad {
-            // iPad: Wrap in NavigationView for modal presentation
+        if DeviceSizeManager.isLargeDisplay() {
             rootView = AnyView(
                 NavigationView {
-                    PreferencesView()
+                    PreferencesView().environmentObject(DeviceSizeManager.shared)
                 }
                 .navigationViewStyle(StackNavigationViewStyle())
             )
         } else {
-            // iPhone: Use plain view (will be pushed onto existing navigation stack)
-            rootView = AnyView(PreferencesView())
+            rootView = AnyView(PreferencesView().environmentObject(DeviceSizeManager.shared))
         }
         
         super.init(rootView: rootView)
@@ -38,17 +36,17 @@ class PreferencesHostingController: UIHostingController<AnyView> {
     @MainActor required dynamic init?(coder aDecoder: NSCoder) {
         // Same logic for coder init
         let rootView: AnyView
-        if UIDevice.current.userInterfaceIdiom == .pad {
+        if DeviceSizeManager.isLargeDisplay() {
             rootView = AnyView(
                 NavigationView {
-                    PreferencesView()
+                    PreferencesView().environmentObject(DeviceSizeManager.shared)
                 }
                 .navigationViewStyle(StackNavigationViewStyle())
             )
         } else {
-            rootView = AnyView(PreferencesView())
+            rootView = AnyView(PreferencesView().environmentObject(DeviceSizeManager.shared))
         }
-        
+
         super.init(coder: aDecoder, rootView: rootView)
         setupController()
     }

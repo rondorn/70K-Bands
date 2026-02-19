@@ -134,7 +134,7 @@ class DetailViewModel: ObservableObject {
     // Detects if essential data is missing (only for bands that should have this data)
     var isEssentialDataMissing: Bool {
         // Don't show loading if we're in landscape mode on iPhone - data is intentionally hidden
-        let isLandscapeOnPhone = UIApplication.shared.statusBarOrientation != .portrait && UIDevice.current.userInterfaceIdiom != .pad
+        let isLandscapeOnPhone = UIApplication.shared.statusBarOrientation != .portrait && !DeviceSizeManager.isLargeDisplay()
         if isLandscapeOnPhone {
             return false // Don't show loading in landscape - data is intentionally hidden
         }
@@ -979,7 +979,7 @@ class DetailViewModel: ObservableObject {
                 backItem.title = "Back"
                 
                 // Handle iPad split view vs iPhone navigation
-                if UIDevice.current.userInterfaceIdiom == .pad {
+                if DeviceSizeManager.isLargeDisplay() {
                     if let splitViewController = rootViewController as? UISplitViewController,
                        let detailNavigationController = splitViewController.viewControllers.last as? UINavigationController {
                         detailNavigationController.topViewController?.navigationItem.backBarButtonItem = backItem
@@ -1661,8 +1661,7 @@ class DetailViewModel: ObservableObject {
         // Post targeted notification for priority changes (avoid full data reload)
         NotificationCenter.default.post(name: Notification.Name("DetailDidUpdate"), object: nil)
         
-        if UIDevice.current.userInterfaceIdiom == .pad {
-            // Use lightweight refresh instead of heavy background update for priority changes
+        if DeviceSizeManager.isLargeDisplay() {
             masterView?.refreshBandListOnly(reason: "Detail view priority update")
         }
     }
