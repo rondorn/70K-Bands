@@ -7,6 +7,8 @@
     <string name="unknown">Unbekannte</string>
     <string name="priority">Priorität</string>
     <string name="attended">Teilgenommen</string>
+    <string name="band_priority">Band-Priorität</string>
+    <string name="event_attendance">Veranstaltungsbesuch</string>
 
     <string name="Ok">Ja</string>
     <string name="Cancel">Nein</string>
@@ -55,7 +57,9 @@
     <string name="AllOfEvent">An diesem Event teilnehmen</string>
     <string name="PartOfEvent">Teilnehmen an dieser Veranstaltung</string>
     <string name="NoneOfEvent">Ich werde dieses Ereignis nicht sehen</string>
-
+    <string name="EventAttendanceAll">Alle</string>
+    <string name="EventAttendancePartial">Teilweise</string>
+    <string name="EventAttendanceNone">Keine</string>
 
     <string name="venueFilterHeader">Anzeigen/Ausblenden Tagungsort</string>
     <string name="showTypeFilterHeader">Anzeigen/Ausblenden Ereignistyp</string>
@@ -142,6 +146,12 @@
     <string name="can_not_hide_all_statuses">Es können nicht alle Stati ausgeblendet werden</string>
     <!-- help text -->
     <string name="clear_all_filters">Alle Filter löschen</string>
+    <string name="venue_filter_done">Fertig</string>
+    <string name="venue_filter_calendar_description">Veranstaltungsorte ein- oder ausblenden. Gleiche Einstellungen wie in der Listenansicht – wenn ein Ort in der Liste ausgeblendet ist, ist er auch im Kalender ausgeblendet und umgekehrt.</string>
+    <string name="hide_venue_format">%1$s ausblenden</string>
+    <string name="show_venue_format">%1$s anzeigen</string>
+    <string name="one_venue_hidden">1 Ort ausgeblendet</string>
+    <string name="venues_hidden_count">%d Orte ausgeblendet</string>
     <!-- menu choice -->
     <string name="show_all_events">Alle Veranstaltungen anzeigen</string>
     <!-- menu choice -->

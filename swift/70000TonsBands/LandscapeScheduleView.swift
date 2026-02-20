@@ -291,7 +291,12 @@ struct LandscapeScheduleView: View {
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.white)
                 if viewModel.hasHiddenVenues {
-                    Text("\(viewModel.hiddenVenueCount) venue\(viewModel.hiddenVenueCount == 1 ? "" : "s") hidden")
+                    let venueHiddenText: String = {
+                        let n = viewModel.hiddenVenueCount
+                        if n == 1 { return NSLocalizedString("OneVenueHidden", comment: "") }
+                        return String(format: NSLocalizedString("VenuesHiddenCount", comment: ""), n)
+                    }()
+                    Text(venueHiddenText)
                         .font(.system(size: 12))
                         .foregroundColor(.orange)
                 }
@@ -369,11 +374,11 @@ struct LandscapeScheduleView: View {
             return NavigationView {
                 List {
                     Section {
-                        Text("Show or hide venues. Same settings as the list view—if a venue is hidden in the list, it is hidden in the calendar and vice versa.")
+                        Text(NSLocalizedString("VenueFilterSheetDescription", comment: ""))
                             .font(.system(size: 14))
                             .foregroundColor(.secondary)
                     }
-                    Section(header: Text("Location Filters")) {
+                    Section(header: Text(NSLocalizedString("Location Filters", comment: ""))) {
                         ForEach(venues) { venue in
                             HStack(spacing: 12) {
                                 RoundedRectangle(cornerRadius: 4)
@@ -387,12 +392,12 @@ struct LandscapeScheduleView: View {
                         }
                     }
                 }
-                .navigationTitle("Location Filters")
+                .navigationTitle(NSLocalizedString("Location Filters", comment: ""))
                 .navigationBarTitleDisplayMode(.inline)
                 .preferredColorScheme(.dark)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
-                        Button("Clear All Filters") {
+                        Button(NSLocalizedString("Clear All Filters", comment: "")) {
                             setVenueFilters(venueNames: getVenueNamesInUseForList(), show: true)
                             writeFiltersFile()
                             viewModel.refreshVenueVisibility()
@@ -402,7 +407,7 @@ struct LandscapeScheduleView: View {
                         .disabled(!viewModel.hasHiddenVenues)
                     }
                     ToolbarItem(placement: .confirmationAction) {
-                        Button("Done") {
+                        Button(NSLocalizedString("Done", comment: "")) {
                             dismiss()
                         }
                         .font(.system(size: 17, weight: .semibold))
@@ -446,10 +451,10 @@ struct LandscapeScheduleView: View {
                                 HStack(alignment: .top, spacing: 0) {
                                     timeColumnContentView(dayData: dayData)
                                     VStack(spacing: 8) {
-                                        Text("All venues hidden")
+                                        Text(NSLocalizedString("All venues hidden", comment: ""))
                                             .font(.system(size: 16, weight: .medium))
                                             .foregroundColor(.white)
-                                        Text("Tap the filter icon above to show venues again.")
+                                        Text(NSLocalizedString("TapFilterToShowVenues", comment: ""))
                                             .font(.system(size: 14))
                                             .foregroundColor(.gray)
                                             .multilineTextAlignment(.center)

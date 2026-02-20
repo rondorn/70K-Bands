@@ -12,6 +12,7 @@
 */
 
 "Close"="Sulje";
+"Done"="Valmis";
 
 "SelectBandMessage"="Valitse bändi listasta nähdäksesi tiedot";
 
@@ -22,6 +23,11 @@
 "Wont"="Ei";
 "Priority"="Prioriteetti";
 "Attended"="Osallistunut";
+"Band Priority"="Bändin prioriteetti";
+"Event Attendance"="Tapahtuman läsnäolo";
+"EventAttendanceAll"="Kaikki";
+"EventAttendancePartial"="Osittain";
+"EventAttendanceNone"="Ei mitään";
 "Wont Attend"="En osallistu";
 
 "Ok"="Kyllä";
@@ -86,7 +92,9 @@
 
 "showHideExpiredLabel" = "Näytä/piilota vanhentuneet tapahtumat";
 "hideExpiredEvents" = "Piilota vanhentuneet tapahtumat";
+"Hide Expired Events" = "Piilota vanhentuneet tapahtumat";
 "Expired Events" = "Vanhentuneet tapahtumat";
+"Flagged Header" = "Merkityt";
 "Show Expired Events" = "Näytä vanhentuneet tapahtumat";
 "Hiding Expired Events" = "Piilotetaan vanhentuneita tapahtumia";
 "Showing Expired Events" = "Näytetään vanhentuneita tapahtumia";
@@ -129,6 +137,14 @@
 "Sorting Options" = "Lajitteluasetukset"; //menu header
 "Event Type Filters" = "Tapahtumatyyppisuodattimet"; //menu header
 "Venue Filters" = "Tapahtumapaikkasuodattimet"; //menu header
+"Location Filters" = "Tapahtumapaikkasuodattimet"; //menu header (portrait + calendar: venues in use)
+"VenueFilterSheetDescription" = "Näytä tai piilota tapahtumapaikat. Samat asetukset kuin listanäkymässä—jos paikka on piilotettu listassa, se on piilotettu kalenterissa ja päinvastoin.";
+"OneVenueHidden" = "1 paikka piilotettu";
+"VenuesHiddenCount" = "%d paikkaa piilotettu";
+"All venues hidden" = "Kaikki paikat piilotettu";
+"TapFilterToShowVenues" = "Napauta yllä olevaa suodatin-kuvaketta nähdäksesi paikat uudelleen.";
+"Show Venue Format" = "Näytä %@"; //venue filter option, %@ = venue name
+"Hide Venue Format" = "Piilota %@"; //venue filter option, %@ = venue name
 
 "Can not hide all venues" = "Kaikkia tapahtumapaikkoja ei voi piilottaa"; //help text
 "Can not hide all statuses" = "Kaikkia tiloja ei voi piilottaa"; //help text
@@ -265,6 +281,9 @@
 "Bands URL" = "Bändien URL";
 "Schedule URL" = "Aikataulun URL";
 "Pointer URL" = "Osoittimen URL";
+"Custom Pointer URL" = "Mukautettu osoittimen URL";
+"CustomPointerUrlPlaceholder" = "Jätä tyhjäksi käyttääksesi oletusta";
+"Minutes" = "Minuuttia";
 "Default" = "Oletus";
 "Import Successful" = "Tuonti Onnistui";
 "Profile Updated" = "Profiili Päivitetty";

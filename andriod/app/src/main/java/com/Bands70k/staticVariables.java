@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -285,6 +286,65 @@ public class staticVariables {
      */
     public static synchronized mainListHandler getlistHandlerCache() {
         return staticVariables.listHandlerCache;
+    }
+
+    /**
+     * Venues that appear in the list (have at least one event this year). Includes configured venues in use
+     * (prefix match) plus discovered venues (event locations that don't match any configured venue).
+     * Used for Location Filters menu and Clear All Filters.
+     */
+    public static List<String> getVenueNamesInUseForList() {
+        Set<String> allLocations = new HashSet<>();
+        if (BandInfo.scheduleRecords != null) {
+            for (String band : BandInfo.scheduleRecords.keySet()) {
+                scheduleTimeTracker t = BandInfo.scheduleRecords.get(band);
+                if (t != null && t.scheduleByTime != null) {
+                    for (Long time : t.scheduleByTime.keySet()) {
+                        scheduleHandler h = t.scheduleByTime.get(time);
+                        if (h != null) {
+                            String loc = h.getShowLocation();
+                            if (loc != null && !loc.isEmpty()) allLocations.add(loc);
+                        }
+                    }
+                }
+            }
+        }
+        List<String> configured = FestivalConfig.getInstance().getAllVenueNames();
+        List<String> configuredInUse = new ArrayList<>();
+        for (String v : configured) {
+            for (String loc : allLocations) {
+                if (loc.toLowerCase(Locale.ROOT).startsWith(v.toLowerCase(Locale.ROOT))) {
+                    configuredInUse.add(v);
+                    break;
+                }
+            }
+        }
+        Set<String> discovered = new HashSet<>();
+        for (String loc : allLocations) {
+            boolean matches = false;
+            for (String v : configured) {
+                if (loc.toLowerCase(Locale.ROOT).startsWith(v.toLowerCase(Locale.ROOT))) {
+                    matches = true;
+                    break;
+                }
+            }
+            if (!matches) discovered.add(loc);
+        }
+        List<String> discoveredSorted = new ArrayList<>(discovered);
+        Collections.sort(discoveredSorted);
+        List<String> result = new ArrayList<>(configuredInUse);
+        result.addAll(discoveredSorted);
+        return result;
+    }
+
+    /**
+     * Returns venue name with any parenthesized part removed, for menu display only. Filtering still uses full location name.
+     */
+    public static String venueDisplayName(String venueName) {
+        if (venueName == null) return "";
+        int idx = venueName.indexOf(" (");
+        if (idx >= 0) return venueName.substring(0, idx).trim();
+        return venueName.trim();
     }
 
     /**

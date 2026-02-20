@@ -8,6 +8,8 @@
     <string name="unknown">Tuntematon</string>
     <string name="priority">Prioriteetti</string>
     <string name="attended">Osallistunut</string>
+    <string name="band_priority">Bändin prioriteetti</string>
+    <string name="event_attendance">Tapahtuman läsnäolo</string>
 
     <string name="Ok">Kyllä</string>
     <string name="Cancel">Ei</string>
@@ -59,6 +61,9 @@
     <string name="AllOfEvent">Osallistun koko tapahtumaan</string>
     <string name="PartOfEvent">Osallistun osaan tapahtumasta</string>
     <string name="NoneOfEvent">En tule osallistumaan tähän tapahtumaan</string>
+    <string name="EventAttendanceAll">Kaikki</string>
+    <string name="EventAttendancePartial">Osittain</string>
+    <string name="EventAttendanceNone">Ei mitään</string>
 
     <string name="venueFilterHeader">Näytä/piilota paikka</string>
     <string name="showTypeFilterHeader">Näytä/piilota tapahtumatyyppi</string>
@@ -143,6 +148,12 @@
     <!-- help text -->
     <string name="can_not_hide_all_statuses">Kaikkia tiloja ei voi piilottaa</string>
     <string name="clear_all_filters">Tyhjennä kaikki suodattimet</string>
+    <string name="venue_filter_done">Valmis</string>
+    <string name="venue_filter_calendar_description">Näytä tai piilota tapahtumapaikat. Samat asetukset kuin listanäkymässä — jos paikka on piilotettu listassa, se on piilotettu kalenterissa ja päinvastoin.</string>
+    <string name="hide_venue_format">Piilota %1$s</string>
+    <string name="show_venue_format">Näytä %1$s</string>
+    <string name="one_venue_hidden">1 paikka piilotettu</string>
+    <string name="venues_hidden_count">%d paikkaa piilotettu</string>
     <!-- menu choice -->
     <string name="show_all_events">Näytä kaikki tapahtumat</string>
     <!-- menu choice -->

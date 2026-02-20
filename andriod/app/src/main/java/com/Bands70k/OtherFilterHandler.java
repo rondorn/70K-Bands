@@ -78,12 +78,9 @@ public class OtherFilterHandler {
                  staticVariables.preferences.setShowTheaterShows(true);
                  staticVariables.preferences.setShowOtherShows(true);
                  
-                 // Reset all dynamic venue preferences (for MDF and other festivals)
-                 FestivalConfig festivalConfig = FestivalConfig.getInstance();
-                 java.util.List<String> configuredVenues = festivalConfig.getAllVenueNames();
-                 for (String venueName : configuredVenues) {
-                     staticVariables.preferences.setShowVenueEvents(venueName, true);
-                 }
+                 // Reset all location filters (configured + discovered) so every venue in the menu is shown
+                 java.util.List<String> venuesInUse = staticVariables.getVenueNamesInUseForList();
+                 staticVariables.preferences.setVenueFilters(venuesInUse, true);
 
                 staticVariables.preferences.setShowWillAttend(false);
                 staticVariables.preferences.setHideExpiredEvents(false);

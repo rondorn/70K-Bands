@@ -7,6 +7,8 @@
     <string name="unknown">Unknown</string>
     <string name="priority">Priority</string>
     <string name="attended">Attended</string>
+    <string name="band_priority">Band Priority</string>
+    <string name="event_attendance">Event Attendance</string>
 
     <string name="Ok">OK</string>
     <string name="Cancel">Cancel</string>
@@ -60,6 +62,9 @@
     <string name="AllOfEvent">Attending all of this event</string>
     <string name="PartOfEvent">Attending some of this event</string>
     <string name="NoneOfEvent">I will not see this event</string>
+    <string name="EventAttendanceAll">All</string>
+    <string name="EventAttendancePartial">Partial</string>
+    <string name="EventAttendanceNone">None</string>
 
     <string name="venueFilterHeader">Show/Hide Venue</string>
     <string name="showTypeFilterHeader">Show/Hide Event Type</string>
@@ -176,6 +181,13 @@
     <!-- help text -->
     <!-- help text -->
     <string name="clear_all_filters">Clear All Filters</string>
+    <string name="venue_filter_done">Done</string>
+    <string name="venue_filter_calendar_description">Show or hide venues. Same settings as the list view—if a venue is hidden in the list, it is hidden in the calendar and vice versa.</string>
+    <!-- Filter menu: "Hide X" / "Show X" for venue name X (e.g. Hide Rink, Show Lounge) -->
+    <string name="hide_venue_format">Hide %1$s</string>
+    <string name="show_venue_format">Show %1$s</string>
+    <string name="one_venue_hidden">1 venue hidden</string>
+    <string name="venues_hidden_count">%d venues hidden</string>
     <!-- menu choice -->
     <string name="show_all_events">Show All Events</string>
     <!-- menu choice -->
