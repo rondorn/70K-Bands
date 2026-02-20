@@ -33,6 +33,7 @@ import java.lang.reflect.Field;
 public class FilterButtonHandler  {
     public Button filterMenuButton;
     private PopupWindow popupWindow;
+    private static PopupWindow sCurrentPopup;
     private static View messageView;
     /**
      * Sets up the filter button and its click listener.
@@ -58,6 +59,7 @@ public class FilterButtonHandler  {
                 popupWindow.setContentView(view);
 
                 popupWindow.showAsDropDown(filterMenuButton, 0, 0);
+                sCurrentPopup = popupWindow;
 
                 // View Mode Filter removed - use title button to toggle instead
                 boolean hasScheduledEvents = staticVariables.showEventButtons;
@@ -81,6 +83,16 @@ public class FilterButtonHandler  {
 
             }
         });
+    }
+
+    /**
+     * Dismisses the filter popup if it is showing (e.g. on rotation).
+     */
+    public static void dismissFilterPopupIfShowing() {
+        if (sCurrentPopup != null && sCurrentPopup.isShowing()) {
+            sCurrentPopup.dismiss();
+        }
+        sCurrentPopup = null;
     }
 
     /**
@@ -237,21 +249,14 @@ public class FilterButtonHandler  {
 
         Boolean blockChange = false;
         
-        // Check if all venues are hidden using dynamic venue system (only check filter venues + Other)
-        FestivalConfig festivalConfig = FestivalConfig.getInstance();
-        java.util.List<String> filterVenues = festivalConfig.getFilterVenueNames();
-        
+        // Check if all venues in use (configured + discovered) would be hidden
+        java.util.List<String> venuesInUse = staticVariables.getVenueNamesInUseForList();
         boolean anyVenueVisible = false;
-        // Check all filter venues (showInFilters=true)
-        for (String venueName : filterVenues) {
+        for (String venueName : venuesInUse) {
             if (staticVariables.preferences.getShowVenueEvents(venueName)) {
                 anyVenueVisible = true;
                 break;
             }
-        }
-        // Also check "Other" venues (includes venues with showInFilters=false)
-        if (staticVariables.preferences.getShowVenueEvents("Other")) {
-            anyVenueVisible = true;
         }
         
         if (!anyVenueVisible) {

@@ -60,15 +60,15 @@ struct PreferencesView: View {
     
     private var alertPreferencesSection: some View {
         Section(NSLocalizedString("AlertPreferences", comment: "")) {
-            Toggle("Alert On Must See Bands", isOn: $viewModel.alertOnMustSee)
+            Toggle(NSLocalizedString("Alert On Must See Bands", comment: ""), isOn: $viewModel.alertOnMustSee)
                 .disabled(viewModel.alertOnlyForWillAttend)
                 .foregroundColor(viewModel.alertOnlyForWillAttend ? .secondary : .primary)
             
-            Toggle("Alert On Might See Bands", isOn: $viewModel.alertOnMightSee)
+            Toggle(NSLocalizedString("Alert On Might See Bands", comment: ""), isOn: $viewModel.alertOnMightSee)
                 .disabled(viewModel.alertOnlyForWillAttend)
                 .foregroundColor(viewModel.alertOnlyForWillAttend ? .secondary : .primary)
             
-            Toggle("Alert Only for Will Attend Events", isOn: $viewModel.alertOnlyForWillAttend)
+            Toggle(NSLocalizedString("Alert Only for Will Attend Events", comment: ""), isOn: $viewModel.alertOnlyForWillAttend)
             
             minutesBeforeAlertView
             
@@ -78,9 +78,9 @@ struct PreferencesView: View {
     
     private var minutesBeforeAlertView: some View {
         HStack {
-            Text("Minutes Before Event to Alert")
+            Text(NSLocalizedString("Minutes Before Event to Alert", comment: ""))
             Spacer()
-            TextField("Minutes", text: $minutesText)
+            TextField(NSLocalizedString("Minutes", comment: "Minutes number field placeholder"), text: $minutesText)
                 .keyboardType(.numberPad)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .frame(width: 60)
@@ -94,12 +94,12 @@ struct PreferencesView: View {
     
     private var alertTogglesView: some View {
         Group {
-            alertToggleRow("Alert For Shows", binding: $viewModel.alertForShows)
-            alertToggleRow("Alert For Special Events", binding: $viewModel.alertForSpecialEvents)
-            alertToggleRow("Alert For Unofficial Events", binding: $viewModel.alertForCruiserOrganized)
-            alertToggleRow("Alert For Meeting and Greet Events", binding: $viewModel.alertForMeetAndGreet)
-            alertToggleRow("Alert For Clinics", binding: $viewModel.alertForClinics)
-            alertToggleRow("Alert For Album Listening Events", binding: $viewModel.alertForAlbumListening)
+            alertToggleRow(NSLocalizedString("Alert For Shows", comment: ""), binding: $viewModel.alertForShows)
+            alertToggleRow(NSLocalizedString("Alert For Special Events", comment: ""), binding: $viewModel.alertForSpecialEvents)
+            alertToggleRow(NSLocalizedString("Alert For Unofficial Events", comment: ""), binding: $viewModel.alertForCruiserOrganized)
+            alertToggleRow(NSLocalizedString("Alert For Meeting and Greet Events", comment: ""), binding: $viewModel.alertForMeetAndGreet)
+            alertToggleRow(NSLocalizedString("Alert For Clinics", comment: ""), binding: $viewModel.alertForClinics)
+            alertToggleRow(NSLocalizedString("Alert For Album Listening Events", comment: ""), binding: $viewModel.alertForAlbumListening)
         }
     }
     
@@ -211,10 +211,10 @@ struct PreferencesView: View {
             
             // Custom Pointer URL
             VStack(alignment: .leading, spacing: 4) {
-                Text("Custom Pointer URL")
+                Text(NSLocalizedString("Custom Pointer URL", comment: ""))
                     .font(.body)
                     .foregroundColor(.primary)
-                TextField("Leave empty to use default", text: $viewModel.customPointerUrl)
+                TextField(NSLocalizedString("CustomPointerUrlPlaceholder", comment: ""), text: $viewModel.customPointerUrl)
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .autocapitalization(.none)

@@ -8,6 +8,7 @@
  */
 
 "Close"="Luk";
+"Done"="Færdig";
 
 "SelectBandMessage"="Vælg et band fra listen for at se detaljer";
 
@@ -18,6 +19,11 @@
 "Wont"="Skal ikke";
 "Priority"="Prioritet";
 "Attended"="Deltaget";
+"Band Priority"="Bandprioritet";
+"Event Attendance"="Begivenhedsdeltagelse";
+"EventAttendanceAll"="Alle";
+"EventAttendancePartial"="Delvist";
+"EventAttendanceNone"="Ingen";
 "Wont Attend"="Vil ikke deltage";
 
 "Ok"="Ja";
@@ -80,7 +86,9 @@
 
 "showHideExpiredLabel" = "Vis/Skjul Udløbet Begivenheder";
 "hideExpiredEvents" = "Skjul Udløbet Begivenheder";
+"Hide Expired Events" = "Skjul udløbne begivenheder";
 "Expired Events" = "Udløbet Begivenheder";
+"Flagged Header" = "Markerede";
 "Show Expired Events" = "Vis Udløbet Begivenheder";
 "Hiding Expired Events" = "Skjuler Udløbet Begivenheder";
 "Showing Expired Events" = "Viser Udløbet Begivenheder";
@@ -122,10 +130,18 @@
 "Sorting Options" = "Sorteringsmuligheder"; //menu header
 "Event Type Filters" = "Hændelsestypefiltre"; //menu header
 "Venue Filters" = "Lokale filtre"; //menu header
+"Location Filters" = "Lokale filtre"; //menu header (portrait + calendar: venues in use)
+"VenueFilterSheetDescription" = "Vis eller skjul spillesteder. Samme indstillinger som listen—hvis et spillested er skjult i listen, er det skjult i kalenderen og omvendt.";
+"OneVenueHidden" = "1 spillested skjult";
+"VenuesHiddenCount" = "%d spillesteder skjult";
+"All venues hidden" = "Alle spillesteder skjult";
+"TapFilterToShowVenues" = "Tryk på filterikonet ovenfor for at vise spillesteder igen.";
+"Show Venue Format" = "Vis %@"; //venue filter option, %@ = venue name
+"Hide Venue Format" = "Skjul %@"; //venue filter option, %@ = venue name
 
 "Can not hide all venues" = "Can not hide all venues";
 "Can not hide all statuses" = "Kan ikke skjule al status";
-"Clear All Filters" = "Clear All Filters";  //menu choice
+"Clear All Filters" = "Ryd alle filtre";  //menu choice
 "Show All Events" = "Vis alle begivenheder";  //menu choice
 "Show Flagged Events Only" = "Vis kun markerede begivenheder";  //menu choice
 "Show Only Events Flagged As Attending" = "Vis kun begivenheder, der er markeret som tilstedeværende"; //help text
@@ -261,6 +277,9 @@
 "Bands URL" = "Bands URL";
 "Schedule URL" = "Tidsplan URL";
 "Pointer URL" = "Pegestreg URL";
+"Custom Pointer URL" = "Brugerdefineret peger-URL";
+"CustomPointerUrlPlaceholder" = "Lad stå tom for at bruge standard";
+"Minutes" = "Minutter";
 "Default" = "Standard";
 
 // Profile Management

@@ -615,6 +615,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         Log.d("orientation", "orientation DONE! New orientation: " + newConfig.orientation);
+        FilterButtonHandler.dismissFilterPopupIfShowing();
         setSearchBarWidth();
         
         // CRITICAL: Update DeviceSizeManager on configuration change

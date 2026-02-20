@@ -7,6 +7,8 @@
     <string name="unknown">Inconnu</string>
     <string name="priority">Priorité</string>
     <string name="attended">Assisté</string>
+    <string name="band_priority">Priorité du groupe</string>
+    <string name="event_attendance">Présence à l\'événement</string>
 
     <string name="Ok">Oui</string>
     <string name="Cancel">Non</string>
@@ -59,6 +61,9 @@
     <string name="AllOfEvent">Assister à tous cet événement</string>
     <string name="PartOfEvent">Assister à certains de cet événement</string>
     <string name="NoneOfEvent">Je ne verrai pas cet événement</string>
+    <string name="EventAttendanceAll">Tous</string>
+    <string name="EventAttendancePartial">Partiel</string>
+    <string name="EventAttendanceNone">Aucun</string>
 
     <string name="venueFilterHeader">Afficher/Masquer le Lieu</string>
     <string name="showTypeFilterHeader">Afficher/Masquer Type d\'événement</string>
@@ -144,6 +149,12 @@
     <string name="can_not_hide_all_statuses">Impossible de masquer tous les statuts</string>
     <!-- help text -->
     <string name="clear_all_filters">Effacer tous les filtres</string>
+    <string name="venue_filter_done">Terminé</string>
+    <string name="venue_filter_calendar_description">Afficher ou masquer les lieux. Mêmes réglages que la vue liste — si un lieu est masqué dans la liste, il est masqué dans le calendrier et vice versa.</string>
+    <string name="hide_venue_format">Masquer %1$s</string>
+    <string name="show_venue_format">Afficher %1$s</string>
+    <string name="one_venue_hidden">1 lieu masqué</string>
+    <string name="venues_hidden_count">%d lieux masqués</string>
     <!-- menu choice -->
     <string name="show_all_events">Afficher tous les événements</string>
     <!-- menu choice -->

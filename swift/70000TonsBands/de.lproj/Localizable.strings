@@ -10,6 +10,7 @@
 */
 
 "Close"="Schließen";
+"Done"="Fertig";
 
 "SelectBandMessage"="Wählen Sie eine Band aus der Liste aus, um Details anzuzeigen";
 
@@ -20,6 +21,11 @@
 "Wont"="Nein";
 "Priority"="Priorität";
 "Attended"="Teilgenommen";
+"Band Priority"="Band-Priorität";
+"Event Attendance"="Veranstaltungsbesuch";
+"EventAttendanceAll"="Alle";
+"EventAttendancePartial"="Teilweise";
+"EventAttendanceNone"="Keine";
 "Wont Attend"="Wird nicht teilnehmen";
 "Unknown" = "Unbekannt";
 
@@ -82,7 +88,9 @@
 "showTypeFilterHeader" = "Ereignistyp anzeigen/ausblenden";
 "showHideExpiredLabel" = "Vergangene Ereignisse anzeigen/ausblenden";
 "hideExpiredEvents" = "Vergangene Ereignisse ausblenden";
+"Hide Expired Events" = "Vergangene Ereignisse ausblenden";
 "Expired Events" = "Abgelaufene Ereignisse";
+"Flagged Header" = "Markierte";
 "Show Expired Events" = "Vergangene Ereignisse anzeigen";
 "Hiding Expired Events" = "Vergangene Ereignisse ausblenden";
 "Showing Expired Events" = "Vergangene Ereignisse anzeigen";
@@ -145,6 +153,14 @@
 "Sorting Options" = "Sortieroptionen"; //menu header
 "Event Type Filters" = "Filter nach Veranstaltungstyp"; //menu header
 "Venue Filters" = "Filter nach Veranstaltungsort"; //menu header
+"Location Filters" = "Filter nach Veranstaltungsort"; //menu header (portrait + calendar: venues in use)
+"VenueFilterSheetDescription" = "Veranstaltungsorte ein- oder ausblenden. Gleiche Einstellungen wie in der Listenansicht—wenn ein Ort in der Liste ausgeblendet ist, ist er auch im Kalender ausgeblendet und umgekehrt.";
+"OneVenueHidden" = "1 Ort ausgeblendet";
+"VenuesHiddenCount" = "%d Orte ausgeblendet";
+"All venues hidden" = "Alle Orte ausgeblendet";
+"TapFilterToShowVenues" = "Tippe oben auf das Filter-Symbol, um Orte wieder anzuzeigen.";
+"Show Venue Format" = "%@ anzeigen"; //venue filter option, %@ = venue name
+"Hide Venue Format" = "%@ ausblenden"; //venue filter option, %@ = venue name
 
 "Can not hide all venues" = "Es können nicht alle Veranstaltungsorte ausgeblendet werden"; //help text
 "Can not hide all statuses" = "Es können nicht alle Stati ausgeblendet werden"; //help text
@@ -245,6 +261,9 @@
 "Bands URL" = "Bands URL";
 "Schedule URL" = "Zeitplan URL";
 "Pointer URL" = "Zeiger URL";
+"Custom Pointer URL" = "Benutzerdefinierte Zeiger-URL";
+"CustomPointerUrlPlaceholder" = "Leer lassen für Standard";
+"Minutes" = "Minuten";
 "Default" = "Standard";
 
 // Localized share text

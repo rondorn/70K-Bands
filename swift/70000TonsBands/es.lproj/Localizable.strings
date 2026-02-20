@@ -9,6 +9,7 @@
  */
 
 "Close"="Cerrar";
+"Done"="Listo";
 
 "SelectBandMessage"="Selecciona una banda de la lista para ver detalles";
 
@@ -19,6 +20,11 @@
 "Wont"="No";
 "Priority"="Prioridad";
 "Attended"="Asistencia";
+"Band Priority"="Prioridad de banda";
+"Event Attendance"="Asistencia al evento";
+"EventAttendanceAll"="Todo";
+"EventAttendancePartial"="Parcial";
+"EventAttendanceNone"="Ninguno";
 "Wont Attend"="No asistiré";
 "Unknown" = "No lo sé";
 
@@ -81,7 +87,9 @@
 
 "showHideExpiredLabel" = "Mostrar/Ocultar eventos pasados";
 "hideExpiredEvents" = "Ocultar eventos pasados";
+"Hide Expired Events" = "Ocultar eventos pasados";
 "Expired Events" = "Eventos Pasados";
+"Flagged Header" = "Eventos marcados";
 "Show Expired Events" = "Mostrar Eventos Pasados";
 "Hiding Expired Events" = "Ocultando Eventos Pasados";
 "Showing Expired Events" = "Mostrando Eventos Pasados";
@@ -144,6 +152,14 @@
 "Sorting Options" = "Opciones de ordenación"; //menu header
 "Event Type Filters" = "Filtros de tipo de evento"; //menu header
 "Venue Filters" = "Filtros de lugar"; //menu header
+"Location Filters" = "Filtros de lugar"; //menu header (portrait + calendar: venues in use)
+"VenueFilterSheetDescription" = "Mostrar u ocultar lugares. Misma configuración que la vista de lista: si un lugar está oculto en la lista, está oculto en el calendario y viceversa.";
+"OneVenueHidden" = "1 lugar oculto";
+"VenuesHiddenCount" = "%d lugares ocultos";
+"All venues hidden" = "Todos los lugares ocultos";
+"TapFilterToShowVenues" = "Toca el icono de filtros de arriba para volver a mostrar los lugares.";
+"Show Venue Format" = "Mostrar %@"; //venue filter option, %@ = venue name
+"Hide Venue Format" = "Ocultar %@"; //venue filter option, %@ = venue name
 
 "Can not hide all venues" = "No se pueden ocultar todos los lugares"; //help text
 "Can not hide all statuses" = "No se pueden ocultar todos los estados"; //help text
@@ -260,6 +276,9 @@
 "Bands URL" = "URL de bandas";
 "Schedule URL" = "URL del calendario";
 "Pointer URL" = "URL del puntero";
+"Custom Pointer URL" = "URL del puntero personalizado";
+"CustomPointerUrlPlaceholder" = "Dejar vacío para usar el predeterminado";
+"Minutes" = "Minutos";
 "Default" = "Predeterminado";
 
 "year_change_loading" = "Cargando datos para el nuevo año, por favor espere...";

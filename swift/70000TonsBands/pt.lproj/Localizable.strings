@@ -9,6 +9,7 @@
 */
 
 "Close"="Fechar";
+"Done"="Concluído";
 
 "SelectBandMessage"="Selecione uma banda da lista para ver detalhes";
 
@@ -19,6 +20,11 @@
 "Wont"="Não";
 "Priority"="Prioridade";
 "Attended"="Participou";
+"Band Priority"="Prioridade da banda";
+"Event Attendance"="Comparecimento ao evento";
+"EventAttendanceAll"="Todos";
+"EventAttendancePartial"="Parcial";
+"EventAttendanceNone"="Nenhum";
 "Wont Attend"="Não participará";
 
 "Ok"="Ok";
@@ -83,7 +89,9 @@
 
 "showHideExpiredLabel" = "Mostrar/Ocultar Eventos Expirados";
 "hideExpiredEvents" = "Ocultar Eventos Expirados";
+"Hide Expired Events" = "Ocultar eventos passados";
 "Expired Events" = "Eventos Expirados";
+"Flagged Header" = "Eventos marcados";
 "Show Expired Events" = "Mostrar Eventos Expirados";
 "Hiding Expired Events" = "Ocultando Eventos Expirados";
 "Showing Expired Events" = "Mostrando Eventos Expirados";
@@ -145,6 +153,14 @@
 "Sorting Options" = "Opções de classificação"; //menu header
 "Event Type Filters" = "Filtros de tipo de evento"; //menu header
 "Venue Filters" = "Filtros de local"; //menu header
+"Location Filters" = "Filtros de local"; //menu header (portrait + calendar: venues in use)
+"VenueFilterSheetDescription" = "Mostrar ou ocultar locais. Mesmas configurações da vista de lista—se um local estiver oculto na lista, estará oculto no calendário e vice-versa.";
+"OneVenueHidden" = "1 local oculto";
+"VenuesHiddenCount" = "%d locais ocultos";
+"All venues hidden" = "Todos os locais ocultos";
+"TapFilterToShowVenues" = "Toque no ícone de filtro acima para mostrar os locais novamente.";
+"Show Venue Format" = "Mostrar %@"; //venue filter option, %@ = venue name
+"Hide Venue Format" = "Ocultar %@"; //venue filter option, %@ = venue name
 
 "Can not hide all venues" = "Não é possível ocultar todos os locais"; //help text
 "Can not hide all statuses" = "Não é possível ocultar todos os status"; //help text
@@ -259,6 +275,9 @@
 "Bands URL" = "URL das bandas";
 "Schedule URL" = "URL do calendário";
 "Pointer URL" = "URL do ponteiro";
+"Custom Pointer URL" = "URL do ponteiro personalizado";
+"CustomPointerUrlPlaceholder" = "Deixe vazio para usar o padrão";
+"Minutes" = "Minutos";
 "Default" = "Padrão";
 
 "NoteFontSize"="Tamanho de fonte grande para notas";

@@ -462,33 +462,18 @@ public class mainListHandler {
     }
 
     private boolean filterByVenue(String venue){
-
-        Boolean showVenue = false;
-        Log.d("VenueFilter", "Venue is " + venue);
-
-        // Get the current festival configuration
+        // Per-venue state: configured (prefix match) or discovered (full location as key)
         FestivalConfig festivalConfig = FestivalConfig.getInstance();
-        List<String> filterVenues = festivalConfig.getFilterVenueNames();
-
-        // Check if this venue is one of the filter venues (showInFilters=true)
-        boolean isFilterVenue = false;
-        for (String filterVenue : filterVenues) {
-            if (venue.equals(filterVenue)) {
-                // Check if this specific filter venue is enabled
-                showVenue = getVenueShowState(filterVenue);
-                isFilterVenue = true;
-                Log.d("VenueFilter", "Filter venue " + filterVenue + " show state: " + showVenue);
+        List<String> configuredVenues = festivalConfig.getAllVenueNames();
+        String venueNameToCheck = null;
+        for (String v : configuredVenues) {
+            if (venue.toLowerCase(java.util.Locale.ROOT).startsWith(v.toLowerCase(java.util.Locale.ROOT))) {
+                venueNameToCheck = v;
                 break;
             }
         }
-        
-        // If not a filter venue, treat as "Other" (includes venues with showInFilters=false)
-        if (!isFilterVenue) {
-            showVenue = staticVariables.preferences.getShowOtherShows();
-            Log.d("VenueFilter", "Other venue '" + venue + "' (showInFilters=false or unknown) show state: " + showVenue);
-        }
-
-        return showVenue;
+        if (venueNameToCheck == null) venueNameToCheck = venue;
+        return getVenueShowState(venueNameToCheck);
     }
     
     /**
@@ -679,20 +664,10 @@ public class mainListHandler {
                  staticVariables.preferences.getShowAlbumListen() &&
                  staticVariables.preferences.getShowUnofficalEvents());
                  
-        // Check venue filters using dynamic system (only check filter venues + Other)
+        // Check venue filters: any venue (configured or discovered) with show=false means filters active
         boolean venueFiltersDefault = true;
-        FestivalConfig festivalConfig = FestivalConfig.getInstance();
-        java.util.List<String> filterVenues = festivalConfig.getFilterVenueNames();
-        
-        // Check all filter venues (showInFilters=true)
-        for (String venueName : filterVenues) {
-            if (!staticVariables.preferences.getShowVenueEvents(venueName)) {
-                venueFiltersDefault = false;
-                break;
-            }
-        }
-        // Also check "Other" venues (includes venues with showInFilters=false)
-        if (!staticVariables.preferences.getShowVenueEvents("Other")) {
+        java.util.Map<String, Boolean> allVenueStates = staticVariables.preferences.getAllVenueFilterStates();
+        if (allVenueStates.values().contains(Boolean.FALSE)) {
             venueFiltersDefault = false;
         }
         

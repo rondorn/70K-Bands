@@ -33,7 +33,8 @@ public class VenueFilterHandler {
     }
     
     public void setupVenueListener(showBands showBands){
-        Log.d("VenueFilterHandler", "Setting up dynamic venue listeners for filter venues: " + festivalConfig.getFilterVenueNames());
+        List<String> venuesInUse = staticVariables.getVenueNamesInUseForList();
+        Log.d("VenueFilterHandler", "Setting up dynamic venue listeners for venues in use: " + venuesInUse);
         
         // Clear any existing venue sections
         if (dynamicVenueContainer != null) {
@@ -43,17 +44,10 @@ public class VenueFilterHandler {
             venueImageViews.clear();
         }
         
-        // Create venue filter sections ONLY for venues with showInFilters=true
-        List<String> filterVenues = festivalConfig.getFilterVenueNames();
-        
-        for (String venueName : filterVenues) {
+        for (String venueName : venuesInUse) {
             createVenueFilterSection(venueName, showBands);
         }
         
-        // Always add "Other" section for venues with showInFilters=false
-        createVenueFilterSection("Other", showBands);
-        
-        // Populate all the venue sections with their initial text and icons
         setupVenueFilters();
     }
     
@@ -192,22 +186,16 @@ public class VenueFilterHandler {
     }
 
     public void setupVenueFilters(){
-        Log.d("VenueFilterHandler", "Setting up venue filter UI for filter venues: " + festivalConfig.getFilterVenueNames());
+        List<String> venuesInUse = staticVariables.getVenueNamesInUseForList();
+        Log.d("VenueFilterHandler", "Setting up venue filter UI for venues in use: " + venuesInUse);
         
-        // If we don't have stored references (e.g., after Clear Filters), rebuild them by scanning the container
         if (venueTextViews.isEmpty() && dynamicVenueContainer != null) {
             rebuildVenueReferences();
         }
         
-        // Update UI for each dynamically created venue section (only showInFilters=true venues)
-        List<String> filterVenues = festivalConfig.getFilterVenueNames();
-        
-        for (String venueName : filterVenues) {
+        for (String venueName : venuesInUse) {
             updateVenueFilterUI(venueName);
         }
-        
-        // Always update "Other" section (for showInFilters=false venues)
-        updateVenueFilterUI("Other");
     }
     
     /**
@@ -220,9 +208,7 @@ public class VenueFilterHandler {
         venueTextViews.clear();
         venueImageViews.clear();
         
-        // Only rebuild references for filter venues (showInFilters=true) plus "Other"
-        List<String> allVenueNames = new ArrayList<>(festivalConfig.getFilterVenueNames());
-        allVenueNames.add("Other");
+        List<String> allVenueNames = new ArrayList<>(staticVariables.getVenueNamesInUseForList());
         
         // Scan through child views to find venue sections
         for (int i = 0; i < dynamicVenueContainer.getChildCount(); i++) {
@@ -286,62 +272,51 @@ public class VenueFilterHandler {
         }
     }
     
+    /** Show/Hide Venue section: label is "Hide X" / "Show X" with no " Events" suffix. Uses localized format. */
     private String getHideVenueText(String venueName) {
-        // Try to get venue-specific strings first
-        int stringResId = getStringResourceByName("hide_" + venueName.toLowerCase() + "_events");
-        if (stringResId != 0) {
-            return staticVariables.context.getString(stringResId);
-        }
-        
-        // Fall back to existing hardcoded strings
-        switch (venueName) {
-            case "Pool": return staticVariables.context.getString(R.string.hide_pool_events);
-            case "Lounge": return staticVariables.context.getString(R.string.hide_lounge_events);
-            case "Theater": return staticVariables.context.getString(R.string.hide_theater_events);
-            case "Rink": return staticVariables.context.getString(R.string.hide_rink_events);
-            case "Other": return staticVariables.context.getString(R.string.hide_other_events);
-            default: return "Hide " + venueName + " Events";
-        }
+        String displayName = staticVariables.venueDisplayName(venueName);
+        return context.getResources().getString(R.string.hide_venue_format, displayName);
     }
-    
+
     private String getShowVenueText(String venueName) {
-        // Try to get venue-specific strings first
-        int stringResId = getStringResourceByName("show_" + venueName.toLowerCase() + "_events");
-        if (stringResId != 0) {
-            return staticVariables.context.getString(stringResId);
-        }
-        
-        // Fall back to existing hardcoded strings
-        switch (venueName) {
-            case "Pool": return staticVariables.context.getString(R.string.show_pool_events);
-            case "Lounge": return staticVariables.context.getString(R.string.show_lounge_events);
-            case "Theater": return staticVariables.context.getString(R.string.show_theater_events);
-            case "Rink": return staticVariables.context.getString(R.string.show_rink_events);
-            case "Other": return staticVariables.context.getString(R.string.show_other_events);
-            default: return "Show " + venueName + " Events";
-        }
+        String displayName = staticVariables.venueDisplayName(venueName);
+        return context.getResources().getString(R.string.show_venue_format, displayName);
     }
     
+    /** Generic venue icons in portrait filter (same assets as iOS: Location-Generic-Going-wBox / NotGoing-wBox). */
+    private static final int VENUE_FILTER_GENERIC_ICON = R.drawable.icon_location_generic;
+    private static final int VENUE_FILTER_GENERIC_ICON_ALT = R.drawable.icon_location_generic_alt;
+
     private Drawable getVenueDrawable(String venueName, boolean isEnabled) {
-        // Try to get icon from FestivalConfig first
-        String iconName = isEnabled ? 
-            festivalConfig.getVenueGoingIcon(venueName) : 
+        // Try to get icon from FestivalConfig first (uses exact/prefix match so Boleros Lounge ≠ Lounge)
+        String iconName = isEnabled ?
+            festivalConfig.getVenueGoingIcon(venueName) :
             festivalConfig.getVenueNotGoingIcon(venueName);
-            
+        // Generic unknown-venue: use same generic location icons as iOS (Going = colorful, NotGoing = muted)
+        if (isGenericVenueIconName(iconName)) {
+            return AppCompatResources.getDrawable(context,
+                isEnabled ? VENUE_FILTER_GENERIC_ICON : VENUE_FILTER_GENERIC_ICON_ALT);
+        }
         // Try to get resource by name from FestivalConfig
         int resourceId = getDrawableResourceByName(iconName);
         if (resourceId != 0) {
             return AppCompatResources.getDrawable(context, resourceId);
         }
-        
-        // Fall back to hardcoded icons
+        // Fall back to hardcoded icons (unknown venues get generic icon)
         return getHardcodedVenueDrawable(venueName, isEnabled);
     }
-    
+
+    private boolean isGenericVenueIconName(String iconName) {
+        if (iconName == null) return true;
+        String lower = iconName.toLowerCase();
+        return "unknown-going-wbox".equals(lower) || "unknown-notgoing-wbox".equals(lower)
+            || "icon_unknown".equals(lower) || "icon_unknown_alt".equals(lower);
+    }
+
     private Drawable getHardcodedVenueDrawable(String venueName, boolean isEnabled) {
         switch (venueName) {
             case "Lounge":
-                return AppCompatResources.getDrawable(context, 
+                return AppCompatResources.getDrawable(context,
                     isEnabled ? R.drawable.icon_lounge : R.drawable.icon_lounge_alt);
             case "Pool":
                 return AppCompatResources.getDrawable(context,
@@ -355,7 +330,7 @@ public class VenueFilterHandler {
             case "Other":
             default:
                 return AppCompatResources.getDrawable(context,
-                    isEnabled ? R.drawable.icon_unknown : R.drawable.icon_unknown_alt);
+                    isEnabled ? VENUE_FILTER_GENERIC_ICON : VENUE_FILTER_GENERIC_ICON_ALT);
         }
     }
     

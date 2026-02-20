@@ -14,6 +14,11 @@
 "Wont"="Wont";
 "Priority"="Priority";
 "Attended"="Attended";
+"Band Priority"="Band Priority";
+"Event Attendance"="Event Attendance";
+"EventAttendanceAll"="All";
+"EventAttendancePartial"="Partial";
+"EventAttendanceNone"="None";
 "Wont Attend"="Wont Attend";
 "Unknown" = "Unknown";
 
@@ -60,6 +65,8 @@
 
 "ShowHideEvents"="Show/Hide Expired";
 "HideExpiredEvents"="Hide Expired Events";
+"Hide Expired Events"="Hide Expired Events";
+"Flagged Header"="Flagged";
 
 "Special Event"="Special Event";
 "Meet and Greet"="Meet and Greet";
@@ -163,7 +170,14 @@
 "Venue Filters" = "Venue Filters"; //menu header
 "Event Location Filter" = "Event Location Filter"; //menu header (legacy)
 "Locations" = "Locations"; //legacy
-"Location Filters" = "Location Filters"; //menu header (portrait + calendar: venues in use)
+"Location Filters" = "Location Filters"; //menu header
+"VenueFilterSheetDescription" = "Show or hide venues. Same settings as the list view—if a venue is hidden in the list, it is hidden in the calendar and vice versa.";
+"OneVenueHidden" = "1 venue hidden";
+"VenuesHiddenCount" = "%d venues hidden";
+"All venues hidden" = "All venues hidden";
+"TapFilterToShowVenues" = "Tap the filter icon above to show venues again.";
+"Show Venue Format" = "Show %@"; //venue filter option, %@ = venue name
+"Hide Venue Format" = "Hide %@"; //venue filter option, %@ = venue name
 
 "Can not hide all venues" = "Can not hide all venues"; //help text
 "Can not hide all statuses" = "Can not hide all status"; //help text
@@ -269,6 +283,9 @@
 "Bands URL" = "Bands URL";
 "Schedule URL" = "Schedule URL";
 "Pointer URL" = "Pointer URL";
+"Custom Pointer URL" = "Custom Pointer URL";
+"CustomPointerUrlPlaceholder" = "Leave empty to use default";
+"Minutes" = "Minutes";
 "Default" = "Default";
 
 // Default description text

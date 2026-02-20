@@ -323,6 +323,24 @@ public class FestivalConfig {
     }
     
     /**
+     * Get venue by exact match or prefix match (venue name + space or '(').
+     * Used for icon/color so "Boleros Lounge" does not match "Lounge".
+     */
+    public Venue getVenueByExactOrPrefixName(String name) {
+        if (name == null) return null;
+        String nameLower = name.toLowerCase();
+        for (Venue venue : venues) {
+            String vLower = venue.name.toLowerCase();
+            if (nameLower.equals(vLower)) return venue;
+            if (nameLower.startsWith(vLower) && name.length() > venue.name.length()) {
+                char next = name.charAt(venue.name.length());
+                if (next == ' ' || next == '(') return venue;
+            }
+        }
+        return null;
+    }
+    
+    /**
      * Get venue name string by partial name match (returns null if not found)
      * This is a convenience method to avoid type visibility issues with package-private Venue class
      */
@@ -360,7 +378,7 @@ public class FestivalConfig {
      * Get venue color for a given venue name (returns hex string)
      */
     public String getVenueColor(String venueName) {
-        Venue venue = getVenueByPartialName(venueName);
+        Venue venue = getVenueByExactOrPrefixName(venueName);
         return venue != null ? venue.color : "A9A9A9"; // Default to gray
     }
     
@@ -368,7 +386,7 @@ public class FestivalConfig {
      * Get venue going icon for a given venue name
      */
     public String getVenueGoingIcon(String venueName) {
-        Venue venue = getVenueByPartialName(venueName);
+        Venue venue = getVenueByExactOrPrefixName(venueName);
         return venue != null ? venue.goingIcon : "Unknown-Going-wBox";
     }
     
@@ -376,7 +394,7 @@ public class FestivalConfig {
      * Get venue not going icon for a given venue name
      */
     public String getVenueNotGoingIcon(String venueName) {
-        Venue venue = getVenueByPartialName(venueName);
+        Venue venue = getVenueByExactOrPrefixName(venueName);
         return venue != null ? venue.notGoingIcon : "Unknown-NotGoing-wBox";
     }
     
@@ -384,7 +402,7 @@ public class FestivalConfig {
      * Get venue location for a given venue name
      */
     public String getVenueLocation(String venueName) {
-        Venue venue = getVenueByPartialName(venueName);
+        Venue venue = getVenueByExactOrPrefixName(venueName);
         return venue != null ? venue.location : "";
     }
 }

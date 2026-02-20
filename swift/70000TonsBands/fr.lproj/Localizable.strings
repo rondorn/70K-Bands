@@ -9,6 +9,7 @@
 */
 
 "Close"="Fermer";
+"Done"="Terminé";
 
 "SelectBandMessage"="Sélectionnez un groupe dans la liste pour voir les détails";
 
@@ -19,6 +20,11 @@
 "Wont" = "Non";
 "Priority" = "Priorité";
 "Attended" = "Assisté";
+"Band Priority" = "Priorité du groupe";
+"Event Attendance" = "Présence à l'événement";
+"EventAttendanceAll" = "Tous";
+"EventAttendancePartial" = "Partiel";
+"EventAttendanceNone" = "Aucun";
 "Wont Attend" = "Ne participera pas";
 "Unknown" = "Inconnu";
 
@@ -84,7 +90,9 @@
 
 "showHideExpiredLabel" = "Afficher/Masquer Événements Expirés";
 "hideExpiredEvents" = "Masquer Événements Expirés";
+"Hide Expired Events" = "Masquer les événements passés";
 "Expired Events" = "Événements Expirés";
+"Flagged Header" = "Événements marqués";
 "Show Expired Events" = "Afficher Événements Expirés";
 "Hiding Expired Events" = "Masquage Événements Expirés";
 "Showing Expired Events" = "Affichage Événements Expirés";
@@ -147,6 +155,14 @@
 "Sorting Options" = "Options de tri"; //menu header
 "Event Type Filters" = "Filtres de types d'événements"; //menu header
 "Venue Filters" = "Filtres de sites"; //menu header
+"Location Filters" = "Filtres de sites"; //menu header (portrait + calendar: venues in use)
+"VenueFilterSheetDescription" = "Afficher ou masquer les lieux. Mêmes réglages que la vue liste—si un lieu est masqué dans la liste, il est masqué dans le calendrier et vice versa.";
+"OneVenueHidden" = "1 lieu masqué";
+"VenuesHiddenCount" = "%d lieux masqués";
+"All venues hidden" = "Tous les lieux masqués";
+"TapFilterToShowVenues" = "Appuyez sur l’icône de filtre ci-dessus pour afficher à nouveau les lieux.";
+"Show Venue Format" = "Afficher %@"; //venue filter option, %@ = venue name
+"Hide Venue Format" = "Masquer %@"; //venue filter option, %@ = venue name
 
 "Can not hide all venues" = "Impossible de masquer tous les lieux"; //help text
 "Can not hide all statuses" = "Impossible de masquer tous les statuts"; //help text
@@ -249,6 +265,9 @@
 "Bands URL" = "URL des groupes";
 "Schedule URL" = "URL du calendrier";
 "Pointer URL" = "URL du pointeur";
+"Custom Pointer URL" = "URL du pointeur personnalisée";
+"CustomPointerUrlPlaceholder" = "Laisser vide pour utiliser la valeur par défaut";
+"Minutes" = "Minutes";
 "Default" = "Par défaut";
 
 "year_change_loading" = "Chargement des données pour la nouvelle année, veuillez patienter...";

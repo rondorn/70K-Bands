@@ -14,6 +14,8 @@
     <string name="unknown">No lo sé</string>
     <string name="priority">Prioridad</string>
     <string name="attended">Asistencia</string>
+    <string name="band_priority">Prioridad de banda</string>
+    <string name="event_attendance">Asistencia al evento</string>
     <string name="Ok">Sí</string>
     <string name="Cancel">Cancelar</string>
     <string name="SelectBand">Seleccionar Banda</string>
@@ -50,6 +52,9 @@
     <string name="AllOfEvent">Asistir a todo este evento</string>
     <string name="PartOfEvent">Asistir a parte de este evento</string>
     <string name="NoneOfEvent">No voy a asistir a este evento</string>
+    <string name="EventAttendanceAll">Todo</string>
+    <string name="EventAttendancePartial">Parcial</string>
+    <string name="EventAttendanceNone">Ninguno</string>
 
     <string name="PromptForAttendedStatusHeader">Asistencia a eventos</string>
     <string name="PromptForAttendedStatus">Indicar asistencia a eventos</string>
@@ -136,6 +141,12 @@
     <string name="can_not_hide_all_statuses">No se pueden ocultar todos los estados</string>
     <!-- help text -->
     <string name="clear_all_filters">Borrar todos los filtros</string>
+    <string name="venue_filter_done">Listo</string>
+    <string name="venue_filter_calendar_description">Mostrar u ocultar lugares. Misma configuración que la vista de lista: si un lugar está oculto en la lista, está oculto en el calendario y viceversa.</string>
+    <string name="hide_venue_format">Ocultar %1$s</string>
+    <string name="show_venue_format">Mostrar %1$s</string>
+    <string name="one_venue_hidden">1 lugar oculto</string>
+    <string name="venues_hidden_count">%d lugares ocultos</string>
     <!-- menu choice -->
     <string name="show_all_events">Mostrar todos los eventos</string>
     <!-- menu choice -->
