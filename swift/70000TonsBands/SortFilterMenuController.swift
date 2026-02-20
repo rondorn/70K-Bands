@@ -204,10 +204,10 @@ func setupHeadersAndMisc(controller: MasterViewController, item: String, cellRow
         setupCell(header: true, titleText: NSLocalizedString("Band Ranking Filters", comment: ""), cellData: cellRow, imageName: "", disabled: false)
         
     } else if (item == "Flagged Header"){
-        if (eventCount > 0 && eventCounterUnoffical != eventCount){
-            setupCell(header: true, titleText: NSLocalizedString("Show Only Flagged As Attended", comment: "") , cellData: cellRow, imageName: unknownIcon, disabled: false)
-        }
-        
+        let titleText = (eventCount > 0 && eventCounterUnoffical != eventCount)
+            ? NSLocalizedString("Show Only Flagged As Attended", comment: "")
+            : NSLocalizedString("Flagged Header", comment: "")
+        setupCell(header: true, titleText: titleText, cellData: cellRow, imageName: unknownIcon, disabled: false)
     } else if (item == "Event Type Filters"){
         setupCell(header: true, titleText: NSLocalizedString("Event Type Filters", comment: ""), cellData: cellRow, imageName: "", disabled: false)
         
@@ -472,9 +472,11 @@ func setupVenueMenuChoices(controller: MasterViewController, item: String, cellR
             let hasEstablishedIcon = venue.map { !$0.goingIcon.lowercased().contains("unknown") } ?? false
             let displayName = venueDisplayName(for: venueName)
             var currentIcon: String
-            var currentText = "Show \(displayName)"
+            let showFormat = NSLocalizedString("Show Venue Format", comment: "Format for venue filter option, e.g. Show Pool. %@ = venue name.")
+            let hideFormat = NSLocalizedString("Hide Venue Format", comment: "Format for venue filter option, e.g. Hide Pool. %@ = venue name.")
+            var currentText = String(format: showFormat, displayName)
             if getShowVenueEvents(venueName: venueName) == true {
-                currentText = "Hide \(displayName)"
+                currentText = String(format: hideFormat, displayName)
                 currentIcon = (hasEstablishedIcon ? venue?.goingIcon : nil) ?? genericLocationIconShown
             } else {
                 currentIcon = (hasEstablishedIcon ? venue?.notGoingIcon : nil) ?? genericLocationIconHidden

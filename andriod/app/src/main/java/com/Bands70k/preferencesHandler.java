@@ -593,6 +593,36 @@ public class preferencesHandler {
         editor.apply();
     }
 
+    /**
+     * Returns all venue filter states (configured + custom/discovered). Used so "Filtering" header and
+     * Clear All Filters enabled state include every venue that has a stored state.
+     */
+    public java.util.Map<String, Boolean> getAllVenueFilterStates() {
+        java.util.Map<String, Boolean> map = new java.util.HashMap<>();
+        map.put("Pool", getShowPoolShows());
+        map.put("Lounge", getShowLoungeShows());
+        map.put("Theater", getShowTheaterShows());
+        map.put("Rink", getShowRinkShows());
+        map.put("Other", getShowOtherShows());
+        android.content.SharedPreferences customVenuePrefs = staticVariables.context.getSharedPreferences("custom_venue_prefs", android.content.Context.MODE_PRIVATE);
+        for (String key : customVenuePrefs.getAll().keySet()) {
+            if (key.startsWith("show_") && key.endsWith("_shows")) {
+                String venueName = key.substring(5, key.length() - 6);
+                map.put(venueName, customVenuePrefs.getBoolean(key, true));
+            }
+        }
+        return map;
+    }
+
+    /**
+     * Set venue filter state for a list of venue names (e.g. configured + discovered). Used when clearing all filters.
+     */
+    public void setVenueFilters(java.util.List<String> venueNames, boolean show) {
+        for (String name : venueNames) {
+            setShowVenueEvents(name, show);
+        }
+    }
+
     public void setSortByTime(Boolean value) {
         sortByTime = value;
     }

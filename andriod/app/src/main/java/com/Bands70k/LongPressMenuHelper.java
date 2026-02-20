@@ -56,7 +56,7 @@ public class LongPressMenuHelper {
         } else {
             root.addView(prioritySection);
         }
-        prioritySection.addView(addSectionHeader(activity, activity.getString(R.string.priority), density));
+        prioritySection.addView(addSectionHeader(activity, activity.getString(R.string.band_priority), density));
 
         final AlertDialog[] dialogHolder = new AlertDialog[1];
 
@@ -98,7 +98,7 @@ public class LongPressMenuHelper {
                 attendedSection.setOrientation(LinearLayout.VERTICAL);
                 LinearLayout.LayoutParams colLp = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
                 root.addView(attendedSection, colLp);
-                attendedSection.addView(addSectionHeader(activity, activity.getString(R.string.attended), density));
+                attendedSection.addView(addSectionHeader(activity, activity.getString(R.string.event_attendance), density));
                 View.OnClickListener allClick = wrapDismiss(dialogHolder, new View.OnClickListener() {
                     @Override public void onClick(View v) {
                         setAttended(activity, bandName, loc, raw, evType, staticVariables.sawAllStatus);
@@ -117,13 +117,11 @@ public class LongPressMenuHelper {
                         if (onRefresh != null) onRefresh.run();
                     }
                 });
-                attendedSection.addView(addRow(activity, 0, activity.getString(R.string.AllOfEvent), staticVariables.sawAllStatus.equals(currentAttendedFinal), allClick, density, rowHeight, textSizeSp));
-                if (staticVariables.show.equals(evType)) {
-                    attendedSection.addView(addRow(activity, 0, activity.getString(R.string.PartOfEvent), staticVariables.sawSomeStatus.equals(currentAttendedFinal), partClick, density, rowHeight, textSizeSp));
-                }
-                attendedSection.addView(addRow(activity, 0, activity.getString(R.string.NoneOfEvent), staticVariables.sawNoneStatus.equals(currentAttendedFinal), noneClick, density, rowHeight, textSizeSp));
+                attendedSection.addView(addRow(activity, 0, activity.getString(R.string.EventAttendanceAll), staticVariables.sawAllStatus.equals(currentAttendedFinal), allClick, density, rowHeight, textSizeSp));
+                attendedSection.addView(addRow(activity, 0, activity.getString(R.string.EventAttendancePartial), staticVariables.sawSomeStatus.equals(currentAttendedFinal), partClick, density, rowHeight, textSizeSp));
+                attendedSection.addView(addRow(activity, 0, activity.getString(R.string.EventAttendanceNone), staticVariables.sawNoneStatus.equals(currentAttendedFinal), noneClick, density, rowHeight, textSizeSp));
             } else {
-                root.addView(addSectionHeader(activity, activity.getString(R.string.attended), density));
+                root.addView(addSectionHeader(activity, activity.getString(R.string.event_attendance), density));
                 View.OnClickListener allClick = wrapDismiss(dialogHolder, new View.OnClickListener() {
                     @Override public void onClick(View v) {
                         setAttended(activity, bandName, loc, raw, evType, staticVariables.sawAllStatus);
@@ -142,11 +140,9 @@ public class LongPressMenuHelper {
                         if (onRefresh != null) onRefresh.run();
                     }
                 });
-                root.addView(addRow(activity, 0, activity.getString(R.string.AllOfEvent), staticVariables.sawAllStatus.equals(currentAttendedFinal), allClick, density, rowHeight, textSizeSp));
-                if (staticVariables.show.equals(evType)) {
-                    root.addView(addRow(activity, 0, activity.getString(R.string.PartOfEvent), staticVariables.sawSomeStatus.equals(currentAttendedFinal), partClick, density, rowHeight, textSizeSp));
-                }
-                root.addView(addRow(activity, 0, activity.getString(R.string.NoneOfEvent), staticVariables.sawNoneStatus.equals(currentAttendedFinal), noneClick, density, rowHeight, textSizeSp));
+                root.addView(addRow(activity, 0, activity.getString(R.string.EventAttendanceAll), staticVariables.sawAllStatus.equals(currentAttendedFinal), allClick, density, rowHeight, textSizeSp));
+                root.addView(addRow(activity, 0, activity.getString(R.string.EventAttendancePartial), staticVariables.sawSomeStatus.equals(currentAttendedFinal), partClick, density, rowHeight, textSizeSp));
+                root.addView(addRow(activity, 0, activity.getString(R.string.EventAttendanceNone), staticVariables.sawNoneStatus.equals(currentAttendedFinal), noneClick, density, rowHeight, textSizeSp));
             }
         }
 

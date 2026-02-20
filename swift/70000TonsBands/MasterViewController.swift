@@ -446,7 +446,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             bandSearch.searchTextField.backgroundColor = .black
             bandSearch.searchTextField.textColor = .white
             bandSearch.searchTextField.attributedPlaceholder = NSAttributedString(
-                string: "Search Criteria", 
+                string: NSLocalizedString("SearchCriteria", comment: ""),
                 attributes: [NSAttributedString.Key.foregroundColor: UIColor.lightGray]
             )
 
@@ -4412,7 +4412,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         var sections: [CompactActionSheetViewController.MenuSection] = [
             CompactActionSheetViewController.MenuSection(
-                header: NSLocalizedString("Priority", comment: "Priority section header"),
+                header: NSLocalizedString("Band Priority", comment: "Band priority section header"),
                 items: priorityItems
             )
         ]
@@ -4433,7 +4433,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             let sawSomeStatusValue = sawSomeStatus
             let sawNoneStatusValue = sawNoneStatus
             
-            let allOfEventTitle = NSLocalizedString("All Of Event", comment: "Attended all of event")
+            let allOfEventTitle = NSLocalizedString("EventAttendanceAll", comment: "Event attendance: All")
             attendanceItems.append(CompactActionSheetViewController.MenuItem(
                 title: allOfEventTitle,
                 iconName: getAttendanceIconName(status: sawAllStatusValue),
@@ -4445,24 +4445,21 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
             ))
             
-            // Only show "Partially Attended" for shows
-            if cellEventType == showType {
-                let partOfEventTitle = NSLocalizedString("Part Of Event", comment: "Partially attended event")
-                attendanceItems.append(CompactActionSheetViewController.MenuItem(
-                    title: partOfEventTitle,
-                    iconName: getAttendanceIconName(status: sawSomeStatusValue),
-                    isSelected: currentAttendedStatus == sawSomeStatusValue,
-                    action: { [weak self] in
-                        guard let self = self else { return }
-                        self.markAttendingStatus(cellDataText: capturedCellDataText, status: sawSomeStatusValue, correctBandName: bandName)
-                        self.refreshLandscapeScheduleViewIfNeeded(for: bandName)
-                    }
-                ))
-            }
-            
-            let wontAttendTitle = NSLocalizedString("Wont Attend", comment: "Won't attend")
+            let partOfEventTitle = NSLocalizedString("EventAttendancePartial", comment: "Event attendance: Partial")
             attendanceItems.append(CompactActionSheetViewController.MenuItem(
-                title: wontAttendTitle,
+                title: partOfEventTitle,
+                iconName: getAttendanceIconName(status: sawSomeStatusValue),
+                isSelected: currentAttendedStatus == sawSomeStatusValue,
+                action: { [weak self] in
+                    guard let self = self else { return }
+                    self.markAttendingStatus(cellDataText: capturedCellDataText, status: sawSomeStatusValue, correctBandName: bandName)
+                    self.refreshLandscapeScheduleViewIfNeeded(for: bandName)
+                }
+            ))
+            
+            let noneOfEventTitle = NSLocalizedString("EventAttendanceNone", comment: "Event attendance: None")
+            attendanceItems.append(CompactActionSheetViewController.MenuItem(
+                title: noneOfEventTitle,
                 iconName: nil,
                 isSelected: currentAttendedStatus == sawNoneStatusValue,
                 action: { [weak self] in
@@ -4473,7 +4470,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             ))
             
             sections.append(CompactActionSheetViewController.MenuSection(
-                header: NSLocalizedString("Attended", comment: "Attended section header"),
+                header: NSLocalizedString("Event Attendance", comment: "Event attendance section header"),
                 items: attendanceItems
             ))
         }
