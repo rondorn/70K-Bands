@@ -339,3 +339,71 @@
 "AboutPositionRight" = "oikealla";
 "AboutPositionLeft" = "vasemmalla";
 "AboutTeamPhoto" = "Tiimikuva";
+
+// Toast and help messages
+"Venue Filter On Format" = "%@ Venue Filter On"; // Format for venue filter on message, %@ = venue name
+"Venue Filter Off Format" = "%@ Venue Filter Off"; // Format for venue filter off message, %@ = venue name
+"Invalid cell data - cannot add attendance" = "Invalid cell data - cannot add attendance"; // Toast message when cell data is invalid
+"No Show Is Associated With This Entry" = "No Show Is Associated With This Entry"; // Toast message when no show is associated with entry
+"Dismiss" = "Hylkää"; // Alert dismiss button
+"Message received" = "Viesti vastaanotettu"; // Alert title when a push notification message is received
+"Choose Country" = "Valitse Maa"; // Alert title for country selection
+
+// Migration dialog messages
+"Data Migration Complete" = "Tietojen Siirto Valmis"; // Migration dialog title when successful
+"Data Migration Report" = "Tietojen Siirto Raportti"; // Migration dialog title when reporting
+"Successfully migrated %d priority records" = "%d prioriteettitietuetta siirretty onnistuneesti"; // Migration success message with count
+"Final count: %d records in database" = "Lopullinen määrä: %d tietuetta tietokannassa"; // Migration final count message
+"Data sources: %@" = "Tietolähteet: %@"; // Migration data sources list
+"No data found to migrate" = "Ei löytynyt siirrettäviä tietoja"; // Migration no data message
+"Current database count: %d records" = "Nykyinen tietokannan määrä: %d tietuetta"; // Migration current count message
+"Issues encountered:" = "Koetut ongelmat:"; // Migration issues header
+"... and %d more issues" = "... ja %d muuta ongelmaa"; // Migration more issues message
+"You can take a screenshot to report these issues." = "Voit ottaa kuvakaappauksen raportoidaksesi nämä ongelmat."; // Migration screenshot instruction
+
+// Error and stats messages
+"Error" = "Virhe"; // Error alert title
+"Could not access documents directory." = "Asiakirjahakemistoon ei voitu käyttää."; // Error message when documents directory cannot be accessed
+"No Stats Data" = "Ei Tilastotietoja"; // Alert title when stats data is not available
+"Loading Stats" = "Ladataan Tilastoja"; // Alert title when loading stats
+"Please wait while stats are being downloaded..." = "Odota, kunnes tilastot ladataan..."; // Message shown while stats are loading
+"Network Error" = "Verkkovirhe"; // Alert title for network errors
+"Unable to load stats page. Check your internet connection and try again." = "Tilastosivua ei voitu ladata. Tarkista Internet-yhteytesi ja yritä uudelleen."; // Network error message
+"Retry" = "Yritä Uudelleen"; // Retry button title
+"Loading Error" = "Latausvirhe"; // Alert title for loading errors
+"Failed to load stats page: %@" = "Tilastosivun lataus epäonnistui: %@"; // Loading error message format
+"Loading Timeout" = "Latausaika Ylittynyt"; // Alert title for loading timeout
+"The stats page is taking too long to load. Please check your internet connection and try again." = "Tilastosivu kestää liian kauan latautuakseen. Tarkista Internet-yhteytesi ja yritä uudelleen."; // Loading timeout message
+
+// Missing keys from Base
+"Close" = "Sulje";
+"Copy" = "Kopioi";
+"Cut" = "Leikkaa";
+"Event Location Filter" = "Tapahtumapaikan Suodatin";
+"Hide Other" = "Piilota Muut";
+"Hide Other Venues" = "Piilota Muut Tapahtumapaikat";
+"Last On Cruise" = "Viimeksi Risteilyllä";
+"Locations" = "Sijainnit";
+"Multiple bands share this event. Which band would you like to view?" = "Useat bändit jakavat tämän tapahtuman. Mitä bändiä haluaisit nähdä?";
+"Note" = "Huomautus";
+"Paste" = "Liitä";
+"Preferences" = "Asetukset";
+"Select All" = "Valitse Kaikki";
+"SelectYearLabel" = "Valitse Näytettävä Vuosi";
+"ShareBandChoices" = "Jaa Bändivalinnat";
+"ShareShowChoices" = "Jaa Näytösvalinnat";
+"Show Bands Only" = "Näytä Vain Bändit";
+"Show Other" = "Näytä Muut";
+"Show Other Venues" = "Näytä Muut Tapahtumapaikat";
+"Show Schedule" = "Näytä Aikataulu";
+"Unknown" = "Tuntematon";
+"View Mode" = "Näkymätila";
+"confirmCountry" = "Vahvista";
+"correctCountry" = "Muuta";
+"correctCountryDescription" = "Korjaa Maasi Tarvittaessa";
+"country" = "Maa";
+"data_filter_issue" = "Kaikki tiedot suodatetaan pois, poista suodattimet nähdäksesi tiedot";
+"genre" = "Tyylilaji";
+"verifyCountry" = "Vahvista Maasi";
+"visitBands" = "Linkit";
+"waiting_for_data" = "Odotetaan tietojen latautumista, odota hetki....";

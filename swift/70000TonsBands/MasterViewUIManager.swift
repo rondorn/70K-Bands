@@ -275,6 +275,7 @@ class MasterViewUIManager {
     }
     
     /// Updates the current viewing day from visible cells in the table view
+    /// Uses the topmost visible entry that has a valid day as the key record
     /// - Parameters:
     ///   - tableView: The table view
     ///   - bands: The bands array
@@ -284,22 +285,116 @@ class MasterViewUIManager {
         bands: [String],
         currentViewingDay: inout String?
     ) {
-        guard let visibleIndexPaths = tableView.indexPathsForVisibleRows,
-              let firstVisibleIndexPath = visibleIndexPaths.first,
-              firstVisibleIndexPath.row < bands.count else {
+        // CRITICAL: Get the actual topmost visible row by checking the exact top point of the visible area
+        // This ensures we get the row that's truly at the top, not just any partially visible row
+        // Use indexPathForRow(at:) with the top of the visible rect for accuracy
+        let topPoint = CGPoint(x: tableView.bounds.midX, y: tableView.contentOffset.y + tableView.contentInset.top)
+        var topmostRow: Int? = nil
+        
+        // First, try to get the row at the exact top point
+        if let indexPath = tableView.indexPathForRow(at: topPoint) {
+            topmostRow = indexPath.row
+            print("🔍 [LANDSCAPE_SCHEDULE] Found row at top point: \(topmostRow!)")
+        }
+        
+        // Fallback: Use the first visible row if we couldn't get the exact top
+        if topmostRow == nil {
+            if let visibleIndexPaths = tableView.indexPathsForVisibleRows, !visibleIndexPaths.isEmpty {
+                // Sort by row number to find the actual topmost
+                let sortedVisibleIndexPaths = visibleIndexPaths.sorted { $0.row < $1.row }
+                topmostRow = sortedVisibleIndexPaths.first?.row
+                print("🔍 [LANDSCAPE_SCHEDULE] Using first visible row as fallback: \(topmostRow!)")
+            }
+        }
+        
+        guard let startRow = topmostRow, startRow < bands.count else {
+            print("⚠️ [LANDSCAPE_SCHEDULE] Could not determine topmost visible row")
             return
         }
         
-        let bandEntry = bands[firstVisibleIndexPath.row]
+        print("🔍 [LANDSCAPE_SCHEDULE] Topmost visible row: \(startRow), checking from there")
         
-        // Extract day from the band entry (format: "timeIndex:bandName")
-        if let timeIndex = bandEntry.components(separatedBy: ":").first?.doubleValue {
+        // Search through rows starting from the topmost visible row
+        // Check up to 20 rows to find the first one with a valid day
+        // IMPORTANT: We want the FIRST entry that's actually visible at the top, not just any visible row
+        // Also track the most common day in visible rows to handle edge cases where the first row
+        // might be from the previous day but most visible rows are from the new day
+        let maxRowsToCheck = min(20, bands.count - startRow)
+        print("🔍 [LANDSCAPE_SCHEDULE] Checking \(maxRowsToCheck) rows starting from row \(startRow)")
+        
+        var firstValidDay: String? = nil
+        var dayCounts: [String: Int] = [:]
+        var rowsChecked = 0
+        
+        for offset in 0..<maxRowsToCheck {
+            let row = startRow + offset
+            guard row < bands.count else { break }
+            
+            let bandEntry = bands[row]
+            rowsChecked += 1
+            
+            // Extract day from the band entry (format: "timeIndex:bandName")
+            // Skip entries that don't have a timeIndex (band names without schedule)
+            guard let timeIndexString = bandEntry.components(separatedBy: ":").first,
+                  let timeIndex = Double(timeIndexString) else {
+                print("🔍 [LANDSCAPE_SCHEDULE] Row \(row): No timeIndex (band name only), skipping")
+                continue // Skip band names without schedule
+            }
+            
             let events = schedule.schedulingDataByTime[timeIndex] ?? []
             if let firstEvent = events.first, let day = firstEvent["Day"] {
-                currentViewingDay = day
-                print("🔄 [LANDSCAPE_SCHEDULE] Updated viewing day from visible cells: \(day)")
+                // Track the first valid day we find
+                if firstValidDay == nil {
+                    firstValidDay = day
+                }
+                
+                // Count occurrences of each day
+                dayCounts[day] = (dayCounts[day] ?? 0) + 1
+                print("🔍 [LANDSCAPE_SCHEDULE] Row \(row) (offset \(offset)): day='\(day)'")
+            } else {
+                print("🔍 [LANDSCAPE_SCHEDULE] Row \(row): No events found for timeIndex \(timeIndex)")
             }
         }
+        
+        // Determine which day to use
+        if let firstDay = firstValidDay {
+            // If we found multiple days, use the most common one (likely the day that's actually visible)
+            // Otherwise use the first day found
+            if dayCounts.count > 1 {
+                let mostCommonDay = dayCounts.max(by: { $0.value < $1.value })?.key ?? firstDay
+                if mostCommonDay != firstDay {
+                    print("⚠️ [LANDSCAPE_SCHEDULE] Multiple days found - using most common: '\(mostCommonDay)' (found \(dayCounts[mostCommonDay] ?? 0) times) instead of first: '\(firstDay)'")
+                    currentViewingDay = mostCommonDay
+                } else {
+                    currentViewingDay = firstDay
+                    print("✅ [LANDSCAPE_SCHEDULE] Updated viewing day from row \(startRow): '\(firstDay)'")
+                }
+            } else {
+                currentViewingDay = firstDay
+                print("✅ [LANDSCAPE_SCHEDULE] Updated viewing day from row \(startRow): '\(firstDay)'")
+            }
+        } else {
+            print("⚠️ [LANDSCAPE_SCHEDULE] No valid day found after checking \(rowsChecked) rows")
+        }
+        
+        print("⚠️ [LANDSCAPE_SCHEDULE] No valid day found in visible cells after checking \(maxRowsToCheck) rows starting from row \(startRow)")
+    }
+    
+    /// Returns the first table view row index that belongs to the given day (e.g. "Day 3").
+    /// Used when switching from calendar to list so the list can scroll to the same day.
+    /// - Parameters:
+    ///   - day: Day label to find (e.g. "Day 1", "Day 3")
+    ///   - bands: The bands array (sortable entries with optional "timeIndex:bandName" format)
+    /// - Returns: Row index of the first event on that day, or nil if not found
+    func firstRowIndex(forDay day: String, bands: [String]) -> Int? {
+        for (row, bandEntry) in bands.enumerated() {
+            guard let timeIndex = bandEntry.components(separatedBy: ":").first?.doubleValue else { continue }
+            let events = schedule.schedulingDataByTime[timeIndex] ?? []
+            if let firstEvent = events.first, let eventDay = firstEvent["Day"], eventDay == day {
+                return row
+            }
+        }
+        return nil
     }
     
     /// Gets the number of rows for the table view

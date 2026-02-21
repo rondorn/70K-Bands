@@ -28,6 +28,8 @@ public class LandscapeScheduleActivity extends Activity {
     public static final String EXTRA_INITIAL_DAY = "initial_day";
     public static final String EXTRA_HIDE_EXPIRED_EVENTS = "hide_expired_events";
     public static final String EXTRA_IS_SPLIT_VIEW_CAPABLE = "is_split_view_capable";
+    /** Result extra: calendar day being viewed when activity finished (e.g. "Day 3") so list can scroll to it. */
+    public static final String EXTRA_RESULT_CURRENT_DAY = "result_current_day";
     public static final int REQUEST_CODE_BAND_DETAILS = 1001;
     
     private LandscapeScheduleView scheduleView;
@@ -186,10 +188,10 @@ public class LandscapeScheduleActivity extends Activity {
               ", using: " + width + "x" + height +
               ", size-based portrait: " + isPortraitBySize + ", isPortrait: " + isPortrait);
         
-        // Phone mode: If rotated back to portrait, close this activity immediately
+        // Phone mode: If rotated back to portrait, close this activity immediately (pass current day so list can scroll to it)
         if (isPortrait) {
             Log.d(TAG, "🚫 Rotated to portrait - closing landscape schedule activity (portrait never shows calendar on phone)");
-            finish();
+            finishWithResult(scheduleView != null ? scheduleView.getCurrentDay() : null);
         }
     }
     
@@ -203,15 +205,33 @@ public class LandscapeScheduleActivity extends Activity {
             // Set or update dismiss listener for tablets
             scheduleView.setDismissRequestedListener(new LandscapeScheduleView.OnDismissRequestedListener() {
                 @Override
-                public void onDismissRequested() {
-                    Log.d(TAG, "📱 [TABLET_TOGGLE] Dismiss requested - returning to list view");
-                    finish();
+                public void onDismissRequested(String currentDay) {
+                    Log.d(TAG, "📱 [TABLET_TOGGLE] Dismiss requested - returning to list view, day: " + currentDay);
+                    finishWithResult(currentDay);
                 }
             });
         } else {
             // Remove dismiss listener for phones
             scheduleView.setDismissRequestedListener(null);
         }
+    }
+
+    /** Set result with current calendar day so list can scroll to it, then finish. */
+    private void finishWithResult(String currentDay) {
+        Log.d(TAG, "finishWithResult() called with currentDay: '" + currentDay + "'");
+        Intent data = new Intent();
+        if (currentDay != null) {
+            data.putExtra(EXTRA_RESULT_CURRENT_DAY, currentDay);
+            Log.d(TAG, "Setting EXTRA_RESULT_CURRENT_DAY to: '" + currentDay + "'");
+            // Store in SharedPreferences as backup in case onActivityResult isn't called reliably
+            android.content.SharedPreferences prefs = getSharedPreferences("landscape_schedule", MODE_PRIVATE);
+            prefs.edit().putString("pending_day_result", currentDay).apply();
+            Log.d(TAG, "✅ Stored day '" + currentDay + "' in SharedPreferences as backup");
+        } else {
+            Log.w(TAG, "finishWithResult() called with null currentDay - no day will be passed to list");
+        }
+        setResult(RESULT_OK, data);
+        finish();
     }
     
     @Override
@@ -247,7 +267,7 @@ public class LandscapeScheduleActivity extends Activity {
                 
                 if (isPortrait) {
                     Log.d(TAG, "🚫 Window focus gained in portrait - closing landscape schedule activity");
-                    finish();
+                    finishWithResult(scheduleView != null ? scheduleView.getCurrentDay() : null);
                 }
             }
         }
@@ -256,7 +276,7 @@ public class LandscapeScheduleActivity extends Activity {
     @Override
     public void onBackPressed() {
         Log.d(TAG, "Back button pressed");
+        finishWithResult(scheduleView != null ? scheduleView.getCurrentDay() : null);
         super.onBackPressed();
-        finish();
     }
 }

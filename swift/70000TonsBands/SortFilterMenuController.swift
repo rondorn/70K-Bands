@@ -424,12 +424,15 @@ func setupVenueClickResponse(controller: MasterViewController, item: String){
     for venueName in venuesInUse {
         if (item == "\(venueName) Venue" && blockTurningAllFiltersOn(controller: controller) == false){
             let displayName = venueDisplayName(for: venueName)
-            var message = "\(displayName) Venue Filter Off"
+            var message: String
             if (getShowVenueEvents(venueName: venueName) == true){
                 setShowVenueEvents(venueName: venueName, show: false)
-                message = "\(displayName) Venue Filter On"
+                let format = NSLocalizedString("Venue Filter On Format", comment: "Format for venue filter on message, e.g. Pool Venue Filter On. %@ = venue name.")
+                message = String(format: format, displayName)
             } else {
                 setShowVenueEvents(venueName: venueName, show: true)
+                let format = NSLocalizedString("Venue Filter Off Format", comment: "Format for venue filter off message, e.g. Pool Venue Filter Off. %@ = venue name.")
+                message = String(format: format, displayName)
             }
             if (blockTurningAllFiltersOn(controller: controller) == true){
                 setShowVenueEvents(venueName: venueName, show: true)

@@ -101,9 +101,10 @@ struct LandscapeScheduleView: View {
     let onLongPress: ((String, String, String, String, String) -> Void)?  // (bandName, location, startTime, eventType, day)
     let attendedHandle: ShowsAttended
     let isSplitViewCapable: Bool  // iPad or similar
-    let onDismissRequested: (() -> Void)?  // iPad: callback to return to list view
+    let onDismissRequested: ((String?) -> Void)?  // iPad: callback to return to list view; passes current calendar day so list can scroll to it
+    let onCurrentDayChanged: ((String?) -> Void)?  // Called when calendar day changes (swipe/buttons) so list can show same day when switching back
     
-    init(priorityManager: SQLitePriorityManager, attendedHandle: ShowsAttended, initialDay: String? = nil, hideExpiredEvents: Bool = false, isSplitViewCapable: Bool = false, onDismissRequested: (() -> Void)? = nil, onBandTapped: @escaping (String, String?) -> Void, onLongPress: ((String, String, String, String, String) -> Void)? = nil) {
+    init(priorityManager: SQLitePriorityManager, attendedHandle: ShowsAttended, initialDay: String? = nil, hideExpiredEvents: Bool = false, isSplitViewCapable: Bool = false, onDismissRequested: ((String?) -> Void)? = nil, onCurrentDayChanged: ((String?) -> Void)? = nil, onBandTapped: @escaping (String, String?) -> Void, onLongPress: ((String, String, String, String, String) -> Void)? = nil) {
         self.priorityManager = priorityManager
         self._viewModel = StateObject(wrappedValue: LandscapeScheduleViewModel(
             priorityManager: priorityManager,
@@ -116,6 +117,7 @@ struct LandscapeScheduleView: View {
         self.attendedHandle = attendedHandle
         self.isSplitViewCapable = isSplitViewCapable
         self.onDismissRequested = onDismissRequested
+        self.onCurrentDayChanged = onCurrentDayChanged
     }
     
     func getCurrentDay() -> String? {
@@ -159,6 +161,12 @@ struct LandscapeScheduleView: View {
                 viewModel.refreshData()
             }
         }
+        .onChange(of: viewModel.currentDayIndex) { _ in
+            onCurrentDayChanged?(viewModel.currentDayData?.dayLabel)
+        }
+        .onChange(of: viewModel.isLoading) { isLoading in
+            if !isLoading { onCurrentDayChanged?(viewModel.currentDayData?.dayLabel) }
+        }
     }
     
     // MARK: - Loading View
@@ -200,7 +208,7 @@ struct LandscapeScheduleView: View {
                         Spacer()
                         Button(action: {
                             print("📱 [IPAD_TOGGLE] Return to list from no data screen")
-                            onDismiss()
+                            onDismiss(viewModel.currentDayData?.dayLabel)
                         }) {
                             Image(systemName: "list.bullet")
                                 .font(.system(size: 18, weight: .semibold))
@@ -348,7 +356,7 @@ struct LandscapeScheduleView: View {
             if isSplitViewCapable, let onDismiss = onDismissRequested {
                 Button(action: {
                     print("📱 [IPAD_TOGGLE] List button tapped in calendar view")
-                    onDismiss()
+                    onDismiss(viewModel.currentDayData?.dayLabel)
                 }) {
                     Image(systemName: "list.bullet")
                         .font(.system(size: 18, weight: .semibold))
@@ -900,8 +908,8 @@ struct LandscapeScheduleView: View {
         priorityManager: SQLitePriorityManager.shared,
         attendedHandle: ShowsAttended(),
         isSplitViewCapable: true,
-        onDismissRequested: {
-            print("Preview: Dismiss requested")
+        onDismissRequested: { currentDay in
+            print("Preview: Dismiss requested, current day: \(currentDay ?? "nil")")
         },
         onBandTapped: { bandName, currentDay in
             print("Preview: Tapped \(bandName) on \(currentDay ?? "unknown")")
