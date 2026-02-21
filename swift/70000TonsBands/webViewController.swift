@@ -156,20 +156,26 @@ class WebViewController: UIViewController, WKNavigationDelegate {
         DispatchQueue.main.async {
             if isNetworkError {
                 // For network errors, show a retry option
-                let alert = UIAlertController(title: "Network Error", message: "Unable to load stats page. Check your internet connection and try again.", preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: "Retry", style: .default) { _ in
+                let title = NSLocalizedString("Network Error", comment: "Alert title for network errors")
+                let message = NSLocalizedString("Unable to load stats page. Check your internet connection and try again.", comment: "Network error message")
+                let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+                let retryTitle = NSLocalizedString("Retry", comment: "Retry button title")
+                alert.addAction(UIAlertAction(title: retryTitle, style: .default) { _ in
                     // Retry loading the same URL
                     if let url = webView.url {
                         let request = URLRequest(url: url)
                         webView.load(request)
                     }
                 })
-                alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+                alert.addAction(UIAlertAction(title: NSLocalizedString("Cancel", comment: "Cancel button"), style: .cancel))
                 self.present(alert, animated: true)
             } else {
                 // For other errors, show a simple error message
-                let alert = UIAlertController(title: "Loading Error", message: "Failed to load stats page: \(error.localizedDescription)", preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: "OK", style: .default))
+                let title = NSLocalizedString("Loading Error", comment: "Alert title for loading errors")
+                let messageFormat = NSLocalizedString("Failed to load stats page: %@", comment: "Loading error message format")
+                let message = String(format: messageFormat, error.localizedDescription)
+                let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: "Alert OK button"), style: .default))
                 self.present(alert, animated: true)
             }
         }
@@ -197,15 +203,18 @@ class WebViewController: UIViewController, WKNavigationDelegate {
             
             // Show timeout error
             DispatchQueue.main.async {
-                let alert = UIAlertController(title: "Loading Timeout", message: "The stats page is taking too long to load. Please check your internet connection and try again.", preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: "Retry", style: .default) { _ in
+                let title = NSLocalizedString("Loading Timeout", comment: "Alert title for loading timeout")
+                let message = NSLocalizedString("The stats page is taking too long to load. Please check your internet connection and try again.", comment: "Loading timeout message")
+                let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+                let retryTitle = NSLocalizedString("Retry", comment: "Retry button title")
+                alert.addAction(UIAlertAction(title: retryTitle, style: .default) { _ in
                     // Retry loading the current URL
                     if let url = self?.webDisplay.url {
                         let request = URLRequest(url: url)
                         self?.webDisplay.load(request)
                     }
                 })
-                alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+                alert.addAction(UIAlertAction(title: NSLocalizedString("Cancel", comment: "Cancel button"), style: .cancel))
                 self?.present(alert, animated: true)
             }
         }

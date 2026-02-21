@@ -153,6 +153,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     private var isShowingLandscapeSchedule: Bool = false
     private var currentViewingDay: String? = nil  // Track which day user is viewing
     private var savedScrollPosition: CGPoint? = nil  // Save scroll position when navigating away
+    private var lastProgrammaticScrollTime: Date? = nil  // Track when we last scrolled programmatically
     
     // iPad-specific calendar toggle
     private var viewToggleButton: UIBarButtonItem?
@@ -794,36 +795,41 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print("🚨 PARSED DIALOG DATA - Creating UI dialog...")
         
         DispatchQueue.main.async {
-            let title = success ? "Data Migration Complete" : "Data Migration Report"
+            let title = success ? NSLocalizedString("Data Migration Complete", comment: "Migration dialog title when successful") : NSLocalizedString("Data Migration Report", comment: "Migration dialog title when reporting")
             
             var message = ""
             
             if success {
-                message += "✅ Successfully migrated \(migratedCount) priority records\n"
-                message += "📊 Final count: \(finalCount) records in database\n"
+                let successFormat = NSLocalizedString("Successfully migrated %d priority records", comment: "Migration success message with count")
+                message += "✅ \(String(format: successFormat, migratedCount))\n"
+                let finalCountFormat = NSLocalizedString("Final count: %d records in database", comment: "Migration final count message")
+                message += "📊 \(String(format: finalCountFormat, finalCount))\n"
                 
                 if !dataSources.isEmpty {
-                    message += "📁 Data sources: \(dataSources.joined(separator: ", "))\n"
+                    let dataSourcesFormat = NSLocalizedString("Data sources: %@", comment: "Migration data sources list")
+                    message += "📁 \(String(format: dataSourcesFormat, dataSources.joined(separator: ", ")))\n"
                 }
             } else {
-                message += "⚠️ No data found to migrate\n"
-                message += "📊 Current database count: \(finalCount) records\n"
+                message += "⚠️ \(NSLocalizedString("No data found to migrate", comment: "Migration no data message"))\n"
+                let currentCountFormat = NSLocalizedString("Current database count: %d records", comment: "Migration current count message")
+                message += "📊 \(String(format: currentCountFormat, finalCount))\n"
             }
             
             // Show issues if any
             if !issues.isEmpty {
-                message += "\n🔍 Issues encountered:\n"
+                message += "\n🔍 \(NSLocalizedString("Issues encountered:", comment: "Migration issues header"))\n"
                 for (index, issue) in issues.prefix(5).enumerated() {
                     message += "• \(issue)\n"
                 }
                 if issues.count > 5 {
-                    message += "... and \(issues.count - 5) more issues\n"
+                    let moreIssuesFormat = NSLocalizedString("... and %d more issues", comment: "Migration more issues message")
+                    message += String(format: moreIssuesFormat, issues.count - 5) + "\n"
                 }
-                message += "\n📸 You can take a screenshot to report these issues."
+                message += "\n📸 \(NSLocalizedString("You can take a screenshot to report these issues.", comment: "Migration screenshot instruction"))"
             }
             
             let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            alert.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: "Alert OK button"), style: .default))
             
             print("🚨 PRESENTING MIGRATION DIALOG TO USER")
             self.present(alert, animated: true)
@@ -1115,7 +1121,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             let defaultCountry = NSLocale.current.regionCode ?? "US"
             var countryLongShort = countryHandle.getCountryLongShort()
 
-            let alertController = UIAlertController(title: "Choose Country", message: nil, preferredStyle: .actionSheet)
+            let alertController = UIAlertController(title: NSLocalizedString("Choose Country", comment: "Alert title for country selection"), message: nil, preferredStyle: .actionSheet)
             var sortedKeys = countryLongShort.keys.sorted()
             for keyValue in sortedKeys {
                 alertController.addAction(UIAlertAction(title: keyValue, style: .default, handler: { (_) in
@@ -1612,7 +1618,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     @objc func showReceivedMessage(_ notification: Notification) {
         if let info = notification.userInfo as? Dictionary<String,AnyObject> {
             if let aps = info["aps"] as? Dictionary<String, String> {
-                showAlert("Message received", message: aps["alert"]!)
+                let title = NSLocalizedString("Message received", comment: "Alert title when a push notification message is received")
+                showAlert(title, message: aps["alert"]!)
             }
         } else {
             print("Software failure. Guru meditation.")
@@ -1623,7 +1630,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
 
             let alert = UIAlertController(title: title,
                                           message: message, preferredStyle: .alert)
-            let dismissAction = UIAlertAction(title: "Dismiss", style: .destructive, handler: nil)
+            let dismissAction = UIAlertAction(title: NSLocalizedString("Dismiss", comment: "Alert dismiss button"), style: .destructive, handler: nil)
             alert.addAction(dismissAction)
             self.present(alert, animated: true, completion: nil)
             isLoadingBandData = false
@@ -2195,10 +2202,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print("🔄 [LANDSCAPE_SCHEDULE] Check orientation - Landscape: \(isLandscape), Schedule View: \(isScheduleView), Has Event Entries: \(hasEventEntries), Bands Count: \(self.bands.count)")
         
         if isLandscape && isScheduleView && hasEventEntries {
-            // Update current viewing day from first visible cell if not already set
-            if currentViewingDay == nil {
-                updateCurrentViewingDayFromVisibleCells()
-            }
+            // Always update current viewing day from topmost visible cell before showing calendar
+            // This ensures calendar shows the same day as the first visible entry in the list
+            updateCurrentViewingDayFromVisibleCells()
             
             // Show landscape schedule view
             presentLandscapeScheduleView()
@@ -2215,6 +2221,44 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             bands: bands,
             currentViewingDay: &currentViewingDay
         )
+    }
+    
+    /// Scrolls the list view to the first row of the given day (e.g. "Day 3").
+    /// Called when switching from calendar to list so the list shows the same day the user was viewing.
+    private func scrollListToDayIfNeeded(day: String?) {
+        guard let day = day, !bands.isEmpty else { return }
+        guard let row = uiManager.firstRowIndex(forDay: day, bands: bands) else {
+            print("🔄 [LANDSCAPE_SCHEDULE] No list row found for day: \(day)")
+            return
+        }
+        let indexPath = IndexPath(row: row, section: 0)
+        guard row < tableView.numberOfRows(inSection: 0) else { return }
+        
+        // CRITICAL: Set currentViewingDay BEFORE scrolling so it's preserved
+        // This prevents updateCurrentViewingDayFromVisibleCells from overwriting it
+        // with an incorrect value if called before scroll completes
+        currentViewingDay = day
+        lastProgrammaticScrollTime = Date()
+        print("🔄 [LANDSCAPE_SCHEDULE] Set currentViewingDay to '\(day)' before scrolling to row \(row)")
+        
+        tableView.scrollToRow(at: indexPath, at: .top, animated: false)
+        print("🔄 [LANDSCAPE_SCHEDULE] List scrolled to day \(day) (row \(row))")
+        
+        // After scroll completes, verify the visible day matches what we scrolled to
+        // Use a delay to ensure scroll animation completes
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            guard let self = self else { return }
+            // Clear the flag after scroll animation completes
+            self.lastProgrammaticScrollTime = nil
+            // Only update if currentViewingDay was somehow cleared
+            // Otherwise trust the value we set before scrolling
+            if self.currentViewingDay != day {
+                print("⚠️ [LANDSCAPE_SCHEDULE] currentViewingDay was changed after scroll, updating from visible cells")
+                self.updateCurrentViewingDayFromVisibleCells()
+            } else {
+                print("✅ [LANDSCAPE_SCHEDULE] Scroll completed, currentViewingDay still matches scrolled day '\(day)'")
+            }
+        }
     }
     
     // MARK: - iPad Split View Detection
@@ -2305,7 +2349,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             // Update button to list icon
             viewToggleButton?.image = UIImage(systemName: "list.bullet")
         } else {
-            // Switch to list view
+            // Switch to list view (scroll to current day happens in dismissLandscapeViewController)
             dismissLandscapeScheduleView()
             // Update button to calendar icon
             viewToggleButton?.image = UIImage(systemName: "calendar")
@@ -2389,12 +2433,30 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             return
         }
         
+        // CRITICAL: Update current viewing day from topmost visible cell before presenting calendar
+        // BUT: If we just scrolled programmatically (within last 0.5 seconds), trust the day we scrolled to
+        // instead of re-checking visible cells (which may not have updated yet due to scroll animation)
+        let timeSinceScroll = lastProgrammaticScrollTime.map { Date().timeIntervalSince($0) } ?? 1.0
+        
+        if timeSinceScroll < 0.5, let scrolledDay = currentViewingDay {
+            // We just scrolled programmatically - trust the day we scrolled to
+            print("🔄 [LANDSCAPE_SCHEDULE] Recent programmatic scroll detected (\(String(format: "%.2f", timeSinceScroll))s ago), using scrolled day: '\(scrolledDay)'")
+        } else {
+            // No recent scroll, or currentViewingDay is nil - update from visible cells
+            if currentViewingDay == nil {
+                print("🔄 [LANDSCAPE_SCHEDULE] currentViewingDay is nil, updating from visible cells")
+            } else {
+                print("🔄 [LANDSCAPE_SCHEDULE] No recent scroll, updating from visible cells (current: '\(currentViewingDay!)')")
+            }
+            updateCurrentViewingDayFromVisibleCells()
+        }
+        
         // Use the tracked current viewing day
         let initialDay = currentViewingDay
         if let day = initialDay {
-            print("🔄 [LANDSCAPE_SCHEDULE] Starting on tracked day: \(day)")
+            print("🔄 [LANDSCAPE_SCHEDULE] Starting on tracked day: '\(day)'")
         } else {
-            print("🔄 [LANDSCAPE_SCHEDULE] No tracked day, will start on first day")
+            print("🔄 [LANDSCAPE_SCHEDULE] No tracked day found, will start on first day")
         }
         
         // Pass the same dependencies used by the main view for filtering
@@ -2404,10 +2466,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             initialDay: initialDay,
             hideExpiredEvents: hideExpiredEvents,
             isSplitViewCapable: isSplitViewCapable(),
-            onDismissRequested: { [weak self] in
-                // iPad: User wants to return to list view
+            onDismissRequested: { [weak self] currentDay in
+                // iPad: User wants to return to list view; use calendar's current day so list shows same day
+                if let day = currentDay {
+                    self?.currentViewingDay = day
+                    print("🔄 [LANDSCAPE_SCHEDULE] Calendar → list: will show day \(day)")
+                }
                 self?.isManualCalendarView = false
                 self?.dismissLandscapeScheduleView()
+            },
+            onCurrentDayChanged: { [weak self] day in
+                // Keep currentViewingDay in sync when user changes day in calendar (swipe/buttons)
+                self?.currentViewingDay = day
             },
             onBandTapped: { [weak self] bandName, currentDay in
                 // Handle band tap - present detail directly from landscape view
@@ -2544,6 +2614,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     private func dismissLandscapeViewController(viewController: UIViewController, completion: (() -> Void)?) {
+        let dayToShow = currentViewingDay  // Capture before dismiss so list can scroll to same day
         viewController.dismiss(animated: true) { [weak self] in
             print("✅ [LANDSCAPE_SCHEDULE] Landscape schedule view dismissed")
             self?.landscapeScheduleViewController = nil
@@ -2556,6 +2627,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 print("📱 [IPAD_TOGGLE] Reset to list view, button updated")
             }
             
+            // Calendar → list: show the day the user was viewing in the calendar
+            // Scroll to first entry of that day after a brief delay to ensure table view is ready
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                self?.scrollListToDayIfNeeded(day: dayToShow)
+            }
             completion?()
         }
     }
@@ -3704,7 +3780,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 // CRITICAL: Validate cellData has enough elements to prevent crash
                 guard let data = cellData, data.count >= 4 else {
                     print("❌ [SWIPE_ACTION] Invalid cell data format: \(cellText ?? "nil")")
-                    let message = "Invalid cell data - cannot add attendance"
+                    let message = NSLocalizedString("Invalid cell data - cannot add attendance", comment: "Toast message when cell data is invalid")
                     ToastMessages(message).show(self, cellLocation: placementOfCell!, placeHigh: false)
                     return
                 }
@@ -3729,7 +3805,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 self.refreshIPadDetailViewIfNeeded(for: bandName)
                 self.quickRefresh()
             } else {
-                let message =  "No Show Is Associated With This Entry"
+                let message = NSLocalizedString("No Show Is Associated With This Entry", comment: "Toast message when no show is associated with entry")
                 ToastMessages(message).show(self, cellLocation: placementOfCell!, placeHigh: false)
             }
         })
@@ -4804,7 +4880,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     @objc @IBAction func statsButtonTapped(_ sender: Any) {
         let fileManager = FileManager.default
         guard let documentsUrl = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first else {
-            showAlert("Error", message: "Could not access documents directory.")
+            let title = NSLocalizedString("Error", comment: "Error alert title")
+            let message = NSLocalizedString("Could not access documents directory.", comment: "Error message when documents directory cannot be accessed")
+            showAlert(title, message: message)
             return
         }
         let fileUrl = documentsUrl.appendingPathComponent("stats.html")
@@ -4994,7 +5072,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 let fileManager = FileManager.default
                 guard let documentsUrl = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first else {
                     // Fallback to basic alert if we can't get documents directory
-                    self.showAlert("No Stats Data", message: message)
+                    let title = NSLocalizedString("No Stats Data", comment: "Alert title when stats data is not available")
+                    self.showAlert(title, message: message)
                     return
                 }
                 let tempUrl = documentsUrl.appendingPathComponent("no_stats.html")
@@ -5017,7 +5096,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     }
                 } catch {
                     // Fallback to basic alert if HTML creation fails
-                    self.showAlert("No Stats Data", message: message)
+                    let title = NSLocalizedString("No Stats Data", comment: "Alert title when stats data is not available")
+                    self.showAlert(title, message: message)
                 }
             }
         }
@@ -5087,7 +5167,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     let fileManager = FileManager.default
                     guard let documentsUrl = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first else {
                         // Fallback to basic alert if we can't get documents directory
-                        self.showAlert("Loading Stats", message: "Please wait while stats are being downloaded...")
+                        let title = NSLocalizedString("Loading Stats", comment: "Alert title when loading stats")
+                        let message = NSLocalizedString("Please wait while stats are being downloaded...", comment: "Message shown while stats are loading")
+                        self.showAlert(title, message: message)
                         return
                     }
                     let tempUrl = documentsUrl.appendingPathComponent("loading_stats.html")

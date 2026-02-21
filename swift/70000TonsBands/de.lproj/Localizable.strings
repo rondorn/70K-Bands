@@ -361,4 +361,52 @@
 "AboutPositionLeft" = "links";
 "AboutTeamPhoto" = "Teamfoto";
 
+// Toast and help messages
+"Venue Filter On Format" = "%@ Venue Filter On"; // Format for venue filter on message, %@ = venue name
+"Venue Filter Off Format" = "%@ Venue Filter Off"; // Format for venue filter off message, %@ = venue name
+"Invalid cell data - cannot add attendance" = "Invalid cell data - cannot add attendance"; // Toast message when cell data is invalid
+"No Show Is Associated With This Entry" = "No Show Is Associated With This Entry"; // Toast message when no show is associated with entry
+"Dismiss" = "Verwerfen"; // Alert dismiss button
+"Message received" = "Nachricht erhalten"; // Alert title when a push notification message is received
+"Choose Country" = "Land Wählen"; // Alert title for country selection
+
+// Migration dialog messages
+"Data Migration Complete" = "Datenmigration Abgeschlossen"; // Migration dialog title when successful
+"Data Migration Report" = "Datenmigrationsbericht"; // Migration dialog title when reporting
+"Successfully migrated %d priority records" = "%d Prioritätsdatensätze erfolgreich migriert"; // Migration success message with count
+"Final count: %d records in database" = "Endgültige Anzahl: %d Datensätze in der Datenbank"; // Migration final count message
+"Data sources: %@" = "Datenquellen: %@"; // Migration data sources list
+"No data found to migrate" = "Keine zu migrierenden Daten gefunden"; // Migration no data message
+"Current database count: %d records" = "Aktuelle Datenbankanzahl: %d Datensätze"; // Migration current count message
+"Issues encountered:" = "Aufgetretene Probleme:"; // Migration issues header
+"... and %d more issues" = "... und %d weitere Probleme"; // Migration more issues message
+"You can take a screenshot to report these issues." = "Sie können einen Screenshot machen, um diese Probleme zu melden."; // Migration screenshot instruction
+
+// Error and stats messages
+"Error" = "Fehler"; // Error alert title
+"Could not access documents directory." = "Auf das Dokumentenverzeichnis konnte nicht zugegriffen werden."; // Error message when documents directory cannot be accessed
+"No Stats Data" = "Keine Statistikdaten"; // Alert title when stats data is not available
+"Loading Stats" = "Statistiken Werden Geladen"; // Alert title when loading stats
+"Please wait while stats are being downloaded..." = "Bitte warten Sie, während die Statistiken heruntergeladen werden..."; // Message shown while stats are loading
+"Network Error" = "Netzwerkfehler"; // Alert title for network errors
+"Unable to load stats page. Check your internet connection and try again." = "Die Statistikseite konnte nicht geladen werden. Überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut."; // Network error message
+"Retry" = "Wiederholen"; // Retry button title
+"Loading Error" = "Ladefehler"; // Alert title for loading errors
+"Failed to load stats page: %@" = "Fehler beim Laden der Statistikseite: %@"; // Loading error message format
+"Loading Timeout" = "Ladezeitüberschreitung"; // Alert title for loading timeout
+"The stats page is taking too long to load. Please check your internet connection and try again." = "Die Statistikseite benötigt zu lange zum Laden. Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut."; // Loading timeout message
+
+// Missing keys from Base
+"Close" = "Schließen";
+"Cut" = "Ausschneiden";
+"Event Location Filter" = "Veranstaltungsortfilter";
+"Hide Other" = "Andere Ausblenden";
+"Hide Other Venues" = "Andere Orte Ausblenden";
+"Locations" = "Orte";
+"Multiple bands share this event. Which band would you like to view?" = "Mehrere Bands teilen sich diese Veranstaltung. Welche Band möchten Sie ansehen?";
+"Show Bands Only" = "Nur Bands Anzeigen";
+"Show Other" = "Andere Anzeigen";
+"Show Other Venues" = "Andere Orte Anzeigen";
+"Show Schedule" = "Zeitplan Anzeigen";
+"View Mode" = "Ansichtsmodus";
 

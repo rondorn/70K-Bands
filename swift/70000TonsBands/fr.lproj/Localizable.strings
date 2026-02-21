@@ -350,3 +350,62 @@
 "AboutPositionRight" = "droite";
 "AboutPositionLeft" = "gauche";
 "AboutTeamPhoto" = "Photo d'Équipe";
+
+// Toast and help messages
+"Venue Filter On Format" = "%@ Venue Filter On"; // Format for venue filter on message, %@ = venue name
+"Venue Filter Off Format" = "%@ Venue Filter Off"; // Format for venue filter off message, %@ = venue name
+"Invalid cell data - cannot add attendance" = "Invalid cell data - cannot add attendance"; // Toast message when cell data is invalid
+"No Show Is Associated With This Entry" = "No Show Is Associated With This Entry"; // Toast message when no show is associated with entry
+"Dismiss" = "Rejeter"; // Alert dismiss button
+"Message received" = "Message reçu"; // Alert title when a push notification message is received
+"Choose Country" = "Choisir le Pays"; // Alert title for country selection
+
+// Migration dialog messages
+"Data Migration Complete" = "Migration de Données Terminée"; // Migration dialog title when successful
+"Data Migration Report" = "Rapport de Migration de Données"; // Migration dialog title when reporting
+"Successfully migrated %d priority records" = "%d enregistrements prioritaires migrés avec succès"; // Migration success message with count
+"Final count: %d records in database" = "Nombre final : %d enregistrements dans la base de données"; // Migration final count message
+"Data sources: %@" = "Sources de données : %@"; // Migration data sources list
+"No data found to migrate" = "Aucune donnée trouvée à migrer"; // Migration no data message
+"Current database count: %d records" = "Nombre actuel dans la base de données : %d enregistrements"; // Migration current count message
+"Issues encountered:" = "Problèmes rencontrés :"; // Migration issues header
+"... and %d more issues" = "... et %d problèmes supplémentaires"; // Migration more issues message
+"You can take a screenshot to report these issues." = "Vous pouvez prendre une capture d'écran pour signaler ces problèmes."; // Migration screenshot instruction
+
+// Error and stats messages
+"Error" = "Erreur"; // Error alert title
+"Could not access documents directory." = "Impossible d'accéder au répertoire des documents."; // Error message when documents directory cannot be accessed
+"No Stats Data" = "Aucune Donnée de Statistiques"; // Alert title when stats data is not available
+"Loading Stats" = "Chargement des Statistiques"; // Alert title when loading stats
+"Please wait while stats are being downloaded..." = "Veuillez patienter pendant le téléchargement des statistiques..."; // Message shown while stats are loading
+"Network Error" = "Erreur Réseau"; // Alert title for network errors
+"Unable to load stats page. Check your internet connection and try again." = "Impossible de charger la page des statistiques. Vérifiez votre connexion Internet et réessayez."; // Network error message
+"Retry" = "Réessayer"; // Retry button title
+"Loading Error" = "Erreur de Chargement"; // Alert title for loading errors
+"Failed to load stats page: %@" = "Échec du chargement de la page des statistiques : %@"; // Loading error message format
+"Loading Timeout" = "Délai de Chargement Dépassé"; // Alert title for loading timeout
+"The stats page is taking too long to load. Please check your internet connection and try again." = "La page des statistiques met trop de temps à charger. Vérifiez votre connexion Internet et réessayez."; // Loading timeout message
+
+// Missing keys from Base
+"Choices" = "Choix";
+"ClinicsPlural" = "Cliniques";
+"Close" = "Fermer";
+"CruiseEventsPlural" = "Événements de Croisière";
+"Cut" = "Couper";
+"Event Location Filter" = "Filtre d'Emplacement d'Événement";
+"EventsAttended" = "Événements Assistés";
+"Hide Other" = "Masquer Autres";
+"Hide Other Venues" = "Masquer Autres Lieux";
+"Locations" = "Emplacements";
+"MeetAndGreetsPlural" = "Rencontres";
+"MightSeeBands" = "Bandes à Peut-être Voir";
+"Multiple bands share this event. Which band would you like to view?" = "Plusieurs groupes partagent cet événement. Quel groupe souhaitez-vous voir ?";
+"MustSeeBands" = "Bandes à Voir Absolument";
+"Show Bands Only" = "Afficher Seulement les Groupes";
+"Show Other" = "Afficher Autres";
+"Show Other Venues" = "Afficher Autres Lieux";
+"Show Schedule" = "Afficher le Calendrier";
+"ShowsPlural" = "Concerts";
+"SpecialEventsPlural" = "Événements Spéciaux";
+"UnofficialEventsPlural" = "Événements Non Officiels";
+"View Mode" = "Mode d'Affichage";
