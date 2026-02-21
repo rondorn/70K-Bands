@@ -136,6 +136,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     // INTERMITTENT POSITION LOSS FIX: Flag to track when we're returning from details screen
     public static Boolean returningFromDetailsScreen = false;
     
+    // Flag to track when we're returning from landscape schedule activity (to prevent state restoration from overwriting scroll)
+    private boolean returningFromLandscapeSchedule = false;
+    
     // Only perform the "startup refresh" (core CSV downloads) once per process.
     // Prevents re-downloading when returning from internal screens (details/preferences/stats).
     private static final java.util.concurrent.atomic.AtomicBoolean startupRefreshDone =
@@ -1360,7 +1363,12 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                     if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_IDLE) {
                         lastScrollTime = System.currentTimeMillis();
                         // Update current viewing day when scroll stops to track which day is visible
-                        updateCurrentViewingDayFromVisibleCells();
+                        // BUT: Don't update if we're returning from landscape schedule - we'll set it explicitly
+                        if (!returningFromLandscapeSchedule) {
+                            updateCurrentViewingDayFromVisibleCells();
+                        } else {
+                            Log.d("LANDSCAPE_SCHEDULE", "Skipping updateCurrentViewingDayFromVisibleCells - returningFromLandscapeSchedule is true");
+                        }
                     }
                 }
 
@@ -2221,17 +2229,71 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        // CRITICAL: Log at the very start, before super call, to ensure we see if this method is called at all
+        Log.d("LANDSCAPE_SCHEDULE", "🔵🔵🔵 onActivityResult ENTRY - requestCode=" + requestCode + ", resultCode=" + resultCode + ", data=" + (data != null ? "not null" : "null"));
         super.onActivityResult(requestCode, resultCode, data);
         
-        // Handle landscape schedule activity result
-        if (requestCode == REQUEST_CODE_LANDSCAPE_SCHEDULE) {
-            Log.d("LANDSCAPE_SCHEDULE", "Returned from landscape schedule activity");
-            isShowingLandscapeSchedule = false;
+        try {
+            Log.d("LANDSCAPE_SCHEDULE", "═══════════════════════════════════════════════════════");
+            Log.d("LANDSCAPE_SCHEDULE", "onActivityResult called - requestCode=" + requestCode + " (expected " + REQUEST_CODE_LANDSCAPE_SCHEDULE + "), resultCode=" + resultCode + ", data=" + (data != null ? "not null" : "null"));
             
-            // Refresh data in case anything changed
-            if (adapter != null) {
-                adapter.notifyDataSetChanged();
+            // Handle landscape schedule activity result
+            if (requestCode == REQUEST_CODE_LANDSCAPE_SCHEDULE) {
+                Log.d("LANDSCAPE_SCHEDULE", "✅ MATCHED REQUEST_CODE_LANDSCAPE_SCHEDULE");
+                Log.d("LANDSCAPE_SCHEDULE", "Returned from landscape schedule activity - resultCode=" + resultCode + " (RESULT_OK=" + RESULT_OK + "), data=" + (data != null ? "not null" : "null"));
+                isShowingLandscapeSchedule = false;
+                
+                // Set flag to prevent state restoration from overwriting our scroll position
+                returningFromLandscapeSchedule = true;
+                Log.d("LANDSCAPE_SCHEDULE", "✅ Set returningFromLandscapeSchedule flag to TRUE");
+                
+                // Calendar → list: show the day the user was viewing in the calendar
+                if (resultCode == RESULT_OK && data != null) {
+                    Log.d("LANDSCAPE_SCHEDULE", "✅ resultCode == RESULT_OK && data != null");
+                    String day = data.getStringExtra(com.Bands70k.landscape.LandscapeScheduleActivity.EXTRA_RESULT_CURRENT_DAY);
+                    Log.d("LANDSCAPE_SCHEDULE", "Retrieved EXTRA_RESULT_CURRENT_DAY from Intent: '" + day + "' (length=" + (day != null ? day.length() : 0) + ")");
+                    
+                    // Debug: Print all extras
+                    if (data.getExtras() != null) {
+                        Log.d("LANDSCAPE_SCHEDULE", "All Intent extras:");
+                        for (String key : data.getExtras().keySet()) {
+                            Log.d("LANDSCAPE_SCHEDULE", "  - " + key + " = '" + data.getExtras().get(key) + "'");
+                        }
+                    }
+                    
+                    if (day != null && !day.isEmpty()) {
+                        currentViewingDay = day;
+                        // Store in SharedPreferences as backup in case onActivityResult isn't called reliably
+                        SharedPreferences prefs = getSharedPreferences("landscape_schedule", MODE_PRIVATE);
+                        prefs.edit().putString("pending_day_result", day).apply();
+                        Log.d("LANDSCAPE_SCHEDULE", "✅ Stored day '" + day + "' in SharedPreferences as backup");
+                        Log.d("LANDSCAPE_SCHEDULE", "✅ Calendar → list: will show day '" + day + "' - calling scrollListToDayIfNeeded()");
+                        scrollListToDayIfNeeded(day);
+                        Log.d("LANDSCAPE_SCHEDULE", "✅ scrollListToDayIfNeeded() call completed");
+                    } else {
+                        Log.w("LANDSCAPE_SCHEDULE", "❌ EXTRA_RESULT_CURRENT_DAY is null or empty - cannot scroll to day");
+                        // Reset flag if we're not scrolling
+                        returningFromLandscapeSchedule = false;
+                        Log.d("LANDSCAPE_SCHEDULE", "Reset returningFromLandscapeSchedule flag to FALSE (day is null/empty)");
+                    }
+                } else {
+                    Log.w("LANDSCAPE_SCHEDULE", "❌ resultCode != RESULT_OK or data is null - resultCode=" + resultCode + " (expected " + RESULT_OK + "), data=" + (data != null ? "not null" : "null"));
+                    // Reset flag if result is not OK
+                    returningFromLandscapeSchedule = false;
+                    Log.d("LANDSCAPE_SCHEDULE", "Reset returningFromLandscapeSchedule flag to FALSE (result not OK)");
+                }
+                
+                // Refresh data in case anything changed
+                if (adapter != null) {
+                    adapter.notifyDataSetChanged();
+                }
+            } else {
+                Log.d("LANDSCAPE_SCHEDULE", "⚠️ requestCode does not match - got " + requestCode + ", expected " + REQUEST_CODE_LANDSCAPE_SCHEDULE);
             }
+            Log.d("LANDSCAPE_SCHEDULE", "═══════════════════════════════════════════════════════");
+        } catch (Exception e) {
+            Log.e("LANDSCAPE_SCHEDULE", "❌ EXCEPTION in onActivityResult", e);
+            returningFromLandscapeSchedule = false;
         }
         
         if (resultCode == RESULT_OK) {
@@ -4352,13 +4414,38 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         handleSearch();
 
         Log.d(TAG, notificationTag + " In onResume - 4");
+        Log.d("LANDSCAPE_SCHEDULE", "onResume() - returningFromLandscapeSchedule=" + returningFromLandscapeSchedule + ", returningFromDetailsScreen=" + returningFromDetailsScreen);
+        
+        // FALLBACK FIX: Check SharedPreferences for pending day result in case onActivityResult wasn't called
+        SharedPreferences prefs = getSharedPreferences("landscape_schedule", MODE_PRIVATE);
+        String pendingDay = prefs.getString("pending_day_result", null);
+        if (pendingDay != null && !pendingDay.isEmpty()) {
+            Log.d("LANDSCAPE_SCHEDULE", "⚠️ FALLBACK: Found pending day result in SharedPreferences: '" + pendingDay + "'");
+            Log.d("LANDSCAPE_SCHEDULE", "⚠️ This suggests onActivityResult may not have been called - handling fallback scroll");
+            // Clear the pending result
+            prefs.edit().remove("pending_day_result").apply();
+            // Set flag and trigger scroll
+            returningFromLandscapeSchedule = true;
+            currentViewingDay = pendingDay;
+            // Delay scroll slightly to ensure list is ready
+            bandNamesList.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    scrollListToDayIfNeeded(pendingDay);
+                }
+            }, 100);
+        }
+        
         // ERRATIC JUMPING FIX: Disable automatic state restoration that conflicts with position restoration
         // Our manual position restoration in displayBandDataWithSchedule() is more reliable
-        if (listState != null && !returningFromDetailsScreen) {
-            Log.d("State Status", "restoring state during Resume (not returning from details)");
+        if (listState != null && !returningFromDetailsScreen && !returningFromLandscapeSchedule) {
+            Log.d("State Status", "restoring state during Resume (not returning from details or landscape schedule)");
             bandNamesList.onRestoreInstanceState(listState);
         } else if (returningFromDetailsScreen) {
             Log.d("State Status", "skipping automatic state restoration - returning from details screen");
+        } else if (returningFromLandscapeSchedule) {
+            Log.d("State Status", "skipping automatic state restoration - returning from landscape schedule (will scroll to day)");
+            Log.d("LANDSCAPE_SCHEDULE", "onResume() - Flag is TRUE, scroll should have been initiated in onActivityResult");
         }
 
         Log.d(TAG, notificationTag + " In onResume - 5");
@@ -4937,28 +5024,24 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             return;
         }
         
-        // Get adapter - use member variable if available, otherwise get from ListView
-        bandListView bandAdapter = null;
-        if (adapter != null && adapter instanceof bandListView) {
-            bandAdapter = (bandListView) adapter;
-        } else {
-            android.widget.ListAdapter listAdapter = bandNamesList.getAdapter();
-            if (listAdapter instanceof bandListView) {
-                bandAdapter = (bandListView) listAdapter;
-            } else {
-                Log.w("LANDSCAPE_SCHEDULE", "Cannot update day - adapter is not bandListView");
-                return;
-            }
+        // Get adapter - use member variable directly
+        // Note: SwipeMenuListView.getAdapter() returns a wrapper, not the actual bandListView
+        if (adapter == null || !(adapter instanceof bandListView)) {
+            Log.w("LANDSCAPE_SCHEDULE", "Cannot update day - adapter is null or not bandListView, it's: " + (adapter != null ? adapter.getClass().getName() : "null"));
+            return;
         }
+        bandListView bandAdapter = adapter;
         
         int adapterCount = bandAdapter.getCount();
         int firstVisiblePosition = bandNamesList.getFirstVisiblePosition();
+        int lastVisiblePosition = bandNamesList.getLastVisiblePosition();
         
-        Log.d("LANDSCAPE_SCHEDULE", "Updating day from visible cells - firstVisible: " + firstVisiblePosition + ", adapterCount: " + adapterCount);
+        Log.d("LANDSCAPE_SCHEDULE", "Updating day from visible cells - firstVisible: " + firstVisiblePosition + ", lastVisible: " + lastVisiblePosition + ", adapterCount: " + adapterCount);
         
         if (firstVisiblePosition >= 0 && firstVisiblePosition < adapterCount) {
-            // PRIORITY 1: Try the topmost visible entry (firstVisiblePosition) itself
-            // Get bandListItem from adapter and look up raw day from schedule data cache
+            // PRIORITY 1: Use the topmost visible entry (firstVisiblePosition) as the key record
+            // This ensures the calendar shows the same day as the first visible entry in the list
+            // The 1st visible entry on the list should be used for both leaving the list view and returning to the list view
             try {
                 bandListItem item = bandAdapter.getItem(firstVisiblePosition);
                 String rawDay = extractRawDayFromBandListItem(item);
@@ -4971,11 +5054,29 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 Log.d("LANDSCAPE_SCHEDULE", "Error getting topmost item at position " + firstVisiblePosition + ": " + e.getMessage());
             }
             
-            // PRIORITY 2: Search BACKWARDS from firstVisiblePosition to find the most recent event
-            // If the topmost entry is a band header or doesn't have a day, find the most recent event entry
-            // This ensures we get the day the user is actually viewing (e.g., if they scrolled to Day 3)
+            // PRIORITY 2: Fallback - search forward from firstVisiblePosition (user likely scrolled forward to a day)
+            // This is more likely to find the day the user scrolled to (e.g., Day 3) than searching backward
+            int maxForward = Math.min(50, adapterCount - firstVisiblePosition);
+            Log.d("LANDSCAPE_SCHEDULE", "Topmost entry has no day, searching forward " + maxForward + " positions from " + firstVisiblePosition);
+            for (int i = 1; i < maxForward; i++) {
+                int position = firstVisiblePosition + i;
+                try {
+                    bandListItem item = bandAdapter.getItem(position);
+                    String rawDay = extractRawDayFromBandListItem(item);
+                    if (rawDay != null && !rawDay.isEmpty()) {
+                        currentViewingDay = rawDay;
+                        Log.d("LANDSCAPE_SCHEDULE", "✅ Updated viewing day from forward search at position " + position + ": '" + currentViewingDay + "' (topmost was at " + firstVisiblePosition + ")");
+                        return;
+                    }
+                } catch (Exception e) {
+                    // Continue searching
+                }
+            }
+            
+            // PRIORITY 3: Search BACKWARDS from firstVisiblePosition (only if forward search failed)
+            // This handles edge cases where the user might have scrolled backwards
             int maxBackward = Math.min(100, firstVisiblePosition);
-            Log.d("LANDSCAPE_SCHEDULE", "Topmost entry has no day, searching backwards " + maxBackward + " positions from " + firstVisiblePosition);
+            Log.d("LANDSCAPE_SCHEDULE", "Forward search failed, searching backwards " + maxBackward + " positions from " + firstVisiblePosition);
             for (int i = 1; i <= maxBackward; i++) {
                 int position = firstVisiblePosition - i;
                 if (position >= 0) {
@@ -4990,25 +5091,6 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                     } catch (Exception e) {
                         // Continue searching
                     }
-                }
-            }
-            
-            // PRIORITY 3: Search forward from firstVisiblePosition (only if backward search failed)
-            // This handles edge cases where the topmost entry might be at the very start of a day
-            int maxForward = Math.min(50, adapterCount - firstVisiblePosition);
-            Log.d("LANDSCAPE_SCHEDULE", "Backward search failed, searching forward " + maxForward + " positions from " + firstVisiblePosition);
-            for (int i = 1; i < maxForward; i++) {
-                int position = firstVisiblePosition + i;
-                try {
-                    bandListItem item = bandAdapter.getItem(position);
-                    String rawDay = extractRawDayFromBandListItem(item);
-                    if (rawDay != null && !rawDay.isEmpty()) {
-                        currentViewingDay = rawDay;
-                        Log.d("LANDSCAPE_SCHEDULE", "✅ Updated viewing day from forward search at position " + position + ": '" + currentViewingDay + "' (topmost was at " + firstVisiblePosition + ")");
-                        return;
-                    }
-                } catch (Exception e) {
-                    // Continue searching
                 }
             }
         }
@@ -5034,25 +5116,137 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     }
     
     /**
+     * Scrolls the list view to the first row of the given day (e.g. "Day 3").
+     * Called when switching from calendar to list so the list shows the same day the user was viewing.
+     */
+    private void scrollListToDayIfNeeded(final String day) {
+        Log.d("LANDSCAPE_SCHEDULE", "═══════════════════════════════════════════════════════");
+        Log.d("LANDSCAPE_SCHEDULE", "scrollListToDayIfNeeded() called with day: '" + day + "' (length=" + (day != null ? day.length() : 0) + ")");
+        try {
+            if (day == null || day.isEmpty()) {
+                Log.w("LANDSCAPE_SCHEDULE", "❌ scrollListToDayIfNeeded: day is null or empty");
+                return;
+            }
+            if (bandNamesList == null) {
+                Log.w("LANDSCAPE_SCHEDULE", "❌ scrollListToDayIfNeeded: bandNamesList is null");
+                return;
+            }
+            // Use the instance variable 'adapter' directly instead of getAdapter()
+            // because SwipeMenuListView.getAdapter() returns a wrapper, not the actual bandListView
+            if (adapter == null || !(adapter instanceof bandListView)) {
+                Log.w("LANDSCAPE_SCHEDULE", "❌ scrollListToDayIfNeeded: adapter is null or not bandListView, it's: " + (adapter != null ? adapter.getClass().getName() : "null"));
+                return;
+            }
+            final bandListView bandAdapter = adapter;
+            int count = bandAdapter.getCount();
+            Log.d("LANDSCAPE_SCHEDULE", "✅ Searching through " + count + " items for day '" + day + "'");
+            if (count == 0) {
+                Log.w("LANDSCAPE_SCHEDULE", "❌ scrollListToDayIfNeeded: adapter count is 0");
+                return;
+            }
+            
+            // Search for matching day
+            int foundPosition = -1;
+            String foundRawDay = null;
+            for (int position = 0; position < count; position++) {
+                try {
+                    bandListItem item = bandAdapter.getItem(position);
+                    String rawDay = extractRawDayFromBandListItem(item);
+                    
+                    // Log first few items and any that might match
+                    if (position < 5 || (rawDay != null && rawDay.trim().equalsIgnoreCase(day.trim()))) {
+                        Log.d("LANDSCAPE_SCHEDULE", "  Position " + position + ": rawDay='" + rawDay + "' (searching for '" + day + "') - match=" + (rawDay != null && rawDay.trim().equals(day.trim())));
+                    }
+                    
+                    if (rawDay != null && rawDay.trim().equals(day.trim())) {
+                        foundPosition = position;
+                        foundRawDay = rawDay;
+                        Log.d("LANDSCAPE_SCHEDULE", "✅ FOUND MATCHING DAY at position " + position + " - rawDay='" + rawDay + "' matches day='" + day + "'");
+                        break;
+                    }
+                } catch (Exception e) {
+                    Log.w("LANDSCAPE_SCHEDULE", "Error checking position " + position + ": " + e.getMessage());
+                    // Continue searching
+                }
+            }
+            
+            if (foundPosition >= 0) {
+                final int scrollPosition = foundPosition;
+                Log.d("LANDSCAPE_SCHEDULE", "✅ Scheduling scroll to position " + scrollPosition + " for day '" + day + "'");
+                bandNamesList.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Log.d("LANDSCAPE_SCHEDULE", "🔄 Executing scroll runnable - scrollPosition=" + scrollPosition + ", adapterCount=" + (bandAdapter != null ? bandAdapter.getCount() : "N/A"));
+                            if (bandNamesList != null && scrollPosition < bandAdapter.getCount()) {
+                                bandNamesList.setSelectionFromTop(scrollPosition, 0);
+                                Log.d("LANDSCAPE_SCHEDULE", "✅✅✅ List scrolled to day '" + day + "' (position " + scrollPosition + ")");
+                                // CRITICAL: Set currentViewingDay explicitly to the day we scrolled to
+                                // This prevents updateCurrentViewingDayFromVisibleCells from overwriting it
+                                // with a different day based on first visible position
+                                currentViewingDay = day;
+                                Log.d("LANDSCAPE_SCHEDULE", "✅ Set currentViewingDay to '" + day + "' after scroll");
+                                // Clear SharedPreferences backup after successful scroll
+                                SharedPreferences prefs = getSharedPreferences("landscape_schedule", MODE_PRIVATE);
+                                prefs.edit().remove("pending_day_result").apply();
+                                // Reset flag after scroll completes (with a small delay to ensure scroll animation finishes)
+                                bandNamesList.postDelayed(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        returningFromLandscapeSchedule = false;
+                                        Log.d("LANDSCAPE_SCHEDULE", "Reset returningFromLandscapeSchedule flag to FALSE after scroll animation completed");
+                                    }
+                                }, 300); // 300ms delay to let scroll animation finish
+                            } else {
+                                Log.w("LANDSCAPE_SCHEDULE", "❌ Cannot scroll: bandNamesList=" + (bandNamesList != null ? "not null" : "null") + ", scrollPosition=" + scrollPosition + ", adapterCount=" + (bandAdapter != null ? bandAdapter.getCount() : "N/A"));
+                                // Reset flag even if scroll failed
+                                returningFromLandscapeSchedule = false;
+                            }
+                        } catch (Exception e) {
+                            Log.e("LANDSCAPE_SCHEDULE", "❌ EXCEPTION in scroll runnable", e);
+                            returningFromLandscapeSchedule = false;
+                        }
+                    }
+                });
+                Log.d("LANDSCAPE_SCHEDULE", "═══════════════════════════════════════════════════════");
+                return;
+            }
+            
+            // No match found - log sample of what we're comparing
+            Log.w("LANDSCAPE_SCHEDULE", "❌ No list position found for day: '" + day + "' after searching " + count + " items");
+            Log.d("LANDSCAPE_SCHEDULE", "Sample of days in list (first 10):");
+            for (int i = 0; i < Math.min(10, count); i++) {
+                try {
+                    bandListItem item = bandAdapter.getItem(i);
+                    String rawDay = extractRawDayFromBandListItem(item);
+                    Log.d("LANDSCAPE_SCHEDULE", "  [" + i + "] rawDay='" + rawDay + "'");
+                } catch (Exception e) {
+                    Log.d("LANDSCAPE_SCHEDULE", "  [" + i + "] Error: " + e.getMessage());
+                }
+            }
+            // Reset flag if we couldn't find the day to scroll to
+            returningFromLandscapeSchedule = false;
+            Log.d("LANDSCAPE_SCHEDULE", "Reset returningFromLandscapeSchedule flag to FALSE (day not found in list)");
+            Log.d("LANDSCAPE_SCHEDULE", "═══════════════════════════════════════════════════════");
+        } catch (Exception e) {
+            Log.e("LANDSCAPE_SCHEDULE", "❌ EXCEPTION in scrollListToDayIfNeeded", e);
+            returningFromLandscapeSchedule = false;
+            Log.d("LANDSCAPE_SCHEDULE", "═══════════════════════════════════════════════════════");
+        }
+    }
+    
+    /**
      * Extract raw day from bandListItem - SIMPLE: just use the rawDay field we stored!
      * This is much simpler than looking up schedule data - we already have it!
      * When we create bandListItem, we store the raw day from scheduleHandler.getShowDay() BEFORE formatting.
      */
     private String extractRawDayFromBandListItem(bandListItem item) {
         if (item == null) {
-            Log.d("LANDSCAPE_SCHEDULE", "  Item is null");
             return null;
         }
         
         String rawDay = item.getRawDay();
-        if (rawDay != null && !rawDay.isEmpty()) {
-            Log.d("LANDSCAPE_SCHEDULE", "  ✅ Got raw day directly from bandListItem: '" + rawDay + "' for " + item.getBandName());
-            return rawDay;
-        }
-        
-        // Fallback: if rawDay wasn't set (for older items or non-event entries), return null
-        Log.d("LANDSCAPE_SCHEDULE", "  ⚠️ No rawDay stored in bandListItem for " + item.getBandName() + " - might be a non-event entry");
-        return null;
+        return rawDay; // Return null if not set (for non-event entries)
     }
     
     

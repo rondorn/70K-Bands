@@ -339,3 +339,69 @@
 "AboutPositionRight" = "derecha";
 "AboutPositionLeft" = "izquierda";
 "AboutTeamPhoto" = "Foto del Equipo";
+
+// Toast and help messages
+"Venue Filter On Format" = "%@ Venue Filter On"; // Format for venue filter on message, %@ = venue name
+"Venue Filter Off Format" = "%@ Venue Filter Off"; // Format for venue filter off message, %@ = venue name
+"Invalid cell data - cannot add attendance" = "Invalid cell data - cannot add attendance"; // Toast message when cell data is invalid
+"No Show Is Associated With This Entry" = "No Show Is Associated With This Entry"; // Toast message when no show is associated with entry
+"Dismiss" = "Descartar"; // Alert dismiss button
+"Message received" = "Mensaje recibido"; // Alert title when a push notification message is received
+"Choose Country" = "Elegir País"; // Alert title for country selection
+
+// Migration dialog messages
+"Data Migration Complete" = "Migración de Datos Completa"; // Migration dialog title when successful
+"Data Migration Report" = "Informe de Migración de Datos"; // Migration dialog title when reporting
+"Successfully migrated %d priority records" = "Se migraron exitosamente %d registros de prioridad"; // Migration success message with count
+"Final count: %d records in database" = "Recuento final: %d registros en la base de datos"; // Migration final count message
+"Data sources: %@" = "Fuentes de datos: %@"; // Migration data sources list
+"No data found to migrate" = "No se encontraron datos para migrar"; // Migration no data message
+"Current database count: %d records" = "Recuento actual de la base de datos: %d registros"; // Migration current count message
+"Issues encountered:" = "Problemas encontrados:"; // Migration issues header
+"... and %d more issues" = "... y %d problemas más"; // Migration more issues message
+"You can take a screenshot to report these issues." = "Puede tomar una captura de pantalla para informar estos problemas."; // Migration screenshot instruction
+
+// Error and stats messages
+"Error" = "Error"; // Error alert title
+"Could not access documents directory." = "No se pudo acceder al directorio de documentos."; // Error message when documents directory cannot be accessed
+"No Stats Data" = "Sin Datos de Estadísticas"; // Alert title when stats data is not available
+"Loading Stats" = "Cargando Estadísticas"; // Alert title when loading stats
+"Please wait while stats are being downloaded..." = "Por favor espere mientras se descargan las estadísticas..."; // Message shown while stats are loading
+"Network Error" = "Error de Red"; // Alert title for network errors
+"Unable to load stats page. Check your internet connection and try again." = "No se pudo cargar la página de estadísticas. Verifique su conexión a Internet e intente nuevamente."; // Network error message
+"Retry" = "Reintentar"; // Retry button title
+"Loading Error" = "Error de Carga"; // Alert title for loading errors
+"Failed to load stats page: %@" = "Error al cargar la página de estadísticas: %@"; // Loading error message format
+"Loading Timeout" = "Tiempo de Carga Agotado"; // Alert title for loading timeout
+"The stats page is taking too long to load. Please check your internet connection and try again." = "La página de estadísticas está tardando demasiado en cargar. Verifique su conexión a Internet e intente nuevamente."; // Loading timeout message
+
+// Missing keys from Base
+"Close" = "Cerrar";
+"Cut" = "Cortar";
+"DefaultDescription70K" = "El texto del comentario aún no está disponible. Por favor espera a que Aaron agregue su descripción. Puedes agregar la tuya si lo deseas, pero cuando la suya esté disponible no sobrescribirá tus datos y no se mostrará.";
+"DefaultDescriptionMDF" = "Haz clic para agregar tus propias notas";
+"Event Location Filter" = "Filtro de Ubicación de Evento";
+"Hide Other" = "Ocultar Otros";
+"Hide Other Venues" = "Ocultar Otros Lugares";
+"Last On Cruise" = "Última Vez en el Crucero";
+"Locations" = "Ubicaciones";
+"Multiple bands share this event. Which band would you like to view?" = "Varias bandas comparten este evento. ¿Qué banda te gustaría ver?";
+"Note" = "Nota";
+"Preferences" = "Preferencias";
+"SelectYearLabel" = "Selecciona el Año a Mostrar";
+"ShareBandChoices" = "Compartir Elecciones de Bandas";
+"ShareShowChoices" = "Compartir Elecciones de Shows";
+"Show Bands Only" = "Mostrar Solo Bandas";
+"Show Other" = "Mostrar Otros";
+"Show Other Venues" = "Mostrar Otros Lugares";
+"Show Schedule" = "Mostrar Horario";
+"View Mode" = "Modo de Vista";
+"confirmCountry" = "Confirmar";
+"correctCountry" = "Cambiar";
+"correctCountryDescription" = "Corrige Tu País Si Es Necesario";
+"country" = "País";
+"data_filter_issue" = "Todos los datos están siendo filtrados, por favor elimina los filtros para ver los datos";
+"genre" = "Género";
+"verifyCountry" = "Verifica Tu País";
+"visitBands" = "Enlaces";
+"waiting_for_data" = "Esperando a que se carguen los datos, por favor espera....";

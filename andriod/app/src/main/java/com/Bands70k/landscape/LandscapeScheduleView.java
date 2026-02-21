@@ -103,7 +103,20 @@ public class LandscapeScheduleView extends LinearLayout {
     }
     
     public interface OnDismissRequestedListener {
-        void onDismissRequested();
+        /** Called when user requests return to list view; currentDay is the calendar day being viewed so list can scroll to it. */
+        void onDismissRequested(String currentDay);
+    }
+
+    /** Returns the day label currently displayed (e.g. "Day 3"), or null if none. Used when finishing activity so list can scroll to this day. */
+    public String getCurrentDay() {
+        if (days != null && !days.isEmpty() && currentDayIndex >= 0 && currentDayIndex < days.size()) {
+            DayScheduleData d = days.get(currentDayIndex);
+            String dayLabel = d != null ? d.dayLabel : null;
+            Log.d(TAG, "getCurrentDay() returning: '" + dayLabel + "' (currentDayIndex=" + currentDayIndex + ", days.size()=" + days.size() + ")");
+            return dayLabel;
+        }
+        Log.d(TAG, "getCurrentDay() returning null (days=" + (days != null ? "not null" : "null") + ", isEmpty=" + (days != null ? days.isEmpty() : "N/A") + ", currentDayIndex=" + currentDayIndex + ")");
+        return null;
     }
     
     public LandscapeScheduleView(Context context) {
@@ -698,6 +711,7 @@ public class LandscapeScheduleView extends LinearLayout {
             }
             
             DayScheduleData currentDay = days.get(currentDayIndex);
+            Log.d(TAG, "updateDisplay() - currentDayIndex=" + currentDayIndex + ", dayLabel='" + currentDay.dayLabel + "'");
             int visibleEventCount = 0;
             for (VenueColumn venue : currentDay.venues) {
                 visibleEventCount += venue.events.size();
@@ -714,6 +728,7 @@ public class LandscapeScheduleView extends LinearLayout {
             String localizedDay = getLocalizedDayLabel(currentDay.dayLabel);
             String eventsLabel = context.getResources().getString(R.string.Events);
             dayLabel.setText(localizedDay + " - " + visibleEventCount + " " + eventsLabel);
+            Log.d(TAG, "updateDisplay() - displaying day: '" + localizedDay + "' (raw dayLabel='" + currentDay.dayLabel + "')");
             if (hiddenVenueCount > 0) {
                 venueFilterSubtitle.setVisibility(View.VISIBLE);
                 String venueHiddenText = hiddenVenueCount == 1
@@ -1921,7 +1936,8 @@ public class LandscapeScheduleView extends LinearLayout {
                 public void onClick(View v) {
                     Log.d(TAG, "📱 [TABLET_TOGGLE] List button tapped in calendar view");
                     if (dismissRequestedListener != null) {
-                        dismissRequestedListener.onDismissRequested();
+                        String day = getCurrentDay();
+                        dismissRequestedListener.onDismissRequested(day != null ? day : null);
                     }
                 }
             });

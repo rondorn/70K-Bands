@@ -332,3 +332,71 @@
 "AboutPositionRight" = "højre";
 "AboutPositionLeft" = "venstre";
 "AboutTeamPhoto" = "Holdbillede";
+
+// Toast and help messages
+"Venue Filter On Format" = "%@ Venue Filter On"; // Format for venue filter on message, %@ = venue name
+"Venue Filter Off Format" = "%@ Venue Filter Off"; // Format for venue filter off message, %@ = venue name
+"Invalid cell data - cannot add attendance" = "Invalid cell data - cannot add attendance"; // Toast message when cell data is invalid
+"No Show Is Associated With This Entry" = "No Show Is Associated With This Entry"; // Toast message when no show is associated with entry
+"Dismiss" = "Afvis"; // Alert dismiss button
+"Message received" = "Besked modtaget"; // Alert title when a push notification message is received
+"Choose Country" = "Vælg Land"; // Alert title for country selection
+
+// Migration dialog messages
+"Data Migration Complete" = "Datamigration Fuldført"; // Migration dialog title when successful
+"Data Migration Report" = "Datamigrationsrapport"; // Migration dialog title when reporting
+"Successfully migrated %d priority records" = "%d prioritetsposter migreret med succes"; // Migration success message with count
+"Final count: %d records in database" = "Endelig antal: %d poster i databasen"; // Migration final count message
+"Data sources: %@" = "Datakilder: %@"; // Migration data sources list
+"No data found to migrate" = "Ingen data fundet at migrere"; // Migration no data message
+"Current database count: %d records" = "Nuværende databaseantal: %d poster"; // Migration current count message
+"Issues encountered:" = "Problemer stødt på:"; // Migration issues header
+"... and %d more issues" = "... og %d flere problemer"; // Migration more issues message
+"You can take a screenshot to report these issues." = "Du kan tage et skærmbillede for at rapportere disse problemer."; // Migration screenshot instruction
+
+// Error and stats messages
+"Error" = "Fejl"; // Error alert title
+"Could not access documents directory." = "Kunne ikke få adgang til dokumentmappen."; // Error message when documents directory cannot be accessed
+"No Stats Data" = "Ingen Statistikdata"; // Alert title when stats data is not available
+"Loading Stats" = "Indlæser Statistikker"; // Alert title when loading stats
+"Please wait while stats are being downloaded..." = "Vent venligst, mens statistikkerne downloades..."; // Message shown while stats are loading
+"Network Error" = "Netværksfejl"; // Alert title for network errors
+"Unable to load stats page. Check your internet connection and try again." = "Kunne ikke indlæse statistikside. Tjek din internetforbindelse og prøv igen."; // Network error message
+"Retry" = "Prøv Igen"; // Retry button title
+"Loading Error" = "Indlæsningsfejl"; // Alert title for loading errors
+"Failed to load stats page: %@" = "Kunne ikke indlæse statistikside: %@"; // Loading error message format
+"Loading Timeout" = "Indlæsningstimeout"; // Alert title for loading timeout
+"The stats page is taking too long to load. Please check your internet connection and try again." = "Statistik siden tager for lang tid at indlæse. Tjek venligst din internetforbindelse og prøv igen."; // Loading timeout message
+
+// Missing keys from Base
+"Close" = "Luk";
+"Copy" = "Kopiér";
+"Cut" = "Klip";
+"Event Location Filter" = "Begivenhedsstedfilter";
+"Hide Other" = "Skjul Andre";
+"Hide Other Venues" = "Skjul Andre Steder";
+"Last On Cruise" = "Sidst På Krydstogt";
+"Locations" = "Steder";
+"Multiple bands share this event. Which band would you like to view?" = "Flere bands deler denne begivenhed. Hvilket band vil du se?";
+"Note" = "Note";
+"NoteFontSize" = "Note Skriftstørrelse Stor";
+"Paste" = "Indsæt";
+"Select All" = "Vælg Alle";
+"SelectYearLabel" = "Vælg Året At Vise";
+"ShareBandChoices" = "Del Bandvalg";
+"ShareShowChoices" = "Del Showvalg";
+"Show Bands Only" = "Vis Kun Bands";
+"Show Other" = "Vis Andre";
+"Show Other Venues" = "Vis Andre Steder";
+"Show Schedule" = "Vis Tidsplan";
+"Unknown" = "Ukendt";
+"View Mode" = "Visningstilstand";
+"confirmCountry" = "Bekræft";
+"correctCountry" = "Ændre";
+"correctCountryDescription" = "Korriger Dit Land Hvis Nødvendigt";
+"country" = "Land";
+"data_filter_issue" = "Alle data filtreres væk, fjern venligst filtrene for at se data";
+"genre" = "Genre";
+"verifyCountry" = "Bekræft Dit Land";
+"visitBands" = "Links";
+"waiting_for_data" = "Venter på at data indlæses, vent venligst....";

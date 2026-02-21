@@ -960,7 +960,7 @@ struct ScheduleEventView: View {
                 
                 // Day Column (distinct grey background with Day at top, number at bottom)
                 VStack(spacing: 0) {
-                    Text("Day")
+                    Text(NSLocalizedString("Day", comment: "Day label in detail view"))
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(.white)
                         .frame(height: 25)

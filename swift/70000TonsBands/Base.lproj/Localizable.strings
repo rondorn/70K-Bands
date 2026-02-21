@@ -309,3 +309,38 @@
 "AboutPositionRight" = "right";
 "AboutPositionLeft" = "left";
 "AboutTeamPhoto" = "Team Photo";
+
+// Toast and help messages
+"Venue Filter On Format" = "%@ Venue Filter On"; // Format for venue filter on message, %@ = venue name
+"Venue Filter Off Format" = "%@ Venue Filter Off"; // Format for venue filter off message, %@ = venue name
+"Invalid cell data - cannot add attendance" = "Invalid cell data - cannot add attendance"; // Toast message when cell data is invalid
+"No Show Is Associated With This Entry" = "No Show Is Associated With This Entry"; // Toast message when no show is associated with entry
+"Dismiss" = "Dismiss"; // Alert dismiss button
+"Message received" = "Message received"; // Alert title when a push notification message is received
+"Choose Country" = "Choose Country"; // Alert title for country selection
+
+// Migration dialog messages
+"Data Migration Complete" = "Data Migration Complete"; // Migration dialog title when successful
+"Data Migration Report" = "Data Migration Report"; // Migration dialog title when reporting
+"Successfully migrated %d priority records" = "Successfully migrated %d priority records"; // Migration success message with count
+"Final count: %d records in database" = "Final count: %d records in database"; // Migration final count message
+"Data sources: %@" = "Data sources: %@"; // Migration data sources list
+"No data found to migrate" = "No data found to migrate"; // Migration no data message
+"Current database count: %d records" = "Current database count: %d records"; // Migration current count message
+"Issues encountered:" = "Issues encountered:"; // Migration issues header
+"... and %d more issues" = "... and %d more issues"; // Migration more issues message
+"You can take a screenshot to report these issues." = "You can take a screenshot to report these issues."; // Migration screenshot instruction
+
+// Error and stats messages
+"Error" = "Error"; // Error alert title
+"Could not access documents directory." = "Could not access documents directory."; // Error message when documents directory cannot be accessed
+"No Stats Data" = "No Stats Data"; // Alert title when stats data is not available
+"Loading Stats" = "Loading Stats"; // Alert title when loading stats
+"Please wait while stats are being downloaded..." = "Please wait while stats are being downloaded..."; // Message shown while stats are loading
+"Network Error" = "Network Error"; // Alert title for network errors
+"Unable to load stats page. Check your internet connection and try again." = "Unable to load stats page. Check your internet connection and try again."; // Network error message
+"Retry" = "Retry"; // Retry button title
+"Loading Error" = "Loading Error"; // Alert title for loading errors
+"Failed to load stats page: %@" = "Failed to load stats page: %@"; // Loading error message format
+"Loading Timeout" = "Loading Timeout"; // Alert title for loading timeout
+"The stats page is taking too long to load. Please check your internet connection and try again." = "The stats page is taking too long to load. Please check your internet connection and try again."; // Loading timeout message
