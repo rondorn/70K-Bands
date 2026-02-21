@@ -29,6 +29,9 @@ import android.webkit.WebViewClient;
 import android.webkit.WebChromeClient;
 
 import androidx.core.app.NavUtils;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.widget.Toast;
@@ -2039,8 +2042,12 @@ public class showBandDetails extends Activity {
         // Reset link state first
         inLink = false;
         
-        // Reset any window modifications
-        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+        // Reset any window modifications: show system bars (replaces deprecated setSystemUiVisibility)
+        WindowInsetsControllerCompat insetsController =
+            WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        if (insetsController != null) {
+            insetsController.show(WindowInsetsCompat.Type.systemBars());
+        }
         
         // Restore original band details content
         Log.d("WebView", "Restoring band details content");
