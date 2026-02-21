@@ -266,6 +266,9 @@ struct LandscapeScheduleView: View {
     private func headerView(dayData: DayScheduleData) -> some View {
         let visibleVenues = dayData.venues.filter { !viewModel.hiddenVenueNames.contains($0.name.lowercased()) }
         let visibleEventCount = visibleVenues.reduce(0) { $0 + $1.events.count }
+        // Only count venues hidden on this day (venues that have events today and are hidden)
+        let hiddenCountForDay = dayData.venues.filter { viewModel.hiddenVenueNames.contains($0.name.lowercased()) }.count
+        let hasHiddenVenuesOnThisDay = hiddenCountForDay > 0
         
         return HStack {
             Spacer()
@@ -290,11 +293,10 @@ struct LandscapeScheduleView: View {
                 Text("\(dayData.dayLabel) - \(visibleEventCount) Events")
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.white)
-                if viewModel.hasHiddenVenues {
+                if hasHiddenVenuesOnThisDay {
                     let venueHiddenText: String = {
-                        let n = viewModel.hiddenVenueCount
-                        if n == 1 { return NSLocalizedString("OneVenueHidden", comment: "") }
-                        return String(format: NSLocalizedString("VenuesHiddenCount", comment: ""), n)
+                        if hiddenCountForDay == 1 { return NSLocalizedString("OneVenueHidden", comment: "") }
+                        return String(format: NSLocalizedString("VenuesHiddenCount", comment: ""), hiddenCountForDay)
                     }()
                     Text(venueHiddenText)
                         .font(.system(size: 12))
@@ -320,16 +322,16 @@ struct LandscapeScheduleView: View {
             
             Spacer()
             
-            // Venue filter button (system-standard filter affordance)
+            // Venue filter button (system-standard filter affordance); badge shows count for this day
             Button(action: {
                 showVenueFilterSheet = true
             }) {
                 ZStack(alignment: .topTrailing) {
                     Image(systemName: "line.3.horizontal.decrease.circle")
                         .font(.system(size: 22))
-                        .foregroundColor(viewModel.hasHiddenVenues ? .orange : .white)
-                    if viewModel.hasHiddenVenues {
-                        Text("\(viewModel.hiddenVenueCount)")
+                        .foregroundColor(hasHiddenVenuesOnThisDay ? .orange : .white)
+                    if hasHiddenVenuesOnThisDay {
+                        Text("\(hiddenCountForDay)")
                             .font(.system(size: 11, weight: .bold))
                             .foregroundColor(.black)
                             .frame(minWidth: 16, minHeight: 16)
@@ -358,7 +360,7 @@ struct LandscapeScheduleView: View {
                 .padding(.trailing, 16)
             }
         }
-        .frame(height: viewModel.hasHiddenVenues ? 76 : 60)
+        .frame(height: hasHiddenVenuesOnThisDay ? 76 : 60)
         .background(Color.black)
     }
     
