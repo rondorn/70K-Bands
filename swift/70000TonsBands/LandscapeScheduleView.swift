@@ -8,6 +8,33 @@
 
 import SwiftUI
 
+// MARK: - Helper Functions for Filter Availability
+
+// Helper function to check if any bands have been ranked (priority set)
+private func hasRankedBands() -> Bool {
+    let priorityCount = SQLitePriorityManager.shared.getPriorityCount(eventYear: eventYear)
+    return priorityCount > 0
+}
+
+// Helper function to check if any event types exist that can be filtered
+private func hasFilterableEventTypes() -> Bool {
+    let allEvents = DataManager.shared.fetchEvents(forYear: eventYear)
+    let eventTypes = Set(allEvents.compactMap { $0.eventType })
+    
+    // Check if we have any of the filterable event types
+    let filterableTypes = ["Meet and Greet", "Special Event", "Unofficial Event", "Cruiser Organized"]
+    return eventTypes.contains { type in
+        filterableTypes.contains { filterableType in
+            type.localizedCaseInsensitiveContains(filterableType)
+        }
+    }
+}
+
+// Helper function to check if any events are flagged
+private func hasFlaggedEvents() -> Bool {
+    return attendingCount > 0
+}
+
 // MARK: - Trackable Scroll View
 
 struct TrackableScrollView<Content: View>: View {
@@ -95,6 +122,7 @@ struct LandscapeScheduleView: View {
     @StateObject private var viewModel: LandscapeScheduleViewModel
     @Environment(\.presentationMode) var presentationMode
     @State private var showVenueFilterSheet: Bool = false
+    @State private var dayBeforeFilterChange: String? = nil
     
     let priorityManager: SQLitePriorityManager
     let onBandTapped: (String, String?) -> Void  // (bandName, currentDay)
@@ -136,8 +164,27 @@ struct LandscapeScheduleView: View {
                 noDataView
             }
         }
-        .sheet(isPresented: $showVenueFilterSheet) {
-            VenueFilterSheetView(dayData: viewModel.currentDayData, viewModel: viewModel)
+        .sheet(isPresented: $showVenueFilterSheet, onDismiss: {
+            // Refresh when filter sheet is dismissed to ensure all filter changes are applied
+            // Restore the day that was active when the filter sheet was opened
+            print("🔄 [LANDSCAPE_SCHEDULE] Filter sheet dismissed, refreshing schedule data")
+            viewModel.refreshVenueVisibility()
+            if let dayToRestore = dayBeforeFilterChange {
+                print("🔄 [LANDSCAPE_SCHEDULE] Restoring day: \(dayToRestore)")
+                viewModel.refreshData(restoreDay: dayToRestore)
+            } else {
+                viewModel.refreshData()
+            }
+            dayBeforeFilterChange = nil
+        }) {
+            VenueFilterSheetView(dayData: viewModel.currentDayData, viewModel: viewModel, dayBeforeFilterChange: $dayBeforeFilterChange)
+        }
+        .onChange(of: showVenueFilterSheet) { isShowing in
+            // Store the current day when opening the filter sheet
+            if isShowing {
+                dayBeforeFilterChange = viewModel.currentDayData?.dayLabel
+                print("🔄 [LANDSCAPE_SCHEDULE] Filter sheet opened, storing current day: \(dayBeforeFilterChange ?? "nil")")
+            }
         }
         .preferredColorScheme(.dark)
         .onAppear {
@@ -158,6 +205,18 @@ struct LandscapeScheduleView: View {
                 viewModel.refreshEventData(bandName: bandName)
             } else {
                 print("🔄 [LANDSCAPE_SCHEDULE] Refreshing all schedule data")
+                viewModel.refreshData()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("VenueFiltersDidChange"))) { _ in
+            // Refresh landscape schedule when any filters change (venue, event type, priority, attendance)
+            // Only restore day if filter sheet is open (dayBeforeFilterChange is set)
+            print("🔄 [LANDSCAPE_SCHEDULE] Filters changed, refreshing schedule data")
+            viewModel.refreshVenueVisibility()
+            if let dayToRestore = dayBeforeFilterChange {
+                print("🔄 [LANDSCAPE_SCHEDULE] Restoring day after filter change: \(dayToRestore)")
+                viewModel.refreshData(restoreDay: dayToRestore)
+            } else {
                 viewModel.refreshData()
             }
         }
@@ -274,9 +333,28 @@ struct LandscapeScheduleView: View {
     private func headerView(dayData: DayScheduleData) -> some View {
         let visibleVenues = dayData.venues.filter { !viewModel.hiddenVenueNames.contains($0.name.lowercased()) }
         let visibleEventCount = visibleVenues.reduce(0) { $0 + $1.events.count }
-        // Only count venues hidden on this day (venues that have events today and are hidden)
-        let hiddenCountForDay = dayData.venues.filter { viewModel.hiddenVenueNames.contains($0.name.lowercased()) }.count
-        let hasHiddenVenuesOnThisDay = hiddenCountForDay > 0
+        
+        // Get unfiltered event count for this day from the view model
+        let dayLabel = dayData.dayLabel
+        let unfilteredEventCountForDay = viewModel.unfilteredEventCountsPerDay[dayLabel] ?? 0
+        
+        // Count events actually shown (after all filters including venue filters)
+        // Note: dayData.venues already contains events filtered by event type, priority, and attendance
+        // We only need to account for venue filters here
+        let totalVisibleEventsForDay = visibleEventCount
+        
+        // Calculate hidden events: unfiltered - visible
+        // Ensure we don't show negative counts (shouldn't happen, but safety check)
+        let hiddenRecordsCount = max(0, unfilteredEventCountForDay - totalVisibleEventsForDay)
+        
+        // Only show counter if there are actually hidden records AND filters are active
+        // Check if any filters are active
+        let hasActiveFilters = !viewModel.hiddenVenueNames.isEmpty || 
+                              !getMustSeeOn() || !getMightSeeOn() || !getWontSeeOn() || !getUnknownSeeOn() ||
+                              !getShowMeetAndGreetEvents() || !getShowSpecialEvents() || !getShowUnofficalEvents() ||
+                              getShowOnlyWillAttened()
+        
+        let hasHiddenRecordsOnThisDay = hiddenRecordsCount > 0 && hasActiveFilters
         
         return HStack {
             Spacer()
@@ -301,15 +379,6 @@ struct LandscapeScheduleView: View {
                 Text("\(dayData.dayLabel) - \(visibleEventCount) Events")
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.white)
-                if hasHiddenVenuesOnThisDay {
-                    let venueHiddenText: String = {
-                        if hiddenCountForDay == 1 { return NSLocalizedString("OneVenueHidden", comment: "") }
-                        return String(format: NSLocalizedString("VenuesHiddenCount", comment: ""), hiddenCountForDay)
-                    }()
-                    Text(venueHiddenText)
-                        .font(.system(size: 12))
-                        .foregroundColor(.orange)
-                }
             }
             .frame(minWidth: 200)
             
@@ -330,16 +399,16 @@ struct LandscapeScheduleView: View {
             
             Spacer()
             
-            // Venue filter button (system-standard filter affordance); badge shows count for this day
+            // Venue filter button (system-standard filter affordance); badge shows records hidden count for this day
             Button(action: {
                 showVenueFilterSheet = true
             }) {
                 ZStack(alignment: .topTrailing) {
                     Image(systemName: "line.3.horizontal.decrease.circle")
                         .font(.system(size: 22))
-                        .foregroundColor(hasHiddenVenuesOnThisDay ? .orange : .white)
-                    if hasHiddenVenuesOnThisDay {
-                        Text("\(hiddenCountForDay)")
+                        .foregroundColor(hasHiddenRecordsOnThisDay ? .orange : .white)
+                    if hasHiddenRecordsOnThisDay && hiddenRecordsCount > 0 {
+                        Text("\(hiddenRecordsCount)")
                             .font(.system(size: 11, weight: .bold))
                             .foregroundColor(.black)
                             .frame(minWidth: 16, minHeight: 16)
@@ -368,53 +437,176 @@ struct LandscapeScheduleView: View {
                 .padding(.trailing, 16)
             }
         }
-        .frame(height: hasHiddenVenuesOnThisDay ? 76 : 60)
+        .frame(height: hasHiddenRecordsOnThisDay ? 76 : 60)
         .background(Color.black)
     }
     
-    // MARK: - Venue Filter Sheet (only current day's venues; same Show/Hide settings as list—hidden in list is hidden in calendar)
+    // MARK: - Venue Filter Sheet (includes all filter options matching list view menu order)
     
     private struct VenueFilterSheetView: View {
         let dayData: DayScheduleData?
         @ObservedObject var viewModel: LandscapeScheduleViewModel
         @Environment(\.dismiss) private var dismiss
+        @Binding var dayBeforeFilterChange: String?
+        @State private var showFlaggedOnly: Bool = getShowOnlyWillAttened()
         
         var body: some View {
             let venues = dayData?.venues ?? []
+            let isFlaggedFilterEnabled = showFlaggedOnly
             return NavigationView {
                 List {
-                    Section {
-                        Text(NSLocalizedString("VenueFilterSheetDescription", comment: ""))
-                            .font(.system(size: 14))
-                            .foregroundColor(.secondary)
+                    
+                    // ORDER: Show Flagged Events Only first (same order as list view menu)
+                    // Only show if flagged events exist
+                    if hasFlaggedEvents() {
+                        Section(header: Text(NSLocalizedString("Show Flagged Events Only", comment: ""))) {
+                            Toggle(NSLocalizedString("Show Flagged Events Only", comment: ""), isOn: Binding(
+                                get: { showFlaggedOnly },
+                                set: { newValue in
+                                    showFlaggedOnly = newValue
+                                    setShowOnlyWillAttened(newValue)
+                                    writeFiltersFile()
+                                    NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
+                                }
+                            ))
+                        }
                     }
-                    Section(header: Text(NSLocalizedString("Location Filters", comment: ""))) {
-                        ForEach(venues) { venue in
-                            HStack(spacing: 12) {
-                                RoundedRectangle(cornerRadius: 4)
-                                    .fill(venue.color)
-                                    .frame(width: 24, height: 24)
-                                Toggle(venueDisplayName(for: venue.name), isOn: Binding(
-                                    get: { !viewModel.isVenueHidden(venue.name) },
-                                    set: { viewModel.setVenueHidden(venue.name, hidden: !$0) }
+                    
+                    // ORDER: Event Type Filters second (same order as list view menu)
+                    // Only show if filterable event types exist
+                    // Disabled when "Show Flagged Events Only" is enabled
+                    if hasFilterableEventTypes() {
+                        Section(header: Text(NSLocalizedString("Event Type Filters", comment: ""))) {
+                            if getMeetAndGreetsEnabled() {
+                                Toggle(NSLocalizedString("Show Meet & Greet Events", comment: ""), isOn: Binding(
+                                    get: { getShowMeetAndGreetEvents() },
+                                    set: { newValue in
+                                        setShowMeetAndGreetEvents(newValue)
+                                        writeFiltersFile()
+                                        NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
+                                    }
                                 ))
+                                .disabled(isFlaggedFilterEnabled)
+                            }
+                            if getSpecialEventsEnabled() {
+                                Toggle(NSLocalizedString("Show Special/Other Events", comment: ""), isOn: Binding(
+                                    get: { getShowSpecialEvents() },
+                                    set: { newValue in
+                                        setShowSpecialEvents(newValue)
+                                        writeFiltersFile()
+                                        NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
+                                    }
+                                ))
+                                .disabled(isFlaggedFilterEnabled)
+                            }
+                            if getUnofficalEventsEnabled() {
+                                Toggle(NSLocalizedString("Show Unofficial Events", comment: ""), isOn: Binding(
+                                    get: { getShowUnofficalEvents() },
+                                    set: { newValue in
+                                        setShowUnofficalEvents(newValue)
+                                        writeFiltersFile()
+                                        NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
+                                    }
+                                ))
+                                .disabled(isFlaggedFilterEnabled)
+                            }
+                        }
+                    }
+                    
+                    // ORDER: Band Ranking Filters third (same order as list view menu)
+                    // Only show if bands have been ranked
+                    // Disabled when "Show Flagged Events Only" is enabled
+                    if hasRankedBands() {
+                        Section(header: Text(NSLocalizedString("Band Ranking Filters", comment: ""))) {
+                            Toggle(NSLocalizedString("Show Must See Items", comment: ""), isOn: Binding(
+                                get: { getMustSeeOn() },
+                                set: { newValue in
+                                    setMustSeeOn(newValue)
+                                    writeFiltersFile()
+                                    NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
+                                }
+                            ))
+                            .disabled(isFlaggedFilterEnabled)
+                            Toggle(NSLocalizedString("Show Might See Items", comment: ""), isOn: Binding(
+                                get: { getMightSeeOn() },
+                                set: { newValue in
+                                    setMightSeeOn(newValue)
+                                    writeFiltersFile()
+                                    NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
+                                }
+                            ))
+                            .disabled(isFlaggedFilterEnabled)
+                            Toggle(NSLocalizedString("Show Wont See Items", comment: ""), isOn: Binding(
+                                get: { getWontSeeOn() },
+                                set: { newValue in
+                                    setWontSeeOn(newValue)
+                                    writeFiltersFile()
+                                    NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
+                                }
+                            ))
+                            .disabled(isFlaggedFilterEnabled)
+                            Toggle(NSLocalizedString("Show Unknown Items", comment: ""), isOn: Binding(
+                                get: { getUnknownSeeOn() },
+                                set: { newValue in
+                                    setUnknownSeeOn(newValue)
+                                    writeFiltersFile()
+                                    NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
+                                }
+                            ))
+                            .disabled(isFlaggedFilterEnabled)
+                        }
+                    }
+                    
+                    // ORDER: Location Filters fourth (same order as list view menu)
+                    // Only show if locations/venues exist
+                    // Disabled when "Show Flagged Events Only" is enabled
+                    if !venues.isEmpty {
+                        Section(header: Text(NSLocalizedString("Location Filters", comment: ""))) {
+                            ForEach(venues) { venue in
+                                HStack(spacing: 12) {
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .fill(venue.color)
+                                        .frame(width: 24, height: 24)
+                                    Toggle(venueDisplayName(for: venue.name), isOn: Binding(
+                                        get: { !viewModel.isVenueHidden(venue.name) },
+                                        set: { viewModel.setVenueHidden(venue.name, hidden: !$0) }
+                                    ))
+                                    .disabled(isFlaggedFilterEnabled)
+                                }
                             }
                         }
                     }
                 }
-                .navigationTitle(NSLocalizedString("Location Filters", comment: ""))
+                .navigationTitle(NSLocalizedString("Filters", comment: ""))
                 .navigationBarTitleDisplayMode(.inline)
                 .preferredColorScheme(.dark)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
                         Button(NSLocalizedString("Clear All Filters", comment: "")) {
+                            // Clear all filters
                             setVenueFilters(venueNames: getVenueNamesInUseForList(), show: true)
+                            setShowOnlyWillAttened(false)
+                            // Update local state to reflect the cleared filter
+                            showFlaggedOnly = false
+                            setShowMeetAndGreetEvents(true)
+                            setShowSpecialEvents(true)
+                            setShowUnofficalEvents(true)
+                            setMustSeeOn(true)
+                            setMightSeeOn(true)
+                            setWontSeeOn(true)
+                            setUnknownSeeOn(true)
                             writeFiltersFile()
                             viewModel.refreshVenueVisibility()
+                            // Force refresh to ensure counters are cleared
+                            if let dayToRestore = dayBeforeFilterChange {
+                                viewModel.refreshData(restoreDay: dayToRestore)
+                            } else {
+                                viewModel.refreshData()
+                            }
                             NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
                         }
                         .font(.system(size: 17, weight: .regular))
-                        .disabled(!viewModel.hasHiddenVenues)
+                        .disabled(!viewModel.hasHiddenVenues && !getShowOnlyWillAttened() && getMustSeeOn() && getMightSeeOn() && getWontSeeOn() && getUnknownSeeOn() && getShowMeetAndGreetEvents() && getShowSpecialEvents() && getShowUnofficalEvents())
                     }
                     ToolbarItem(placement: .confirmationAction) {
                         Button(NSLocalizedString("Done", comment: "")) {
