@@ -2107,7 +2107,7 @@
 				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = "70000TonsBands/Info-MDF.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "MDF Bands!";
+				INFOPLIST_KEY_CFBundleDisplayName = "x`";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				"INFOPLIST_KEY_UILaunchStoryboardName[sdk=*]" = LaunchScreen;
@@ -2188,7 +2188,7 @@
 				);
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = "70000TonsBands/Info-MDF.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "MDF Bands!";
+				INFOPLIST_KEY_CFBundleDisplayName = "x`";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				"INFOPLIST_KEY_UILaunchStoryboardName[sdk=*]" = LaunchScreen;

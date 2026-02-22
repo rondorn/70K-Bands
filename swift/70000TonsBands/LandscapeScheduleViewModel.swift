@@ -17,6 +17,10 @@ class LandscapeScheduleViewModel: ObservableObject {
     @Published var currentDayIndex: Int = 0
     @Published var days: [DayScheduleData] = []
     @Published var totalEventCount: Int = 0
+    /// Total unfiltered event count (before applying filters) - used for filter counter
+    @Published var totalUnfilteredEventCount: Int = 0
+    /// Unfiltered event counts per day label (before applying filters) - used for filter counter
+    @Published var unfilteredEventCountsPerDay: [String: Int] = [:]
     /// Venue show state (lowercase name -> show). Synced with persisted getShowVenueEvents/setShowVenueEvents so list and calendar share the same filters.
     @Published var venueVisibility: [String: Bool] = [:]
     
@@ -71,20 +75,127 @@ class LandscapeScheduleViewModel: ObservableObject {
     
     // MARK: - Public Methods
     
-    func loadScheduleData() {
+    /// Apply all filters to events (same logic as list view)
+    private func applyFiltersToEvents(_ events: [EventData]) -> [EventData] {
+        print("🔍 [LANDSCAPE_FILTER] Applying filters to \(events.count) events")
+        
+        // 1. EVENT TYPE FILTERS
+        var excludedEventTypes: [String] = []
+        if !getShowSpecialEvents() {
+            excludedEventTypes.append("Special Event")
+        }
+        if !getShowMeetAndGreetEvents() {
+            excludedEventTypes.append("Meet and Greet")
+        }
+        if !getShowUnofficalEvents() {
+            excludedEventTypes.append(contentsOf: ["Unofficial Event", "Cruiser Organized"])
+        }
+        
+        var filteredEvents = events.filter { event in
+            let eventType = event.eventType ?? ""
+            if excludedEventTypes.contains(eventType) {
+                return false
+            }
+            return true
+        }
+        
+        print("🔍 [LANDSCAPE_FILTER] After event type filtering: \(filteredEvents.count) events")
+        
+        // 2. VENUE FILTERS
+        let filterVenues = FestivalConfig.current.getAllVenueNames()
+        filteredEvents = filteredEvents.filter { event in
+            let location = event.location
+            var venueNameToCheck: String?
+            for venueName in filterVenues {
+                if location.lowercased().hasPrefix(venueName.lowercased()) {
+                    venueNameToCheck = venueName
+                    break
+                }
+            }
+            if venueNameToCheck == nil {
+                venueNameToCheck = location // Discovered venue
+            }
+            if let name = venueNameToCheck {
+                return getShowVenueEvents(venueName: name)
+            }
+            return true
+        }
+        
+        print("🔍 [LANDSCAPE_FILTER] After venue filtering: \(filteredEvents.count) events")
+        
+        // 3. PRIORITY/BAND RANKING FILTERS
+        filteredEvents = filteredEvents.filter { event in
+            let bandName = event.bandName
+            guard !bandName.isEmpty else { return true } // Include standalone events
+            
+            let priority = priorityManager.getPriority(for: bandName)
+            
+            // Check priority filters
+            if priority == 1 && !getMustSeeOn() { return false }
+            if priority == 2 && !getMightSeeOn() { return false }
+            if priority == 3 && !getWontSeeOn() { return false }
+            if priority == 0 && !getUnknownSeeOn() { return false }
+            
+            return true
+        }
+        
+        print("🔍 [LANDSCAPE_FILTER] After priority filtering: \(filteredEvents.count) events")
+        
+        // 4. ATTENDANCE/FLAGGED EVENTS FILTER
+        if getShowOnlyWillAttened() {
+            filteredEvents = filteredEvents.filter { event in
+                let bandName = event.bandName
+                let location = event.location
+                let eventType = event.eventType ?? ""
+                let startTime = event.startTime ?? ""
+                
+                if startTime.isEmpty {
+                    return false
+                }
+                
+                let eventYearString = String(eventYear)
+                let attendedStatus = attendedHandle.getShowAttendedStatus(
+                    band: bandName,
+                    location: location,
+                    startTime: startTime,
+                    eventType: eventType,
+                    eventYearString: eventYearString
+                )
+                
+                return attendedStatus != sawNoneStatus
+            }
+            
+            print("🔍 [LANDSCAPE_FILTER] After attendance filtering: \(filteredEvents.count) events")
+        }
+        
+        print("🔍 [LANDSCAPE_FILTER] Final filtered events: \(filteredEvents.count) from \(events.count) total")
+        return filteredEvents
+    }
+    
+    func loadScheduleData(restoreDay: String? = nil) {
         isLoading = true
+        
+        // Clear combined events map on main thread before processing (thread-safe)
+        DispatchQueue.main.async {
+            combinedEventsMap.removeAll()
+        }
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             
             print("🔍 [LANDSCAPE_SCHEDULE] Loading schedule data for year \(eventYear)")
             
-            // Get ALL events for the current year (don't filter here - we want to show expired events dimmed)
+            // Get ALL events for the current year
             let allEvents = self.eventManager.getEvents(forYear: eventYear)
             print("🔍 [LANDSCAPE_SCHEDULE] Total events for year \(eventYear): \(allEvents.count)")
             
-            // Process events into days
-            var processedDays = self.processEventsIntodays(allEvents)
+            // Apply all filters (event type, venue, priority, attendance)
+            let filteredEvents = self.applyFiltersToEvents(allEvents)
+            
+            // Process filtered events into days (returns days and combined events map)
+            let processResult = self.processEventsIntodays(filteredEvents)
+            var processedDays = processResult.days
+            let combinedMap = processResult.combinedMap
             
             // If hideExpiredEvents is true, filter out days with ONLY expired events
             if self.hideExpiredEvents {
@@ -107,8 +218,35 @@ class LandscapeScheduleViewModel: ObservableObject {
             }
             
                 DispatchQueue.main.async {
+                // Assign combined events map on main thread for thread safety
+                combinedEventsMap = combinedMap
+                
                 self.days = processedDays
-                self.totalEventCount = allEvents.count
+                self.totalEventCount = filteredEvents.count
+                
+                // Store unfiltered event counts per day for filter counter calculation
+                // Only exclude expired events filter if enabled, but include all other events
+                let unfilteredEvents = self.hideExpiredEvents ? 
+                    allEvents.filter { event in
+                        let currentTime = Date().timeIntervalSinceReferenceDate
+                        var endTimeIndex = event.endTimeIndex
+                        if event.timeIndex > endTimeIndex {
+                            endTimeIndex += 86400
+                        }
+                        return endTimeIndex + 600 > currentTime
+                    } : allEvents
+                
+                self.totalUnfilteredEventCount = unfilteredEvents.count
+                
+                // Calculate unfiltered event counts per day
+                var countsPerDay: [String: Int] = [:]
+                for event in unfilteredEvents {
+                    if let day = event.day {
+                        countsPerDay[day, default: 0] += 1
+                    }
+                }
+                self.unfilteredEventCountsPerDay = countsPerDay
+                
                 self.venueVisibility = getAllVenueFilterStates()
                 
                 if processedDays.isEmpty {
@@ -117,13 +255,19 @@ class LandscapeScheduleViewModel: ObservableObject {
                     return
                 }
                 
-                // Set initial day index based on initialDay parameter
-                if let initialDay = self.initialDay {
-                    if let dayIndex = processedDays.firstIndex(where: { $0.dayLabel == initialDay }) {
+                // Set day index: prioritize restoreDay (for filter changes), then initialDay (for initial load)
+                let dayToRestore = restoreDay ?? self.initialDay
+                if let dayToRestore = dayToRestore {
+                    if let dayIndex = processedDays.firstIndex(where: { $0.dayLabel == dayToRestore }) {
                         self.currentDayIndex = dayIndex
-                        print("✅ [LANDSCAPE_SCHEDULE] Starting on day: \(initialDay) (index \(dayIndex))")
+                        print("✅ [LANDSCAPE_SCHEDULE] Restored to day: \(dayToRestore) (index \(dayIndex))")
                     } else {
-                        print("⚠️ [LANDSCAPE_SCHEDULE] Could not find day: \(initialDay), defaulting to index 0")
+                        print("⚠️ [LANDSCAPE_SCHEDULE] Could not find day: \(dayToRestore), defaulting to index 0")
+                        self.currentDayIndex = 0
+                    }
+                } else {
+                    // No day specified, keep current index if valid, otherwise default to 0
+                    if self.currentDayIndex >= processedDays.count {
                         self.currentDayIndex = 0
                     }
                 }
@@ -286,9 +430,9 @@ class LandscapeScheduleViewModel: ObservableObject {
         objectWillChange.send()
     }
     
-    func refreshData() {
+    func refreshData(restoreDay: String? = nil) {
         print("🔄 [LANDSCAPE_SCHEDULE] Refreshing data due to filter change")
-        loadScheduleData()
+        loadScheduleData(restoreDay: restoreDay)
     }
     
     /// Sync venue visibility from persisted settings (e.g. after returning from list view or app launch).
@@ -351,7 +495,7 @@ class LandscapeScheduleViewModel: ObservableObject {
         return baseDate.addingTimeInterval(TimeInterval(minutes * 60))
     }
     
-    private func processEventsIntodays(_ events: [EventData]) -> [DayScheduleData] {
+    private func processEventsIntodays(_ events: [EventData]) -> (days: [DayScheduleData], combinedMap: [String: [String]]) {
         var dayGroups: [String: [ScheduleBlock]] = [:]
         
         // DETECT AND COMBINE DUPLICATE EVENTS FOR LANDSCAPE CALENDAR VIEW
@@ -377,6 +521,8 @@ class LandscapeScheduleViewModel: ObservableObject {
         // Create mapping for combined events: event key -> combined band name
         var eventToCombinedName: [String: String] = [:] // "timeIndex:bandName" -> combined name (band1+delimiter+band2)
         var eventsToSkip = Set<String>() // Events to skip (second event of a pair)
+        // Build local map for thread safety (will be assigned to global on main thread)
+        var localCombinedEventsMap: [String: [String]] = [:]
         
         for (_, groupEvents) in eventGroups {
             // Only combine if exactly 2 events with different band names
@@ -397,8 +543,8 @@ class LandscapeScheduleViewModel: ObservableObject {
                     // Mark second event to skip (we'll only process the first with combined name)
                     eventsToSkip.insert("\(groupEvents[1].timeIndex):\(band2)")
                     
-                    // Store mapping for later use (for tap handling)
-                    combinedEventsMap[combinedBandName] = sortedBands
+                    // Store mapping locally (will be assigned to global on main thread for thread safety)
+                    localCombinedEventsMap[combinedBandName] = sortedBands
                     
                     print("🔗 [LANDSCAPE_COMBINED] Combined events: '\(band1)' + '\(band2)' -> '\(combinedBandName)'")
                 }
@@ -535,7 +681,7 @@ class LandscapeScheduleViewModel: ObservableObject {
         dayScheduleData.sort { $0.earliestTimeIndex < $1.earliestTimeIndex }
         
         // Extract just the DayScheduleData (remove the sorting helper)
-        return dayScheduleData.map { $0.data }
+        return (days: dayScheduleData.map { $0.data }, combinedMap: localCombinedEventsMap)
     }
     
     private func getUniqueVenues(from events: [ScheduleBlock]) -> [String] {
