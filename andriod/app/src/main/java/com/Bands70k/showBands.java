@@ -5036,10 +5036,42 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         int firstVisiblePosition = bandNamesList.getFirstVisiblePosition();
         int lastVisiblePosition = bandNamesList.getLastVisiblePosition();
         
-        Log.d("LANDSCAPE_SCHEDULE", "Updating day from visible cells - firstVisible: " + firstVisiblePosition + ", lastVisible: " + lastVisiblePosition + ", adapterCount: " + adapterCount);
+        Log.d("LANDSCAPE_SCHEDULE", "Updating day from visible cells - firstVisible: " + firstVisiblePosition + ", lastVisible: " + lastVisiblePosition + ", adapterCount: " + adapterCount + ", currentViewingDay: " + currentViewingDay);
         
         if (firstVisiblePosition >= 0 && firstVisiblePosition < adapterCount) {
-            // PRIORITY 1: Use the topmost visible entry (firstVisiblePosition) as the key record
+            // CRITICAL FIX: If currentViewingDay is already set (e.g., from returning from Calendar),
+            // we're likely at a day boundary. Search forward first to find the expected day,
+            // not backward to find a previous day.
+            String expectedDay = currentViewingDay;
+            boolean hasExpectedDay = (expectedDay != null && !expectedDay.isEmpty());
+            
+            if (hasExpectedDay) {
+                // PRIORITY 1: Search forward from firstVisiblePosition to find the expected day
+                // This handles the case where we're at a day boundary (e.g., Day 2 items visible above Day 3)
+                int maxForward = Math.min(50, adapterCount - firstVisiblePosition);
+                Log.d("LANDSCAPE_SCHEDULE", "currentViewingDay is set to '" + expectedDay + "', searching forward " + maxForward + " positions from " + firstVisiblePosition + " to find expected day");
+                for (int i = 0; i < maxForward; i++) {
+                    int position = firstVisiblePosition + i;
+                    try {
+                        bandListItem item = bandAdapter.getItem(position);
+                        String rawDay = extractRawDayFromBandListItem(item);
+                        if (rawDay != null && !rawDay.isEmpty()) {
+                            if (rawDay.trim().equals(expectedDay.trim())) {
+                                // Found the expected day - use it
+                                currentViewingDay = rawDay;
+                                Log.d("LANDSCAPE_SCHEDULE", "✅ Found expected day '" + rawDay + "' at position " + position + " (was at boundary)");
+                                return;
+                            }
+                        }
+                    } catch (Exception e) {
+                        // Continue searching
+                    }
+                }
+                // If we didn't find the expected day forward, fall through to normal logic
+                Log.d("LANDSCAPE_SCHEDULE", "Expected day '" + expectedDay + "' not found forward, using normal detection logic");
+            }
+            
+            // PRIORITY 2: Use the topmost visible entry (firstVisiblePosition) as the key record
             // This ensures the calendar shows the same day as the first visible entry in the list
             // The 1st visible entry on the list should be used for both leaving the list view and returning to the list view
             try {
@@ -5054,7 +5086,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 Log.d("LANDSCAPE_SCHEDULE", "Error getting topmost item at position " + firstVisiblePosition + ": " + e.getMessage());
             }
             
-            // PRIORITY 2: Fallback - search forward from firstVisiblePosition (user likely scrolled forward to a day)
+            // PRIORITY 3: Fallback - search forward from firstVisiblePosition (user likely scrolled forward to a day)
             // This is more likely to find the day the user scrolled to (e.g., Day 3) than searching backward
             int maxForward = Math.min(50, adapterCount - firstVisiblePosition);
             Log.d("LANDSCAPE_SCHEDULE", "Topmost entry has no day, searching forward " + maxForward + " positions from " + firstVisiblePosition);
@@ -5073,7 +5105,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 }
             }
             
-            // PRIORITY 3: Search BACKWARDS from firstVisiblePosition (only if forward search failed)
+            // PRIORITY 4: Search BACKWARDS from firstVisiblePosition (only if forward search failed)
             // This handles edge cases where the user might have scrolled backwards
             int maxBackward = Math.min(100, firstVisiblePosition);
             Log.d("LANDSCAPE_SCHEDULE", "Forward search failed, searching backwards " + maxBackward + " positions from " + firstVisiblePosition);
@@ -5339,9 +5371,16 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         
         Log.d("LANDSCAPE_SCHEDULE", "Presenting landscape schedule view");
         
-        // CRITICAL: Always update day from visible cells RIGHT BEFORE launching landscape view
-        // This ensures we have the most current day even if scroll listener hasn't fired yet
-        updateCurrentViewingDayFromVisibleCells();
+        // CRITICAL: Only update day from visible cells if currentViewingDay is not already set
+        // This prevents overwriting the day when switching back to Calendar after returning from Calendar
+        // (e.g., if user was on Day 3, went to Calendar, back to List, then Calendar again - preserve Day 3)
+        // The scroll listener will update currentViewingDay when user manually scrolls
+        if (currentViewingDay == null || currentViewingDay.isEmpty()) {
+            Log.d("LANDSCAPE_SCHEDULE", "currentViewingDay is not set, updating from visible cells");
+            updateCurrentViewingDayFromVisibleCells();
+        } else {
+            Log.d("LANDSCAPE_SCHEDULE", "Preserving existing currentViewingDay: '" + currentViewingDay + "' (not updating from visible cells)");
+        }
         
         // Check if hiding expired events
         boolean hideExpiredEvents = staticVariables.preferences.getHideExpiredEvents();
