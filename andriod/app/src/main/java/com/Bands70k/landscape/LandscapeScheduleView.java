@@ -32,6 +32,7 @@ import com.Bands70k.scheduleInfo;
 import com.Bands70k.rankStore;
 import com.Bands70k.LongPressMenuHelper;
 import com.Bands70k.Utilities;
+import androidx.appcompat.content.res.AppCompatResources;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -69,6 +70,56 @@ public class LandscapeScheduleView extends LinearLayout {
     
     // Map to store combined events: combined band name -> list of individual band names
     private Map<String, List<String>> combinedEventsMap = new HashMap<>();
+    
+    // Track unfiltered event counts per day for filter counter
+    private Map<String, Integer> unfilteredEventCountsPerDay = new HashMap<>();
+    
+    // Track previous filter state to revert if all data is filtered out
+    private static class FilterState {
+        boolean showFlaggedOnly;
+        boolean showMeetAndGreet;
+        boolean showSpecialEvents;
+        boolean showUnofficalEvents;
+        boolean showMust;
+        boolean showMight;
+        boolean showWont;
+        boolean showUnknown;
+        Map<String, Boolean> venueVisibility;
+        
+        FilterState() {
+            this.showFlaggedOnly = staticVariables.preferences.getShowWillAttend();
+            this.showMeetAndGreet = staticVariables.preferences.getShowMeetAndGreet();
+            this.showSpecialEvents = staticVariables.preferences.getShowSpecialEvents();
+            this.showUnofficalEvents = staticVariables.preferences.getShowUnofficalEvents();
+            this.showMust = staticVariables.preferences.getShowMust();
+            this.showMight = staticVariables.preferences.getShowMight();
+            this.showWont = staticVariables.preferences.getShowWont();
+            this.showUnknown = staticVariables.preferences.getShowUnknown();
+            this.venueVisibility = new HashMap<>();
+            List<String> venues = staticVariables.getVenueNamesInUseForList();
+            for (String venue : venues) {
+                this.venueVisibility.put(venue, staticVariables.preferences.getShowVenueEvents(venue));
+            }
+        }
+        
+        void restore() {
+            staticVariables.preferences.setShowWillAttend(showFlaggedOnly);
+            staticVariables.preferences.setShowMeetAndGreet(showMeetAndGreet);
+            staticVariables.preferences.setShowSpecialEvents(showSpecialEvents);
+            staticVariables.preferences.setShowUnofficalEvents(showUnofficalEvents);
+            staticVariables.preferences.setshowMust(showMust);
+            staticVariables.preferences.setshowMight(showMight);
+            staticVariables.preferences.setshowWont(showWont);
+            staticVariables.preferences.setshowUnknown(showUnknown);
+            for (Map.Entry<String, Boolean> entry : venueVisibility.entrySet()) {
+                staticVariables.preferences.setShowVenueEvents(entry.getKey(), entry.getValue());
+            }
+            staticVariables.preferences.saveData();
+        }
+    }
+    
+    private FilterState previousFilterState;
+    private boolean isClearingAllFilters = false; // Flag to prevent empty data alert when clearing all filters
 
     /** Internal delimiter for combined (two-band) events. ASCII Record Separator - never in user-visible event names. */
     private static final String COMBINED_EVENT_DELIMITER = "\u001E";
@@ -350,20 +401,30 @@ public class LandscapeScheduleView extends LinearLayout {
         headerRightLayout.setLayoutParams(headerRightParams);
         
         filterButtonWrapper = new FrameLayout(context);
+        // Allow badge to extend beyond button bounds (negative margins)
+        filterButtonWrapper.setClipChildren(false);
+        filterButtonWrapper.setClipToPadding(false);
         filterButton = new Button(context);
         filterButton.setText("");
+        // Icon will be centered when no badge, left-aligned when badge is visible
         filterButton.setGravity(Gravity.CENTER);
+        // Use ImageButton or set drawable with proper centering
         filterButton.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_filter_lines, 0, 0, 0);
+        filterButton.setCompoundDrawablePadding(0);
         filterButton.setTextColor(Color.WHITE);
-        filterButton.setMinWidth(dpToPx(44));
-        filterButton.setMinHeight(dpToPx(44));
-        filterButton.setPadding(dpToPx(8), dpToPx(8), dpToPx(8), dpToPx(8));
+        // Set minimum size - will expand when badge is visible
+        int buttonSize = dpToPx(44);
+        filterButton.setMinWidth(buttonSize);
+        filterButton.setMinHeight(buttonSize);
+        // Don't set maxWidth/maxHeight - allow expansion when badge is visible
+        // Remove padding to center icon properly (will be adjusted in updateDisplay)
+        filterButton.setPadding(0, 0, 0, 0);
         filterButton.setBackground(getRoundedBackground(Color.argb(80, 128, 128, 128)));
         filterButton.setClickable(true);
         filterButton.setFocusable(false);
         filterButton.setFocusableInTouchMode(false);
         FrameLayout.LayoutParams filterBtnParams = new FrameLayout.LayoutParams(
-            LayoutParams.WRAP_CONTENT, dpToPx(44));
+            buttonSize, buttonSize);
         filterBtnParams.gravity = Gravity.CENTER;
         filterButton.setLayoutParams(filterBtnParams);
         filterButton.setOnClickListener(new View.OnClickListener() {
@@ -380,10 +441,15 @@ public class LandscapeScheduleView extends LinearLayout {
         filterCountBadge.setGravity(Gravity.CENTER);
         filterCountBadge.setBackground(getRoundedBackground(0xFFFFA500)); // Orange circle
         filterCountBadge.setVisibility(View.GONE);
+        // Add elevation to ensure badge appears above button
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            filterCountBadge.setElevation(dpToPx(4));
+        }
         int badgeSize = dpToPx(18);
         FrameLayout.LayoutParams badgeParams = new FrameLayout.LayoutParams(badgeSize, badgeSize);
         badgeParams.gravity = Gravity.TOP | Gravity.END;
-        badgeParams.setMargins(0, -dpToPx(4), -dpToPx(4), 0);
+        // Position badge inside button at top-right corner (will be adjusted in updateDisplay)
+        badgeParams.setMargins(0, dpToPx(2), dpToPx(2), 0);
         filterCountBadge.setLayoutParams(badgeParams);
         filterButtonWrapper.addView(filterCountBadge);
         LinearLayout.LayoutParams wrapperParams = new LinearLayout.LayoutParams(
@@ -509,7 +575,11 @@ public class LandscapeScheduleView extends LinearLayout {
     }
     
     private void loadScheduleData() {
-        Log.d(TAG, "loadScheduleData: Starting background thread");
+        loadScheduleData(null);
+    }
+    
+    private void loadScheduleData(final String restoreDay) {
+        Log.d(TAG, "loadScheduleData: Starting background thread, restoreDay=" + restoreDay);
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -530,10 +600,12 @@ public class LandscapeScheduleView extends LinearLayout {
                     }
                     
                     // Preserve current day when reloading (e.g. returning from details) so position is not reset
-                    String dayToRestore = null;
-                    if (days != null && !days.isEmpty() && currentDayIndex >= 0 && currentDayIndex < days.size()) {
+                    String dayToRestore = restoreDay;
+                    if (dayToRestore == null && days != null && !days.isEmpty() && currentDayIndex >= 0 && currentDayIndex < days.size()) {
                         dayToRestore = days.get(currentDayIndex).dayLabel;
                         Log.d(TAG, "Preserving current day for restore: '" + dayToRestore + "' (index " + currentDayIndex + ")");
+                    } else if (dayToRestore != null) {
+                        Log.d(TAG, "Using provided restoreDay: '" + dayToRestore + "'");
                     }
                     
                     days = processEventsFromScheduleRecords();
@@ -547,14 +619,37 @@ public class LandscapeScheduleView extends LinearLayout {
                     // Check if there are any events at all (Rule 4)
                     if (days.isEmpty()) {
                         Log.w(TAG, "No scheduled events found - not showing calendar view");
-                        post(new Runnable() {
-                            @Override
-                            public void run() {
-                                updateDisplay();
-                            }
-                        });
+                        // Don't show alert if we're clearing all filters - just update display
+                        if (isClearingAllFilters) {
+                            Log.d(TAG, "Clearing all filters - skipping empty data alert");
+                            isClearingAllFilters = false; // Reset flag
+                            post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    updateDisplay();
+                                }
+                            });
+                        } else if (previousFilterState != null) {
+                            // If we have a previous filter state, show alert to revert
+                            post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    showEmptyDataAlert();
+                                }
+                            });
+                        } else {
+                            post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    updateDisplay();
+                                }
+                            });
+                        }
                         return;
                     }
+                    
+                    // Reset flag if we successfully loaded data
+                    isClearingAllFilters = false;
                     
                     // If hiding expired events, check if ALL events are expired (Rule 1)
                     if (hideExpiredEvents) {
@@ -645,35 +740,133 @@ public class LandscapeScheduleView extends LinearLayout {
                         return;
                     }
                     
-                    // Restore to the day we were on (e.g. after returning from details), else use initialDay from intent
+                    // Check if all days are empty (no events)
+                    boolean allDaysEmpty = true;
+                    for (DayScheduleData day : days) {
+                        int eventCount = 0;
+                        for (VenueColumn venue : day.venues) {
+                            eventCount += venue.events.size();
+                        }
+                        if (eventCount > 0) {
+                            allDaysEmpty = false;
+                            break;
+                        }
+                    }
+                    
+                    if (allDaysEmpty && previousFilterState != null) {
+                        Log.w(TAG, "All days are empty after filtering - showing alert");
+                        // Still update display first so user sees current state, then show alert
+                        post(new Runnable() {
+                            @Override
+                            public void run() {
+                                updateDisplay(); // Update display first
+                                showEmptyDataAlert(); // Then show alert
+                            }
+                        });
+                        return;
+                    }
+                    
+                    // Restore to the day we were on (e.g. after returning from details or filter changes), else use initialDay from intent
                     boolean restored = false;
+                    Integer targetDayIndex = null;
+                    
                     if (dayToRestore != null && !days.isEmpty()) {
                         // dayToRestore is already raw day from schedule data cache
                         Log.d(TAG, "Restoring day: '" + dayToRestore + "'");
                         for (int i = 0; i < days.size(); i++) {
                             String dayLabel = days.get(i).dayLabel;
                             if (dayLabel != null && dayLabel.trim().equals(dayToRestore.trim())) {
-                                currentDayIndex = i;
-                                restored = true;
-                                Log.d(TAG, "✅ Restored calendar to day: '" + dayToRestore + "' (index " + i + ")");
+                                targetDayIndex = i;
+                                Log.d(TAG, "✅ Found target day: '" + dayToRestore + "' (index " + i + ")");
                                 break;
                             }
                         }
                     }
-                    if (!restored && initialDay != null) {
+                    if (targetDayIndex == null && initialDay != null) {
                         // initialDay is already raw day from schedule data cache (via extractDayFromPosition)
                         Log.d(TAG, "Looking for initial day: '" + initialDay + "'");
                         for (int i = 0; i < days.size(); i++) {
                             String dayLabel = days.get(i).dayLabel;
                             if (dayLabel != null && dayLabel.trim().equals(initialDay.trim())) {
-                                currentDayIndex = i;
+                                targetDayIndex = i;
                                 Log.d(TAG, "✅ Found matching initial day at index " + i);
                                 break;
                             }
                         }
                     }
-                    if (currentDayIndex >= days.size()) {
-                        currentDayIndex = 0;
+                    
+                    // If target day has no events, find first day with events
+                    if (targetDayIndex != null && targetDayIndex < days.size()) {
+                        DayScheduleData targetDay = days.get(targetDayIndex);
+                        int eventCount = 0;
+                        for (VenueColumn venue : targetDay.venues) {
+                            eventCount += venue.events.size();
+                        }
+                        if (eventCount == 0) {
+                            Log.d(TAG, "Target day '" + targetDay.dayLabel + "' has no events, finding first day with events");
+                            targetDayIndex = null; // Reset to find first day with events
+                        }
+                    }
+                    
+                    // If no target day or target day is empty, find first day with events
+                    if (targetDayIndex == null) {
+                        for (int i = 0; i < days.size(); i++) {
+                            DayScheduleData day = days.get(i);
+                            int eventCount = 0;
+                            for (VenueColumn venue : day.venues) {
+                                eventCount += venue.events.size();
+                            }
+                            if (eventCount > 0) {
+                                targetDayIndex = i;
+                                Log.d(TAG, "✅ Navigating to first day with events: index " + i + " ('" + day.dayLabel + "')");
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (targetDayIndex != null) {
+                        currentDayIndex = targetDayIndex;
+                    } else {
+                        // No days have events - this should have been caught above, but handle it anyway
+                        // If we still don't have a valid day with events, check if all days are empty
+                        if (allDaysEmpty && previousFilterState != null) {
+                            Log.w(TAG, "No days have events after filtering - showing alert");
+                            post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    showEmptyDataAlert();
+                                }
+                            });
+                            return;
+                        }
+                        // Fallback: set to 0 if valid, otherwise keep current index
+                        if (currentDayIndex >= days.size()) {
+                            currentDayIndex = 0;
+                        }
+                    }
+                    
+                    // Double-check: if current day has no events but other days do, navigate to first day with events
+                    if (currentDayIndex >= 0 && currentDayIndex < days.size()) {
+                        DayScheduleData currentDay = days.get(currentDayIndex);
+                        int currentEventCount = 0;
+                        for (VenueColumn venue : currentDay.venues) {
+                            currentEventCount += venue.events.size();
+                        }
+                        if (currentEventCount == 0) {
+                            // Current day is empty, find first day with events
+                            for (int i = 0; i < days.size(); i++) {
+                                DayScheduleData day = days.get(i);
+                                int eventCount = 0;
+                                for (VenueColumn venue : day.venues) {
+                                    eventCount += venue.events.size();
+                                }
+                                if (eventCount > 0) {
+                                    currentDayIndex = i;
+                                    Log.d(TAG, "✅ Current day was empty, navigating to first day with events: index " + i + " ('" + day.dayLabel + "')");
+                                    break;
+                                }
+                            }
+                        }
                     }
                     
                     if (!shouldFinishActivity) {
@@ -705,6 +898,126 @@ public class LandscapeScheduleView extends LinearLayout {
             dayLabel.setText("No Schedule Data");
             prevButton.setVisibility(View.GONE);
             nextButton.setVisibility(View.GONE);
+            
+            // Even when no data, show filter button so users can turn filters off
+            // Check if any filters are active to determine button state
+            boolean hasActiveFilters = false;
+            
+            // Check "Show Flagged Events Only" filter
+            if (staticVariables.preferences.getShowWillAttend()) {
+                hasActiveFilters = true;
+            }
+            
+            // Check event type filters (if any are hidden)
+            if (!staticVariables.preferences.getShowMeetAndGreet() ||
+                !staticVariables.preferences.getShowSpecialEvents() ||
+                !staticVariables.preferences.getShowUnofficalEvents()) {
+                hasActiveFilters = true;
+            }
+            
+            // Check priority/ranking filters (if any are hidden)
+            if (!staticVariables.preferences.getShowMust() ||
+                !staticVariables.preferences.getShowMight() ||
+                !staticVariables.preferences.getShowWont() ||
+                !staticVariables.preferences.getShowUnknown()) {
+                hasActiveFilters = true;
+            }
+            
+            // Check venue filters (if any are hidden)
+            if (!hasActiveFilters) {
+                List<String> venues = staticVariables.getVenueNamesInUseForList();
+                for (String venue : venues) {
+                    if (!staticVariables.preferences.getShowVenueEvents(venue)) {
+                        hasActiveFilters = true;
+                        break;
+                    }
+                }
+            }
+            
+            int buttonSize = dpToPx(44);
+            if (hasActiveFilters) {
+                // FILTERS ACTIVE: Show badge, expand button, left-align icon
+                filterButton.setBackground(getRoundedBackground(0xFFFFA500)); // Orange when filter active
+                filterButton.setTextColor(Color.BLACK); // Dark text on orange for contrast
+                filterButton.setText(""); // Always icon only, count shown in badge
+                filterButton.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
+                filterButton.setPadding(dpToPx(8), 0, dpToPx(8), 0);
+                
+                // Make button wider to accommodate badge
+                int expandedWidth = dpToPx(68);
+                FrameLayout.LayoutParams filterBtnParams = (FrameLayout.LayoutParams) filterButton.getLayoutParams();
+                filterBtnParams.width = expandedWidth;
+                filterBtnParams.height = buttonSize;
+                filterBtnParams.gravity = Gravity.START | Gravity.CENTER_VERTICAL;
+                filterButton.setLayoutParams(filterBtnParams);
+                
+                // Make wrapper wider too
+                LinearLayout.LayoutParams wrapperParams = (LinearLayout.LayoutParams) filterButtonWrapper.getLayoutParams();
+                wrapperParams.width = expandedWidth;
+                wrapperParams.height = dpToPx(44);
+                wrapperParams.setMargins(0, 0, dpToPx(8), 0);
+                filterButtonWrapper.setLayoutParams(wrapperParams);
+                
+                // Show badge - try to get count from unfilteredEventCountsPerDay if available
+                int totalFilteredCount = 0;
+                for (Integer count : unfilteredEventCountsPerDay.values()) {
+                    totalFilteredCount += count;
+                }
+                
+                if (totalFilteredCount > 0) {
+                    filterCountBadge.setText(String.valueOf(totalFilteredCount));
+                } else {
+                    // If we can't determine count, show "!" to indicate filters are active
+                    filterCountBadge.setText("!");
+                }
+                
+                int badgeSize = (totalFilteredCount >= 10 || totalFilteredCount == 0) ? dpToPx(22) : dpToPx(18);
+                FrameLayout.LayoutParams badgeParams = (FrameLayout.LayoutParams) filterCountBadge.getLayoutParams();
+                if (badgeParams != null) {
+                    badgeParams.width = badgeSize;
+                    badgeParams.height = badgeSize;
+                    badgeParams.gravity = Gravity.TOP | Gravity.END;
+                    badgeParams.setMargins(0, dpToPx(2), dpToPx(2), 0);
+                    filterCountBadge.setLayoutParams(badgeParams);
+                }
+                filterCountBadge.setVisibility(View.VISIBLE);
+                filterCountBadge.bringToFront();
+                filterButtonWrapper.bringChildToFront(filterCountBadge);
+            } else {
+                // NO FILTERS: Hide badge, square button, center icon
+                filterButton.setBackground(getRoundedBackground(Color.argb(80, 128, 128, 128)));
+                filterButton.setTextColor(Color.WHITE);
+                filterButton.setText(""); // Icon only when no filters
+                filterButton.setGravity(Gravity.CENTER);
+                
+                // Center the icon
+                android.graphics.drawable.Drawable drawable = filterButton.getCompoundDrawables()[0];
+                int iconWidth = drawable != null ? drawable.getIntrinsicWidth() : dpToPx(24);
+                int iconPadding = (buttonSize - iconWidth) / 2;
+                if (iconPadding < 0) iconPadding = 0;
+                filterButton.setPadding(iconPadding, 0, iconPadding, 0);
+                
+                // Reset button to square size
+                FrameLayout.LayoutParams filterBtnParams = (FrameLayout.LayoutParams) filterButton.getLayoutParams();
+                filterBtnParams.width = buttonSize;
+                filterBtnParams.height = buttonSize;
+                filterBtnParams.gravity = Gravity.CENTER;
+                filterButton.setLayoutParams(filterBtnParams);
+                
+                // Reset wrapper to wrap content
+                LinearLayout.LayoutParams wrapperParams = (LinearLayout.LayoutParams) filterButtonWrapper.getLayoutParams();
+                wrapperParams.width = LayoutParams.WRAP_CONTENT;
+                wrapperParams.height = dpToPx(44);
+                wrapperParams.setMargins(0, 0, dpToPx(8), 0);
+                filterButtonWrapper.setLayoutParams(wrapperParams);
+                
+                // Hide badge
+                filterCountBadge.setVisibility(View.GONE);
+            }
+            
+            // Ensure filter button is visible
+            filterButton.setVisibility(View.VISIBLE);
+            filterButtonWrapper.setVisibility(View.VISIBLE);
         } else {
             if (currentDayIndex < 0 || currentDayIndex >= days.size()) {
                 currentDayIndex = 0;
@@ -716,37 +1029,107 @@ public class LandscapeScheduleView extends LinearLayout {
             for (VenueColumn venue : currentDay.venues) {
                 visibleEventCount += venue.events.size();
             }
-            // Count hidden venues from ALL venues for this day (currentDay.venues only contains visible ones)
-            int hiddenVenueCount = 0;
-            if (currentDay.allVenueNamesForDay != null) {
-                for (String venueName : currentDay.allVenueNamesForDay) {
-                    if (!staticVariables.preferences.getShowVenueEvents(venueName)) {
-                        hiddenVenueCount++;
-                    }
-                }
+            // Count hidden records (events) for this day
+            int hiddenRecordsCount = 0;
+            Integer unfilteredCount = unfilteredEventCountsPerDay.get(currentDay.dayLabel);
+            if (unfilteredCount != null) {
+                hiddenRecordsCount = unfilteredCount - visibleEventCount;
             }
             String localizedDay = getLocalizedDayLabel(currentDay.dayLabel);
             String eventsLabel = context.getResources().getString(R.string.Events);
             dayLabel.setText(localizedDay + " - " + visibleEventCount + " " + eventsLabel);
             Log.d(TAG, "updateDisplay() - displaying day: '" + localizedDay + "' (raw dayLabel='" + currentDay.dayLabel + "')");
-            if (hiddenVenueCount > 0) {
-                venueFilterSubtitle.setVisibility(View.VISIBLE);
-                String venueHiddenText = hiddenVenueCount == 1
-                    ? context.getResources().getString(R.string.one_venue_hidden)
-                    : context.getResources().getString(R.string.venues_hidden_count, hiddenVenueCount);
-                venueFilterSubtitle.setText(venueHiddenText);
+            int buttonSize = dpToPx(44);
+            
+            if (hiddenRecordsCount > 0) {
+                // FILTERS ACTIVE: Show badge, expand button, left-align icon
                 filterButton.setBackground(getRoundedBackground(0xFFFFA500)); // Orange when filter active
                 filterButton.setTextColor(Color.BLACK); // Dark text on orange for contrast
-                filterButton.setText(String.valueOf(hiddenVenueCount)); // Show count on button
-                filterCountBadge.setText(String.valueOf(hiddenVenueCount));
+                filterButton.setText(""); // Always icon only, count shown in badge
+                filterButton.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
+                // Add left padding to position icon away from left edge
+                filterButton.setPadding(dpToPx(8), 0, dpToPx(8), 0);
+                
+                // Make button wider to accommodate badge (especially for 2-digit numbers)
+                int expandedWidth = dpToPx(68);
+                FrameLayout.LayoutParams filterBtnParams = (FrameLayout.LayoutParams) filterButton.getLayoutParams();
+                filterBtnParams.width = expandedWidth;
+                filterBtnParams.height = buttonSize;
+                filterBtnParams.gravity = Gravity.START | Gravity.CENTER_VERTICAL;
+                filterButton.setLayoutParams(filterBtnParams);
+                
+                // Make wrapper wider too
+                LinearLayout.LayoutParams wrapperParams = (LinearLayout.LayoutParams) filterButtonWrapper.getLayoutParams();
+                wrapperParams.width = expandedWidth;
+                wrapperParams.height = dpToPx(44);
+                wrapperParams.setMargins(0, 0, dpToPx(8), 0);
+                filterButtonWrapper.setLayoutParams(wrapperParams);
+                
+                // Show badge with count - position it inside the button at top-right
+                filterCountBadge.setText(String.valueOf(hiddenRecordsCount));
+                // Adjust badge size for 2-digit numbers if needed
+                int badgeSize = hiddenRecordsCount >= 10 ? dpToPx(22) : dpToPx(18);
+                FrameLayout.LayoutParams badgeParams = (FrameLayout.LayoutParams) filterCountBadge.getLayoutParams();
+                if (badgeParams != null) {
+                    badgeParams.width = badgeSize;
+                    badgeParams.height = badgeSize;
+                    badgeParams.gravity = Gravity.TOP | Gravity.END;
+                    // Position badge inside button at top-right corner (small positive margins instead of negative)
+                    badgeParams.setMargins(0, dpToPx(2), dpToPx(2), 0);
+                    filterCountBadge.setLayoutParams(badgeParams);
+                }
                 filterCountBadge.setVisibility(View.VISIBLE);
+                // Ensure badge is on top and visible
+                filterCountBadge.bringToFront();
+                filterButtonWrapper.bringChildToFront(filterCountBadge);
+                // Force badge to be drawn
+                filterCountBadge.invalidate();
+                filterCountBadge.requestLayout();
             } else {
+                // NO FILTERS: Hide badge, square button, center icon
                 venueFilterSubtitle.setVisibility(View.GONE);
                 filterButton.setBackground(getRoundedBackground(Color.argb(80, 128, 128, 128)));
                 filterButton.setTextColor(Color.WHITE);
                 filterButton.setText(""); // Icon only when no filters
+                filterButton.setGravity(Gravity.CENTER);
+                
+                // To center a left compound drawable, we need equal padding on left and right
+                // Estimate: if button is 44dp and icon is ~24dp, we need ~10dp padding each side
+                // But let's use a simpler approach: measure the drawable if possible
+                android.graphics.drawable.Drawable drawable = filterButton.getCompoundDrawables()[0];
+                int iconWidth = drawable != null ? drawable.getIntrinsicWidth() : dpToPx(24);
+                int iconPadding = (buttonSize - iconWidth) / 2;
+                if (iconPadding < 0) iconPadding = 0;
+                // Use symmetric padding to visually center the icon
+                filterButton.setPadding(iconPadding, 0, iconPadding, 0);
+                
+                // Reset button to square size
+                FrameLayout.LayoutParams filterBtnParams = (FrameLayout.LayoutParams) filterButton.getLayoutParams();
+                filterBtnParams.width = buttonSize;
+                filterBtnParams.height = buttonSize;
+                filterBtnParams.gravity = Gravity.CENTER;
+                filterButton.setLayoutParams(filterBtnParams);
+                
+                // Reset wrapper to wrap content (but maintain height)
+                LinearLayout.LayoutParams wrapperParams = (LinearLayout.LayoutParams) filterButtonWrapper.getLayoutParams();
+                wrapperParams.width = LayoutParams.WRAP_CONTENT;
+                wrapperParams.height = dpToPx(44);
+                wrapperParams.setMargins(0, 0, dpToPx(8), 0);
+                filterButtonWrapper.setLayoutParams(wrapperParams);
+                
+                // Hide badge to free up space - this allows button to be smaller
                 filterCountBadge.setVisibility(View.GONE);
             }
+            
+            // Force layout update after all changes
+            filterButton.post(new Runnable() {
+                @Override
+                public void run() {
+                    filterButton.requestLayout();
+                    filterButtonWrapper.requestLayout();
+                    filterCountBadge.requestLayout();
+                }
+            });
             
             // Show/hide buttons like iOS - only show when they can be used
             if (currentDayIndex > 0) {
@@ -1957,31 +2340,68 @@ public class LandscapeScheduleView extends LinearLayout {
     }
     
     /**
-     * Show venue filter sheet (Location Filters) for the current day — same settings as list view.
-     * Replicates iOS LandscapeScheduleView VenueFilterSheetView.
+     * Show filter sheet for the calendar view — includes Show Flagged Events Only, Event Type Filters,
+     * Band Ranking Filters, and Location Filters. Replicates iOS LandscapeScheduleView VenueFilterSheetView.
      */
     private void showVenueFilterSheet() {
-        if (days.isEmpty() || currentDayIndex < 0 || currentDayIndex >= days.size()) {
-            return;
-        }
-        DayScheduleData currentDay = days.get(currentDayIndex);
-        // Filter list = only venues that have events on THIS day (hidden venues with no events this day are not shown).
+        // Store current day to restore after filter changes (if available)
+        String dayToRestore = null;
         final List<String> allVenueNames = new ArrayList<>();
-        if (currentDay.allVenueNamesForDay != null) {
-            allVenueNames.addAll(currentDay.allVenueNamesForDay);
+        
+        if (!days.isEmpty() && currentDayIndex >= 0 && currentDayIndex < days.size()) {
+            DayScheduleData currentDay = days.get(currentDayIndex);
+            dayToRestore = currentDay.dayLabel;
+            // Filter list = only venues that have events on THIS day (hidden venues with no events this day are not shown).
+            if (currentDay.allVenueNamesForDay != null) {
+                allVenueNames.addAll(currentDay.allVenueNamesForDay);
+            }
+            // Defensive: add any venue currently displayed as a column that's missing
+            Log.d(TAG, "[VENUE_DEBUG] Filter sheet OPEN: dayLabel='" + currentDay.dayLabel + "' allVenueNamesForDay=" + (currentDay.allVenueNamesForDay != null ? currentDay.allVenueNamesForDay : "null") + " -> allVenueNames after step1=" + new ArrayList<>(allVenueNames));
+            for (VenueColumn v : currentDay.venues) {
+                if (v.name != null && !allVenueNames.contains(v.name)) {
+                    allVenueNames.add(v.name);
+                    Log.d(TAG, "[VENUE_DEBUG] Filter sheet: defensive add from column: '" + v.name + "'");
+                }
+            }
+            Log.d(TAG, "[VENUE_DEBUG] Filter sheet: currentDay.venues column names=" + venueColumnNames(currentDay.venues) + " final allVenueNames=" + allVenueNames);
         }
-        Log.d(TAG, "[VENUE_DEBUG] Filter sheet OPEN: dayLabel='" + currentDay.dayLabel + "' allVenueNamesForDay=" + (currentDay.allVenueNamesForDay != null ? currentDay.allVenueNamesForDay : "null") + " -> allVenueNames after step1=" + new ArrayList<>(allVenueNames));
-        // Defensive: add any venue currently displayed as a column that's missing
-        for (VenueColumn v : currentDay.venues) {
-            if (v.name != null && !allVenueNames.contains(v.name)) {
-                allVenueNames.add(v.name);
-                Log.d(TAG, "[VENUE_DEBUG] Filter sheet: defensive add from column: '" + v.name + "'");
+        
+        // If no days available or no venues found, get all venues from configured venues
+        if (allVenueNames.isEmpty()) {
+            List<String> configuredVenues = FestivalConfig.getInstance().getAllVenueNames();
+            if (configuredVenues != null) {
+                allVenueNames.addAll(configuredVenues);
+            }
+            // Also get venues from schedule records if available
+            if (BandInfo.scheduleRecords != null) {
+                Set<String> venuesFromSchedule = new HashSet<>();
+                for (scheduleTimeTracker tracker : BandInfo.scheduleRecords.values()) {
+                    if (tracker != null && tracker.scheduleByTime != null) {
+                        for (scheduleHandler scheduleHandle : tracker.scheduleByTime.values()) {
+                            if (scheduleHandle != null) {
+                                String loc = scheduleHandle.getShowLocation();
+                                if (loc != null && !loc.isEmpty()) {
+                                    venuesFromSchedule.add(loc);
+                                }
+                            }
+                        }
+                    }
+                }
+                for (String venue : venuesFromSchedule) {
+                    if (!allVenueNames.contains(venue)) {
+                        allVenueNames.add(venue);
+                    }
+                }
             }
         }
-        Log.d(TAG, "[VENUE_DEBUG] Filter sheet: currentDay.venues column names=" + venueColumnNames(currentDay.venues) + " final allVenueNames=" + allVenueNames);
+        
+        // Note: We continue even if allVenueNames is empty - user can still adjust other filters
         if (allVenueNames.isEmpty()) {
-            return;
+            Log.d(TAG, "[VENUE_DEBUG] No venues found, but showing filter sheet anyway for other filters");
         }
+        
+        // Make dayToRestore final for use in inner classes
+        final String finalDayToRestore = dayToRestore;
         FestivalConfig config = FestivalConfig.getInstance();
         
         Dialog dialog = new Dialog(context, android.R.style.Theme_DeviceDefault_Dialog);
@@ -2010,20 +2430,12 @@ public class LandscapeScheduleView extends LinearLayout {
         clearAll.setPadding(0, dpToPx(8), 0, dpToPx(8));
         clearAll.setClickable(true);
         clearAll.setFocusable(true);
-        boolean anyHidden = false;
-        for (String vn : allVenueNames) {
-            if (!staticVariables.preferences.getShowVenueEvents(vn)) {
-                anyHidden = true;
-                break;
-            }
-        }
-        clearAll.setClickable(anyHidden);
-        clearAll.setAlpha(anyHidden ? 1f : 0.4f);
+        // Initial state will be set after all switches are created
         LinearLayout.LayoutParams clearParams = new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
         toolbarRow.addView(clearAll, clearParams);
         
         TextView titleView = new TextView(context);
-        titleView.setText(context.getString(R.string.venue_filters));
+        titleView.setText(context.getString(R.string.Filters));
         titleView.setTextSize(17);
         titleView.setTypeface(null, android.graphics.Typeface.BOLD);
         titleView.setTextColor(Color.WHITE);
@@ -2049,61 +2461,281 @@ public class LandscapeScheduleView extends LinearLayout {
         toolbarRow.addView(done, new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
         root.addView(toolbarRow);
         
-        // Description block (iOS: gray area with secondary text)
-        LinearLayout descBlock = new LinearLayout(context);
-        descBlock.setOrientation(LinearLayout.VERTICAL);
-        descBlock.setBackgroundColor(Color.parseColor("#FF2C2C2E"));
-        descBlock.setPadding(horizontalPadding, dpToPx(12), horizontalPadding, dpToPx(12));
-        TextView desc = new TextView(context);
-        desc.setText(context.getString(R.string.venue_filter_calendar_description));
-        desc.setTextSize(14);
-        desc.setTextColor(Color.parseColor("#FF8E8E93"));
-        desc.setLineSpacing(dpToPx(2), 1f);
-        descBlock.addView(desc);
-        root.addView(descBlock);
-        
-        // Section header
-        TextView sectionHeader = new TextView(context);
-        sectionHeader.setText(context.getString(R.string.venue_filters));
-        sectionHeader.setTextSize(13);
-        sectionHeader.setTypeface(null, android.graphics.Typeface.BOLD);
-        sectionHeader.setTextColor(Color.parseColor("#FF8E8E93"));
-        sectionHeader.setPadding(horizontalPadding, dpToPx(16), horizontalPadding, dpToPx(8));
-        root.addView(sectionHeader);
-        
+        // ScrollView for all filter sections
         ScrollView scroll = new ScrollView(context);
         scroll.setPadding(horizontalPadding, 0, horizontalPadding, 0);
-        LinearLayout venueList = new LinearLayout(context);
-        venueList.setOrientation(LinearLayout.VERTICAL);
-        venueList.setBackgroundColor(Color.parseColor("#FF2C2C2E"));
-        venueList.setPadding(0, dpToPx(4), 0, dpToPx(4));
+        LinearLayout filterList = new LinearLayout(context);
+        filterList.setOrientation(LinearLayout.VERTICAL);
+        filterList.setBackgroundColor(Color.parseColor("#FF2C2C2E"));
+        filterList.setPadding(0, dpToPx(4), 0, dpToPx(4));
+        
+        // Track switches for disabling when Show Flagged Events Only is enabled
+        final java.util.List<Switch> allFilterSwitches = new ArrayList<>();
+        final Switch[] flaggedSwitchRef = new Switch[1]; // Reference to flagged switch
+        
+        // Check if Show Flagged Events Only is enabled
+        boolean isFlaggedFilterEnabled = staticVariables.preferences.getShowWillAttend();
+        
+        // 1. Show Flagged Events Only section
+        if (hasFlaggedEvents()) {
+            TextView flaggedHeader = new TextView(context);
+            flaggedHeader.setText(context.getString(R.string.show_only_flagged_as_attended));
+            flaggedHeader.setTextSize(13);
+            flaggedHeader.setTypeface(null, android.graphics.Typeface.BOLD);
+            flaggedHeader.setTextColor(Color.parseColor("#FF8E8E93"));
+            flaggedHeader.setPadding(horizontalPadding, dpToPx(16), horizontalPadding, dpToPx(8));
+            filterList.addView(flaggedHeader);
+            
+            LinearLayout flaggedRow = new LinearLayout(context);
+            flaggedRow.setOrientation(LinearLayout.HORIZONTAL);
+            flaggedRow.setGravity(Gravity.CENTER_VERTICAL);
+            flaggedRow.setPadding(dpToPx(16), dpToPx(12), dpToPx(16), dpToPx(12));
+            flaggedRow.setBackgroundColor(Color.TRANSPARENT);
+            
+            ImageView flaggedIcon = new ImageView(context);
+            android.graphics.drawable.Drawable flaggedIconDrawable = AppCompatResources.getDrawable(context, 
+                isFlaggedFilterEnabled ? R.drawable.icon_seen : R.drawable.icon_seen_alt);
+            flaggedIcon.setImageDrawable(flaggedIconDrawable);
+            LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dpToPx(24), dpToPx(24));
+            iconParams.setMargins(0, 0, dpToPx(12), 0);
+            flaggedIcon.setLayoutParams(iconParams);
+            
+            TextView flaggedText = new TextView(context);
+            flaggedText.setText(isFlaggedFilterEnabled ? 
+                context.getString(R.string.show_all_events) : 
+                context.getString(R.string.show_flaged_events_only));
+            flaggedText.setTextSize(17);
+            flaggedText.setTextColor(Color.WHITE);
+            flaggedText.setLayoutParams(new LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f));
+            
+            Switch flaggedSwitch = new Switch(context);
+            flaggedSwitch.setChecked(isFlaggedFilterEnabled);
+            flaggedSwitchRef[0] = flaggedSwitch;
+            flaggedSwitch.setOnCheckedChangeListener(new android.widget.CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(android.widget.CompoundButton buttonView, boolean isChecked) {
+                    staticVariables.preferences.setShowWillAttend(isChecked);
+                    staticVariables.preferences.saveData();
+                    // Update icon and text
+                    flaggedIcon.setImageDrawable(AppCompatResources.getDrawable(context, 
+                        isChecked ? R.drawable.icon_seen : R.drawable.icon_seen_alt));
+                    flaggedText.setText(isChecked ? 
+                        context.getString(R.string.show_all_events) : 
+                        context.getString(R.string.show_flaged_events_only));
+                    // Enable/disable other filters
+                    boolean shouldDisable = isChecked;
+                    for (Switch sw : allFilterSwitches) {
+                        sw.setEnabled(!shouldDisable);
+                    }
+                    refreshCalendarAfterFilterChange(finalDayToRestore);
+                    updateClearAllButtonState(clearAll, allVenueNames, allFilterSwitches, flaggedSwitchRef[0]);
+                }
+            });
+            
+            flaggedRow.addView(flaggedIcon);
+            flaggedRow.addView(flaggedText);
+            flaggedRow.addView(flaggedSwitch);
+            filterList.addView(flaggedRow);
+        }
+        
+        // 2. Event Type Filters section
+        if (hasFilterableEventTypes()) {
+            TextView eventTypeHeader = new TextView(context);
+            eventTypeHeader.setText(context.getString(R.string.event_type_filters));
+            eventTypeHeader.setTextSize(13);
+            eventTypeHeader.setTypeface(null, android.graphics.Typeface.BOLD);
+            eventTypeHeader.setTextColor(Color.parseColor("#FF8E8E93"));
+            eventTypeHeader.setPadding(horizontalPadding, dpToPx(16), horizontalPadding, dpToPx(8));
+            filterList.addView(eventTypeHeader);
+            
+            // Meet and Greet
+            if (staticVariables.preferences.getMeetAndGreetsEnabled()) {
+                LinearLayout meetGreetRow = createFilterRow(
+                    context, filterList, 
+                    R.drawable.icon_meet_and_greet, R.drawable.icon_meet_and_greet_alt,
+                    R.string.hide_meet_and_greet_events, R.string.show_meet_and_greet_events,
+                    staticVariables.preferences.getShowMeetAndGreet(),
+                    new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            boolean newValue = !staticVariables.preferences.getShowMeetAndGreet();
+                            staticVariables.preferences.setShowMeetAndGreet(newValue);
+                            staticVariables.preferences.saveData();
+                            refreshCalendarAfterFilterChange(finalDayToRestore);
+                            updateClearAllButtonState(clearAll, allVenueNames, allFilterSwitches, flaggedSwitchRef[0]);
+                        }
+                    },
+                    allFilterSwitches, isFlaggedFilterEnabled
+                );
+            }
+            
+            // Special Events
+            if (staticVariables.preferences.getSpecialEventsEnabled()) {
+                LinearLayout specialRow = createFilterRow(
+                    context, filterList,
+                    R.drawable.icon_all_star_jam, R.drawable.icon_all_star_jam_alt,
+                    R.string.hide_special_other_events, R.string.show_special_other_events,
+                    staticVariables.preferences.getShowSpecialEvents(),
+                    new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            boolean newValue = !staticVariables.preferences.getShowSpecialEvents();
+                            staticVariables.preferences.setShowSpecialEvents(newValue);
+                            staticVariables.preferences.saveData();
+                            refreshCalendarAfterFilterChange(finalDayToRestore);
+                            updateClearAllButtonState(clearAll, allVenueNames, allFilterSwitches, flaggedSwitchRef[0]);
+                        }
+                    },
+                    allFilterSwitches, isFlaggedFilterEnabled
+                );
+            }
+            
+            // Unofficial Events
+            if (staticVariables.preferences.getUnofficalEventsEnabled()) {
+                LinearLayout unofficialRow = createFilterRow(
+                    context, filterList,
+                    R.drawable.icon_unoffical_event, R.drawable.icon_unoffical_event_alt,
+                    R.string.hide_unofficial_events, R.string.show_unofficial_events,
+                    staticVariables.preferences.getShowUnofficalEvents(),
+                    new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            boolean newValue = !staticVariables.preferences.getShowUnofficalEvents();
+                            staticVariables.preferences.setShowUnofficalEvents(newValue);
+                            staticVariables.preferences.saveData();
+                            refreshCalendarAfterFilterChange(finalDayToRestore);
+                            updateClearAllButtonState(clearAll, allVenueNames, allFilterSwitches, flaggedSwitchRef[0]);
+                        }
+                    },
+                    allFilterSwitches, isFlaggedFilterEnabled
+                );
+            }
+        }
+        
+        // 3. Band Ranking Filters section
+        if (hasRankedBands()) {
+            TextView rankingHeader = new TextView(context);
+            rankingHeader.setText(context.getString(R.string.band_ranking_filters));
+            rankingHeader.setTextSize(13);
+            rankingHeader.setTypeface(null, android.graphics.Typeface.BOLD);
+            rankingHeader.setTextColor(Color.parseColor("#FF8E8E93"));
+            rankingHeader.setPadding(horizontalPadding, dpToPx(16), horizontalPadding, dpToPx(8));
+            filterList.addView(rankingHeader);
+            
+            // Must See
+            LinearLayout mustRow = createFilterRow(
+                context, filterList,
+                R.drawable.icon_going_yes, R.drawable.icon_going_yes_alt,
+                R.string.hide_must_see_items, R.string.show_must_see_items,
+                staticVariables.preferences.getShowMust(),
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        boolean newValue = !staticVariables.preferences.getShowMust();
+                        staticVariables.preferences.setshowMust(newValue);
+                        staticVariables.preferences.saveData();
+                        refreshCalendarAfterFilterChange(finalDayToRestore);
+                        updateClearAllButtonState(clearAll, allVenueNames, allFilterSwitches, flaggedSwitchRef[0]);
+                    }
+                },
+                allFilterSwitches, isFlaggedFilterEnabled
+            );
+            
+            // Might See
+            LinearLayout mightRow = createFilterRow(
+                context, filterList,
+                R.drawable.icon_going_maybe, R.drawable.icon_going_maybe_alt,
+                R.string.hide_might_see_items, R.string.show_might_see_items,
+                staticVariables.preferences.getShowMight(),
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        boolean newValue = !staticVariables.preferences.getShowMight();
+                        staticVariables.preferences.setshowMight(newValue);
+                        staticVariables.preferences.saveData();
+                        refreshCalendarAfterFilterChange(finalDayToRestore);
+                        updateClearAllButtonState(clearAll, allVenueNames, allFilterSwitches, flaggedSwitchRef[0]);
+                    }
+                },
+                allFilterSwitches, isFlaggedFilterEnabled
+            );
+            
+            // Wont See
+            LinearLayout wontRow = createFilterRow(
+                context, filterList,
+                R.drawable.icon_going_no, R.drawable.icon_going_no_alt,
+                R.string.hide_wont_see_items, R.string.show_wont_see_items,
+                staticVariables.preferences.getShowWont(),
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        boolean newValue = !staticVariables.preferences.getShowWont();
+                        staticVariables.preferences.setshowWont(newValue);
+                        staticVariables.preferences.saveData();
+                        refreshCalendarAfterFilterChange(finalDayToRestore);
+                        updateClearAllButtonState(clearAll, allVenueNames, allFilterSwitches, flaggedSwitchRef[0]);
+                    }
+                },
+                allFilterSwitches, isFlaggedFilterEnabled
+            );
+            
+            // Unknown
+            LinearLayout unknownRow = createFilterRow(
+                context, filterList,
+                R.drawable.icon_unknown, R.drawable.icon_unknown_alt,
+                R.string.hide_unknown_items, R.string.show_unknown_items,
+                staticVariables.preferences.getShowUnknown(),
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        boolean newValue = !staticVariables.preferences.getShowUnknown();
+                        staticVariables.preferences.setshowUnknown(newValue);
+                        staticVariables.preferences.saveData();
+                        refreshCalendarAfterFilterChange(finalDayToRestore);
+                        updateClearAllButtonState(clearAll, allVenueNames, allFilterSwitches, flaggedSwitchRef[0]);
+                    }
+                },
+                allFilterSwitches, isFlaggedFilterEnabled
+            );
+        }
+        
+        // 4. Location Filters section
+        TextView locationHeader = new TextView(context);
+        locationHeader.setText(context.getString(R.string.venue_filters));
+        locationHeader.setTextSize(13);
+        locationHeader.setTypeface(null, android.graphics.Typeface.BOLD);
+        locationHeader.setTextColor(Color.parseColor("#FF8E8E93"));
+        locationHeader.setPadding(horizontalPadding, dpToPx(16), horizontalPadding, dpToPx(8));
+        filterList.addView(locationHeader);
+        
         final java.util.Map<String, Switch> switchByVenue = new HashMap<>();
         Log.d(TAG, "[VENUE_DEBUG] Filter sheet: building " + allVenueNames.size() + " rows for dialog");
         for (final String venueName : allVenueNames) {
             Log.d(TAG, "[VENUE_DEBUG] Filter sheet: adding row for venue='" + venueName + "'");
-            int venueColor = parseColorFromHex(config.getVenueColor(venueName));
+            boolean isVenueEnabled = staticVariables.preferences.getShowVenueEvents(venueName);
             LinearLayout row = new LinearLayout(context);
             row.setOrientation(LinearLayout.HORIZONTAL);
             row.setGravity(Gravity.CENTER_VERTICAL);
             row.setPadding(dpToPx(16), dpToPx(12), dpToPx(16), dpToPx(12));
             row.setBackgroundColor(Color.TRANSPARENT);
-            android.graphics.drawable.GradientDrawable swatch = new android.graphics.drawable.GradientDrawable();
-            swatch.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
-            swatch.setCornerRadius(dpToPx(4));
-            swatch.setColor(venueColor);
-            View colorView = new View(context);
-            colorView.setBackground(swatch);
-            LinearLayout.LayoutParams colorParams = new LinearLayout.LayoutParams(dpToPx(24), dpToPx(24));
-            colorParams.setMargins(0, 0, dpToPx(12), 0);
-            colorView.setLayoutParams(colorParams);
+            
+            // Use venue icon instead of color swatch - primary icon when on, alt icon when off
+            ImageView venueIcon = new ImageView(context);
+            venueIcon.setImageDrawable(getVenueIconDrawable(venueName, isVenueEnabled));
+            LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dpToPx(24), dpToPx(24));
+            iconParams.setMargins(0, 0, dpToPx(12), 0);
+            venueIcon.setLayoutParams(iconParams);
+            
             TextView nameText = new TextView(context);
             nameText.setText(venueName != null ? staticVariables.venueDisplayName(venueName) : "");
             nameText.setTextSize(17);
             nameText.setTextColor(Color.WHITE);
             nameText.setLayoutParams(new LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f));
             Switch sw = new Switch(context);
-            sw.setChecked(staticVariables.preferences.getShowVenueEvents(venueName));
+            sw.setChecked(isVenueEnabled);
+            sw.setEnabled(!isFlaggedFilterEnabled);
             switchByVenue.put(venueName, sw);
+            allFilterSwitches.add(sw);
             sw.setOnCheckedChangeListener(new android.widget.CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(android.widget.CompoundButton buttonView, boolean isChecked) {
@@ -2114,21 +2746,21 @@ public class LandscapeScheduleView extends LinearLayout {
                     }
                     staticVariables.preferences.setShowVenueEvents(venueName, isChecked);
                     staticVariables.preferences.saveData();
-                    refreshCalendarAfterFilterChange();
-                    boolean hasHidden = hasAnyHiddenVenue(allVenueNames);
-                    clearAll.setClickable(hasHidden);
-                    clearAll.setAlpha(hasHidden ? 1f : 0.4f);
+                    // Update venue icon: primary when on (checked), alt when off (unchecked)
+                    venueIcon.setImageDrawable(getVenueIconDrawable(venueName, isChecked));
+                    refreshCalendarAfterFilterChange(finalDayToRestore);
+                    updateClearAllButtonState(clearAll, allVenueNames, allFilterSwitches, flaggedSwitchRef[0]);
                 }
             });
-            row.addView(colorView);
+            row.addView(venueIcon);
             row.addView(nameText);
             row.addView(sw);
             LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
-            venueList.addView(row, rowParams);
+            filterList.addView(row, rowParams);
         }
-        // CRITICAL: give venueList WRAP_CONTENT height so ScrollView can scroll when content is taller than viewport.
+        // CRITICAL: give filterList WRAP_CONTENT height so ScrollView can scroll when content is taller than viewport.
         // Without this, the child can get MATCH_PARENT and fill the viewport, clipping content and preventing scroll.
-        scroll.addView(venueList, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+        scroll.addView(filterList, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
         scroll.setVerticalScrollBarEnabled(true);
         scroll.setFillViewport(false);
         // Use weight=1 and height=0 so ScrollView gets only the REMAINING space inside the dialog.
@@ -2139,11 +2771,25 @@ public class LandscapeScheduleView extends LinearLayout {
         LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f);
         root.addView(scroll, scrollParams);
         
+        // Set initial state of Clear All button after all switches are created
+        updateClearAllButtonState(clearAll, allVenueNames, allFilterSwitches, flaggedSwitchRef[0]);
+        
         clearAll.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (clearAll.getAlpha() < 0.5f) return; // disabled
+                // Clear previous filter state FIRST to prevent any revert
+                previousFilterState = null;
+                isClearingAllFilters = true; // Set flag to prevent empty data alert
+                
                 // Clear ALL filters (same as portrait "Clear All Filters"): event types, must/might/wont/unknown, venues, etc.
+                Log.d(TAG, "Clear All Filters: Setting filters to true - BEFORE: showMust=" + 
+                      staticVariables.preferences.getShowMust() + ", showMight=" + 
+                      staticVariables.preferences.getShowMight() + ", showWont=" + 
+                      staticVariables.preferences.getShowWont() + ", showUnknown=" + 
+                      staticVariables.preferences.getShowUnknown() + ", showWillAttend=" + 
+                      staticVariables.preferences.getShowWillAttend());
+                
                 staticVariables.preferences.setShowAlbumListen(true);
                 staticVariables.preferences.setShowClinicEvents(true);
                 staticVariables.preferences.setShowMeetAndGreet(true);
@@ -2160,16 +2806,20 @@ public class LandscapeScheduleView extends LinearLayout {
                 staticVariables.preferences.setShowOtherShows(true);
                 List<String> venueNames = staticVariables.getVenueNamesInUseForList();
                 staticVariables.preferences.setVenueFilters(venueNames, true);
-                staticVariables.preferences.setShowWillAttend(false);
+                staticVariables.preferences.setShowWillAttend(false); // Turn off Show Flagged Events Only
                 staticVariables.preferences.setHideExpiredEvents(false);
                 staticVariables.preferences.saveData();
-                for (String vn : allVenueNames) {
-                    Switch s = switchByVenue.get(vn);
-                    if (s != null) s.setChecked(true);
-                }
-                clearAll.setClickable(false);
-                clearAll.setAlpha(0.4f);
-                refreshCalendarAfterFilterChange();
+                
+                Log.d(TAG, "Clear All Filters: Setting filters to true - AFTER: showMust=" + 
+                      staticVariables.preferences.getShowMust() + ", showMight=" + 
+                      staticVariables.preferences.getShowMight() + ", showWont=" + 
+                      staticVariables.preferences.getShowWont() + ", showUnknown=" + 
+                      staticVariables.preferences.getShowUnknown() + ", showWillAttend=" + 
+                      staticVariables.preferences.getShowWillAttend());
+                
+                // Close the dialog and refresh the calendar - the filter menu will show correct state when reopened
+                dialog.dismiss();
+                refreshCalendarAfterFilterChange(finalDayToRestore, false);
             }
         });
         
@@ -2200,9 +2850,277 @@ public class LandscapeScheduleView extends LinearLayout {
         return false;
     }
     
+    /**
+     * Check if there are any flagged events (must see).
+     */
+    private boolean hasFlaggedEvents() {
+        return staticVariables.showsIwillAttend > 0;
+    }
+    
+    /**
+     * Check if there are any ranked bands (must/might/wont/unknown).
+     */
+    private boolean hasRankedBands() {
+        if (BandInfo.scheduleRecords == null) return false;
+        for (String bandName : BandInfo.scheduleRecords.keySet()) {
+            String rankIcon = rankStore.getRankForBand(bandName);
+            if (rankIcon != null && !rankIcon.isEmpty() && 
+                (rankIcon.equals(staticVariables.mustSeeIcon) ||
+                 rankIcon.equals(staticVariables.mightSeeIcon) ||
+                 rankIcon.equals(staticVariables.wontSeeIcon) ||
+                 rankIcon.equals(staticVariables.unknownIcon))) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * Check if there are any filterable event types.
+     */
+    private boolean hasFilterableEventTypes() {
+        if (BandInfo.scheduleRecords == null) return false;
+        for (scheduleTimeTracker tracker : BandInfo.scheduleRecords.values()) {
+            if (tracker == null || tracker.scheduleByTime == null) continue;
+            for (scheduleHandler scheduleHandle : tracker.scheduleByTime.values()) {
+                if (scheduleHandle == null) continue;
+                String eventType = scheduleHandle.getShowType();
+                if (eventType != null && 
+                    (eventType.equals("Meet and Greet") || 
+                     eventType.equals("Special Event") || 
+                     eventType.equals("Unofficial Event"))) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * Check if an event should be included based on all active filters.
+     * Applies event type, venue, priority, and attendance filters.
+     */
+    private boolean shouldIncludeEvent(ScheduleBlock block, String bandName) {
+        // If "Show Flagged Events Only" is enabled, only show events that have been attended
+        // (same logic as list view: exclude events with "sawNone" status)
+        if (staticVariables.preferences.getShowWillAttend()) {
+            if (block.attendedStatus == null || block.attendedStatus.equals(staticVariables.sawNoneStatus)) {
+                return false;
+            }
+        }
+        
+        // Event type filters
+        String eventType = block.eventType != null ? block.eventType : "Performance";
+        if (eventType.equals("Meet and Greet") && !staticVariables.preferences.getShowMeetAndGreet()) {
+            return false;
+        }
+        if (eventType.equals("Special Event") && !staticVariables.preferences.getShowSpecialEvents()) {
+            return false;
+        }
+        if (eventType.equals("Unofficial Event") && !staticVariables.preferences.getShowUnofficalEvents()) {
+            return false;
+        }
+        
+        // Venue filter
+        if (block.location != null && !staticVariables.preferences.getShowVenueEvents(block.location)) {
+            return false;
+        }
+        
+        // Priority/ranking filters (Must/Might/Wont/Unknown)
+        // priority: 1 = Must See, 2 = Might See, 3 = Wont See, 0 = Unknown/None
+        if (block.priority == 1 && !staticVariables.preferences.getShowMust()) {
+            return false;
+        }
+        if (block.priority == 2 && !staticVariables.preferences.getShowMight()) {
+            return false;
+        }
+        if (block.priority == 3 && !staticVariables.preferences.getShowWont()) {
+            return false;
+        }
+        if (block.priority == 0 && !staticVariables.preferences.getShowUnknown()) {
+            return false;
+        }
+        
+        return true;
+    }
+    
     private void refreshCalendarAfterFilterChange() {
-        loadScheduleData();
+        refreshCalendarAfterFilterChange(null);
+    }
+    
+    private void refreshCalendarAfterFilterChange(String restoreDay) {
+        refreshCalendarAfterFilterChange(restoreDay, true);
+    }
+    
+    private void refreshCalendarAfterFilterChange(String restoreDay, boolean savePreviousState) {
+        // Save current filter state before applying new filters (unless explicitly disabled)
+        if (savePreviousState) {
+            previousFilterState = new FilterState();
+            isClearingAllFilters = false; // Reset flag when saving state (normal filter change)
+        }
+        // Note: If savePreviousState is false, isClearingAllFilters flag should already be set
+        // and will be checked in loadScheduleData to prevent empty data alert
+        loadScheduleData(restoreDay);
         updateDisplay();
+    }
+    
+    /**
+     * Revert to previous filter state (called when user acknowledges empty data alert)
+     */
+    private void revertToPreviousFilterState() {
+        if (previousFilterState == null) {
+            Log.w(TAG, "No previous filter state to revert to");
+            return;
+        }
+        Log.d(TAG, "Reverting to previous filter state");
+        FilterState stateToRestore = previousFilterState;
+        previousFilterState = null; // Clear before restore to prevent saving state again
+        stateToRestore.restore();
+        // Refresh data with the reverted filters - loadScheduleData will call updateDisplay() when done
+        loadScheduleData(null);
+    }
+    
+    /**
+     * Show alert dialog when filtering results in no data
+     */
+    private void showEmptyDataAlert() {
+        if (context == null) {
+            Log.w(TAG, "Cannot show alert - context is null");
+            return;
+        }
+        
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(context);
+        builder.setTitle(context.getString(R.string.this_would_filter_out_all_data));
+        builder.setMessage(context.getString(R.string.this_would_filter_out_all_data));
+        builder.setPositiveButton(context.getString(R.string.Ok), new android.content.DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(android.content.DialogInterface dialog, int which) {
+                revertToPreviousFilterState();
+            }
+        });
+        builder.setCancelable(false); // User must click OK
+        builder.show();
+    }
+    
+    /**
+     * Helper method to create a filter row with icon, text, and switch.
+     */
+    private LinearLayout createFilterRow(Context ctx, LinearLayout parent, 
+                                        int iconResId, int iconAltResId,
+                                        int textOnResId, int textOffResId,
+                                        boolean isChecked,
+                                        View.OnClickListener clickListener,
+                                        List<Switch> allSwitches,
+                                        boolean disabled) {
+        LinearLayout row = new LinearLayout(ctx);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(dpToPx(16), dpToPx(12), dpToPx(16), dpToPx(12));
+        row.setBackgroundColor(Color.TRANSPARENT);
+        row.setOnClickListener(clickListener);
+        
+        ImageView icon = new ImageView(ctx);
+        // Use primary icon when on (checked), alt icon when off (unchecked)
+        icon.setImageDrawable(AppCompatResources.getDrawable(ctx, isChecked ? iconResId : iconAltResId));
+        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dpToPx(24), dpToPx(24));
+        iconParams.setMargins(0, 0, dpToPx(12), 0);
+        icon.setLayoutParams(iconParams);
+        
+        TextView text = new TextView(ctx);
+        // Always show "Show {name}" text regardless of state (textOffResId contains the "Show" strings)
+        text.setText(ctx.getString(textOffResId));
+        text.setTextSize(17);
+        text.setTextColor(Color.WHITE);
+        text.setLayoutParams(new LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f));
+        
+        Switch sw = new Switch(ctx);
+        sw.setChecked(isChecked);
+        sw.setEnabled(!disabled);
+        allSwitches.add(sw);
+        sw.setOnCheckedChangeListener(new android.widget.CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(android.widget.CompoundButton buttonView, boolean checked) {
+                // Update icon: primary when on (checked), alt when off (unchecked)
+                icon.setImageDrawable(AppCompatResources.getDrawable(ctx, checked ? iconResId : iconAltResId));
+                // Text always stays as "Show {name}" (textOffResId contains the "Show" strings)
+                text.setText(ctx.getString(textOffResId));
+                clickListener.onClick(row);
+            }
+        });
+        
+        row.addView(icon);
+        row.addView(text);
+        row.addView(sw);
+        parent.addView(row);
+        return row;
+    }
+    
+    /**
+     * Get venue icon drawable for a given venue name and enabled state.
+     * Uses primary icon when enabled (on), alt icon when disabled (off).
+     */
+    private android.graphics.drawable.Drawable getVenueIconDrawable(String venueName, boolean isEnabled) {
+        FestivalConfig config = FestivalConfig.getInstance();
+        // Get icon name from FestivalConfig
+        String iconName = isEnabled ?
+            config.getVenueGoingIcon(venueName) :
+            config.getVenueNotGoingIcon(venueName);
+        
+        // Check if it's a generic/unknown venue icon
+        if (iconName == null || iconName.toLowerCase().contains("unknown")) {
+            return AppCompatResources.getDrawable(context,
+                isEnabled ? R.drawable.icon_location_generic : R.drawable.icon_location_generic_alt);
+        }
+        
+        // Try to get resource by name
+        int resourceId = context.getResources().getIdentifier(iconName, "drawable", context.getPackageName());
+        if (resourceId != 0) {
+            return AppCompatResources.getDrawable(context, resourceId);
+        }
+        
+        // Fall back to hardcoded venue icons
+        switch (venueName) {
+            case "Lounge":
+                return AppCompatResources.getDrawable(context,
+                    isEnabled ? R.drawable.icon_lounge : R.drawable.icon_lounge_alt);
+            case "Pool":
+                return AppCompatResources.getDrawable(context,
+                    isEnabled ? R.drawable.icon_pool : R.drawable.icon_pool_alt);
+            case "Rink":
+                return AppCompatResources.getDrawable(context,
+                    isEnabled ? R.drawable.icon_rink : R.drawable.icon_rink_alt);
+            case "Theater":
+                return AppCompatResources.getDrawable(context,
+                    isEnabled ? R.drawable.icon_theater : R.drawable.icon_theater_alt);
+            case "Other":
+            default:
+                return AppCompatResources.getDrawable(context,
+                    isEnabled ? R.drawable.icon_location_generic : R.drawable.icon_location_generic_alt);
+        }
+    }
+    
+    /**
+     * Update the Clear All Filters button state based on whether any filters are active.
+     */
+    private void updateClearAllButtonState(TextView clearAllButton, List<String> venueNames, 
+                                          List<Switch> allSwitches, Switch flaggedSwitch) {
+        boolean anyHidden = false;
+        
+        // Check flagged switch
+        if (flaggedSwitch != null && flaggedSwitch.isChecked()) {
+            anyHidden = true;
+        }
+        
+        // Check other switches
+        for (Switch sw : allSwitches) {
+            if (!sw.isChecked()) {
+                anyHidden = true;
+                break;
+            }
+        }
+        
+        clearAllButton.setClickable(anyHidden);
+        clearAllButton.setAlpha(anyHidden ? 1f : 0.4f);
     }
     
     public void refreshEventData(String bandName) {
@@ -2231,6 +3149,7 @@ public class LandscapeScheduleView extends LinearLayout {
     // Data processing methods (keep existing logic)
     private List<DayScheduleData> processEventsFromScheduleRecords() {
         Map<String, List<ScheduleBlock>> dayGroups = new HashMap<>();
+        Map<String, List<ScheduleBlock>> unfilteredDayGroups = new HashMap<>(); // Track unfiltered events for counting
         
         if (BandInfo.scheduleRecords == null) {
             return new ArrayList<>();
@@ -2265,15 +3184,30 @@ public class LandscapeScheduleView extends LinearLayout {
                 }
                 ScheduleBlock block = createScheduleBlockFromHandler(bandName, timeIndex, scheduleHandle, eventYear);
                 if (block != null) {
-                    if (loc != null && (loc.contains("Clevelander") || loc.contains("Schooner"))) {
-                        Log.d(TAG, "[VENUE_DEBUG] Block CREATED, added to day='" + day + "'");
+                    // Track unfiltered count
+                    if (!unfilteredDayGroups.containsKey(day)) {
+                        unfilteredDayGroups.put(day, new ArrayList<ScheduleBlock>());
                     }
-                    if (!dayGroups.containsKey(day)) {
-                        dayGroups.put(day, new ArrayList<ScheduleBlock>());
+                    unfilteredDayGroups.get(day).add(block);
+                    
+                    // Apply filters - only add to dayGroups if event passes all filters
+                    if (shouldIncludeEvent(block, bandName)) {
+                        if (loc != null && (loc.contains("Clevelander") || loc.contains("Schooner"))) {
+                            Log.d(TAG, "[VENUE_DEBUG] Block CREATED, added to day='" + day + "'");
+                        }
+                        if (!dayGroups.containsKey(day)) {
+                            dayGroups.put(day, new ArrayList<ScheduleBlock>());
+                        }
+                        dayGroups.get(day).add(block);
                     }
-                    dayGroups.get(day).add(block);
                 }
             }
+        }
+        
+        // Store unfiltered counts per day
+        unfilteredEventCountsPerDay.clear();
+        for (Map.Entry<String, List<ScheduleBlock>> entry : unfilteredDayGroups.entrySet()) {
+            unfilteredEventCountsPerDay.put(entry.getKey(), entry.getValue().size());
         }
         
         // LOG: day group keys and sizes (before any processing)
