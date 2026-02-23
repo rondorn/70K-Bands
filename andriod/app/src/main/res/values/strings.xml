@@ -181,6 +181,7 @@
     <!-- help text -->
     <!-- help text -->
     <string name="clear_all_filters">Clear All Filters</string>
+    <string name="this_would_filter_out_all_data">This would filter out all data</string>
     <string name="venue_filter_done">Done</string>
     <string name="venue_filter_calendar_description">Show or hide venues. Same settings as the list view—if a venue is hidden in the list, it is hidden in the calendar and vice versa.</string>
     <!-- Filter menu: "Hide X" / "Show X" for venue name X (e.g. Hide Rink, Show Lounge) -->

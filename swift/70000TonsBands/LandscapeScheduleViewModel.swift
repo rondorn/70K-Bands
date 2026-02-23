@@ -9,6 +9,49 @@
 import Foundation
 import SwiftUI
 
+/// Structure to track filter state for reverting changes
+private struct FilterState {
+    let showFlaggedOnly: Bool
+    let showMeetAndGreet: Bool
+    let showSpecialEvents: Bool
+    let showUnofficalEvents: Bool
+    let showMust: Bool
+    let showMight: Bool
+    let showWont: Bool
+    let showUnknown: Bool
+    let venueVisibility: [String: Bool]
+    
+    static func current() -> FilterState {
+        return FilterState(
+            showFlaggedOnly: getShowOnlyWillAttened(),
+            showMeetAndGreet: getShowMeetAndGreetEvents(),
+            showSpecialEvents: getShowSpecialEvents(),
+            showUnofficalEvents: getShowUnofficalEvents(),
+            showMust: getMustSeeOn(),
+            showMight: getMightSeeOn(),
+            showWont: getWontSeeOn(),
+            showUnknown: getUnknownSeeOn(),
+            venueVisibility: getAllVenueFilterStates()
+        )
+    }
+    
+    func restore() {
+        setShowOnlyWillAttened(showFlaggedOnly)
+        setShowMeetAndGreetEvents(showMeetAndGreet)
+        setShowSpecialEvents(showSpecialEvents)
+        setShowUnofficalEvents(showUnofficalEvents)
+        setMustSeeOn(showMust)
+        setMightSeeOn(showMight)
+        setWontSeeOn(showWont)
+        setUnknownSeeOn(showUnknown)
+        // Restore venue visibility
+        for (venueName, isVisible) in venueVisibility {
+            setShowVenueEvents(venueName: venueName, show: isVisible)
+        }
+        writeFiltersFile()
+    }
+}
+
 class LandscapeScheduleViewModel: ObservableObject {
     
     // MARK: - Published Properties
@@ -23,6 +66,10 @@ class LandscapeScheduleViewModel: ObservableObject {
     @Published var unfilteredEventCountsPerDay: [String: Int] = [:]
     /// Venue show state (lowercase name -> show). Synced with persisted getShowVenueEvents/setShowVenueEvents so list and calendar share the same filters.
     @Published var venueVisibility: [String: Bool] = [:]
+    /// Alert to show when filtering results in no data
+    @Published var showEmptyDataAlert: Bool = false
+    /// Previous filter state to revert to if all data is filtered out
+    private var previousFilterState: FilterState?
     
     // MARK: - Computed Properties
     
@@ -252,25 +299,59 @@ class LandscapeScheduleViewModel: ObservableObject {
                 if processedDays.isEmpty {
                     print("⚠️ [LANDSCAPE_SCHEDULE] No days available after processing/filtering")
                     self.isLoading = false
+                    // Show alert if we have a previous filter state to revert to
+                    if self.previousFilterState != nil {
+                        DispatchQueue.main.async {
+                            self.showEmptyDataAlert = true
+                        }
+                    }
                     return
                 }
                 
                 // Set day index: prioritize restoreDay (for filter changes), then initialDay (for initial load)
                 let dayToRestore = restoreDay ?? self.initialDay
+                var targetDayIndex: Int? = nil
+                
                 if let dayToRestore = dayToRestore {
                     if let dayIndex = processedDays.firstIndex(where: { $0.dayLabel == dayToRestore }) {
-                        self.currentDayIndex = dayIndex
+                        targetDayIndex = dayIndex
                         print("✅ [LANDSCAPE_SCHEDULE] Restored to day: \(dayToRestore) (index \(dayIndex))")
                     } else {
-                        print("⚠️ [LANDSCAPE_SCHEDULE] Could not find day: \(dayToRestore), defaulting to index 0")
-                        self.currentDayIndex = 0
-                    }
-                } else {
-                    // No day specified, keep current index if valid, otherwise default to 0
-                    if self.currentDayIndex >= processedDays.count {
-                        self.currentDayIndex = 0
+                        print("⚠️ [LANDSCAPE_SCHEDULE] Could not find day: \(dayToRestore), will find first day with events")
                     }
                 }
+                
+                // If target day has no events, find first day with events
+                if let targetIndex = targetDayIndex, targetIndex < processedDays.count {
+                    let targetDay = processedDays[targetIndex]
+                    let eventCount = targetDay.venues.reduce(0) { $0 + $1.events.count }
+                    if eventCount == 0 {
+                        print("⚠️ [LANDSCAPE_SCHEDULE] Target day '\(targetDay.dayLabel)' has no events, finding first day with events")
+                        targetDayIndex = nil // Reset to find first day with events
+                    }
+                }
+                
+                // If no target day or target day is empty, find first day with events
+                if targetDayIndex == nil {
+                    if let firstDayWithEvents = processedDays.firstIndex(where: { day in
+                        day.venues.reduce(0) { $0 + $1.events.count } > 0
+                    }) {
+                        targetDayIndex = firstDayWithEvents
+                        print("✅ [LANDSCAPE_SCHEDULE] Navigating to first day with events: index \(firstDayWithEvents)")
+                    } else {
+                        // No days have events - show alert
+                        print("⚠️ [LANDSCAPE_SCHEDULE] No days have events after filtering")
+                        self.isLoading = false
+                        if self.previousFilterState != nil {
+                            DispatchQueue.main.async {
+                                self.showEmptyDataAlert = true
+                            }
+                        }
+                        return
+                    }
+                }
+                
+                self.currentDayIndex = targetDayIndex ?? 0
                 
                 self.isLoading = false
                 
@@ -432,7 +513,22 @@ class LandscapeScheduleViewModel: ObservableObject {
     
     func refreshData(restoreDay: String? = nil) {
         print("🔄 [LANDSCAPE_SCHEDULE] Refreshing data due to filter change")
+        // Save current filter state before applying new filters
+        previousFilterState = FilterState.current()
         loadScheduleData(restoreDay: restoreDay)
+    }
+    
+    /// Revert to previous filter state (called when user acknowledges empty data alert)
+    func revertToPreviousFilterState() {
+        guard let previousState = previousFilterState else {
+            print("⚠️ [LANDSCAPE_SCHEDULE] No previous filter state to revert to")
+            return
+        }
+        print("🔄 [LANDSCAPE_SCHEDULE] Reverting to previous filter state")
+        previousState.restore()
+        previousFilterState = nil
+        // Refresh data with the reverted filters
+        loadScheduleData(restoreDay: nil)
     }
     
     /// Sync venue visibility from persisted settings (e.g. after returning from list view or app launch).
