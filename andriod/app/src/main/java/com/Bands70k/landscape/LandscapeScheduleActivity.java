@@ -139,6 +139,8 @@ public class LandscapeScheduleActivity extends Activity {
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
+        // Close any open menus at the start of orientation transition
+        com.Bands70k.FilterButtonHandler.dismissFilterPopupIfShowing();
         Log.d(TAG, "Configuration changed - orientation: " + newConfig.orientation + 
               " (ORIENTATION_PORTRAIT=" + Configuration.ORIENTATION_PORTRAIT + 
               ", ORIENTATION_LANDSCAPE=" + Configuration.ORIENTATION_LANDSCAPE + ")");
@@ -218,6 +220,8 @@ public class LandscapeScheduleActivity extends Activity {
 
     /** Set result with current calendar day so list can scroll to it, then finish. */
     private void finishWithResult(String currentDay) {
+        // Close any open menus before switching back to List
+        com.Bands70k.FilterButtonHandler.dismissFilterPopupIfShowing();
         Log.d(TAG, "finishWithResult() called with currentDay: '" + currentDay + "'");
         Intent data = new Intent();
         if (currentDay != null) {

@@ -83,7 +83,7 @@ public class OtherFilterHandler {
                  staticVariables.preferences.setVenueFilters(venuesInUse, true);
 
                 staticVariables.preferences.setShowWillAttend(false);
-                staticVariables.preferences.setHideExpiredEvents(false);
+                // Hide Expired Events is a preference, not a filter — preserve it
 
                 staticVariables.preferences.saveData();
 

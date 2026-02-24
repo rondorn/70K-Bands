@@ -288,7 +288,10 @@
     <string name="Misc">Diverse</string>
     <string name="Information">Information</string>
     <string name="UserIdentifier">Bruger-ID</string>
-    <string name="Build">Build</string>
+    <string name="Build">Kompilering</string>
+    <string name="PointerUrl">Pointer-URL</string>
+    <string name="CustomPointerUrl">Brugerdefineret pointer-URL</string>
+    <string name="CustomPointerUrlHint">Lad stå tom for at bruge standard</string>
     
     <!-- Localized share text -->
     <string name="Choices">Valg</string>

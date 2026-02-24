@@ -293,6 +293,9 @@
     <string name="Information">Tiedot</string>
     <string name="UserIdentifier">Käyttäjätunnus</string>
     <string name="Build">Versio</string>
+    <string name="PointerUrl">Osoitin-URL</string>
+    <string name="CustomPointerUrl">Mukautettu osoitin-URL</string>
+    <string name="CustomPointerUrlHint">Jätä tyhjäksi käyttääksesi oletusta</string>
     
     <!-- Default description text -->
     <string name="DefaultDescription70K">Kommenttiteksti ei ole vielä saatavilla. Odota, että Aaron lisää kuvauksensa. Voit lisätä omasi, jos haluat, mutta kun hänen kuvauksensa tulee saataville, se ei korvaa tietojasi eikä näy.</string>

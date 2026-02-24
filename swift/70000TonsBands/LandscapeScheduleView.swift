@@ -11,7 +11,7 @@ import SwiftUI
 // MARK: - Helper Functions for Filter Availability
 
 // Helper function to check if any bands have been ranked (priority set) for a specific day
-private func hasRankedBands(forDay dayLabel: String) -> Bool {
+func hasRankedBands(forDay dayLabel: String) -> Bool {
     // Get all events for the year (unfiltered)
     let allEvents = DataManager.shared.fetchEvents(forYear: eventYear)
     
@@ -29,7 +29,7 @@ private func hasRankedBands(forDay dayLabel: String) -> Bool {
 }
 
 // Helper function to check if any event types exist that can be filtered for a specific day
-private func hasFilterableEventTypes(forDay dayLabel: String) -> Bool {
+func hasFilterableEventTypes(forDay dayLabel: String) -> Bool {
     // Get all events for the year (unfiltered)
     let allEvents = DataManager.shared.fetchEvents(forYear: eventYear)
     
@@ -50,7 +50,7 @@ private func hasFilterableEventTypes(forDay dayLabel: String) -> Bool {
 }
 
 // Helper function to check if any events are flagged for a specific day
-private func hasFlaggedEvents(forDay dayLabel: String) -> Bool {
+func hasFlaggedEvents(forDay dayLabel: String) -> Bool {
     // Get all events for the year (unfiltered)
     let allEvents = DataManager.shared.fetchEvents(forYear: eventYear)
     
@@ -85,7 +85,7 @@ private func hasFlaggedEvents(forDay dayLabel: String) -> Bool {
 }
 
 // Helper function to get unfiltered venues for a specific day (from raw data, not filtered)
-private func getUnfilteredVenuesForDay(_ dayLabel: String) -> [VenueColumn] {
+func getUnfilteredVenuesForDay(_ dayLabel: String) -> [VenueColumn] {
     // Get all events for the year (unfiltered)
     let allEvents = DataManager.shared.fetchEvents(forYear: eventYear)
     
@@ -569,14 +569,28 @@ struct LandscapeScheduleView: View {
     private struct VenueFilterSheetView: View {
         let dayData: DayScheduleData?
         @ObservedObject var viewModel: LandscapeScheduleViewModel
+        @Binding var dayBeforeFilterChange: String?
+        
+        var body: some View {
+            CommonFilterSheetView(
+                menuOrder: .calendar,
+                dayData: dayData,
+                viewModel: viewModel,
+                dayBeforeFilterChange: $dayBeforeFilterChange
+            )
+        }
+    }
+    
+    // MARK: - Legacy implementation (kept for reference, now uses CommonFilterSheetView)
+    /*
+    private struct VenueFilterSheetView_Legacy: View {
+        let dayData: DayScheduleData?
+        @ObservedObject var viewModel: LandscapeScheduleViewModel
         @Environment(\.dismiss) private var dismiss
         @Binding var dayBeforeFilterChange: String?
         @State private var showFlaggedOnly: Bool = getShowOnlyWillAttened()
         
         var body: some View {
-            // Get unfiltered venues for the current day (from raw data, not filtered)
-            // This ensures all venues that have events on this day appear in the filter menu,
-            // regardless of whether they're currently visible due to other filters
             let dayLabel = dayData?.dayLabel ?? ""
             let venues = getUnfilteredVenuesForDay(dayLabel)
             let isFlaggedFilterEnabled = showFlaggedOnly
@@ -769,47 +783,10 @@ struct LandscapeScheduleView: View {
                         }
                     }
                 }
-                .navigationTitle(NSLocalizedString("Filters", comment: ""))
-                .navigationBarTitleDisplayMode(.inline)
-                .preferredColorScheme(.dark)
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button(NSLocalizedString("Clear All Filters", comment: "")) {
-                            // Clear all filters
-                            setVenueFilters(venueNames: getVenueNamesInUseForList(), show: true)
-                            setShowOnlyWillAttened(false)
-                            // Update local state to reflect the cleared filter
-                            showFlaggedOnly = false
-                            setShowMeetAndGreetEvents(true)
-                            setShowSpecialEvents(true)
-                            setShowUnofficalEvents(true)
-                            setMustSeeOn(true)
-                            setMightSeeOn(true)
-                            setWontSeeOn(true)
-                            setUnknownSeeOn(true)
-                            writeFiltersFile()
-                            viewModel.refreshVenueVisibility()
-                            // Force refresh to ensure counters are cleared
-                            if let dayToRestore = dayBeforeFilterChange {
-                                viewModel.refreshData(restoreDay: dayToRestore)
-                            } else {
-                                viewModel.refreshData()
-                            }
-                            NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
-                        }
-                        .font(.system(size: 17, weight: .regular))
-                        .disabled(!viewModel.hasHiddenVenues && !getShowOnlyWillAttened() && getMustSeeOn() && getMightSeeOn() && getWontSeeOn() && getUnknownSeeOn() && getShowMeetAndGreetEvents() && getShowSpecialEvents() && getShowUnofficalEvents())
-                    }
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button(NSLocalizedString("Done", comment: "")) {
-                            dismiss()
-                        }
-                        .font(.system(size: 17, weight: .semibold))
-                    }
-                }
             }
         }
     }
+    */
     
     // MARK: - Sticky Header Scroll View
     

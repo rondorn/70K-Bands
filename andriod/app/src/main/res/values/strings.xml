@@ -331,6 +331,9 @@
     <string name="Information">Information</string>
     <string name="UserIdentifier">User Identifier</string>
     <string name="Build">Build</string>
+    <string name="PointerUrl">Pointer URL</string>
+    <string name="CustomPointerUrl">Custom Pointer URL</string>
+    <string name="CustomPointerUrlHint">Leave empty to use default</string>
     
     <!-- Default description text -->
     <string name="DefaultDescription70K">Comment text is not available yet. Please wait for Aaron to add his description. You can add your own if you choose, but when his becomes available it will not overwrite your data, and will not display.</string>
