@@ -205,7 +205,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     var filterTextNeeded = true;
     var viewableCell = UITableViewCell()
     
-    var filterMenu = DropDown();
     
     @IBOutlet weak var titleButtonArea: UINavigationItem!
     var backgroundColor = UIColor.white;
@@ -421,7 +420,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
 
         //change the notch area to all black
         navigationController?.view.backgroundColor = .black
-        //createrFilterMenu(controller: self);
      
         filterMenuButton.setTitle(NSLocalizedString("Filters", comment: ""), for: UIControl.State.normal)
         
@@ -1640,9 +1638,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
         }
         
-        // Dismiss the filter menu before the display rotates so it doesn't appear in the wrong layout
-        filterMenu.hide()
-        // Also dismiss the new SwiftUI filter menu (portrait mode)
+        // Dismiss the SwiftUI filter menu (portrait mode) before rotation
         if let existing = currentFilterMenuHostingController {
             print("🔄 [ROTATION] Dismissing portrait filter menu hosting controller")
             existing.view.removeFromSuperview()
@@ -1934,7 +1930,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         DispatchQueue.global(qos: .utility).async { [weak self] in
             self?.refreshDataWithBackgroundUpdate(reason: "Display after wake")
         }
-        //createrFilterMenu(controller: self)
     }
     
     @objc func refreshAlerts(){
@@ -4095,7 +4090,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // KISS: Ensure navigationItem.title is cleared (it hides titleView)
         navigationItem.title = nil
-        //createrFilterMenu(controller: self);
+;
     }
     
     @IBAction func shareButtonClicked(_ sender: UIBarButtonItem){

@@ -278,11 +278,8 @@
 		119434B52B1FCFA000DA3F87 /* CustomListEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119434B32B1FCFA000DA3F87 /* CustomListEntry.swift */; };
 		119A867422D12FA700D23233 /* iCloudDataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119A867322D12FA700D23233 /* iCloudDataHandler.swift */; };
 		119A867522D12FA700D23233 /* iCloudDataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119A867322D12FA700D23233 /* iCloudDataHandler.swift */; };
-		119C803D2F4CEB5700304A1D /* CommonFilterMenuConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119C803B2F4CEB5700304A1D /* CommonFilterMenuConfig.swift */; };
 		119C803E2F4CEB5700304A1D /* PortraitFilterSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119C803C2F4CEB5700304A1D /* PortraitFilterSheetView.swift */; };
-		119C803F2F4CEB5700304A1D /* CommonFilterMenuConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119C803B2F4CEB5700304A1D /* CommonFilterMenuConfig.swift */; };
 		119C80402F4CEB5700304A1D /* PortraitFilterSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119C803C2F4CEB5700304A1D /* PortraitFilterSheetView.swift */; };
-		119C80412F4CEB5700304A1D /* CommonFilterMenuConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119C803B2F4CEB5700304A1D /* CommonFilterMenuConfig.swift */; };
 		119C80422F4CEB5700304A1D /* PortraitFilterSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119C803C2F4CEB5700304A1D /* PortraitFilterSheetView.swift */; };
 		119C80442F4CF06500304A1D /* CommonFilterSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119C80432F4CF06500304A1D /* CommonFilterSheetView.swift */; };
 		119C80452F4CF06500304A1D /* CommonFilterSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119C80432F4CF06500304A1D /* CommonFilterSheetView.swift */; };
@@ -506,7 +503,6 @@
 		11942FD31D0CE33D0078A422 /* SortFilterMenuController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SortFilterMenuController.swift; sourceTree = "<group>"; };
 		119434B32B1FCFA000DA3F87 /* CustomListEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomListEntry.swift; sourceTree = "<group>"; };
 		119A867322D12FA700D23233 /* iCloudDataHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iCloudDataHandler.swift; sourceTree = "<group>"; };
-		119C803B2F4CEB5700304A1D /* CommonFilterMenuConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommonFilterMenuConfig.swift; sourceTree = "<group>"; };
 		119C803C2F4CEB5700304A1D /* PortraitFilterSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortraitFilterSheetView.swift; sourceTree = "<group>"; };
 		119C80432F4CF06500304A1D /* CommonFilterSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommonFilterSheetView.swift; sourceTree = "<group>"; };
 		11ABAA5F222C7EFF00A04397 /* userDataHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = userDataHandler.swift; sourceTree = "<group>"; };
@@ -671,7 +667,6 @@
 			isa = PBXGroup;
 			children = (
 				119C80432F4CF06500304A1D /* CommonFilterSheetView.swift */,
-				119C803B2F4CEB5700304A1D /* CommonFilterMenuConfig.swift */,
 				119C803C2F4CEB5700304A1D /* PortraitFilterSheetView.swift */,
 				1154F60D1A575893003F4764 /* _0000TonsBands.xcdatamodeld */,
 				113C3B9C1A62CBDA000E8D9A /* 70000TonsBands.entitlements */,
@@ -1341,7 +1336,6 @@
 				11111FA720D03D77008E41F6 /* ShowAttendedReport.swift in Sources */,
 				1154F60F1A575893003F4764 /* _0000TonsBands.xcdatamodeld in Sources */,
 				1147D6D92E63A8C3000A98B0 /* DataModel.xcdatamodeld in Sources */,
-				119C803D2F4CEB5700304A1D /* CommonFilterMenuConfig.swift in Sources */,
 				119C803E2F4CEB5700304A1D /* PortraitFilterSheetView.swift in Sources */,
 				1175C93E2E4D2C5A0074E2F2 /* DetailHostingController.swift in Sources */,
 				112913802EE618BE008472A3 /* SQLiteAttendanceManager.swift in Sources */,
@@ -1445,7 +1439,6 @@
 				1129139D2EE77A11008472A3 /* SQLiteProfileManager.swift in Sources */,
 				1155E3A61A8B121000D51ED9 /* Constants.swift in Sources */,
 				1175C93B2E4D2C5A0074E2F2 /* DetailHostingController.swift in Sources */,
-				119C80412F4CEB5700304A1D /* CommonFilterMenuConfig.swift in Sources */,
 				119C80422F4CEB5700304A1D /* PortraitFilterSheetView.swift in Sources */,
 				1147D6DA2E63A8C3000A98B0 /* DataModel.xcdatamodeld in Sources */,
 				1175C93C2E4D2C5A0074E2F2 /* DetailView.swift in Sources */,
@@ -1549,7 +1542,6 @@
 				1129139B2EE77A11008472A3 /* SQLiteProfileManager.swift in Sources */,
 				1172EE0E2E5A1C4D006E3596 /* ShowAttendedReport.swift in Sources */,
 				1172EE0F2E5A1C4D006E3596 /* _0000TonsBands.xcdatamodeld in Sources */,
-				119C803F2F4CEB5700304A1D /* CommonFilterMenuConfig.swift in Sources */,
 				119C80402F4CEB5700304A1D /* PortraitFilterSheetView.swift in Sources */,
 				1147D6DB2E63A8C3000A98B0 /* DataModel.xcdatamodeld in Sources */,
 				1172EE102E5A1C4D006E3596 /* DetailHostingController.swift in Sources */,
@@ -2123,7 +2115,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260224001;
+				CURRENT_PROJECT_VERSION = 20260224002;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -2200,7 +2192,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260224001;
+				CURRENT_PROJECT_VERSION = 20260224002;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;

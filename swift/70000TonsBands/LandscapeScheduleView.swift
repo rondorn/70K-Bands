@@ -480,6 +480,28 @@ struct LandscapeScheduleView: View {
         let hasHiddenRecordsOnThisDay = hiddenRecordsCount > 0 && hasActiveFilters
         
         return HStack {
+            // Venue filter button (left side to match portrait); badge shows records hidden count for this day
+            Button(action: {
+                showVenueFilterSheet = true
+            }) {
+                ZStack(alignment: .topTrailing) {
+                    Image(systemName: "line.3.horizontal.decrease.circle")
+                        .font(.system(size: 22))
+                        .foregroundColor(hasHiddenRecordsOnThisDay ? .orange : .white)
+                    if hasHiddenRecordsOnThisDay && hiddenRecordsCount > 0 {
+                        Text("\(hiddenRecordsCount)")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(.black)
+                            .frame(minWidth: 16, minHeight: 16)
+                            .background(Color.orange)
+                            .clipShape(Circle())
+                            .offset(x: 8, y: -8)
+                    }
+                }
+                .frame(width: 44, height: 44)
+            }
+            .padding(.leading, 8)
+            
             Spacer()
             
             // Previous day button - only show if functional
@@ -522,28 +544,6 @@ struct LandscapeScheduleView: View {
             
             Spacer()
             
-            // Venue filter button (system-standard filter affordance); badge shows records hidden count for this day
-            Button(action: {
-                showVenueFilterSheet = true
-            }) {
-                ZStack(alignment: .topTrailing) {
-                    Image(systemName: "line.3.horizontal.decrease.circle")
-                        .font(.system(size: 22))
-                        .foregroundColor(hasHiddenRecordsOnThisDay ? .orange : .white)
-                    if hasHiddenRecordsOnThisDay && hiddenRecordsCount > 0 {
-                        Text("\(hiddenRecordsCount)")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(.black)
-                            .frame(minWidth: 16, minHeight: 16)
-                            .background(Color.orange)
-                            .clipShape(Circle())
-                            .offset(x: 8, y: -8)
-                    }
-                }
-                .frame(width: 44, height: 44)
-            }
-            .padding(.trailing, 8)
-            
             // iPad: List view toggle button (return to list view)
             if isSplitViewCapable, let onDismiss = onDismissRequested {
                 Button(action: {
@@ -580,213 +580,6 @@ struct LandscapeScheduleView: View {
             )
         }
     }
-    
-    // MARK: - Legacy implementation (kept for reference, now uses CommonFilterSheetView)
-    /*
-    private struct VenueFilterSheetView_Legacy: View {
-        let dayData: DayScheduleData?
-        @ObservedObject var viewModel: LandscapeScheduleViewModel
-        @Environment(\.dismiss) private var dismiss
-        @Binding var dayBeforeFilterChange: String?
-        @State private var showFlaggedOnly: Bool = getShowOnlyWillAttened()
-        
-        var body: some View {
-            let dayLabel = dayData?.dayLabel ?? ""
-            let venues = getUnfilteredVenuesForDay(dayLabel)
-            let isFlaggedFilterEnabled = showFlaggedOnly
-            return NavigationView {
-                List {
-                    
-                    // ORDER: Show Flagged Events Only first (same order as list view menu)
-                    // Only show if flagged events exist for this day (from raw data, not filtered)
-                    if hasFlaggedEvents(forDay: dayLabel) {
-                        Section(header: Text(NSLocalizedString("Show Flagged Events Only", comment: ""))) {
-                            HStack(spacing: 12) {
-                                Image(uiImage: UIImage(named: showFlaggedOnly ? attendedShowIcon : attendedShowIconAlt) ?? UIImage())
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: 24, height: 24)
-                                Toggle(NSLocalizedString("Show Flagged Events Only", comment: ""), isOn: Binding(
-                                    get: { showFlaggedOnly },
-                                    set: { newValue in
-                                        showFlaggedOnly = newValue
-                                        setShowOnlyWillAttened(newValue)
-                                        writeFiltersFile()
-                                        NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
-                                    }
-                                ))
-                            }
-                        }
-                    }
-                    
-                    // ORDER: Event Type Filters second (same order as list view menu)
-                    // Only show if filterable event types exist for this day (from raw data, not filtered)
-                    // Disabled when "Show Flagged Events Only" is enabled
-                    if hasFilterableEventTypes(forDay: dayLabel) {
-                        Section(header: Text(NSLocalizedString("Event Type Filters", comment: ""))) {
-                            if getMeetAndGreetsEnabled() {
-                                HStack(spacing: 12) {
-                                    Image(uiImage: UIImage(named: getShowMeetAndGreetEvents() ? meetAndGreetIcon : meetAndGreetIconAlt) ?? UIImage())
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fit)
-                                        .frame(width: 24, height: 24)
-                                    Toggle(NSLocalizedString("Show Meet & Greet Events", comment: ""), isOn: Binding(
-                                        get: { getShowMeetAndGreetEvents() },
-                                        set: { newValue in
-                                            setShowMeetAndGreetEvents(newValue)
-                                            writeFiltersFile()
-                                            NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
-                                        }
-                                    ))
-                                    .disabled(isFlaggedFilterEnabled)
-                                }
-                            }
-                            if getSpecialEventsEnabled() {
-                                HStack(spacing: 12) {
-                                    Image(uiImage: UIImage(named: getShowSpecialEvents() ? specialEventTypeIcon : specialEventTypeIconAlt) ?? UIImage())
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fit)
-                                        .frame(width: 24, height: 24)
-                                    Toggle(NSLocalizedString("Show Special/Other Events", comment: ""), isOn: Binding(
-                                        get: { getShowSpecialEvents() },
-                                        set: { newValue in
-                                            setShowSpecialEvents(newValue)
-                                            writeFiltersFile()
-                                            NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
-                                        }
-                                    ))
-                                    .disabled(isFlaggedFilterEnabled)
-                                }
-                            }
-                            if getUnofficalEventsEnabled() {
-                                HStack(spacing: 12) {
-                                    Image(uiImage: UIImage(named: getShowUnofficalEvents() ? unofficalEventTypeIcon : unofficalEventTypeIconAlt) ?? UIImage())
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fit)
-                                        .frame(width: 24, height: 24)
-                                    Toggle(NSLocalizedString("Show Unofficial Events", comment: ""), isOn: Binding(
-                                        get: { getShowUnofficalEvents() },
-                                        set: { newValue in
-                                            setShowUnofficalEvents(newValue)
-                                            writeFiltersFile()
-                                            NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
-                                        }
-                                    ))
-                                    .disabled(isFlaggedFilterEnabled)
-                                }
-                            }
-                        }
-                    }
-                    
-                    // ORDER: Band Ranking Filters third (same order as list view menu)
-                    // Only show if bands have been ranked for this day (from raw data, not filtered)
-                    // Disabled when "Show Flagged Events Only" is enabled
-                    if hasRankedBands(forDay: dayLabel) {
-                        Section(header: Text(NSLocalizedString("Band Ranking Filters", comment: ""))) {
-                            HStack(spacing: 12) {
-                                Image(uiImage: UIImage(named: getMustSeeOn() ? mustSeeIcon : mustSeeIconAlt) ?? UIImage())
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: 24, height: 24)
-                                Toggle(NSLocalizedString("Show Must See Items", comment: ""), isOn: Binding(
-                                    get: { getMustSeeOn() },
-                                    set: { newValue in
-                                        setMustSeeOn(newValue)
-                                        writeFiltersFile()
-                                        NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
-                                    }
-                                ))
-                                .disabled(isFlaggedFilterEnabled)
-                            }
-                            HStack(spacing: 12) {
-                                Image(uiImage: UIImage(named: getMightSeeOn() ? mightSeeIcon : mightSeeIconAlt) ?? UIImage())
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: 24, height: 24)
-                                Toggle(NSLocalizedString("Show Might See Items", comment: ""), isOn: Binding(
-                                    get: { getMightSeeOn() },
-                                    set: { newValue in
-                                        setMightSeeOn(newValue)
-                                        writeFiltersFile()
-                                        NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
-                                    }
-                                ))
-                                .disabled(isFlaggedFilterEnabled)
-                            }
-                            HStack(spacing: 12) {
-                                Image(uiImage: UIImage(named: getWontSeeOn() ? wontSeeIcon : wontSeeIconAlt) ?? UIImage())
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: 24, height: 24)
-                                Toggle(NSLocalizedString("Show Wont See Items", comment: ""), isOn: Binding(
-                                    get: { getWontSeeOn() },
-                                    set: { newValue in
-                                        setWontSeeOn(newValue)
-                                        writeFiltersFile()
-                                        NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
-                                    }
-                                ))
-                                .disabled(isFlaggedFilterEnabled)
-                            }
-                            HStack(spacing: 12) {
-                                Image(uiImage: UIImage(named: getUnknownSeeOn() ? unknownIcon : unknownIconAlt) ?? UIImage())
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: 24, height: 24)
-                                Toggle(NSLocalizedString("Show Unknown Items", comment: ""), isOn: Binding(
-                                    get: { getUnknownSeeOn() },
-                                    set: { newValue in
-                                        setUnknownSeeOn(newValue)
-                                        writeFiltersFile()
-                                        NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
-                                    }
-                                ))
-                                .disabled(isFlaggedFilterEnabled)
-                            }
-                        }
-                    }
-                    
-                    // ORDER: Location Filters fourth (same order as list view menu)
-                    // Only show if locations/venues exist
-                    // Disabled when "Show Flagged Events Only" is enabled
-                    if !venues.isEmpty {
-                        Section(header: HStack(spacing: 12) {
-                            Image(uiImage: UIImage(named: "Location-Generic-Going-wBox") ?? UIImage())
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 24, height: 24)
-                            Text(NSLocalizedString("Location Filters", comment: ""))
-                        }) {
-                            ForEach(venues) { venue in
-                                HStack(spacing: 12) {
-                                    // Use same icon logic as list view: venue-specific icon if available, otherwise generic
-                                    let venueConfig = FestivalConfig.current.getVenue(named: venue.name)
-                                    let hasEstablishedIcon = venueConfig.map { !$0.goingIcon.lowercased().contains("unknown") } ?? false
-                                    let genericLocationIconShown = "Location-Generic-Going-wBox"
-                                    let genericLocationIconHidden = "Location-Generic-NotGoing-wBox"
-                                    let isVenueShown = !viewModel.isVenueHidden(venue.name)
-                                    let iconName = isVenueShown 
-                                        ? ((hasEstablishedIcon ? venueConfig?.goingIcon : nil) ?? genericLocationIconShown)
-                                        : ((hasEstablishedIcon ? venueConfig?.notGoingIcon : nil) ?? genericLocationIconHidden)
-                                    
-                                    Image(uiImage: UIImage(named: iconName) ?? UIImage())
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fit)
-                                        .frame(width: 24, height: 24)
-                                    Toggle(venueDisplayName(for: venue.name), isOn: Binding(
-                                        get: { !viewModel.isVenueHidden(venue.name) },
-                                        set: { viewModel.setVenueHidden(venue.name, hidden: !$0) }
-                                    ))
-                                    .disabled(isFlaggedFilterEnabled)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    */
     
     // MARK: - Sticky Header Scroll View
     

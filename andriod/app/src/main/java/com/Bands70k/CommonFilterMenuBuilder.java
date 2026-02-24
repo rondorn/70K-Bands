@@ -111,22 +111,27 @@ public class CommonFilterMenuBuilder {
         
         // Build menu sections based on menu type
         // When Hide Expired Events is ON and no unexpired events: hide event-related sections (Locations, Event Type, Sort By, Show Flagged)
-        // Event sections container is refreshed when Hide Expired toggle changes
-        final View[] eventSectionsContainerRef = new View[1];
+        // Event sections containers are refreshed when Hide Expired toggle changes
+        final View[] eventSectionsContainerRef = new View[2];
         boolean showEventSections = shouldShowEventRelatedSections(context);
         if (menuType == MenuType.PORTRAIT) {
-            // Portrait order: Clear Filters -> Show Expired Events -> Band Ranking -> Show Flagged Events Only -> Sort By Time -> Event Types -> Locations
+            // Portrait order: Hide Expired -> Sort By Name -> Show Flagged -> Band Rankings -> Event Types -> Locations
             buildShowExpiredEventsSection(context, filterList, allFilterSwitches, expiredSwitchRef, isFlaggedFilterEnabled, wrapperCallbacks, eventSectionsContainerRef);
-            buildBandRankingSection(context, filterList, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
             LinearLayout eventSectionsContainer = new LinearLayout(context);
             eventSectionsContainer.setOrientation(LinearLayout.VERTICAL);
             eventSectionsContainer.setVisibility(showEventSections ? View.VISIBLE : View.GONE);
-            buildShowFlaggedEventsSection(context, eventSectionsContainer, flaggedSwitchRef, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
             buildSortByTimeSection(context, eventSectionsContainer, wrapperCallbacks);
-            buildEventTypeSection(context, eventSectionsContainer, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
-            buildLocationSection(context, eventSectionsContainer, allVenueNames, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
+            buildShowFlaggedEventsSection(context, eventSectionsContainer, flaggedSwitchRef, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
             filterList.addView(eventSectionsContainer);
             eventSectionsContainerRef[0] = eventSectionsContainer;
+            buildBandRankingSection(context, filterList, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
+            LinearLayout eventSectionsContainer2 = new LinearLayout(context);
+            eventSectionsContainer2.setOrientation(LinearLayout.VERTICAL);
+            eventSectionsContainer2.setVisibility(showEventSections ? View.VISIBLE : View.GONE);
+            buildEventTypeSection(context, eventSectionsContainer2, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
+            buildLocationSection(context, eventSectionsContainer2, allVenueNames, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
+            filterList.addView(eventSectionsContainer2);
+            eventSectionsContainerRef[1] = eventSectionsContainer2;
         } else {
             // Calendar order (consistent with List): Band Rankings -> Flagged Only -> Event Type -> Locations (no Hide Expired, no Sort By)
             buildBandRankingSection(context, filterList, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
@@ -257,8 +262,13 @@ public class CommonFilterMenuBuilder {
                 staticVariables.preferences.setHideExpiredEvents(isChecked);
                 staticVariables.preferences.saveData();
                 // Refresh menu to show/hide event-related sections
-                if (eventSectionsContainerRef != null && eventSectionsContainerRef[0] != null) {
-                    eventSectionsContainerRef[0].setVisibility(shouldShowEventRelatedSections(context) ? View.VISIBLE : View.GONE);
+                boolean show = shouldShowEventRelatedSections(context);
+                if (eventSectionsContainerRef != null) {
+                    for (View container : eventSectionsContainerRef) {
+                        if (container != null) {
+                            container.setVisibility(show ? View.VISIBLE : View.GONE);
+                        }
+                    }
                 }
                 callbacks.onFilterChanged();
             }
