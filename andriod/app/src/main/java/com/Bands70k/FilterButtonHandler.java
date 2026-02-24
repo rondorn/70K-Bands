@@ -32,8 +32,8 @@ import java.lang.reflect.Field;
 //public class FilterButtonHandler {
 public class FilterButtonHandler  {
     public Button filterMenuButton;
-    private PopupWindow popupWindow;
-    private static PopupWindow sCurrentPopup;
+    private android.app.Dialog filterDialog;
+    private static android.app.Dialog sCurrentDialog;
     private static View messageView;
     /**
      * Sets up the filter button and its click listener.
@@ -48,63 +48,96 @@ public class FilterButtonHandler  {
 
         filterMenuButton.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View context) {
-                popupWindow = new PopupWindow(showBands);
-                LayoutInflater inflater = (LayoutInflater) staticVariables.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-
-                View view = inflater.inflate(R.layout.filter_choices_menu_layout, null);
-
-                popupWindow.setFocusable(true);
-                popupWindow.setWidth(WindowManager.LayoutParams.WRAP_CONTENT);
-                popupWindow.setHeight(WindowManager.LayoutParams.WRAP_CONTENT);
-                popupWindow.setContentView(view);
-
-                popupWindow.showAsDropDown(filterMenuButton, 0, 0);
-                sCurrentPopup = popupWindow;
-
-                // View Mode Filter removed - use title button to toggle instead
-                boolean hasScheduledEvents = staticVariables.showEventButtons;
-                boolean showScheduleFilters = staticVariables.preferences.getShowScheduleView();
-
-                MustMightFilterHandler mustMightHandle = new MustMightFilterHandler(popupWindow);
-                mustMightHandle.setupMustMightFilters();
-                mustMightHandle.setupMustMightListener(showBands);
-
-                EventFilterHandler eventFilterHandle = new EventFilterHandler(popupWindow);
-                eventFilterHandle.setupEventTypeFilters();
-                eventFilterHandle.setupEventTypeListener(showBands);
-
-                VenueFilterHandler venueFilterHandle = new VenueFilterHandler(popupWindow);
-                venueFilterHandle.setupVenueFilters();
-                venueFilterHandle.setupVenueListener(showBands);
-
-                OtherFilterHandler otherFilterHandle = new OtherFilterHandler(popupWindow);
-                otherFilterHandle.setupOtherFilters(showScheduleFilters);
-                otherFilterHandle.setupEventTypeListener(showBands);
-
+                // Dismiss any existing dialog
+                if (sCurrentDialog != null && sCurrentDialog.isShowing()) {
+                    sCurrentDialog.dismiss();
+                }
+                
+                // Create filter menu using CommonFilterMenuBuilder
+                filterDialog = CommonFilterMenuBuilder.buildFilterMenu(
+                    showBands,
+                    CommonFilterMenuBuilder.MenuType.PORTRAIT,
+                    new CommonFilterMenuBuilder.FilterMenuCallbacks() {
+                        @Override
+                        public void onFilterChanged() {
+                            String message = "";
+                            refreshAfterButtonClick(null, showBands, message);
+                        }
+                        
+                        @Override
+                        public void onClearAllFilters() {
+                            // Clear all filters
+                            staticVariables.preferences.setShowAlbumListen(true);
+                            staticVariables.preferences.setShowClinicEvents(true);
+                            staticVariables.preferences.setShowMeetAndGreet(true);
+                            staticVariables.preferences.setShowSpecialEvents(true);
+                            staticVariables.preferences.setShowUnofficalEvents(true);
+                            
+                            staticVariables.preferences.setshowMust(true);
+                            staticVariables.preferences.setshowMight(true);
+                            staticVariables.preferences.setshowWont(true);
+                            staticVariables.preferences.setshowUnknown(true);
+                            
+                            // Reset hardcoded venue preferences (for 70K)
+                            staticVariables.preferences.setShowLoungeShows(true);
+                            staticVariables.preferences.setShowPoolShows(true);
+                            staticVariables.preferences.setShowRinkShows(true);
+                            staticVariables.preferences.setShowTheaterShows(true);
+                            staticVariables.preferences.setShowOtherShows(true);
+                            
+                            // Reset all location filters
+                            java.util.List<String> venuesInUse = staticVariables.getVenueNamesInUseForList();
+                            staticVariables.preferences.setVenueFilters(venuesInUse, true);
+                            
+                            staticVariables.preferences.setShowWillAttend(false);
+                            // Hide Expired Events is a preference, not a filter — preserve it
+                            
+                            staticVariables.preferences.saveData();
+                            
+                            String message = staticVariables.context.getResources().getString(R.string.clear_all_filters);
+                            refreshAfterButtonClick(null, showBands, message);
+                            filterDialog.dismiss();
+                        }
+                        
+                        @Override
+                        public void onDismiss() {
+                            filterDialog.dismiss();
+                        }
+                    }
+                );
+                
+                sCurrentDialog = filterDialog;
+                filterDialog.show();
             }
         });
     }
 
     /**
-     * Dismisses the filter popup if it is showing (e.g. on rotation).
+     * Registers the current filter dialog (List or Calendar). Used so dismissFilterPopupIfShowing can close whichever is open.
+     */
+    public static void registerCurrentFilterDialog(android.app.Dialog dialog) {
+        sCurrentDialog = dialog;
+    }
+
+    /**
+     * Dismisses the filter dialog if it is showing (e.g. on rotation, view switch).
      */
     public static void dismissFilterPopupIfShowing() {
-        if (sCurrentPopup != null && sCurrentPopup.isShowing()) {
-            sCurrentPopup.dismiss();
+        if (sCurrentDialog != null && sCurrentDialog.isShowing()) {
+            sCurrentDialog.dismiss();
         }
-        sCurrentPopup = null;
+        sCurrentDialog = null;
     }
 
     /**
      * Refreshes the filter UI and shows a message after a button click.
-     * @param popupWindow The popup window containing the filters.
+     * @param popupWindow The popup window containing the filters (deprecated, kept for compatibility).
      * @param showBands The main activity instance.
      * @param message The message to display.
      */
     public static void refreshAfterButtonClick(PopupWindow popupWindow, showBands showBands, String message){
 
-        //popupWindow.dismiss();
-        if (message.isEmpty() == false) {
+        if (message != null && !message.isEmpty()) {
             HelpMessageHandler.showMessage(message, messageView);
         }
         // CRITICAL FIX: Clear the mainListHandler cache
@@ -123,22 +156,8 @@ public class FilterButtonHandler  {
             }
         }, 500);
 
-        // View Mode Filter removed - use title button to toggle instead
-        boolean hasScheduledEvents = staticVariables.showEventButtons;
-        boolean showScheduleFilters = staticVariables.preferences.getShowScheduleView();
-
-        MustMightFilterHandler mustMightHandle = new MustMightFilterHandler(popupWindow);
-        mustMightHandle.setupMustMightFilters();
-
-        EventFilterHandler eventFilterHandle = new EventFilterHandler(popupWindow);
-        eventFilterHandle.setupEventTypeFilters();
-
-        VenueFilterHandler venueFilterHandle = new VenueFilterHandler(popupWindow);
-        venueFilterHandle.setupVenueFilters();
-
-        OtherFilterHandler otherFilterHandle = new OtherFilterHandler(popupWindow);
-        otherFilterHandle.setupOtherFilters(showScheduleFilters);
-
+        // Note: Filter UI is now managed by CommonFilterMenuBuilder, so we don't need to refresh
+        // individual filter handlers here anymore. The dialog will be rebuilt when reopened.
     }
 
     /**

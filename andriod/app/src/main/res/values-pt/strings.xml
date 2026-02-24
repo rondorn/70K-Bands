@@ -289,7 +289,10 @@
     <string name="Misc">Diversos</string>
     <string name="Information">Informação</string>
     <string name="UserIdentifier">Identificador do usuário</string>
-    <string name="Build">Build</string>
+    <string name="Build">Compilação</string>
+    <string name="PointerUrl">URL do ponteiro</string>
+    <string name="CustomPointerUrl">URL do ponteiro personalizada</string>
+    <string name="CustomPointerUrlHint">Deixar vazio para usar o padrão</string>
     
     <!-- Localized share text -->
     <string name="Choices">Escolhas</string>

@@ -1158,6 +1158,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         self.tableView.reloadData()
         print("[MasterViewController] Initial waiting message displayed immediately (first install only)")
         
+        // KISS: After table reload, ensure titleView is visible
+        navigationItem.title = nil
+        updateCountLable()
+        
         // Also ensure the bands array is set globally for mainListController
         bands = initialData
     }
@@ -1314,6 +1318,23 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        
+        // Ensure UI elements are visible when view appears (especially after rotation)
+        print("🔄 [VIEW_LIFECYCLE] viewWillAppear called")
+        print("🔄 [VIEW_LIFECYCLE] isShowingLandscapeSchedule: \(isShowingLandscapeSchedule)")
+        print("🔄 [VIEW_LIFECYCLE] presentedViewController: \(presentedViewController != nil ? String(describing: type(of: presentedViewController!)) : "nil")")
+        print("🔄 [VIEW_LIFECYCLE] view.window: \(view.window != nil ? "exists" : "nil")")
+        print("🔄 [VIEW_LIFECYCLE] filterMenuButton.isHidden: \(filterMenuButton.isHidden)")
+        print("🔄 [VIEW_LIFECYCLE] bandSearch.isHidden: \(bandSearch.isHidden)")
+        print("🔄 [VIEW_LIFECYCLE] filterMenuButton.superview: \(filterMenuButton.superview != nil ? String(describing: type(of: filterMenuButton.superview!)) : "nil")")
+        print("🔄 [VIEW_LIFECYCLE] bandSearch.superview: \(bandSearch.superview != nil ? String(describing: type(of: bandSearch.superview!)) : "nil")")
+        
+        filterMenuButton.isHidden = false
+        bandSearch.isHidden = false
+        filterMenuButton.alpha = 1.0
+        bandSearch.alpha = 1.0
+        mainToolBar?.isHidden = false
+        mainToolBar?.alpha = 1.0
         
         let startTime = CFAbsoluteTimeGetCurrent()
         print("🕐 [\(String(format: "%.3f", startTime))] viewWillAppear START - returning from details")
@@ -1486,6 +1507,38 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        
+        // Ensure UI elements are visible when view appears (especially after rotation)
+        print("🔄 [VIEW_LIFECYCLE] viewDidAppear called")
+        print("🔄 [VIEW_LIFECYCLE] isShowingLandscapeSchedule: \(isShowingLandscapeSchedule)")
+        print("🔄 [VIEW_LIFECYCLE] presentedViewController: \(presentedViewController != nil ? String(describing: type(of: presentedViewController!)) : "nil")")
+        print("🔄 [VIEW_LIFECYCLE] view.window: \(view.window != nil ? "exists" : "nil")")
+        print("🔄 [VIEW_LIFECYCLE] filterMenuButton.isHidden: \(filterMenuButton.isHidden)")
+        print("🔄 [VIEW_LIFECYCLE] bandSearch.isHidden: \(bandSearch.isHidden)")
+        print("🔄 [VIEW_LIFECYCLE] navigationItem.titleView: \(navigationItem.titleView != nil ? String(describing: type(of: navigationItem.titleView!)) : "nil")")
+        
+        filterMenuButton.isHidden = false
+        bandSearch.isHidden = false
+        filterMenuButton.alpha = 1.0
+        bandSearch.alpha = 1.0
+        mainToolBar?.isHidden = false
+        mainToolBar?.alpha = 1.0
+        
+        // KISS: Always ensure titleView is visible when view appears
+        // Clear navigationItem.title first (it hides titleView)
+        navigationItem.title = nil
+        
+        // Update the counter (this creates/updates titleView)
+        updateCountLable()
+        
+        // Force navigation bar to refresh
+        navigationController?.navigationBar.setNeedsLayout()
+        navigationController?.navigationBar.layoutIfNeeded()
+        
+        // Force view to update layout
+        view.setNeedsLayout()
+        view.layoutIfNeeded()
+        
         // Run orientation check after view has laid out (fixes launch in landscape showing portrait)
         if !isSplitViewCapable() {
             checkOrientationAndShowLandscapeIfNeeded()
@@ -1539,8 +1592,82 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
 
     override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
         super.viewWillTransition(to: size, with: coordinator)
+        
+        print("🔄 [ROTATION] viewWillTransition called - size: \(size)")
+        print("🔄 [ROTATION] isShowingLandscapeSchedule: \(isShowingLandscapeSchedule)")
+        print("🔄 [ROTATION] presentedViewController: \(presentedViewController != nil ? String(describing: type(of: presentedViewController!)) : "nil")")
+        print("🔄 [ROTATION] filterMenuButton.isHidden: \(filterMenuButton.isHidden)")
+        print("🔄 [ROTATION] bandSearch.isHidden: \(bandSearch.isHidden)")
+        print("🔄 [ROTATION] view.window: \(view.window != nil ? "exists" : "nil")")
+        
+        // If transitioning from landscape to portrait, dismiss any open landscape filter menu
+        // This must happen synchronously before rotation to prevent blocking the transition
+        if isShowingLandscapeSchedule, let landscapeVC = landscapeScheduleViewController {
+            // Check for presented sheet (SwiftUI sheet presentation)
+            if let presentedSheet = landscapeVC.presentedViewController {
+                print("🔄 [ROTATION] Found presented sheet on landscape VC: \(type(of: presentedSheet))")
+                print("🔄 [ROTATION] Dismissing landscape filter menu sheet before rotation")
+                // Dismiss synchronously - don't wait for animation
+                presentedSheet.dismiss(animated: false, completion: {
+                    print("🔄 [ROTATION] Landscape sheet dismissal completed")
+                })
+            }
+            // Also check for any child view controllers that might be filter menus
+            for childVC in landscapeVC.children.reversed() {
+                let childTypeName = String(describing: type(of: childVC))
+                if childTypeName.contains("HostingController") || childTypeName.contains("Filter") {
+                    print("🔄 [ROTATION] Removing filter menu child view controller from landscape: \(childTypeName)")
+                    childVC.view.removeFromSuperview()
+                    childVC.removeFromParent()
+                }
+            }
+        }
+        
+        // Determine if we're transitioning from landscape to portrait
+        let isTransitioningToPortrait = size.width < size.height
+        
+        // If transitioning to portrait and landscape view is showing, ensure it's fully dismissed
+        if isTransitioningToPortrait && isShowingLandscapeSchedule {
+            print("🔄 [ROTATION] Transitioning to portrait - ensuring landscape view is dismissed")
+            // Use coordinator to ensure dismissal happens before rotation completes
+            coordinator.animate(alongsideTransition: nil) { [weak self] _ in
+                guard let self = self else { return }
+                // Double-check that landscape view is dismissed
+                if self.isShowingLandscapeSchedule {
+                    print("🔄 [ROTATION] Landscape view still showing after rotation - forcing dismissal")
+                    self.dismissLandscapeScheduleView()
+                }
+            }
+        }
+        
         // Dismiss the filter menu before the display rotates so it doesn't appear in the wrong layout
         filterMenu.hide()
+        // Also dismiss the new SwiftUI filter menu (portrait mode)
+        if let existing = currentFilterMenuHostingController {
+            print("🔄 [ROTATION] Dismissing portrait filter menu hosting controller")
+            existing.view.removeFromSuperview()
+            existing.removeFromParent()
+            currentFilterMenuHostingController = nil
+        }
+        
+        print("🔄 [ROTATION] After dismissing menus - filterMenuButton.isHidden: \(filterMenuButton.isHidden)")
+        print("🔄 [ROTATION] After dismissing menus - bandSearch.isHidden: \(bandSearch.isHidden)")
+        
+        // Ensure UI elements remain visible during rotation
+        coordinator.animate(alongsideTransition: nil) { [weak self] _ in
+            guard let self = self else { return }
+            print("🔄 [ROTATION] Rotation animation complete - restoring UI")
+            self.filterMenuButton.isHidden = false
+            self.bandSearch.isHidden = false
+            self.filterMenuButton.alpha = 1.0
+            self.bandSearch.alpha = 1.0
+            self.mainToolBar?.isHidden = false
+            self.mainToolBar?.alpha = 1.0
+            
+            print("🔄 [ROTATION] After restore in animation - filterMenuButton.isHidden: \(self.filterMenuButton.isHidden)")
+            print("🔄 [ROTATION] After restore in animation - bandSearch.isHidden: \(self.bandSearch.isHidden)")
+            print("🔄 [ROTATION] After restore in animation - view.window: \(self.view.window != nil ? "exists" : "nil")")
+        }
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -1639,13 +1766,141 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     
+    private var currentFilterMenuHostingController: UIHostingController<PortraitFilterSheetView>?
+    
     @IBAction func filterMenuButtonPress(_ sender: Any) {
+        print("🔘 [FILTER_MENU] filterMenuButtonPress called")
+        print("🔘 [FILTER_MENU] Current view controller: \(type(of: self))")
+        print("🔘 [FILTER_MENU] isShowingLandscapeSchedule: \(isShowingLandscapeSchedule)")
+        print("🔘 [FILTER_MENU] presentedViewController: \(presentedViewController != nil ? String(describing: type(of: presentedViewController!)) : "nil")")
+        print("🔘 [FILTER_MENU] filterMenuButton.isHidden: \(filterMenuButton.isHidden)")
+        print("🔘 [FILTER_MENU] filterMenuButton.alpha: \(filterMenuButton.alpha)")
+        print("🔘 [FILTER_MENU] filterMenuButton.superview: \(filterMenuButton.superview != nil ? String(describing: type(of: filterMenuButton.superview!)) : "nil")")
+        print("🔘 [FILTER_MENU] view.isHidden: \(view.isHidden)")
+        print("🔘 [FILTER_MENU] view.window: \(view.window != nil ? "exists" : "nil")")
         
-        if (filterMenuButton.isHeld == false){
-            createrFilterMenu(controller: self)
-            filterMenu.show()
-        } else {
-            filterMenu.hide()
+        // Dismiss existing menu if present
+        if let existing = currentFilterMenuHostingController {
+            print("🔘 [FILTER_MENU] Dismissing existing menu")
+            existing.view.removeFromSuperview()
+            existing.removeFromParent()
+            currentFilterMenuHostingController = nil
+            return
+        }
+        
+        // Create SwiftUI filter sheet with dismiss handler
+        let filterSheetView = PortraitFilterSheetView(onDismiss: { [weak self] in
+            self?.dismissFilterMenuProgrammatically()
+        })
+        let hostingController = UIHostingController(rootView: filterSheetView)
+        currentFilterMenuHostingController = hostingController
+        
+        print("🔘 [FILTER_MENU] Created hosting controller")
+        
+        // Make the view controller background darker grey (same as menu)
+        hostingController.view.backgroundColor = UIColor(white: 0.2, alpha: 1.0) // Darker grey
+        
+        // Size the menu similar to the old DropDown (300pt width, positioned near button)
+        let menuWidth: CGFloat = 300
+        let screenWidth = UIScreen.main.bounds.width
+        let screenHeight = UIScreen.main.bounds.height
+        
+        // Get button frame in view coordinates
+        var menuX: CGFloat = 20
+        var menuY: CGFloat = 100
+        var menuHeight: CGFloat = min(screenHeight * 0.7, 600)
+        
+        if let buttonFrame = filterMenuButton.superview?.convert(filterMenuButton.frame, to: view) {
+            // Position menu below the button, similar to old DropDown
+            menuX = max(20, min(buttonFrame.origin.x - 20, screenWidth - menuWidth - 20))
+            menuY = buttonFrame.maxY + 8
+            
+            // KISS: Calculate height using window coordinates for consistency
+            // Convert button frame to window coordinates to get accurate position
+            let window: UIWindow? = view.window ?? {
+                let scenes = UIApplication.shared.connectedScenes
+                    .compactMap { $0 as? UIWindowScene }
+                    .flatMap { $0.windows }
+                return scenes.first { $0.isKeyWindow }
+            }()
+            
+            if let window = window {
+                let buttonFrameInWindow = filterMenuButton.superview?.convert(filterMenuButton.frame, to: window)
+                let buttonBottom = (buttonFrameInWindow?.maxY ?? buttonFrame.maxY) + 8
+                let safeAreaBottom = window.safeAreaInsets.bottom
+                let bottomPadding: CGFloat = 20 + safeAreaBottom
+                let availableHeight = window.bounds.height - buttonBottom - bottomPadding
+                
+                menuHeight = max(300, min(availableHeight, screenHeight * 0.8))
+                
+                print("🔘 [FILTER_MENU] Height calculation - window.height: \(window.bounds.height), buttonBottom: \(buttonBottom), availableHeight: \(availableHeight), menuHeight: \(menuHeight)")
+            } else {
+                // Fallback: use view bounds
+                let availableHeight = view.bounds.height - menuY - 20
+                menuHeight = max(300, min(availableHeight, screenHeight * 0.8))
+                print("🔘 [FILTER_MENU] Height calculation (fallback) - view.height: \(view.bounds.height), menuY: \(menuY), availableHeight: \(availableHeight), menuHeight: \(menuHeight)")
+            }
+        }
+        
+        // Configure the view
+        hostingController.view.frame = CGRect(x: menuX, y: menuY, width: menuWidth, height: menuHeight)
+        hostingController.view.layer.cornerRadius = 8
+        hostingController.view.layer.borderWidth = 1
+        hostingController.view.layer.borderColor = UIColor.white.withAlphaComponent(0.3).cgColor
+        hostingController.view.clipsToBounds = true
+        hostingController.view.alpha = 0
+        hostingController.view.isOpaque = true  // Ensure fully opaque
+        
+        // Add as child view controller and subview
+        print("🔘 [FILTER_MENU] Adding hosting controller as child")
+        print("🔘 [FILTER_MENU] view.frame: \(view.frame)")
+        print("🔘 [FILTER_MENU] hostingController.view.frame: \(hostingController.view.frame)")
+        
+        addChild(hostingController)
+        view.addSubview(hostingController.view)
+        hostingController.didMove(toParent: self)
+        
+        print("🔘 [FILTER_MENU] Hosting controller added, view hierarchy:")
+        print("🔘 [FILTER_MENU] - view.subviews.count: \(view.subviews.count)")
+        print("🔘 [FILTER_MENU] - hostingController.view.superview: \(hostingController.view.superview != nil ? String(describing: type(of: hostingController.view.superview!)) : "nil")")
+        print("🔘 [FILTER_MENU] - hostingController.view.isHidden: \(hostingController.view.isHidden)")
+        print("🔘 [FILTER_MENU] - hostingController.view.alpha: \(hostingController.view.alpha)")
+        
+        // Animate in
+        UIView.animate(withDuration: 0.2) {
+            hostingController.view.alpha = 1
+        } completion: { _ in
+            print("🔘 [FILTER_MENU] Animation complete, hostingController.view.alpha: \(hostingController.view.alpha)")
+        }
+        
+        // Add tap gesture to dismiss when tapping outside
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissFilterMenu))
+        tapGesture.cancelsTouchesInView = false
+        view.addGestureRecognizer(tapGesture)
+        
+        print("🔘 [FILTER_MENU] Menu presentation complete")
+    }
+    
+    @objc private func dismissFilterMenu(_ gesture: UITapGestureRecognizer) {
+        guard let hostingController = currentFilterMenuHostingController else { return }
+        
+        let location = gesture.location(in: view)
+        if !hostingController.view.frame.contains(location) {
+            // Tapped outside the menu, dismiss it
+            dismissFilterMenuProgrammatically()
+            gesture.view?.removeGestureRecognizer(gesture)
+        }
+    }
+    
+    private func dismissFilterMenuProgrammatically() {
+        guard let hostingController = currentFilterMenuHostingController else { return }
+        
+        UIView.animate(withDuration: 0.2, animations: {
+            hostingController.view.alpha = 0
+        }) { _ in
+            hostingController.view.removeFromSuperview()
+            hostingController.removeFromParent()
+            self.currentFilterMenuHostingController = nil
         }
     }
     
@@ -2119,6 +2374,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     private func checkOrientationAndShowLandscapeIfNeeded() {
+        print("🔄 [ORIENTATION_CHECK] checkOrientationAndShowLandscapeIfNeeded called")
+        print("🔄 [ORIENTATION_CHECK] filterMenuButton.isHidden: \(filterMenuButton.isHidden)")
+        print("🔄 [ORIENTATION_CHECK] bandSearch.isHidden: \(bandSearch.isHidden)")
+        print("🔄 [ORIENTATION_CHECK] view.window: \(view.window != nil ? "exists" : "nil")")
+        print("🔄 [ORIENTATION_CHECK] isShowingLandscapeSchedule: \(isShowingLandscapeSchedule)")
+        
         // CRITICAL FIX: Check orientation FIRST before any other logic
         // Phone: Use orientation-based switching
         // Get main window (not landscape view controller's window)
@@ -2170,7 +2431,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 // BUT only if no detail view is presented (checked above)
                 if isShowingLandscapeSchedule {
                     print("🚫 [LANDSCAPE_SCHEDULE] iPhone rotated to portrait - immediately dismissing calendar view (portrait never shows calendar)")
+                    print("🚫 [ORIENTATION_CHECK] Before dismissLandscapeScheduleView - filterMenuButton.isHidden: \(filterMenuButton.isHidden)")
+                    print("🚫 [ORIENTATION_CHECK] Before dismissLandscapeScheduleView - bandSearch.isHidden: \(bandSearch.isHidden)")
                     dismissLandscapeScheduleView()
+                    print("🚫 [ORIENTATION_CHECK] After dismissLandscapeScheduleView - filterMenuButton.isHidden: \(filterMenuButton.isHidden)")
+                    print("🚫 [ORIENTATION_CHECK] After dismissLandscapeScheduleView - bandSearch.isHidden: \(bandSearch.isHidden)")
                 }
                 return // Exit early - portrait mode never shows calendar on iPhone
             }
@@ -2596,20 +2861,135 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     private func dismissLandscapeScheduleView(completion: (() -> Void)? = nil) {
         guard isShowingLandscapeSchedule, let viewController = landscapeScheduleViewController else {
+            print("⚠️ [LANDSCAPE_SCHEDULE] Cannot dismiss - not showing or no view controller")
             completion?()
             return
         }
         
         print("🔄 [LANDSCAPE_SCHEDULE] Dismissing landscape schedule view")
+        print("🔄 [LANDSCAPE_SCHEDULE] viewController type: \(type(of: viewController))")
+        print("🔄 [LANDSCAPE_SCHEDULE] viewController.presentedViewController: \(viewController.presentedViewController != nil ? String(describing: type(of: viewController.presentedViewController!)) : "nil")")
+        print("🔄 [LANDSCAPE_SCHEDULE] self.presentedViewController: \(presentedViewController != nil ? String(describing: type(of: presentedViewController!)) : "nil")")
+        print("🔄 [LANDSCAPE_SCHEDULE] self.view.window: \(view.window != nil ? "exists" : "nil")")
+        print("🔄 [LANDSCAPE_SCHEDULE] filterMenuButton.isHidden: \(filterMenuButton.isHidden)")
+        print("🔄 [LANDSCAPE_SCHEDULE] bandSearch.isHidden: \(bandSearch.isHidden)")
         
-        // When dismissing landscape view, check if detail screen is presented.
-        // If detail screen is presented, it will be automatically dismissed when
-        // the landscape view controller is dismissed (iOS modal presentation behavior).
-        // After dismissal, check orientation to show appropriate view.
+        // CRITICAL: If a SwiftUI sheet (filter menu) is presented from the landscape view,
+        // dismiss it first before dismissing the landscape view controller
+        // This prevents the sheet from interfering with the portrait view
+        if let presentedVC = viewController.presentedViewController {
+            print("🔄 [LANDSCAPE_SCHEDULE] Dismissing presented sheet before dismissing landscape view")
+            print("🔄 [LANDSCAPE_SCHEDULE] presentedVC type: \(type(of: presentedVC))")
+            presentedVC.dismiss(animated: false) { [weak self] in
+                print("🔄 [LANDSCAPE_SCHEDULE] Sheet dismissed, waiting before dismissing landscape view")
+                // Small delay to ensure sheet is fully dismissed before dismissing landscape view
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                    self?.dismissLandscapeViewControllerWithUIRestore(viewController: viewController, completion: completion)
+                }
+            }
+        } else {
+            print("🔄 [LANDSCAPE_SCHEDULE] No sheet presented, dismissing landscape view directly")
+            // No sheet presented, dismiss normally with UI restoration
+            dismissLandscapeViewControllerWithUIRestore(viewController: viewController, completion: completion)
+        }
+    }
+    
+    private func dismissLandscapeViewControllerWithUIRestore(viewController: UIViewController, completion: (() -> Void)?) {
+        print("🔄 [LANDSCAPE_DISMISS] dismissLandscapeViewControllerWithUIRestore called")
+        print("🔄 [LANDSCAPE_DISMISS] Before dismiss - view.window: \(view.window != nil ? "exists" : "nil")")
+        print("🔄 [LANDSCAPE_DISMISS] Before dismiss - presentedViewController: \(presentedViewController != nil ? String(describing: type(of: presentedViewController!)) : "nil")")
+        print("🔄 [LANDSCAPE_DISMISS] Before dismiss - filterMenuButton.isHidden: \(filterMenuButton.isHidden)")
+        print("🔄 [LANDSCAPE_DISMISS] Before dismiss - bandSearch.isHidden: \(bandSearch.isHidden)")
+        
         dismissLandscapeViewController(viewController: viewController) { [weak self] in
-            // After landscape view is dismissed, check orientation and show appropriate view
-            self?.checkOrientationAndShowLandscapeIfNeeded()
-            completion?()
+            guard let self = self else { return }
+            
+            print("🔄 [LANDSCAPE_DISMISS] Landscape view dismissed callback")
+            print("🔄 [LANDSCAPE_DISMISS] After dismiss - view.window: \(self.view.window != nil ? "exists" : "nil")")
+            print("🔄 [LANDSCAPE_DISMISS] After dismiss - presentedViewController: \(self.presentedViewController != nil ? String(describing: type(of: self.presentedViewController!)) : "nil")")
+            print("🔄 [LANDSCAPE_DISMISS] After dismiss - isShowingLandscapeSchedule: \(self.isShowingLandscapeSchedule)")
+            print("🔄 [LANDSCAPE_DISMISS] After dismiss - filterMenuButton.isHidden: \(self.filterMenuButton.isHidden)")
+            print("🔄 [LANDSCAPE_DISMISS] After dismiss - bandSearch.isHidden: \(self.bandSearch.isHidden)")
+            print("🔄 [LANDSCAPE_DISMISS] After dismiss - filterMenuButton.superview: \(self.filterMenuButton.superview != nil ? String(describing: type(of: self.filterMenuButton.superview!)) : "nil")")
+            print("🔄 [LANDSCAPE_DISMISS] After dismiss - bandSearch.superview: \(self.bandSearch.superview != nil ? String(describing: type(of: self.bandSearch.superview!)) : "nil")")
+            print("🔄 [LANDSCAPE_DISMISS] After dismiss - view.isHidden: \(self.view.isHidden)")
+            print("🔄 [LANDSCAPE_DISMISS] After dismiss - view.alpha: \(self.view.alpha)")
+            
+            // Small delay to ensure landscape view is fully dismissed before restoring UI
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+                guard let self = self else { return }
+                
+                print("🔄 [LANDSCAPE_DISMISS] Restoring UI elements")
+                
+                // CRITICAL: Restore UI elements BEFORE checking orientation
+                // This ensures elements are visible even if orientation check triggers something
+                self.filterMenuButton.isHidden = false
+                self.bandSearch.isHidden = false
+                self.filterMenuButton.alpha = 1.0
+                self.bandSearch.alpha = 1.0
+                self.mainToolBar?.isHidden = false
+                self.mainToolBar?.alpha = 1.0
+                self.view.isHidden = false
+                self.view.alpha = 1.0
+                
+                // Ensure parent views are visible
+                if let filterSuperview = self.filterMenuButton.superview {
+                    filterSuperview.isHidden = false
+                    filterSuperview.alpha = 1.0
+                    print("🔄 [LANDSCAPE_DISMISS] filterMenuButton superview restored - isHidden: \(filterSuperview.isHidden)")
+                }
+                if let searchSuperview = self.bandSearch.superview {
+                    searchSuperview.isHidden = false
+                    searchSuperview.alpha = 1.0
+                    print("🔄 [LANDSCAPE_DISMISS] bandSearch superview restored - isHidden: \(searchSuperview.isHidden)")
+                }
+                
+                // Force view hierarchy update
+                self.view.setNeedsLayout()
+                self.view.layoutIfNeeded()
+                
+                print("🔄 [LANDSCAPE_DISMISS] After restore - filterMenuButton.isHidden: \(self.filterMenuButton.isHidden)")
+                print("🔄 [LANDSCAPE_DISMISS] After restore - bandSearch.isHidden: \(self.bandSearch.isHidden)")
+                print("🔄 [LANDSCAPE_DISMISS] After restore - view.window: \(self.view.window != nil ? "exists" : "nil")")
+                print("🔄 [LANDSCAPE_DISMISS] After restore - presentedViewController: \(self.presentedViewController != nil ? String(describing: type(of: self.presentedViewController!)) : "nil")")
+                print("🔄 [LANDSCAPE_DISMISS] After restore - view.frame: \(self.view.frame)")
+                print("🔄 [LANDSCAPE_DISMISS] After restore - filterMenuButton.frame: \(self.filterMenuButton.frame)")
+                print("🔄 [LANDSCAPE_DISMISS] After restore - bandSearch.frame: \(self.bandSearch.frame)")
+                
+                // Check if views are actually in the window hierarchy
+                var currentView: UIView? = self.filterMenuButton
+                var viewHierarchy: [String] = []
+                while let view = currentView {
+                    viewHierarchy.append("\(type(of: view))")
+                    currentView = view.superview
+                }
+                print("🔄 [LANDSCAPE_DISMISS] filterMenuButton view hierarchy: \(viewHierarchy.joined(separator: " -> "))")
+                
+                // Check for any views that might be covering the UI elements
+                if let window = self.view.window {
+                    print("🔄 [LANDSCAPE_DISMISS] Checking window subviews for blocking views")
+                    for (index, subview) in window.subviews.enumerated() {
+                        print("🔄 [LANDSCAPE_DISMISS] Window subview \(index): \(type(of: subview)), frame: \(subview.frame), isHidden: \(subview.isHidden), alpha: \(subview.alpha)")
+                    }
+                }
+                
+                // CRITICAL: Force table view header to refresh to ensure toolbar is visible
+                // This ensures the header (which contains the toolbar with buttons) is recreated
+                DispatchQueue.main.async {
+                    print("🔄 [LANDSCAPE_DISMISS] Forcing table view header refresh")
+                    self.tableView.reloadSections(IndexSet(integer: 0), with: .none)
+                    print("🔄 [LANDSCAPE_DISMISS] Table view header refresh complete")
+                    
+                    // KISS: After table reload, ensure titleView is still visible
+                    // Table reload shouldn't affect navigation bar, but be safe
+                    self.navigationItem.title = nil
+                    self.updateCountLable()
+                }
+                
+                // After landscape view is dismissed, check orientation and show appropriate view
+                self.checkOrientationAndShowLandscapeIfNeeded()
+                completion?()
+            }
         }
     }
     
@@ -2630,7 +3010,49 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             // Calendar → list: show the day the user was viewing in the calendar
             // Scroll to first entry of that day after a brief delay to ensure table view is ready
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-                self?.scrollListToDayIfNeeded(day: dayToShow)
+                guard let self = self else { return }
+                self.scrollListToDayIfNeeded(day: dayToShow)
+                
+                // CRITICAL: Ensure UI elements are visible and properly configured after landscape dismissal
+                print("🔄 [UI_RESTORE] Restoring UI elements after landscape dismissal")
+                print("🔄 [UI_RESTORE] filterMenuButton exists: \(self.filterMenuButton != nil), isHidden: \(self.filterMenuButton.isHidden)")
+                print("🔄 [UI_RESTORE] bandSearch exists: \(self.bandSearch != nil), isHidden: \(self.bandSearch.isHidden)")
+                print("🔄 [UI_RESTORE] mainToolBar exists: \(self.mainToolBar != nil), isHidden: \(self.mainToolBar?.isHidden ?? true)")
+                
+                self.filterMenuButton.isHidden = false
+                self.bandSearch.isHidden = false
+                self.filterMenuButton.alpha = 1.0
+                self.bandSearch.alpha = 1.0
+                
+                // Ensure toolbar is visible
+                self.mainToolBar?.isHidden = false
+                self.mainToolBar?.alpha = 1.0
+                
+                // Ensure parent views are also visible
+                if let filterBar = self.filterMenuButton.superview {
+                    print("🔄 [UI_RESTORE] filterMenuButton superview: \(type(of: filterBar)), isHidden: \(filterBar.isHidden)")
+                    filterBar.isHidden = false
+                    filterBar.alpha = 1.0
+                } else {
+                    print("⚠️ [UI_RESTORE] filterMenuButton has no superview!")
+                }
+                if let searchBar = self.bandSearch.superview {
+                    print("🔄 [UI_RESTORE] bandSearch superview: \(type(of: searchBar)), isHidden: \(searchBar.isHidden)")
+                    searchBar.isHidden = false
+                    searchBar.alpha = 1.0
+                } else {
+                    print("⚠️ [UI_RESTORE] bandSearch has no superview!")
+                }
+                
+                // Ensure the view itself is visible
+                self.view.isHidden = false
+                self.view.alpha = 1.0
+                
+                // Force view to update layout
+                self.view.setNeedsLayout()
+                self.view.layoutIfNeeded()
+                
+                print("🔄 [UI_RESTORE] After restore - filterMenuButton.isHidden: \(self.filterMenuButton.isHidden), bandSearch.isHidden: \(self.bandSearch.isHidden)")
             }
             completion?()
         }
@@ -2949,6 +3371,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             filterTextNeeded: &filterTextNeeded,
             filtersOnText: &filtersOnText
         )
+    }
+    
+    // KISS: Helper to reload table and ensure titleView is visible
+    private func reloadTableAndUpdateTitle() {
+        tableView.reloadData()
+        // Ensure titleView is visible after reload
+        navigationItem.title = nil
+        updateCountLable()
     }
     
     func decideIfScheduleMenuApplies()->Bool{
@@ -3618,6 +4048,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         titleButton.title = titleText
         print("🎯 [FINAL_DISPLAY] titleButton.title is now: '\(titleButton.title ?? "nil")'")
         
+        // CRITICAL: Clear navigationItem.title to ensure titleView is displayed
+        // Setting navigationItem.title can override/hide the titleView
+        if navigationItem.title != nil {
+            print("⚠️ [FINAL_DISPLAY] navigationItem.title was set to '\(navigationItem.title!)' - clearing it to show titleView")
+            navigationItem.title = nil
+        }
+        
         // Update or create custom colored titleView for visual distinction between profiles
         let profileColor = getColorForCurrentProfile()
         
@@ -3626,6 +4063,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             existingLabel.text = titleText
             existingLabel.textColor = profileColor
             existingLabel.sizeToFit()
+            // Ensure it's visible
+            existingLabel.isHidden = false
+            existingLabel.alpha = 1.0
+            print("🎯 [FINAL_DISPLAY] Updated existing titleView label - text: '\(titleText)', isHidden: \(existingLabel.isHidden)")
         } else {
             // Create new label
             let titleLabel = UILabel()
@@ -3640,12 +4081,20 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             titleLabel.adjustsFontSizeToFitWidth = false
             titleLabel.numberOfLines = 1
             
+            // Ensure it's visible
+            titleLabel.isHidden = false
+            titleLabel.alpha = 1.0
+            
             // Add tap gesture for profile picker
             let tapGesture = UITapGestureRecognizer(target: self, action: #selector(showProfilePicker))
             titleLabel.addGestureRecognizer(tapGesture)
             
             navigationItem.titleView = titleLabel
+            print("🎯 [FINAL_DISPLAY] Created new titleView label - text: '\(titleText)', isHidden: \(titleLabel.isHidden)")
         }
+        
+        // KISS: Ensure navigationItem.title is cleared (it hides titleView)
+        navigationItem.title = nil
         //createrFilterMenu(controller: self);
     }
     
@@ -3726,14 +4175,129 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        let v = UIView()
+        print("🔄 [TABLE_HEADER] viewForHeaderInSection called")
+        print("🔄 [TABLE_HEADER] filterMenuButton.superview: \(filterMenuButton.superview != nil ? String(describing: type(of: filterMenuButton.superview!)) : "nil")")
+        print("🔄 [TABLE_HEADER] bandSearch.superview: \(bandSearch.superview != nil ? String(describing: type(of: bandSearch.superview!)) : "nil")")
+        print("🔄 [TABLE_HEADER] mainToolBar: \(mainToolBar != nil ? "exists" : "nil")")
+        print("🔄 [TABLE_HEADER] mainToolBar.isHidden: \(mainToolBar?.isHidden ?? true)")
+        print("🔄 [TABLE_HEADER] mainToolBar.items?.count: \(mainToolBar?.items?.count ?? 0)")
+        
+        let v = UIView(frame: CGRect(x: 0, y: 0, width: mainTableView.frame.width, height: 44))
+        v.backgroundColor = .clear  // Ensure it's not blocking anything
+        v.isHidden = false
+        v.alpha = 1.0
         
         let toolBarView : UIView = UIView(frame: CGRect(x: 0, y: 0, width: mainTableView.frame.width, height: 44))
+        toolBarView.backgroundColor = .clear  // Ensure it's not blocking anything
+        toolBarView.isHidden = false
+        toolBarView.alpha = 1.0
         mainToolBar.frame = CGRect(x: 0, y: 0, width: mainTableView.frame.width, height: 44)
+        
+        // CRITICAL: The buttons are barButtonItems, not direct subviews
+        // Ensure toolbar has its items set and buttons are visible
+        if let toolbar = mainToolBar {
+            // Ensure toolbar is visible
+            toolbar.isHidden = false
+            toolbar.alpha = 1.0
+            
+            // CRITICAL: Ensure bar button items have their custom views properly set
+            // filterMenuButton is inside filterButtonBar.customView
+            // bandSearch is inside searchButtonBar.customView
+            if let filterButtonBar = filterButtonBar {
+                if filterButtonBar.customView != filterMenuButton {
+                    print("⚠️ [TABLE_HEADER] filterButtonBar.customView mismatch, re-setting")
+                    filterButtonBar.customView = filterMenuButton
+                }
+            }
+            if let searchButtonBar = searchButtonBar {
+                if searchButtonBar.customView != bandSearch {
+                    print("⚠️ [TABLE_HEADER] searchButtonBar.customView mismatch, re-setting")
+                    searchButtonBar.customView = bandSearch
+                }
+            }
+            
+            // Ensure buttons are visible (they're inside barButtonItems)
+            filterMenuButton.isHidden = false
+            bandSearch.isHidden = false
+            filterMenuButton.alpha = 1.0
+            bandSearch.alpha = 1.0
+            
+            // Ensure bar button items are enabled
+            filterButtonBar?.isEnabled = true
+            searchButtonBar?.isEnabled = true
+            
+            // If buttons lost their parent, they need to be reconnected
+            // But since they're IBOutlets, they should be automatically connected
+            // The issue might be that the toolbar items need to be refreshed
+            if toolbar.items == nil || toolbar.items?.isEmpty == true {
+                print("⚠️ [TABLE_HEADER] Toolbar has no items - this shouldn't happen with IBOutlets")
+            } else {
+                print("🔄 [TABLE_HEADER] Toolbar has \(toolbar.items?.count ?? 0) items")
+                // Log each item to see what's in the toolbar
+                toolbar.items?.enumerated().forEach { index, item in
+                    print("🔄 [TABLE_HEADER] Item \(index): \(type(of: item)), customView: \(item.customView != nil ? String(describing: type(of: item.customView!)) : "nil")")
+                }
+            }
+            
+            // Force layout update to ensure buttons are positioned correctly
+            toolbar.setNeedsLayout()
+            toolbar.layoutIfNeeded()
+            
+            // Also force layout on the buttons themselves
+            filterMenuButton.setNeedsLayout()
+            filterMenuButton.layoutIfNeeded()
+            bandSearch.setNeedsLayout()
+            bandSearch.layoutIfNeeded()
+        }
+        
+        // CRITICAL: Remove toolbar from old parent before adding to new parent
+        // This ensures it's properly moved to the new header view
+        mainToolBar?.removeFromSuperview()
+        
         toolBarView.addSubview(mainToolBar)
         
         v.addSubview(toolBarView)
+        
+        // CRITICAL: After adding to new parent, ensure layout is updated
+        toolBarView.setNeedsLayout()
+        toolBarView.layoutIfNeeded()
+        mainToolBar?.setNeedsLayout()
+        mainToolBar?.layoutIfNeeded()
+        
+        // CRITICAL: Ensure custom views in bar button items are visible after moving toolbar
+        // The buttons might be wrapped in adaptor views that need to be configured
+        if let filterButtonBar = filterButtonBar, let customView = filterButtonBar.customView {
+            customView.isHidden = false
+            customView.alpha = 1.0
+            customView.setNeedsLayout()
+            customView.layoutIfNeeded()
+            print("🔄 [TABLE_HEADER] filterButtonBar.customView configured - frame: \(customView.frame), isHidden: \(customView.isHidden)")
+        }
+        if let searchButtonBar = searchButtonBar, let customView = searchButtonBar.customView {
+            customView.isHidden = false
+            customView.alpha = 1.0
+            customView.setNeedsLayout()
+            customView.layoutIfNeeded()
+            print("🔄 [TABLE_HEADER] searchButtonBar.customView configured - frame: \(customView.frame), isHidden: \(customView.isHidden)")
+        }
+        
+        print("🔄 [TABLE_HEADER] After setup - filterMenuButton.superview: \(filterMenuButton.superview != nil ? String(describing: type(of: filterMenuButton.superview!)) : "nil")")
+        print("🔄 [TABLE_HEADER] After setup - bandSearch.superview: \(bandSearch.superview != nil ? String(describing: type(of: bandSearch.superview!)) : "nil")")
+        print("🔄 [TABLE_HEADER] After setup - filterMenuButton.isHidden: \(filterMenuButton.isHidden)")
+        print("🔄 [TABLE_HEADER] After setup - bandSearch.isHidden: \(bandSearch.isHidden)")
+        print("🔄 [TABLE_HEADER] After setup - filterMenuButton.frame: \(filterMenuButton.frame)")
+        print("🔄 [TABLE_HEADER] After setup - bandSearch.frame: \(bandSearch.frame)")
+        print("🔄 [TABLE_HEADER] After setup - mainToolBar.frame: \(mainToolBar?.frame ?? .zero)")
+        print("🔄 [TABLE_HEADER] After setup - toolBarView.frame: \(toolBarView.frame)")
+        print("🔄 [TABLE_HEADER] After setup - v.frame: \(v.frame)")
+        print("🔄 [TABLE_HEADER] After setup - filterButtonBar.customView: \(filterButtonBar?.customView != nil ? String(describing: type(of: filterButtonBar!.customView!)) : "nil")")
+        print("🔄 [TABLE_HEADER] After setup - searchButtonBar.customView: \(searchButtonBar?.customView != nil ? String(describing: type(of: searchButtonBar!.customView!)) : "nil")")
+        
         return v
+    }
+    
+    override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        return 44.0  // Explicit height for header
     }
     
     //swip code start
@@ -5462,8 +6026,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 print("iCloud: Warning - blankScreenActivityIndicator is nil")
             }
             
-            // Update navigation title to show loading status
-            self.navigationItem.title = "Loading iCloud Data..."
+            // CRITICAL: Don't set navigationItem.title - it will override titleView
+            // Instead, keep the existing titleView or update it
+            // self.navigationItem.title = "Loading iCloud Data..."  // REMOVED - this hides titleView
+            // TitleView will show the current count, which is fine during loading
         }
     }
     
@@ -5485,8 +6051,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 print("iCloud: Warning - blankScreenActivityIndicator is nil")
             }
             
-            // Restore original navigation title
-            self.navigationItem.title = "70K Bands"
+            // CRITICAL: Don't set navigationItem.title - it will override titleView
+            // Instead, ensure titleView is updated via updateCountLable
+            // self.navigationItem.title = "70K Bands"  // REMOVED - this hides titleView
+            self.updateCountLable()  // Update titleView instead
         }
     }
     
@@ -6090,7 +6658,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.tableView.reloadData()
             print("🔄 Band data merge complete - table view updated")
             
-            // Update the count label to reflect the new data
+            // KISS: After table reload, ensure titleView is visible
+            self.navigationItem.title = nil
             self.updateCountLable()
         }
     }
@@ -6127,7 +6696,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.tableView.reloadData()
             print("🔄 All data refresh complete - table view updated")
             
-            // Update the count label to reflect the new data
+            // KISS: After table reload, ensure titleView is visible
+            self.navigationItem.title = nil
             self.updateCountLable()
         }
     }

@@ -632,31 +632,30 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             return;
         }
         
-        // CRITICAL FIX: Don't check orientation if we're not the top activity
-        // This prevents interfering with detail screens launched from landscape schedule
-        // When detail screen is showing, showBands loses window focus, so skip orientation check
-        if (!hasWindowFocus()) {
-            Log.d("LANDSCAPE_SCHEDULE", "onConfigurationChanged - no window focus, skipping orientation check (detail screen likely showing)");
-            return;
+        // CRITICAL: When filter dialog is open, activity lacks window focus. We dismiss it above, but focus
+        // may not return immediately. Always post delayed check so it runs after focus returns.
+        // Skip only the immediate check when no focus (avoids interfering with detail screens).
+        boolean hasFocus = hasWindowFocus();
+        if (!hasFocus) {
+            Log.d("LANDSCAPE_SCHEDULE", "onConfigurationChanged - no window focus, skipping immediate check (may be filter dialog just dismissed)");
         }
-        
+
         // Check if we should show landscape schedule view
-        // Delay slightly to allow orientation to fully settle
+        // Delay slightly to allow orientation to settle and focus to return after dialog dismiss
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                // Double-check we're still the top activity before launching landscape
                 if (hasWindowFocus()) {
                     Log.d("LANDSCAPE_SCHEDULE", "onConfigurationChanged - checking orientation after delay");
                     checkOrientationAndShowLandscapeIfNeeded();
                 } else {
-                    Log.d("LANDSCAPE_SCHEDULE", "onConfigurationChanged - delayed check skipped, no window focus");
+                    Log.d("LANDSCAPE_SCHEDULE", "onConfigurationChanged - delayed check skipped, no window focus (detail screen likely showing)");
                 }
             }
         }, 300);
-        
-        // Only check immediately if we have window focus
-        if (hasWindowFocus()) {
+
+        // Run immediate check only when we have focus
+        if (hasFocus) {
             checkOrientationAndShowLandscapeIfNeeded();
         }
     }
@@ -5357,6 +5356,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
      * @param fromFilterChange when true, skip window-focus check (filter popup may hold focus when toggling Hide Expired)
      */
     private void presentLandscapeScheduleView(boolean fromFilterChange) {
+        // Close any open menus at the start of List→Calendar transition
+        FilterButtonHandler.dismissFilterPopupIfShowing();
         // Don't present if already showing
         if (isShowingLandscapeSchedule) {
             Log.d("LANDSCAPE_SCHEDULE", "Already showing landscape schedule view");
