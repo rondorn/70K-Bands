@@ -9,8 +9,8 @@ import SwiftUI
 
 
 enum FilterMenuOrder {
-    case portrait  // Hide Expired -> Band Rankings -> Flagged -> Sort -> Event Types -> Locations
-    case calendar  // Flagged -> Event Types -> Band Rankings -> Locations
+    case portrait   // List view: all sections
+    case calendar   // Landscape: same order, omits portrait-only (Hide Expired, Sort By Name)
 }
 
 struct CommonFilterSheetView: View {
@@ -52,11 +52,6 @@ struct CommonFilterSheetView: View {
         
         print("📍 [SCROLL] Captured scroll position: \(finalOffset) (from monitor: \(currentOffset), from direct search: \(foundOffset ?? -1))")
         return finalOffset
-    }
-    
-    // Legacy method for compatibility
-    private func captureScrollPosition() {
-        _ = captureScrollPositionSync()
     }
     
     // Helper to restore scroll position by finding UITableView in view hierarchy
@@ -220,11 +215,7 @@ struct CommonFilterSheetView: View {
                 // Use ScrollViewReader to preserve scroll position
                 ScrollViewReader { proxy in
                     List {
-                        if menuOrder == .portrait {
-                            portraitOrderSections
-                        } else {
-                            calendarOrderSections
-                        }
+                        unifiedFilterSections
                     }
                     .id(filterChangeTrigger)  // Force refresh when filters change (e.g., Hide Expired Events)
                     .listStyle(.plain)
@@ -270,68 +261,53 @@ struct CommonFilterSheetView: View {
             }
             .background(menuBackgroundColor)
             .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                Group {
+                    if menuOrder == .portrait {
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                    }
+                }
             )
             .preferredColorScheme(.dark)
         }
     }
     
-    // MARK: - Portrait Order Sections
+    // MARK: - Unified Filter Sections (exact same order for portrait and landscape)
     
+    /// Single canonical order for both portrait and landscape.
+    /// Portrait shows all applicable sections; landscape omits Hide Expired and Sort By Name.
+    /// Order: Hide Expired -> Sort By Name -> Show Flagged -> Band Rankings -> Event Type -> Locations
     @ViewBuilder
-    private var portraitOrderSections: some View {
-        // 1. Hide Expired Events
-        if hasAnyEvents() && hasExpiredEvents() {
+    private var unifiedFilterSections: some View {
+        let dayLabel = dayData?.dayLabel ?? ""
+        
+        // 1. Hide Expired Events (portrait/list only)
+        if menuOrder == .portrait, hasAnyEvents() && hasExpiredEvents() {
             expiredEventsSection
         }
         
-        // 2. Band Ranking Filters
-        bandRankingSection
-        
-        // 3. Show Flagged Events Only
-        if showScheduleFilters && attendingCount > 0 {
-            flaggedEventsSection
-        }
-        
-        // 4. Sort By Name
-        if showScheduleFilters {
+        // 2. Sort By Name (portrait/list only)
+        if menuOrder == .portrait, showScheduleFilters {
             sortBySection
         }
         
-        // 5. Event Type Filters
-        eventTypeSection
-        
-        // 6. Location Filters
-        if showScheduleFilters && !venues.isEmpty {
-            locationSection
-        }
-    }
-    
-    // MARK: - Calendar Order Sections
-    
-    @ViewBuilder
-    private var calendarOrderSections: some View {
-        let dayLabel = dayData?.dayLabel ?? ""
-        
-        // Standardized order (matching portrait, excluding portrait-only items):
-        // 1. Band Ranking Filters (matches portrait order)
-        if hasRankedBands(forDay: dayLabel) {
-            bandRankingSection
-        }
-        
-        // 2. Show Flagged Events Only (matches portrait order)
-        if hasFlaggedEvents(forDay: dayLabel) {
+        // 3. Show Flagged Events Only
+        if menuOrder == .portrait ? (showScheduleFilters && attendingCount > 0) : hasFlaggedEvents(forDay: dayLabel) {
             flaggedEventsSection
         }
         
-        // 3. Event Type Filters (matches portrait order)
-        if hasFilterableEventTypes(forDay: dayLabel) {
+        // 4. Band Ranking Filters
+        if menuOrder == .portrait || hasRankedBands(forDay: dayLabel) {
+            bandRankingSection
+        }
+        
+        // 5. Event Type Filters
+        if menuOrder == .portrait || hasFilterableEventTypes(forDay: dayLabel) {
             eventTypeSection
         }
         
-        // 4. Location Filters (matches portrait order)
-        if !venues.isEmpty {
+        // 6. Location Filters
+        if (menuOrder == .portrait && showScheduleFilters && !venues.isEmpty) || (menuOrder == .calendar && !venues.isEmpty) {
             locationSection
         }
     }
@@ -605,25 +581,7 @@ struct CommonFilterSheetView: View {
     
     @ViewBuilder
     private var locationSection: some View {
-        Section(header: HStack(spacing: 12) {
-            Image(uiImage: UIImage(named: "Location-Generic-Going-wBox") ?? UIImage())
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 24, height: 24)
-            VStack(spacing: 0) {
-                Text(NSLocalizedString("Location Filters", comment: ""))
-                    .foregroundColor(Color.gray)
-                    .font(.system(size: 13, weight: .semibold))
-                if menuOrder == .portrait {
-                    Rectangle()
-                        .fill(Color.white.opacity(0.2))
-                        .frame(height: 1)
-                        .padding(.top, 2)
-                }
-            }
-            .padding(.top, menuOrder == .portrait ? 0 : 8)
-            .padding(.bottom, menuOrder == .portrait ? 0 : 4)
-        }) {
+        Section(header: sectionHeader(NSLocalizedString("Location Filters", comment: ""))) {
             ForEach(venues, id: \.self) { venueName in
                 locationRow(venueName: venueName)
             }
