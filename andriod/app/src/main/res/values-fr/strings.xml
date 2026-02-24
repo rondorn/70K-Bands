@@ -293,7 +293,10 @@
     <string name="Misc">Divers</string>
     <string name="Information">Information</string>
     <string name="UserIdentifier">Identifiant utilisateur</string>
-    <string name="Build">Build</string>
+    <string name="Build">Compilation</string>
+    <string name="PointerUrl">URL du pointeur</string>
+    <string name="CustomPointerUrl">URL du pointeur personnalisée</string>
+    <string name="CustomPointerUrlHint">Laisser vide pour utiliser la valeur par défaut</string>
     
     <!-- Localized share text -->
     <string name="Choices">Choix</string>

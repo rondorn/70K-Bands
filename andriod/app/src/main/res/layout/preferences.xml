@@ -778,7 +778,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Pointer URL"
+                        android:text="@string/PointerUrl"
                         android:textSize="17sp"
                         android:textColor="#FFFFFF"
                         android:paddingBottom="4dp" />
@@ -811,7 +811,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Custom Pointer URL"
+                        android:text="@string/CustomPointerUrl"
                         android:textSize="17sp"
                         android:textColor="#FFFFFF"
                         android:paddingBottom="4dp" />
@@ -823,7 +823,7 @@
                         android:textSize="15sp"
                         android:textColor="#FFFFFF"
                         android:textColorHint="#8E8E93"
-                        android:hint="Leave empty to use default"
+                        android:hint="@string/CustomPointerUrlHint"
                         android:background="@android:color/transparent"
                         android:inputType="textUri|textNoSuggestions" />
                 </LinearLayout>

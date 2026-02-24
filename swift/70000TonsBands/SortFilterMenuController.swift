@@ -90,30 +90,17 @@ func createrFilterMenu( controller: MasterViewController){
     let showScheduleView = getShowScheduleView()
     let showScheduleFilters = hasScheduledEvents && showScheduleView
     
-    // Add Hide Expired Events option (TOP choice) - only when events exist and at least one is expired
-    // Check raw criteria: events exist in database (regardless of view mode/filters) and at least one has expired
-    if hasAnyEvents() && hasExpiredEvents() {
-        controller.filterMenu.dataSource.append("Expired Events Header")
-        controller.filterMenu.dataSource.append("Expired Events")
-    }
+    // ORDER: Match calendar view menu order (Show Flagged Events Only -> Event Types -> Band Ranking -> Locations)
+    // Then add portrait-specific options (Hide Expired Events -> Sort By Time) at the end
     
-    // Add Band Ranking Filters section (always shown)
-    controller.filterMenu.dataSource.append("Band Ranking Filters")
-    controller.filterMenu.dataSource.append("Must See Items")
-    controller.filterMenu.dataSource.append("Might See Items")
-    controller.filterMenu.dataSource.append("Wont See Items")
-    controller.filterMenu.dataSource.append("Unknown Items")
-    
-    // SCHEDULE-RELATED FILTERS: Only show when in Schedule mode AND scheduled events exist
+    // 1. SCHEDULE-RELATED FILTERS: Show Flagged Events Only (same as calendar view)
+    // Only show when in Schedule mode AND scheduled events exist
     if showScheduleFilters {
         controller.filterMenu.dataSource.append("Flagged Header")
         controller.filterMenu.dataSource.append("Flagged Items")
-        controller.filterMenu.dataSource.append("Sort Header")
-        controller.filterMenu.dataSource.append("Sort By")
     }
     
-    // EVENT TYPE FILTERS: Handle scheduled and unofficial event filters separately
-    
+    // 2. EVENT TYPE FILTERS: Handle scheduled and unofficial event filters separately (same as calendar view)
     // Show scheduled event type filters (Meet & Greet, Special Events) only when scheduled events exist
     let showScheduledEventTypeFilters = showScheduleFilters && (getMeetAndGreetsEnabled() || getSpecialEventsEnabled())
     
@@ -140,13 +127,37 @@ func createrFilterMenu( controller: MasterViewController){
         }
     }
     
-    // LOCATION FILTERS: Venues that are in use in the list view (have events this year). Same Show/Hide settings as calendar.
+    // 3. Band Ranking Filters section (same as calendar view)
+    // Always shown
+    controller.filterMenu.dataSource.append("Band Ranking Filters")
+    controller.filterMenu.dataSource.append("Must See Items")
+    controller.filterMenu.dataSource.append("Might See Items")
+    controller.filterMenu.dataSource.append("Wont See Items")
+    controller.filterMenu.dataSource.append("Unknown Items")
+    
+    // 4. LOCATION FILTERS: Venues that are in use in the list view (have events this year). Same Show/Hide settings as calendar.
+    // Same as calendar view
     if showScheduleFilters {
         controller.filterMenu.dataSource.append("Location Filters")
         let venuesInUse = getVenueNamesInUseForList()
         for venueName in venuesInUse {
             controller.filterMenu.dataSource.append("\(venueName) Venue")
         }
+    }
+    
+    // 5. PORTRAIT-SPECIFIC: Hide Expired Events (only for portrait/list view)
+    // Only when events exist and at least one is expired
+    // Check raw criteria: events exist in database (regardless of view mode/filters) and at least one has expired
+    if hasAnyEvents() && hasExpiredEvents() {
+        controller.filterMenu.dataSource.append("Expired Events Header")
+        controller.filterMenu.dataSource.append("Expired Events")
+    }
+    
+    // 6. PORTRAIT-SPECIFIC: Sort By Time (only for portrait/list view)
+    // Only show when in Schedule mode AND scheduled events exist
+    if showScheduleFilters {
+        controller.filterMenu.dataSource.append("Sort Header")
+        controller.filterMenu.dataSource.append("Sort By")
     }
         
     controller.filterMenu.width = 300

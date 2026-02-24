@@ -20,6 +20,7 @@ import android.widget.ImageView;
 import android.widget.Switch;
 import android.widget.TextView;
 import com.Bands70k.BandInfo;
+import com.Bands70k.CommonFilterMenuBuilder;
 import com.Bands70k.FestivalConfig;
 import com.Bands70k.FilterButtonHandler;
 import com.Bands70k.R;
@@ -2341,497 +2342,90 @@ public class LandscapeScheduleView extends LinearLayout {
     
     /**
      * Show filter sheet for the calendar view — includes Show Flagged Events Only, Event Type Filters,
-     * Band Ranking Filters, and Location Filters. Replicates iOS LandscapeScheduleView VenueFilterSheetView.
+     * Band Ranking Filters, and Location Filters. Uses CommonFilterMenuBuilder for consistency with portrait view.
      */
     private void showVenueFilterSheet() {
         // Store current day to restore after filter changes (if available)
         String dayToRestore = null;
-        final List<String> allVenueNames = new ArrayList<>();
-        
         if (!days.isEmpty() && currentDayIndex >= 0 && currentDayIndex < days.size()) {
             DayScheduleData currentDay = days.get(currentDayIndex);
             dayToRestore = currentDay.dayLabel;
-            // Filter list = only venues that have events on THIS day (hidden venues with no events this day are not shown).
-            if (currentDay.allVenueNamesForDay != null) {
-                allVenueNames.addAll(currentDay.allVenueNamesForDay);
-            }
-            // Defensive: add any venue currently displayed as a column that's missing
-            Log.d(TAG, "[VENUE_DEBUG] Filter sheet OPEN: dayLabel='" + currentDay.dayLabel + "' allVenueNamesForDay=" + (currentDay.allVenueNamesForDay != null ? currentDay.allVenueNamesForDay : "null") + " -> allVenueNames after step1=" + new ArrayList<>(allVenueNames));
-            for (VenueColumn v : currentDay.venues) {
-                if (v.name != null && !allVenueNames.contains(v.name)) {
-                    allVenueNames.add(v.name);
-                    Log.d(TAG, "[VENUE_DEBUG] Filter sheet: defensive add from column: '" + v.name + "'");
-                }
-            }
-            Log.d(TAG, "[VENUE_DEBUG] Filter sheet: currentDay.venues column names=" + venueColumnNames(currentDay.venues) + " final allVenueNames=" + allVenueNames);
         }
         
-        // If no days available or no venues found, get all venues from configured venues
-        if (allVenueNames.isEmpty()) {
-            List<String> configuredVenues = FestivalConfig.getInstance().getAllVenueNames();
-            if (configuredVenues != null) {
-                allVenueNames.addAll(configuredVenues);
-            }
-            // Also get venues from schedule records if available
-            if (BandInfo.scheduleRecords != null) {
-                Set<String> venuesFromSchedule = new HashSet<>();
-                for (scheduleTimeTracker tracker : BandInfo.scheduleRecords.values()) {
-                    if (tracker != null && tracker.scheduleByTime != null) {
-                        for (scheduleHandler scheduleHandle : tracker.scheduleByTime.values()) {
-                            if (scheduleHandle != null) {
-                                String loc = scheduleHandle.getShowLocation();
-                                if (loc != null && !loc.isEmpty()) {
-                                    venuesFromSchedule.add(loc);
-                                }
-                            }
-                        }
-                    }
-                }
-                for (String venue : venuesFromSchedule) {
-                    if (!allVenueNames.contains(venue)) {
-                        allVenueNames.add(venue);
-                    }
-                }
-            }
-        }
-        
-        // Note: We continue even if allVenueNames is empty - user can still adjust other filters
-        if (allVenueNames.isEmpty()) {
-            Log.d(TAG, "[VENUE_DEBUG] No venues found, but showing filter sheet anyway for other filters");
-        }
-        
-        // Make dayToRestore final for use in inner classes
         final String finalDayToRestore = dayToRestore;
-        FestivalConfig config = FestivalConfig.getInstance();
         
-        Dialog dialog = new Dialog(context, android.R.style.Theme_DeviceDefault_Dialog);
-        dialog.setCancelable(true);
-        dialog.setCanceledOnTouchOutside(true);
-        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
-        LinearLayout root = new LinearLayout(context);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(Color.parseColor("#FF1C1C1E"));
-        root.setPadding(0, 0, 0, dpToPx(24));
+        // Use a final array to hold dialog reference so it can be accessed in inner class
+        final Dialog[] dialogRef = new Dialog[1];
         
-        // iOS-style title bar: [Clear All Filters] [Location Filters] [Done]
-        int toolbarHeight = dpToPx(56);
-        int horizontalPadding = dpToPx(16);
-        LinearLayout toolbarRow = new LinearLayout(context);
-        toolbarRow.setOrientation(LinearLayout.HORIZONTAL);
-        toolbarRow.setGravity(Gravity.CENTER_VERTICAL);
-        toolbarRow.setLayoutParams(new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, toolbarHeight));
-        toolbarRow.setPadding(horizontalPadding, 0, horizontalPadding, 0);
-        toolbarRow.setBackgroundColor(Color.parseColor("#FF1C1C1E"));
-        
-        final TextView clearAll = new TextView(context);
-        clearAll.setText(context.getString(R.string.clear_all_filters));
-        clearAll.setTextSize(17);
-        clearAll.setTextColor(Color.WHITE);
-        clearAll.setPadding(0, dpToPx(8), 0, dpToPx(8));
-        clearAll.setClickable(true);
-        clearAll.setFocusable(true);
-        // Initial state will be set after all switches are created
-        LinearLayout.LayoutParams clearParams = new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-        toolbarRow.addView(clearAll, clearParams);
-        
-        TextView titleView = new TextView(context);
-        titleView.setText(context.getString(R.string.Filters));
-        titleView.setTextSize(17);
-        titleView.setTypeface(null, android.graphics.Typeface.BOLD);
-        titleView.setTextColor(Color.WHITE);
-        LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f);
-        titleParams.gravity = Gravity.CENTER;
-        titleView.setGravity(Gravity.CENTER);
-        toolbarRow.addView(titleView, titleParams);
-        
-        TextView done = new TextView(context);
-        done.setText(context.getString(R.string.venue_filter_done));
-        done.setTextSize(17);
-        done.setTypeface(null, android.graphics.Typeface.BOLD);
-        done.setTextColor(Color.WHITE);
-        done.setPadding(dpToPx(8), dpToPx(8), 0, dpToPx(8));
-        done.setClickable(true);
-        done.setFocusable(true);
-        done.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
-        toolbarRow.addView(done, new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
-        root.addView(toolbarRow);
-        
-        // ScrollView for all filter sections
-        ScrollView scroll = new ScrollView(context);
-        scroll.setPadding(horizontalPadding, 0, horizontalPadding, 0);
-        LinearLayout filterList = new LinearLayout(context);
-        filterList.setOrientation(LinearLayout.VERTICAL);
-        filterList.setBackgroundColor(Color.parseColor("#FF2C2C2E"));
-        filterList.setPadding(0, dpToPx(4), 0, dpToPx(4));
-        
-        // Track switches for disabling when Show Flagged Events Only is enabled
-        final java.util.List<Switch> allFilterSwitches = new ArrayList<>();
-        final Switch[] flaggedSwitchRef = new Switch[1]; // Reference to flagged switch
-        
-        // Check if Show Flagged Events Only is enabled
-        boolean isFlaggedFilterEnabled = staticVariables.preferences.getShowWillAttend();
-        
-        // 1. Show Flagged Events Only section
-        if (hasFlaggedEvents()) {
-            TextView flaggedHeader = new TextView(context);
-            flaggedHeader.setText(context.getString(R.string.show_only_flagged_as_attended));
-            flaggedHeader.setTextSize(13);
-            flaggedHeader.setTypeface(null, android.graphics.Typeface.BOLD);
-            flaggedHeader.setTextColor(Color.parseColor("#FF8E8E93"));
-            flaggedHeader.setPadding(horizontalPadding, dpToPx(16), horizontalPadding, dpToPx(8));
-            filterList.addView(flaggedHeader);
-            
-            LinearLayout flaggedRow = new LinearLayout(context);
-            flaggedRow.setOrientation(LinearLayout.HORIZONTAL);
-            flaggedRow.setGravity(Gravity.CENTER_VERTICAL);
-            flaggedRow.setPadding(dpToPx(16), dpToPx(12), dpToPx(16), dpToPx(12));
-            flaggedRow.setBackgroundColor(Color.TRANSPARENT);
-            
-            ImageView flaggedIcon = new ImageView(context);
-            android.graphics.drawable.Drawable flaggedIconDrawable = AppCompatResources.getDrawable(context, 
-                isFlaggedFilterEnabled ? R.drawable.icon_seen : R.drawable.icon_seen_alt);
-            flaggedIcon.setImageDrawable(flaggedIconDrawable);
-            LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dpToPx(24), dpToPx(24));
-            iconParams.setMargins(0, 0, dpToPx(12), 0);
-            flaggedIcon.setLayoutParams(iconParams);
-            
-            TextView flaggedText = new TextView(context);
-            flaggedText.setText(isFlaggedFilterEnabled ? 
-                context.getString(R.string.show_all_events) : 
-                context.getString(R.string.show_flaged_events_only));
-            flaggedText.setTextSize(17);
-            flaggedText.setTextColor(Color.WHITE);
-            flaggedText.setLayoutParams(new LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f));
-            
-            Switch flaggedSwitch = new Switch(context);
-            flaggedSwitch.setChecked(isFlaggedFilterEnabled);
-            flaggedSwitchRef[0] = flaggedSwitch;
-            flaggedSwitch.setOnCheckedChangeListener(new android.widget.CompoundButton.OnCheckedChangeListener() {
+        // Create filter menu using CommonFilterMenuBuilder
+        dialogRef[0] = CommonFilterMenuBuilder.buildFilterMenu(
+            context,
+            CommonFilterMenuBuilder.MenuType.CALENDAR,
+            new CommonFilterMenuBuilder.FilterMenuCallbacks() {
                 @Override
-                public void onCheckedChanged(android.widget.CompoundButton buttonView, boolean isChecked) {
-                    staticVariables.preferences.setShowWillAttend(isChecked);
-                    staticVariables.preferences.saveData();
-                    // Update icon and text
-                    flaggedIcon.setImageDrawable(AppCompatResources.getDrawable(context, 
-                        isChecked ? R.drawable.icon_seen : R.drawable.icon_seen_alt));
-                    flaggedText.setText(isChecked ? 
-                        context.getString(R.string.show_all_events) : 
-                        context.getString(R.string.show_flaged_events_only));
-                    // Enable/disable other filters
-                    boolean shouldDisable = isChecked;
-                    for (Switch sw : allFilterSwitches) {
-                        sw.setEnabled(!shouldDisable);
-                    }
+                public void onFilterChanged() {
                     refreshCalendarAfterFilterChange(finalDayToRestore);
-                    updateClearAllButtonState(clearAll, allVenueNames, allFilterSwitches, flaggedSwitchRef[0]);
                 }
-            });
-            
-            flaggedRow.addView(flaggedIcon);
-            flaggedRow.addView(flaggedText);
-            flaggedRow.addView(flaggedSwitch);
-            filterList.addView(flaggedRow);
-        }
-        
-        // 2. Event Type Filters section
-        if (hasFilterableEventTypes()) {
-            TextView eventTypeHeader = new TextView(context);
-            eventTypeHeader.setText(context.getString(R.string.event_type_filters));
-            eventTypeHeader.setTextSize(13);
-            eventTypeHeader.setTypeface(null, android.graphics.Typeface.BOLD);
-            eventTypeHeader.setTextColor(Color.parseColor("#FF8E8E93"));
-            eventTypeHeader.setPadding(horizontalPadding, dpToPx(16), horizontalPadding, dpToPx(8));
-            filterList.addView(eventTypeHeader);
-            
-            // Meet and Greet
-            if (staticVariables.preferences.getMeetAndGreetsEnabled()) {
-                LinearLayout meetGreetRow = createFilterRow(
-                    context, filterList, 
-                    R.drawable.icon_meet_and_greet, R.drawable.icon_meet_and_greet_alt,
-                    R.string.hide_meet_and_greet_events, R.string.show_meet_and_greet_events,
-                    staticVariables.preferences.getShowMeetAndGreet(),
-                    new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            boolean newValue = !staticVariables.preferences.getShowMeetAndGreet();
-                            staticVariables.preferences.setShowMeetAndGreet(newValue);
-                            staticVariables.preferences.saveData();
-                            refreshCalendarAfterFilterChange(finalDayToRestore);
-                            updateClearAllButtonState(clearAll, allVenueNames, allFilterSwitches, flaggedSwitchRef[0]);
-                        }
-                    },
-                    allFilterSwitches, isFlaggedFilterEnabled
-                );
-            }
-            
-            // Special Events
-            if (staticVariables.preferences.getSpecialEventsEnabled()) {
-                LinearLayout specialRow = createFilterRow(
-                    context, filterList,
-                    R.drawable.icon_all_star_jam, R.drawable.icon_all_star_jam_alt,
-                    R.string.hide_special_other_events, R.string.show_special_other_events,
-                    staticVariables.preferences.getShowSpecialEvents(),
-                    new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            boolean newValue = !staticVariables.preferences.getShowSpecialEvents();
-                            staticVariables.preferences.setShowSpecialEvents(newValue);
-                            staticVariables.preferences.saveData();
-                            refreshCalendarAfterFilterChange(finalDayToRestore);
-                            updateClearAllButtonState(clearAll, allVenueNames, allFilterSwitches, flaggedSwitchRef[0]);
-                        }
-                    },
-                    allFilterSwitches, isFlaggedFilterEnabled
-                );
-            }
-            
-            // Unofficial Events
-            if (staticVariables.preferences.getUnofficalEventsEnabled()) {
-                LinearLayout unofficialRow = createFilterRow(
-                    context, filterList,
-                    R.drawable.icon_unoffical_event, R.drawable.icon_unoffical_event_alt,
-                    R.string.hide_unofficial_events, R.string.show_unofficial_events,
-                    staticVariables.preferences.getShowUnofficalEvents(),
-                    new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            boolean newValue = !staticVariables.preferences.getShowUnofficalEvents();
-                            staticVariables.preferences.setShowUnofficalEvents(newValue);
-                            staticVariables.preferences.saveData();
-                            refreshCalendarAfterFilterChange(finalDayToRestore);
-                            updateClearAllButtonState(clearAll, allVenueNames, allFilterSwitches, flaggedSwitchRef[0]);
-                        }
-                    },
-                    allFilterSwitches, isFlaggedFilterEnabled
-                );
-            }
-        }
-        
-        // 3. Band Ranking Filters section
-        if (hasRankedBands()) {
-            TextView rankingHeader = new TextView(context);
-            rankingHeader.setText(context.getString(R.string.band_ranking_filters));
-            rankingHeader.setTextSize(13);
-            rankingHeader.setTypeface(null, android.graphics.Typeface.BOLD);
-            rankingHeader.setTextColor(Color.parseColor("#FF8E8E93"));
-            rankingHeader.setPadding(horizontalPadding, dpToPx(16), horizontalPadding, dpToPx(8));
-            filterList.addView(rankingHeader);
-            
-            // Must See
-            LinearLayout mustRow = createFilterRow(
-                context, filterList,
-                R.drawable.icon_going_yes, R.drawable.icon_going_yes_alt,
-                R.string.hide_must_see_items, R.string.show_must_see_items,
-                staticVariables.preferences.getShowMust(),
-                new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        boolean newValue = !staticVariables.preferences.getShowMust();
-                        staticVariables.preferences.setshowMust(newValue);
-                        staticVariables.preferences.saveData();
-                        refreshCalendarAfterFilterChange(finalDayToRestore);
-                        updateClearAllButtonState(clearAll, allVenueNames, allFilterSwitches, flaggedSwitchRef[0]);
-                    }
-                },
-                allFilterSwitches, isFlaggedFilterEnabled
-            );
-            
-            // Might See
-            LinearLayout mightRow = createFilterRow(
-                context, filterList,
-                R.drawable.icon_going_maybe, R.drawable.icon_going_maybe_alt,
-                R.string.hide_might_see_items, R.string.show_might_see_items,
-                staticVariables.preferences.getShowMight(),
-                new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        boolean newValue = !staticVariables.preferences.getShowMight();
-                        staticVariables.preferences.setshowMight(newValue);
-                        staticVariables.preferences.saveData();
-                        refreshCalendarAfterFilterChange(finalDayToRestore);
-                        updateClearAllButtonState(clearAll, allVenueNames, allFilterSwitches, flaggedSwitchRef[0]);
-                    }
-                },
-                allFilterSwitches, isFlaggedFilterEnabled
-            );
-            
-            // Wont See
-            LinearLayout wontRow = createFilterRow(
-                context, filterList,
-                R.drawable.icon_going_no, R.drawable.icon_going_no_alt,
-                R.string.hide_wont_see_items, R.string.show_wont_see_items,
-                staticVariables.preferences.getShowWont(),
-                new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        boolean newValue = !staticVariables.preferences.getShowWont();
-                        staticVariables.preferences.setshowWont(newValue);
-                        staticVariables.preferences.saveData();
-                        refreshCalendarAfterFilterChange(finalDayToRestore);
-                        updateClearAllButtonState(clearAll, allVenueNames, allFilterSwitches, flaggedSwitchRef[0]);
-                    }
-                },
-                allFilterSwitches, isFlaggedFilterEnabled
-            );
-            
-            // Unknown
-            LinearLayout unknownRow = createFilterRow(
-                context, filterList,
-                R.drawable.icon_unknown, R.drawable.icon_unknown_alt,
-                R.string.hide_unknown_items, R.string.show_unknown_items,
-                staticVariables.preferences.getShowUnknown(),
-                new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        boolean newValue = !staticVariables.preferences.getShowUnknown();
-                        staticVariables.preferences.setshowUnknown(newValue);
-                        staticVariables.preferences.saveData();
-                        refreshCalendarAfterFilterChange(finalDayToRestore);
-                        updateClearAllButtonState(clearAll, allVenueNames, allFilterSwitches, flaggedSwitchRef[0]);
-                    }
-                },
-                allFilterSwitches, isFlaggedFilterEnabled
-            );
-        }
-        
-        // 4. Location Filters section
-        TextView locationHeader = new TextView(context);
-        locationHeader.setText(context.getString(R.string.venue_filters));
-        locationHeader.setTextSize(13);
-        locationHeader.setTypeface(null, android.graphics.Typeface.BOLD);
-        locationHeader.setTextColor(Color.parseColor("#FF8E8E93"));
-        locationHeader.setPadding(horizontalPadding, dpToPx(16), horizontalPadding, dpToPx(8));
-        filterList.addView(locationHeader);
-        
-        final java.util.Map<String, Switch> switchByVenue = new HashMap<>();
-        Log.d(TAG, "[VENUE_DEBUG] Filter sheet: building " + allVenueNames.size() + " rows for dialog");
-        for (final String venueName : allVenueNames) {
-            Log.d(TAG, "[VENUE_DEBUG] Filter sheet: adding row for venue='" + venueName + "'");
-            boolean isVenueEnabled = staticVariables.preferences.getShowVenueEvents(venueName);
-            LinearLayout row = new LinearLayout(context);
-            row.setOrientation(LinearLayout.HORIZONTAL);
-            row.setGravity(Gravity.CENTER_VERTICAL);
-            row.setPadding(dpToPx(16), dpToPx(12), dpToPx(16), dpToPx(12));
-            row.setBackgroundColor(Color.TRANSPARENT);
-            
-            // Use venue icon instead of color swatch - primary icon when on, alt icon when off
-            ImageView venueIcon = new ImageView(context);
-            venueIcon.setImageDrawable(getVenueIconDrawable(venueName, isVenueEnabled));
-            LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dpToPx(24), dpToPx(24));
-            iconParams.setMargins(0, 0, dpToPx(12), 0);
-            venueIcon.setLayoutParams(iconParams);
-            
-            TextView nameText = new TextView(context);
-            nameText.setText(venueName != null ? staticVariables.venueDisplayName(venueName) : "");
-            nameText.setTextSize(17);
-            nameText.setTextColor(Color.WHITE);
-            nameText.setLayoutParams(new LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f));
-            Switch sw = new Switch(context);
-            sw.setChecked(isVenueEnabled);
-            sw.setEnabled(!isFlaggedFilterEnabled);
-            switchByVenue.put(venueName, sw);
-            allFilterSwitches.add(sw);
-            sw.setOnCheckedChangeListener(new android.widget.CompoundButton.OnCheckedChangeListener() {
+                
                 @Override
-                public void onCheckedChanged(android.widget.CompoundButton buttonView, boolean isChecked) {
-                    if (!isChecked && FilterButtonHandler.blockTurningAllFiltersOn()) {
-                        sw.setChecked(true);
-                        android.widget.Toast.makeText(context, context.getString(R.string.can_not_hide_all_venues), android.widget.Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                    staticVariables.preferences.setShowVenueEvents(venueName, isChecked);
+                public void onClearAllFilters() {
+                    // Clear previous filter state FIRST to prevent any revert
+                    previousFilterState = null;
+                    isClearingAllFilters = true; // Set flag to prevent empty data alert
+                    
+                    // Clear ALL filters (same as portrait "Clear All Filters"): event types, must/might/wont/unknown, venues, etc.
+                    Log.d(TAG, "Clear All Filters: Setting filters to true - BEFORE: showMust=" + 
+                          staticVariables.preferences.getShowMust() + ", showMight=" + 
+                          staticVariables.preferences.getShowMight() + ", showWont=" + 
+                          staticVariables.preferences.getShowWont() + ", showUnknown=" + 
+                          staticVariables.preferences.getShowUnknown() + ", showWillAttend=" + 
+                          staticVariables.preferences.getShowWillAttend());
+                    
+                    staticVariables.preferences.setShowAlbumListen(true);
+                    staticVariables.preferences.setShowClinicEvents(true);
+                    staticVariables.preferences.setShowMeetAndGreet(true);
+                    staticVariables.preferences.setShowSpecialEvents(true);
+                    staticVariables.preferences.setShowUnofficalEvents(true);
+                    staticVariables.preferences.setshowMust(true);
+                    staticVariables.preferences.setshowMight(true);
+                    staticVariables.preferences.setshowWont(true);
+                    staticVariables.preferences.setshowUnknown(true);
+                    staticVariables.preferences.setShowLoungeShows(true);
+                    staticVariables.preferences.setShowPoolShows(true);
+                    staticVariables.preferences.setShowRinkShows(true);
+                    staticVariables.preferences.setShowTheaterShows(true);
+                    staticVariables.preferences.setShowOtherShows(true);
+                    List<String> venueNames = staticVariables.getVenueNamesInUseForList();
+                    staticVariables.preferences.setVenueFilters(venueNames, true);
+                    staticVariables.preferences.setShowWillAttend(false); // Turn off Show Flagged Events Only
+                    // Hide Expired Events is a preference, not a filter — preserve it
                     staticVariables.preferences.saveData();
-                    // Update venue icon: primary when on (checked), alt when off (unchecked)
-                    venueIcon.setImageDrawable(getVenueIconDrawable(venueName, isChecked));
-                    refreshCalendarAfterFilterChange(finalDayToRestore);
-                    updateClearAllButtonState(clearAll, allVenueNames, allFilterSwitches, flaggedSwitchRef[0]);
+                    
+                    Log.d(TAG, "Clear All Filters: Setting filters to true - AFTER: showMust=" + 
+                          staticVariables.preferences.getShowMust() + ", showMight=" + 
+                          staticVariables.preferences.getShowMight() + ", showWont=" + 
+                          staticVariables.preferences.getShowWont() + ", showUnknown=" + 
+                          staticVariables.preferences.getShowUnknown() + ", showWillAttend=" + 
+                          staticVariables.preferences.getShowWillAttend());
+                    
+                    // Close the dialog and refresh the calendar
+                    if (dialogRef[0] != null) {
+                        dialogRef[0].dismiss();
+                    }
+                    refreshCalendarAfterFilterChange(finalDayToRestore, false);
                 }
-            });
-            row.addView(venueIcon);
-            row.addView(nameText);
-            row.addView(sw);
-            LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
-            filterList.addView(row, rowParams);
-        }
-        // CRITICAL: give filterList WRAP_CONTENT height so ScrollView can scroll when content is taller than viewport.
-        // Without this, the child can get MATCH_PARENT and fill the viewport, clipping content and preventing scroll.
-        scroll.addView(filterList, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
-        scroll.setVerticalScrollBarEnabled(true);
-        scroll.setFillViewport(false);
-        // Use weight=1 and height=0 so ScrollView gets only the REMAINING space inside the dialog.
-        // Otherwise root content (toolbar + desc + header + scroll) can exceed window height and the
-        // bottom is clipped, making the list appear to end and preventing scroll.
-        int screenWidth = getResources().getDisplayMetrics().widthPixels;
-        int screenHeight = getResources().getDisplayMetrics().heightPixels;
-        LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f);
-        root.addView(scroll, scrollParams);
-        
-        // Set initial state of Clear All button after all switches are created
-        updateClearAllButtonState(clearAll, allVenueNames, allFilterSwitches, flaggedSwitchRef[0]);
-        
-        clearAll.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (clearAll.getAlpha() < 0.5f) return; // disabled
-                // Clear previous filter state FIRST to prevent any revert
-                previousFilterState = null;
-                isClearingAllFilters = true; // Set flag to prevent empty data alert
                 
-                // Clear ALL filters (same as portrait "Clear All Filters"): event types, must/might/wont/unknown, venues, etc.
-                Log.d(TAG, "Clear All Filters: Setting filters to true - BEFORE: showMust=" + 
-                      staticVariables.preferences.getShowMust() + ", showMight=" + 
-                      staticVariables.preferences.getShowMight() + ", showWont=" + 
-                      staticVariables.preferences.getShowWont() + ", showUnknown=" + 
-                      staticVariables.preferences.getShowUnknown() + ", showWillAttend=" + 
-                      staticVariables.preferences.getShowWillAttend());
-                
-                staticVariables.preferences.setShowAlbumListen(true);
-                staticVariables.preferences.setShowClinicEvents(true);
-                staticVariables.preferences.setShowMeetAndGreet(true);
-                staticVariables.preferences.setShowSpecialEvents(true);
-                staticVariables.preferences.setShowUnofficalEvents(true);
-                staticVariables.preferences.setshowMust(true);
-                staticVariables.preferences.setshowMight(true);
-                staticVariables.preferences.setshowWont(true);
-                staticVariables.preferences.setshowUnknown(true);
-                staticVariables.preferences.setShowLoungeShows(true);
-                staticVariables.preferences.setShowPoolShows(true);
-                staticVariables.preferences.setShowRinkShows(true);
-                staticVariables.preferences.setShowTheaterShows(true);
-                staticVariables.preferences.setShowOtherShows(true);
-                List<String> venueNames = staticVariables.getVenueNamesInUseForList();
-                staticVariables.preferences.setVenueFilters(venueNames, true);
-                staticVariables.preferences.setShowWillAttend(false); // Turn off Show Flagged Events Only
-                staticVariables.preferences.setHideExpiredEvents(false);
-                staticVariables.preferences.saveData();
-                
-                Log.d(TAG, "Clear All Filters: Setting filters to true - AFTER: showMust=" + 
-                      staticVariables.preferences.getShowMust() + ", showMight=" + 
-                      staticVariables.preferences.getShowMight() + ", showWont=" + 
-                      staticVariables.preferences.getShowWont() + ", showUnknown=" + 
-                      staticVariables.preferences.getShowUnknown() + ", showWillAttend=" + 
-                      staticVariables.preferences.getShowWillAttend());
-                
-                // Close the dialog and refresh the calendar - the filter menu will show correct state when reopened
-                dialog.dismiss();
-                refreshCalendarAfterFilterChange(finalDayToRestore, false);
+                @Override
+                public void onDismiss() {
+                    if (dialogRef[0] != null) {
+                        dialogRef[0].dismiss();
+                    }
+                }
             }
-        });
+        );
         
-        dialog.setContentView(root);
-        // Make dialog use most of the screen (sheet-style)
-        if (dialog.getWindow() != null) {
-            android.view.WindowManager.LayoutParams wlp = dialog.getWindow().getAttributes();
-            wlp.width = (int) (screenWidth * 0.92);
-            wlp.height = (int) (screenHeight * 0.88);
-            dialog.getWindow().setAttributes(wlp);
-        }
-        dialog.show();
+        FilterButtonHandler.registerCurrentFilterDialog(dialogRef[0]);
+        dialogRef[0].show();
     }
     
     private static List<String> venueColumnNames(List<VenueColumn> columns) {
@@ -2888,7 +2482,8 @@ public class LandscapeScheduleView extends LinearLayout {
                 if (eventType != null && 
                     (eventType.equals("Meet and Greet") || 
                      eventType.equals("Special Event") || 
-                     eventType.equals("Unofficial Event"))) {
+                     eventType.equals(staticVariables.unofficalEvent) || 
+                     eventType.equals(staticVariables.unofficalEventOld))) {
                     return true;
                 }
             }
@@ -2917,7 +2512,9 @@ public class LandscapeScheduleView extends LinearLayout {
         if (eventType.equals("Special Event") && !staticVariables.preferences.getShowSpecialEvents()) {
             return false;
         }
-        if (eventType.equals("Unofficial Event") && !staticVariables.preferences.getShowUnofficalEvents()) {
+        // Cruiser Organized and Unofficial Event are the same filter — treat both consistently
+        if ((eventType.equals(staticVariables.unofficalEvent) || eventType.equals(staticVariables.unofficalEventOld)) 
+                && !staticVariables.preferences.getShowUnofficalEvents()) {
             return false;
         }
         
