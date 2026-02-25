@@ -260,6 +260,10 @@
 
 "Day" = "Day";
 
+"Viewing Day Format" = "Viewing %@";
+"No More Days" = "No More Days";
+"No Previous Days" = "No Previous Days";
+
 "Bands" = "Bands";
 "Events" = "Events";
 
