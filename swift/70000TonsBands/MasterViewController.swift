@@ -151,6 +151,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     // MARK: - Landscape Schedule View
     private var landscapeScheduleViewController: UIViewController?
     private var isShowingLandscapeSchedule: Bool = false
+    private var isDismissingLandscapeSchedule: Bool = false
+    private var lastPortraitDismissCheckTime: CFTimeInterval = 0
     private var currentViewingDay: String? = nil  // Track which day user is viewing
     private var savedScrollPosition: CGPoint? = nil  // Save scroll position when navigating away
     private var lastProgrammaticScrollTime: Date? = nil  // Track when we last scrolled programmatically
@@ -1671,40 +1673,39 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // CRITICAL FIX: Check orientation after layout changes (more reliable than OnOrientationChange)
         // This catches cases where orientation changes but the notification hasn't fired yet
         // BUT: Don't dismiss if a detail screen is currently presented - let it handle its own orientation
-        if !isSplitViewCapable() && isShowingLandscapeSchedule {
+        // PERF: Skip if already dismissing (prevents cascade) or if we checked recently (debounce)
+        if !isSplitViewCapable() && isShowingLandscapeSchedule && !isDismissingLandscapeSchedule {
+            let now = CFAbsoluteTimeGetCurrent()
+            if now - lastPortraitDismissCheckTime < 0.25 {
+                return
+            }
+            lastPortraitDismissCheckTime = now
+            
             // CRITICAL: If a detail screen is currently presented, don't dismiss on orientation change
             if let landscapeVC = landscapeScheduleViewController,
                landscapeVC.presentedViewController != nil {
-                print("🔄 [LAYOUT] Detail screen is presented - skipping portrait dismissal check in viewDidLayoutSubviews")
                 return
             }
             
-            // Get main window (not landscape view controller's window)
             let mainWindow = UIApplication.shared.connectedScenes
                 .compactMap { $0 as? UIWindowScene }
                 .flatMap { $0.windows }
                 .first { $0.isKeyWindow } ?? view.window
             
             let windowBounds = mainWindow?.bounds ?? view.bounds
-            let windowBoundsLandscape = windowBounds.width > windowBounds.height
             let statusBarLandscape = UIApplication.shared.statusBarOrientation.isLandscape
             let deviceOrientationLandscape = UIDevice.current.orientation.isLandscape
             
-            // CRITICAL: Prioritize device orientation and status bar over window bounds
             let isLandscape: Bool
             if !statusBarLandscape && !deviceOrientationLandscape {
-                // Both device and statusBar say portrait - trust them
                 isLandscape = false
             } else if statusBarLandscape || deviceOrientationLandscape {
-                // Device or statusBar say landscape - trust them
                 isLandscape = true
             } else {
-                // Fallback to window bounds
-                isLandscape = windowBoundsLandscape
+                isLandscape = windowBounds.width > windowBounds.height
             }
             
             if !isLandscape {
-                print("🚫 [LAYOUT] iPhone detected in portrait after layout - dismissing calendar view (viewDidLayoutSubviews)")
                 dismissLandscapeScheduleView()
             }
         }
@@ -2986,65 +2987,37 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     private func dismissLandscapeScheduleView(completion: (() -> Void)? = nil) {
         guard isShowingLandscapeSchedule, let viewController = landscapeScheduleViewController else {
-            print("⚠️ [LANDSCAPE_SCHEDULE] Cannot dismiss - not showing or no view controller")
             completion?()
             return
         }
-        
-        print("🔄 [LANDSCAPE_SCHEDULE] Dismissing landscape schedule view")
-        print("🔄 [LANDSCAPE_SCHEDULE] viewController type: \(type(of: viewController))")
-        print("🔄 [LANDSCAPE_SCHEDULE] viewController.presentedViewController: \(viewController.presentedViewController != nil ? String(describing: type(of: viewController.presentedViewController!)) : "nil")")
-        print("🔄 [LANDSCAPE_SCHEDULE] self.presentedViewController: \(presentedViewController != nil ? String(describing: type(of: presentedViewController!)) : "nil")")
-        print("🔄 [LANDSCAPE_SCHEDULE] self.view.window: \(view.window != nil ? "exists" : "nil")")
-        print("🔄 [LANDSCAPE_SCHEDULE] filterMenuButton.isHidden: \(filterMenuButton?.isHidden ?? true)")
-        print("🔄 [LANDSCAPE_SCHEDULE] bandSearch.isHidden: \(bandSearch?.isHidden ?? true)")
+        guard !isDismissingLandscapeSchedule else { return }
+        isDismissingLandscapeSchedule = true
+        let wrappedCompletion: () -> Void = { [weak self] in
+            self?.isDismissingLandscapeSchedule = false
+            completion?()
+        }
         
         // CRITICAL: If a SwiftUI sheet (filter menu) is presented from the landscape view,
         // dismiss it first before dismissing the landscape view controller
         // This prevents the sheet from interfering with the portrait view
         if let presentedVC = viewController.presentedViewController {
-            print("🔄 [LANDSCAPE_SCHEDULE] Dismissing presented sheet before dismissing landscape view")
-            print("🔄 [LANDSCAPE_SCHEDULE] presentedVC type: \(type(of: presentedVC))")
             presentedVC.dismiss(animated: false) { [weak self] in
-                print("🔄 [LANDSCAPE_SCHEDULE] Sheet dismissed, waiting before dismissing landscape view")
-                // Small delay to ensure sheet is fully dismissed before dismissing landscape view
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-                    self?.dismissLandscapeViewControllerWithUIRestore(viewController: viewController, completion: completion)
+                    self?.dismissLandscapeViewControllerWithUIRestore(viewController: viewController, completion: wrappedCompletion)
                 }
             }
         } else {
-            print("🔄 [LANDSCAPE_SCHEDULE] No sheet presented, dismissing landscape view directly")
-            // No sheet presented, dismiss normally with UI restoration
-            dismissLandscapeViewControllerWithUIRestore(viewController: viewController, completion: completion)
+            dismissLandscapeViewControllerWithUIRestore(viewController: viewController, completion: wrappedCompletion)
         }
     }
     
     private func dismissLandscapeViewControllerWithUIRestore(viewController: UIViewController, completion: (() -> Void)?) {
-        print("🔄 [LANDSCAPE_DISMISS] dismissLandscapeViewControllerWithUIRestore called")
-        print("🔄 [LANDSCAPE_DISMISS] Before dismiss - view.window: \(view.window != nil ? "exists" : "nil")")
-        print("🔄 [LANDSCAPE_DISMISS] Before dismiss - presentedViewController: \(presentedViewController != nil ? String(describing: type(of: presentedViewController!)) : "nil")")
-        print("🔄 [LANDSCAPE_DISMISS] Before dismiss - filterMenuButton.isHidden: \(filterMenuButton?.isHidden ?? true)")
-        print("🔄 [LANDSCAPE_DISMISS] Before dismiss - bandSearch.isHidden: \(bandSearch?.isHidden ?? true)")
-        
         dismissLandscapeViewController(viewController: viewController) { [weak self] in
             guard let self = self else { return }
-            
-            print("🔄 [LANDSCAPE_DISMISS] Landscape view dismissed callback")
-            print("🔄 [LANDSCAPE_DISMISS] After dismiss - view.window: \(self.view.window != nil ? "exists" : "nil")")
-            print("🔄 [LANDSCAPE_DISMISS] After dismiss - presentedViewController: \(self.presentedViewController != nil ? String(describing: type(of: self.presentedViewController!)) : "nil")")
-            print("🔄 [LANDSCAPE_DISMISS] After dismiss - isShowingLandscapeSchedule: \(self.isShowingLandscapeSchedule)")
-            print("🔄 [LANDSCAPE_DISMISS] After dismiss - filterMenuButton.isHidden: \(self.filterMenuButton?.isHidden ?? true)")
-            print("🔄 [LANDSCAPE_DISMISS] After dismiss - bandSearch.isHidden: \(self.bandSearch?.isHidden ?? true)")
-            print("🔄 [LANDSCAPE_DISMISS] After dismiss - filterMenuButton.superview: \((self.filterMenuButton?.superview).map { String(describing: type(of: $0)) } ?? "nil")")
-            print("🔄 [LANDSCAPE_DISMISS] After dismiss - bandSearch.superview: \((self.bandSearch?.superview).map { String(describing: type(of: $0)) } ?? "nil")")
-            print("🔄 [LANDSCAPE_DISMISS] After dismiss - view.isHidden: \(self.view.isHidden)")
-            print("🔄 [LANDSCAPE_DISMISS] After dismiss - view.alpha: \(self.view.alpha)")
             
             // Small delay to ensure landscape view is fully dismissed before restoring UI
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
                 guard let self = self else { return }
-                
-                print("🔄 [LANDSCAPE_DISMISS] Restoring UI elements")
                 
                 // CRITICAL: Restore UI elements BEFORE checking orientation
                 // This ensures elements are visible even if orientation check triggers something
@@ -3061,49 +3034,20 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 if let filterSuperview = self.filterMenuButton?.superview {
                     filterSuperview.isHidden = false
                     filterSuperview.alpha = 1.0
-                    print("🔄 [LANDSCAPE_DISMISS] filterMenuButton superview restored - isHidden: \(filterSuperview.isHidden)")
                 }
                 if let searchSuperview = self.bandSearch?.superview {
                     searchSuperview.isHidden = false
                     searchSuperview.alpha = 1.0
-                    print("🔄 [LANDSCAPE_DISMISS] bandSearch superview restored - isHidden: \(searchSuperview.isHidden)")
                 }
                 
                 // Force view hierarchy update
                 self.view.setNeedsLayout()
                 self.view.layoutIfNeeded()
                 
-                print("🔄 [LANDSCAPE_DISMISS] After restore - filterMenuButton.isHidden: \(self.filterMenuButton?.isHidden ?? true)")
-                print("🔄 [LANDSCAPE_DISMISS] After restore - bandSearch.isHidden: \(self.bandSearch?.isHidden ?? true)")
-                print("🔄 [LANDSCAPE_DISMISS] After restore - view.window: \(self.view.window != nil ? "exists" : "nil")")
-                print("🔄 [LANDSCAPE_DISMISS] After restore - presentedViewController: \(self.presentedViewController != nil ? String(describing: type(of: self.presentedViewController!)) : "nil")")
-                print("🔄 [LANDSCAPE_DISMISS] After restore - view.frame: \(self.view.frame)")
-                print("🔄 [LANDSCAPE_DISMISS] After restore - filterMenuButton.frame: \(self.filterMenuButton?.frame ?? .zero)")
-                print("🔄 [LANDSCAPE_DISMISS] After restore - bandSearch.frame: \(self.bandSearch?.frame ?? .zero)")
-                
-                // Check if views are actually in the window hierarchy
-                var currentView: UIView? = self.filterMenuButton
-                var viewHierarchy: [String] = []
-                while let view = currentView {
-                    viewHierarchy.append("\(type(of: view))")
-                    currentView = view.superview
-                }
-                print("🔄 [LANDSCAPE_DISMISS] filterMenuButton view hierarchy: \(viewHierarchy.joined(separator: " -> "))")
-                
-                // Check for any views that might be covering the UI elements
-                if let window = self.view.window {
-                    print("🔄 [LANDSCAPE_DISMISS] Checking window subviews for blocking views")
-                    for (index, subview) in window.subviews.enumerated() {
-                        print("🔄 [LANDSCAPE_DISMISS] Window subview \(index): \(type(of: subview)), frame: \(subview.frame), isHidden: \(subview.isHidden), alpha: \(subview.alpha)")
-                    }
-                }
-                
                 // CRITICAL: Force table view header to refresh to ensure toolbar is visible
                 // This ensures the header (which contains the toolbar with buttons) is recreated
                 DispatchQueue.main.async {
-                    print("🔄 [LANDSCAPE_DISMISS] Forcing table view header refresh")
                     self.tableView.reloadSections(IndexSet(integer: 0), with: .none)
-                    print("🔄 [LANDSCAPE_DISMISS] Table view header refresh complete")
                     
                     // KISS: After table reload, ensure titleView is still visible
                     // Table reload shouldn't affect navigation bar, but be safe
@@ -3121,7 +3065,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     private func dismissLandscapeViewController(viewController: UIViewController, completion: (() -> Void)?) {
         let dayToShow = currentViewingDay  // Capture before dismiss so list can scroll to same day
         viewController.dismiss(animated: true) { [weak self] in
-            print("✅ [LANDSCAPE_SCHEDULE] Landscape schedule view dismissed")
             self?.landscapeScheduleViewController = nil
             self?.isShowingLandscapeSchedule = false
             
@@ -3129,7 +3072,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             if self?.isSplitViewCapable() == true {
                 self?.isManualCalendarView = false
                 self?.viewToggleButton?.image = UIImage(systemName: "calendar")
-                print("📱 [IPAD_TOGGLE] Reset to list view, button updated")
             }
             
             // Calendar → list: show the day the user was viewing in the calendar
@@ -3137,12 +3079,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
                 guard let self = self else { return }
                 self.scrollListToDayIfNeeded(day: dayToShow)
-                
-                // CRITICAL: Ensure UI elements are visible and properly configured after landscape dismissal
-                print("🔄 [UI_RESTORE] Restoring UI elements after landscape dismissal")
-                print("🔄 [UI_RESTORE] filterMenuButton exists: \(self.filterMenuButton != nil), isHidden: \(self.filterMenuButton?.isHidden ?? true)")
-                print("🔄 [UI_RESTORE] bandSearch exists: \(self.bandSearch != nil), isHidden: \(self.bandSearch?.isHidden ?? true)")
-                print("🔄 [UI_RESTORE] mainToolBar exists: \(self.mainToolBar != nil), isHidden: \(self.mainToolBar?.isHidden ?? true)")
                 
                 self.filterMenuButton?.isHidden = false
                 self.bandSearch?.isHidden = false
@@ -3153,18 +3089,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 
                 // Ensure parent views are also visible
                 if let filterBar = self.filterMenuButton?.superview {
-                    print("🔄 [UI_RESTORE] filterMenuButton superview: \(type(of: filterBar)), isHidden: \(filterBar.isHidden)")
                     filterBar.isHidden = false
                     filterBar.alpha = 1.0
-                } else {
-                    print("⚠️ [UI_RESTORE] filterMenuButton has no superview!")
                 }
                 if let searchBar = self.bandSearch?.superview {
-                    print("🔄 [UI_RESTORE] bandSearch superview: \(type(of: searchBar)), isHidden: \(searchBar.isHidden)")
                     searchBar.isHidden = false
                     searchBar.alpha = 1.0
-                } else {
-                    print("⚠️ [UI_RESTORE] bandSearch has no superview!")
                 }
                 
                 // Ensure the view itself is visible
@@ -3174,8 +3104,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 // Force view to update layout
                 self.view.setNeedsLayout()
                 self.view.layoutIfNeeded()
-                
-                print("🔄 [UI_RESTORE] After restore - filterMenuButton.isHidden: \(self.filterMenuButton?.isHidden ?? true), bandSearch.isHidden: \(self.bandSearch?.isHidden ?? true)")
             }
             completion?()
         }
@@ -4365,7 +4293,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         shareBtn.tintColor = UIColor(white: 0.67, alpha: 1)
         shareBtn.addTarget(self, action: #selector(customShareButtonTapped(_:)), for: .touchUpInside)
         shareBtn.translatesAutoresizingMaskIntoConstraints = false
-        shareBtn.widthAnchor.constraint(equalToConstant: 44).isActive = true
+        let shareWidthConstraint = shareBtn.widthAnchor.constraint(equalToConstant: 44)
+        shareWidthConstraint.priority = .defaultHigh  // Breakable so layout can resolve when portrait width is tight
+        shareWidthConstraint.isActive = true
         shareBtn.setContentHuggingPriority(.defaultHigh, for: .horizontal)
         customShareButtonView = shareBtn
         
