@@ -237,26 +237,20 @@ open class ShowsAttended {
         
         // Use SQLite AttendanceManager instead of old system
         let currentStatus = attendanceManager.getAttendanceStatusByIndex(index: index)
-        print("🔍 [ShowsAttended] addShowsAttended - currentStatus: \(currentStatus) for '\(band)'")
         
         // Determine new status based on current status
         var newStatus: Int
         switch currentStatus {
         case 0, 3: // No status or Won't Attend -> Will Attend
             newStatus = 2
-            print("🔍 [ShowsAttended] Setting to Will Attend (2)")
         case 2 where eventType == showType: // Will Attend -> Will Attend Some (only for shows)
             newStatus = 1
-            print("🔍 [ShowsAttended] Setting to Will Attend Some (1)")
         case 1: // Will Attend Some -> Won't Attend
             newStatus = 3
-            print("🔍 [ShowsAttended] Setting to Won't Attend (3)")
         case 2: // Will Attend for non-show events -> Won't Attend
             newStatus = 3
-            print("🔍 [ShowsAttended] Setting to Won't Attend (3) for non-show event")
         default: // Fallback
             newStatus = 2
-            print("🔍 [ShowsAttended] Fallback: setting to Will Attend (2)")
         }
         
         // Update using SQLite (all profiles are now editable)
@@ -275,7 +269,6 @@ open class ShowsAttended {
             value = sawNoneStatus
         }
         
-        print("🔍 [ShowsAttended] addShowsAttended completed: '\(band)' -> '\(value)'")
         return value
     }
     
@@ -439,11 +432,6 @@ open class ShowsAttended {
             value = sawNoneStatus
         default: // 0 or unknown
             value = sawNoneStatus
-        }
-        
-        // DEBUG: Log every query for bands that should have data
-        if band == "Grave" || band == "Destruction" || band == "Hellbutcher" || status != 0 {
-            print("🔍 [ShowsAttended] Query: '\(band)' index: '\(index)' -> status: \(status) -> value: '\(value)'")
         }
         
         return value

@@ -144,7 +144,55 @@ class WebViewController: UIViewController, WKNavigationDelegate {
         print("❌ WebView failed to load: \(error.localizedDescription)")
         print("❌ Failed URL: \(webView.url?.absoluteString ?? "unknown")")
         
-        // Check if it's a network error that might be temporary
+        // STATS FALLBACK: Before showing any error, try loading cached local stats.
+        // The stats flow should always display local files (stats.html or loading_stats.html).
+        // If we failed (e.g. restricted port from wrong URL, network issue), try cached content.
+        let failedUrl = webView.url?.absoluteString ?? ""
+        let isRemoteUrl = failedUrl.hasPrefix("http://") || failedUrl.hasPrefix("https://")
+        
+        if isRemoteUrl || failedUrl.lowercased().contains("stats") {
+            tryLoadCachedStatsAndHideError(in: webView, failedUrl: failedUrl) { [weak self] fallbackSucceeded in
+                guard let self = self, !fallbackSucceeded else { return }
+                self.showLoadErrorAlert(webView: webView, error: error)
+            }
+            return
+        }
+        
+        // For non-stats usage (e.g. Wikipedia, band links), show error
+        DispatchQueue.main.async {
+            self.showLoadErrorAlert(webView: webView, error: error)
+        }
+    }
+    
+    /// Tries to load cached stats (stats.html or loading_stats.html). Calls completion with true if fallback succeeded.
+    private func tryLoadCachedStatsAndHideError(in webView: WKWebView, failedUrl: String, completion: @escaping (Bool) -> Void) {
+        DispatchQueue.main.async {
+            guard let documentsUrl = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+                completion(false)
+                return
+            }
+            let statsUrl = documentsUrl.appendingPathComponent("stats.html")
+            let loadingUrl = documentsUrl.appendingPathComponent("loading_stats.html")
+            
+            if FileManager.default.fileExists(atPath: statsUrl.path) {
+                print("🔄 [STATS] Load failed, falling back to cached stats.html")
+                setUrl(statsUrl.absoluteString)
+                webView.load(URLRequest(url: statsUrl))
+                completion(true)
+                return
+            }
+            if FileManager.default.fileExists(atPath: loadingUrl.path) {
+                print("🔄 [STATS] Load failed, falling back to loading_stats.html")
+                setUrl(loadingUrl.absoluteString)
+                webView.load(URLRequest(url: loadingUrl))
+                completion(true)
+                return
+            }
+            completion(false)
+        }
+    }
+    
+    private func showLoadErrorAlert(webView: WKWebView, error: Error) {
         let nsError = error as NSError
         let isNetworkError = nsError.domain == NSURLErrorDomain && (
             nsError.code == NSURLErrorNotConnectedToInternet ||
@@ -153,31 +201,25 @@ class WebViewController: UIViewController, WKNavigationDelegate {
             nsError.code == NSURLErrorCannotConnectToHost
         )
         
-        DispatchQueue.main.async {
-            if isNetworkError {
-                // For network errors, show a retry option
-                let title = NSLocalizedString("Network Error", comment: "Alert title for network errors")
-                let message = NSLocalizedString("Unable to load stats page. Check your internet connection and try again.", comment: "Network error message")
-                let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-                let retryTitle = NSLocalizedString("Retry", comment: "Retry button title")
-                alert.addAction(UIAlertAction(title: retryTitle, style: .default) { _ in
-                    // Retry loading the same URL
-                    if let url = webView.url {
-                        let request = URLRequest(url: url)
-                        webView.load(request)
-                    }
-                })
-                alert.addAction(UIAlertAction(title: NSLocalizedString("Cancel", comment: "Cancel button"), style: .cancel))
-                self.present(alert, animated: true)
-            } else {
-                // For other errors, show a simple error message
-                let title = NSLocalizedString("Loading Error", comment: "Alert title for loading errors")
-                let messageFormat = NSLocalizedString("Failed to load stats page: %@", comment: "Loading error message format")
-                let message = String(format: messageFormat, error.localizedDescription)
-                let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: "Alert OK button"), style: .default))
-                self.present(alert, animated: true)
-            }
+        if isNetworkError {
+            let title = NSLocalizedString("Network Error", comment: "Alert title for network errors")
+            let message = NSLocalizedString("Unable to load stats page. Check your internet connection and try again.", comment: "Network error message")
+            let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+            let retryTitle = NSLocalizedString("Retry", comment: "Retry button title")
+            alert.addAction(UIAlertAction(title: retryTitle, style: .default) { _ in
+                if let url = webView.url {
+                    webView.load(URLRequest(url: url))
+                }
+            })
+            alert.addAction(UIAlertAction(title: NSLocalizedString("Cancel", comment: "Cancel button"), style: .cancel))
+            present(alert, animated: true)
+        } else {
+            let title = NSLocalizedString("Loading Error", comment: "Alert title for loading errors")
+            let messageFormat = NSLocalizedString("Failed to load stats page: %@", comment: "Loading error message format")
+            let message = String(format: messageFormat, error.localizedDescription)
+            let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: "Alert OK button"), style: .default))
+            present(alert, animated: true)
         }
     }
 

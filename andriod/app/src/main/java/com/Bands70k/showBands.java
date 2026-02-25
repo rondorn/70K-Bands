@@ -3347,7 +3347,6 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                             Log.d("LANDSCAPE_SCHEDULE", "Stored raw day in bandListItem: '" + day + "' for " + bandName);
 
                             String attendedIcon = attendedHandler.getShowAttendedIcon(bandName, location, startTime, eventType, eventYear);
-                            Log.d("ShowsAttended", "attendedIcon is " + attendedIcon + " for " + bandName + "-" + location + "-" + "-" + startTime);
                             if (day.contains("Day")) {
                                 day = " " + day.replaceAll("Day", "");
                             }

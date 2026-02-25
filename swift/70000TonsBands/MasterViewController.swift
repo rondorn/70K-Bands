@@ -223,6 +223,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @IBOutlet weak var titleLabel: UINavigationItem!
     
+    /// Reusable titleView count label
+    private var titleCountLabel: UILabel?
+    
     var dataHandle = dataHandler()
     private let priorityManager = SQLitePriorityManager.shared
     
@@ -341,6 +344,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         self.navigationController?.navigationBar.tintColor = UIColor.white
         self.navigationController?.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor : UIColor.white]
         
+        // Keep nav bar and stats icon visible when scrolling (do not hide on swipe)
+        self.navigationController?.hidesBarsOnSwipe = false
+        self.navigationController?.hidesBarsWhenVerticallyCompact = false
+        self.navigationController?.barHideOnSwipeGestureRecognizer.isEnabled = false
+        self.navigationController?.navigationBar.prefersLargeTitles = false
+        
         // Ensure back button always says "Back" when navigating from this view
         let backItem = UIBarButtonItem()
         backItem.title = "Back"
@@ -437,20 +446,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         //these are needed for iOS 26 visual fixes
         if #available(iOS 26.0, *) {
-            preferenceButton.hidesSharedBackground = true
-            statsButton.hidesSharedBackground = true
-            shareButton.hidesSharedBackground = true
+            preferenceButton?.hidesSharedBackground = true
+            statsButton?.hidesSharedBackground = true
+            shareButton?.hidesSharedBackground = true
             filterButtonBar?.hidesSharedBackground = true
             searchButtonBar?.hidesSharedBackground = true
-            statsButton.hidesSharedBackground = true
-            titleButtonArea.leftBarButtonItem?.hidesSharedBackground = true
-            titleButtonArea.rightBarButtonItem?.hidesSharedBackground = true
+            titleButtonArea?.leftBarButtonItem?.hidesSharedBackground = true
+            titleButtonArea?.rightBarButtonItem?.hidesSharedBackground = true
             
-            preferenceButton.customView?.backgroundColor = .black
-            statsButton.customView?.backgroundColor = .white 
+            preferenceButton?.customView?.backgroundColor = .black
+            statsButton?.customView?.backgroundColor = .white 
             
             filterMenuButton?.backgroundColor = .black
-            shareButton.customView?.backgroundColor = .black
+            shareButton?.customView?.backgroundColor = .black
             bandSearch?.backgroundColor = .black
             bandSearch?.tintColor = .lightGray
             bandSearch?.barTintColor = .black
@@ -1337,6 +1345,49 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         mainToolBar?.isTranslucent = false
     }
     
+    /// Builds titleView with count label. Stats icon is set as leftBarButtonItem (far left, symmetric with preferences).
+    private func makeTitleViewWithStats(text: String, profileColor: UIColor) -> UIView {
+        let label: UILabel
+        if let existing = titleCountLabel {
+            label = existing
+        } else {
+            label = UILabel()
+            label.font = UIFont.boldSystemFont(ofSize: 17)
+            label.textAlignment = .center
+            label.isUserInteractionEnabled = true
+            label.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(showProfilePicker)))
+            titleCountLabel = label
+        }
+        label.text = text
+        label.textColor = profileColor
+        label.sizeToFit()
+        label.frame = CGRect(x: 0, y: 0, width: max(label.bounds.width, 100), height: 44)
+        return label
+    }
+    
+    /// Updates left bar button with stats icon (far left, symmetric with preferences on right). Uses customView to stay visible when scrolling.
+    private func installStatsBarButton() {
+        let btn = UIButton(type: .system)
+        btn.setImage(UIImage(named: "Stats v 4On Black"), for: .normal)
+        btn.tintColor = .white
+        btn.addTarget(self, action: #selector(statsButtonTapped(_:)), for: .touchUpInside)
+        btn.frame = CGRect(x: 0, y: 0, width: 44, height: 44)
+        let container = UIView(frame: CGRect(x: 0, y: 0, width: 44, height: 44))
+        container.addSubview(btn)
+        btn.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            btn.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            btn.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            btn.widthAnchor.constraint(equalToConstant: 44),
+            btn.heightAnchor.constraint(equalToConstant: 44)
+        ])
+        let barItem = UIBarButtonItem(customView: container)
+        if #available(iOS 26.0, *) {
+            barItem.hidesSharedBackground = true
+        }
+        navigationItem.leftBarButtonItem = barItem
+    }
+    
     override var preferredStatusBarStyle: UIStatusBarStyle {
         return .lightContent
     }
@@ -1379,6 +1430,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
+        // Re-apply on each appear – physical device may reset nav bar behavior
+        navigationController?.hidesBarsOnSwipe = false
+        navigationController?.hidesBarsWhenVerticallyCompact = false
+        navigationController?.barHideOnSwipeGestureRecognizer.isEnabled = false
+        navigationController?.navigationBar.prefersLargeTitles = false
+        
         // Ensure UI elements are visible when view appears (especially after rotation)
         print("🔄 [VIEW_LIFECYCLE] viewWillAppear called")
         print("🔄 [VIEW_LIFECYCLE] isShowingLandscapeSchedule: \(isShowingLandscapeSchedule)")
@@ -1395,6 +1452,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         bandSearch?.alpha = 1.0
         mainToolBar?.isHidden = false
         mainToolBar?.alpha = 1.0
+        
+        // Stats on far left (symmetric with preferences on right), using customView so it stays visible when scrolling
+        installStatsBarButton()
         
         let startTime = CFAbsoluteTimeGetCurrent()
         print("🕐 [\(String(format: "%.3f", startTime))] viewWillAppear START - returning from details")
@@ -3088,8 +3148,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 self.bandSearch?.isHidden = false
                 self.filterMenuButton?.alpha = 1.0
                 self.bandSearch?.alpha = 1.0
-                
-                // Ensure toolbar is visible
                 self.mainToolBar?.isHidden = false
                 self.mainToolBar?.alpha = 1.0
                 
@@ -3952,34 +4010,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     self.titleButton.title = titleText
                     print("🎯 [ASYNC_UPDATE] titleButton.title set to: '\(titleText)'")
                     
-                    // Update or create custom colored titleView for visual distinction between profiles
                     let profileColor = self.getColorForCurrentProfile()
-                    
-                    if let existingLabel = self.navigationItem.titleView as? UILabel {
-                        // Reuse existing label
-                        existingLabel.text = titleText
-                        existingLabel.textColor = profileColor
-                        existingLabel.sizeToFit()
-                    } else {
-                        // Create new label
-                        let titleLabel = UILabel()
-                        titleLabel.text = titleText
-                        titleLabel.textColor = profileColor
-                        titleLabel.font = UIFont.boldSystemFont(ofSize: 17)
-                        titleLabel.textAlignment = .center
-                        titleLabel.isUserInteractionEnabled = true
-                        
-                        // Set wider frame to prevent truncation
-                        titleLabel.frame = CGRect(x: 0, y: 0, width: 300, height: 44)
-                        titleLabel.adjustsFontSizeToFitWidth = false
-                        titleLabel.numberOfLines = 1
-                        
-                        // Add tap gesture for profile picker
-                        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(self.showProfilePicker))
-                        titleLabel.addGestureRecognizer(tapGesture)
-                        
-                        self.navigationItem.titleView = titleLabel
-                    }
+                    self.navigationItem.titleView = self.makeTitleViewWithStats(text: titleText, profileColor: profileColor)
                     
                     print("📊 [ASYNC_COUNT] Display updated: \(titleText)")
                 } else {
@@ -4175,49 +4207,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print("🎯 [FINAL_DISPLAY] titleButton.title is now: '\(titleButton.title ?? "nil")'")
         
         // CRITICAL: Clear navigationItem.title to ensure titleView is displayed
-        // Setting navigationItem.title can override/hide the titleView
         if navigationItem.title != nil {
             print("⚠️ [FINAL_DISPLAY] navigationItem.title was set to '\(navigationItem.title!)' - clearing it to show titleView")
             navigationItem.title = nil
         }
         
-        // Update or create custom colored titleView for visual distinction between profiles
         let profileColor = getColorForCurrentProfile()
-        
-        if let existingLabel = navigationItem.titleView as? UILabel {
-            // Reuse existing label
-            existingLabel.text = titleText
-            existingLabel.textColor = profileColor
-            existingLabel.sizeToFit()
-            // Ensure it's visible
-            existingLabel.isHidden = false
-            existingLabel.alpha = 1.0
-            print("🎯 [FINAL_DISPLAY] Updated existing titleView label - text: '\(titleText)', isHidden: \(existingLabel.isHidden)")
-        } else {
-            // Create new label
-            let titleLabel = UILabel()
-            titleLabel.text = titleText
-            titleLabel.textColor = profileColor
-            titleLabel.font = UIFont.boldSystemFont(ofSize: 17)
-            titleLabel.textAlignment = .center
-            titleLabel.isUserInteractionEnabled = true
-            
-            // Set wider frame to prevent truncation
-            titleLabel.frame = CGRect(x: 0, y: 0, width: 300, height: 44)
-            titleLabel.adjustsFontSizeToFitWidth = false
-            titleLabel.numberOfLines = 1
-            
-            // Ensure it's visible
-            titleLabel.isHidden = false
-            titleLabel.alpha = 1.0
-            
-            // Add tap gesture for profile picker
-            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(showProfilePicker))
-            titleLabel.addGestureRecognizer(tapGesture)
-            
-            navigationItem.titleView = titleLabel
-            print("🎯 [FINAL_DISPLAY] Created new titleView label - text: '\(titleText)', isHidden: \(titleLabel.isHidden)")
-        }
+        navigationItem.titleView = makeTitleViewWithStats(text: titleText, profileColor: profileColor)
         
         // KISS: Ensure navigationItem.title is cleared (it hides titleView)
         navigationItem.title = nil
@@ -4345,14 +4341,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             searchBar = fallbackBandSearch!
         }
         let headerWidth = tableView.bounds.width > 0 ? tableView.bounds.width : 320
-        let headerHeight: CGFloat = 44
         
-        let container = UIView(frame: CGRect(x: 0, y: 0, width: headerWidth, height: headerHeight))
+        let container = UIView(frame: CGRect(x: 0, y: 0, width: headerWidth, height: 44))
         container.backgroundColor = .black
         container.isOpaque = true
         mainToolBar?.isHidden = true  // Using custom header instead
         
-        // If using IB outlets, break bar item connection so toolbar won't steal them back
         if filterMenuButton != nil { filterButtonBar?.customView = nil }
         if bandSearch != nil { searchButtonBar?.customView = nil }
         filterBtn.removeFromSuperview()
@@ -4366,7 +4360,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         filterBtn.setContentHuggingPriority(.defaultHigh, for: .horizontal)
         searchBar.setContentHuggingPriority(.defaultLow, for: .horizontal)
         
-        // Share button: custom UIButton (aligns with Day column on right)
         let shareBtn = UIButton(type: .system)
         shareBtn.setImage(UIImage(named: "icon-share"), for: .normal)
         shareBtn.tintColor = UIColor(white: 0.67, alpha: 1)
@@ -4376,7 +4369,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         shareBtn.setContentHuggingPriority(.defaultHigh, for: .horizontal)
         customShareButtonView = shareBtn
         
-        // Badge container: allocates space so the filter count isn't clipped by the narrow Filters button
         let badgeContainer = UIView()
         badgeContainer.backgroundColor = .clear
         badgeContainer.translatesAutoresizingMaskIntoConstraints = false
@@ -4393,8 +4385,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         stack.translatesAutoresizingMaskIntoConstraints = false
         
         container.addSubview(stack)
-        
-        // Align with table content: filter at 4pt (matches bandName), share at trailing-16 (matches Day label)
         NSLayoutConstraint.activate([
             stack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 4),
             stack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
@@ -5785,8 +5775,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     func presentWebView(url: String, isLoading: Bool = false) {
         DispatchQueue.main.async {
             if let webViewController = self.storyboard?.instantiateViewController(withIdentifier: "StatsWebViewController") as? WebViewController {
-                setUrl(url)
-
                 let backItem = UIBarButtonItem()
                 backItem.title = "Back"
 
@@ -5856,9 +5844,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                         try htmlContent.write(to: tempUrl, atomically: true, encoding: .utf8)
                         setUrl(tempUrl.absoluteString)
                     } catch {
-                        // Fallback to basic alert if HTML creation fails
+                        // Don't push WebView if we couldn't create the loading page
                         self.showAlert("Loading Stats", message: "Please wait while stats are being downloaded...")
+                        return
                     }
+                } else {
+                    setUrl(url)
                 }
 
                 if self.isSplitViewCapable() {
