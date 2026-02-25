@@ -383,6 +383,16 @@ public class mainListHandler {
     }
 
     /**
+     * Returns the number of records hidden by filters (unfiltered - displayed).
+     * Used for the filter badge counter, matching iOS behavior.
+     */
+    public int getHiddenRecordsCount() {
+        int displayed = (arrayAdapter != null) ? arrayAdapter.getCount() : 0;
+        int hidden = Math.max(0, allUpcomingEvents - displayed);
+        return hidden;
+    }
+
+    /**
      * Applies all filters to a band at a given time index.
      * @param bandName The band name.
      * @param timeIndex The time index.

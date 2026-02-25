@@ -2737,6 +2737,26 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         }
     }
 
+    /**
+     * Updates the filter badge (hidden records count) to match iOS.
+     * Only shows when in schedule view and filters are hiding records.
+     */
+    public void updateFilterBadge() {
+        TextView badge = (TextView) findViewById(R.id.filterCountBadge);
+        if (badge == null) return;
+        if (listHandler == null || !staticVariables.preferences.getShowScheduleView()) {
+            badge.setVisibility(View.GONE);
+            return;
+        }
+        int hiddenCount = listHandler.getHiddenRecordsCount();
+        if (hiddenCount > 0) {
+            badge.setText(String.valueOf(hiddenCount));
+            badge.setVisibility(View.VISIBLE);
+        } else {
+            badge.setVisibility(View.GONE);
+        }
+    }
+
     private void displayBandData() {
         Log.d("MDF_DEBUG", "🎨 displayBandData() START");
         Log.d("DisplayListData", "starting display ");
@@ -2771,6 +2791,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 Log.e("MDF_DEBUG", "🎨 displayBandData() - ERROR in displayBandDataWithoutSchedule(): " + e.getMessage(), e);
             }
         }
+        updateFilterBadge();
         // After displaying data, check if we're in landscape (phone) and should show calendar.
         // Fixes launch-in-landscape showing list until user rotates away and back.
         if (showScheduleView) {
