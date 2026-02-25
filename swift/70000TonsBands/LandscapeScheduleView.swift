@@ -156,12 +156,14 @@ func getUnfilteredVenuesForDay(_ dayLabel: String) -> [VenueColumn] {
 struct TrackableScrollView<Content: View>: View {
     let axes: Axis.Set
     let showsIndicators: Bool
+    var scrollDisabled: Bool = false
     @Binding var contentOffset: CGPoint
     let content: Content
     
-    init(axes: Axis.Set = .vertical, showsIndicators: Bool = true, contentOffset: Binding<CGPoint>, @ViewBuilder content: () -> Content) {
+    init(axes: Axis.Set = .vertical, showsIndicators: Bool = true, scrollDisabled: Bool = false, contentOffset: Binding<CGPoint>, @ViewBuilder content: () -> Content) {
         self.axes = axes
         self.showsIndicators = showsIndicators
+        self.scrollDisabled = scrollDisabled
         self._contentOffset = contentOffset
         self.content = content()
     }
@@ -178,6 +180,7 @@ struct TrackableScrollView<Content: View>: View {
             
             content
         }
+        .scrollDisabled(scrollDisabled)
         .coordinateSpace(name: "scrollView")
         .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
             contentOffset = CGPoint(x: -value.x, y: -value.y)
@@ -420,6 +423,7 @@ struct LandscapeScheduleView: View {
                     StickyHeaderScrollView(
                     dayData: dayData,
                     hiddenVenueNames: viewModel.hiddenVenueNames,
+                    scrollDisabled: showVenueFilterSheet,
                     onBandTapped: onBandTapped,
                     onLongPress: onLongPress,
                     priorityManager: priorityManager,
@@ -480,27 +484,29 @@ struct LandscapeScheduleView: View {
         let hasHiddenRecordsOnThisDay = hiddenRecordsCount > 0 && hasActiveFilters
         
         return HStack {
-            // Venue filter button (left side to match portrait); badge shows records hidden count for this day
+            // Venue filter button - 100% match to list view: icon + "Filters" text + badge (when filters active)
             Button(action: {
                 showVenueFilterSheet = true
             }) {
-                ZStack(alignment: .topTrailing) {
-                    Image(systemName: "line.3.horizontal.decrease.circle")
+                HStack(spacing: 8) {
+                    Image(systemName: "line.3.horizontal.decrease")
                         .font(.system(size: 22))
-                        .foregroundColor(hasHiddenRecordsOnThisDay ? .orange : .white)
+                    Text(NSLocalizedString("Filters", comment: ""))
+                        .font(.system(size: 25))
                     if hasHiddenRecordsOnThisDay && hiddenRecordsCount > 0 {
                         Text("\(hiddenRecordsCount)")
                             .font(.system(size: 11, weight: .bold))
                             .foregroundColor(.black)
-                            .frame(minWidth: 16, minHeight: 16)
+                            .padding(.horizontal, 4)
+                            .padding(.vertical, 3)
+                            .frame(minWidth: 28, minHeight: 28)
                             .background(Color.orange)
-                            .clipShape(Circle())
-                            .offset(x: 8, y: -8)
+                            .clipShape(Capsule())
                     }
                 }
-                .frame(width: 44, height: 44)
+                .foregroundColor(Color(white: 0.67))
             }
-            .padding(.leading, 8)
+            .padding(.leading, 4)
             
             Spacer()
             
@@ -560,7 +566,7 @@ struct LandscapeScheduleView: View {
                 .padding(.trailing, 16)
             }
         }
-        .frame(height: hasHiddenRecordsOnThisDay ? 76 : 60)
+        .frame(height: 60)
         .background(Color.black)
     }
     
@@ -586,6 +592,7 @@ struct LandscapeScheduleView: View {
     private struct StickyHeaderScrollView: View {
         let dayData: DayScheduleData
         let hiddenVenueNames: Set<String>
+        let scrollDisabled: Bool
         let onBandTapped: (String, String?) -> Void
         let onLongPress: ((String, String, String, String, String) -> Void)?
         let priorityManager: SQLitePriorityManager
@@ -605,7 +612,7 @@ struct LandscapeScheduleView: View {
                 
                 ZStack(alignment: .topLeading) {
                     // Main scrollable content (vertical only)
-                    TrackableScrollView(axes: .vertical, showsIndicators: true, contentOffset: $scrollOffset) {
+                    TrackableScrollView(axes: .vertical, showsIndicators: true, scrollDisabled: scrollDisabled, contentOffset: $scrollOffset) {
                         VStack(alignment: .leading, spacing: 0) {
                             // Spacer for headers
                             Color.clear.frame(height: 44)

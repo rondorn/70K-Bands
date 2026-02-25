@@ -129,6 +129,41 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
     // Note: New struct-based API doesn't use NSPredicate, so we filter directly
     let allEvents = DataManager.shared.fetchEvents(forYear: eventYear)
     
+    // UNFILTERED COUNT - for portrait filter badge (matches landscape logic)
+    // Apply only expiration filter; include all events, venues, priorities, etc.
+    let unfilteredEventsForCount: [EventData]
+    if getHideExpireScheduleData() {
+        let currentTime = Date().timeIntervalSinceReferenceDate
+        unfilteredEventsForCount = allEvents.filter { event in
+            var endTimeIndex = event.endTimeIndex
+            if event.timeIndex > endTimeIndex { endTimeIndex += 86400 }
+            return endTimeIndex + 600 > currentTime
+        }
+    } else {
+        unfilteredEventsForCount = allEvents
+    }
+    let bandsWithUnfilteredEvents = Set(unfilteredEventsForCount.map { $0.bandName })
+    let fetchedBandsForUnfiltered = DataManager.shared.fetchBands(forYear: eventYear)
+    let unfilteredBandOnlyCount = fetchedBandsForUnfiltered.filter { band in
+        let name = band.bandName
+        guard !name.isEmpty else { return false }
+        return !bandsWithUnfilteredEvents.contains(name)
+    }.count
+    if getShowScheduleView() {
+        unfilteredBandCount = unfilteredEventsForCount.count + unfilteredBandOnlyCount
+    } else {
+        // Bands-only: unfiltered = all bands (with expiration applied)
+        if getHideExpireScheduleData() {
+            let currentTime = Date().timeIntervalSinceReferenceDate
+            unfilteredBandCount = fetchedBandsForUnfiltered.filter { band in
+                let events = DataManager.shared.fetchEventsForBand(band.bandName, forYear: eventYear)
+                return events.isEmpty || events.contains(where: { $0.timeIndex > currentTime })
+            }.count
+        } else {
+            unfilteredBandCount = fetchedBandsForUnfiltered.count
+        }
+    }
+    
     // Apply filters directly on structs
     let filteredEvents = allEvents.filter { event in
         let eventType = event.eventType ?? ""

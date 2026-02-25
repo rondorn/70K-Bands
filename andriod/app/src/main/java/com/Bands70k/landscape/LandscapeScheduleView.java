@@ -144,8 +144,8 @@ public class LandscapeScheduleView extends LinearLayout {
     private TextView dayLabel;
     private TextView venueFilterSubtitle; // "X venues hidden" when filter active
     private Button filterButton; // Opens venue filter sheet (like iOS calendar)
-    private TextView filterCountBadge;   // Badge on filter button showing hidden venue count (like iOS)
-    private FrameLayout filterButtonWrapper; // Wraps filter button + badge for overlay
+    private TextView filterCountBadge;   // Badge showing hidden records count (like iOS)
+    private LinearLayout filterButtonWrapper; // Wraps icon + "Filters" text + badge (iOS-style row)
     private Button listViewButton; // Button to return to list view (tablets only)
     private ScrollView contentScrollView;
     private LinearLayout contentLayout;
@@ -391,7 +391,69 @@ public class LandscapeScheduleView extends LinearLayout {
         navContainer.addView(navGroup);
         headerLayout.addView(navContainer);
         
-        // Right side: filter button + list view button (tablet)
+        // Left side: filter button (hamburger + "Filters" + badge) — matches iOS layout
+        LinearLayout headerLeftLayout = new LinearLayout(context);
+        headerLeftLayout.setOrientation(LinearLayout.HORIZONTAL);
+        headerLeftLayout.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
+        FrameLayout.LayoutParams headerLeftParams = new FrameLayout.LayoutParams(
+            LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+        headerLeftParams.gravity = Gravity.START | Gravity.TOP;
+        headerLeftParams.setMargins(0, dpToPx(1), dpToPx(8), dpToPx(8));
+        headerLeftLayout.setLayoutParams(headerLeftParams);
+        
+        // Filter menu container: icon + "Filters" text + badge (iOS-style)
+        filterButtonWrapper = new LinearLayout(context);
+        filterButtonWrapper.setOrientation(LinearLayout.HORIZONTAL);
+        filterButtonWrapper.setGravity(Gravity.CENTER_VERTICAL);
+        filterButtonWrapper.setClickable(true);
+        filterButtonWrapper.setFocusable(true);
+        filterButtonWrapper.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showVenueFilterSheet();
+            }
+        });
+        int filterRowHeight = dpToPx(38);
+        filterButton = new Button(context);
+        filterButton.setText(context.getResources().getString(R.string.Filters));
+        filterButton.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
+        filterButton.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_filter_lines, 0, 0, 0);
+        filterButton.setCompoundDrawablePadding(dpToPx(8));
+        filterButton.setTextColor(Color.argb(255, 171, 171, 171)); // #ABABAB like iOS
+        filterButton.setTextSize(18);
+        filterButton.setTypeface(null, android.graphics.Typeface.BOLD);
+        filterButton.setBackgroundColor(Color.TRANSPARENT);
+        filterButton.setMinHeight(0);
+        filterButton.setMinWidth(0);
+        filterButton.setPadding(dpToPx(4), 0, dpToPx(4), 0);
+        filterButton.setClickable(false);
+        filterButton.setFocusable(false);
+        LinearLayout.LayoutParams filterBtnParams = new LinearLayout.LayoutParams(
+            LayoutParams.WRAP_CONTENT, filterRowHeight);
+        filterButton.setLayoutParams(filterBtnParams);
+        filterButtonWrapper.addView(filterButton);
+        filterCountBadge = new TextView(context);
+        filterCountBadge.setTextSize(11);
+        filterCountBadge.setTextColor(Color.BLACK);
+        filterCountBadge.setTypeface(null, android.graphics.Typeface.BOLD);
+        filterCountBadge.setGravity(Gravity.CENTER);
+        filterCountBadge.setBackground(getRoundedBackground(0xFFFFA500)); // Orange oval like iOS
+        filterCountBadge.setVisibility(View.GONE);
+        filterCountBadge.setPadding(dpToPx(8), dpToPx(3), dpToPx(8), dpToPx(3));
+        filterCountBadge.setMinWidth(dpToPx(28));
+        filterCountBadge.setMinHeight(dpToPx(28));
+        LinearLayout.LayoutParams badgeParams = new LinearLayout.LayoutParams(
+            LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+        badgeParams.setMargins(dpToPx(8), 0, 0, 0);
+        filterCountBadge.setLayoutParams(badgeParams);
+        filterButtonWrapper.addView(filterCountBadge);
+        LinearLayout.LayoutParams wrapperParams = new LinearLayout.LayoutParams(
+            LayoutParams.WRAP_CONTENT, filterRowHeight);
+        filterButtonWrapper.setLayoutParams(wrapperParams);
+        headerLeftLayout.addView(filterButtonWrapper);
+        headerLayout.addView(headerLeftLayout);
+        
+        // Right side: list view button (tablet only)
         headerRightLayout = new LinearLayout(context);
         headerRightLayout.setOrientation(LinearLayout.HORIZONTAL);
         headerRightLayout.setGravity(Gravity.CENTER_VERTICAL | Gravity.END);
@@ -400,65 +462,6 @@ public class LandscapeScheduleView extends LinearLayout {
         headerRightParams.gravity = Gravity.END | Gravity.TOP;
         headerRightParams.setMargins(0, dpToPx(1), dpToPx(8), dpToPx(8));
         headerRightLayout.setLayoutParams(headerRightParams);
-        
-        filterButtonWrapper = new FrameLayout(context);
-        // Allow badge to extend beyond button bounds (negative margins)
-        filterButtonWrapper.setClipChildren(false);
-        filterButtonWrapper.setClipToPadding(false);
-        filterButton = new Button(context);
-        filterButton.setText("");
-        // Icon will be centered when no badge, left-aligned when badge is visible
-        filterButton.setGravity(Gravity.CENTER);
-        // Use ImageButton or set drawable with proper centering
-        filterButton.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_filter_lines, 0, 0, 0);
-        filterButton.setCompoundDrawablePadding(0);
-        filterButton.setTextColor(Color.WHITE);
-        // Set minimum size - will expand when badge is visible
-        int buttonSize = dpToPx(44);
-        filterButton.setMinWidth(buttonSize);
-        filterButton.setMinHeight(buttonSize);
-        // Don't set maxWidth/maxHeight - allow expansion when badge is visible
-        // Remove padding to center icon properly (will be adjusted in updateDisplay)
-        filterButton.setPadding(0, 0, 0, 0);
-        filterButton.setBackground(getRoundedBackground(Color.argb(80, 128, 128, 128)));
-        filterButton.setClickable(true);
-        filterButton.setFocusable(false);
-        filterButton.setFocusableInTouchMode(false);
-        FrameLayout.LayoutParams filterBtnParams = new FrameLayout.LayoutParams(
-            buttonSize, buttonSize);
-        filterBtnParams.gravity = Gravity.CENTER;
-        filterButton.setLayoutParams(filterBtnParams);
-        filterButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showVenueFilterSheet();
-            }
-        });
-        filterButtonWrapper.addView(filterButton);
-        filterCountBadge = new TextView(context);
-        filterCountBadge.setTextSize(11);
-        filterCountBadge.setTextColor(Color.WHITE);
-        filterCountBadge.setTypeface(null, android.graphics.Typeface.BOLD);
-        filterCountBadge.setGravity(Gravity.CENTER);
-        filterCountBadge.setBackground(getRoundedBackground(0xFFFFA500)); // Orange circle
-        filterCountBadge.setVisibility(View.GONE);
-        // Add elevation to ensure badge appears above button
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-            filterCountBadge.setElevation(dpToPx(4));
-        }
-        int badgeSize = dpToPx(18);
-        FrameLayout.LayoutParams badgeParams = new FrameLayout.LayoutParams(badgeSize, badgeSize);
-        badgeParams.gravity = Gravity.TOP | Gravity.END;
-        // Position badge inside button at top-right corner (will be adjusted in updateDisplay)
-        badgeParams.setMargins(0, dpToPx(2), dpToPx(2), 0);
-        filterCountBadge.setLayoutParams(badgeParams);
-        filterButtonWrapper.addView(filterCountBadge);
-        LinearLayout.LayoutParams wrapperParams = new LinearLayout.LayoutParams(
-            LayoutParams.WRAP_CONTENT, dpToPx(44));
-        wrapperParams.setMargins(0, 0, dpToPx(8), 0);
-        filterButtonWrapper.setLayoutParams(wrapperParams);
-        headerRightLayout.addView(filterButtonWrapper);
-        
         headerLayout.addView(headerRightLayout);
         
         if (isSplitViewCapable) {
@@ -935,84 +938,18 @@ public class LandscapeScheduleView extends LinearLayout {
                 }
             }
             
-            int buttonSize = dpToPx(44);
-            if (hasActiveFilters) {
-                // FILTERS ACTIVE: Show badge, expand button, left-align icon
-                filterButton.setBackground(getRoundedBackground(0xFFFFA500)); // Orange when filter active
-                filterButton.setTextColor(Color.BLACK); // Dark text on orange for contrast
-                filterButton.setText(""); // Always icon only, count shown in badge
-                filterButton.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
-                filterButton.setPadding(dpToPx(8), 0, dpToPx(8), 0);
-                
-                // Make button wider to accommodate badge
-                int expandedWidth = dpToPx(68);
-                FrameLayout.LayoutParams filterBtnParams = (FrameLayout.LayoutParams) filterButton.getLayoutParams();
-                filterBtnParams.width = expandedWidth;
-                filterBtnParams.height = buttonSize;
-                filterBtnParams.gravity = Gravity.START | Gravity.CENTER_VERTICAL;
-                filterButton.setLayoutParams(filterBtnParams);
-                
-                // Make wrapper wider too
-                LinearLayout.LayoutParams wrapperParams = (LinearLayout.LayoutParams) filterButtonWrapper.getLayoutParams();
-                wrapperParams.width = expandedWidth;
-                wrapperParams.height = dpToPx(44);
-                wrapperParams.setMargins(0, 0, dpToPx(8), 0);
-                filterButtonWrapper.setLayoutParams(wrapperParams);
-                
-                // Show badge - try to get count from unfilteredEventCountsPerDay if available
-                int totalFilteredCount = 0;
-                for (Integer count : unfilteredEventCountsPerDay.values()) {
-                    totalFilteredCount += count;
-                }
-                
-                if (totalFilteredCount > 0) {
-                    filterCountBadge.setText(String.valueOf(totalFilteredCount));
-                } else {
-                    // If we can't determine count, show "!" to indicate filters are active
-                    filterCountBadge.setText("!");
-                }
-                
-                int badgeSize = (totalFilteredCount >= 10 || totalFilteredCount == 0) ? dpToPx(22) : dpToPx(18);
-                FrameLayout.LayoutParams badgeParams = (FrameLayout.LayoutParams) filterCountBadge.getLayoutParams();
-                if (badgeParams != null) {
-                    badgeParams.width = badgeSize;
-                    badgeParams.height = badgeSize;
-                    badgeParams.gravity = Gravity.TOP | Gravity.END;
-                    badgeParams.setMargins(0, dpToPx(2), dpToPx(2), 0);
-                    filterCountBadge.setLayoutParams(badgeParams);
-                }
+            // iOS-style: icon + "Filters" text always visible; badge only when filters hide records
+            int totalFilteredCount = 0;
+            for (Integer count : unfilteredEventCountsPerDay.values()) {
+                totalFilteredCount += count;
+            }
+            if (hasActiveFilters && totalFilteredCount > 0) {
+                filterCountBadge.setText(String.valueOf(totalFilteredCount));
                 filterCountBadge.setVisibility(View.VISIBLE);
-                filterCountBadge.bringToFront();
-                filterButtonWrapper.bringChildToFront(filterCountBadge);
+            } else if (hasActiveFilters) {
+                filterCountBadge.setText("!");
+                filterCountBadge.setVisibility(View.VISIBLE);
             } else {
-                // NO FILTERS: Hide badge, square button, center icon
-                filterButton.setBackground(getRoundedBackground(Color.argb(80, 128, 128, 128)));
-                filterButton.setTextColor(Color.WHITE);
-                filterButton.setText(""); // Icon only when no filters
-                filterButton.setGravity(Gravity.CENTER);
-                
-                // Center the icon
-                android.graphics.drawable.Drawable drawable = filterButton.getCompoundDrawables()[0];
-                int iconWidth = drawable != null ? drawable.getIntrinsicWidth() : dpToPx(24);
-                int iconPadding = (buttonSize - iconWidth) / 2;
-                if (iconPadding < 0) iconPadding = 0;
-                filterButton.setPadding(iconPadding, 0, iconPadding, 0);
-                
-                // Reset button to square size
-                FrameLayout.LayoutParams filterBtnParams = (FrameLayout.LayoutParams) filterButton.getLayoutParams();
-                filterBtnParams.width = buttonSize;
-                filterBtnParams.height = buttonSize;
-                filterBtnParams.gravity = Gravity.CENTER;
-                filterButton.setLayoutParams(filterBtnParams);
-                
-                // Reset wrapper to wrap content
-                LinearLayout.LayoutParams wrapperParams = (LinearLayout.LayoutParams) filterButtonWrapper.getLayoutParams();
-                wrapperParams.width = LayoutParams.WRAP_CONTENT;
-                wrapperParams.height = dpToPx(44);
-                wrapperParams.setMargins(0, 0, dpToPx(8), 0);
-                filterButtonWrapper.setLayoutParams(wrapperParams);
-                
-                // Hide badge
                 filterCountBadge.setVisibility(View.GONE);
             }
             
@@ -1040,85 +977,12 @@ public class LandscapeScheduleView extends LinearLayout {
             String eventsLabel = context.getResources().getString(R.string.Events);
             dayLabel.setText(localizedDay + " - " + visibleEventCount + " " + eventsLabel);
             Log.d(TAG, "updateDisplay() - displaying day: '" + localizedDay + "' (raw dayLabel='" + currentDay.dayLabel + "')");
-            int buttonSize = dpToPx(44);
-            
+            // iOS-style: badge shows hidden records count for current day
             if (hiddenRecordsCount > 0) {
-                // FILTERS ACTIVE: Show badge, expand button, left-align icon
-                filterButton.setBackground(getRoundedBackground(0xFFFFA500)); // Orange when filter active
-                filterButton.setTextColor(Color.BLACK); // Dark text on orange for contrast
-                filterButton.setText(""); // Always icon only, count shown in badge
-                filterButton.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
-                // Add left padding to position icon away from left edge
-                filterButton.setPadding(dpToPx(8), 0, dpToPx(8), 0);
-                
-                // Make button wider to accommodate badge (especially for 2-digit numbers)
-                int expandedWidth = dpToPx(68);
-                FrameLayout.LayoutParams filterBtnParams = (FrameLayout.LayoutParams) filterButton.getLayoutParams();
-                filterBtnParams.width = expandedWidth;
-                filterBtnParams.height = buttonSize;
-                filterBtnParams.gravity = Gravity.START | Gravity.CENTER_VERTICAL;
-                filterButton.setLayoutParams(filterBtnParams);
-                
-                // Make wrapper wider too
-                LinearLayout.LayoutParams wrapperParams = (LinearLayout.LayoutParams) filterButtonWrapper.getLayoutParams();
-                wrapperParams.width = expandedWidth;
-                wrapperParams.height = dpToPx(44);
-                wrapperParams.setMargins(0, 0, dpToPx(8), 0);
-                filterButtonWrapper.setLayoutParams(wrapperParams);
-                
-                // Show badge with count - position it inside the button at top-right
                 filterCountBadge.setText(String.valueOf(hiddenRecordsCount));
-                // Adjust badge size for 2-digit numbers if needed
-                int badgeSize = hiddenRecordsCount >= 10 ? dpToPx(22) : dpToPx(18);
-                FrameLayout.LayoutParams badgeParams = (FrameLayout.LayoutParams) filterCountBadge.getLayoutParams();
-                if (badgeParams != null) {
-                    badgeParams.width = badgeSize;
-                    badgeParams.height = badgeSize;
-                    badgeParams.gravity = Gravity.TOP | Gravity.END;
-                    // Position badge inside button at top-right corner (small positive margins instead of negative)
-                    badgeParams.setMargins(0, dpToPx(2), dpToPx(2), 0);
-                    filterCountBadge.setLayoutParams(badgeParams);
-                }
                 filterCountBadge.setVisibility(View.VISIBLE);
-                // Ensure badge is on top and visible
-                filterCountBadge.bringToFront();
-                filterButtonWrapper.bringChildToFront(filterCountBadge);
-                // Force badge to be drawn
-                filterCountBadge.invalidate();
-                filterCountBadge.requestLayout();
             } else {
-                // NO FILTERS: Hide badge, square button, center icon
                 venueFilterSubtitle.setVisibility(View.GONE);
-                filterButton.setBackground(getRoundedBackground(Color.argb(80, 128, 128, 128)));
-                filterButton.setTextColor(Color.WHITE);
-                filterButton.setText(""); // Icon only when no filters
-                filterButton.setGravity(Gravity.CENTER);
-                
-                // To center a left compound drawable, we need equal padding on left and right
-                // Estimate: if button is 44dp and icon is ~24dp, we need ~10dp padding each side
-                // But let's use a simpler approach: measure the drawable if possible
-                android.graphics.drawable.Drawable drawable = filterButton.getCompoundDrawables()[0];
-                int iconWidth = drawable != null ? drawable.getIntrinsicWidth() : dpToPx(24);
-                int iconPadding = (buttonSize - iconWidth) / 2;
-                if (iconPadding < 0) iconPadding = 0;
-                // Use symmetric padding to visually center the icon
-                filterButton.setPadding(iconPadding, 0, iconPadding, 0);
-                
-                // Reset button to square size
-                FrameLayout.LayoutParams filterBtnParams = (FrameLayout.LayoutParams) filterButton.getLayoutParams();
-                filterBtnParams.width = buttonSize;
-                filterBtnParams.height = buttonSize;
-                filterBtnParams.gravity = Gravity.CENTER;
-                filterButton.setLayoutParams(filterBtnParams);
-                
-                // Reset wrapper to wrap content (but maintain height)
-                LinearLayout.LayoutParams wrapperParams = (LinearLayout.LayoutParams) filterButtonWrapper.getLayoutParams();
-                wrapperParams.width = LayoutParams.WRAP_CONTENT;
-                wrapperParams.height = dpToPx(44);
-                wrapperParams.setMargins(0, 0, dpToPx(8), 0);
-                filterButtonWrapper.setLayoutParams(wrapperParams);
-                
-                // Hide badge to free up space - this allows button to be smaller
                 filterCountBadge.setVisibility(View.GONE);
             }
             
