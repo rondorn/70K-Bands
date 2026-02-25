@@ -217,6 +217,11 @@
 "Filters" = "Filtre"; //menu name
 
 "Day" = "Dag";
+
+"Viewing Day Format" = "Visning af %@";
+"No More Days" = "Ingen flere dage";
+"No Previous Days" = "Ingen tidligere dage";
+
 "Bands" = "Bands";
 "Events" = "Begivenheder";
 

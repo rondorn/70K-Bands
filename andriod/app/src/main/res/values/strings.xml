@@ -315,6 +315,10 @@
 
     <string name="Day">Day</string>
 
+    <string name="viewing_day_format">Viewing %s</string>
+    <string name="no_more_days">No More Days</string>
+    <string name="no_previous_days">No Previous Days</string>
+
     <string name="Bands">Bands</string>
     <string name="Events">Events</string>
 

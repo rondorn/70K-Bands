@@ -6,6 +6,8 @@ import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 
@@ -35,7 +37,8 @@ public class LandscapeScheduleActivity extends Activity {
     private LandscapeScheduleView scheduleView;
     private String currentViewingDay;
     private boolean initialIsSplitViewCapable; // Store initial value for reference
-    
+    private GestureDetector swipeGestureDetector;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -96,6 +99,7 @@ public class LandscapeScheduleActivity extends Activity {
         setupDismissListener(isSplitViewCapable);
         
         setContentView(scheduleView);
+        initializeSwipeGestureDetector();
         // Theme A (full display): no insets → no padding, full screen.
         // Theme B (nav/status bar present): insets > 0 → translucent bar + padding so content doesn't sit under bar.
         ViewCompat.setOnApplyWindowInsetsListener(scheduleView, (v, windowInsets) -> {
@@ -282,5 +286,76 @@ public class LandscapeScheduleActivity extends Activity {
         Log.d(TAG, "Back button pressed");
         finishWithResult(scheduleView != null ? scheduleView.getCurrentDay() : null);
         super.onBackPressed();
+    }
+
+    private void initializeSwipeGestureDetector() {
+        swipeGestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+            private static final int SWIPE_MIN_DISTANCE = 100;
+            private static final int SWIPE_MAX_OFF_PATH = 300;
+            private static final int SWIPE_THRESHOLD_VELOCITY = 150;
+
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                if (e1 == null || e2 == null || scheduleView == null) return false;
+                float deltaX = e2.getX() - e1.getX();
+                float deltaY = e2.getY() - e1.getY();
+                if (Math.abs(deltaX) > Math.abs(deltaY) &&
+                    Math.abs(deltaY) < SWIPE_MAX_OFF_PATH &&
+                    Math.abs(deltaX) > SWIPE_MIN_DISTANCE &&
+                    Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+                    provideSwipeFeedback();
+                    if (deltaX > 0) {
+                        if (scheduleView.performSwipeToPreviousDay()) {
+                            String day = scheduleView.getCurrentDay();
+                            if (day != null) {
+                                com.Bands70k.HelpMessageHandler.showMessage(
+                                    getString(com.Bands70k.R.string.viewing_day_format, day), scheduleView);
+                            }
+                        } else {
+                            com.Bands70k.HelpMessageHandler.showMessage(
+                                getString(com.Bands70k.R.string.no_previous_days), scheduleView);
+                            scheduleView.performRubberBand(false);
+                        }
+                    } else {
+                        if (scheduleView.performSwipeToNextDay()) {
+                            String day = scheduleView.getCurrentDay();
+                            if (day != null) {
+                                com.Bands70k.HelpMessageHandler.showMessage(
+                                    getString(com.Bands70k.R.string.viewing_day_format, day), scheduleView);
+                            }
+                        } else {
+                            com.Bands70k.HelpMessageHandler.showMessage(
+                                getString(com.Bands70k.R.string.no_more_days), scheduleView);
+                            scheduleView.performRubberBand(true);
+                        }
+                    }
+                    return true;
+                }
+                return false;
+            }
+        });
+    }
+
+    private void provideSwipeFeedback() {
+        try {
+            android.os.Vibrator vibrator = (android.os.Vibrator) getSystemService(android.content.Context.VIBRATOR_SERVICE);
+            if (vibrator != null && vibrator.hasVibrator()) {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    vibrator.vibrate(android.os.VibrationEffect.createOneShot(50, android.os.VibrationEffect.DEFAULT_AMPLITUDE));
+                } else {
+                    vibrator.vibrate(50);
+                }
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Could not provide haptic feedback", e);
+        }
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        if (swipeGestureDetector != null && swipeGestureDetector.onTouchEvent(event)) {
+            return true;
+        }
+        return super.dispatchTouchEvent(event);
     }
 }

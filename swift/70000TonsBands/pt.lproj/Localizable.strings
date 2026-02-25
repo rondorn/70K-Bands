@@ -240,6 +240,11 @@
 "Filters" = "Filtros"; //menu name
 
 "Day" = "Día";
+
+"Viewing Day Format" = "Visualizando %@";
+"No More Days" = "Não há mais dias";
+"No Previous Days" = "Não há dias anteriores";
+
 "Bands" = "Bandas";
 "Events" = "Eventos";
 

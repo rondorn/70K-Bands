@@ -241,6 +241,10 @@
 
 "Day" = "Día";
 
+"Viewing Day Format" = "Viendo %@";
+"No More Days" = "No hay más días";
+"No Previous Days" = "No hay días anteriores";
+
 "Bands" = "Bandas";
 "Events" = "Eventos";
 

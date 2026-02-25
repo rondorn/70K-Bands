@@ -57,13 +57,17 @@ class ToastMessages : UILabel {
         - parent: The parent UIViewController to display the toast in.
         - cellLocation: The CGRect specifying where to display the toast.
         - placeHigh: Whether to place the toast high on the screen.
+        - placeAtBottom: Whether to place the toast at the bottom of the screen.
      */
-    public func show(_ parent: UIViewController, cellLocation: CGRect, placeHigh: Bool) {
+    public func show(_ parent: UIViewController, cellLocation: CGRect, placeHigh: Bool, placeAtBottom: Bool = false) {
         
         print ("Toast cell location is \(cellLocation)")
         var heightOffSet: CGFloat = cellLocation.midY - (cellLocation.height/8);
         
-        if placeHigh == true {
+        if placeAtBottom {
+            parent.view.layoutIfNeeded()
+            heightOffSet = parent.view.bounds.height - parent.view.safeAreaInsets.bottom - HEIGHT - BOTTOM_MARGIN
+        } else if placeHigh == true {
             // Ensure layout is up to date to get correct safeAreaInsets
             parent.view.layoutIfNeeded()
             heightOffSet = parent.view.safeAreaInsets.top + SIDE_MARGIN
@@ -74,10 +78,19 @@ class ToastMessages : UILabel {
 
         ToastMessages.cellLocationStore = frame
         
-        //Log.d("showing \(String(describing: text))")
+        // UIHostingController doesn't support adding UIKit subviews to its view; use superview instead
+        let containerView: UIView
+        if String(describing: type(of: parent)).contains("UIHostingController"),
+           let superview = parent.view.superview {
+            containerView = superview
+            frame = parent.view.convert(frame, to: superview)
+        } else {
+            containerView = parent.view
+        }
+        
         ToastMessages.showing = self
         alpha = 0
-        parent.view.addSubview(self)
+        containerView.addSubview(self)
         
         self.lineBreakMode = NSLineBreakMode.byWordWrapping
         self.numberOfLines = 4
