@@ -393,8 +393,6 @@ class IndependentShowsAttendedCollector: BaseIndependentCollector {
     }
     
     override func performCollection(eventYearOverride: Bool, completion: @escaping (Bool) -> Void) {
-        print("[ShowsAttended] Starting independent collection")
-        
         // For shows attended, we just need to ensure data is loaded
         // No network download needed - it's user-generated data
         loadShowsAttended()
@@ -404,15 +402,12 @@ class IndependentShowsAttendedCollector: BaseIndependentCollector {
     private func loadShowsAttended() {
         guard let data = try? Data(contentsOf: URL(fileURLWithPath: showsAttended)),
               let loadedArray = try? JSONSerialization.jsonObject(with: data) as? [String: String] else {
-            print("[ShowsAttended] Could not load shows attended data")
             return
         }
         
         attendedLock.lock()
         showsAttendedArray = loadedArray
         attendedLock.unlock()
-        
-        print("[ShowsAttended] Loaded \(showsAttendedArray.count) attended shows")
     }
 }
 
