@@ -104,34 +104,62 @@
         android:paddingBottom="10dp"
         android:background="#FF000000">
 
-        <Button
-            android:id="@+id/FilerMenu"
+        <!-- Filters menu: hamburger icon + "Filters" text + badge (iOS-style) -->
+        <LinearLayout
+            android:id="@+id/filterMenuContainer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:minHeight="31dp"
             android:layout_alignParentStart="true"
             android:layout_centerVertical="true"
             android:layout_marginStart="10dp"
-            android:layout_marginEnd="8dp"
-            android:background="@color/common_google_signin_btn_text_light_pressed"
-            android:gravity="start|center_vertical"
-            android:text="@string/Filters"
-            android:textColor="#A2AAAD"
-            android:textAppearance="@style/TextAppearance.AppCompat.Light.Widget.PopupMenu.Large"
-            android:drawableLeft="@drawable/ic_menu_copy"
-            android:textOff="@string/Filters"
-            android:textOn="@string/Filters"
-            android:textSize="20sp"
-            android:maxLines="1"
-            android:textStyle="bold"
-            android:paddingStart="8dp"
-            android:paddingEnd="8dp" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <Button
+                android:id="@+id/FilerMenu"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="38dp"
+                android:minWidth="0dp"
+                android:background="#FF000000"
+                android:gravity="start|center_vertical"
+                android:text="@string/Filters"
+                android:textColor="#ABABAB"
+                android:drawableLeft="@drawable/ic_filter_lines"
+                app:drawableTint="#ABABAB"
+                android:drawablePadding="8dp"
+                android:textSize="18sp"
+                android:maxLines="1"
+                android:textStyle="bold"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp"
+                android:contentDescription="Filters" />
+
+            <!-- Hidden records counter badge (orange oval, like iOS) -->
+            <TextView
+                android:id="@+id/filterCountBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:minWidth="28dp"
+                android:minHeight="28dp"
+                android:gravity="center"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textColor="#FF000000"
+                android:background="@drawable/filter_badge_background"
+                android:visibility="gone"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:paddingTop="3dp"
+                android:paddingBottom="3dp" />
+        </LinearLayout>
 
         <androidx.appcompat.widget.SearchView
             android:id="@+id/searchCriteria"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_toEndOf="@+id/FilerMenu"
+            android:layout_toEndOf="@+id/filterMenuContainer"
             android:layout_toStartOf="@+id/shareButton"
             android:layout_centerVertical="true"
             android:layout_marginStart="8dp"

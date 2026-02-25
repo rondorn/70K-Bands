@@ -38,7 +38,7 @@ See you at the fest!</string>
                     <fontDescription key="fontDescription" type="system" pointSize="9"/>
                     <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
                 </textView>
-                <stackView autoresizesSubviews="NO" opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" layoutMarginsFollowReadableWidth="YES" distribution="equalSpacing" spacingType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="77w-zM-Uyc">
+                <stackView autoresizesSubviews="NO" opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" distribution="equalSpacing" spacing="8" translatesAutoresizingMaskIntoConstraints="NO" id="77w-zM-Uyc">
                     <rect key="frame" x="169" y="201.33333333333334" width="142" height="28.666666666666657"/>
                     <subviews>
                         <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" image="icon-going-yes" translatesAutoresizingMaskIntoConstraints="NO" id="Jal-53-Ql9">
