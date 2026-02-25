@@ -170,7 +170,50 @@ public class LandscapeScheduleView extends LinearLayout {
         Log.d(TAG, "getCurrentDay() returning null (days=" + (days != null ? "not null" : "null") + ", isEmpty=" + (days != null ? days.isEmpty() : "N/A") + ", currentDayIndex=" + currentDayIndex + ")");
         return null;
     }
-    
+
+    /**
+     * Attempts to navigate to next day (swipe left). Returns true if navigated, false if at last day.
+     */
+    public boolean performSwipeToNextDay() {
+        if (days == null || days.isEmpty() || currentDayIndex >= days.size() - 1) return false;
+        currentDayIndex++;
+        updateDisplay();
+        return true;
+    }
+
+    /**
+     * Attempts to navigate to previous day (swipe right). Returns true if navigated, false if at first day.
+     */
+    public boolean performSwipeToPreviousDay() {
+        if (days == null || days.isEmpty() || currentDayIndex <= 0) return false;
+        currentDayIndex--;
+        updateDisplay();
+        return true;
+    }
+
+    /**
+     * Rubber band effect when swiping past first or last day.
+     * @param atLastDay true when at last day (swipe left tried), false when at first day (swipe right tried)
+     */
+    public void performRubberBand(boolean atLastDay) {
+        if (contentScrollView == null) return;
+        float bounce = atLastDay ? -30 : 30;
+        contentScrollView.animate()
+            .translationX(bounce)
+            .setDuration(150)
+            .withEndAction(new Runnable() {
+                @Override
+                public void run() {
+                    contentScrollView.animate()
+                        .translationX(0)
+                        .setDuration(200)
+                        .setInterpolator(new android.view.animation.DecelerateInterpolator(1.5f))
+                        .start();
+                }
+            })
+            .start();
+    }
+
     public LandscapeScheduleView(Context context) {
         super(context);
         this.context = context;

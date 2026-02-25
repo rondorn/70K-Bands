@@ -808,6 +808,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             ToastMessages(message).show(self, cellLocation: visibleLocation, placeHigh: true)
         }
     }
+
+    /// Show toast on the topmost view controller (e.g. when landscape calendar is presented modally)
+    func showToastOnTopmostVC(message: String) {
+        DispatchQueue.main.async {
+            var topVC: UIViewController? = self
+            while let presented = topVC?.presentedViewController {
+                topVC = presented
+            }
+            guard let vc = topVC else { return }
+            let visibleLocation = CGRect(origin: .zero, size: vc.view.bounds.size)
+            ToastMessages(message).show(vc, cellLocation: visibleLocation, placeHigh: false, placeAtBottom: true)
+        }
+    }
     
     @objc func showToastMessage(_ notification: NSNotification) {
         guard let message = notification.object as? String else { return }
@@ -2792,6 +2805,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             onCurrentDayChanged: { [weak self] day in
                 // Keep currentViewingDay in sync when user changes day in calendar (swipe/buttons)
                 self?.currentViewingDay = day
+            },
+            onShowMessage: { [weak self] message in
+                self?.showToastOnTopmostVC(message: message)
             },
             onBandTapped: { [weak self] bandName, currentDay in
                 // Handle band tap - present detail directly from landscape view

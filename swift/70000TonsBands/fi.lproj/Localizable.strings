@@ -224,6 +224,11 @@
 "Filters" = "Suodattimet"; //menu name
 
 "Day" = "Päivä";
+
+"Viewing Day Format" = "Näytetään %@";
+"No More Days" = "Ei enää päiviä";
+"No Previous Days" = "Ei aiemmin päiviä";
+
 "Bands" = "Bändit";
 "Events" = "Tapahtumat";
 

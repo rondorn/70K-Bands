@@ -240,6 +240,11 @@
 "Filters" = "Filter"; //menu name
 
 "Day" = "Tag";
+
+"Viewing Day Format" = "Anzeige %@";
+"No More Days" = "Keine weiteren Tage";
+"No Previous Days" = "Keine vorherigen Tage";
+
 "Bands" = "Bands";
 "Events" = "Veranstaltungen";
 

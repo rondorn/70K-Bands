@@ -242,6 +242,8 @@ struct LandscapeScheduleView: View {
     @Environment(\.presentationMode) var presentationMode
     @State private var showVenueFilterSheet: Bool = false
     @State private var dayBeforeFilterChange: String? = nil
+    @State private var rubberBandOffset: CGFloat = 0
+    @State private var swipeBlocked: Bool = false
     
     let priorityManager: SQLitePriorityManager
     let onBandTapped: (String, String?) -> Void  // (bandName, currentDay)
@@ -250,8 +252,9 @@ struct LandscapeScheduleView: View {
     let isSplitViewCapable: Bool  // iPad or similar
     let onDismissRequested: ((String?) -> Void)?  // iPad: callback to return to list view; passes current calendar day so list can scroll to it
     let onCurrentDayChanged: ((String?) -> Void)?  // Called when calendar day changes (swipe/buttons) so list can show same day when switching back
+    let onShowMessage: ((String) -> Void)?  // Toast/help message (e.g. "Viewing Day 1", "No More Days")
     
-    init(priorityManager: SQLitePriorityManager, attendedHandle: ShowsAttended, initialDay: String? = nil, hideExpiredEvents: Bool = false, isSplitViewCapable: Bool = false, onDismissRequested: ((String?) -> Void)? = nil, onCurrentDayChanged: ((String?) -> Void)? = nil, onBandTapped: @escaping (String, String?) -> Void, onLongPress: ((String, String, String, String, String) -> Void)? = nil) {
+    init(priorityManager: SQLitePriorityManager, attendedHandle: ShowsAttended, initialDay: String? = nil, hideExpiredEvents: Bool = false, isSplitViewCapable: Bool = false, onDismissRequested: ((String?) -> Void)? = nil, onCurrentDayChanged: ((String?) -> Void)? = nil, onShowMessage: ((String) -> Void)? = nil, onBandTapped: @escaping (String, String?) -> Void, onLongPress: ((String, String, String, String, String) -> Void)? = nil) {
         self.priorityManager = priorityManager
         self._viewModel = StateObject(wrappedValue: LandscapeScheduleViewModel(
             priorityManager: priorityManager,
@@ -265,6 +268,7 @@ struct LandscapeScheduleView: View {
         self.isSplitViewCapable = isSplitViewCapable
         self.onDismissRequested = onDismissRequested
         self.onCurrentDayChanged = onCurrentDayChanged
+        self.onShowMessage = onShowMessage
     }
     
     func getCurrentDay() -> String? {
@@ -414,7 +418,8 @@ struct LandscapeScheduleView: View {
     // MARK: - Schedule Grid View
     
     private func scheduleGridView(dayData: DayScheduleData) -> some View {
-        VStack(spacing: 0) {
+        let swipeThreshold: CGFloat = 50
+        return VStack(spacing: 0) {
             // Header with day navigation - stays fixed
             headerView(dayData: dayData)
             
@@ -453,6 +458,59 @@ struct LandscapeScheduleView: View {
                 )
             }
         }
+        .contentShape(Rectangle())
+        .offset(x: rubberBandOffset)
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 20)
+                .onEnded { value in
+                    guard !swipeBlocked else { return }
+                    let dx = value.translation.width
+                    let dy = value.translation.height
+                    // Horizontal swipe dominates
+                    guard abs(dx) > abs(dy) && abs(dx) > 50 else { return }
+                    swipeBlocked = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { swipeBlocked = false }
+                    if dx < 0 {
+                        // Swipe left = next day
+                        if viewModel.canNavigateToNextDay {
+                            viewModel.navigateToNextDay()
+                            if let day = viewModel.currentDayData?.dayLabel {
+                                let msg = String(format: NSLocalizedString("Viewing Day Format", comment: ""), day)
+                                onShowMessage?(msg)
+                            }
+                        } else {
+                            onShowMessage?(NSLocalizedString("No More Days", comment: ""))
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                                rubberBandOffset = 30
+                            }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                                withAnimation(.spring(response: 0.25, dampingFraction: 0.7)) {
+                                    rubberBandOffset = 0
+                                }
+                            }
+                        }
+                    } else {
+                        // Swipe right = previous day
+                        if viewModel.canNavigateToPreviousDay {
+                            viewModel.navigateToPreviousDay()
+                            if let day = viewModel.currentDayData?.dayLabel {
+                                let msg = String(format: NSLocalizedString("Viewing Day Format", comment: ""), day)
+                                onShowMessage?(msg)
+                            }
+                        } else {
+                            onShowMessage?(NSLocalizedString("No Previous Days", comment: ""))
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                                rubberBandOffset = -30
+                            }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                                withAnimation(.spring(response: 0.25, dampingFraction: 0.7)) {
+                                    rubberBandOffset = 0
+                                }
+                            }
+                        }
+                    }
+                }
+        )
     }
     
     // MARK: - Header View
