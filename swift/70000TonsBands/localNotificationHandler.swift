@@ -272,7 +272,6 @@ class localNoticationHandler {
     func addNotifications(){
         
         print ("✅ [THREAD_SAFE] addNotifications: No locking needed with SQLite")
-        print ("🌍 [ALERT_TIMEZONE] Scheduling alerts using current timezone: \(TimeZone.current.identifier)")
 
         // Clear cache at start of notification generation
         clearAlertCache()
@@ -332,7 +331,6 @@ class localNoticationHandler {
                             
                             // Skip if we couldn't parse the time
                             if recalculatedTimeIndex == -1 {
-                                print("⚠️ [ALERT_TIMEZONE] Failed to parse time for \(bandName.0) - skipping alert")
                                 continue
                             }
                             
@@ -343,7 +341,6 @@ class localNoticationHandler {
                             if (addToNoticication == true){
                                 let compareResult = alertTime.compare(NSDate() as Date)
                                 if compareResult == ComparisonResult.orderedDescending {
-                                    print ("🔔 [ALERT_TIMEZONE] Scheduling notification for \(bandName.0) at \(alertTime) (current TZ)")
                                     getAlertMessage(bandName.0, indexValue: alertTime as Date)
                                     addNotification(message: alertTextMessage, showTime: alertTime)
 
@@ -431,14 +428,10 @@ class localNoticationHandler {
         for format in formats {
             formatter.dateFormat = format
             if let parsedDate = formatter.date(from: dateTimeString) {
-                let timeIndex = parsedDate.timeIntervalSinceReferenceDate
-                print("🌍 [ALERT_TIMEZONE] Parsed '\(dateTimeString)' as \(parsedDate) in timezone \(TimeZone.current.identifier)")
-                return timeIndex
+                return parsedDate.timeIntervalSinceReferenceDate
             }
         }
         
-        // If parsing fails, return -1 to signal error
-        print("⚠️ [ALERT_TIMEZONE] Failed to parse '\(dateTimeString)' with any known format")
         return -1
     }
 }

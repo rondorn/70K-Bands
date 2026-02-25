@@ -81,7 +81,6 @@ class SQLiteDataManager: DataManagerProtocol {
     private let descMapDescriptionUrlDate = Expression<String?>("descriptionUrlDate")  // Optional modification date
     
     private init() {
-        print("📊 SQLiteDataManager: Initializing SQLite backend")
         setupDatabase()
     }
     
@@ -92,10 +91,7 @@ class SQLiteDataManager: DataManagerProtocol {
     /// (e.g., schedule imports) and fixes event-count oscillations.
     @discardableResult
     func withImmediateTransaction(_ label: String, _ block: () -> Bool) -> Bool {
-        guard let db = db else {
-            print("❌ SQLiteDataManager: Transaction '\(label)' failed - DB not initialized")
-            return false
-        }
+        guard let db = db else { return false }
         
         do {
             try db.execute("BEGIN IMMEDIATE TRANSACTION")
@@ -105,12 +101,10 @@ class SQLiteDataManager: DataManagerProtocol {
                 return true
             } else {
                 try db.execute("ROLLBACK")
-                print("⚠️ SQLiteDataManager: Transaction '\(label)' rolled back (block returned false)")
                 return false
             }
         } catch {
             try? db.execute("ROLLBACK")
-            print("❌ SQLiteDataManager: Transaction '\(label)' failed and was rolled back: \(error)")
             return false
         }
     }
@@ -124,7 +118,6 @@ class SQLiteDataManager: DataManagerProtocol {
             let count = try db.run(eventsTable.filter(eventYear_col == year).delete())
             return count
         } catch {
-            print("❌ SQLiteDataManager: Failed to delete all events for year \(year): \(error)")
             return 0
         }
     }
@@ -133,14 +126,11 @@ class SQLiteDataManager: DataManagerProtocol {
         do {
             let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0]
             let dbPath = "\(documentsPath)/70kbands.sqlite3"
-            print("📊 SQLiteDataManager: Database path: \(dbPath)")
-            
             db = try Connection(dbPath)
             
             // CRITICAL: Set busy timeout to handle concurrent writes
             // This prevents "database is locked" errors when multiple managers access the same DB
             try db?.execute("PRAGMA busy_timeout = 30000")  // 30 seconds
-            print("✅ SQLiteDataManager: Set busy timeout to 30 seconds")
             
             // Enable WAL mode for better concurrency
             try db?.execute("PRAGMA journal_mode=WAL")
@@ -156,37 +146,15 @@ class SQLiteDataManager: DataManagerProtocol {
             // IMPORTANT: Only save version AFTER tables are successfully created
             if needsMigration {
                 UserDefaults.standard.set(currentSchemaVersion, forKey: schemaVersionKey)
-                print("✅ SQLiteDataManager: Schema version updated to \(currentSchemaVersion)")
             }
-            
-            print("✅ SQLiteDataManager: Initialization complete")
         } catch {
-            print("❌ SQLiteDataManager: Failed to initialize: \(error)")
+            // Initialization failed
         }
     }
     
     private func verifyUniqueConstraints() throws {
         guard let db = db else { return }
         
-        // Query SQLite schema to verify unique constraints exist
-        let schemaQuery = "SELECT sql FROM sqlite_master WHERE type='table' AND name='bands'"
-        if let schema = try db.scalar(schemaQuery) as? String {
-            print("🔍 [SCHEMA_DEBUG] Bands table schema:")
-            print(schema)
-            
-            if schema.contains("UNIQUE") {
-                print("✅ [SCHEMA_DEBUG] Unique constraint FOUND in schema")
-            } else {
-                print("❌ [SCHEMA_DEBUG] Unique constraint NOT FOUND - this will cause duplicates!")
-            }
-        }
-        
-        // Also check indexes
-        let indexQuery = "SELECT name, sql FROM sqlite_master WHERE type='index' AND tbl_name='bands'"
-        for row in try db.prepare(indexQuery) {
-            print("🔍 [SCHEMA_DEBUG] Index: \(row[0] ?? "unknown")")
-            print("🔍 [SCHEMA_DEBUG] SQL: \(row[1] ?? "unknown")")
-        }
     }
     
     private func checkAndMigrateSchema() throws -> Bool {
@@ -195,9 +163,6 @@ class SQLiteDataManager: DataManagerProtocol {
         let storedVersion = UserDefaults.standard.integer(forKey: schemaVersionKey)
         
         if storedVersion < currentSchemaVersion {
-            print("🔄 SQLiteDataManager: Schema version \(storedVersion) is outdated (current: \(currentSchemaVersion))")
-            print("🔄 SQLiteDataManager: Dropping old tables to recreate with unique constraints...")
-            
             // Drop old tables
             try? db.run(bandsTable.drop(ifExists: true))
             try? db.run(eventsTable.drop(ifExists: true))
@@ -210,13 +175,10 @@ class SQLiteDataManager: DataManagerProtocol {
                 UserDefaults.standard.removeObject(forKey: "batchInsertCallCount_\(year)")
             }
             
-            print("✅ SQLiteDataManager: Old tables dropped and counters reset, will recreate with proper constraints")
-            
             // Return true to indicate migration was performed
             // Version will be saved AFTER tables are successfully created
             return true
         } else {
-            print("✅ SQLiteDataManager: Schema version is current (\(currentSchemaVersion))")
             return false
         }
     }
@@ -297,28 +259,15 @@ class SQLiteDataManager: DataManagerProtocol {
         try db.run(eventsTable.createIndex(eventBandName, ifNotExists: true))
         try db.run(descriptionMapTable.createIndex(descMapEventYear, ifNotExists: true))
         try db.run(descriptionMapTable.createIndex(descMapEntityName, ifNotExists: true))
-        
-        print("✅ SQLiteDataManager: Tables created successfully")
     }
     
     // MARK: - Band Operations
     
     func fetchBands(forYear year: Int) -> [BandData] {
-        guard let db = db else {
-            print("❌ SQLiteDataManager: Database not initialized")
-            return []
-        }
+        guard let db = db else { return [] }
         
         do {
-            // Debug: Check total bands in database
-            let totalCount = try db.scalar(bandsTable.count)
-            print("🔍 [FETCH_DEBUG] Total bands in database (all years): \(totalCount)")
-            
-            // Debug: Check bands for specific year
             let query = bandsTable.filter(eventYear == year)
-            let yearCount = try db.scalar(query.count)
-            print("🔍 [FETCH_DEBUG] Bands for year \(year): \(yearCount)")
-            
             var bands: [BandData] = []
             
             for row in try db.prepare(query) {
@@ -337,20 +286,14 @@ class SQLiteDataManager: DataManagerProtocol {
                 )
                 bands.append(band)
             }
-            
-            print("✅ SQLiteDataManager: Fetched \(bands.count) bands for year \(year) (NO Core Data objects!)")
             return bands
         } catch {
-            print("❌ SQLiteDataManager: Failed to fetch bands: \(error)")
             return []
         }
     }
     
     func fetchBands() -> [BandData] {
-        guard let db = db else {
-            print("❌ SQLiteDataManager: Database not initialized")
-            return []
-        }
+        guard let db = db else { return [] }
         
         do {
             var bands: [BandData] = []
@@ -372,19 +315,14 @@ class SQLiteDataManager: DataManagerProtocol {
                 bands.append(band)
             }
             
-            print("✅ SQLiteDataManager: Fetched \(bands.count) bands (all years, NO Core Data objects!)")
             return bands
         } catch {
-            print("❌ SQLiteDataManager: Failed to fetch all bands: \(error)")
             return []
         }
     }
     
     func fetchBand(byName name: String, eventYear year: Int) -> BandData? {
-        guard let db = db else {
-            print("❌ SQLiteDataManager: Database not initialized")
-            return nil
-        }
+        guard let db = db else { return nil }
         
         do {
             let query = bandsTable.filter(bandName == name && eventYear == year).limit(1)
@@ -408,7 +346,6 @@ class SQLiteDataManager: DataManagerProtocol {
             
             return nil
         } catch {
-            print("❌ SQLiteDataManager: Failed to fetch band '\(name)': \(error)")
             return nil
         }
     }
@@ -436,10 +373,9 @@ class SQLiteDataManager: DataManagerProtocol {
                    isValidImageURL(existingImageUrl) {
                     // Preserve existing valid image URL
                     finalImageUrl = existingImageUrl
-                    print("✅ SQLiteDataManager: Preserving existing valid image URL for band '\(name)' year \(year)")
                 }
             } catch {
-                print("⚠️ SQLiteDataManager: Could not check existing band image URL: \(error)")
+                // Could not check existing band image URL
             }
         }
         
@@ -459,9 +395,8 @@ class SQLiteDataManager: DataManagerProtocol {
                 self.priorYears <- priorYears
             )
             try db.run(insert)
-            print("✅ SQLiteDataManager: Inserted/updated band '\(name)' for year \(year) (NO Core Data!)")
         } catch {
-            print("❌ SQLiteDataManager: Failed to insert/update band: \(error)")
+            // Insert/update failed
         }
         
         // Return the band as a plain struct (no Core Data!)
@@ -483,10 +418,7 @@ class SQLiteDataManager: DataManagerProtocol {
     /// Create band only if it doesn't exist (won't overwrite existing data)
     /// Used by schedule importer to ensure band exists without destroying existing metadata
     func createBandIfNotExists(name: String, eventYear year: Int) -> Bool {
-        guard let db = db else {
-            print("❌ SQLiteDataManager: Database not initialized")
-            return false
-        }
+        guard let db = db else { return false }
         
         do {
             // Check if band already exists
@@ -495,7 +427,6 @@ class SQLiteDataManager: DataManagerProtocol {
             
             if count > 0 {
                 // Band exists, don't overwrite
-                print("✅ SQLiteDataManager: Band '\(name)' for year \(year) already exists - preserving existing data")
                 return true
             }
             
@@ -515,10 +446,8 @@ class SQLiteDataManager: DataManagerProtocol {
                 self.priorYears <- nil
             )
             try db.run(insert)
-            print("✅ SQLiteDataManager: Created minimal band entry for '\(name)' year \(year)")
             return true
         } catch {
-            print("❌ SQLiteDataManager: Failed to create band if not exists: \(error)")
             return false
         }
     }
@@ -533,33 +462,17 @@ class SQLiteDataManager: DataManagerProtocol {
         batchInsertLock.lock()
         defer { batchInsertLock.unlock() }
         
-        if isBatchInserting {
-            print("⚠️ [BATCH_DEBUG] Batch insert already in progress - BLOCKING duplicate insert attempt")
-            return
-        }
+        if isBatchInserting { return }
         
         isBatchInserting = true
         defer { isBatchInserting = false }
         
-        guard let db = db else {
-            print("❌ SQLiteDataManager: Database not initialized")
-            return
-        }
+        guard let db = db else { return }
         
-        // Debug: Check how many times this has been called
         let callCount = UserDefaults.standard.integer(forKey: "batchInsertCallCount_\(bands.first?.eventYear ?? 0)") + 1
         UserDefaults.standard.set(callCount, forKey: "batchInsertCallCount_\(bands.first?.eventYear ?? 0)")
-        print("🔍 [BATCH_DEBUG] This is batch insert call #\(callCount) for year \(bands.first?.eventYear ?? 0)")
         
         do {
-            // Debug: Check what's in DB before insert
-            let totalBeforeInsert = try db.scalar(bandsTable.count)
-            print("🔍 [BATCH_DEBUG] Total bands in DB BEFORE insert: \(totalBeforeInsert)")
-            
-            print("🔄 SQLiteDataManager: Starting batch insert of \(bands.count) bands in single transaction")
-            if let firstBand = bands.first {
-                print("🔍 [BATCH_DEBUG] First band year: \(firstBand.eventYear), name: '\(firstBand.name)'")
-            }
             
             // Helper to validate image URLs
             func isValidImageURL(_ url: String?) -> Bool {
@@ -600,19 +513,12 @@ class SQLiteDataManager: DataManagerProtocol {
                     try db.run(insert)
                     
                     if (index + 1) % 10 == 0 {
-                        print("🔄 SQLiteDataManager: Inserted \(index + 1)/\(bands.count) bands for year \(bandData.eventYear)")
+                        // Progress every 10 bands
                     }
                 }
             }
-            
-            // Debug: Verify what's actually in the database after insert
-            let totalAfterInsert = try db.scalar(bandsTable.count)
-            print("🔍 [BATCH_DEBUG] Total bands in DB AFTER insert: \(totalAfterInsert)")
-            print("🔍 [BATCH_DEBUG] Net change: +\(totalAfterInsert - totalBeforeInsert) bands")
-            
-            print("✅ SQLiteDataManager: Batch insert complete - \(bands.count) bands inserted/updated")
         } catch {
-            print("❌ SQLiteDataManager: Batch insert failed: \(error)")
+            // Batch insert failed
         }
     }
     
@@ -622,19 +528,15 @@ class SQLiteDataManager: DataManagerProtocol {
         do {
             let bandToDelete = bandsTable.filter(bandName == name && eventYear == year)
             try db.run(bandToDelete.delete())
-            print("✅ SQLiteDataManager: Deleted band '\(name)' for year \(year)")
         } catch {
-            print("❌ SQLiteDataManager: Failed to delete band: \(error)")
+            // Delete failed
         }
     }
     
     // MARK: - Event Operations
     
     func fetchEvents(forYear year: Int) -> [EventData] {
-        guard let db = db else {
-            print("❌ SQLiteDataManager: Database not initialized")
-            return []
-        }
+        guard let db = db else { return [] }
         
         do {
             let query = eventsTable.filter(eventYear_col == year)
@@ -658,20 +560,14 @@ class SQLiteDataManager: DataManagerProtocol {
                 )
                 events.append(event)
             }
-            
-            print("✅ SQLiteDataManager: Fetched \(events.count) events for year \(year) (NO Core Data!)")
             return events
         } catch {
-            print("❌ SQLiteDataManager: Failed to fetch events: \(error)")
             return []
         }
     }
     
     func fetchEvents() -> [EventData] {
-        guard let db = db else {
-            print("❌ SQLiteDataManager: Database not initialized")
-            return []
-        }
+        guard let db = db else { return [] }
         
         do {
             var events: [EventData] = []
@@ -694,20 +590,14 @@ class SQLiteDataManager: DataManagerProtocol {
                 )
                 events.append(event)
             }
-            
-            print("✅ SQLiteDataManager: Fetched \(events.count) events (all years, NO Core Data!)")
             return events
         } catch {
-            print("❌ SQLiteDataManager: Failed to fetch all events: \(error)")
             return []
         }
     }
     
     func fetchEventsForBand(_ bandName: String, forYear year: Int) -> [EventData] {
-        guard let db = db else {
-            print("❌ SQLiteDataManager: Database not initialized")
-            return []
-        }
+        guard let db = db else { return [] }
         
         do {
             let query = eventsTable.filter(eventBandName == bandName && eventYear_col == year)
@@ -731,20 +621,14 @@ class SQLiteDataManager: DataManagerProtocol {
                 )
                 events.append(event)
             }
-            
-            print("✅ SQLiteDataManager: Fetched \(events.count) events for band '\(bandName)' year \(year)")
             return events
         } catch {
-            print("❌ SQLiteDataManager: Failed to fetch events for band: \(error)")
             return []
         }
     }
     
     func fetchEvents(forYear year: Int, location locationFilter: String?, eventType typeFilter: String?) -> [EventData] {
-        guard let db = db else {
-            print("❌ SQLiteDataManager: Database not initialized")
-            return []
-        }
+        guard let db = db else { return [] }
         
         do {
             var query = eventsTable.filter(eventYear_col == year)
@@ -774,11 +658,8 @@ class SQLiteDataManager: DataManagerProtocol {
                 )
                 events.append(event)
             }
-            
-            print("✅ SQLiteDataManager: Fetched \(events.count) events for year \(year) with filters (NO Core Data!)")
             return events
         } catch {
-            print("❌ SQLiteDataManager: Failed to fetch events: \(error)")
             return []
         }
     }
@@ -810,9 +691,8 @@ class SQLiteDataManager: DataManagerProtocol {
                 self.eventImageUrl <- imgUrl  // ✅ Write as-is (null is valid for events)
             )
             try db.run(insert)
-            print("✅ SQLiteDataManager: Inserted/updated event for '\(name)' at timeIndex \(timeIndex) (NO Core Data!)")
         } catch {
-            print("❌ SQLiteDataManager: Failed to insert/update event: \(error)")
+            // Insert/update failed
         }
         
         // Return the event as a plain struct (no Core Data!)
@@ -843,23 +723,19 @@ class SQLiteDataManager: DataManagerProtocol {
                 timeIndex == ti
             )
             try db.run(eventToDelete.delete())
-            print("✅ SQLiteDataManager: Deleted event")
         } catch {
-            print("❌ SQLiteDataManager: Failed to delete event: \(error)")
+            // Delete failed
         }
     }
     
     func cleanupProblematicEvents(currentYear year: Int) {
-        print("⚠️ SQLiteDataManager.cleanupProblematicEvents(currentYear:) - no cleanup needed for SQLite")
+        // No cleanup needed for SQLite
     }
     
     // MARK: - User Priority Operations
     
     func fetchUserPriorities() -> [UserPriorityData] {
-        guard let db = db else {
-            print("❌ SQLiteDataManager: Database not initialized")
-            return []
-        }
+        guard let db = db else { return [] }
         
         do {
             var priorities: [UserPriorityData] = []
@@ -876,11 +752,8 @@ class SQLiteDataManager: DataManagerProtocol {
                 )
                 priorities.append(priority)
             }
-            
-            print("✅ SQLiteDataManager: Fetched \(priorities.count) user priorities (NO Core Data!)")
             return priorities
         } catch {
-            print("❌ SQLiteDataManager: Failed to fetch user priorities: \(error)")
             return []
         }
     }
@@ -899,9 +772,8 @@ class SQLiteDataManager: DataManagerProtocol {
                 priorityLastModified <- Date().timeIntervalSince1970
             )
             try db.run(insert)
-            print("✅ SQLiteDataManager: Inserted/updated user priority for '\(name)'")
         } catch {
-            print("❌ SQLiteDataManager: Failed to insert/update user priority: \(error)")
+            // Insert/update failed
         }
         
         return UserPriorityData(bandName: name, eventYear: year, priorityLevel: level, updatedAt: Date())
@@ -913,19 +785,15 @@ class SQLiteDataManager: DataManagerProtocol {
         do {
             let priorityToDelete = userPrioritiesTable.filter(priorityBandName == name && priorityEventYear == year)
             try db.run(priorityToDelete.delete())
-            print("✅ SQLiteDataManager: Deleted user priority for '\(name)'")
         } catch {
-            print("❌ SQLiteDataManager: Failed to delete user priority: \(error)")
+            // Delete failed
         }
     }
     
     // MARK: - User Attendance Operations
     
     func fetchUserAttendances() -> [UserAttendanceData] {
-        guard let db = db else {
-            print("❌ SQLiteDataManager: Database not initialized")
-            return []
-        }
+        guard let db = db else { return [] }
         
         do {
             var attendances: [UserAttendanceData] = []
@@ -943,11 +811,8 @@ class SQLiteDataManager: DataManagerProtocol {
                 )
                 attendances.append(attendance)
             }
-            
-            print("✅ SQLiteDataManager: Fetched \(attendances.count) user attendances (NO Core Data!)")
             return attendances
         } catch {
-            print("❌ SQLiteDataManager: Failed to fetch user attendances: \(error)")
             return []
         }
     }
@@ -967,9 +832,8 @@ class SQLiteDataManager: DataManagerProtocol {
                 attendanceLastModified <- Date().timeIntervalSince1970
             )
             try db.run(insert)
-            print("✅ SQLiteDataManager: Inserted/updated user attendance for '\(name)'")
         } catch {
-            print("❌ SQLiteDataManager: Failed to insert/update user attendance: \(error)")
+            // Insert/update failed
         }
         
         return UserAttendanceData(bandName: name, eventYear: year, timeIndex: ti, attendanceStatus: status, updatedAt: Date())
@@ -985,9 +849,8 @@ class SQLiteDataManager: DataManagerProtocol {
                 attendanceTimeIndex == ti
             )
             try db.run(attendanceToDelete.delete())
-            print("✅ SQLiteDataManager: Deleted user attendance for '\(name)'")
         } catch {
-            print("❌ SQLiteDataManager: Failed to delete user attendance: \(error)")
+            // Delete failed
         }
     }
     
@@ -995,10 +858,7 @@ class SQLiteDataManager: DataManagerProtocol {
     
     /// Get description URL for a band or event
     func getDescriptionUrl(forEntity entityName: String, eventYear year: Int) -> String? {
-        guard let db = db else {
-            print("❌ SQLiteDataManager: Database not initialized")
-            return nil
-        }
+        guard let db = db else { return nil }
         
         do {
             let query = descriptionMapTable.filter(descMapEntityName == entityName && descMapEventYear == year)
@@ -1007,17 +867,13 @@ class SQLiteDataManager: DataManagerProtocol {
             }
             return nil
         } catch {
-            print("❌ SQLiteDataManager: Failed to fetch description URL for '\(entityName)': \(error)")
             return nil
         }
     }
     
     /// Get all description URLs for a given year
     func getAllDescriptionUrls(forYear year: Int) -> [String: String] {
-        guard let db = db else {
-            print("❌ SQLiteDataManager: Database not initialized")
-            return [:]
-        }
+        guard let db = db else { return [:] }
         
         var descriptionMap: [String: String] = [:]
         
@@ -1028,9 +884,8 @@ class SQLiteDataManager: DataManagerProtocol {
                 let url = try row.get(descMapDescriptionUrl)
                 descriptionMap[entityName] = url
             }
-            print("✅ SQLiteDataManager: Fetched \(descriptionMap.count) description URLs for year \(year)")
         } catch {
-            print("❌ SQLiteDataManager: Failed to fetch description URLs: \(error)")
+            // Failed to fetch
         }
         
         return descriptionMap
@@ -1038,10 +893,7 @@ class SQLiteDataManager: DataManagerProtocol {
     
     /// Insert or update description URL for a band or event
     func createOrUpdateDescriptionUrl(forEntity entityName: String, eventYear year: Int, descriptionUrl url: String, descriptionUrlDate urlDate: String? = nil) {
-        guard let db = db else {
-            print("❌ SQLiteDataManager: Database not initialized")
-            return
-        }
+        guard let db = db else { return }
         
         do {
             let insert = descriptionMapTable.insert(
@@ -1052,18 +904,14 @@ class SQLiteDataManager: DataManagerProtocol {
                 descMapDescriptionUrlDate <- urlDate
             )
             try db.run(insert)
-            print("✅ SQLiteDataManager: Inserted/updated description URL for '\(entityName)'")
         } catch {
-            print("❌ SQLiteDataManager: Failed to insert/update description URL: \(error)")
+            // Insert/update failed
         }
     }
     
     /// Batch insert description map entries (for loading from CSV)
     func batchInsertDescriptionMap(entries: [(entityName: String, eventYear: Int, url: String, urlDate: String?)]) {
-        guard let db = db else {
-            print("❌ SQLiteDataManager: Database not initialized")
-            return
-        }
+        guard let db = db else { return }
         
         do {
             try db.transaction {
@@ -1078,9 +926,8 @@ class SQLiteDataManager: DataManagerProtocol {
                     try db.run(insert)
                 }
             }
-            print("✅ SQLiteDataManager: Batch inserted \(entries.count) description map entries")
         } catch {
-            print("❌ SQLiteDataManager: Failed to batch insert description map: \(error)")
+            // Batch insert failed
         }
     }
     
@@ -1094,9 +941,8 @@ class SQLiteDataManager: DataManagerProtocol {
                 descMapEventYear == year
             )
             try db.run(entryToDelete.delete())
-            print("✅ SQLiteDataManager: Deleted description URL for '\(entityName)'")
         } catch {
-            print("❌ SQLiteDataManager: Failed to delete description URL: \(error)")
+            // Delete failed
         }
     }
     
@@ -1106,10 +952,9 @@ class SQLiteDataManager: DataManagerProtocol {
         
         do {
             let entriesToDelete = descriptionMapTable.filter(descMapEventYear == year)
-            let deleteCount = try db.run(entriesToDelete.delete())
-            print("✅ SQLiteDataManager: Cleared \(deleteCount) description map entries for year \(year)")
+            _ = try db.run(entriesToDelete.delete())
         } catch {
-            print("❌ SQLiteDataManager: Failed to clear description map: \(error)")
+            // Clear failed
         }
     }
 }
