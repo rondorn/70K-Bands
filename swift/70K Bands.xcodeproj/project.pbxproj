@@ -117,6 +117,15 @@
 		1156B4F51A6613E700D48D12 /* urlStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1156B4F41A6613E700D48D12 /* urlStorage.swift */; };
 		115B64B3292AC95800DF2313 /* UILaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1154F6191A575893003F4764 /* UILaunchScreen.xib */; };
 		115B64B4292ACD6400DF2313 /* UILaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1154F6191A575893003F4764 /* UILaunchScreen.xib */; };
+		115F0DCC2F551A76003CD82C /* AIScheduleBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 115F0DCA2F551A76003CD82C /* AIScheduleBuilder.swift */; };
+		115F0DCD2F551A76003CD82C /* CreateAIScheduleSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 115F0DCB2F551A76003CD82C /* CreateAIScheduleSheet.swift */; };
+		115F0DCE2F551A76003CD82C /* AIScheduleBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 115F0DCA2F551A76003CD82C /* AIScheduleBuilder.swift */; };
+		115F0DCF2F551A76003CD82C /* CreateAIScheduleSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 115F0DCB2F551A76003CD82C /* CreateAIScheduleSheet.swift */; };
+		115F0DD02F551A76003CD82C /* AIScheduleBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 115F0DCA2F551A76003CD82C /* AIScheduleBuilder.swift */; };
+		115F0DD12F551A76003CD82C /* CreateAIScheduleSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 115F0DCB2F551A76003CD82C /* CreateAIScheduleSheet.swift */; };
+		115F0DD32F551DE7003CD82C /* AIScheduleStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 115F0DD22F551DE7003CD82C /* AIScheduleStorage.swift */; };
+		115F0DD42F551DE7003CD82C /* AIScheduleStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 115F0DD22F551DE7003CD82C /* AIScheduleStorage.swift */; };
+		115F0DD52F551DE7003CD82C /* AIScheduleStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 115F0DD22F551DE7003CD82C /* AIScheduleStorage.swift */; };
 		11615BB32E4644ED007BD3D5 /* PreferencesHostingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11615BB02E4644ED007BD3D5 /* PreferencesHostingController.swift */; };
 		11615BB42E4644ED007BD3D5 /* PreferencesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11615BB22E4644ED007BD3D5 /* PreferencesViewModel.swift */; };
 		11615BB52E4644ED007BD3D5 /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11615BB12E4644ED007BD3D5 /* PreferencesView.swift */; };
@@ -298,6 +307,9 @@
 		11AE9BE720CE12C20007C4E1 /* ShowsAttended.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11AE985220CDFE890007C4E1 /* ShowsAttended.swift */; };
 		11B20C441ECDE4EE0031FD3A /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11B20C431ECDE4ED0031FD3A /* UserNotifications.framework */; };
 		11BE68F51A59C45100602EC7 /* webViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11BE68F41A59C45100602EC7 /* webViewController.swift */; };
+		11C061ED2F55FDAA0037A875 /* AutoChooseAttendanceWizardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C061EC2F55FDAA0037A875 /* AutoChooseAttendanceWizardView.swift */; };
+		11C061EE2F55FDAA0037A875 /* AutoChooseAttendanceWizardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C061EC2F55FDAA0037A875 /* AutoChooseAttendanceWizardView.swift */; };
+		11C061EF2F55FDAA0037A875 /* AutoChooseAttendanceWizardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C061EC2F55FDAA0037A875 /* AutoChooseAttendanceWizardView.swift */; };
 		11C62E7E2E64B9EE000D9AF2 /* DataCollectionCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C62E7B2E64B9EE000D9AF2 /* DataCollectionCoordinator.swift */; };
 		11C62E7F2E64B9EE000D9AF2 /* ScheduleCSVImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C62E7C2E64B9EE000D9AF2 /* ScheduleCSVImporter.swift */; };
 		11C62E812E64B9EE000D9AF2 /* DataCollectionCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C62E7B2E64B9EE000D9AF2 /* DataCollectionCoordinator.swift */; };
@@ -458,6 +470,9 @@
 		1156251C1B6E65F200C658C6 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/Localizable.strings; sourceTree = "<group>"; };
 		1156B4F21A660BE500D48D12 /* guiIcons.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = guiIcons.swift; sourceTree = "<group>"; };
 		1156B4F41A6613E700D48D12 /* urlStorage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = urlStorage.swift; sourceTree = "<group>"; };
+		115F0DCA2F551A76003CD82C /* AIScheduleBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIScheduleBuilder.swift; sourceTree = "<group>"; };
+		115F0DCB2F551A76003CD82C /* CreateAIScheduleSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateAIScheduleSheet.swift; sourceTree = "<group>"; };
+		115F0DD22F551DE7003CD82C /* AIScheduleStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIScheduleStorage.swift; sourceTree = "<group>"; };
 		11615BB02E4644ED007BD3D5 /* PreferencesHostingController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesHostingController.swift; sourceTree = "<group>"; };
 		11615BB12E4644ED007BD3D5 /* PreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesView.swift; sourceTree = "<group>"; };
 		11615BB22E4644ED007BD3D5 /* PreferencesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesViewModel.swift; sourceTree = "<group>"; };
@@ -518,6 +533,7 @@
 		11AE985220CDFE890007C4E1 /* ShowsAttended.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ShowsAttended.swift; sourceTree = "<group>"; };
 		11B20C431ECDE4ED0031FD3A /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
 		11BE68F41A59C45100602EC7 /* webViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = webViewController.swift; sourceTree = "<group>"; };
+		11C061EC2F55FDAA0037A875 /* AutoChooseAttendanceWizardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoChooseAttendanceWizardView.swift; sourceTree = "<group>"; };
 		11C62E7B2E64B9EE000D9AF2 /* DataCollectionCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataCollectionCoordinator.swift; sourceTree = "<group>"; };
 		11C62E7C2E64B9EE000D9AF2 /* ScheduleCSVImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleCSVImporter.swift; sourceTree = "<group>"; };
 		11C62E872E6661C9000D9AF2 /* EventManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventManager.swift; sourceTree = "<group>"; };
@@ -666,6 +682,10 @@
 		1154F6081A575893003F4764 /* 70000TonsBands */ = {
 			isa = PBXGroup;
 			children = (
+				11C061EC2F55FDAA0037A875 /* AutoChooseAttendanceWizardView.swift */,
+				115F0DD22F551DE7003CD82C /* AIScheduleStorage.swift */,
+				115F0DCA2F551A76003CD82C /* AIScheduleBuilder.swift */,
+				115F0DCB2F551A76003CD82C /* CreateAIScheduleSheet.swift */,
 				119C80432F4CF06500304A1D /* CommonFilterSheetView.swift */,
 				119C803C2F4CEB5700304A1D /* PortraitFilterSheetView.swift */,
 				1154F60D1A575893003F4764 /* _0000TonsBands.xcdatamodeld */,
@@ -1307,6 +1327,7 @@
 				11DCE9BD1A86F9E000A25FB8 /* Constants.swift in Sources */,
 				110E085A2AECB6E200075618 /* DropDownCell.swift in Sources */,
 				11E2F24A2E8D78530004D6F4 /* AttendanceManager.swift in Sources */,
+				115F0DD32F551DE7003CD82C /* AIScheduleStorage.swift in Sources */,
 				119A867422D12FA700D23233 /* iCloudDataHandler.swift in Sources */,
 				11D4844522418A9E00910878 /* firebaseUserWrite.swift in Sources */,
 				11895BA02EE4D4F1008CC4A9 /* SQLiteDataManager.swift in Sources */,
@@ -1352,6 +1373,7 @@
 				11615BB62E4644ED007BD3D5 /* PreferencesHostingController.swift in Sources */,
 				1147D6E12E63C549000A98B0 /* BandCSVImporter.swift in Sources */,
 				11615BB72E4644ED007BD3D5 /* PreferencesViewModel.swift in Sources */,
+				11C061EE2F55FDAA0037A875 /* AutoChooseAttendanceWizardView.swift in Sources */,
 				11615BB82E4644ED007BD3D5 /* PreferencesView.swift in Sources */,
 				1154F60C1A575893003F4764 /* AppDelegate.swift in Sources */,
 				1169374520F555CD00038DA5 /* Reachability.swift in Sources */,
@@ -1367,6 +1389,8 @@
 				1122E3EE23DC8E38005EE50D /* NetworkTesting.swift in Sources */,
 				1154F6111A575893003F4764 /* MasterViewController.swift in Sources */,
 				B0B1C2D3E4F5061728394A5C /* MinimumVersionWarningManager.swift in Sources */,
+				115F0DD02F551A76003CD82C /* AIScheduleBuilder.swift in Sources */,
+				115F0DD12F551A76003CD82C /* CreateAIScheduleSheet.swift in Sources */,
 				110E08542AECB6E200075618 /* DropDown+Appearance.swift in Sources */,
 				11C8BDC81A7D264F00037F2B /* httpHandler.swift in Sources */,
 				110E08582AECB6E200075618 /* DPDUIView+Extension.swift in Sources */,
@@ -1410,6 +1434,7 @@
 				1152132A2A69E23C0017DD9F /* variableStore.swift in Sources */,
 				1155E3AA1A8B121000D51ED9 /* httpHandler.swift in Sources */,
 				1169374620F555D400038DA5 /* Reachability.swift in Sources */,
+				115F0DD42F551DE7003CD82C /* AIScheduleStorage.swift in Sources */,
 				11E2F2482E8D78530004D6F4 /* AttendanceManager.swift in Sources */,
 				110E085B2AECB6E200075618 /* DropDownCell.swift in Sources */,
 				1155E3B01A8B126500D51ED9 /* AppDelegate.swift in Sources */,
@@ -1455,6 +1480,7 @@
 				1147D7002E63CF51000A98B0 /* BandNamesHandlerProtocol.swift in Sources */,
 				11615BB32E4644ED007BD3D5 /* PreferencesHostingController.swift in Sources */,
 				1147D6E72E63C549000A98B0 /* BandCSVImporter.swift in Sources */,
+				11C061EF2F55FDAA0037A875 /* AutoChooseAttendanceWizardView.swift in Sources */,
 				11615BB42E4644ED007BD3D5 /* PreferencesViewModel.swift in Sources */,
 				11615BB52E4644ED007BD3D5 /* PreferencesView.swift in Sources */,
 				1155E3A91A8B121000D51ED9 /* guiIcons.swift in Sources */,
@@ -1470,6 +1496,8 @@
 				B0B1C2D3E4F5061728394A5D /* MinimumVersionWarningManager.swift in Sources */,
 				11C62E8C2E6661F0000D9AF2 /* EventCSVImporter.swift in Sources */,
 				110E08552AECB6E200075618 /* DropDown+Appearance.swift in Sources */,
+				115F0DCC2F551A76003CD82C /* AIScheduleBuilder.swift in Sources */,
+				115F0DCD2F551A76003CD82C /* CreateAIScheduleSheet.swift in Sources */,
 				1155E3AB1A8B121000D51ED9 /* mainListController.swift in Sources */,
 				1155E3A71A8B121000D51ED9 /* dataHandler.swift in Sources */,
 				110E08592AECB6E200075618 /* DPDUIView+Extension.swift in Sources */,
@@ -1513,6 +1541,7 @@
 				1172EE012E5A1C4D006E3596 /* variableStore.swift in Sources */,
 				1172EE022E5A1C4D006E3596 /* Constants.swift in Sources */,
 				1172EE032E5A1C4D006E3596 /* DropDownCell.swift in Sources */,
+				115F0DD52F551DE7003CD82C /* AIScheduleStorage.swift in Sources */,
 				11E2F2462E8D78530004D6F4 /* AttendanceManager.swift in Sources */,
 				1172EE042E5A1C4D006E3596 /* iCloudDataHandler.swift in Sources */,
 				1172EE052E5A1C4D006E3596 /* firebaseUserWrite.swift in Sources */,
@@ -1558,6 +1587,7 @@
 				1147D6FE2E63CF51000A98B0 /* BandNamesHandlerProtocol.swift in Sources */,
 				1172EE142E5A1C4D006E3596 /* PreferencesHostingController.swift in Sources */,
 				1147D6E42E63C549000A98B0 /* BandCSVImporter.swift in Sources */,
+				11C061ED2F55FDAA0037A875 /* AutoChooseAttendanceWizardView.swift in Sources */,
 				1172EE152E5A1C4D006E3596 /* PreferencesViewModel.swift in Sources */,
 				1172EE162E5A1C4D006E3596 /* PreferencesView.swift in Sources */,
 				1172EE172E5A1C4D006E3596 /* AppDelegate.swift in Sources */,
@@ -1573,6 +1603,8 @@
 				11C62E8D2E6661F0000D9AF2 /* EventCSVImporter.swift in Sources */,
 				1172EE1D2E5A1C4D006E3596 /* NetworkTesting.swift in Sources */,
 				1172EE1E2E5A1C4D006E3596 /* MasterViewController.swift in Sources */,
+				115F0DCE2F551A76003CD82C /* AIScheduleBuilder.swift in Sources */,
+				115F0DCF2F551A76003CD82C /* CreateAIScheduleSheet.swift in Sources */,
 				B0B1C2D3E4F5061728394A5E /* MinimumVersionWarningManager.swift in Sources */,
 				1172EE1F2E5A1C4D006E3596 /* DropDown+Appearance.swift in Sources */,
 				1172EE202E5A1C4D006E3596 /* httpHandler.swift in Sources */,

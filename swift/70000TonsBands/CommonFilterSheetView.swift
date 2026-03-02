@@ -125,7 +125,6 @@ struct CommonFilterSheetView: View {
     let viewModel: LandscapeScheduleViewModel?  // nil for portrait, set for calendar
     @Binding var dayBeforeFilterChange: String?  // nil for portrait, set for calendar
     var onDismiss: (() -> Void)? = nil  // Optional dismiss closure for portrait view
-    
     private var dismiss: () -> Void {
         if let onDismiss = onDismiss {
             return onDismiss
@@ -276,12 +275,12 @@ struct CommonFilterSheetView: View {
     
     /// Single canonical order for both portrait and landscape.
     /// Portrait shows all applicable sections; landscape omits Hide Expired and Sort By Name.
-    /// Order: Hide Expired -> Sort By Name -> Show Flagged -> Band Rankings -> Event Type -> Locations
+    /// Order: AI Schedule (when enabled) -> Hide Expired -> Sort By Name -> Show Flagged -> Band Rankings -> Event Type -> Locations
     @ViewBuilder
     private var unifiedFilterSections: some View {
         let dayLabel = dayData?.dayLabel ?? ""
         
-        // 1. Hide Expired Events (portrait/list only)
+        // 0. Hide Expired Events (portrait/list only)
         if menuOrder == .portrait, hasAnyEvents() && hasExpiredEvents() {
             expiredEventsSection
         }
