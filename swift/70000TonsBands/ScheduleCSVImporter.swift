@@ -165,9 +165,11 @@ class ScheduleCSVImporter {
         }
         print("✅ [SQLITE_FIX] Unofficial events in SQLite for year \(eventYear): \(unofficialEventsInSQLite.count)")
         
-        // When 30+ new (never seen before) events are added in one import, offer Auto Choose Attendance (festival-specific)
+        // When 30+ new events are added in one import, offer Auto Choose Attendance only for the current year (festival-specific).
+        // For past years the user must use Preferences to run the wizard.
         let eventsAdded = eventsInSQLite.count - existingEvents.count
-        if FestivalConfig.current.aiSchedule, eventsAdded >= 30 {
+        let currentCalendarYear = Calendar.current.component(.year, from: Date())
+        if FestivalConfig.current.aiSchedule, eventsAdded >= 30, eventYear == currentCalendarYear {
             NotificationCenter.default.post(
                 name: Notification.Name("AutoChooseAttendanceWizardRequested"),
                 object: nil,

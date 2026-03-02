@@ -35,7 +35,6 @@ struct AutoChooseAttendanceWizardView: View {
     @State private var step: WizardStep = .intro
     @State private var events: [EventData] = []
     @State private var unknownBandNames: [String] = []
-    @State private var sleepHours: Int = 4
     /// Latest show user wants to see: half-hours from midnight (0=12:00am, 1=12:30am, ..., 11=5:30am). Derived from schedule.
     @State private var latestShowHalfHours: Int = 0
     /// Max half-hour offered in picker (0–11), derived from schedule so e.g. latest show 5:15am → offer up to 5:30am (11).
@@ -340,8 +339,6 @@ struct AutoChooseAttendanceWizardView: View {
     private var buildingStep: some View {
         if case .needMustConflict(let a, let b) = currentBuildStep {
             mustConflictResolutionView(eventA: a, eventB: b)
-        } else if case .needBothShowsMissed(let bandName, let showA, let showB) = currentBuildStep {
-            bothMissedResolutionView(bandName: bandName, showA: showA, showB: showB)
         } else {
             VStack(spacing: 20) {
                 ProgressView()
@@ -376,38 +373,6 @@ struct AutoChooseAttendanceWizardView: View {
                 onDismiss()
             }
             .foregroundColor(.gray)
-        }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-    
-    private func bothMissedResolutionView(bandName: String, showA: EventData, showB: EventData) -> some View {
-        VStack(alignment: .leading, spacing: 20) {
-            Text(NSLocalizedString("AIScheduleBothMissedTitle", comment: ""))
-                .font(.headline)
-                .foregroundColor(.white)
-            Text(String(format: NSLocalizedString("AIScheduleBothMissedMessage", comment: ""), bandName))
-                .foregroundColor(.gray)
-                .font(.subheadline)
-            ScrollView {
-                VStack(spacing: 12) {
-                    conflictEventCard(event: showA) {
-                        resolveBothMissed(attendA: true, attendB: false)
-                    }
-                    conflictEventCard(event: showB) {
-                        resolveBothMissed(attendA: false, attendB: true)
-                    }
-                }
-            }
-            HStack(spacing: 12) {
-                Button(NSLocalizedString("AIScheduleSkipBand", comment: ""), role: .destructive) {
-                    resolveBothMissed(attendA: false, attendB: false)
-                }
-                Button(NSLocalizedString("Cancel", comment: ""), role: .cancel) {
-                    onDismiss()
-                }
-                .foregroundColor(.gray)
-            }
         }
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -612,7 +577,6 @@ struct AutoChooseAttendanceWizardView: View {
             return status != sawNoneStatus
         }
         var b = AIScheduleBuilder(
-            sleepHours: sleepHours,
             markAllMustMeetAndGreets: markMAndG,
             markAllMustClinics: markClinics,
             priorityManager: priorityManager,
@@ -633,7 +597,7 @@ struct AutoChooseAttendanceWizardView: View {
     private func checkStepForAlerts() {
         guard let step = currentBuildStep else { return }
         switch step {
-        case .needMustConflict, .needBothShowsMissed:
+        case .needMustConflict:
             break // Shown in-wizard in buildingStep
         case .completed:
             finishBuild(with: step)
@@ -670,11 +634,4 @@ struct AutoChooseAttendanceWizardView: View {
         checkStepForAlerts()
     }
     
-    private func resolveBothMissed(attendA: Bool, attendB: Bool) {
-        guard var b = builder else { return }
-        let next = b.nextStep(resolution: .bothShowsMissed(attendA: attendA, attendB: attendB, skipBand: !attendA && !attendB))
-        builder = b
-        currentBuildStep = next
-        checkStepForAlerts()
-    }
 }

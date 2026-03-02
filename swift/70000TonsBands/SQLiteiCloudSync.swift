@@ -331,6 +331,7 @@ class SQLiteiCloudSync {
         }
         
         print("☁️ Starting iCloud attendance sync to SQLite...")
+        print("🔍 [CLEAR_DEBUG] syncFromiCloud started (any iCloud key with no local row will be written to SQLite)")
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else {
@@ -363,6 +364,9 @@ class SQLiteiCloudSync {
             
             print("☁️ Found \(attendanceKeys.count) attendance keys in iCloud")
             print("📊 Attendance - Processed: \(processedCount), Updated: \(updatedCount)")
+            if updatedCount > 0 {
+                print("🔍 [CLEAR_DEBUG] syncFromiCloud wrote \(updatedCount) record(s) from iCloud into SQLite (if these are cleared-year keys, they were restored)")
+            }
             
             if attendanceKeys.count == 0 {
                 print("⚠️ NO ATTENDANCE KEYS FOUND IN iCLOUD!")
@@ -378,13 +382,60 @@ class SQLiteiCloudSync {
         }
     }
     
-    /// Writes all local attendance data to iCloud
-    /// Thread-safe - can be called from any thread
-    func syncAttendanceToiCloud() {
+    /// Removes from NSUbiquitousKeyValueStore all attendance keys for the given year.
+    /// Call this immediately after clearing SQLite attendance for that year so syncFromiCloud cannot restore them.
+    /// Uses same guards as other attendance sync (Default profile, iCloud enabled). Completion called on main queue.
+    func removeAttendanceKeysForYearFromKVStore(forYear year: Int, completion: @escaping () -> Void) {
+        let isMigrating = UserDefaults.standard.bool(forKey: "PriorityUniqueConstraintMigration_Started")
+        guard !isMigrating else {
+            DispatchQueue.main.async { completion() }
+            return
+        }
+        let isSwitching = UserDefaults.standard.bool(forKey: "ProfileSwitchInProgress")
+        guard !isSwitching else {
+            DispatchQueue.main.async { completion() }
+            return
+        }
+        let activeProfile = SharedPreferencesManager.shared.getActivePreferenceSource()
+        guard activeProfile == "Default" else {
+            DispatchQueue.main.async { completion() }
+            return
+        }
+        let iCloudHandler = iCloudDataHandler()
+        guard iCloudHandler.checkForIcloud() else {
+            DispatchQueue.main.async { completion() }
+            return
+        }
+        let eventNamePrefix = "eventName:"
+        let yearSuffix = ":\(year)"
+        DispatchQueue.global(qos: .userInitiated).async {
+            let iCloudStore = NSUbiquitousKeyValueStore.default
+            var removedCount = 0
+            for key in iCloudStore.dictionaryRepresentation.keys {
+                guard key.hasPrefix(eventNamePrefix) else { continue }
+                let index = String(key.dropFirst(eventNamePrefix.count))
+                if index.hasSuffix(yearSuffix) {
+                    iCloudStore.removeObject(forKey: key)
+                    removedCount += 1
+                }
+            }
+            if removedCount > 0 {
+                iCloudStore.synchronize()
+                print("☁️ Removed \(removedCount) attendance keys for year \(year) from KV store (clear-all fix)")
+            }
+            DispatchQueue.main.async { completion() }
+        }
+    }
+    
+    /// Writes all local attendance data to iCloud and removes keys no longer in SQLite.
+    /// Thread-safe - can be called from any thread.
+    /// - Parameter completion: Optional; called on main queue when done. Use after Clear All so UI refresh happens only after iCloud is updated (avoids syncFromiCloud restoring cleared data).
+    func syncAttendanceToiCloud(completion: (() -> Void)? = nil) {
         // CRITICAL: Block iCloud operations during database migration
         let isMigrating = UserDefaults.standard.bool(forKey: "PriorityUniqueConstraintMigration_Started")
         guard !isMigrating else {
             print("🚫 [ICLOUD_BLOCK] Database migration in progress - BLOCKING iCloud attendance sync")
+            DispatchQueue.main.async { completion?() }
             return
         }
         
@@ -392,6 +443,7 @@ class SQLiteiCloudSync {
         let isSwitching = UserDefaults.standard.bool(forKey: "ProfileSwitchInProgress")
         guard !isSwitching else {
             print("🚫 [ICLOUD_BLOCK] Profile switch in progress - BLOCKING iCloud attendance sync")
+            DispatchQueue.main.async { completion?() }
             return
         }
         
@@ -399,6 +451,7 @@ class SQLiteiCloudSync {
         let activeProfile = SharedPreferencesManager.shared.getActivePreferenceSource()
         guard activeProfile == "Default" else {
             print("☁️ [ICLOUD_SKIP] Active profile is '\(activeProfile)' (not Default) - skipping iCloud sync")
+            DispatchQueue.main.async { completion?() }
             return
         }
         
@@ -406,13 +459,18 @@ class SQLiteiCloudSync {
         let iCloudHandler = iCloudDataHandler()
         guard iCloudHandler.checkForIcloud() else {
             print("☁️ iCloud disabled - skipping attendance sync to iCloud")
+            DispatchQueue.main.async { completion?() }
             return
         }
         
         print("☁️ Starting attendance sync to iCloud (Default only)...")
+        print("🔍 [CLEAR_DEBUG] syncToiCloud async work queued (will read SQLite, remove stale iCloud keys, then call completion)")
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let self = self else { return }
+            guard let self = self else {
+                DispatchQueue.main.async { completion?() }
+                return
+            }
             
             // Only sync "Default" profile to iCloud
             let allAttendance = self.attendanceManager.getAllAttendanceDataByIndex(profileName: "Default")
@@ -420,6 +478,7 @@ class SQLiteiCloudSync {
             
             var writtenCount = 0
             
+            let currentIndices = Set(allAttendance.keys)
             for (index, data) in allAttendance {
                 guard let status = data["status"] as? Int,
                       let lastModified = data["lastModified"] as? Double else { continue }
@@ -435,11 +494,29 @@ class SQLiteiCloudSync {
                 writtenCount += 1
             }
             
+            // Remove from iCloud any attendance keys that are no longer in SQLite (e.g. after Clear all attendance).
+            // Otherwise syncAttendanceFromiCloud would restore them when the app next runs or becomes active.
+            let eventNamePrefix = "eventName:"
+            var removedCount = 0
+            for key in iCloudStore.dictionaryRepresentation.keys {
+                guard key.hasPrefix(eventNamePrefix) else { continue }
+                let index = String(key.dropFirst(eventNamePrefix.count))
+                if !currentIndices.contains(index) {
+                    iCloudStore.removeObject(forKey: key)
+                    removedCount += 1
+                }
+            }
+            if removedCount > 0 {
+                print("☁️ Removed \(removedCount) stale attendance keys from iCloud")
+                print("🔍 [CLEAR_DEBUG] syncToiCloud removed \(removedCount) keys from iCloud (cleared-year keys no longer in iCloud)")
+            }
+            
             // Synchronize with iCloud
             iCloudStore.synchronize()
             
             print("☁️ Attendance sync to iCloud completed")
             print("📊 Written: \(writtenCount) records")
+            DispatchQueue.main.async { completion?() }
         }
     }
     
@@ -519,6 +596,7 @@ class SQLiteiCloudSync {
         // RULE 3: If no local data exists, use iCloud data regardless of UID
         if localStatus == 0 {
             print("☁️ No local data exists, using iCloud data")
+            print("🔍 [CLEAR_DEBUG] Restoring from iCloud -> SQLite index=\(attendanceIndex) year=\(eventYearString)")
         }
         
         // Update the attendance record (only "Default" profile)

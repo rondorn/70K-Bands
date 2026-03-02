@@ -428,6 +428,7 @@ struct LandscapeScheduleView: View {
             headerView(dayData: dayData)
             
             // Sticky headers and scrollable content (only visible venues shown when filter active)
+            // .id(dayLabel) so switching days recreates the scroll view and starts at the first event
             GeometryReader { geometry in
                     StickyHeaderScrollView(
                     dayData: dayData,
@@ -443,14 +444,15 @@ struct LandscapeScheduleView: View {
                         
                         print("🔍 [LANDSCAPE_SCHEDULE] Event type for attendance: \(eventType) -> \(normalizedEventType)")
                         
-                        // Update attendance in database
+                        // Update attendance in database (pass all events so overlapping show attendance is cleared)
                         attendedHandle.addShowsAttendedWithStatus(
                             band: bandName,
                             location: location,
                             startTime: startTime,
                             eventType: normalizedEventType,
                             eventYearString: String(eventYear),
-                            status: status
+                            status: status,
+                            allEventsForYear: viewModel.allEventsForYear
                         )
                         
                         // Update the view model's data in place (use original eventType for matching)
@@ -460,6 +462,7 @@ struct LandscapeScheduleView: View {
                     },
                     attendedHandle: attendedHandle
                 )
+                .id(dayData.dayLabel)
             }
         }
         .contentShape(Rectangle())

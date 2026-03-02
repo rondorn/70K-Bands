@@ -64,6 +64,8 @@ public class LandscapeScheduleView extends LinearLayout {
     // Simple data storage
     private List<DayScheduleData> days = new ArrayList<>();
     private int currentDayIndex = 0;
+    /** Day index last time we drew content; used to scroll to first event when switching days. */
+    private int lastDisplayedDayIndex = -1;
     private OnBandTappedListener bandTappedListener;
     private OnDismissRequestedListener dismissRequestedListener;
     private showsAttended attendedHandle;
@@ -1061,6 +1063,19 @@ public class LandscapeScheduleView extends LinearLayout {
         
         // Update content
         updateContent();
+        
+        // When switching days, start at the first event of the new day (scroll to top)
+        if (contentScrollView != null && !days.isEmpty() && currentDayIndex >= 0 && currentDayIndex < days.size()) {
+            if (currentDayIndex != lastDisplayedDayIndex) {
+                lastDisplayedDayIndex = currentDayIndex;
+                contentScrollView.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        contentScrollView.scrollTo(0, 0);
+                    }
+                });
+            }
+        }
     }
     
     /**

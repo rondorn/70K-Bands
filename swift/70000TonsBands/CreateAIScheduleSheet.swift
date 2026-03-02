@@ -2,8 +2,8 @@
 //  CreateAIScheduleSheet.swift
 //  70000TonsBands
 //
-//  Sheet: sleep hours, Meet and Greet / Clinic options, then build.
-//  Resolves Must conflicts and "both shows missed" via alerts, then writes will-attend.
+//  Sheet: Meet and Greet / Clinic options, then build.
+//  Resolves Must/Might conflicts via alerts, then writes will-attend.
 //
 
 import SwiftUI
@@ -11,7 +11,6 @@ import SwiftUI
 // MARK: - View model
 
 final class CreateAIScheduleSheetViewModel: ObservableObject {
-    @Published var sleepHours: Int = 4
     @Published var markAllMustMeetAndGreets: Bool = true
     @Published var markAllMustClinics: Bool = true
     @Published var isBuilding: Bool = false
@@ -82,7 +81,6 @@ final class CreateAIScheduleSheetViewModel: ObservableObject {
             return status != sawNoneStatus
         }
         var b = AIScheduleBuilder(
-            sleepHours: sleepHours,
             markAllMustMeetAndGreets: markAllMustMeetAndGreets,
             markAllMustClinics: markAllMustClinics,
             priorityManager: priorityManager,
@@ -122,7 +120,8 @@ final class CreateAIScheduleSheetViewModel: ObservableObject {
                 startTime: startTime,
                 eventType: eventType,
                 eventYearString: yearString,
-                status: sawAllStatus
+                status: sawAllStatus,
+                allEventsForYear: events
             )
         }
         completedCount = events.count
@@ -146,10 +145,6 @@ struct CreateAIScheduleSheet: View {
     @State private var showMustConflictAlert = false
     @State private var mustConflictEventA: EventData?
     @State private var mustConflictEventB: EventData?
-    @State private var showBothMissedAlert = false
-    @State private var bothMissedBand: String?
-    @State private var bothMissedShowA: EventData?
-    @State private var bothMissedShowB: EventData?
     @State private var showCompletedAlert = false
     @State private var showExistingAttendanceWarning = false
     @State private var pendingBuildEvents: [EventData]?
@@ -183,13 +178,6 @@ struct CreateAIScheduleSheet: View {
             mustConflictAlertButtons
         } message: {
             Text(NSLocalizedString("AIScheduleMustConflictMessage", comment: "Two Must-see shows overlap"))
-        }
-        .alert(NSLocalizedString("AIScheduleBothMissedTitle", comment: "Both shows missed"), isPresented: $showBothMissedAlert) {
-            bothMissedAlertButtons
-        } message: {
-            if let band = bothMissedBand {
-                Text(String(format: NSLocalizedString("AIScheduleBothMissedMessage", comment: "Both shows would be missed for %@"), band))
-            }
         }
         .alert(NSLocalizedString("AIScheduleDoneTitle", comment: "Schedule created"), isPresented: $showCompletedAlert) {
             Button(NSLocalizedString("OK", comment: "")) {
@@ -234,11 +222,6 @@ struct CreateAIScheduleSheet: View {
     
     private var scheduleForm: some View {
         Form {
-            Section(header: Text(NSLocalizedString("AIScheduleSleepHeader", comment: "Sleep"))) {
-                Stepper(value: $viewModel.sleepHours, in: 4...10) {
-                    Text(NSLocalizedString("AIScheduleSleepPrompt", comment: "Hours of sleep per night") + ": \(viewModel.sleepHours)")
-                }
-            }
             Section(header: Text(NSLocalizedString("AIScheduleMeetGreetHeader", comment: "Meet and Greets"))) {
                 Toggle(NSLocalizedString("AIScheduleMarkAllMustMeetGreets", comment: "Mark all Must Meet and Greets"), isOn: $viewModel.markAllMustMeetAndGreets)
                 if !viewModel.markAllMustMeetAndGreets {
@@ -334,44 +317,6 @@ struct CreateAIScheduleSheet: View {
         }
     }
     
-    @ViewBuilder
-    private var bothMissedAlertButtons: some View {
-        if let a = bothMissedShowA, let b = bothMissedShowB {
-            Button(showALabel(a)) {
-                viewModel.resolve(resolution: .bothShowsMissed(attendA: true, attendB: false, skipBand: false))
-                showBothMissedAlert = false
-                checkStepForAlerts()
-            }
-            Button(showBLabel(b)) {
-                viewModel.resolve(resolution: .bothShowsMissed(attendA: false, attendB: true, skipBand: false))
-                showBothMissedAlert = false
-                checkStepForAlerts()
-            }
-            Button(NSLocalizedString("AIScheduleSkipBand", comment: "Skip this band"), role: .destructive) {
-                viewModel.resolve(resolution: .bothShowsMissed(attendA: false, attendB: false, skipBand: true))
-                showBothMissedAlert = false
-                checkStepForAlerts()
-            }
-            Button(NSLocalizedString("Cancel", comment: ""), role: .cancel) {
-                showBothMissedAlert = false
-                viewModel.isBuilding = false
-            }
-        }
-    }
-    
-    private func showALabel(_ event: EventData) -> String {
-        let loc = event.location
-        let time = event.startTime ?? ""
-        if time.isEmpty { return String(format: NSLocalizedString("AIScheduleAttendShowA", comment: "Attend show A"), loc) }
-        return String(format: NSLocalizedString("AIScheduleAttendShowAWithTime", comment: "Attend show A: %@ %@"), loc, time)
-    }
-    private func showBLabel(_ event: EventData) -> String {
-        let loc = event.location
-        let time = event.startTime ?? ""
-        if time.isEmpty { return String(format: NSLocalizedString("AIScheduleAttendShowB", comment: "Attend show B"), loc) }
-        return String(format: NSLocalizedString("AIScheduleAttendShowBWithTime", comment: "Attend show B: %@ %@"), loc, time)
-    }
-    
     private func checkStepForAlerts() {
         guard let step = viewModel.currentStep else { return }
         switch step {
@@ -379,11 +324,6 @@ struct CreateAIScheduleSheet: View {
             mustConflictEventA = a
             mustConflictEventB = b
             showMustConflictAlert = true
-        case .needBothShowsMissed(let bandName, let showA, let showB):
-            bothMissedBand = bandName
-            bothMissedShowA = showA
-            bothMissedShowB = showB
-            showBothMissedAlert = true
         case .completed(let events):
             viewModel.writeAndFinish(events: events, onDone: {
                 showCompletedAlert = true

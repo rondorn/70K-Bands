@@ -487,6 +487,7 @@ class SQLiteAttendanceManager {
                 let toDelete = self.attendanceTable.filter(self.eventYearColumn == year && self.profileName == currentProfile)
                 let deleted = try db.run(toDelete.delete())
                 print("✅ SQLiteAttendanceManager: Cleared \(deleted) total attendance records for year \(year)")
+                print("🔍 [CLEAR_DEBUG] clearAllAttendance done for year \(year); next step is syncToiCloud to remove those keys from iCloud")
             } catch {
                 print("❌ SQLiteAttendanceManager: clearAllAttendance failed: \(error)")
             }

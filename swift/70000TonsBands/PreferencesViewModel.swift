@@ -408,6 +408,8 @@ class PreferencesViewModel: ObservableObject {
         AttendanceManager().clearAutoChosenAttendance(forYear: selectedYearAsInt) { [weak self] in
             self?.refreshAutoChosenDataState()
             NotificationCenter.default.post(name: Notification.Name("RefreshLandscapeSchedule"), object: nil)
+            // Push current state to iCloud so removed auto records are removed from iCloud too
+            SQLiteiCloudSync().syncAttendanceToiCloud()
         }
     }
     
@@ -418,13 +420,23 @@ class PreferencesViewModel: ObservableObject {
         showClearAllConfirmation = true
     }
     
-    /// User confirmed clearing all attendance. Removes every attendance record for the year.
+    /// User confirmed clearing all attendance. Removes every attendance record for the year (current profile).
     func confirmClearAllAttendance() {
         showClearAllConfirmation = false
         guard FestivalConfig.current.aiSchedule else { return }
         AttendanceManager().clearAllAttendance(forYear: selectedYearAsInt) { [weak self] in
-            self?.refreshAutoChosenDataState()
-            NotificationCenter.default.post(name: Notification.Name("RefreshLandscapeSchedule"), object: nil)
+            guard let self = self else { return }
+            ShowsAttended.clearLegacyStoreForYear(self.selectedYearAsInt)
+            // Remove cleared year's keys from KV store immediately so syncFromiCloud cannot restore them (works with or without iCloud account).
+            SQLiteiCloudSync().removeAttendanceKeysForYearFromKVStore(forYear: self.selectedYearAsInt) { [weak self] in
+                guard let self = self else { return }
+                // Then push current state to KV store and refresh UI.
+                SQLiteiCloudSync().syncAttendanceToiCloud(completion: { [weak self] in
+                    guard let self = self else { return }
+                    self.refreshAutoChosenDataState()
+                    NotificationCenter.default.post(name: Notification.Name("RefreshLandscapeSchedule"), object: nil)
+                })
+            }
         }
     }
     
