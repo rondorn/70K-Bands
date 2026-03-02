@@ -59,6 +59,8 @@ class LandscapeScheduleViewModel: ObservableObject {
     @Published var isLoading: Bool = true
     @Published var currentDayIndex: Int = 0
     @Published var days: [DayScheduleData] = []
+    /// All events for the current year (set when schedule loads). Used for attendance conflict resolution (no overlapping shows).
+    @Published var allEventsForYear: [EventData] = []
     @Published var totalEventCount: Int = 0
     /// Total unfiltered event count (before applying filters) - used for filter counter
     @Published var totalUnfilteredEventCount: Int = 0
@@ -268,6 +270,7 @@ class LandscapeScheduleViewModel: ObservableObject {
                 // Assign combined events map on main thread for thread safety
                 combinedEventsMap = combinedMap
                 
+                self.allEventsForYear = allEvents
                 self.days = processedDays
                 self.totalEventCount = filteredEvents.count
                 

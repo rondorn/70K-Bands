@@ -224,7 +224,7 @@ struct FestivalConfig {
         // MDF comments not available message
         self.commentsNotAvailableTranslationKey = "DefaultDescriptionMDF"
         
-        self.aiSchedule = false
+        self.aiSchedule = true
         
         #else
         print("🏛️ [MDF_DEBUG] Building DEFAULT (70K) configuration - no macro defined")
