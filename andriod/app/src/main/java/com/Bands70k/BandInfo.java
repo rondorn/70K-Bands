@@ -35,6 +35,27 @@ public class BandInfo {
 
     public static Map<String, scheduleTimeTracker> scheduleRecords;
 
+    /**
+     * Returns true if the schedule contains any Unofficial Event or Cruiser Organized events.
+     * Used to decide whether to show the "Show Unofficial" filter option in the menu.
+     */
+    public static boolean hasUnofficialEventsInSchedule() {
+        if (scheduleRecords == null || scheduleRecords.isEmpty()) return false;
+        for (scheduleTimeTracker tracker : scheduleRecords.values()) {
+            if (tracker != null && tracker.scheduleByTime != null) {
+                for (scheduleHandler sh : tracker.scheduleByTime.values()) {
+                    if (sh != null) {
+                        String type = sh.getShowType();
+                        if (staticVariables.unofficalEvent.equals(type) || staticVariables.unofficalEventOld.equals(type)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     public Map<String,String> downloadUrls = new HashMap<String, String>();
 
     /**

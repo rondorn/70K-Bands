@@ -54,12 +54,14 @@ class ScheduleCSVImporter {
         print("  - endTimeField: '\(endTimeField)'")
         print("  - typeField: '\(typeField)'")
         
-        // SAFETY CHECK: Validate CSV has reasonable number of rows before deleting anything
-        // A typical event schedule should have at least 50+ events
-        // If CSV has fewer than 10 rows, it's likely corrupt/incomplete - keep existing data
-        if csvData.rows.count < 10 {
-            print("⚠️ [EVENT_SAFETY] CSV has only \(csvData.rows.count) rows - likely corrupt or incomplete")
-            print("⚠️ [EVENT_SAFETY] Import ABORTED - keeping existing database data to prevent data loss")
+        // VALIDATION: Abort only if required headers are missing (malformed or wrong format)
+        // Empty or small CSVs with valid headers are valid (e.g. test schedules) - proceed as normal
+        let requiredHeaders = Set([bandField, locationField, dateField, dayField, startTimeField, endTimeField, typeField])
+        let headerSet = Set(csvData.headers.map { $0.trimmingCharacters(in: .whitespaces) })
+        guard requiredHeaders.isSubset(of: headerSet) else {
+            print("⚠️ [EVENT_VALIDATION] CSV missing required headers - aborting import")
+            print("⚠️ [EVENT_VALIDATION] Expected: Band, Location, Date, Day, Start Time, End Time, Type")
+            print("⚠️ [EVENT_VALIDATION] Found headers: \(csvData.headers)")
             return false
         }
         
@@ -163,7 +165,8 @@ class ScheduleCSVImporter {
         }
         print("✅ [SQLITE_FIX] Unofficial events in SQLite for year \(eventYear): \(unofficialEventsInSQLite.count)")
         
-        return successCount > 0
+        // Import succeeded if we completed the process (including empty/small CSVs - schedule is now correct)
+        return true
     }
     
     // MARK: - Time Index Calculation

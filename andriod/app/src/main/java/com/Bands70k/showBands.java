@@ -2739,16 +2739,22 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
     /**
      * Updates the filter badge (hidden records count) to match iOS.
-     * Only shows when in schedule view and filters are hiding records.
+     * Shows in both list and schedule view when filters are hiding records.
+     * Works when schedule is absent: uses unfilteredBandCount for list view.
      */
     public void updateFilterBadge() {
         TextView badge = (TextView) findViewById(R.id.filterCountBadge);
         if (badge == null) return;
-        if (listHandler == null || !staticVariables.preferences.getShowScheduleView()) {
-            badge.setVisibility(View.GONE);
-            return;
+        int hiddenCount;
+        if (listHandler != null && listHandler.allUpcomingEvents > 0) {
+            // Schedule view with event data: use event-based count
+            hiddenCount = listHandler.getHiddenRecordsCount();
+        } else {
+            // List view or no schedule: hidden = total bands - displayed (unfilteredBandCount set by getBandNames)
+            int displayed = (adapter != null) ? adapter.getCount() : 0;
+            int total = Math.max(0, staticVariables.unfilteredBandCount);
+            hiddenCount = Math.max(0, total - displayed);
         }
-        int hiddenCount = listHandler.getHiddenRecordsCount();
         if (hiddenCount > 0) {
             badge.setText(String.valueOf(hiddenCount));
             badge.setVisibility(View.VISIBLE);
