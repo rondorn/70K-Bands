@@ -300,7 +300,11 @@ struct LandscapeScheduleView: View {
             }
             dayBeforeFilterChange = nil
         }) {
-            VenueFilterSheetView(dayData: viewModel.currentDayData, viewModel: viewModel, dayBeforeFilterChange: $dayBeforeFilterChange)
+            VenueFilterSheetView(
+                dayData: viewModel.currentDayData,
+                viewModel: viewModel,
+                dayBeforeFilterChange: $dayBeforeFilterChange
+            )
         }
         .onChange(of: showVenueFilterSheet) { isShowing in
             // Store the current day when opening the filter sheet

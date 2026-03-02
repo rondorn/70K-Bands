@@ -253,8 +253,8 @@ open class ShowsAttended {
             newStatus = 2
         }
         
-        // Update using SQLite (all profiles are now editable)
-        attendanceManager.setAttendanceStatusByIndex(index: index, status: newStatus)
+        // Update using SQLite (all profiles are now editable); explicitly mark as Manual
+        attendanceManager.setAttendanceStatusByIndex(index: index, status: newStatus, timestamp: Date().timeIntervalSince1970, attendanceSource: "Manual")
         
         // Convert to string status for return value
         var value = ""
@@ -294,8 +294,8 @@ open class ShowsAttended {
             numericStatus = 0
         }
         
-        // Use SQLite AttendanceManager
-        attendanceManager.setAttendanceStatusByIndex(index: index, status: numericStatus)
+        // Use SQLite AttendanceManager; explicitly mark as Manual for user-initiated changes
+        attendanceManager.setAttendanceStatusByIndex(index: index, status: numericStatus, timestamp: Date().timeIntervalSince1970, attendanceSource: "Manual")
         
         // Keep old system for backward compatibility (legacy cache)
         mutateShowsAttendedArray { arr in arr[index] = status }
@@ -323,11 +323,24 @@ open class ShowsAttended {
         - skipICloud: If true, skips writing to iCloud (useful during restoration)
      */
     func changeShowAttendedStatus(index: String, status: String, skipICloud: Bool) {
-        // Reduced logging for performance
+        // Parse status string (may be "status" or "status:timestamp") to numeric for SQLite
+        let statusParts = status.components(separatedBy: ":")
+        let statusString = statusParts[0]
+        let numericStatus: Int
+        switch statusString {
+        case sawAllStatus:
+            numericStatus = 2
+        case sawSomeStatus:
+            numericStatus = 1
+        case sawNoneStatus:
+            numericStatus = 3
+        default:
+            numericStatus = 0
+        }
+        attendanceManager.setAttendanceStatusByIndex(index: index, status: numericStatus, timestamp: Date().timeIntervalSince1970, attendanceSource: "Manual")
         mutateShowsAttendedArray { arr in arr[index] = status }
         let firebaseEventWrite = firebaseEventDataWrite();
         firebaseEventWrite.writeEvent(index: index, status: status)
-        // cacheVariables setters are thread-safe
         cacheVariables.attendedStaticCache[index] = status
         saveShowsAttended()
         

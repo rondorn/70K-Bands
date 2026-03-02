@@ -124,6 +124,10 @@ struct FestivalConfig {
     let specialEventsEnabledDefault: Bool
     let unofficalEventsEnabledDefault: Bool
     
+    /// When true, the "Create AI schedule" feature is available (schedule present + this flag).
+    /// 70K Bands: true. MDF Bands: false (for now).
+    let aiSchedule: Bool
+    
     // Comments not available message configuration
     let commentsNotAvailableTranslationKey: String
     
@@ -176,6 +180,8 @@ struct FestivalConfig {
         // 70K comments not available message
         self.commentsNotAvailableTranslationKey = "DefaultDescription70K"
         
+        self.aiSchedule = true
+        
         #elseif FESTIVAL_MDF
         print("🏛️ [MDF_DEBUG] Building MDF configuration")
         // Maryland Death Fest configuration
@@ -217,6 +223,8 @@ struct FestivalConfig {
         
         // MDF comments not available message
         self.commentsNotAvailableTranslationKey = "DefaultDescriptionMDF"
+        
+        self.aiSchedule = false
         
         #else
         print("🏛️ [MDF_DEBUG] Building DEFAULT (70K) configuration - no macro defined")
@@ -264,6 +272,7 @@ struct FestivalConfig {
         
         // Default comments not available message (same as 70K)
         self.commentsNotAvailableTranslationKey = "DefaultDescription70K"
+        self.aiSchedule = true
         #endif
         
         print("🏛️ [MDF_DEBUG] FestivalConfig init() completed")

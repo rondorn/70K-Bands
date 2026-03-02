@@ -161,6 +161,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     private var viewToggleButton: UIBarButtonItem?
     private var isManualCalendarView: Bool = false  // For iPad: true = calendar view, false = list view
     
+    /// When non-nil, user opened band list from Auto Choose Attendance wizard; show "Back to wizard" and re-present wizard when tapped.
+    private var autoChooseWizardResumeYear: Int?
+    
     @IBOutlet weak var statsButton: UIBarButtonItem!
     @IBOutlet weak var filterButtonBar: UIBarButtonItem!
     @IBOutlet weak var searchButtonBar: UIBarButtonItem!
@@ -504,6 +507,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         NotificationCenter.default.addObserver(self, selector: #selector(showMigrationResultsDialog(_:)), name: Notification.Name("ShowMigrationResultsDialog"), object: nil)
         print("🔔 MIGRATION DIALOG OBSERVER REGISTERED SUCCESSFULLY")
         NotificationCenter.default.addObserver(self, selector: #selector(iCloudAttendedDataRestoredHandler), name: Notification.Name("iCloudAttendedDataRestored"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleAutoChooseAttendanceWizardRequested(_:)), name: Notification.Name("AutoChooseAttendanceWizardRequested"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleAutoChooseAttendanceOpenBandDetail(_:)), name: Notification.Name("AutoChooseAttendanceOpenBandDetail"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(bandNamesCacheReadyHandler), name: NSNotification.Name("BandNamesDataReady"), object: nil)
         
         // ✅ DEADLOCK FIX: Register observer for first launch band names loaded
@@ -1466,8 +1471,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         mainToolBar?.isHidden = false
         mainToolBar?.alpha = 1.0
         
-        // Stats on far left (symmetric with preferences on right), using customView so it stays visible when scrolling
-        installStatsBarButton()
+        // Stats on far left (symmetric with preferences on right), or "Back to wizard" when returning from wizard's band list
+        if autoChooseWizardResumeYear != nil {
+            installBackToWizardButtonIfNeeded()
+        } else {
+            installStatsBarButton()
+        }
         
         let startTime = CFAbsoluteTimeGetCurrent()
         print("🕐 [\(String(format: "%.3f", startTime))] viewWillAppear START - returning from details")
@@ -1920,9 +1929,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
         
         // Create SwiftUI filter sheet with dismiss handler
-        let filterSheetView = PortraitFilterSheetView(onDismiss: { [weak self] in
-            self?.dismissFilterMenuProgrammatically()
-        })
+        let filterSheetView = PortraitFilterSheetView(
+            onDismiss: { [weak self] in
+                self?.dismissFilterMenuProgrammatically()
+            }
+        )
         let hostingController = UIHostingController(rootView: filterSheetView)
         currentFilterMenuHostingController = hostingController
         
@@ -2036,6 +2047,88 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             hostingController.removeFromParent()
             self.currentFilterMenuHostingController = nil
             self.mainTableView.isScrollEnabled = true
+        }
+    }
+    
+    @objc private func handleAutoChooseAttendanceWizardRequested(_ notification: Notification) {
+        guard FestivalConfig.current.aiSchedule else { return }
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            let year = notification.userInfo?["eventYear"] as? Int ?? eventYear
+            let alert = UIAlertController(
+                title: NSLocalizedString("AutoChooseAttendanceTitle", comment: "Auto Choose Attendance"),
+                message: NSLocalizedString("AutoChooseAttendanceImportPrompt", comment: "Schedule imported. Would you like to use Auto Choose Attendance to plan your schedule?"),
+                preferredStyle: .alert
+            )
+            alert.addAction(UIAlertAction(title: NSLocalizedString("Ok", comment: ""), style: .default) { [weak self] _ in
+                self?.presentAutoChooseAttendanceWizard(eventYear: year)
+            })
+            alert.addAction(UIAlertAction(title: NSLocalizedString("Cancel", comment: ""), style: .cancel))
+            self.present(alert, animated: true)
+        }
+    }
+    
+    private func presentAutoChooseAttendanceWizard(eventYear year: Int) {
+        let wizardView = AutoChooseAttendanceWizardView(
+            eventYear: year,
+            onDismiss: { [weak self] in
+                self?.autoChooseWizardResumeYear = nil
+                self?.presentedViewController?.dismiss(animated: true)
+                NotificationCenter.default.post(name: Notification.Name("RefreshLandscapeSchedule"), object: nil)
+                self?.refreshBandList(reason: "Auto Choose Attendance", scrollToTop: false)
+            },
+            onOpenBandList: { [weak self] in
+                guard let self = self else { return }
+                let resumeYear = year
+                self.presentedViewController?.dismiss(animated: true) {
+                    self.autoChooseWizardResumeYear = resumeYear
+                    self.installBackToWizardButtonIfNeeded()
+                }
+            },
+            onOpenBandDetail: { [weak self] bandName in
+                self?.presentBandDetailForWizard(bandName: bandName)
+            }
+        )
+        let hosting = UIHostingController(rootView: wizardView)
+        hosting.view.backgroundColor = .black
+        present(hosting, animated: true)
+    }
+    
+    private func installBackToWizardButtonIfNeeded() {
+        if autoChooseWizardResumeYear != nil {
+            let item = UIBarButtonItem(
+                title: NSLocalizedString("AutoChooseAttendanceBackToWizard", comment: "Back to wizard"),
+                style: .plain,
+                target: self,
+                action: #selector(backToWizardTapped(_:))
+            )
+            item.tintColor = .white
+            navigationItem.leftBarButtonItem = item
+        } else {
+            installStatsBarButton()
+        }
+    }
+    
+    @objc private func backToWizardTapped(_ sender: Any) {
+        guard let year = autoChooseWizardResumeYear else { return }
+        autoChooseWizardResumeYear = nil
+        installStatsBarButton()
+        presentAutoChooseAttendanceWizard(eventYear: year)
+    }
+    
+    /// Presents band detail on top of the wizard so the user can set Must/Might/Wont; when dismissed, returns to wizard.
+    private func presentBandDetailForWizard(bandName: String) {
+        var top: UIViewController = self
+        while let presented = top.presentedViewController { top = presented }
+        let detailController = DetailHostingController(bandName: bandName, showCustomBackButton: true)
+        detailController.overrideUserInterfaceStyle = .dark
+        top.present(detailController, animated: true)
+    }
+    
+    @objc private func handleAutoChooseAttendanceOpenBandDetail(_ notification: Notification) {
+        guard let bandName = notification.userInfo?["bandName"] as? String else { return }
+        DispatchQueue.main.async { [weak self] in
+            self?.presentBandDetailForWizard(bandName: bandName)
         }
     }
     
