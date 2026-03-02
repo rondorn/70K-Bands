@@ -5276,7 +5276,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             let cellEventType  = String(cellData[2])
             let cellStartTime = String(cellData[3])
             
-            attendedHandle.addShowsAttendedWithStatus(band: cellBandName, location: cellLocation, startTime: cellStartTime, eventType: cellEventType,eventYearString: String(eventYear), status: status);
+            let allEvents = DataManager.shared.fetchEvents(forYear: eventYear)
+            attendedHandle.addShowsAttendedWithStatus(band: cellBandName, location: cellLocation, startTime: cellStartTime, eventType: cellEventType, eventYearString: String(eventYear), status: status, allEventsForYear: allEvents);
             
             let empty : UITextField = UITextField();
             let message = attendedHandle.setShowsAttendedStatus(empty, status: status)

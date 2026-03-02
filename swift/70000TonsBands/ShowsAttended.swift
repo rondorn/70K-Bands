@@ -179,6 +179,117 @@ open class ShowsAttended {
         }
     }
     
+    /// Removes attendance for the given year from the legacy file and static cache.
+    /// Call this after clearing SQLite so the UI and any reload don't show stale data from file/cache.
+    static func clearLegacyStoreForYear(_ year: Int) {
+        let suffix = ":\(year)"
+        var removedFromCache = 0
+        var current = cacheVariables.attendedStaticCache
+        let keysToRemove = current.keys.filter { $0.hasSuffix(suffix) }
+        for key in keysToRemove {
+            current.removeValue(forKey: key)
+            removedFromCache += 1
+        }
+        cacheVariables.attendedStaticCache = current
+        if removedFromCache > 0 {
+            print("📋 ShowsAttended: Removed \(removedFromCache) keys for year \(year) from static cache")
+        }
+        do {
+            let fileURL = showsAttended
+            guard FileManager.default.fileExists(atPath: fileURL.path) else { return }
+            let data = try Data(contentsOf: fileURL)
+            guard let dict = try JSONSerialization.jsonObject(with: data) as? [String: String] else { return }
+            let filtered = dict.filter { !$0.key.hasSuffix(suffix) }
+            if filtered.count != dict.count {
+                if filtered.isEmpty {
+                    let emptyDict: [String: String] = [:]
+                    let emptyData = try JSONSerialization.data(withJSONObject: emptyDict)
+                    try emptyData.write(to: fileURL)
+                    print("📋 ShowsAttended: Cleared legacy file for year \(year)")
+                } else {
+                    let newData = try JSONSerialization.data(withJSONObject: filtered)
+                    try newData.write(to: fileURL)
+                    print("📋 ShowsAttended: Removed \(dict.count - filtered.count) keys for year \(year) from legacy file")
+                }
+            }
+        } catch {
+            print("📋 ShowsAttended: Failed to clear legacy file for year \(year): \(error.localizedDescription)")
+        }
+    }
+    
+    /// Overlap of 15 min or less is ignored (both shows can stay marked). Only clear when overlap > this threshold.
+    private static let shortOverlapThresholdSeconds: Double = 900 // 15 minutes
+
+    /// When marking a Show as attended, clear any other Show already attended that overlaps in time (same calendar day) by more than 15 min. Meet and Greets are not cleared. Overlap <= 15 min is allowed (both can be marked).
+    private func clearOverlappingShowAttendance(band: String, location: String, startTime: String, eventType: String, eventYearString: String, currentIndex: String, allEvents: [EventData]) {
+        guard let thisEvent = allEvents.first(where: { e in
+            e.bandName == band && e.location == location && (e.startTime ?? "") == startTime && eventTypeMatches(e.eventType, stored: eventType)
+        }) else { return }
+        let thisDay = normalizedCalendarDay(from: thisEvent.date)
+        var thisEnd = thisEvent.endTimeIndex
+        if thisEvent.timeIndex > thisEnd { thisEnd += 86400 }
+        let attended = getShowsAttended()
+        let sawNone = sawNoneStatus + ":" + String(format: "%.0f", Date().timeIntervalSince1970)
+        for (index, value) in attended {
+            guard index != currentIndex else { continue }
+            guard index.hasSuffix(":" + eventYearString) else { continue }
+            let statusPart = value.components(separatedBy: ":").first ?? value
+            guard statusPart == sawAllStatus || statusPart == sawSomeStatus else { continue }
+            guard let (otherBand, otherLocation, otherStart, otherEventType) = parseAttendanceIndex(index) else { continue }
+            guard otherEventType == showType else { continue }
+            guard let otherEvent = allEvents.first(where: { e in
+                e.bandName == otherBand && e.location == otherLocation && (e.startTime ?? "") == otherStart && eventTypeMatches(e.eventType, stored: otherEventType)
+            }) else { continue }
+            let otherDay = normalizedCalendarDay(from: otherEvent.date)
+            guard thisDay == otherDay else { continue }
+            var otherEnd = otherEvent.endTimeIndex
+            if otherEvent.timeIndex > otherEnd { otherEnd += 86400 }
+            let overlaps = thisEvent.timeIndex < otherEnd && otherEvent.timeIndex < thisEnd
+            guard overlaps else { continue }
+            let overlapStart = max(thisEvent.timeIndex, otherEvent.timeIndex)
+            let overlapEnd = min(thisEnd, otherEnd)
+            let overlapSeconds = max(0, overlapEnd - overlapStart)
+            if overlapSeconds > Self.shortOverlapThresholdSeconds {
+                changeShowAttendedStatus(index: index, status: sawNone)
+            }
+        }
+    }
+    
+    private func eventTypeMatches(_ eventType: String?, stored: String) -> Bool {
+        let t = eventType ?? ""
+        if t == stored { return true }
+        if t == unofficalEventTypeOld && stored == unofficalEventType { return true }
+        return false
+    }
+    
+    /// Parse "band:location:startTime:eventType:year" allowing band/location to contain ":".
+    private func parseAttendanceIndex(_ index: String) -> (band: String, location: String, startTime: String, eventType: String)? {
+        let parts = index.components(separatedBy: ":")
+        guard parts.count >= 5 else { return nil }
+        let year = parts.last!
+        let eventType = parts[parts.count - 2]
+        let startTime = parts[parts.count - 3]
+        let location = parts[parts.count - 4]
+        let band = parts[0..<(parts.count - 4)].joined(separator: ":")
+        return (band, location, startTime, eventType)
+    }
+    
+    private func normalizedCalendarDay(from dateString: String?) -> String? {
+        guard let s = dateString, !s.isEmpty else { return nil }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        let formats = ["M/d/yyyy", "MM/dd/yyyy", "M-d-yyyy", "MM-dd-yyyy"]
+        for format in formats {
+            formatter.dateFormat = format
+            if let date = formatter.date(from: s) {
+                formatter.dateFormat = "yyyy-MM-dd"
+                return formatter.string(from: date)
+            }
+        }
+        return nil
+    }
+    
     /**
      Adds or updates a show attended record with a specific status and timestamp.
      - Parameters:
@@ -189,14 +300,21 @@ open class ShowsAttended {
         - eventYearString: The event year as a string.
         - status: The attendance status to set.
         - newTime: The timestamp to use (Double, seconds since epoch).
+        - allEventsForYear: If provided, enforces "no overlapping shows attended": when marking a Show (not Meet and Greet) as attended, any other Show already marked attended that overlaps in time will be cleared first. Meet and Greets are allowed to overlap.
      */
-    func addShowsAttendedWithStatusAndTime(band: String, location: String, startTime: String, eventType: String, eventYearString: String, status: String, newTime: Double) {
+    func addShowsAttendedWithStatusAndTime(band: String, location: String, startTime: String, eventType: String, eventYearString: String, status: String, newTime: Double, allEventsForYear: [EventData]? = nil) {
         // Normalize event type: "Unofficial Event" -> "Cruiser Organized" (for consistency with getShowAttendedStatus)
         var eventTypeValue = eventType
         if eventType == unofficalEventTypeOld {
             eventTypeValue = unofficalEventType
         }
         let index = band + ":" + location + ":" + startTime + ":" + eventTypeValue + ":" + eventYearString
+        
+        // For shows only: clear any other overlapping show attendance (user can't see two shows at once). Meet and Greets may overlap.
+        if let events = allEventsForYear, eventTypeValue == showType, status == sawAllStatus || status == sawSomeStatus {
+            clearOverlappingShowAttendance(band: band, location: location, startTime: startTime, eventType: eventTypeValue, eventYearString: eventYearString, currentIndex: index, allEvents: events)
+        }
+        
         let timestamp = String(format: "%.0f", newTime)
         changeShowAttendedStatus(index: index, status: status + ":" + timestamp)
         // cacheVariables setters are thread-safe
@@ -212,10 +330,11 @@ open class ShowsAttended {
         - eventType: The type of event.
         - eventYearString: The event year as a string.
         - status: The attendance status to set.
+        - allEventsForYear: If provided, enforces "no overlapping shows attended" when marking a Show as attended (see addShowsAttendedWithStatusAndTime).
      */
-    func addShowsAttendedWithStatus (band: String, location: String, startTime: String, eventType: String, eventYearString: String, status: String){
+    func addShowsAttendedWithStatus (band: String, location: String, startTime: String, eventType: String, eventYearString: String, status: String, allEventsForYear: [EventData]? = nil){
         let now = Date().timeIntervalSince1970
-        addShowsAttendedWithStatusAndTime(band: band, location: location, startTime: startTime, eventType: eventType, eventYearString: eventYearString, status: status, newTime: now)
+        addShowsAttendedWithStatusAndTime(band: band, location: location, startTime: startTime, eventType: eventType, eventYearString: eventYearString, status: status, newTime: now, allEventsForYear: allEventsForYear)
     }
     
     /**
