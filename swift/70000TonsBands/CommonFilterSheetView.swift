@@ -296,7 +296,7 @@ struct CommonFilterSheetView: View {
             flaggedEventsSection
         }
         
-        // 4. Band Ranking Filters
+        // 4. Band Ranking Filters (mandatory in list view only; calendar only when ranked bands exist to avoid empty menu)
         if menuOrder == .portrait || hasRankedBands(forDay: dayLabel) {
             bandRankingSection
         }
@@ -513,7 +513,8 @@ struct CommonFilterSheetView: View {
     @ViewBuilder
     private var eventTypeSection: some View {
         let showScheduledEventTypeFilters = showScheduleFilters && (getMeetAndGreetsEnabled() || getSpecialEventsEnabled())
-        let showUnofficalEventFilter = getUnofficalEventsEnabled() && showScheduleView
+        // Show Unofficial option only when schedule actually contains Unofficial or Cruiser Organized events
+        let showUnofficalEventFilter = getUnofficalEventsEnabled() && showScheduleView && eventCounterUnoffical > 0
         
         if showScheduledEventTypeFilters || showUnofficalEventFilter {
             Section(header: sectionHeader(NSLocalizedString("Event Type Filters", comment: ""))) {

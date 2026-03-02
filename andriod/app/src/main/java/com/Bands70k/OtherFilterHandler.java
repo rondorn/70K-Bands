@@ -232,7 +232,8 @@ public class OtherFilterHandler {
                   ", showAnyEventTypeFilters=" + showAnyEventTypeFilters);
             
             if (showAnyEventTypeFilters) {
-                if (treatAsOnlyUnofficalEvents) {
+                boolean hasUnofficialInSchedule = BandInfo.hasUnofficialEventsInSchedule();
+                if (treatAsOnlyUnofficalEvents && hasUnofficialInSchedule) {
                     // ONLY UNOFFICIAL EVENTS (shown or hidden): Show only unofficial filter, hide header and others
                     Log.d("UNOFFICIAL_DEBUG", "🔧 ONLY unofficial events (or hidden) - showing only unofficial filter");
                     FilterButtonHandler.hideMenuSection(R.id.eventTypeHeader, "TextView", popupWindow); // Hide header
@@ -240,6 +241,14 @@ public class OtherFilterHandler {
                     FilterButtonHandler.hideMenuSection(R.id.meetAndGreetFilterAll, "LinearLayout", popupWindow);
                     FilterButtonHandler.hideMenuSection(R.id.specialOtherEventFilterAll, "LinearLayout", popupWindow);
                     FilterButtonHandler.showMenuSection(R.id.unofficalEventFilterAll, "LinearLayout", popupWindow);
+                } else if (treatAsOnlyUnofficalEvents && !hasUnofficialInSchedule) {
+                    // No unofficial events in schedule - hide unofficial filter
+                    Log.d("UNOFFICIAL_DEBUG", "🔧 No unofficial events in schedule - hiding event type filters");
+                    FilterButtonHandler.hideMenuSection(R.id.eventTypeHeader, "TextView", popupWindow);
+                    FilterButtonHandler.hideMenuSection(R.id.Brake5, "TextView", popupWindow);
+                    FilterButtonHandler.hideMenuSection(R.id.meetAndGreetFilterAll, "LinearLayout", popupWindow);
+                    FilterButtonHandler.hideMenuSection(R.id.specialOtherEventFilterAll, "LinearLayout", popupWindow);
+                    FilterButtonHandler.hideMenuSection(R.id.unofficalEventFilterAll, "LinearLayout", popupWindow);
                 } else {
                     // MIXED OR OFFICIAL EVENTS: Show header and filters based on festival settings and data
                     Log.d("UNOFFICIAL_DEBUG", "🔧 Mixed/official events - showing standard filters and header");
@@ -258,12 +267,12 @@ public class OtherFilterHandler {
                         FilterButtonHandler.hideMenuSection(R.id.specialOtherEventFilterAll, "LinearLayout", popupWindow);
                     }
                     
-                    // Show unofficial events filter if enabled in festival config (regardless of current visibility)
-                    if (staticVariables.preferences.getUnofficalEventsEnabled()) {
+                    // Show unofficial events filter only if enabled in festival config AND schedule has such events
+                    if (staticVariables.preferences.getUnofficalEventsEnabled() && hasUnofficialInSchedule) {
                         Log.d("UNOFFICIAL_DEBUG", "🔧 Showing unofficial events filter");
                         FilterButtonHandler.showMenuSection(R.id.unofficalEventFilterAll, "LinearLayout", popupWindow);
                     } else {
-                        Log.d("UNOFFICIAL_DEBUG", "🔧 Hiding unofficial events filter - not enabled for this festival");
+                        Log.d("UNOFFICIAL_DEBUG", "🔧 Hiding unofficial events filter - not enabled or no unofficial events in schedule");
                         FilterButtonHandler.hideMenuSection(R.id.unofficalEventFilterAll, "LinearLayout", popupWindow);
                     }
                 }
