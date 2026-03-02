@@ -134,7 +134,10 @@ public class CommonFilterMenuBuilder {
             eventSectionsContainerRef[1] = eventSectionsContainer2;
         } else {
             // Calendar order (consistent with List): Band Rankings -> Flagged Only -> Event Type -> Locations (no Hide Expired, no Sort By)
-            buildBandRankingSection(context, filterList, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
+            // Only show Band Rankings in calendar when there are ranked bands - avoid empty menu
+            if (hasRankedBands(context)) {
+                buildBandRankingSection(context, filterList, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
+            }
             if (showEventSections) {
                 buildShowFlaggedEventsSection(context, filterList, flaggedSwitchRef, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
                 buildEventTypeSection(context, filterList, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
@@ -392,10 +395,7 @@ public class CommonFilterMenuBuilder {
     
     private static void buildBandRankingSection(Context context, LinearLayout parent, List<Switch> allSwitches,
                                                 boolean isFlaggedEnabled, FilterMenuCallbacks callbacks) {
-        if (!hasRankedBands(context)) {
-            return;
-        }
-        
+        // List view: always shown (mandatory). Calendar view: only when hasRankedBands (caller checks)
         int horizontalPadding = dpToPx(context, 16);
         
         TextView header = new TextView(context);
@@ -523,8 +523,8 @@ public class CommonFilterMenuBuilder {
                 allSwitches, isFlaggedEnabled);
         }
         
-        // Unofficial Events
-        if (staticVariables.preferences.getUnofficalEventsEnabled()) {
+        // Unofficial Events - only show if schedule contains Unofficial or Cruiser Organized events
+        if (staticVariables.preferences.getUnofficalEventsEnabled() && BandInfo.hasUnofficialEventsInSchedule()) {
             createFilterRow(context, parent,
                 R.drawable.icon_unoffical_event, R.drawable.icon_unoffical_event_alt,
                 R.string.hide_unofficial_events, R.string.show_unofficial_events,
@@ -758,17 +758,23 @@ public class CommonFilterMenuBuilder {
         return staticVariables.showsIwillAttend > 0;
     }
     
+    /**
+     * Returns true if the user has ranked any bands (Must/Might/Wont/Unknown).
+     * Uses rankStore so it works even when schedule is not present.
+     */
     private static boolean hasRankedBands(Context context) {
-        if (BandInfo.scheduleRecords == null) return false;
-        for (String bandName : BandInfo.scheduleRecords.keySet()) {
-            String rankIcon = rankStore.getRankForBand(bandName);
-            if (rankIcon != null && !rankIcon.isEmpty() &&
-                (rankIcon.equals(staticVariables.mustSeeIcon) ||
-                 rankIcon.equals(staticVariables.mightSeeIcon) ||
-                 rankIcon.equals(staticVariables.wontSeeIcon) ||
-                 rankIcon.equals(staticVariables.unknownIcon))) {
+        Map<String, String> rankings = rankStore.getBandRankings();
+        if (rankings == null || rankings.isEmpty()) return false;
+        for (String rankValue : rankings.values()) {
+            if (rankValue == null || rankValue.isEmpty()) continue;
+            if (rankValue.equals(staticVariables.mustSeeIcon) ||
+                rankValue.equals(staticVariables.mightSeeIcon) ||
+                rankValue.equals(staticVariables.wontSeeIcon) ||
+                rankValue.equals(staticVariables.unknownIcon)) {
                 return true;
             }
+            String icon = staticVariables.getRankIcon(rankValue);
+            if (icon != null && !icon.isEmpty()) return true;
         }
         return false;
     }

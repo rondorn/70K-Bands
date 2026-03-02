@@ -269,6 +269,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     var easterEggTriggeredForSearch = false
     private var pupaPartyOverlay: PupaPartyOverlayView?
     
+    /// Last search text used for refresh - prevents spurious refresh when text hasn't changed
+    private var lastSearchTextForRefresh: String = ""
+    
     // Flag to track if country dialog should be shown after data loads on first install
     private var shouldShowCountryDialogAfterDataLoad = false
 
@@ -744,13 +747,21 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        // When user clears search (e.g. taps X), dismiss keyboard - defer so clear button handling completes first
+        // When user clears search (e.g. taps X): dismiss keyboard and ensure search bar is NOT re-selected.
+        // iOS automatically re-focuses the search bar when clear is tapped. A short delay lets that complete,
+        // then we resign to dismiss the keyboard for good.
         if searchText.isEmpty {
-            DispatchQueue.main.async { [weak self] in
-                self?.view.endEditing(true)
+            let bar = searchBar
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                bar.resignFirstResponder()
             }
         }
-        print("Filtering activated 2  \(searchBar.text) \(searchBar.text?.count)")
+        
+        // Only refresh when search text actually changed - prevents spurious refresh without user input
+        guard searchText != lastSearchTextForRefresh else { return }
+        lastSearchTextForRefresh = searchText
+        
+        print("Filtering activated 2  \(searchBar.text ?? "") \(searchBar.text?.count ?? 0)")
         let normalized = normalizedEasterEggSearchText(searchText)
         
         // Accept "more cow bell" or "more cowbell" in any case (with/without spaces).
