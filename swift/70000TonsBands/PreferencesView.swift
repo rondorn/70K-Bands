@@ -26,8 +26,57 @@ struct PreferencesView: View {
             alertPreferencesSection
             detailScreenSection
             miscSection
+            autoChooseAttendanceSection
             informationSection
             advancedPreferencesSection
+        }
+        .sheet(isPresented: $viewModel.showAutoChooseAttendanceWizard, onDismiss: {
+            viewModel.showAutoChooseAttendanceWizard = false
+            viewModel.refreshAutoChosenDataState()
+        }) {
+            AutoChooseAttendanceWizardView(eventYear: viewModel.selectedYearAsInt, onDismiss: {
+                viewModel.showAutoChooseAttendanceWizard = false
+            })
+        }
+        .alert(NSLocalizedString("AutoChooseAttendanceReplaceTitle", comment: ""), isPresented: $viewModel.showReplaceAutoChoicesConfirmation) {
+            Button(NSLocalizedString("Cancel", comment: ""), role: .cancel) {
+                viewModel.showReplaceAutoChoicesConfirmation = false
+            }
+            Button(NSLocalizedString("OK", comment: "")) {
+                viewModel.confirmReplaceAutoChoicesAndStartWizard()
+            }
+        } message: {
+            Text(NSLocalizedString("AutoChooseAttendanceReplaceMessage", comment: ""))
+        }
+        .alert(NSLocalizedString("AutoChooseAttendanceClearAutoTitle", comment: ""), isPresented: $viewModel.showClearAutoConfirmation) {
+            Button(NSLocalizedString("Cancel", comment: ""), role: .cancel) {
+                viewModel.showClearAutoConfirmation = false
+            }
+            Button(NSLocalizedString("OK", comment: "")) {
+                viewModel.confirmClearAutoChosenAttendance()
+            }
+        } message: {
+            Text(viewModel.clearAutoCount == 0
+                 ? NSLocalizedString("AutoChooseAttendanceClearAutoMessageNone", comment: "")
+                 : String(format: NSLocalizedString("AutoChooseAttendanceClearAutoMessage", comment: ""), viewModel.clearAutoCount))
+        }
+        .alert(NSLocalizedString("AutoChooseAttendanceClearAllTitle", comment: ""), isPresented: $viewModel.showClearAllConfirmation) {
+            Button(NSLocalizedString("Cancel", comment: ""), role: .cancel) {
+                viewModel.showClearAllConfirmation = false
+            }
+            Button(NSLocalizedString("OK", comment: ""), role: .destructive) {
+                viewModel.confirmClearAllAttendance()
+            }
+        } message: {
+            Text(viewModel.clearAllCount == 0
+                 ? NSLocalizedString("AutoChooseAttendanceClearAllMessageNone", comment: "")
+                 : String(format: NSLocalizedString("AutoChooseAttendanceClearAllMessage", comment: ""), viewModel.clearAllCount))
+        }
+        .onAppear {
+            viewModel.refreshAutoChosenDataState()
+        }
+        .onChange(of: viewModel.selectedYear) { _ in
+            viewModel.refreshAutoChosenDataState()
         }
     }
     
@@ -146,6 +195,24 @@ struct PreferencesView: View {
             
             if viewModel.isLoadingData {
                 loadingIndicatorView
+            }
+        }
+    }
+    
+    private var autoChooseAttendanceSection: some View {
+        Group {
+            if FestivalConfig.current.aiSchedule {
+                Section(NSLocalizedString("AutoChooseAttendanceSection", comment: "Auto Choose Attendance")) {
+                    Button(NSLocalizedString("AutoChooseAttendanceTriggerWizard", comment: "Trigger Auto Choose Attendance Wizard")) {
+                        viewModel.triggerAutoChooseAttendanceWizard()
+                    }
+                    Button(NSLocalizedString("AutoChooseAttendanceClearData", comment: "Auto Chosen Attendance Data (Clear)")) {
+                        viewModel.requestClearAutoChosenAttendance()
+                    }
+                    Button(NSLocalizedString("AutoChooseAttendanceClearAll", comment: "Clear all attendance")) {
+                        viewModel.requestClearAllAttendance()
+                    }
+                }
             }
         }
     }

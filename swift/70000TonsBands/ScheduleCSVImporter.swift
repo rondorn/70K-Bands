@@ -165,6 +165,16 @@ class ScheduleCSVImporter {
         }
         print("✅ [SQLITE_FIX] Unofficial events in SQLite for year \(eventYear): \(unofficialEventsInSQLite.count)")
         
+        // When 30+ new (never seen before) events are added in one import, offer Auto Choose Attendance (festival-specific)
+        let eventsAdded = eventsInSQLite.count - existingEvents.count
+        if FestivalConfig.current.aiSchedule, eventsAdded >= 30 {
+            NotificationCenter.default.post(
+                name: Notification.Name("AutoChooseAttendanceWizardRequested"),
+                object: nil,
+                userInfo: ["eventYear": eventYear]
+            )
+        }
+        
         // Import succeeded if we completed the process (including empty/small CSVs - schedule is now correct)
         return true
     }
