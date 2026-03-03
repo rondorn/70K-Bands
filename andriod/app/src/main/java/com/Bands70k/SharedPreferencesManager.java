@@ -116,6 +116,14 @@ public class SharedPreferencesManager {
         
         Log.d(TAG, "✅ [PROFILE_SWITCH] Active preference source changed: '" + oldSource + "' → '" + sourceName + "'");
     }
+
+    public boolean getBoolean(String key, boolean defaultValue) {
+        return prefs.getBoolean(key, defaultValue);
+    }
+
+    public void setBoolean(String key, boolean value) {
+        prefs.edit().putBoolean(key, value).apply();
+    }
     
     /**
      * Gets list of all available preference sources (user's own + imported)

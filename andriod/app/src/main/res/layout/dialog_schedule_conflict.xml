@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dark-theme conflict resolution: two card options + Cancel (matches iOS style) -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="#1C1C1E">
+
+    <TextView
+        android:id="@+id/conflict_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Two Must-see shows at the same time."
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:paddingBottom="8dp" />
+
+    <TextView
+        android:id="@+id/conflict_subtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Pick which one to attend."
+        android:textColor="#AAAAAA"
+        android:textSize="14sp"
+        android:paddingBottom="20dp" />
+
+    <LinearLayout
+        android:id="@+id/conflict_option_a"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:background="#2C2C2E"
+        android:clickable="true"
+        android:focusable="true"
+        android:minHeight="72dp"
+        android:layout_marginBottom="12dp">
+
+        <TextView
+            android:id="@+id/conflict_option_a_band"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+        <TextView
+            android:id="@+id/conflict_option_a_time"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:paddingTop="2dp" />
+        <TextView
+            android:id="@+id/conflict_option_a_venue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#AAAAAA"
+            android:textSize="13sp"
+            android:paddingTop="2dp" />
+        <TextView
+            android:id="@+id/conflict_option_a_seeing_them"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#888888"
+            android:textSize="13sp"
+            android:paddingTop="4dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/conflict_option_b"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:background="#2C2C2E"
+        android:clickable="true"
+        android:focusable="true"
+        android:minHeight="72dp"
+        android:layout_marginBottom="24dp">
+
+        <TextView
+            android:id="@+id/conflict_option_b_band"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+        <TextView
+            android:id="@+id/conflict_option_b_time"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:paddingTop="2dp" />
+        <TextView
+            android:id="@+id/conflict_option_b_venue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#AAAAAA"
+            android:textSize="13sp"
+            android:paddingTop="2dp" />
+        <TextView
+            android:id="@+id/conflict_option_b_seeing_them"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#888888"
+            android:textSize="13sp"
+            android:paddingTop="4dp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/conflict_cancel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Cancel"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        android:clickable="true"
+        android:focusable="true"
+        android:padding="8dp" />
+</LinearLayout>

@@ -291,9 +291,9 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
     print("🔍 [FILTER] After priority filtering: \(priorityFilteredEvents.count) events")
     
     // APPLY ATTENDANCE FILTER (if enabled)
-    let finalEvents: [EventData]
+    var finalEvents: [EventData]
     if getShowOnlyWillAttened() {
-        finalEvents = priorityFilteredEvents.filter { event in
+        let attendanceFiltered = priorityFilteredEvents.filter { event in
             let bandName = event.bandName
             let location = event.location
             let eventType = event.eventType ?? ""
@@ -315,7 +315,7 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
             let eventYearString = String(eventYear)
             let attendedStatus = attendedHandle.getShowAttendedStatus(
                 band: bandName,
-                location: location, 
+                location: location,
                 startTime: startTime,
                 eventType: eventType,
                 eventYearString: eventYearString
@@ -327,6 +327,14 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
             
             // Only show events marked as attending
             return willShow
+        }
+        // If Show Flagged Only would hide everything, turn it off and show all (other filters still apply)
+        if attendanceFiltered.isEmpty && !priorityFilteredEvents.isEmpty {
+            setShowOnlyWillAttened(false)
+            finalEvents = priorityFilteredEvents
+            print("🔍 [FILTER] Show Flagged Only had no events; turned off and showing \(finalEvents.count) events")
+        } else {
+            finalEvents = attendanceFiltered
         }
         print("🔍 [FILTER] After attendance filtering: \(finalEvents.count) events")
     } else {
