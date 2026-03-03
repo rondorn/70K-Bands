@@ -873,7 +873,8 @@ public class mainListHandler {
                 String location = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowLocation();
                 String startTime = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getStartTimeString();
                 String eventType = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType();
-                String attendedIcon = attendedHandler.getShowAttendedIcon(bandName, location, startTime, eventType, eventYear);
+                showsAttended handler = staticVariables.attendedHandler != null ? staticVariables.attendedHandler : attendedHandler;
+                String attendedIcon = handler.getShowAttendedIcon(bandName, location, startTime, eventType, eventYear);
 
                 line = attendedIcon + " " + rankIcon;
                 if (!rankStore.getRankForBand(bandName).equals("")) {

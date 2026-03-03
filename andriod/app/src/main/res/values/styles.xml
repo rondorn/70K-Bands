@@ -7,6 +7,12 @@
         <item name="android:background">@android:color/black</item-->
     </style>
 
+    <!-- Wizard: no action bar so our layout shows single title (matches iOS). -->
+    <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
     <style name="NavigationView"  parent="Base.Theme.AppCompat">
         <item name="android:textColor">@color/custom_colors</item>
         <item name="android:listDivider">@android:color/white</item>

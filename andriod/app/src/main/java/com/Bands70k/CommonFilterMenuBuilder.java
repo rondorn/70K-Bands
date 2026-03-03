@@ -133,13 +133,14 @@ public class CommonFilterMenuBuilder {
             filterList.addView(eventSectionsContainer2);
             eventSectionsContainerRef[1] = eventSectionsContainer2;
         } else {
-            // Calendar order (consistent with List): Band Rankings -> Flagged Only -> Event Type -> Locations (no Hide Expired, no Sort By)
-            // Only show Band Rankings in calendar when there are ranked bands - avoid empty menu
+            // Calendar: same as List but hidden = Hide Expired, Sort Alphabetically. First entry = Show Flagged Events Only.
+            if (showEventSections) {
+                buildShowFlaggedEventsSection(context, filterList, flaggedSwitchRef, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
+            }
             if (hasRankedBands(context)) {
                 buildBandRankingSection(context, filterList, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
             }
             if (showEventSections) {
-                buildShowFlaggedEventsSection(context, filterList, flaggedSwitchRef, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
                 buildEventTypeSection(context, filterList, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
                 buildLocationSection(context, filterList, allVenueNames, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
             }

@@ -23,7 +23,19 @@ import java.util.Set;
  */
 public class scheduleInfo {
 
+    /** True when the last DownloadScheduleFile call actually updated the schedule file (processIfChanged returned true). */
+    private static volatile boolean lastScheduleDataChanged = false;
+
+    public static boolean getLastScheduleDataChanged() {
+        return lastScheduleDataChanged;
+    }
+
+    public static void clearLastScheduleDataChanged() {
+        lastScheduleDataChanged = false;
+    }
+
     public Map<String, scheduleTimeTracker> DownloadScheduleFile(String scheduleUrl){
+        lastScheduleDataChanged = false;
 
         Log.d("ScheduleLine", "DownloadScheduleFile - 1");
         //Log.d("bandUrlIs", scheduleUrl);
@@ -82,6 +94,7 @@ public class scheduleInfo {
             // Process temp file only if download was successful and content changed
             if (downloadSuccessful) {
                 boolean dataChanged = cacheManager.processIfChanged(tempSchedule, FileHandler70k.schedule, "scheduleInfo");
+                lastScheduleDataChanged = dataChanged;
                 if (dataChanged) {
                     Log.i("ScheduleInfo", "Schedule data has changed, processed new file");
                 } else {
@@ -215,6 +228,16 @@ public class scheduleInfo {
         Log.d("ParseScheduleCSV", "ParseScheduleCSV - 7");
         Log.d("ScheduleInfo", "Parsed schedule CSV: " + bandSchedule.size() + " bands");
         return bandSchedule;
+    }
+
+    /** Total number of events in the schedule. Used to trigger AI wizard when 30+ for current year. */
+    public static int countEvents(Map<String, scheduleTimeTracker> schedule) {
+        if (schedule == null) return 0;
+        int n = 0;
+        for (scheduleTimeTracker t : schedule.values()) {
+            if (t != null && t.scheduleByTime != null) n += t.scheduleByTime.size();
+        }
+        return n;
     }
 
 }

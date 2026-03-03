@@ -192,6 +192,7 @@ class LandscapeScheduleViewModel: ObservableObject {
         
         // 4. ATTENDANCE/FLAGGED EVENTS FILTER
         if getShowOnlyWillAttened() {
+            let beforeFlaggedFilter = filteredEvents
             filteredEvents = filteredEvents.filter { event in
                 let bandName = event.bandName
                 let location = event.location
@@ -212,6 +213,13 @@ class LandscapeScheduleViewModel: ObservableObject {
                 )
                 
                 return attendedStatus != sawNoneStatus
+            }
+            
+            // If nothing is viewable with "Show Flagged Only" on, turn it off and show all (other filters still apply)
+            if filteredEvents.isEmpty && !beforeFlaggedFilter.isEmpty {
+                setShowOnlyWillAttened(false)
+                filteredEvents = beforeFlaggedFilter
+                print("🔍 [LANDSCAPE_FILTER] Show Flagged Only had no events; turned off and showing \(filteredEvents.count) events")
             }
             
             print("🔍 [LANDSCAPE_FILTER] After attendance filtering: \(filteredEvents.count) events")

@@ -87,6 +87,9 @@ public class FestivalConfig {
     
     // Comments not available message configuration
     public final int commentsNotAvailableStringResourceId;
+
+    /** Whether the "Plan Your Schedule" / AI schedule builder feature is enabled. */
+    public final boolean aiSchedule;
     
     /**
      * Private constructor that initializes configuration based on build variant
@@ -145,6 +148,8 @@ public class FestivalConfig {
             
             // MDF comments not available message
             this.commentsNotAvailableStringResourceId = R.string.DefaultDescriptionMDF;
+
+            this.aiSchedule = false;
             
         } else {
             // Default to 70K configuration
@@ -199,6 +204,8 @@ public class FestivalConfig {
             
             // 70K comments not available message
             this.commentsNotAvailableStringResourceId = R.string.DefaultDescription70K;
+
+            this.aiSchedule = true;
         }
         
         Log.d("FestivalConfig", "Configuration initialized:");

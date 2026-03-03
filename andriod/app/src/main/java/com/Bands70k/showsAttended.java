@@ -90,6 +90,42 @@ public class showsAttended {
         return showsAttendedHash;
     }
 
+    /** Number of attendance keys for the given year (any status). Used to decide if "Replace auto schedule" should be shown. */
+    public int countAttendanceForYear(int year) {
+        String suffix = ":" + year;
+        int count = 0;
+        for (String key : getShowsAttended().keySet()) {
+            if (key != null && key.endsWith(suffix)) count++;
+        }
+        return count;
+    }
+
+    /**
+     * Clear attendance for a single year only. Used when starting "Build my schedule automatically"
+     * so the builder runs from a clean slate and prompts for all conflicts. Persists synchronously.
+     */
+    public void clearAttendanceForYear(int year) {
+        String suffix = ":" + year;
+        Map<String, String> current = new HashMap<>(getShowsAttended());
+        for (String key : new ArrayList<>(current.keySet())) {
+            if (key != null && key.endsWith(suffix)) {
+                current.remove(key);
+            }
+        }
+        showsAttendedHash = current;
+        saveShowsAttendedSync(current);
+    }
+
+    /** Clear all attendance data for the active profile and persist. Use with confirmation (e.g. preferences "Clear all attendance data").
+     * Persists synchronously so no async load can overwrite with stale data before the next read. */
+    public void clearAllAttendance() {
+        String activeProfile = SharedPreferencesManager.getInstance().getActivePreferenceSource();
+        Map<String, String> empty = new HashMap<>();
+        showsAttendedHash = empty;
+        currentLoadedProfile = activeProfile;
+        saveShowsAttendedSync(empty);
+    }
+
     public void saveShowsAttended(Map<String,String> showsAttendedHash){
         final String activeProfile = SharedPreferencesManager.getInstance().getActivePreferenceSource();
 
@@ -138,6 +174,36 @@ public class showsAttended {
                 saveScheduled.set(false);
             }
         });
+    }
+
+    /**
+     * Writes the given map to disk synchronously. Used by clearAllAttendance so the cleared state
+     * is persisted before return; avoids a race where an async load could repopulate from stale file.
+     */
+    private void saveShowsAttendedSync(Map<String, String> snapshot) {
+        if (snapshot == null) return;
+        try {
+            String activeProfile = SharedPreferencesManager.getInstance().getActivePreferenceSource();
+            File fileToSave = getFileForActiveProfile();
+            File parentDir = fileToSave.getParentFile();
+            if (parentDir != null && !parentDir.exists()) {
+                parentDir.mkdirs();
+            }
+            if ("Default".equals(activeProfile)) {
+                File correct = new File(showBands.newRootDir + FileHandler70k.directoryName + "showsAttended.data");
+                File legacyTypo = FileHandler70k.showsAttendedFile;
+                if (!correct.equals(fileToSave) && legacyTypo.exists() && !correct.exists()) {
+                    copyFile(legacyTypo, correct);
+                    fileToSave = correct;
+                }
+            }
+            try (FileOutputStream file = new FileOutputStream(fileToSave);
+                 ObjectOutputStream out = new ObjectOutputStream(file)) {
+                out.writeObject(new HashMap<>(snapshot));
+            }
+        } catch (Exception error) {
+            Log.e(TAG, "Unable to save attended tracking data (sync): " + error.getMessage());
+        }
     }
 
     public Map<String,String>  loadShowsAttended() {
@@ -366,8 +432,7 @@ public class showsAttended {
     */
 
     public String addShowsAttended (String index, String attendedStatus) {
-
-        index = index.replaceAll("\\.", "");
+        // Do not strip periods from band names (e.g. T.H.E.M); store and lookup must use the same key.
         String value = "";
 
         String[] valueTypes = index.split(":");
@@ -429,17 +494,179 @@ public class showsAttended {
         return value;
     }
 
+    /** Overlap of 15 min or less is ignored (both shows can stay marked). Only clear when overlap > this. */
+    private static final double SHORT_OVERLAP_THRESHOLD_SECONDS = 900.0;
+
+    /**
+     * When marking a Show as attended, clear any other Show already attended that overlaps by more than 15 min (same day).
+     */
+    private void clearOverlappingShowAttendance(String band, String location, String startTime, String eventType,
+                                                String eventYearString, String currentIndex, java.util.List<EventData> allEvents) {
+        if (allEvents == null) return;
+        String normStart = normalizeTimeForIndex(startTime);
+        EventData thisEvent = null;
+        for (EventData e : allEvents) {
+            if (e.bandName != null && e.bandName.equals(band) && e.location != null && e.location.equals(location)
+                    && e.startTime != null && normalizeTimeForIndex(e.startTime).equals(normStart) && eventTypeMatches(e.eventType, eventType)
+                    && String.valueOf(e.eventYear).equals(eventYearString)) {
+                thisEvent = e;
+                break;
+            }
+        }
+        if (thisEvent == null) return;
+
+        String thisDay = normalizedCalendarDay(thisEvent.date);
+        double thisEnd = thisEvent.endTimeIndex;
+        if (thisEvent.timeIndex > thisEnd) thisEnd += 86400;
+
+        Map<String, String> attended = getShowsAttended();
+        String sawNone = staticVariables.sawNoneStatus + ":" + String.format("%.0f", System.currentTimeMillis() / 1000.0);
+
+        for (Map.Entry<String, String> entry : attended.entrySet()) {
+            String index = entry.getKey();
+            if (index == null || index.equals(currentIndex) || !index.endsWith(":" + eventYearString)) continue;
+            String statusPart = entry.getValue();
+            if (statusPart != null && statusPart.contains(":")) statusPart = statusPart.split(":")[0];
+            if (!staticVariables.sawAllStatus.equals(statusPart) && !staticVariables.sawSomeStatus.equals(statusPart)) continue;
+
+            ParsedIndex other = parseAttendanceIndex(index);
+            if (other == null || !staticVariables.show.equals(other.eventType)) continue;
+
+            EventData otherEvent = null;
+            for (EventData e : allEvents) {
+                if (e.bandName != null && e.bandName.equals(other.band) && e.location != null && e.location.equals(other.location)
+                        && e.startTime != null && normalizeTimeForIndex(e.startTime).equals(normalizeTimeForIndex(other.startTime)) && eventTypeMatches(e.eventType, other.eventType)) {
+                    otherEvent = e;
+                    break;
+                }
+            }
+            if (otherEvent == null) continue;
+            if (!thisDay.equals(normalizedCalendarDay(otherEvent.date))) continue;
+
+            double otherEnd = otherEvent.endTimeIndex;
+            if (otherEvent.timeIndex > otherEnd) otherEnd += 86400;
+            boolean overlaps = thisEvent.timeIndex < otherEnd && otherEvent.timeIndex < thisEnd;
+            if (!overlaps) continue;
+
+            double overlapStart = Math.max(thisEvent.timeIndex, otherEvent.timeIndex);
+            double overlapEnd = Math.min(thisEnd, otherEnd);
+            double overlapSeconds = Math.max(0, overlapEnd - overlapStart);
+            if (overlapSeconds > SHORT_OVERLAP_THRESHOLD_SECONDS) {
+                changeShowAttendedStatus(index, sawNone);
+            }
+        }
+    }
+
+    private static class ParsedIndex {
+        String band, location, startTime, eventType, year;
+    }
+
+    private ParsedIndex parseAttendanceIndex(String index) {
+        if (index == null) return null;
+        String[] parts = index.split(":", -1);
+        if (parts.length < 5) return null;
+        ParsedIndex p = new ParsedIndex();
+        if (parts.length >= 6) {
+            p.year = parts[parts.length - 1];
+            p.eventType = parts[parts.length - 2];
+            p.startTime = parts[parts.length - 4] + ":" + parts[parts.length - 3];
+            p.location = parts[parts.length - 5];
+            StringBuilder band = new StringBuilder(parts[0]);
+            for (int i = 1; i < parts.length - 5; i++) band.append(":").append(parts[i]);
+            p.band = band.toString();
+        } else {
+            p.year = parts[parts.length - 1];
+            p.eventType = parts[parts.length - 2];
+            p.startTime = parts[parts.length - 3];
+            p.location = parts[parts.length - 4];
+            StringBuilder band = new StringBuilder(parts[0]);
+            for (int i = 1; i < parts.length - 4; i++) band.append(":").append(parts[i]);
+            p.band = band.toString();
+        }
+        return p;
+    }
+
+    private boolean eventTypeMatches(String eventType, String stored) {
+        if (eventType == null) eventType = "";
+        if (stored == null) stored = "";
+        if (eventType.equals(stored)) return true;
+        if (staticVariables.unofficalEventOld.equals(eventType) && staticVariables.unofficalEvent.equals(stored)) return true;
+        return false;
+    }
+
+    private String normalizedCalendarDay(String dateString) {
+        if (dateString == null || dateString.isEmpty()) return "";
+        try {
+            java.text.SimpleDateFormat in = new java.text.SimpleDateFormat("M/d/yyyy", java.util.Locale.US);
+            java.util.Date d = in.parse(dateString);
+            if (d == null) {
+                in = new java.text.SimpleDateFormat("MM/dd/yyyy", java.util.Locale.US);
+                d = in.parse(dateString);
+            }
+            if (d != null) {
+                java.text.SimpleDateFormat out = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US);
+                return out.format(d);
+            }
+        } catch (Exception ignored) { }
+        return dateString;
+    }
+
+    private void changeShowAttendedStatus(String index, String status) {
+        showsAttendedHash.put(index, status);
+        saveShowsAttended(showsAttendedHash);
+    }
+
+    /**
+     * Restore attendance for a year from a backup map (e.g. from AIScheduleStorage).
+     * Keys in backup are applied; keys for this year not in backup are set to sawNone.
+     */
+    public void restoreFromBackup(int year, Map<String, String> backup) {
+        if (backup == null) return;
+        String suffix = ":" + year;
+        Map<String, String> current = new HashMap<>(getShowsAttended());
+        for (Map.Entry<String, String> e : backup.entrySet()) {
+            current.put(e.getKey(), e.getValue());
+        }
+        for (String index : new ArrayList<>(current.keySet())) {
+            if (index != null && index.endsWith(suffix) && !backup.containsKey(index)) {
+                current.put(index, staticVariables.sawNoneStatus + ":" + String.format("%.0f", System.currentTimeMillis() / 1000.0));
+            }
+        }
+        showsAttendedHash = current;
+        saveShowsAttended(showsAttendedHash);
+    }
+
+    /**
+     * Add or update attendance with a specific status. If allEventsForYear is provided and this is a Show (sawAll/sawSome),
+     * clears any other Show attendance that overlaps by more than 15 min first.
+     */
+    public String addShowsAttendedWithStatus(String band, String location, String startTime, String eventType,
+                                             String eventYearString, String status,
+                                             java.util.List<EventData> allEventsForYear) {
+        if (staticVariables.unofficalEventOld.equals(eventType)) eventType = staticVariables.unofficalEvent;
+        String normalizedTime = normalizeTimeForIndex(startTime);
+        String index = band + ":" + location + ":" + normalizedTime + ":" + eventType + ":" + eventYearString;
+        if (allEventsForYear != null && staticVariables.show.equals(eventType)
+                && (staticVariables.sawAllStatus.equals(status) || staticVariables.sawSomeStatus.equals(status))) {
+            clearOverlappingShowAttendance(band, location, startTime, eventType, eventYearString, index, allEventsForYear);
+        }
+        return addShowsAttended(index, status);
+    }
+
     public String getShowAttendedIcon(String index){
 
         Log.d("showAttended", "getting icon for index " + index);
 
-        String[] valueTypes = index.split(":");
+        String[] valueTypes = index.split(":", -1);
+        if (valueTypes.length != 6) {
+            Log.w(TAG, "ATTENDANCE_INDEX_PARSE index=" + index + " parts=" + valueTypes.length + " (expected 6)");
+        }
 
-        String bandName = valueTypes[0];
-        String location = valueTypes[1];
-        String startTime = valueTypes[2] + ":" + valueTypes[3];
-        String eventType = valueTypes[4];
-        String eventyear = valueTypes[5];
+        String bandName = valueTypes.length > 0 ? valueTypes[0] : "";
+        String location = valueTypes.length > 1 ? valueTypes[1] : "";
+        String startTime = valueTypes.length > 3 ? (valueTypes[2] + ":" + valueTypes[3]) : "";
+        String eventType = valueTypes.length > 4 ? valueTypes[4] : "";
+        String eventyear = valueTypes.length > 5 ? valueTypes[5] : "";
 
         return getShowAttendedIcon(bandName,location,startTime,eventType, eventyear);
     }
@@ -521,11 +748,36 @@ public class showsAttended {
         return value;
     }
 
+    /**
+     * Canonicalize time string for attendance index so "4:15" and "04:15" match.
+     * Returns "HH:mm" (hour zero-padded to 2 digits) or original if not parseable.
+     */
+    private static String normalizeTimeForIndex(String startTime) {
+        if (startTime == null || startTime.isEmpty()) return startTime;
+        String t = startTime.trim();
+        int colon = t.indexOf(':');
+        if (colon <= 0 || colon >= t.length() - 1) return startTime;
+        String hourPart = t.substring(0, colon).replaceAll("[^0-9]", "");
+        String rest = t.substring(colon);
+        if (hourPart.isEmpty()) return startTime;
+        try {
+            int h = Integer.parseInt(hourPart);
+            if (h >= 0 && h <= 23) {
+                return String.format("%02d", h) + rest;
+            }
+        } catch (NumberFormatException ignored) { }
+        return startTime;
+    }
+
     public String getShowAttendedStatus(String band, String location, String startTime, String eventType, String eventYear) {
 
-        String index = band + ":" + location + ":" + startTime + ":" + eventType + ":" + eventYear;
-
-        return getShowAttendedStatus(index);
+        String normalizedTime = normalizeTimeForIndex(startTime);
+        String index = band + ":" + location + ":" + normalizedTime + ":" + eventType + ":" + eventYear;
+        String value = getShowAttendedStatus(index);
+        if (staticVariables.sawNoneStatus.equals(value) && band != null && band.contains("T.H.E.M")) {
+            Log.d(TAG, "ATTENDANCE_MISS lookup index=" + index + " (not in map)");
+        }
+        return value;
 
     }
 

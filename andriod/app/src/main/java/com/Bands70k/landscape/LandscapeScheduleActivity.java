@@ -1,7 +1,10 @@
 package com.Bands70k.landscape;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -14,6 +17,7 @@ import android.widget.Button;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import com.Bands70k.R;
@@ -34,10 +38,13 @@ public class LandscapeScheduleActivity extends Activity {
     public static final String EXTRA_RESULT_CURRENT_DAY = "result_current_day";
     public static final int REQUEST_CODE_BAND_DETAILS = 1001;
     
+    private static final String ACTION_REFRESH_LANDSCAPE_SCHEDULE = "RefreshLandscapeSchedule";
+
     private LandscapeScheduleView scheduleView;
     private String currentViewingDay;
     private boolean initialIsSplitViewCapable; // Store initial value for reference
     private GestureDetector swipeGestureDetector;
+    private BroadcastReceiver refreshScheduleReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,6 +107,16 @@ public class LandscapeScheduleActivity extends Activity {
         
         setContentView(scheduleView);
         initializeSwipeGestureDetector();
+        refreshScheduleReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (scheduleView != null && ACTION_REFRESH_LANDSCAPE_SCHEDULE.equals(intent.getAction())) {
+                    Log.d(TAG, "RefreshLandscapeSchedule received - reloading schedule data");
+                    scheduleView.refreshScheduleData();
+                }
+            }
+        };
+        LocalBroadcastManager.getInstance(this).registerReceiver(refreshScheduleReceiver, new IntentFilter(ACTION_REFRESH_LANDSCAPE_SCHEDULE));
         // Theme A (full display): no insets → no padding, full screen.
         // Theme B (nav/status bar present): insets > 0 → translucent bar + padding so content doesn't sit under bar.
         ViewCompat.setOnApplyWindowInsetsListener(scheduleView, (v, windowInsets) -> {
@@ -124,6 +141,17 @@ public class LandscapeScheduleActivity extends Activity {
             return windowInsets;
         });
         ViewCompat.requestApplyInsets(scheduleView);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (refreshScheduleReceiver != null) {
+            try {
+                LocalBroadcastManager.getInstance(this).unregisterReceiver(refreshScheduleReceiver);
+            } catch (Exception ignored) { }
+            refreshScheduleReceiver = null;
+        }
     }
     
     @Override
