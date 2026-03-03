@@ -146,8 +146,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
     //private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
     private static final String TAG = "MainActivity";
+    private static final String ACTION_REFRESH_LANDSCAPE_SCHEDULE = "RefreshLandscapeSchedule";
 
     private BroadcastReceiver mRegistrationBroadcastReceiver;
+    private BroadcastReceiver refreshScheduleReceiver;
     private boolean isReceiverRegistered;
 
     public mainListHandler listHandler;
@@ -257,6 +259,20 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                         PreferenceManager.getDefaultSharedPreferences(context);
                 boolean sentToken = sharedPreferences
                         .getBoolean(SENT_TOKEN_TO_SERVER, false);
+            }
+        };
+        refreshScheduleReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (ACTION_REFRESH_LANDSCAPE_SCHEDULE.equals(intent.getAction())) {
+                    runOnUiThread(() -> {
+                        // Purge and repopulate all cached data so attendance changes are visible without restart
+                        if (listHandler != null) {
+                            listHandler.clearCache();
+                        }
+                        refreshData();
+                    });
+                }
             }
         };
 
@@ -770,6 +786,22 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                         // Keep alerts consistent with refreshNewData()
                         scheduleAlertHandler alerts = new scheduleAlertHandler();
                         alerts.execute();
+
+                        // AI Schedule: offer Plan Your Schedule only when schedule data actually changed, 30+ events, 20+ Must/Might/Wont choices, current year, not yet run
+                        if (FestivalConfig.getInstance().aiSchedule && BandInfo.scheduleRecords != null && scheduleInfo.getLastScheduleDataChanged()) {
+                            scheduleInfo.clearLastScheduleDataChanged();
+                            int eventYear = staticVariables.eventYear != null ? staticVariables.eventYear : 0;
+                            int currentYear = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR);
+                            if (eventYear == currentYear && !AIScheduleStorage.hasRunAI(eventYear)) {
+                                int eventCount = scheduleInfo.countEvents(BandInfo.scheduleRecords);
+                                int rankedCount = countMustMightWontChoices();
+                                if (eventCount >= 30 && rankedCount >= 20) {
+                                    Intent wizard = new Intent(showBands.this, AutoChooseAttendanceWizardActivity.class);
+                                    wizard.putExtra("eventYear", eventYear);
+                                    startActivity(wizard);
+                                }
+                            }
+                        }
                     } catch (Exception e) {
                         Log.e("PullToRefresh", "Error refreshing UI after pull-to-refresh downloads", e);
                     }
@@ -1468,8 +1500,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                             String rawStartTime = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getStartTimeString();
                             String eventType = listHandler.getEventType(bandName, timeIndex);
 
-                            String status = attendedHandler.addShowsAttended(bandName, location, rawStartTime, eventType);
-                            message = attendedHandler.setShowsAttendedStatus(status);
+                            if (staticVariables.attendedHandler == null) staticVariables.attendedHandler = new showsAttended();
+                            String status = staticVariables.attendedHandler.addShowsAttended(bandName, location, rawStartTime, eventType);
+                            message = staticVariables.attendedHandler.setShowsAttendedStatus(status);
                         } else {
                             message = "No Show Is Associated With This Entry";
                         }
@@ -3275,6 +3308,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         
         Integer counter = 0;
         Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Loading shows attended");
+        showsAttended attendedHandler = staticVariables.attendedHandler != null ? staticVariables.attendedHandler : new showsAttended();
         attendedHandler.loadShowsAttended();
         Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Shows attended loaded");
         //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 8");
@@ -4146,8 +4180,11 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         alerts.execute();
 
         staticVariables.preferences.saveData();
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mRegistrationBroadcastReceiver);
-        isReceiverRegistered = false;
+        if (isReceiverRegistered) {
+            LocalBroadcastManager.getInstance(this).unregisterReceiver(mRegistrationBroadcastReceiver);
+            LocalBroadcastManager.getInstance(this).unregisterReceiver(refreshScheduleReceiver);
+            isReceiverRegistered = false;
+        }
         loadOnceStopper = false;
     }
 
@@ -4162,6 +4199,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         if (!isReceiverRegistered) {
             LocalBroadcastManager.getInstance(this).registerReceiver(mRegistrationBroadcastReceiver,
                     new IntentFilter(REGISTRATION_COMPLETE));
+            LocalBroadcastManager.getInstance(this).registerReceiver(refreshScheduleReceiver,
+                    new IntentFilter(ACTION_REFRESH_LANDSCAPE_SCHEDULE));
             isReceiverRegistered = true;
         }
     }
@@ -4537,7 +4576,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         String currentAttended = null;
         if (location != null && rawStartTime != null && eventType != null && listHandler != null && listPosition >= 0 && scheduleSortedBandNames != null && listPosition < scheduleSortedBandNames.size()) {
             String startTime = listHandler.getStartTime(bandName, getTimeIndexFromIndex(scheduleSortedBandNames.get(listPosition)));
-            currentAttended = attendedHandler.getShowAttendedStatus(bandName, location, startTime, eventType, String.valueOf(eventYear));
+            showsAttended handler = staticVariables.attendedHandler != null ? staticVariables.attendedHandler : new showsAttended();
+            currentAttended = handler.getShowAttendedStatus(bandName, location, startTime, eventType, String.valueOf(eventYear));
         }
         final Runnable onRefresh = listPosition >= 0 ? new Runnable() { @Override public void run() { saveScrollPosition(); refreshData(); } } : null;
         ignoreNextListClickUntilMenuDismissed = true;
@@ -4553,8 +4593,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                                             String eventType,
                                             AlertDialog dialog) {
 
-        String status = attendedHandler.addShowsAttended(selectedBand, location, startTime, eventType, desiredStatus);
-        String message = attendedHandler.setShowsAttendedStatus(status);
+        if (staticVariables.attendedHandler == null) staticVariables.attendedHandler = new showsAttended();
+        String status = staticVariables.attendedHandler.addShowsAttended(selectedBand, location, startTime, eventType, desiredStatus);
+        String message = staticVariables.attendedHandler.setShowsAttendedStatus(status);
 
         dialog.dismiss();
         Toast.makeText(getApplicationContext(),
@@ -4789,13 +4830,39 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 // Start bulk downloads after CSV processing completes
                 Log.d("Refresh", "CSV processing complete, starting bulk downloads");
                 ForegroundDownloadManager.startDownloadsAfterCSV(showBands.this);
-                
+
+                // AI Schedule: offer Plan Your Schedule only when schedule data actually changed (new download), 30+ events, 20+ Must/Might/Wont choices, current year, not yet run
+                if (FestivalConfig.getInstance().aiSchedule && BandInfo.scheduleRecords != null && scheduleInfo.getLastScheduleDataChanged()) {
+                    scheduleInfo.clearLastScheduleDataChanged();
+                    int eventYear = staticVariables.eventYear != null ? staticVariables.eventYear : 0;
+                    int currentYear = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR);
+                    if (eventYear == currentYear && !AIScheduleStorage.hasRunAI(eventYear)) {
+                        int eventCount = scheduleInfo.countEvents(BandInfo.scheduleRecords);
+                        int rankedCount = countMustMightWontChoices();
+                        if (eventCount >= 30 && rankedCount >= 20) {
+                            Intent wizard = new Intent(showBands.this, AutoChooseAttendanceWizardActivity.class);
+                            wizard.putExtra("eventYear", eventYear);
+                            startActivity(wizard);
+                        }
+                    }
+                }
+
                 Log.d("Refresh", "Refresh Stage = Post-Stop");
             }
         );
     }
 
-
+    /** Number of bands with Must (1), Might (2), or Wont (3) set. Used to avoid offering Plan Your Schedule when not relevant. */
+    private int countMustMightWontChoices() {
+        Map<String, String> rankings = rankStore.getBandRankings();
+        if (rankings == null) return 0;
+        int count = 0;
+        for (String bandName : rankings.keySet()) {
+            int p = rankStore.getPriorityForBand(bandName);
+            if (p == 1 || p == 2 || p == 3) count++;
+        }
+        return count;
+    }
 
     class AsyncNotesLoader extends AsyncTask<String, Void, ArrayList<String>> {
 

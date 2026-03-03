@@ -450,6 +450,33 @@ class SQLitePriorityManager {
         return result
     }
     
+    /// Gets count of Must (1), Might (2), or Wont (3) choices only. Used to decide whether to offer Plan Your Schedule.
+    /// Thread-safe - can be called from any thread
+    func getRankedChoiceCount(eventYear year: Int = 0) -> Int {
+        var result = 0
+        let semaphore = DispatchSemaphore(value: 0)
+        
+        serialQueue.async { [weak self] in
+            defer { semaphore.signal() }
+            
+            guard let self = self, let db = self.db else { return }
+            
+            do {
+                let currentYear = year > 0 ? year : eventYear
+                let query = self.prioritiesTable
+                    .filter(self.eventYearColumn == currentYear)
+                    .filter(self.priority >= 1)
+                    .filter(self.priority <= 3)
+                result = try db.scalar(query.count)
+            } catch {
+                print("❌ SQLitePriorityManager: Failed to get ranked choice count: \(error)")
+            }
+        }
+        
+        semaphore.wait()
+        return result
+    }
+    
     /// Gets count of priorities for a specific profile
     /// Thread-safe - can be called from any thread
     func getPriorityCount(profileName profile: String, eventYear year: Int = 0) -> Int {

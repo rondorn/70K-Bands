@@ -623,6 +623,11 @@ public class LandscapeScheduleView extends LinearLayout {
         addView(contentScrollView);
     }
     
+    /** Call from Activity when attendance data may have changed (e.g. after AI Schedule wizard). */
+    public void refreshScheduleData() {
+        loadScheduleData(null);
+    }
+
     private void loadScheduleData() {
         loadScheduleData(null);
     }

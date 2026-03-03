@@ -36,6 +36,9 @@ struct AIScheduleBuilder {
     private var chosen: Set<EventData> = []
     /// Events already marked will-attend; no new event may conflict with these (except M&G vs M&G).
     private var existingAttended: Set<EventData> = []
+    /// User-selected clinics/specials; participate in conflict resolution (mandatory when overlapping > 15 min).
+    private var selectedClinicSet: Set<EventData> = []
+    private var selectedSpecialSet: Set<EventData> = []
     private var candidateIndex: Int = 0
     private var phase: Phase = .buildingShows
     
@@ -54,8 +57,12 @@ struct AIScheduleBuilder {
     
     /// Build the candidate list (filter by sleep, type, priority) and return first step.
     /// - Parameter existingAttended: Events already marked will-attend; treated as mandatory (no new conflicts allowed except M&G vs M&G).
-    mutating func start(events: [EventData], existingAttended: [EventData] = []) -> AIScheduleBuildStep {
+    /// - Parameter selectedClinicEvents: User-checked clinics; added to candidates and participate in conflict resolution.
+    /// - Parameter selectedSpecialEvents: User-checked special events; added to candidates and participate in conflict resolution.
+    mutating func start(events: [EventData], existingAttended: [EventData] = [], selectedClinicEvents: [EventData] = [], selectedSpecialEvents: [EventData] = []) -> AIScheduleBuildStep {
         self.existingAttended = Set(existingAttended)
+        self.selectedClinicSet = Set(selectedClinicEvents)
+        self.selectedSpecialSet = Set(selectedSpecialEvents)
         var candidates: [EventData] = []
         
         for event in events {
@@ -86,11 +93,8 @@ struct AIScheduleBuilder {
                 continue
             }
             
-            // Clinic: only if option on and band is Must (clinics tied to bands)
+            // Clinic: only added via selectedClinicEvents (user checklist), not here
             if eventType == clinicType {
-                if markAllMustClinics && priority == 1 {
-                    candidates.append(event)
-                }
                 continue
             }
             
@@ -99,9 +103,14 @@ struct AIScheduleBuilder {
                 continue
             }
             
-            // Other types (Special, etc.): skip for AI schedule
+            // Special events: only added via selectedSpecialEvents (user checklist), not here
+            if eventType == specialEventType {
+                continue
+            }
         }
         
+        candidates.append(contentsOf: selectedClinicEvents)
+        candidates.append(contentsOf: selectedSpecialEvents)
         allCandidates = candidates.sorted { $0.timeIndex < $1.timeIndex }
         chosen = self.existingAttended
         candidateIndex = 0
@@ -184,31 +193,33 @@ struct AIScheduleBuilder {
                     continue
                 }
                 
-                let priorityEvent = priorityManager.getPriority(for: event.bandName, eventYear: eventYear)
-                let isMust = (priorityEvent == 1)
-                let overlappingMust = overlapping.first(where: { priorityManager.getPriority(for: $0.bandName, eventYear: eventYear) == 1 })
-                let overlappingAllMight = overlapping.allSatisfy { priorityManager.getPriority(for: $0.bandName, eventYear: eventYear) == 2 }
-                
-                // Diagnostic: log priority for TYR / The Absence
-                if event.bandName == "TYR" || event.bandName == "The Absence" {
-                    print("📋 [AIScheduleBuilder] PRIORITY_DEBUG \(event.bandName)=\(priorityEvent) (1=Must 2=Might) isMust=\(isMust) overlappingMust=\(overlappingMust.map { eventLabel($0) } ?? "nil") overlappingAllMight=\(overlappingAllMight)")
-                }
-                
-                // If one overlapping is Must and current is Might, skip current (Must wins)
-                if !isMust && overlappingMust != nil {
-                    print("📋 [AIScheduleBuilder] phase1 skip (Might vs Must): \(eventLabel(event)) overlappingMust=\(eventLabel(overlappingMust!))")
+                // Meet and Greet vs Meet and Greet: overlapping is allowed. Only shows are excluded by overlap; do not prompt to choose.
+                if isMeetAndGreet(event) && overlapping.allSatisfy({ isMeetAndGreet($0) }) {
+                    chosen.insert(event)
                     candidateIndex += 1
                     continue
                 }
                 
-                // Must vs Must: need user choice (prompt for conflict resolution)
-                if isMust, let other = overlappingMust {
+                // Mandatory = Must show, or M&G (we're adding them), or user-selected clinic, or user-selected special. All participate in conflict resolution (> 15 min).
+                let eventMandatory = isMandatory(event)
+                let overlappingMandatory = overlapping.first(where: { isMandatory($0) })
+                let overlappingAllNonMandatory = overlapping.allSatisfy { !isMandatory($0) }
+                
+                // If current is not mandatory and something overlapping is mandatory → skip current
+                if !eventMandatory && overlappingMandatory != nil {
+                    print("📋 [AIScheduleBuilder] phase1 skip (non-mandatory vs mandatory): \(eventLabel(event)) overlapping=\(eventLabel(overlappingMandatory!))")
+                    candidateIndex += 1
+                    continue
+                }
+                
+                // Both mandatory (Must vs Must, or show vs selected clinic/special, etc.): need user choice
+                if eventMandatory, let other = overlappingMandatory {
                     print("📋 [AIScheduleBuilder] needMustConflict: current=\(eventLabel(event)) other=\(eventLabel(other))")
                     return .needMustConflict(event, other)
                 }
                 
-                // Must vs Might only: Must always wins — remove Might(s) from chosen, add current (Must)
-                if isMust && overlappingAllMight {
+                // Current mandatory, overlapping all non-mandatory (e.g. Might shows): add current, remove overlapping
+                if eventMandatory && overlappingAllNonMandatory {
                     for o in overlapping {
                         chosen.remove(o)
                     }
@@ -217,17 +228,17 @@ struct AIScheduleBuilder {
                     continue
                 }
                 
-                // Might vs Might: need user choice (prompt for conflict resolution)
-                if !isMust && overlappingAllMight {
+                // Current non-mandatory, overlapping all non-mandatory (e.g. Might vs Might): need user choice
+                if !eventMandatory && overlappingAllNonMandatory {
                     guard let other = overlapping.first else {
                         candidateIndex += 1
                         continue
                     }
-                    print("📋 [AIScheduleBuilder] needMustConflict (Might vs Might): current=\(eventLabel(event)) other=\(eventLabel(other))")
+                    print("📋 [AIScheduleBuilder] needMustConflict (non-mandatory vs non-mandatory): current=\(eventLabel(event)) other=\(eventLabel(other))")
                     return .needMustConflict(event, other)
                 }
                 
-                // Fallback: skip (should not reach for Shows)
+                // Fallback: skip
                 print("📋 [AIScheduleBuilder] phase1 skip (fallback): \(eventLabel(event)) overlapping=\(overlapping.count)")
                 candidateIndex += 1
             }
@@ -247,16 +258,23 @@ struct AIScheduleBuilder {
     /// Two events conflict only if they are on the same calendar day and their time ranges overlap.
     /// Events on different days (e.g. same band, same time on Day 2 vs Day 4) must not be treated as conflicts.
     /// Uses normalized calendar day so "01/26/2011" and "1/26/2011" are treated as the same day.
+    /// Applies midnight-wrap: if an event's end time is earlier than its start on the same calendar day (e.g. 23:15–00:00 or 23:45–01:30), end is treated as next day (+24h) so overnight events overlap correctly.
     private func overlaps(_ a: EventData, _ b: EventData) -> Bool {
         let dayA = normalizedCalendarDay(from: a.date)
         let dayB = normalizedCalendarDay(from: b.date)
         if let dayA = dayA, let dayB = dayB, dayA != dayB {
             return false
         }
-        return a.timeIndex < b.endTimeIndex && b.timeIndex < a.endTimeIndex
+        var endA = a.endTimeIndex
+        if a.timeIndex > endA { endA += 86400 }
+        var endB = b.endTimeIndex
+        if b.timeIndex > endB { endB += 86400 }
+        return a.timeIndex < endB && b.timeIndex < endA
     }
     
     /// Overlap duration in seconds (0 if different days or no overlap). Uses same-day and midnight-wrap logic as overlaps.
+    /// MUST be measured as: end time of earlier event → start time of later event (the period both are running).
+    /// Do NOT use start-to-start; that undercounts overlap (e.g. 11:00 vs 11:15 gives 15 min but real overlap is 11:15→11:45 = 30 min).
     private static let shortOverlapThresholdSeconds: Double = 900 // 15 minutes
     
     private func overlapDurationSeconds(_ a: EventData, _ b: EventData) -> Double {
@@ -265,13 +283,13 @@ struct AIScheduleBuilder {
         if let dayA = dayA, let dayB = dayB, dayA != dayB {
             return 0
         }
-        var aEnd = a.endTimeIndex
-        if a.timeIndex > aEnd { aEnd += 86400 }
-        var bEnd = b.endTimeIndex
-        if b.timeIndex > bEnd { bEnd += 86400 }
-        let start = max(a.timeIndex, b.timeIndex)
-        let end = min(aEnd, bEnd)
-        return max(0, end - start)
+        // Explicit: earlier = smaller start time, later = larger start time. Overlap = (end of earlier) − (start of later).
+        let (earlier, later) = a.timeIndex <= b.timeIndex ? (a, b) : (b, a)
+        var endOfEarlier = earlier.endTimeIndex
+        if earlier.timeIndex > endOfEarlier { endOfEarlier += 86400 }
+        var startOfLater = later.timeIndex
+        if earlier.timeIndex > startOfLater { startOfLater += 86400 }
+        return max(0, endOfEarlier - startOfLater)
     }
     
     /// True if the overlap is short enough to ignore (both events can be marked). Requires exactly one overlapping event with overlap <= 15 min. Two such overlaps (e.g. one at start, one at end) → not allowed.
@@ -299,6 +317,24 @@ struct AIScheduleBuilder {
     
     private func isMeetAndGreet(_ event: EventData) -> Bool {
         (event.eventType ?? "") == meetAndGreetype
+    }
+    
+    /// True if this event is "mandatory" for conflict resolution: Must show, M&G we're adding, or user-selected clinic/special.
+    private func isMandatory(_ event: EventData) -> Bool {
+        let eventType = event.eventType ?? ""
+        if eventType == showType {
+            return priorityManager.getPriority(for: event.bandName, eventYear: eventYear) == 1
+        }
+        if eventType == meetAndGreetype {
+            return true
+        }
+        if eventType == clinicType {
+            return selectedClinicSet.contains(event)
+        }
+        if eventType == specialEventType {
+            return selectedSpecialSet.contains(event)
+        }
+        return false
     }
     
     private func eventLabel(_ event: EventData) -> String {

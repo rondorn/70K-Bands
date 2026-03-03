@@ -2052,9 +2052,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @objc private func handleAutoChooseAttendanceWizardRequested(_ notification: Notification) {
         guard FestivalConfig.current.aiSchedule else { return }
+        let year = notification.userInfo?["eventYear"] as? Int ?? eventYear
+        let rankedCount = SQLitePriorityManager.shared.getRankedChoiceCount(eventYear: year)
+        guard rankedCount >= 20 else { return }
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
-            let year = notification.userInfo?["eventYear"] as? Int ?? eventYear
             let alert = UIAlertController(
                 title: NSLocalizedString("AutoChooseAttendanceTitle", comment: "Auto Choose Attendance"),
                 message: NSLocalizedString("AutoChooseAttendanceImportPrompt", comment: "Schedule imported. Would you like to use Auto Choose Attendance to plan your schedule?"),

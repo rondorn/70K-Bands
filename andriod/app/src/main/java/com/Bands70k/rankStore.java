@@ -28,6 +28,18 @@ public class rankStore {
     private static File bandRankingsFileBackup = FileHandler70k.bandRankingsBk;
     private static String currentLoadedProfile = null;  // Track which profile is currently loaded
 
+    /**
+     * Returns priority for AI schedule builder: 1=Must, 2=Might, 3=Wont, 0=unknown.
+     */
+    public static int getPriorityForBand(String bandName) {
+        String ranking = getBandRankings().get(bandName);
+        if (ranking == null || ranking.isEmpty()) return 0;
+        if (ranking.equals(staticVariables.mustSeeIcon)) return 1;
+        if (ranking.equals(staticVariables.mightSeeIcon)) return 2;
+        if (ranking.equals(staticVariables.wontSeeIcon)) return 3;
+        return 0;
+    }
+
     public static String getRankForBand (String bandName){
 
         String icon;

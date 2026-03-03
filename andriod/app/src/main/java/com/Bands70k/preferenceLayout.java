@@ -137,6 +137,123 @@ public class preferenceLayout  extends Activity {
                 }
             });
         }
+        View planScheduleSection = findViewById(R.id.plan_schedule_section);
+        if (FestivalConfig.getInstance().aiSchedule && planScheduleSection != null) {
+            planScheduleSection.setVisibility(View.VISIBLE);
+            int eventYear = staticVariables.eventYear != null ? staticVariables.eventYear : 0;
+            if (eventYear == 0) {
+                staticVariables.ensureEventYearIsSet();
+                eventYear = staticVariables.eventYear;
+            }
+            final int yearForSchedule = eventYear;
+
+            View buildItem = findViewById(R.id.plan_schedule_build);
+            if (buildItem != null) {
+                buildItem.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        int y = staticVariables.eventYear != null ? staticVariables.eventYear : yearForSchedule;
+                        if (y == 0) {
+                            staticVariables.ensureEventYearIsSet();
+                            y = staticVariables.eventYear;
+                        }
+                        final int eventYearForWizard = y;
+                        showsAttended attendedForCheck = staticVariables.attendedHandler != null ? staticVariables.attendedHandler : new showsAttended();
+                        boolean hasExistingAttendance = attendedForCheck.countAttendanceForYear(yearForSchedule) > 0;
+                        if (AIScheduleStorage.hasRunAI(yearForSchedule) && hasExistingAttendance) {
+                            new AlertDialog.Builder(preferenceLayout.this)
+                                    .setTitle(R.string.replace_auto_schedule_title)
+                                    .setMessage(R.string.replace_auto_schedule_message)
+                                    .setPositiveButton(R.string.Ok, new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            showsAttended attendedHandle = staticVariables.attendedHandler != null
+                                                    ? staticVariables.attendedHandler
+                                                    : new showsAttended();
+                                            if (staticVariables.attendedHandler == null) {
+                                                staticVariables.attendedHandler = attendedHandle;
+                                            }
+                                            AIScheduleStorage.restore(attendedHandle, yearForSchedule);
+                                            Intent refresh = new Intent("RefreshLandscapeSchedule");
+                                            androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(preferenceLayout.this).sendBroadcast(refresh);
+                                            Intent intent = new Intent(preferenceLayout.this, AutoChooseAttendanceWizardActivity.class);
+                                            intent.putExtra("eventYear", eventYearForWizard);
+                                            startActivity(intent);
+                                        }
+                                    })
+                                    .setNegativeButton(R.string.Cancel, null)
+                                    .show();
+                        } else {
+                            Intent intent = new Intent(preferenceLayout.this, AutoChooseAttendanceWizardActivity.class);
+                            intent.putExtra("eventYear", eventYearForWizard);
+                            startActivity(intent);
+                        }
+                    }
+                });
+            }
+
+            View clearAutoItem = findViewById(R.id.plan_schedule_clear_auto);
+            if (clearAutoItem != null) {
+                clearAutoItem.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        new AlertDialog.Builder(preferenceLayout.this)
+                                .setTitle(R.string.clear_auto_chosen_schedule)
+                                .setMessage(R.string.clear_auto_chosen_confirm)
+                                .setPositiveButton(R.string.Ok, new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        showsAttended attendedHandle = staticVariables.attendedHandler != null
+                                                ? staticVariables.attendedHandler
+                                                : new showsAttended();
+                                        if (staticVariables.attendedHandler == null) {
+                                            staticVariables.attendedHandler = attendedHandle;
+                                        }
+                                        if (AIScheduleStorage.restore(attendedHandle, yearForSchedule)) {
+                                            Toast.makeText(preferenceLayout.this, getString(R.string.Ok), Toast.LENGTH_SHORT).show();
+                                            Intent refresh = new Intent("RefreshLandscapeSchedule");
+                                            androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(preferenceLayout.this).sendBroadcast(refresh);
+                                        }
+                                    }
+                                })
+                                .setNegativeButton(R.string.Cancel, null)
+                                .show();
+                    }
+                });
+            }
+
+            View clearAllItem = findViewById(R.id.plan_schedule_clear_all);
+            if (clearAllItem != null) {
+                clearAllItem.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        new AlertDialog.Builder(preferenceLayout.this)
+                                .setTitle(R.string.clear_all_attendance_data)
+                                .setMessage(R.string.clear_all_attendance_confirm)
+                                .setPositiveButton(R.string.Ok, new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        // Use the same instance the rest of the app uses so in-memory state is cleared
+                                        showsAttended attendedHandle = staticVariables.attendedHandler != null
+                                                ? staticVariables.attendedHandler
+                                                : new showsAttended();
+                                        if (staticVariables.attendedHandler == null) {
+                                            staticVariables.attendedHandler = attendedHandle;
+                                        }
+                                        attendedHandle.clearAllAttendance();
+                                        AIScheduleStorage.clearBackup(yearForSchedule);
+                                        AIScheduleStorage.setHasRunAI(yearForSchedule, false);
+                                        Toast.makeText(preferenceLayout.this, getString(R.string.Ok), Toast.LENGTH_SHORT).show();
+                                        Intent refresh = new Intent("RefreshLandscapeSchedule");
+                                        androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(preferenceLayout.this).sendBroadcast(refresh);
+                                    }
+                                })
+                                .setNegativeButton(R.string.Cancel, null)
+                                .show();
+                    }
+                });
+            }
+        }
 
     }
 
