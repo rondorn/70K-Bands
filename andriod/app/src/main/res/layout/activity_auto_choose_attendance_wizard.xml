@@ -290,6 +290,14 @@
                 android:text="@string/Cancel" />
 
             <Button
+                android:id="@+id/wizard_back"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="@string/navigation_back"
+                android:visibility="gone" />
+
+            <Button
                 android:id="@+id/wizard_next"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

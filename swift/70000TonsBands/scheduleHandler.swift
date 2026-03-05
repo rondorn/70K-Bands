@@ -738,10 +738,14 @@ open class scheduleHandler {
                     print("🔍 No stored checksum found (first run or missing)")
                 }
                 
-                // Smart import detection: Force import if we have large CSV but few events
+                // Smart import detection: Force import if we have large CSV but few events, or CSV has many more rows than SQLite (e.g. restore from Dropbox)
                 let currentEventCount = dataManager.fetchEvents(forYear: eventYear).count
+                let dataRowCount = max(0, lines.count - 1) // subtract header
                 if httpData.count > 1000 && currentEventCount < 5 {
                     print("DEBUG_MARKER: Smart import triggered - Downloaded \(httpData.count) chars but only \(currentEventCount) events in SQLite")
+                    storedChecksum = nil // Force import
+                } else if dataRowCount > currentEventCount + 30 {
+                    print("DEBUG_MARKER: Smart import triggered - CSV has \(dataRowCount) rows but SQLite has \(currentEventCount) events (restore scenario)")
                     storedChecksum = nil // Force import
                 }
                 
@@ -771,6 +775,8 @@ open class scheduleHandler {
                 } else {
                     print("DEBUG_MARKER: Data unchanged - checksum: \(newChecksum.prefix(8))")
                     dataChanged = false
+                    // Still load from SQLite so UI shows existing data (cache was cleared before download)
+                    loadCacheFromCoreData()
             }
         } else {
                 print("❌ Internet is down or data is invalid, keeping existing data")

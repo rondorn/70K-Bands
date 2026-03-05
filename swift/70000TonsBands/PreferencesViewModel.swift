@@ -137,8 +137,6 @@ class PreferencesViewModel: ObservableObject {
     @Published var showYearChangeConfirmation = false
     @Published var showAutoChooseAttendanceWizard = false
     @Published var showReplaceAutoChoicesConfirmation = false
-    @Published var showClearAutoConfirmation = false
-    @Published var clearAutoCount = 0
     @Published var showClearAllConfirmation = false
     @Published var clearAllCount = 0
     @Published var hasAutoChosenDataForSelectedYear = false
@@ -240,10 +238,10 @@ class PreferencesViewModel: ObservableObject {
     // MARK: - Initialization
     init() {
         setupUserInfo()
-        loadAvailableYears()
-        loadCurrentPreferences()
+        // Show preferences UI immediately with default year; load years and prefs in background to avoid 10+ second delay when opening preferences.
+        eventYearArray = ["Current"]
+        availableYears = [NSLocalizedString("Current", comment: "")]
         
-        // If the pointer file is updated while preferences are open, refresh the year list.
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(handlePointerDataUpdated),
@@ -251,11 +249,38 @@ class PreferencesViewModel: ObservableObject {
             object: nil
         )
         
-        // Defer any heavy iCloud operations to avoid blocking the preferences UI
-        DispatchQueue.global(qos: .background).async {
-            // Any heavy data operations that might be needed can go here
-            // This ensures the preferences screen opens immediately
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            self?.performDeferredPreferencesLoad()
         }
+    }
+    
+    /// Runs file I/O on a background queue, then applies results and loads UserDefaults on main. Keeps preferences screen from blocking 10+ seconds on open.
+    private func performDeferredPreferencesLoad() {
+        let (years, displayYears) = computeAvailableYearsFromStorage()
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            if !years.isEmpty {
+                self.eventYearArray = years
+                self.availableYears = displayYears
+            }
+            self.loadCurrentPreferences()
+        }
+    }
+    
+    /// Builds eventYearArray and availableYears from disk. Safe to call from any thread; returns values without touching self.
+    private func computeAvailableYearsFromStorage() -> (eventYearArray: [String], availableYears: [String]) {
+        let variableStoreHandle = variableStore()
+        var eventArray: [String]
+        if let yearsFromPointer = loadEventYearsFromCachedPointerFile(), !yearsFromPointer.isEmpty {
+            eventArray = yearsFromPointer
+            variableStoreHandle.storeDataToDisk(data: eventArray, fileName: eventYearsInfoFile)
+        } else {
+            eventArray = variableStoreHandle.readDataFromDiskArray(fileName: eventYearsInfoFile) ?? ["Current"]
+        }
+        let display = eventArray.map { elem in
+            !elem.isYearString ? NSLocalizedString("Current", comment: "") : elem
+        }
+        return (eventArray, display)
     }
     
     deinit {
@@ -289,8 +314,7 @@ class PreferencesViewModel: ObservableObject {
             displayYear = NSLocalizedString("Current", comment: "")
         }
         
-        // Load advanced preferences from UserDefaults
-        UserDefaults.standard.synchronize() // Sync to get latest from Settings.bundle
+        // Load advanced preferences from UserDefaults (synchronize() omitted - deprecated and can block main thread)
         let customPointerUrlValue = UserDefaults.standard.string(forKey: "CustomPointerUrl") ?? ""
         let pointerUrlValue = UserDefaults.standard.string(forKey: "PointerUrl") ?? "Prod"
         
@@ -362,23 +386,42 @@ class PreferencesViewModel: ObservableObject {
         selectedYear == "Current" ? eventYear : (Int(selectedYear) ?? eventYear)
     }
     
-    /// Refreshes whether the selected year has auto-chosen attendance data (for Clear button state).
-    func refreshAutoChosenDataState() {
+    /// Refreshes whether the selected year has auto-chosen attendance data and total attendance count (for Clear button state).
+    /// Runs the SQLite checks on a background queue so the main thread is never blocked (avoids hang from manual/auto attendance changes).
+    /// - Parameter completion: If provided, called on main with the result; use when you need the value for follow-up logic (e.g. wizard trigger).
+    func refreshAutoChosenDataState(completion: ((Bool) -> Void)? = nil) {
         guard FestivalConfig.current.aiSchedule else {
             hasAutoChosenDataForSelectedYear = false
+            clearAllCount = 0
+            completion?(false)
             return
         }
-        hasAutoChosenDataForSelectedYear = AttendanceManager().hasAutoChosenAttendance(forYear: selectedYearAsInt)
+        let year = selectedYearAsInt
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            let am = AttendanceManager()
+            let hasAuto = am.hasAutoChosenAttendance(forYear: year)
+            let totalCount = am.countAllAttendance(forYear: year)
+            DispatchQueue.main.async {
+                self.hasAutoChosenDataForSelectedYear = hasAuto
+                self.clearAllCount = totalCount
+                completion?(hasAuto)
+            }
+        }
     }
     
     /// Presents the Auto Choose Attendance wizard (triggered from preferences).
-    /// If the selected year already has auto-chosen attendance, shows a confirmation that those will be removed first.
+    /// If the selected year already has auto-chosen attendance (or has run AI before, e.g. data restored from iCloud without source), shows a confirmation that those will be removed first.
     func triggerAutoChooseAttendanceWizard() {
         guard FestivalConfig.current.aiSchedule else { return }
-        if hasAutoChosenDataForSelectedYear {
-            showReplaceAutoChoicesConfirmation = true
-        } else {
-            showAutoChooseAttendanceWizard = true
+        refreshAutoChosenDataState { [weak self] hasAuto in
+            guard let self = self else { return }
+            let hasRunAIForYear = AIScheduleStorage.hasRunAI(for: self.selectedYearAsInt)
+            if hasAuto || hasRunAIForYear {
+                self.showReplaceAutoChoicesConfirmation = true
+            } else {
+                self.showAutoChooseAttendanceWizard = true
+            }
         }
     }
     
@@ -393,26 +436,6 @@ class PreferencesViewModel: ObservableObject {
         }
     }
     
-    /// Prepares and shows confirmation to clear only auto-chosen attendance (shows count).
-    func requestClearAutoChosenAttendance() {
-        guard FestivalConfig.current.aiSchedule else { return }
-        let am = AttendanceManager()
-        clearAutoCount = am.countAutoChosenAttendance(forYear: selectedYearAsInt)
-        showClearAutoConfirmation = true
-    }
-    
-    /// User confirmed clearing auto-chosen attendance. Removes only records with source "Auto".
-    func confirmClearAutoChosenAttendance() {
-        showClearAutoConfirmation = false
-        guard FestivalConfig.current.aiSchedule else { return }
-        AttendanceManager().clearAutoChosenAttendance(forYear: selectedYearAsInt) { [weak self] in
-            self?.refreshAutoChosenDataState()
-            NotificationCenter.default.post(name: Notification.Name("RefreshLandscapeSchedule"), object: nil)
-            // Push current state to iCloud so removed auto records are removed from iCloud too
-            SQLiteiCloudSync().syncAttendanceToiCloud()
-        }
-    }
-    
     /// Prepares and shows confirmation to clear all attendance for the year (shows count).
     func requestClearAllAttendance() {
         guard FestivalConfig.current.aiSchedule else { return }
@@ -420,23 +443,18 @@ class PreferencesViewModel: ObservableObject {
         showClearAllConfirmation = true
     }
     
-    /// User confirmed clearing all attendance. Removes every attendance record for the year (current profile).
+    /// User confirmed clearing all attendance. Sets every attendance record for the year to Not Attended (keeps records); sync pushes sawNone to iCloud.
     func confirmClearAllAttendance() {
         showClearAllConfirmation = false
         guard FestivalConfig.current.aiSchedule else { return }
         AttendanceManager().clearAllAttendance(forYear: selectedYearAsInt) { [weak self] in
             guard let self = self else { return }
             ShowsAttended.clearLegacyStoreForYear(self.selectedYearAsInt)
-            // Remove cleared year's keys from KV store immediately so syncFromiCloud cannot restore them (works with or without iCloud account).
-            SQLiteiCloudSync().removeAttendanceKeysForYearFromKVStore(forYear: self.selectedYearAsInt) { [weak self] in
+            SQLiteiCloudSync().syncAttendanceToiCloud(completion: { [weak self] in
                 guard let self = self else { return }
-                // Then push current state to KV store and refresh UI.
-                SQLiteiCloudSync().syncAttendanceToiCloud(completion: { [weak self] in
-                    guard let self = self else { return }
-                    self.refreshAutoChosenDataState()
-                    NotificationCenter.default.post(name: Notification.Name("RefreshLandscapeSchedule"), object: nil)
-                })
-            }
+                self.refreshAutoChosenDataState()
+                NotificationCenter.default.post(name: Notification.Name("RefreshLandscapeSchedule"), object: nil)
+            })
         }
     }
     

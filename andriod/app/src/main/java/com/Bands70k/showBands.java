@@ -755,6 +755,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                                 Log.d("DownloadUrls", "Using fallback scheduleUrl");
                             }
                             Log.d("PullToRefresh", "Downloading schedule from URL: " + scheduleUrl);
+                            scheduleInfo.setLastPreviousEventKeysForWizard(scheduleInfo.collectEventKeys(BandInfo.scheduleRecords));
                             BandInfo.scheduleRecords = schedule.DownloadScheduleFile(scheduleUrl);
                         } catch (Exception e) {
                             Log.e("PullToRefresh", "Error downloading schedule data", e);
@@ -787,21 +788,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                         scheduleAlertHandler alerts = new scheduleAlertHandler();
                         alerts.execute();
 
-                        // AI Schedule: offer Plan Your Schedule only when schedule data actually changed, 30+ events, 20+ Must/Might/Wont choices, current year, not yet run
-                        if (FestivalConfig.getInstance().aiSchedule && BandInfo.scheduleRecords != null && scheduleInfo.getLastScheduleDataChanged()) {
-                            scheduleInfo.clearLastScheduleDataChanged();
-                            int eventYear = staticVariables.eventYear != null ? staticVariables.eventYear : 0;
-                            int currentYear = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR);
-                            if (eventYear == currentYear && !AIScheduleStorage.hasRunAI(eventYear)) {
-                                int eventCount = scheduleInfo.countEvents(BandInfo.scheduleRecords);
-                                int rankedCount = countMustMightWontChoices();
-                                if (eventCount >= 30 && rankedCount >= 20) {
-                                    Intent wizard = new Intent(showBands.this, AutoChooseAttendanceWizardActivity.class);
-                                    wizard.putExtra("eventYear", eventYear);
-                                    startActivity(wizard);
-                                }
-                            }
-                        }
+                        offerAutoScheduleWizardIfNeeded();
                     } catch (Exception e) {
                         Log.e("PullToRefresh", "Error refreshing UI after pull-to-refresh downloads", e);
                     }
@@ -3168,6 +3155,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                     () -> {
                         try {
                             Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Background: Starting schedule parse");
+                            scheduleInfo.setLastPreviousEventKeysForWizard(scheduleInfo.collectEventKeys(BandInfo.scheduleRecords));
                             scheduleInfo schedule = new scheduleInfo();
                             // IMPORTANT: Do NOT call DownloadScheduleFile() here.
                             // DownloadScheduleFile() evaluates OnlineStatus.isOnline(), which can block for a long
@@ -3193,6 +3181,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                                 Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Background callback: Schedule has data, refreshing");
                                 Log.d("ScheduleCache", "Cached schedule parsed with " + BandInfo.scheduleRecords.size() + " records; refreshing schedule view");
                                 refreshData(true);
+                                offerAutoScheduleWizardIfNeeded();
                                 Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Background callback: Refresh complete");
                             } else {
                                 Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Background callback: Schedule still empty after parse, skipping refresh (already showing bands-only view)");
@@ -4435,9 +4424,25 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 } else {
                     // Normal resume (including internal navigation and true background->foreground):
                     // - Core refresh is handled at the Application level (Bands70k -> CoreDataRefreshManager)
-                    // - This onResume path should stay cache-first and never trigger re-downloads
+                    // - If schedule file was modified while in background (e.g. data added back), re-read from disk so UI and wizard see new data
+                    if (FileHandler70k.schedule.exists()) {
+                        String currentHash = CacheHashManager.getInstance().calculateFileHash(FileHandler70k.schedule);
+                        String lastHash = dataTimestampPrefs.getString("schedule_hash", null);
+                        if (currentHash != null && !currentHash.equals(lastHash)) {
+                            try {
+                                scheduleInfo.setLastPreviousEventKeysForWizard(scheduleInfo.collectEventKeys(BandInfo.scheduleRecords));
+                                scheduleInfo schedule = new scheduleInfo();
+                                BandInfo.scheduleRecords = schedule.ParseScheduleCSV();
+                                Log.d("OnResume", "Schedule file changed on disk; re-parsed " + (BandInfo.scheduleRecords != null ? BandInfo.scheduleRecords.size() : 0) + " bands");
+                                dataTimestampPrefs.edit().putString("schedule_hash", currentHash).apply();
+                            } catch (Exception e) {
+                                Log.e("OnResume", "Error re-reading schedule from disk", e);
+                            }
+                        }
+                    }
                     reloadData();
                     refreshData();
+                    offerAutoScheduleWizardIfNeeded();
                 }
             }
         } else {
@@ -4733,6 +4738,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                             Log.d("DownloadUrls", "Using fallback scheduleUrl");
                         }
                         Log.d("FILTER_DEBUG", "🔍 STARTUP: About to download schedule from URL: " + scheduleUrl);
+                        scheduleInfo.setLastPreviousEventKeysForWizard(scheduleInfo.collectEventKeys(BandInfo.scheduleRecords));
                         BandInfo.scheduleRecords = schedule.DownloadScheduleFile(scheduleUrl);
                         Log.d("FILTER_DEBUG", "🔍 STARTUP: Schedule download complete, scheduleRecords has " +
                                 (BandInfo.scheduleRecords != null ? BandInfo.scheduleRecords.size() : "NULL") + " records");
@@ -4831,21 +4837,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 Log.d("Refresh", "CSV processing complete, starting bulk downloads");
                 ForegroundDownloadManager.startDownloadsAfterCSV(showBands.this);
 
-                // AI Schedule: offer Plan Your Schedule only when schedule data actually changed (new download), 30+ events, 20+ Must/Might/Wont choices, current year, not yet run
-                if (FestivalConfig.getInstance().aiSchedule && BandInfo.scheduleRecords != null && scheduleInfo.getLastScheduleDataChanged()) {
-                    scheduleInfo.clearLastScheduleDataChanged();
-                    int eventYear = staticVariables.eventYear != null ? staticVariables.eventYear : 0;
-                    int currentYear = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR);
-                    if (eventYear == currentYear && !AIScheduleStorage.hasRunAI(eventYear)) {
-                        int eventCount = scheduleInfo.countEvents(BandInfo.scheduleRecords);
-                        int rankedCount = countMustMightWontChoices();
-                        if (eventCount >= 30 && rankedCount >= 20) {
-                            Intent wizard = new Intent(showBands.this, AutoChooseAttendanceWizardActivity.class);
-                            wizard.putExtra("eventYear", eventYear);
-                            startActivity(wizard);
-                        }
-                    }
-                }
+                offerAutoScheduleWizardIfNeeded();
 
                 Log.d("Refresh", "Refresh Stage = Post-Stop");
             }
@@ -4862,6 +4854,33 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             if (p == 1 || p == 2 || p == 3) count++;
         }
         return count;
+    }
+
+    /**
+     * Offer Plan Your Schedule wizard when 30+ new events were added in this load (not a reload/update of existing).
+     * Uses in-memory "previous" keys only (set by loading paths before replacing schedule); no historical persistence.
+     */
+    void offerAutoScheduleWizardIfNeeded() {
+        if (!FestivalConfig.getInstance().aiSchedule || BandInfo.scheduleRecords == null) return;
+        java.util.Set<String> previousKeys = scheduleInfo.getAndClearLastPreviousEventKeysForWizard();
+        if (previousKeys.isEmpty()) return;
+        java.util.Set<String> currentKeys = scheduleInfo.collectEventKeys(BandInfo.scheduleRecords);
+        int newCount = 0;
+        for (String k : currentKeys) {
+            if (!previousKeys.contains(k)) newCount++;
+        }
+        int eventYear = staticVariables.eventYear != null ? staticVariables.eventYear : 0;
+        int currentYear = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR);
+        int rankedCount = countMustMightWontChoices();
+        if (eventYear == currentYear
+                && !AIScheduleStorage.hasRunAI(eventYear)
+                && rankedCount >= 20
+                && newCount >= 30) {
+            scheduleInfo.clearLastScheduleDataChanged();
+            Intent wizard = new Intent(this, AutoChooseAttendanceWizardActivity.class);
+            wizard.putExtra("eventYear", eventYear);
+            startActivity(wizard);
+        }
     }
 
     class AsyncNotesLoader extends AsyncTask<String, Void, ArrayList<String>> {
