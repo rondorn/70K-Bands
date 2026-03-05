@@ -34,8 +34,12 @@ struct PreferencesView: View {
             viewModel.showAutoChooseAttendanceWizard = false
             viewModel.refreshAutoChosenDataState()
         }) {
-            AutoChooseAttendanceWizardView(eventYear: viewModel.selectedYearAsInt, onDismiss: {
+            AutoChooseAttendanceWizardView(eventYear: viewModel.selectedYearAsInt, onDismiss: { goToSchedule in
                 viewModel.showAutoChooseAttendanceWizard = false
+                if goToSchedule {
+                    presentationMode.wrappedValue.dismiss()
+                }
+                viewModel.refreshAutoChosenDataState()
             })
         }
         .alert(NSLocalizedString("AutoChooseAttendanceReplaceTitle", comment: ""), isPresented: $viewModel.showReplaceAutoChoicesConfirmation) {
@@ -47,18 +51,6 @@ struct PreferencesView: View {
             }
         } message: {
             Text(NSLocalizedString("AutoChooseAttendanceReplaceMessage", comment: ""))
-        }
-        .alert(NSLocalizedString("AutoChooseAttendanceClearAutoTitle", comment: ""), isPresented: $viewModel.showClearAutoConfirmation) {
-            Button(NSLocalizedString("Cancel", comment: ""), role: .cancel) {
-                viewModel.showClearAutoConfirmation = false
-            }
-            Button(NSLocalizedString("OK", comment: "")) {
-                viewModel.confirmClearAutoChosenAttendance()
-            }
-        } message: {
-            Text(viewModel.clearAutoCount == 0
-                 ? NSLocalizedString("AutoChooseAttendanceClearAutoMessageNone", comment: "")
-                 : String(format: NSLocalizedString("AutoChooseAttendanceClearAutoMessage", comment: ""), viewModel.clearAutoCount))
         }
         .alert(NSLocalizedString("AutoChooseAttendanceClearAllTitle", comment: ""), isPresented: $viewModel.showClearAllConfirmation) {
             Button(NSLocalizedString("Cancel", comment: ""), role: .cancel) {
@@ -206,12 +198,10 @@ struct PreferencesView: View {
                     Button(NSLocalizedString("AutoChooseAttendanceTriggerWizard", comment: "Trigger Auto Choose Attendance Wizard")) {
                         viewModel.triggerAutoChooseAttendanceWizard()
                     }
-                    Button(NSLocalizedString("AutoChooseAttendanceClearData", comment: "Auto Chosen Attendance Data (Clear)")) {
-                        viewModel.requestClearAutoChosenAttendance()
-                    }
                     Button(NSLocalizedString("AutoChooseAttendanceClearAll", comment: "Clear all attendance")) {
                         viewModel.requestClearAllAttendance()
                     }
+                    .disabled(viewModel.clearAllCount == 0)
                 }
             }
         }

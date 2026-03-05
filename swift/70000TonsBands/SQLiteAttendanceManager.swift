@@ -37,8 +37,16 @@ class SQLiteAttendanceManager {
         case empty = "Empty"
     }
     
+    /// Status values: 1 = sawSome, 2 = sawAll, 3 = sawNone (Not Attended). Used when "clearing" sets to Not Attended instead of deleting.
+    private static let statusSawNone = 3
+    
     private init() {
-        setupDatabase()
+        // CRITICAL: Run setup on our serial queue so it never runs on the main thread.
+        // Migrations (attendanceSource column, UPDATE all rows, unique-constraint migration) can take
+        // seconds and would freeze the UI if run on main (e.g. from loadICloudData() or PreferencesView).
+        serialQueue.async { [weak self] in
+            self?.setupDatabase()
+        }
     }
     
     private func setupDatabase() {
@@ -417,7 +425,7 @@ class SQLiteAttendanceManager {
         return countAutoChosenAttendance(forYear: year, profileName: profile) > 0
     }
     
-    /// Returns the number of attendance records for the year with source "Auto".
+    /// Returns the number of attendance records for the year with source "Auto" and status != Not Attended (used for Clear Auto button; grey out when 0).
     func countAutoChosenAttendance(forYear year: Int, profileName profile: String? = nil) -> Int {
         var result = 0
         let semaphore = DispatchSemaphore(value: 0)
@@ -426,7 +434,8 @@ class SQLiteAttendanceManager {
             guard let self = self, let db = self.db else { return }
             let currentProfile = profile ?? self.getCurrentProfileName()
             do {
-                let count = try db.scalar(self.attendanceTable.filter(self.eventYearColumn == year && self.profileName == currentProfile && self.attendanceSource == AttendanceSource.auto.rawValue).count)
+                let filter = self.attendanceTable.filter(self.eventYearColumn == year && self.profileName == currentProfile && self.attendanceSource == AttendanceSource.auto.rawValue && self.status != Self.statusSawNone)
+                let count = try db.scalar(filter.count)
                 result = Int(count ?? 0)
             } catch {
                 print("❌ SQLiteAttendanceManager: countAutoChosenAttendance failed: \(error)")
@@ -436,7 +445,7 @@ class SQLiteAttendanceManager {
         return result
     }
     
-    /// Returns the total number of attendance records for the year (any source).
+    /// Returns the number of attendance records for the year that are attended (status != Not Attended). Used for Clear All button; grey out when 0.
     func countAllAttendance(forYear year: Int, profileName profile: String? = nil) -> Int {
         var result = 0
         let semaphore = DispatchSemaphore(value: 0)
@@ -445,7 +454,8 @@ class SQLiteAttendanceManager {
             guard let self = self, let db = self.db else { return }
             let currentProfile = profile ?? self.getCurrentProfileName()
             do {
-                let count = try db.scalar(self.attendanceTable.filter(self.eventYearColumn == year && self.profileName == currentProfile).count)
+                let filter = self.attendanceTable.filter(self.eventYearColumn == year && self.profileName == currentProfile && self.status != Self.statusSawNone)
+                let count = try db.scalar(filter.count)
                 result = Int(count ?? 0)
             } catch {
                 print("❌ SQLiteAttendanceManager: countAllAttendance failed: \(error)")
@@ -455,7 +465,7 @@ class SQLiteAttendanceManager {
         return result
     }
     
-    /// Removes all attendance records for the year that have source "Auto". Used by Clear Auto Chosen in preferences.
+    /// Sets all attendance records for the year with source "Auto" to Not Attended (keeps records; avoids sync restoring data).
     /// Calls completion on main queue when done so UI can refresh.
     func clearAutoChosenAttendance(forYear year: Int, profileName profile: String? = nil, completion: (() -> Void)? = nil) {
         serialQueue.async { [weak self] in
@@ -465,9 +475,9 @@ class SQLiteAttendanceManager {
             }
             let currentProfile = profile ?? self.getCurrentProfileName()
             do {
-                let toDelete = self.attendanceTable.filter(self.eventYearColumn == year && self.profileName == currentProfile && self.attendanceSource == AttendanceSource.auto.rawValue)
-                let deleted = try db.run(toDelete.delete())
-                print("✅ SQLiteAttendanceManager: Cleared \(deleted) auto-chosen attendance records for year \(year)")
+                let toUpdate = self.attendanceTable.filter(self.eventYearColumn == year && self.profileName == currentProfile && self.attendanceSource == AttendanceSource.auto.rawValue && self.status != Self.statusSawNone)
+                let updated = try db.run(toUpdate.update(self.status <- Self.statusSawNone))
+                print("✅ SQLiteAttendanceManager: Set \(updated) auto-chosen attendance records to Not Attended for year \(year)")
             } catch {
                 print("❌ SQLiteAttendanceManager: clearAutoChosenAttendance failed: \(error)")
             }
@@ -475,7 +485,7 @@ class SQLiteAttendanceManager {
         }
     }
     
-    /// Removes all attendance records for the year (auto and manual). Used by Clear All Attendance in preferences.
+    /// Sets all attendance records for the year to Not Attended (keeps records; avoids sync restoring data).
     func clearAllAttendance(forYear year: Int, profileName profile: String? = nil, completion: (() -> Void)? = nil) {
         serialQueue.async { [weak self] in
             guard let self = self, let db = self.db else {
@@ -484,10 +494,9 @@ class SQLiteAttendanceManager {
             }
             let currentProfile = profile ?? self.getCurrentProfileName()
             do {
-                let toDelete = self.attendanceTable.filter(self.eventYearColumn == year && self.profileName == currentProfile)
-                let deleted = try db.run(toDelete.delete())
-                print("✅ SQLiteAttendanceManager: Cleared \(deleted) total attendance records for year \(year)")
-                print("🔍 [CLEAR_DEBUG] clearAllAttendance done for year \(year); next step is syncToiCloud to remove those keys from iCloud")
+                let toUpdate = self.attendanceTable.filter(self.eventYearColumn == year && self.profileName == currentProfile && self.status != Self.statusSawNone)
+                let updated = try db.run(toUpdate.update(self.status <- Self.statusSawNone))
+                print("✅ SQLiteAttendanceManager: Set \(updated) attendance records to Not Attended for year \(year)")
             } catch {
                 print("❌ SQLiteAttendanceManager: clearAllAttendance failed: \(error)")
             }
@@ -518,7 +527,8 @@ class SQLiteAttendanceManager {
                     if let index = row[self.attendanceIndex] {
                         result[index] = [
                             "status": row[self.status],
-                            "lastModified": row[self.lastModified] ?? Date().timeIntervalSince1970
+                            "lastModified": row[self.lastModified] ?? Date().timeIntervalSince1970,
+                            "attendanceSource": (row[self.attendanceSource]).map { $0 } ?? AttendanceSource.manual.rawValue
                         ]
                     }
                 }

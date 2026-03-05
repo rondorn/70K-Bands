@@ -24,7 +24,8 @@ private enum WizardStep: Int, CaseIterable {
 
 struct AutoChooseAttendanceWizardView: View {
     let eventYear: Int
-    let onDismiss: () -> Void
+    /// goToSchedule: true = user completed the wizard → host should dismiss to list view; false = user cancelled → host only dismisses wizard (e.g. stay on preferences).
+    let onDismiss: (Bool) -> Void
     /// When set, called so the host can dismiss the wizard and show the band list; back should return to the wizard.
     var onOpenBandList: (() -> Void)? = nil
     /// When set, called to open the band detail screen for the given band name (set Must/Might/Wont). If nil, posts AutoChooseAttendanceOpenBandDetail notification.
@@ -79,13 +80,14 @@ struct AutoChooseAttendanceWizardView: View {
         "\(event.bandName):\(event.location):\(event.startTime ?? ""):\(event.eventType ?? "")"
     }
     
-    /// Respects OS time format (12h AM/PM vs 24h). Used for Latest show picker labels.
-    private static let latestShowTimeFormatter: DateFormatter = {
+    /// Respects OS time format (12h AM/PM vs 24h). Used for Latest show picker labels only; internal logic always uses half-hour indices (0–11).
+    private static var latestShowTimeFormatter: DateFormatter {
         let f = DateFormatter()
+        f.locale = Locale.current
         f.dateStyle = .none
         f.timeStyle = .short
         return f
-    }()
+    }
     
     var body: some View {
         NavigationView {
@@ -99,16 +101,6 @@ struct AutoChooseAttendanceWizardView: View {
             }
             .navigationTitle(stepTitle)
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    if abortMessage == nil && step != .building {
-                        Button(NSLocalizedString("Cancel", comment: "")) {
-                            onDismiss()
-                        }
-                        .foregroundColor(.white)
-                    }
-                }
-            }
             .preferredColorScheme(.dark)
             .onAppear {
                 loadEvents()
@@ -126,7 +118,7 @@ struct AutoChooseAttendanceWizardView: View {
                 setShowOnlyWillAttened(true)
                 writeFiltersFile()
                 NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
-                onDismiss()
+                onDismiss(true)
             }
         } message: {
             Text(String(format: NSLocalizedString("AIScheduleDoneMessage", comment: ""), completedCount) + "\n\n" + NSLocalizedString("AIScheduleDoneMessageDetail", comment: ""))
@@ -167,9 +159,68 @@ struct AutoChooseAttendanceWizardView: View {
             case .done:
                 EmptyView()
             }
+            if abortMessage == nil && step != .building {
+                Spacer(minLength: 20)
+                wizardBottomBar
+            }
         }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    
+    /// Single row: Cancel, Back (when not intro), Next (or Build schedule). Shown where the old Next button was.
+    @ViewBuilder
+    private var wizardBottomBar: some View {
+        HStack(spacing: 12) {
+            secondaryButton(NSLocalizedString("Cancel", comment: "")) {
+                onDismiss(false)
+            }
+            if step != .intro {
+                secondaryButton(NSLocalizedString("Back", comment: "Back button")) {
+                    previousStep()
+                }
+            }
+            Spacer(minLength: 0)
+            primaryButton(wizardNextButtonTitle) {
+                performWizardNext()
+            }
+        }
+    }
+    
+    private var wizardNextButtonTitle: String {
+        switch step {
+        case .intro, .unknownBands, .sleepHours, .meetAndGreet:
+            return NSLocalizedString("AutoChooseAttendanceNext", comment: "Next")
+        case .clinics:
+            return hasSpecialEvents ? NSLocalizedString("AutoChooseAttendanceNext", comment: "Next") : NSLocalizedString("AIScheduleBuild", comment: "Build schedule")
+        case .specialEvents:
+            return NSLocalizedString("AIScheduleBuild", comment: "Build schedule")
+        case .building, .done:
+            return NSLocalizedString("AutoChooseAttendanceNext", comment: "Next")
+        }
+    }
+    
+    private func performWizardNext() {
+        switch step {
+        case .intro:
+            advanceFromIntro()
+        case .unknownBands:
+            if unknownBandNames.count > 10 {
+                abortMessage = NSLocalizedString("AutoChooseAttendanceTooManyUnknown", comment: "")
+            } else {
+                advanceFromUnknownBands()
+            }
+        case .sleepHours:
+            step = nextStep(after: .sleepHours)
+        case .meetAndGreet:
+            step = nextStep(after: .meetAndGreet)
+        case .clinics:
+            step = nextStep(after: .clinics)
+        case .specialEvents:
+            step = nextStep(after: .specialEvents)
+        case .building, .done:
+            break
+        }
     }
     
     private var introStep: some View {
@@ -178,9 +229,6 @@ struct AutoChooseAttendanceWizardView: View {
                 .foregroundColor(.white)
                 .font(.body)
             Spacer(minLength: 20)
-            primaryButton(NSLocalizedString("AutoChooseAttendanceNext", comment: "Next")) {
-                advanceFromIntro()
-            }
         }
     }
     
@@ -190,16 +238,10 @@ struct AutoChooseAttendanceWizardView: View {
                 Text(NSLocalizedString("AutoChooseAttendanceNoUnknownBands", comment: ""))
                     .foregroundColor(.white)
                 Spacer(minLength: 20)
-                primaryButton(NSLocalizedString("AutoChooseAttendanceNext", comment: "Next")) {
-                    step = nextStep(after: .unknownBands)
-                }
             } else if unknownBandNames.count > 10 {
                 Text(NSLocalizedString("AutoChooseAttendanceTooManyUnknown", comment: ""))
                     .foregroundColor(.white)
                 Spacer(minLength: 20)
-                primaryButton(NSLocalizedString("Cancel", comment: "")) {
-                    abortMessage = NSLocalizedString("AutoChooseAttendanceTooManyUnknown", comment: "")
-                }
             } else {
                 Text(String(format: NSLocalizedString("AutoChooseAttendanceFixUnknownPrompt", comment: ""), unknownBandNames.count))
                     .foregroundColor(.white)
@@ -219,13 +261,8 @@ struct AutoChooseAttendanceWizardView: View {
                     }
                 }
                 .frame(maxHeight: 280)
-                HStack(spacing: 12) {
-                    secondaryButton(NSLocalizedString("AutoChooseAttendanceTreatAsWont", comment: "Treat as Wont")) {
-                        advanceTreatingUnknownAsWont()
-                    }
-                    primaryButton(NSLocalizedString("AutoChooseAttendanceNext", comment: "Next")) {
-                        advanceFromUnknownBands()
-                    }
+                secondaryButton(NSLocalizedString("AutoChooseAttendanceTreatAsWont", comment: "Treat as Wont")) {
+                    advanceTreatingUnknownAsWont()
                 }
             }
         }
@@ -268,7 +305,7 @@ struct AutoChooseAttendanceWizardView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text(NSLocalizedString("AutoChooseAttendanceLatestShowPrompt", comment: "The latest show you want to see."))
                 .foregroundColor(.white)
-            Text(NSLocalizedString("AutoChooseAttendanceLatestShowHint", comment: "Shows starting at or after the next hour will be excluded (e.g. 2am excludes from 1am on)."))
+            Text(NSLocalizedString("AutoChooseAttendanceLatestShowHint", comment: "Shows that begin after this specified time will be excluded. For instance, if you set this time to 2 am, a show scheduled for 2 am will be included, but a show scheduled for 2:30 am or later will be excluded."))
                 .foregroundColor(.gray)
                 .font(.caption)
             Picker("", selection: $latestShowHalfHours) {
@@ -280,9 +317,6 @@ struct AutoChooseAttendanceWizardView: View {
             .colorScheme(.dark)
             .frame(height: 120)
             Spacer(minLength: 20)
-            primaryButton(NSLocalizedString("AutoChooseAttendanceNext", comment: "Next")) {
-                step = nextStep(after: .sleepHours)
-            }
         }
         .onAppear { updateLatestShowHourFromSchedule() }
     }
@@ -321,9 +355,6 @@ struct AutoChooseAttendanceWizardView: View {
                 }
             }
             Spacer(minLength: 20)
-            primaryButton(NSLocalizedString("AutoChooseAttendanceNext", comment: "Next")) {
-                step = nextStep(after: .meetAndGreet)
-            }
         }
     }
     
@@ -351,9 +382,6 @@ struct AutoChooseAttendanceWizardView: View {
                 .frame(maxHeight: .infinity)
             }
             Spacer(minLength: 20)
-            primaryButton(hasSpecialEvents ? NSLocalizedString("AutoChooseAttendanceNext", comment: "Next") : NSLocalizedString("AIScheduleBuild", comment: "Build schedule")) {
-                step = nextStep(after: .clinics)
-            }
         }
     }
     
@@ -396,9 +424,6 @@ struct AutoChooseAttendanceWizardView: View {
                 .frame(maxHeight: .infinity)
             }
             Spacer(minLength: 20)
-            primaryButton(NSLocalizedString("AIScheduleBuild", comment: "Build schedule")) {
-                step = nextStep(after: .specialEvents)
-            }
         }
     }
     
@@ -473,7 +498,7 @@ struct AutoChooseAttendanceWizardView: View {
                 }
             }
             Button(NSLocalizedString("Cancel", comment: ""), role: .cancel) {
-                onDismiss()
+                onDismiss(false)
             }
             .foregroundColor(.gray)
         }
@@ -501,13 +526,16 @@ struct AutoChooseAttendanceWizardView: View {
     }
     
     private func conflictEventCard(event: EventData, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+        let dayLabel = (event.day ?? "").trimmingCharacters(in: .whitespaces)
+        let timeStr = formatTimeStringForDisplay(event.startTime ?? "")
+        let dayAndTime = dayLabel.isEmpty ? timeStr : "\(dayLabel) - \(timeStr)"
+        return Button(action: action) {
             VStack(alignment: .leading, spacing: 6) {
                 Text(event.bandName)
                     .font(.headline)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                Text(formatTimeStringForDisplay(event.startTime ?? ""))
+                Text(dayAndTime)
                     .font(.subheadline)
                     .foregroundColor(.gray)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -548,7 +576,7 @@ struct AutoChooseAttendanceWizardView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
             primaryButton(NSLocalizedString("Done", comment: "")) {
-                onDismiss()
+                onDismiss(false)
             }
         }
     }
@@ -672,6 +700,19 @@ struct AutoChooseAttendanceWizardView: View {
         case .specialEvents:
             startBuilding(); return .building
         default: return .building
+        }
+    }
+    
+    /// Previous step for Back button; nil when already at intro.
+    private func previousStep() {
+        switch step {
+        case .intro: break
+        case .unknownBands: step = .intro
+        case .sleepHours: step = .unknownBands
+        case .meetAndGreet: step = .sleepHours
+        case .clinics: step = hasMeetAndGreets ? .meetAndGreet : .sleepHours
+        case .specialEvents: step = .clinics
+        case .building, .done: break
         }
     }
     

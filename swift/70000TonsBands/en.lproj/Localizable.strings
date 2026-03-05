@@ -158,6 +158,7 @@
 "AutoChooseAttendanceTitle" = "Plan Your Schedule";
 "AutoChooseAttendanceWizardPlaceholder" = "Plan Your Schedule will guide you through choosing events.";
 "AutoChooseAttendanceImportPrompt" = "Schedule imported. Would you like to plan your schedule automatically?";
+"AutoChooseAttendanceScheduleUpdatedPrompt" = "Schedule was updated with many new events. Run Auto Choose Attendance again?";
 "AutoChooseAttendanceIntro" = "Do you want %@ to help you choose what events to attend?\n\nWe'll use your Must, Might, and Wont choices plus a few quick questions to build a first pass. You can change any event afterward.";
 "AutoChooseAttendanceNext" = "Next";
 "AutoChooseAttendanceUnknownBandsTitle" = "Unknown bands";
@@ -172,7 +173,7 @@
 "AutoChooseAttendanceHoursSleep" = "hours of sleep per night";
 "AutoChooseAttendanceLatestShowTitle" = "Latest show";
 "AutoChooseAttendanceLatestShowPrompt" = "The latest show you want to see.";
-"AutoChooseAttendanceLatestShowHint" = "Shows starting at or after the next hour will be excluded (e.g. 2am excludes from 1am on).";
+"AutoChooseAttendanceLatestShowHint" = "Shows that begin after this specified time will be excluded. For instance, if you set this time to 2 am, a show scheduled for 2 am will be included, but a show scheduled for 2:30 am or later will be excluded.";
 "AutoChooseAttendanceLatestShowMidnight" = "Midnight (12am)";
 "AutoChooseAttendanceLatestShow1am" = "1am";
 "AutoChooseAttendanceLatestShow2am" = "2am";
@@ -192,12 +193,12 @@
 "AutoChooseAttendanceLatestShow500am" = "5:00am";
 "AutoChooseAttendanceLatestShow530am" = "5:30am";
 "AutoChooseAttendanceNoMeetAndGreets" = "No Meet and Greet events in the schedule.";
-"AutoChooseAttendanceMeetAndGreetQuestion" = "Do you want to attend Meet and Greets for all of your Must bands, some of them, or not interested?";
+"AutoChooseAttendanceMeetAndGreetQuestion" = "Do you want to attend Meet and Greet for all of your Must bands? You can always flag these manually if you select 'Not interested'.";
 "AutoChooseAttendanceMGOptionAll" = "All of your Must bands";
 "AutoChooseAttendanceMGOptionSome" = "Some of your Must bands";
-"AutoChooseAttendanceMGOptionNone" = "Not interested in Meet and Greets";
+"AutoChooseAttendanceMGOptionNone" = "Not interested";
 "AutoChooseAttendanceNoClinics" = "No clinic events in the schedule.";
-"AutoChooseAttendanceClinicsQuestion" = "Do you want to attend clinics for all of your Must bands, some of them, or not interested?";
+"AutoChooseAttendanceClinicsQuestion" = "Which clinics do you want to attend?";
 "AutoChooseAttendanceClinicsOptionAll" = "All Must bands";
 "AutoChooseAttendanceClinicsOptionSome" = "Some Must bands";
 "AutoChooseAttendanceClinicsOptionNone" = "Not interested in clinics";

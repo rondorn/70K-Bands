@@ -486,9 +486,12 @@ class SQLiteiCloudSync {
                 // Get current device UID
                 guard let currentUid = UIDevice.current.identifierForVendor?.uuidString else { continue }
                 
-                // Create iCloud key and value
+                // Include attendanceSource so restore preserves Auto vs Manual (backward compatible: old clients ignore 4th component)
+                let source = (data["attendanceSource"] as? String).flatMap { $0 == "Auto" ? "Auto" : "Manual" } ?? "Manual"
+                
+                // Create iCloud key and value (format: status:uid:timestamp or status:uid:timestamp:source)
                 let iCloudKey = "eventName:\(index)"
-                let iCloudValue = "\(status):\(currentUid):\(String(format: "%.0f", lastModified))"
+                let iCloudValue = "\(status):\(currentUid):\(String(format: "%.0f", lastModified)):\(source)"
                 
                 iCloudStore.set(iCloudValue, forKey: iCloudKey)
                 writtenCount += 1
@@ -544,13 +547,16 @@ class SQLiteiCloudSync {
         let attendanceIndex = "\(bandName):\(location):\(startTime):\(eventType):\(eventYearString)"
         print("☁️ Created attendance index: \(attendanceIndex)")
         
-        // Parse the value (format: status:uid:timestamp)
+        // Parse the value (format: status:uid:timestamp or status:uid:timestamp:source for Auto/Manual)
         let valueComponents = value.components(separatedBy: ":")
         guard valueComponents.count >= 3,
               let timestamp = Double(valueComponents[2]) else {
             print("❌ Invalid iCloud attendance value format: \(value)")
             return false
         }
+        
+        // Optional 4th component: attendance source (Auto or Manual). If missing, treat as Manual for backward compatibility.
+        let sourceFromiCloud: String? = valueComponents.count >= 4 ? (valueComponents[3] == "Auto" ? "Auto" : "Manual") : nil
         
         // Convert status string to numeric value
         let statusString = valueComponents[0]
@@ -599,14 +605,14 @@ class SQLiteiCloudSync {
             print("🔍 [CLEAR_DEBUG] Restoring from iCloud -> SQLite index=\(attendanceIndex) year=\(eventYearString)")
         }
         
-        // Update the attendance record (only "Default" profile)
-        print("☁️ Updating attendance record (Default): \(attendanceIndex) -> \(status)")
-        // Note: setAttendanceStatusByIndex needs to be updated to accept profileName parameter
-        // For now, it will use the default "Default" via getCurrentProfileName()
+        // Update the attendance record (only "Default" profile), preserving source (Auto/Manual) when present
+        print("☁️ Updating attendance record (Default): \(attendanceIndex) -> \(status) source=\(sourceFromiCloud ?? "nil→Manual")")
         attendanceManager.setAttendanceStatusByIndex(
             index: attendanceIndex,
             status: status,
-            timestamp: timestamp
+            timestamp: timestamp,
+            profileName: nil,
+            attendanceSource: sourceFromiCloud
         )
         
         print("✅ Updated attendance from iCloud: \(attendanceIndex) -> \(status)")
