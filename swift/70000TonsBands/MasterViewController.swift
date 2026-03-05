@@ -2059,7 +2059,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             guard let self = self else { return }
             let alert = UIAlertController(
                 title: NSLocalizedString("AutoChooseAttendanceTitle", comment: "Auto Choose Attendance"),
-                message: NSLocalizedString("AutoChooseAttendanceImportPrompt", comment: "Schedule imported. Would you like to use Auto Choose Attendance to plan your schedule?"),
+                message: NSLocalizedString("AutoChooseAttendanceImportPrompt", comment: "Schedule has new events - offer to plan schedule automatically"),
                 preferredStyle: .alert
             )
             alert.addAction(UIAlertAction(title: NSLocalizedString("Ok", comment: ""), style: .default) { [weak self] _ in
@@ -2073,7 +2073,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     private func presentAutoChooseAttendanceWizard(eventYear year: Int) {
         let wizardView = AutoChooseAttendanceWizardView(
             eventYear: year,
-            onDismiss: { [weak self] in
+            onDismiss: { [weak self] _ in
                 self?.autoChooseWizardResumeYear = nil
                 self?.presentedViewController?.dismiss(animated: true)
                 NotificationCenter.default.post(name: Notification.Name("RefreshLandscapeSchedule"), object: nil)
@@ -6367,14 +6367,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
         }
         
-        // STEP 2: Launch unified data refresh (3 parallel threads) with throttling check
-        print("🔄 FOREGROUND-REFRESH: Step 2 - Checking throttling before unified data refresh")
-        if shouldDownloadSchedule(force: false) {
-            print("🔄 FOREGROUND-REFRESH: Throttling check passed - launching unified data refresh")
-            performUnifiedDataRefresh(reason: "Foreground refresh")
-        } else {
-            print("🔄 FOREGROUND-REFRESH: Throttled - less than 5 minutes since last download, skipping fresh download")
-        }
+        // STEP 2: Always launch unified data refresh when returning from background (no throttle).
+        // Data refresh is expected on: 1) launch, 2) app brought from background, 3) pull-to-refresh.
+        print("🔄 FOREGROUND-REFRESH: Step 2 - Launching unified data refresh (no throttle on foreground return)")
+        performUnifiedDataRefresh(reason: "Foreground refresh")
     }
     
     // Helper to deduplicate while preserving order

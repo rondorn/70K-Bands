@@ -94,6 +94,8 @@ public class preferenceLayout  extends Activity {
 
     private Button eventYearButton;
 
+    private static final int REQUEST_WIZARD = 2002;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         setTheme(R.style.AppTheme);
@@ -178,7 +180,7 @@ public class preferenceLayout  extends Activity {
                                             androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(preferenceLayout.this).sendBroadcast(refresh);
                                             Intent intent = new Intent(preferenceLayout.this, AutoChooseAttendanceWizardActivity.class);
                                             intent.putExtra("eventYear", eventYearForWizard);
-                                            startActivity(intent);
+                                            startActivityForResult(intent, REQUEST_WIZARD);
                                         }
                                     })
                                     .setNegativeButton(R.string.Cancel, null)
@@ -186,44 +188,16 @@ public class preferenceLayout  extends Activity {
                         } else {
                             Intent intent = new Intent(preferenceLayout.this, AutoChooseAttendanceWizardActivity.class);
                             intent.putExtra("eventYear", eventYearForWizard);
-                            startActivity(intent);
+                            startActivityForResult(intent, REQUEST_WIZARD);
                         }
-                    }
-                });
-            }
-
-            View clearAutoItem = findViewById(R.id.plan_schedule_clear_auto);
-            if (clearAutoItem != null) {
-                clearAutoItem.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        new AlertDialog.Builder(preferenceLayout.this)
-                                .setTitle(R.string.clear_auto_chosen_schedule)
-                                .setMessage(R.string.clear_auto_chosen_confirm)
-                                .setPositiveButton(R.string.Ok, new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        showsAttended attendedHandle = staticVariables.attendedHandler != null
-                                                ? staticVariables.attendedHandler
-                                                : new showsAttended();
-                                        if (staticVariables.attendedHandler == null) {
-                                            staticVariables.attendedHandler = attendedHandle;
-                                        }
-                                        if (AIScheduleStorage.restore(attendedHandle, yearForSchedule)) {
-                                            Toast.makeText(preferenceLayout.this, getString(R.string.Ok), Toast.LENGTH_SHORT).show();
-                                            Intent refresh = new Intent("RefreshLandscapeSchedule");
-                                            androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(preferenceLayout.this).sendBroadcast(refresh);
-                                        }
-                                    }
-                                })
-                                .setNegativeButton(R.string.Cancel, null)
-                                .show();
                     }
                 });
             }
 
             View clearAllItem = findViewById(R.id.plan_schedule_clear_all);
             if (clearAllItem != null) {
+                showsAttended attendedForClearAll = staticVariables.attendedHandler != null ? staticVariables.attendedHandler : new showsAttended();
+                setPlanScheduleItemState(clearAllItem, attendedForClearAll.countAttended() > 0);
                 clearAllItem.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -246,6 +220,7 @@ public class preferenceLayout  extends Activity {
                                         Toast.makeText(preferenceLayout.this, getString(R.string.Ok), Toast.LENGTH_SHORT).show();
                                         Intent refresh = new Intent("RefreshLandscapeSchedule");
                                         androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(preferenceLayout.this).sendBroadcast(refresh);
+                                        refreshPlanScheduleButtonsState(yearForSchedule);
                                     }
                                 })
                                 .setNegativeButton(R.string.Cancel, null)
@@ -255,6 +230,21 @@ public class preferenceLayout  extends Activity {
             }
         }
 
+    }
+
+    /** Updates enabled state of "Clear all attendance data" based on current data. */
+    private void refreshPlanScheduleButtonsState(int yearForSchedule) {
+        View clearAllItem = findViewById(R.id.plan_schedule_clear_all);
+        showsAttended attended = staticVariables.attendedHandler != null ? staticVariables.attendedHandler : new showsAttended();
+        boolean clearAllEnabled = attended.countAttended() > 0;
+        setPlanScheduleItemState(clearAllItem, clearAllEnabled);
+    }
+
+    /** Sets enabled state and visual appearance (opacity) for a plan schedule row so disabled items look greyed out. */
+    private void setPlanScheduleItemState(View item, boolean enabled) {
+        if (item == null) return;
+        item.setEnabled(enabled);
+        item.setAlpha(enabled ? 1f : 0.4f);
     }
 
     private void eventYearButton() {
@@ -997,6 +987,17 @@ public class preferenceLayout  extends Activity {
         NavUtils.navigateUpTo(this, new Intent(this,
                 showBands.class));
 
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_WIZARD && resultCode == AutoChooseAttendanceWizardActivity.RESULT_GO_TO_LIST) {
+            Intent toList = new Intent(this, showBands.class);
+            toList.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(toList);
+            finish();
+        }
     }
 
 }

@@ -21,6 +21,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +46,8 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
     private static final int STEP_DONE = 7;
 
     private static final int REQUEST_BAND_DETAILS = 2001;
+    /** Result code: wizard completed successfully; caller should navigate to list view. */
+    public static final int RESULT_GO_TO_LIST = 100;
 
     private int eventYear;
     private int step = STEP_INTRO;
@@ -94,6 +97,8 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
 
         nextButton.setOnClickListener(v -> advanceStep());
         findViewById(R.id.wizard_cancel).setOnClickListener(v -> finish());
+        Button backButton = findViewById(R.id.wizard_back);
+        if (backButton != null) backButton.setOnClickListener(v -> goToPreviousStep());
 
         findViewById(R.id.wizard_unknown_treat_wont).setOnClickListener(v -> treatUnknownAsWont());
         findViewById(R.id.wizard_unknown_next).setOnClickListener(v -> advanceFromUnknownBands());
@@ -132,9 +137,11 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
         stepSpecialEventsView.setVisibility(step == STEP_SPECIAL_EVENTS ? View.VISIBLE : View.GONE);
         stepBuildingView.setVisibility(step == STEP_BUILDING ? View.VISIBLE : View.GONE);
 
-        // Align with iOS: step title for Meet and Greets / Clinics / Special Events
+        // Align with iOS: step title for Unknown bands / Latest show / Meet and Greets / Clinics / Special Events
         if (titleText != null) {
-            if (step == STEP_MEET_GREET) titleText.setText(R.string.aischedule_meet_greet_header);
+            if (step == STEP_UNKNOWN_BANDS) titleText.setText(R.string.unknown_bands_title);
+            else if (step == STEP_LATEST_SHOW) titleText.setText(R.string.latest_show_title);
+            else if (step == STEP_MEET_GREET) titleText.setText(R.string.aischedule_meet_greet_header);
             else if (step == STEP_CLINICS) titleText.setText(R.string.aischedule_clinics_header);
             else if (step == STEP_SPECIAL_EVENTS) titleText.setText(R.string.aischedule_special_events_header);
             else titleText.setText(R.string.plan_your_schedule);
@@ -146,12 +153,19 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
         if (step == STEP_LATEST_SHOW) {
             Spinner spinner = findViewById(R.id.wizard_latest_show_spinner);
             if (spinner != null && spinner.getAdapter() == null) {
+                // Display times in user's preferred format (12h AM/PM or 24h); internal value stays half-hour index 0–11
+                java.text.DateFormat timeFmt = android.text.format.DateFormat.getTimeFormat(this);
+                Calendar cal = Calendar.getInstance();
+                cal.set(2000, Calendar.JANUARY, 1, 0, 0, 0);
+                cal.set(Calendar.SECOND, 0);
+                cal.set(Calendar.MILLISECOND, 0);
                 String[] labels = new String[12];
                 for (int i = 0; i < 12; i++) {
                     int h = i / 2;
                     int m = (i % 2) * 30;
-                    if (h == 0) labels[i] = "12:" + String.format("%02d", m) + " AM";
-                    else labels[i] = h + ":" + String.format("%02d", m) + " AM";
+                    cal.set(Calendar.HOUR_OF_DAY, h);
+                    cal.set(Calendar.MINUTE, m);
+                    labels[i] = timeFmt.format(cal.getTime());
                 }
                 android.widget.ArrayAdapter<String> adapter = new android.widget.ArrayAdapter<String>(this, R.layout.spinner_item_white, labels);
                 adapter.setDropDownViewResource(R.layout.spinner_dropdown_item_dark);
@@ -172,6 +186,10 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
         }
 
         nextButton.setVisibility(step == STEP_BUILDING ? View.GONE : View.VISIBLE);
+        Button backBtn = findViewById(R.id.wizard_back);
+        if (backBtn != null) {
+            backBtn.setVisibility(step > STEP_INTRO && step != STEP_BUILDING ? View.VISIBLE : View.GONE);
+        }
         String nextLabel = getString(R.string.Next);
         if (step == STEP_CLINICS) nextLabel = hasSpecialEvents ? getString(R.string.Next) : getString(R.string.aischedule_build_schedule);
         else if (step == STEP_SPECIAL_EVENTS) nextLabel = getString(R.string.aischedule_build_schedule);
@@ -278,7 +296,8 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
         }
     }
 
-    private void loadUnknownBandsAndUpdateUI() {
+    /** Populates unknownBandNames (and events if needed). Call before showing STEP_UNKNOWN_BANDS or when deciding whether to skip it. */
+    private void refreshUnknownBandsList() {
         if (events.isEmpty()) {
             events = AIScheduleEventLoader.buildEventListForYear(eventYear);
         }
@@ -296,6 +315,10 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
                 unknownBandNames.add(name);
             }
         }
+    }
+
+    private void loadUnknownBandsAndUpdateUI() {
+        refreshUnknownBandsList();
 
         TextView message = findViewById(R.id.wizard_unknown_message);
         TextView hint = findViewById(R.id.wizard_unknown_hint);
@@ -392,7 +415,12 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
 
     private void advanceStep() {
         if (step == STEP_INTRO) {
-            showStep(STEP_UNKNOWN_BANDS);
+            refreshUnknownBandsList();
+            if (unknownBandNames.isEmpty()) {
+                showStep(STEP_LATEST_SHOW);
+            } else {
+                showStep(STEP_UNKNOWN_BANDS);
+            }
             return;
         }
         if (step == STEP_LATEST_SHOW) {
@@ -493,6 +521,15 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
         return getString(R.string.aischedule_seeing_them_nowhere_else);
     }
 
+    /** Day and time for conflict card: "Day 1 - 5:45 PM" or just time if no day. */
+    private String formatDayAndTime(EventData e) {
+        if (e == null) return "";
+        String day = e.day != null ? e.day.trim() : "";
+        String time = e.startTime != null ? e.startTime : "";
+        if (day.isEmpty()) return time;
+        return day + " - " + time;
+    }
+
     private void showConflictDialog(EventData a, EventData b) {
         View view = LayoutInflater.from(this).inflate(R.layout.dialog_schedule_conflict, null);
         TextView title = view.findViewById(R.id.conflict_title);
@@ -510,7 +547,7 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
         TextView seeingA = view.findViewById(R.id.conflict_option_a_seeing_them);
         if (a != null) {
             bandA.setText(a.bandName);
-            timeA.setText(a.startTime != null ? a.startTime : "");
+            timeA.setText(formatDayAndTime(a));
             venueA.setText(a.location != null ? a.location : "");
             seeingA.setText(seeingThemElsewhere(a));
             seeingA.setVisibility(View.VISIBLE);
@@ -523,7 +560,7 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
         TextView seeingB = view.findViewById(R.id.conflict_option_b_seeing_them);
         if (b != null) {
             bandB.setText(b.bandName);
-            timeB.setText(b.startTime != null ? b.startTime : "");
+            timeB.setText(formatDayAndTime(b));
             venueB.setText(b.location != null ? b.location : "");
             seeingB.setText(seeingThemElsewhere(b));
             seeingB.setVisibility(View.VISIBLE);
@@ -603,8 +640,23 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
         new AlertDialog.Builder(this)
                 .setTitle(R.string.aischedule_done_title)
                 .setMessage(message)
-                .setPositiveButton(R.string.Ok, (dialog, which) -> finish())
+                .setPositiveButton(R.string.Ok, (dialog, which) -> {
+                    setResult(RESULT_GO_TO_LIST);
+                    finish();
+                })
                 .setCancelable(false)
                 .show();
+    }
+
+    private void goToPreviousStep() {
+        if (step <= STEP_INTRO || step == STEP_BUILDING) return;
+        int prev;
+        if (step == STEP_UNKNOWN_BANDS) prev = STEP_INTRO;
+        else if (step == STEP_LATEST_SHOW) prev = STEP_UNKNOWN_BANDS;
+        else if (step == STEP_MEET_GREET) prev = STEP_LATEST_SHOW;
+        else if (step == STEP_CLINICS) prev = STEP_MEET_GREET;
+        else if (step == STEP_SPECIAL_EVENTS) prev = STEP_CLINICS;
+        else prev = STEP_INTRO;
+        showStep(prev);
     }
 }

@@ -65,6 +65,7 @@ public final class CoreDataRefreshManager {
                     scheduleUrl = FestivalConfig.getInstance().scheduleUrlDefault;
                     Log.d(TAG, "Using fallback scheduleUrl for core refresh");
                 }
+                scheduleInfo.setLastPreviousEventKeysForWizard(scheduleInfo.collectEventKeys(BandInfo.scheduleRecords));
                 BandInfo.scheduleRecords = schedule.DownloadScheduleFile(scheduleUrl);
 
                 // 4) descriptionMap CSV (download + parse)
@@ -85,8 +86,8 @@ public final class CoreDataRefreshManager {
                         if (activity instanceof showBands) {
                             showBands main = (showBands) activity;
                             Log.d(TAG, "Refreshing main UI after core refresh");
-                            // Avoid calling private helpers; refreshData() will re-read cached files as needed.
                             main.refreshData();
+                            main.offerAutoScheduleWizardIfNeeded();
                         }
                     } catch (Exception ignored) {
                         // UI refresh is best-effort; core refresh already finished.

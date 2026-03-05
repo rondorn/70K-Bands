@@ -165,22 +165,42 @@ class ScheduleCSVImporter {
         }
         print("✅ [SQLITE_FIX] Unofficial events in SQLite for year \(eventYear): \(unofficialEventsInSQLite.count)")
         
-        // When 30+ new events are added in one import, offer Auto Choose Attendance only for the current year (festival-specific).
-        // Only offer if at least 20 Must/Might/Wont choices are populated so the feature is relevant.
-        // For past years the user must use Preferences to run the wizard.
-        let eventsAdded = eventsInSQLite.count - existingEvents.count
+        // Offer Auto Choose Attendance when 30+ new events were added in this import (not a reload/update of existing).
+        // Use in-memory previous state only (existingEvents before this import); no historical persistence.
+        let previousKeys = Set(existingEvents.map { eventKey(for: $0) })
+        let currentKeys = Set(eventsInSQLite.map { eventKey(for: $0) })
+        let newCount = currentKeys.subtracting(previousKeys).count
         let currentCalendarYear = Calendar.current.component(.year, from: Date())
         let rankedCount = SQLitePriorityManager.shared.getRankedChoiceCount(eventYear: eventYear)
-        if FestivalConfig.current.aiSchedule, eventsAdded >= 30, eventYear == currentCalendarYear, rankedCount >= 20 {
-            NotificationCenter.default.post(
-                name: Notification.Name("AutoChooseAttendanceWizardRequested"),
-                object: nil,
-                userInfo: ["eventYear": eventYear]
-            )
+        let aiSchedule = FestivalConfig.current.aiSchedule
+        print("🧙 [WIZARD_CHECK] previousKeys=\(previousKeys.count) currentKeys=\(currentKeys.count) newCount=\(newCount) eventYear=\(eventYear) calendarYear=\(currentCalendarYear) rankedCount=\(rankedCount) aiSchedule=\(aiSchedule)")
+        // Offer wizard when 30+ new events in this import (not year change or re-import of same data). hasRunAI is not considered.
+        if !previousKeys.isEmpty, newCount >= 30 {
+            if aiSchedule, eventYear == currentCalendarYear, rankedCount >= 20 {
+                print("🧙 [WIZARD_CHECK] Posting AutoChooseAttendanceWizardRequested on main queue")
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(
+                        name: Notification.Name("AutoChooseAttendanceWizardRequested"),
+                        object: nil,
+                        userInfo: ["eventYear": eventYear]
+                    )
+                }
+            } else {
+                print("🧙 [WIZARD_CHECK] Wizard not offered: aiSchedule=\(aiSchedule) yearMatch=\(eventYear == currentCalendarYear) rankedCount>=20=\(rankedCount >= 20)")
+            }
+        } else {
+            print("🧙 [WIZARD_CHECK] Wizard not offered: previousKeys.isEmpty=\(previousKeys.isEmpty) newCount>=30=\(newCount >= 30)")
         }
         
         // Import succeeded if we completed the process (including empty/small CSVs - schedule is now correct)
         return true
+    }
+    
+    /// Stable event key for "new in this load" detection (bandName|timeIndex|location).
+    private func eventKey(for event: EventData) -> String {
+        let b = (event.bandName).replacingOccurrences(of: "\n", with: " ").replacingOccurrences(of: "\r", with: " ")
+        let loc = (event.location).replacingOccurrences(of: "\n", with: " ").replacingOccurrences(of: "\r", with: " ")
+        return "\(b)|\(event.timeIndex)|\(loc)"
     }
     
     // MARK: - Time Index Calculation

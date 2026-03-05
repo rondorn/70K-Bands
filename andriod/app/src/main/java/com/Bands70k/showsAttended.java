@@ -100,30 +100,50 @@ public class showsAttended {
         return count;
     }
 
+    /** Number of entries that are attended (sawAll or sawSome) for the active profile. Used to grey out "Clear all attendance" when 0. */
+    public int countAttended() {
+        Map<String, String> map = getShowsAttended();
+        int count = 0;
+        for (String value : map.values()) {
+            if (value == null) continue;
+            String statusPart = value.contains(":") ? value.split(":")[0] : value;
+            if (staticVariables.sawAllStatus.equals(statusPart) || staticVariables.sawSomeStatus.equals(statusPart)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     /**
-     * Clear attendance for a single year only. Used when starting "Build my schedule automatically"
-     * so the builder runs from a clean slate and prompts for all conflicts. Persists synchronously.
+     * Set all attendance for a single year to Not Attended (sawNone). Keeps records so sync/restore does not bring data back.
+     * Used when starting "Build my schedule automatically". Persists synchronously.
      */
     public void clearAttendanceForYear(int year) {
         String suffix = ":" + year;
+        String sawNoneValue = staticVariables.sawNoneStatus + ":" + String.format("%.0f", System.currentTimeMillis() / 1000.0);
         Map<String, String> current = new HashMap<>(getShowsAttended());
         for (String key : new ArrayList<>(current.keySet())) {
             if (key != null && key.endsWith(suffix)) {
-                current.remove(key);
+                current.put(key, sawNoneValue);
             }
         }
         showsAttendedHash = current;
         saveShowsAttendedSync(current);
     }
 
-    /** Clear all attendance data for the active profile and persist. Use with confirmation (e.g. preferences "Clear all attendance data").
-     * Persists synchronously so no async load can overwrite with stale data before the next read. */
+    /** Set all attendance data for the active profile to Not Attended (sawNone). Keeps records so sync does not bring data back.
+     * Use with confirmation (e.g. preferences "Clear all attendance data"). Persists synchronously. */
     public void clearAllAttendance() {
-        String activeProfile = SharedPreferencesManager.getInstance().getActivePreferenceSource();
-        Map<String, String> empty = new HashMap<>();
-        showsAttendedHash = empty;
-        currentLoadedProfile = activeProfile;
-        saveShowsAttendedSync(empty);
+        String sawNoneValue = staticVariables.sawNoneStatus + ":" + String.format("%.0f", System.currentTimeMillis() / 1000.0);
+        Map<String, String> current = new HashMap<>(getShowsAttended());
+        for (String key : new ArrayList<>(current.keySet())) {
+            if (key != null) {
+                current.put(key, sawNoneValue);
+            }
+        }
+        showsAttendedHash = current;
+        currentLoadedProfile = SharedPreferencesManager.getInstance().getActivePreferenceSource();
+        saveShowsAttendedSync(current);
     }
 
     public void saveShowsAttended(Map<String,String> showsAttendedHash){

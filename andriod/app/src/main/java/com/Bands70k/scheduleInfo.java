@@ -15,6 +15,7 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -32,6 +33,11 @@ public class scheduleInfo {
 
     public static void clearLastScheduleDataChanged() {
         lastScheduleDataChanged = false;
+    }
+
+    /** Set when schedule data is known to have changed (e.g. mass add detected by event count delta). */
+    public static void setLastScheduleDataChanged(boolean value) {
+        lastScheduleDataChanged = value;
     }
 
     public Map<String, scheduleTimeTracker> DownloadScheduleFile(String scheduleUrl){
@@ -238,6 +244,55 @@ public class scheduleInfo {
             if (t != null && t.scheduleByTime != null) n += t.scheduleByTime.size();
         }
         return n;
+    }
+
+    /**
+     * Keys from the schedule we had before this refresh/load. Used only for "30+ new events this load" detection;
+     * not persisted (reload/update of existing events must not trigger the wizard).
+     */
+    private static volatile Set<String> lastPreviousEventKeysForWizard = null;
+
+    /** Capture schedule keys before replacing with new data; call from loading code paths before updating BandInfo.scheduleRecords. */
+    public static void setLastPreviousEventKeysForWizard(Set<String> keys) {
+        lastPreviousEventKeysForWizard = keys != null ? new java.util.HashSet<String>(keys) : new java.util.HashSet<String>();
+    }
+
+    /** Get and clear the previous keys so we can compute how many events are new in this load. */
+    public static Set<String> getAndClearLastPreviousEventKeysForWizard() {
+        Set<String> prev = lastPreviousEventKeysForWizard;
+        lastPreviousEventKeysForWizard = null;
+        return prev != null ? prev : new java.util.HashSet<String>();
+    }
+
+    /**
+     * Build a stable key for one event (bandName|epochStart|location). Sanitizes so keys are safe to join/split.
+     */
+    private static String eventKey(String bandName, long epochStart, String location) {
+        String b = (bandName != null ? bandName : "").replace("\n", " ").replace("\r", " ");
+        String loc = (location != null ? location : "").replace("\n", " ").replace("\r", " ");
+        return b + "|" + epochStart + "|" + loc;
+    }
+
+    /**
+     * Collect stable event keys from the schedule for "never before seen" detection.
+     * Key format: bandName|epochStart|location (matches iOS logic).
+     */
+    public static Set<String> collectEventKeys(Map<String, scheduleTimeTracker> schedule) {
+        Set<String> keys = new HashSet<>();
+        if (schedule == null) return keys;
+        for (Map.Entry<String, scheduleTimeTracker> bandEntry : schedule.entrySet()) {
+            scheduleTimeTracker tracker = bandEntry.getValue();
+            if (tracker == null || tracker.scheduleByTime == null) continue;
+            String bandName = bandEntry.getKey();
+            for (Map.Entry<Long, scheduleHandler> timeEntry : tracker.scheduleByTime.entrySet()) {
+                scheduleHandler h = timeEntry.getValue();
+                if (h == null) continue;
+                Long epoch = h.getEpochStart();
+                String loc = h.getShowLocation();
+                keys.add(eventKey(bandName, epoch != null ? epoch : 0L, loc));
+            }
+        }
+        return keys;
     }
 
 }
