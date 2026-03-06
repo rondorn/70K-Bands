@@ -175,6 +175,7 @@
 "Filters" = "Filtros"; //menu name
 
 "Day" = "Día";
+"Day (Finish)" = "Día (Final)";
 
 "Viewing Day Format" = "Viendo %@";
 "No More Days" = "No hay más días";

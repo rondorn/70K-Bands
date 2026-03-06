@@ -1006,84 +1006,6 @@ public class showBandDetails extends Activity {
             })
             .start();
     }
-    
-    /**
-     * Alternative animation method using traditional Animation classes for compatibility
-     */
-    private void animateContentTransitionClassic(String direction) {
-        if (contentContainer == null) {
-            Log.d("SwipeAnimation", "Container not available, using progressive loading for " + bandName);
-            loadAllContentProgressively();
-            return;
-        }
-        
-        Log.d("SwipeAnimation", "Starting classic slide animation for direction: " + direction);
-        
-        // Determine slide direction based on swipe
-        boolean slideLeft = direction.equals("Next");
-        
-        // Create slide-out animation (current content slides out)
-        TranslateAnimation slideOut = new TranslateAnimation(
-            Animation.RELATIVE_TO_SELF, 0.0f,           // Start X
-            Animation.RELATIVE_TO_SELF, slideLeft ? -1.0f : 1.0f, // End X
-            Animation.RELATIVE_TO_SELF, 0.0f,           // Start Y  
-            Animation.RELATIVE_TO_SELF, 0.0f            // End Y
-        );
-        slideOut.setDuration(250);
-        slideOut.setFillAfter(true);
-        
-        // Create slide-in animation (new content slides in)
-        TranslateAnimation slideIn = new TranslateAnimation(
-            Animation.RELATIVE_TO_SELF, slideLeft ? 1.0f : -1.0f, // Start X (opposite direction)
-            Animation.RELATIVE_TO_SELF, 0.0f,           // End X
-            Animation.RELATIVE_TO_SELF, 0.0f,           // Start Y
-            Animation.RELATIVE_TO_SELF, 0.0f            // End Y
-        );
-        slideIn.setDuration(250);
-        
-        // Set up animation listener to update content at the right time
-        slideOut.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) {
-                Log.d("SwipeAnimation", "Classic slide-out animation started");
-            }
-            
-            @Override
-            public void onAnimationEnd(Animation animation) {
-                Log.d("SwipeAnimation", "Classic slide-out animation ended, updating content with progressive loading");
-                // FIXED: Use progressive loading instead of heavy refresh
-                loadAllContentProgressively();
-                contentContainer.startAnimation(slideIn);
-            }
-            
-            @Override
-            public void onAnimationRepeat(Animation animation) {}
-        });
-        
-        slideIn.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) {
-                Log.d("SwipeAnimation", "Classic slide-in animation started");
-            }
-            
-            @Override
-            public void onAnimationEnd(Animation animation) {
-                Log.d("SwipeAnimation", "Classic slide-in animation completed");
-                contentContainer.clearAnimation();
-                
-                // Ensure title and band name TextView are updated after animation completes
-                setTitle(bandName);
-                updateBandNameInUI();
-            }
-            
-            @Override
-            public void onAnimationRepeat(Animation animation) {}
-        });
-        
-        // Start the slide-out animation
-        contentContainer.startAnimation(slideOut);
-    }
-
 
     private void nextRecord(String direction){
 
@@ -2622,17 +2544,6 @@ public class showBandDetails extends Activity {
             Log.d("RefreshContent", "Refreshing native content for " + bandName);
             populateNativeContent(); // This is heavy - includes schedule processing and image loading
             Log.d("RefreshContent", "Native content refreshed for " + bandName);
-        }
-    }
-    
-    /**
-     * Lightweight refresh for progressive loading - only updates specific sections
-     */
-    private void refreshNativeContentLight() {
-        if (bandNameText != null) {
-            Log.d("RefreshContent", "Light refresh for " + bandName);
-            // Only refresh the sections that were actually updated
-            // Individual setup methods are called directly by progressive loading phases
         }
     }
     

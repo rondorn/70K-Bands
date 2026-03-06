@@ -75,12 +75,6 @@
         </activity>
 
         <activity
-            android:name=".filterMenu"
-            android:label="Filter"
-            android:exported="true">
-        </activity>
-
-        <activity
             android:name=".WebViewActivity"
             android:label="Report Dashboard"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
@@ -111,9 +105,6 @@
                 <category android:name="com.Bands70K"/>
             </intent-filter>
         </receiver>
-        <service 
-            android:name=".BackgroundService"
-            android:exported="false" />
         <service 
             android:name=".ImageDownloadService"
             android:exported="false" />

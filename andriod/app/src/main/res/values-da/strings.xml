@@ -5,8 +5,6 @@
     <string name="must">Ja</string>
     <string name="wont">Nein ikke</string>
     <string name="unknown">Ukendt</string>
-    <string name="priority">Prioritet</string>
-    <string name="attended">Deltaget</string>
     <string name="band_priority">Bandprioritet</string>
     <string name="event_attendance">Begivenhedsdeltagelse</string>
 
@@ -24,20 +22,13 @@
     <string name="aischedule_unofficial_question">Hvilke uofficielle / Cruiser Organized begivenheder vil du deltage i?</string>
     <string name="aischedule_unofficial_checklist_hint">Vælg dem, du vil deltage i. Kun Must-bands.</string>
     <string name="aischedule_checklist_all">Alle</string>
-    <string name="meet_greet_choice">Vil du deltage i Meet and Greet for alle dine Must-bands? Du kan altid markere disse manuelt, hvis du vælger „Ikke interesseret“.</string>
-    <string name="mark_all_must_mg">Alle dine Must-bands</string>
-    <string name="mark_none_mg">Ikke interesseret</string>
     <string name="aischedule_clinics_header">Clinics</string>
     <string name="clinics_choice">Hvilke klinikker vil du deltage i?</string>
-    <string name="mark_all_must_clinics">Alle Must-bands</string>
-    <string name="mark_none_clinics">Ikke interesseret i klinikker</string>
     <string name="aischedule_clinics_checklist_hint">Vælg dem, du vil deltage i. Noter fra programmet (f.eks. sangskrivningsklinik, basunklinik).</string>
-    <string name="aischedule_no_clinics">Ingen klinikker i programmet.</string>
     <string name="aischedule_seeing_them_nowhere_else">Se dem: Ingen andre steder</string>
     <string name="aischedule_seeing_them_format">Se dem: %1$s</string>
     <string name="aischedule_special_events_header">Særlige begivenheder</string>
     <string name="aischedule_special_events_hint">Vælg de særlige begivenheder, du vil deltage i.</string>
-    <string name="aischedule_no_special_events">Ingen særlige begivenheder i programmet.</string>
     <string name="aischedule_must_conflict_title">To Must-shows på samme tid</string>
     <string name="aischedule_must_conflict_message">Vælg hvilken du vil deltage i.</string>
     <string name="aischedule_must_conflict_both">Begge</string>
@@ -49,7 +40,6 @@
     <string name="unknown_bands_fix_prompt">Du har %d bands uden prioritet (Ukendt).</string>
     <string name="unknown_bands_fix_hint">Sæt Must, Might eller Wont for hver, eller tryk „Behandl som Wont“ for at springe over.</string>
     <string name="unknown_bands_treat_as_wont">Behandl som Wont</string>
-    <string name="unknown_bands_go_to_list">Gå til bandliste</string>
     <string name="unknown_bands_details">Detaljer</string>
     <string name="aischedule_done_title">Færdig</string>
     <string name="aischedule_done_message">%d begivenheder markeret som deltager.</string>
@@ -57,12 +47,9 @@
     <string name="aischedule_build_schedule">Byg tidsplan</string>
     <string name="building_schedule">Bygger din tidsplan…</string>
     <string name="build_schedule_automatically">Byg min tidsplan automatisk</string>
-    <string name="clear_auto_chosen_schedule">Ryd auto-valgt tidsplan</string>
     <string name="clear_all_attendance_data">Ryd alle deltagelsesdata</string>
-    <string name="clear_auto_chosen_confirm">Gendan deltagelse til før du kørte „Planlæg din tidsplan“ for dette år?</string>
     <string name="clear_all_attendance_confirm">Ryd alle begivenheder, du har markeret som deltaget? Det kan ikke fortrydes.</string>
     <string name="SelectBand">Vælg Band</string>
-    <string name="WhichBandDoYouWant">Hvilket band vil du angive prioritet eller deltagelse for?</string>
     <string name="outdated_app_version_message">Du bruger en ældre version af appen. Opdater venligst til den nyeste version i dag</string>
 
     <string name="AlertOnMustSeeBands">Notifikation ved bands der skal ses</string>
@@ -79,11 +66,6 @@
     <string name="AlertForShowsAccordingToSelection">Advarsel til shows i henhold til dit valgvalg og de indstillinger, der er angivet på denne skærm</string>
 
 
-    <string name="PoolVenue">Pool</string>
-    <string name="TheaterVenue">Teater</string>
-    <string name="LoungeVenue">Lounge</string>
-    <string name="RinkVenue">Rink</string>
-    <string name="OtherVenue">Andet</string>
 
     <string name="SpecialEvents">Specielle Begivenheder</string>
     <string name="MeetAndGreet">Meeting and Greet</string>
@@ -91,14 +73,11 @@
     <string name="AlbumListeningEvents">PrÊsentation af nyt Album</string>
     <string name="unofficalEventLable">Cruiser Organiseret</string>
 
-    <string name="UseLastYearsData">Brug sidste Ârs data</string>
     <string name="LastYearsFeatureExplication">Brug data fra tidligere år, når data for det aktuelle år endnu ikke er tilgængelige</string>
     <string name="AdvancedPreferences">Avanceret præference.\nRediger ikke, medmindre du ved, hvad du laver!</string>
     <string name="PreferenceHeader">70K Bands Præferencer</string>
     <string name="Preferences">Præferencer</string>
     <string name="importMessage">Denne ændring kræver genstart af programmet.\n70K Bands vil nu holde op. Genstart for at se den nye data</string>
-    <string name="showAttendedFilterTrueHelp">Vis kun begivenheder, som du angiver, du vil deltage i. Andre filtre gælder ikke</string>
-    <string name="showAttendedFilterFalseHelp">Vis bands og shows i henhold til filtre</string>
 
     <string name="alertOnlyForShowWillAttend">Alarmer kun for at deltage i begivenheder</string>
 
@@ -113,9 +92,6 @@
     <string name="EventAttendanceNone">Ingen</string>
 
     <string name="venueFilterHeader">Vis/Skjul Lokalitet</string>
-    <string name="showTypeFilterHeader">Vis/Skjul Begivenhedstype</string>
-    <string name="showHideExpiredLabel">Vis/Skjul Udløbet Begivenheder</string>
-    <string name="hideExpiredEvents">Skjul Udløbet Begivenheder</string>
 
     <string name="AlertPreferences">Indstillinger for Alarm</string>
 
@@ -124,11 +100,7 @@
     <string name="YouTubeLinkHelp">Søgning på YouTube til officielle videoer</string>
     <string name="MetalArchiveLinkHelp">Søgning på metalarkivers</string>
 
-    <string name="PromptForAttendedStatusHeader">Spørg om deltaget status</string>
-    <string name="PromptForAttendedStatus">Spørg om deltaget status</string>
-    <string name="GoToDetails">Gå til detaljer</string>
 
-    <string name="disableAttendedPrompt">Deaktiver denne prompt</string>
 
     <string name="EndofList">Slut på listen</string>
     <string name="AlreadyAtStart">Allerede ved start af listen</string>
@@ -137,14 +109,11 @@
     <string name="calendar_start">Start</string>
     <string name="calendar_end">Slut</string>
 
-    <string name="ImportDataBackup">Importer Sikkerhedskopiering Af Data</string>
     <string name="ShareTitle">Hvad vil du dele?</string>
     <string name="ShareBandChoices">Del Bandvalg</string>
     <string name="ShareShowChoices">Del Vis valg</string>
     <string name="ShareImportableData">Del Importerbare Band/Event Data</string>
-    <string name="ExportUserData">Eksporter brugerdata</string>
 
-    <string name="visitBands">Links</string>
     <string name="country">Land</string>
     <string name="genre">Køn</string>
     <string name="LastOnCruise">Sidst på krydstogt</string> <!--list of years a band was previously on -->
@@ -156,6 +125,15 @@
 
     <string name="waiting_for_data">Venter på, at data indlæses. Standby...</string>
     <string name="data_filter_issue">Alle data filtreres fra. Fjern filtre for at se data</string>
+
+    <!-- Startup diagnostics (stuck on splash) -->
+    <string name="startup_diag_title">Opstartsdiagnostik</string>
+    <string name="startup_diag_body">Hvis appen hænger ved opstart, tryk Del og send dette til support.</string>
+    <string name="startup_diag_share">Del</string>
+    <string name="startup_diag_close">Luk</string>
+    <string name="startup_diag_share_subject">70K Bands opstartsdiagnostik</string>
+    <string name="startup_watchdog_notification_title">70K Bands tager længere tid om at starte</string>
+    <string name="startup_watchdog_notification_text">Tryk for at se diagnostik du kan dele med support.</string>
 
     <!-- WebView Navigation Buttons -->
     <string name="navigation_close">Luk</string>
@@ -170,7 +148,6 @@
     <string name="eventOrBandPrompt">DVil du se en liste over bands eller en liste over begivenheder?</string>
     <string name="bandListButton">Band Liste</string>
     <string name="eventListButton">Begivenhedsliste</string>
-    <string name="changeYearDialogBoxTitle">Ændring af begivenhedsåret</string>
     <!-- this represents the current year in the choice menu -->
     <string name="Current">Nuværende</string>
 
@@ -184,7 +161,6 @@
     <!-- menu header -->
     <string name="show_only_flagged_as_attended">Vis kun markeret som deltog</string>
     <!-- menu header -->
-    <string name="sorting_options">Sorteringsmuligheder</string>
     <!-- menu header -->
     <string name="event_type_filters">Hændelsestypefiltre</string>
     <!-- menu header -->
@@ -192,55 +168,42 @@
     <!-- menu header -->
     <string name="can_not_hide_all_venues">Can not hide all venues</string>
     <string name="can_not_hide_all_statuses">Kan ikke skjule al status</string>
-    <string name="clear_all_filters">Clear All Filters</string>
+    <string name="this_would_filter_out_all_data">Dette ville filtrere alle data fra</string>
+    <string name="clear_all_filters">Ryd alle filtre</string>
     <string name="venue_filter_done">Færdig</string>
-    <string name="venue_filter_calendar_description">Vis eller skjul spillesteder. Samme indstillinger som listen — hvis et spillested er skjult i listen, er det skjult i kalenderen og omvendt.</string>
     <string name="hide_venue_format">Skjul %1$s</string>
     <string name="show_venue_format">Vis %1$s</string>
-    <string name="one_venue_hidden">1 spillested skjult</string>
-    <string name="venues_hidden_count">%d spillesteder skjult</string>
     <!-- menu choice -->
     <string name="show_all_events">Vis alle begivenheder</string>
     <!-- menu choice -->
     <string name="show_flaged_events_only">Vis kun markerede begivenheder</string>
     <!-- menu choice -->
-    <string name="show_only_events_flagged_as_attending">Vis kun begivenheder, der er markeret som tilstedeværende</string>
     <!-- venue filters -->
-    <string name="show_pool_events">Vis poolbegivenheder</string>
     <!-- menu choice -->
-    <string name="hide_pool_events">Skjul poolbegivenheder</string>
     <!-- menu choice -->
     <string name="pool_venue_filter_on">Pool Venue Filter On</string>
     <!-- help text -->
     <string name="pool_venue_filter_off">Pool Venue Filter Off</string>
     <!-- help text -->
-    <string name="show_lounge_events">Vis Lounge-begivenheder</string>
     <!-- menu choice -->
-    <string name="hide_lounge_events">Skjul Lounge-begivenheder</string>
     <!-- menu choice -->
     <string name="lounge_venue_filter_on">Lounge Venue Filter On</string>
     <!-- help text -->
     <string name="lounge_venue_filter_off">Lounge Venue Filter Off</string>
     <!-- help text -->
-    <string name="show_theater_events">Vis teaterbegivenheder</string>
     <!-- menu choice -->
-    <string name="hide_theater_events">Skjul teaterbegivenheder</string>
     <!-- menu choice -->
     <string name="theater_venue_filter_on">Teaterstedsfilter til</string>
     <!-- help text -->
     <string name="theater_venue_filter_off">Teaterstedsfilter fra</string>
     <!-- help text -->
-    <string name="show_rink_events">Vis Rink-begivenheder</string>
     <!-- menu choice -->
-    <string name="hide_rink_events">Skjul Rink-begivenheder</string>
     <!-- menu choice -->
     <string name="rink_venue_filter_on">Rink Venue Filter On</string>
     <!-- help text -->
     <string name="rink_venue_filter_off">Rink Venue Filter Off</string>
     <!-- help text -->
-    <string name="show_other_events">Vis andre begivenheder</string>
     <!-- menu choice -->
-    <string name="hide_other_events">Skjul andre begivenheder</string>
     <!-- menu choice -->
     <string name="other_venue_filter_on">Andet spillestedsfilter til</string>
     <!-- help text -->
@@ -322,6 +285,10 @@
     <string name="Filters">Filtre</string>
 
     <string name="Day">Dag</string>
+    <string name="viewing_day_format">Viser %s</string>
+    <string name="no_more_days">Ingen flere dage</string>
+    <string name="no_previous_days">Ingen tidligere dage</string>
+
     <string name="Bands">Bands</string>
     <string name="Events">Begivenheder</string>
 
@@ -382,18 +349,10 @@
     <string name="import_successful">Import Lykkedes</string>
     
     <!-- Profile Actions -->
-    <string name="choose_an_action">Vælg en handling</string>
-    <string name="choose_action">Vælg en handling</string>
-    <string name="rename_this_entry">Omdøb Denne Post</string>
     <string name="rename_entry">Omdøb Denne Post</string>
-    <string name="change_the_color">Skift Farven</string>
     <string name="change_color">Skift Farven</string>
-    <string name="make_settings_my_own">Gør Disse Indstillinger Til Mine Egne</string>
     <string name="make_settings_own">Gør Disse Indstillinger Til Mine Egne</string>
-    <string name="delete_this_entry">Slet Denne Post</string>
     <string name="delete_entry">Slet Denne Post</string>
-    <string name="are_you_sure_delete">Er du sikker på, at du vil slette</string>
-    <string name="cannot_be_undone">Dette kan ikke fortrydes.</string>
     <string name="delete_profile_message">Er du sikker på, at du vil slette \"{profileName}\"?\n\nDette kan ikke fortrydes.</string>
     
     <!-- Profile Tutorial -->
@@ -402,11 +361,6 @@
     
     <!-- Sharing Feature -->
     <string name="failed_to_export_preferences">Kunne ikke eksportere præferencer. Prøv venligst igen.</string>
-    <string name="share_your_preferences">Del Dine Præferencer</string>
-    <string name="share_priorities_and_events">Del dine Must/Might/Won\'t prioriteter og besøgte begivenheder med en anden bruger.</string>
-    <string name="export_your_profile">Eksporter Din Profil</string>
-    <string name="export_profile_description">Din standardprofil vil blive eksporteret. Modtagere kan importere den og se dine præferencer.</string>
-    <string name="export_failed">Eksport Mislykkedes</string>
     <string name="name_your_share">Navngiv Din Deling</string>
     <string name="name_share_message">Giv denne deling et navn, så modtageren kan identificere dig.</string>
     <string name="import_button">Import</string>
@@ -418,38 +372,21 @@
     <string name="profile_updated">Profil Opdateret</string>
     
     <!-- Profile Management Additional -->
-    <string name="save">Gem</string>
     <string name="Save">Gem</string>
-    <string name="delete">Slet</string>
     <string name="Delete">Slet</string>
     <string name="Update">Opdater</string>
     <string name="profile_renamed">Profil omdøbt</string>
     <string name="change_profile_color">Skift Profilfarve</string>
     <string name="color_changed">Farve ændret</string>
-    <string name="choose_color">Vælg Farve</string>
-    <string name="select_color_for">Vælg en farve til</string>
     <string name="rename_profile">Omdøb Profil</string>
     <string name="rename_profile_message">Indtast et nyt navn til denne profil</string>
-    <string name="enter_new_profile_name">Indtast et nyt navn til denne profil</string>
-    <string name="delete_profile">Slet Profil</string>
     <string name="profile_deleted">Profil slettet</string>
     <string name="make_my_own">Gør Til Mine Egne</string>
     <string name="make_settings_own_message">Dette vil kopiere alle prioriteter og deltagelse fra \"{profileName}\" til din standardprofil, og erstatte dine nuværende indstillinger.\n\nEr du sikker?</string>
-    <string name="make_settings_your_own">Gør Disse Indstillinger Til Dine Egne</string>
     <string name="settings_copied_to_default">Indstillinger kopieret til Standard</string>
-    <string name="are_you_sure_continue">Er du sikker på, at du vil fortsætte?</string>
-    <string name="existing_data_lost">Dine eksisterende prioriteter og besøgte begivenheder vil være permanent tabt.</string>
-    <string name="overwrite_warning">Dette vil overskrive alle dine nuværende standardprofilindstillinger med</string>
-    <string name="overwrite_my_settings">Overskriv Mine Indstillinger</string>
-    <string name="copied">Kopieret</string>
-    <string name="to_your_profile">til Din Profil</string>
-    <string name="done">Færdig</string>
     <string name="share_preferences">Del Præferencer</string>
     
     <!-- View Mode Filter Strings -->
-    <string name="view_mode">Visningstilstand</string>
-    <string name="show_schedule">Vis Tidsplan</string>
-    <string name="show_bands_only">Vis Kun Bands</string>
     
     <!-- Import/Export -->
     <string name="update_profile">Opdater Profil</string>
@@ -458,7 +395,6 @@
     <!-- About Screen -->
     <string name="about">Om</string>
     <string name="about_description1">Dette er en uofficiel open-source-applikation designet til at hjælpe brugere med at opdage bands, der optræder på !FESTIVALE_NAME!, og se begivenhedsprogrammer, tidspunkter og steder på ét sted.</string>
-    <string name="about_description2">The app allows users to browse artists, explore event listings, and stay organized while attending festivals. It is designed to work across different events without being tied to any single festival, promoter, or organizer.</string>
     <string name="about_description3">Denne applikation er ikke tilknyttet, godkendt af eller officielt forbundet med nogen festival, begivenhedsarrangør, promoter eller kunstner. Alle kunstnernavne, begivenhedsnavne og relaterede oplysninger forbliver ejendommen til deres respektive ejere og bruges kun til informationsformål.</string>
     <string name="about_description4">Kildekoden til denne applikation er open-source og licenseret under GNU General Public License, version 2 (GPL-2.0).</string>
     <string name="about_copyright">Copyright © 2015–nu</string>

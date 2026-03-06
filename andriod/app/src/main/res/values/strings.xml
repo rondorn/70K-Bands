@@ -5,8 +5,6 @@
     <string name="might">Might</string>
     <string name="wont">Wont</string>
     <string name="unknown">Unknown</string>
-    <string name="priority">Priority</string>
-    <string name="attended">Attended</string>
     <string name="band_priority">Band Priority</string>
     <string name="event_attendance">Event Attendance</string>
 
@@ -24,18 +22,11 @@
     <string name="aischedule_unofficial_question">What Unofficial / Cruiser Organized events do you want to attend?</string>
     <string name="aischedule_unofficial_checklist_hint">Check each you want to attend. Must bands only.</string>
     <string name="aischedule_checklist_all">All</string>
-    <string name="meet_greet_choice">Do you want to attend Meet and Greet for all of your Must bands? You can always flag these manually if you select \'Not interested\'.</string>
-    <string name="mark_all_must_mg">All of your Must bands</string>
-    <string name="mark_none_mg">Not interested</string>
     <string name="aischedule_clinics_header">Clinics</string>
     <string name="clinics_choice">Which clinics do you want to attend?</string>
-    <string name="mark_all_must_clinics">All Must bands</string>
-    <string name="mark_none_clinics">Not interested in clinics</string>
     <string name="aischedule_clinics_checklist_hint">Check each you want to attend. Notes from schedule (e.g. Song writing clinic, Bass Clinic).</string>
-    <string name="aischedule_no_clinics">No clinic events in the schedule.</string>
     <string name="aischedule_special_events_header">Special Events</string>
     <string name="aischedule_special_events_hint">Check each special event you want to attend.</string>
-    <string name="aischedule_no_special_events">No special events in the schedule.</string>
     <string name="aischedule_done_title">Done</string>
     <string name="aischedule_done_message">Marked %d events as will attend.</string>
     <string name="aischedule_done_message_detail">You will now be taken to a view showing your schedule.\n\nIn the filter menu:\n• Click Clear All Filters to see all events\n• Click Show Flagged Events only to see only your events\n• Long press any event to change your attendance status.</string>
@@ -52,17 +43,13 @@
     <string name="unknown_bands_fix_prompt">You have %d bands with no priority set (Unknown).</string>
     <string name="unknown_bands_fix_hint">Set Must, Might, or Wont for each, or tap \"Treat as Wont\" to skip them.</string>
     <string name="unknown_bands_treat_as_wont">Treat as Wont</string>
-    <string name="unknown_bands_go_to_list">Go to band list</string>
     <string name="unknown_bands_details">Details</string>
     <string name="build_schedule_automatically">Build my schedule automatically</string>
-    <string name="clear_auto_chosen_schedule">Clear auto-chosen schedule</string>
     <string name="clear_all_attendance_data">Clear all attendance data</string>
-    <string name="clear_auto_chosen_confirm">Restore attendance to before you ran \"Plan Your Schedule\" for this year?</string>
     <string name="replace_auto_schedule_title">Replace auto schedule?</string>
     <string name="replace_auto_schedule_message">All existing auto choices will be removed and the process will start over. Any events you marked manually will be kept.</string>
     <string name="clear_all_attendance_confirm">Clear all events you marked as attended? This cannot be undone.</string>
     <string name="SelectBand">Select Band</string>
-    <string name="WhichBandDoYouWant">Which band do you want to set priority or attendance for?</string>
 
     <string name="outdated_app_version_message">You are running an older version of the app. Please update to the latest version today</string>
 
@@ -80,11 +67,6 @@
     <string name="AlertForClinics">Alert For Clinics</string>
     <string name="AlertForAlbumListeningEvents">Alert For Album Listening Events</string>
 
-    <string name="PoolVenue">Pool</string>
-    <string name="TheaterVenue">Theater</string>
-    <string name="LoungeVenue">Lounge</string>
-    <string name="RinkVenue">Rink</string>
-    <string name="OtherVenue">Other</string>
 
     <string name="SpecialEvents">Special Events</string>
     <string name="MeetAndGreet">Meeting and Greet</string>
@@ -92,7 +74,6 @@
     <string name="AlbumListeningEvents">Listening Party</string>
     <string name="unofficalEventLable">Cruiser Organized</string>
 
-    <string name="UseLastYearsData">Use Last Years Data</string>
     <string name="LastYearsFeatureExplication">Use data from previous years when current year data is not yet available</string>
     <string name="AdvancedPreferences">Advanced Preference.\nDo not modify unless you know what your doing!</string>
     <string name="PreferenceHeader">@string/app_name Preferences</string>
@@ -100,8 +81,6 @@
 
     <string name="importMessage">This change requires restarting the application.\n@string/app_name will now quit. Relaunch to see the new data</string>
 
-    <string name="showAttendedFilterTrueHelp">Only show events that you indicate you will attend. Other filters will not apply</string>
-    <string name="showAttendedFilterFalseHelp">Show bands and shows according to filters</string>
 
     <string name="alertOnlyForShowWillAttend">Alert Only for Will Attend Events</string>
 
@@ -116,10 +95,7 @@
     <string name="EventAttendanceNone">None</string>
 
     <string name="venueFilterHeader">Show/Hide Venue</string>
-    <string name="showTypeFilterHeader">Show/Hide Event Type</string>
 
-    <string name="showHideExpiredLabel">Show/Hide Expired</string>
-    <string name="hideExpiredEvents">Hide Expired Events</string>
 
     <string name="AlertPreferences">Alert Preferences</string>
 
@@ -128,11 +104,7 @@
     <string name="YouTubeLinkHelp">Searching YouTube for Official videos</string>
     <string name="MetalArchiveLinkHelp">Searching Metal Archives</string>
 
-    <string name="PromptForAttendedStatusHeader">Prompt For Attended Status</string>
-    <string name="PromptForAttendedStatus">Prompt For Attended Status</string>
-    <string name="GoToDetails">Go To Details</string>
 
-    <string name="disableAttendedPrompt">Disable This Prompt</string>
 
     <string name="EndofList">End of List</string>
     <string name="AlreadyAtStart">Already At Start of List</string>
@@ -143,13 +115,11 @@
     <string name="calendar_start">Start</string>
     <string name="calendar_end">End</string>
 
-    <string name="ImportDataBackup">Import Data Backup</string>
 
     <string name="ShareTitle">What do you want to share?</string>
     <string name="ShareBandChoices">Share Band Report</string>
     <string name="ShareShowChoices">Share Event Report</string>
     <string name="ShareImportableData">Share Importable Band/Event Data</string>
-    <string name="ExportUserData">Export User Data</string>
     
     <!-- Localized share text -->
     <string name="Choices">Choices</string>
@@ -171,7 +141,6 @@
     <string name="navigation_refresh">Refresh</string>
     <string name="UnofficialEventsPlural">Unofficial Events</string>
 
-    <string name="visitBands">Links</string>
     <string name="country">Country</string>
     <string name="genre">Genre</string>
     <string name="LastOnCruise">Last On Cruise</string> <!--list of years a band was previously on -->
@@ -201,7 +170,6 @@
     <string name="eventOrBandPrompt">Do you want to view a list of bands, or a list of events?</string>
     <string name="bandListButton">Band List</string>
     <string name="eventListButton">Event List</string>
-    <string name="changeYearDialogBoxTitle">Changing The Event Year</string>
     <!-- this represents the current year in the choice menu -->
     <string name="Current">Current</string>
 
@@ -216,11 +184,7 @@
     <string name="show_only_flagged_as_attended">Show Only Flagged As Attended</string>
     
     <!-- View Mode Filter Strings -->
-    <string name="view_mode">View Mode</string>
-    <string name="show_schedule">Show Schedule</string>
-    <string name="show_bands_only">Show Bands Only</string>
     <!-- help text -->
-    <string name="sorting_options">Sorting Options</string>
     <!-- menu header -->
     <string name="event_type_filters">Event Type Filters</string>
     <!-- menu header -->
@@ -232,54 +196,40 @@
     <string name="clear_all_filters">Clear All Filters</string>
     <string name="this_would_filter_out_all_data">This would filter out all data</string>
     <string name="venue_filter_done">Done</string>
-    <string name="venue_filter_calendar_description">Show or hide venues. Same settings as the list view—if a venue is hidden in the list, it is hidden in the calendar and vice versa.</string>
     <!-- Filter menu: "Hide X" / "Show X" for venue name X (e.g. Hide Rink, Show Lounge) -->
     <string name="hide_venue_format">Hide %1$s</string>
     <string name="show_venue_format">Show %1$s</string>
-    <string name="one_venue_hidden">1 venue hidden</string>
-    <string name="venues_hidden_count">%d venues hidden</string>
     <!-- menu choice -->
     <string name="show_all_events">Show All Events</string>
     <!-- menu choice -->
     <string name="show_flaged_events_only">Show Flaged Events Only</string>
     <!-- menu choice -->
-    <string name="show_only_events_flagged_as_attending">Show Only Events Flagged As Attending</string>
     <!-- venue filters -->
-    <string name="show_pool_events">Show Pool Events</string>
     <!-- menu choice -->
-    <string name="hide_pool_events">Hide Pool Events</string>
     <!-- menu choice -->
     <string name="pool_venue_filter_on">Pool Venue Filter On</string>
     <!-- help text -->
     <string name="pool_venue_filter_off">Pool Venue Filter Off</string>
     <!-- help text -->
-    <string name="show_lounge_events">Show Lounge Events</string>
     <!-- menu choice -->
-    <string name="hide_lounge_events">Hide Lounge Events</string>
     <!-- menu choice -->
     <string name="lounge_venue_filter_on">Lounge Venue Filter On</string>
     <!-- help text -->
     <string name="lounge_venue_filter_off">Lounge Venue Filter Off</string>
     <!-- help text -->
-    <string name="show_theater_events">Show Theater Events</string>
     <!-- menu choice -->
-    <string name="hide_theater_events">Hide Theater Events</string>
     <!-- menu choice -->
     <string name="theater_venue_filter_on">Theater Venue Filter On</string>
     <!-- help text -->
     <string name="theater_venue_filter_off">Theater Venue Filter Off</string>
     <!-- help text -->
-    <string name="show_rink_events">Show Rink Events</string>
     <!-- menu choice -->
-    <string name="hide_rink_events">Hide Rink Events</string>
     <!-- menu choice -->
     <string name="rink_venue_filter_on">Rink Venue Filter On</string>
     <!-- help text -->
     <string name="rink_venue_filter_off">Rink Venue Filter Off</string>
     <!-- help text -->
-    <string name="show_other_events">Show Other Events</string>
     <!-- menu choice -->
-    <string name="hide_other_events">Hide Other Events</string>
     <!-- menu choice -->
     <string name="other_venue_filter_on">Other Venue Filter On</string>
     <!-- help text -->
@@ -401,11 +351,6 @@
     
     <!-- Sharing Feature -->
     <string name="failed_to_export_preferences">Failed to export preferences. Please try again.</string>
-    <string name="share_your_preferences">Share Your Preferences</string>
-    <string name="share_priorities_and_events">Share your Must/Might/Won\'t priorities and attended events with another user.</string>
-    <string name="export_your_profile">Export Your Profile</string>
-    <string name="export_profile_description">Your Default profile will be exported. Recipients can import it and view your preferences.</string>
-    <string name="export_failed">Export Failed</string>
     <string name="name_your_share">Name Your Share</string>
     <string name="name_share_message">Give this share a name so the recipient can identify you.</string>
     
@@ -428,35 +373,13 @@
     <string name="import_failed">Import Failed</string>
     
     <!-- Profile Management -->
-    <string name="choose_an_action">Choose an action</string>
-    <string name="rename_this_entry">Rename This Entry</string>
-    <string name="change_the_color">Change The Color</string>
-    <string name="make_settings_my_own">Make These Settings My Own</string>
-    <string name="delete_this_entry">Delete this Entry</string>
     <string name="rename_profile">Rename Profile</string>
-    <string name="enter_new_profile_name">Enter a new name for this profile</string>
-    <string name="save">Save</string>
-    <string name="choose_color">Choose Color</string>
-    <string name="select_color_for">Select a color for</string>
-    <string name="delete_profile">Delete Profile</string>
-    <string name="are_you_sure_delete">Are you sure you want to delete</string>
-    <string name="cannot_be_undone">This cannot be undone.</string>
-    <string name="delete">Delete</string>
-    <string name="make_settings_your_own">Make These Settings Your Own</string>
-    <string name="overwrite_warning">This will overwrite all of your current Default profile settings with</string>
-    <string name="existing_data_lost">Your existing priorities and attended events will be permanently lost.</string>
-    <string name="are_you_sure_continue">Are you sure you want to continue?</string>
-    <string name="overwrite_my_settings">Overwrite My Settings</string>
     <string name="now_viewing_profile">Now Viewing Profile:</string>
     <string name="select_profile">Select Profile</string>
-    <string name="copied">Copied</string>
-    <string name="to_your_profile">to Your Profile</string>
     
-    <string name="done">Done</string>
     <string name="share_preferences">Share Preferences</string>
     
     <!-- Profile Actions -->
-    <string name="choose_action">Choose an action</string>
     <string name="rename_entry">Rename This Entry</string>
     <string name="change_color">Change The Color</string>
     <string name="make_settings_own">Make These Settings My Own</string>
@@ -485,7 +408,6 @@
     <!-- About Screen -->
     <string name="about">About</string>
     <string name="about_description1">This is an unofficial, open-source application designed to help users discover bands appearing at !FESTIVALE_NAME!, and to view event schedules, times, and venues in one place.</string>
-    <string name="about_description2">The app allows users to browse artists, explore event listings, and stay organized while attending festivals. It is designed to work across different events without being tied to any single festival, promoter, or organizer.</string>
     <string name="about_description3">This application is not affiliated with, endorsed by, or officially connected to any festival, event organizer, promoter, or performing artist. All artist names, event names, and related information remain the property of their respective owners and are used for informational purposes only.</string>
     <string name="about_description4">The source code for this application is open-sourced and licensed under the GNU General Public License, version 2 (GPL-2.0).</string>
     <string name="about_copyright">Copyright © 2015–present</string>
