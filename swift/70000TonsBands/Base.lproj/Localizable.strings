@@ -12,14 +12,11 @@
 "Must"="Must";
 "Might"="Might";
 "Wont"="Wont";
-"Priority"="Priority";
-"Attended"="Attended";
 "Band Priority"="Band Priority";
 "Event Attendance"="Event Attendance";
 "EventAttendanceAll"="All";
 "EventAttendancePartial"="Partial";
 "EventAttendanceNone"="None";
-"Wont Attend"="Wont Attend";
 "Unknown" = "Unknown";
 
 "SelectBandMessage"="Select a band from the list to view details";
@@ -37,11 +34,7 @@
 "Alert On Might See Bands"="Alert On Might See Bands";
 "Alert Only for Will Attend Events"="Alert Only for Will Attend Events";
 
-"Only alert for shows you will attend"="Only alert for shows you will attend";
-"Alert for shows according to your favorites selection"="Alert for shows according to your favorites selection, and the settings indicated on this screen";
 
-"showAttendedFilterTrueHelp"="Only show events that you indicate you will attend. Other filters will not apply";
-"showAttendedFilterFalseHelp"="Show bands and shows according to filters";
 
 "Sorting Chronologically"="Sorting Chronologically";
 "Sorting Alphabetically"="Sorting Alphabetically";
@@ -50,10 +43,7 @@
 "Part Of Event"="Attending Some Of This Event";
 "None Of Event"="I Will Not See This Event";
 
-"Prompt For Attended Status Header"="Prompt For Attended Status";
-"Prompt For Attended Status"="Prompt For Attended Status";
 
-"Go To Details"="Go To Details";
 
 "Minutes Before Event to Alert"="Minutes Before Event to Alert";
 "Alert For Shows"="Alert For Shows";
@@ -63,55 +53,31 @@
 "Alert For Album Listening Events"="Alert For Album Listening Events";
 "Alert For Unofficial Events"="Alert For Cruiser Organized Events";
 
-"ShowHideEvents"="Show/Hide Expired";
-"HideExpiredEvents"="Hide Expired Events";
 "Hide Expired Events"="Hide Expired Events";
-"Flagged Header"="Flagged";
 
-"Special Event"="Special Event";
-"Meet and Greet"="Meet and Greet";
-"Clinic"="Clinic";
-"Listening Party"="Listening Party";
 "Unofficial Events"="Cruiser Organized";
 
 
 
-"officialWebSiteLinkHelp" = "Taking you to the official Web Site";
-"WikipediaLinkHelp" = "Searching Wikipedia";
-"YouTubeLinkHelp" = "Searching YouTube for official videos";
-"MetalArchiveLinkHelp" = "Searching Metal Archives";
 
-"PoolVenue" = "Pool";
-"TheaterVenue" = "Theater";
-"LoungeVenue" = "Lounge";
-"RinkVenue" = "Rink";
-"OtherVenue" = "Other";
 
-"venueFilterHeader" = "Show/Hide Venue";
-"showTypeFilterHeader" = "Show/Hide Event Type";
 
-"showHideExpiredLabel" = "Show/Hide Expired";
-"hideExpiredEvents" = "Hide Expired Events";
 "Expired Events" = "Expired Events";
-"Show Expired Events" = "Show Expired Events";
-"Hiding Expired Events" = "Hiding Expired Events";
-"Showing Expired Events" = "Showing Expired Events";
 
 "AlertPreferences" = "Alert Preferences";
-"PreferenceHeader" = "Preferences";
 "Preferences" = "Preferences";
 
-"disableAttendedPrompt" = "Disable This Prompt";
 
 "EndofList" = "End of List";
 "AlreadyAtStart" = "Already At Start of List";
-"Next" = "Next";
-"Previous" = "Previous";
 
 "NoteFontSize" = "Note Font Size Large";
 
-"ShareBandChoices" = "Share Band Choices";
-"ShareShowChoices" = "Share Show Choices";
+"Share Type" = "Share Type"; // Share action sheet title
+"Share Importable Band/Event Data" = "Share Importable Band/Event Data"; // Share option: export profile file
+"Share Band Report" = "Share Band Report"; // Share option: Must/Might report as text
+"Share Event Report" = "Share Event Report"; // Share option: attended events as text
+"Back" = "Back"; // Wizard / navigation back button
 
 // Localized share text
 "Choices" = "Choices";
@@ -127,7 +93,6 @@
 "CruiseEventsPlural" = "Cruise Events";
 "UnofficialEventsPlural" = "Unofficial Events";
 
-"visitBands" = "Links";
 "country" = "Country";
 "genre" = "Genre";
 "Last On Cruise" = "Last On Cruise"; //list of years a band was previously on
@@ -150,20 +115,14 @@
 "MiscSection"="Misc";
 "AutoChooseAttendanceSection" = "Plan Your Schedule";
 "AutoChooseAttendanceTriggerWizard" = "Build my schedule automatically";
-"AutoChooseAttendanceClearData" = "Clear auto-chosen schedule";
 "AutoChooseAttendanceClearAll" = "Clear all attendance data";
-"AutoChooseAttendanceClearAutoTitle" = "Clear auto-chosen schedule?";
-"AutoChooseAttendanceClearAutoMessage" = "This will remove %d auto-chosen attendance record(s) for this year. Manually set attendance will be kept.";
-"AutoChooseAttendanceClearAutoMessageNone" = "There are no auto-chosen records for this year. Nothing to clear.";
 "AutoChooseAttendanceClearAllTitle" = "Clear all attendance?";
 "AutoChooseAttendanceClearAllMessage" = "This will remove all %d attendance record(s) for this year, including both auto-chosen and manually set. This cannot be undone.";
 "AutoChooseAttendanceClearAllMessageNone" = "There are no attendance records for this year. Nothing to clear.";
 "AutoChooseAttendanceReplaceTitle" = "Replace auto schedule?";
 "AutoChooseAttendanceReplaceMessage" = "All existing auto choices will be removed and the process will start over. Any events you marked manually will be kept.";
 "AutoChooseAttendanceTitle" = "Plan Your Schedule";
-"AutoChooseAttendanceWizardPlaceholder" = "Plan Your Schedule will guide you through choosing events.";
 "AutoChooseAttendanceImportPrompt" = "Schedule imported. Would you like to plan your schedule automatically?";
-"AutoChooseAttendanceScheduleUpdatedPrompt" = "Schedule was updated with many new events. Run Auto Choose Attendance again?";
 "AutoChooseAttendanceIntro" = "Do you want %@ to help you choose what events to attend?\n\nWe'll use your Must, Might, and Wont choices plus a few quick questions to build a first pass. You can change any event afterward.";
 "AutoChooseAttendanceNext" = "Next";
 "AutoChooseAttendanceUnknownBandsTitle" = "Unknown bands";
@@ -175,45 +134,18 @@
 "AutoChooseAttendanceGoToBandList" = "Go to band list";
 "AutoChooseAttendanceBackToWizard" = "Back to wizard";
 "AutoChooseAttendanceDetails" = "Details";
-"AutoChooseAttendanceHoursSleep" = "hours of sleep per night";
 "AutoChooseAttendanceLatestShowTitle" = "Latest show";
 "AutoChooseAttendanceLatestShowPrompt" = "The latest show you want to see.";
 "AutoChooseAttendanceLatestShowHint" = "Shows that begin after this specified time will be excluded. For instance, if you set this time to 2 am, a show scheduled for 2 am will be included, but a show scheduled for 2:30 am or later will be excluded.";
-"AutoChooseAttendanceLatestShowMidnight" = "Midnight (12am)";
-"AutoChooseAttendanceLatestShow1am" = "1am";
-"AutoChooseAttendanceLatestShow2am" = "2am";
-"AutoChooseAttendanceLatestShow3am" = "3am";
-"AutoChooseAttendanceLatestShow4am" = "4am";
-"AutoChooseAttendanceLatestShow5am" = "5am";
-"AutoChooseAttendanceLatestShow1200am" = "12:00am";
-"AutoChooseAttendanceLatestShow1230am" = "12:30am";
-"AutoChooseAttendanceLatestShow100am" = "1:00am";
-"AutoChooseAttendanceLatestShow130am" = "1:30am";
-"AutoChooseAttendanceLatestShow200am" = "2:00am";
-"AutoChooseAttendanceLatestShow230am" = "2:30am";
-"AutoChooseAttendanceLatestShow300am" = "3:00am";
-"AutoChooseAttendanceLatestShow330am" = "3:30am";
-"AutoChooseAttendanceLatestShow400am" = "4:00am";
-"AutoChooseAttendanceLatestShow430am" = "4:30am";
-"AutoChooseAttendanceLatestShow500am" = "5:00am";
-"AutoChooseAttendanceLatestShow530am" = "5:30am";
 "AIScheduleUnofficialEventsHeader" = "Unofficial / Cruiser Organized";
 "AutoChooseAttendanceNoUnofficialEvents" = "No Unofficial / Cruiser Organized events in the schedule.";
 "AutoChooseAttendanceUnofficialQuestion" = "What Unofficial / Cruiser Organized events do you want to attend?";
 "AutoChooseAttendanceNoMeetAndGreets" = "No Meet and Greet events in the schedule.";
 "AutoChooseAttendanceMeetAndGreetQuestion" = "What Meet and Greet Events do you want to attend?";
-"AutoChooseAttendanceMGOptionAll" = "All of your Must bands";
-"AutoChooseAttendanceMGOptionSome" = "Some of your Must bands";
-"AutoChooseAttendanceMGOptionNone" = "Not interested";
 "AutoChooseAttendanceMGSelectAll" = "All";
 "AutoChooseAttendanceNoClinics" = "No clinic events in the schedule.";
 "AutoChooseAttendanceClinicsQuestion" = "Which clinics do you want to attend?";
-"AutoChooseAttendanceClinicsOptionAll" = "All Must bands";
-"AutoChooseAttendanceClinicsOptionSome" = "Some Must bands";
-"AutoChooseAttendanceClinicsOptionNone" = "Not interested in clinics";
-"AutoChooseAttendanceBuild" = "Build schedule";
 "AutoChooseAttendanceBuilding" = "Building your schedule…";
-"restartTitle" = "Restart Required";
 "restartMessage" = "DO NOT DO THIS ON THE CRUISE. INTERNET CONNECTION REQUIRED.";
 "yearChangeAborted" = "No internet connection is available, can NOT switch years at this time";
 "eventOrBandPrompt" = "Do you want to view a list of bands, or a list of events?";
@@ -224,105 +156,34 @@
 "Current" = "Current";
 
 //new section for the filter menu control
-"Clear Filters" = "Clear Filters"; //menu choice
 "Band Ranking Filters" = "Band Ranking Filters"; //menu header
-"Show Only Flagged As Attended" = "Show Only Flagged As Attended"; //menu header
 "Sorting Options" = "Sorting Options"; //menu header
-"View Mode" = "View Mode"; //menu header
-"Show Bands Only" = "Show Bands Only"; //menu option
-"Show Schedule" = "Show Schedule"; //menu option
 "Event Type Filters" = "Event Type Filters"; //menu header
-"Venue Filters" = "Venue Filters"; //menu header
-"Event Location Filter" = "Event Location Filter"; //menu header (legacy)
-"Locations" = "Locations"; //legacy
 "Location Filters" = "Location Filters"; //menu header
-"VenueFilterSheetDescription" = "Show or hide venues. Same settings as the list view—if a venue is hidden in the list, it is hidden in the calendar and vice versa.";
-"OneVenueHidden" = "1 venue hidden";
-"VenuesHiddenCount" = "%d venues hidden";
 "All venues hidden" = "All venues hidden";
 "TapFilterToShowVenues" = "Tap the filter icon above to show venues again.";
-"Show Venue Format" = "Show %@"; //venue filter option, %@ = venue name
-"Hide Venue Format" = "Hide %@"; //venue filter option, %@ = venue name
 
-"Can not hide all venues" = "Can not hide all venues"; //help text
-"Can not hide all statuses" = "Can not hide all status"; //help text
 "Clear All Filters" = "Clear All Filters"; //menu choice
-"FiltersRemoveAllAttendance" = "Remove all attendance flags";
-"FiltersRemoveAllAttendanceConfirmTitle" = "Remove all attendance?";
-"FiltersRemoveAllAttendanceConfirmMessage" = "This will clear all will-attend flags for this year. This cannot be undone.";
-"FiltersRemoveAllAttendanceConfirmRemove" = "Remove all";
-"Show All Events" = "Show All Events"; //menu choice
 "Show Flagged Events Only" = "Show Flagged Events Only"; //menu choice
-"Show Only Events Flagged As Attending" = "Show Only Events Flagged As Attending"; //help text
 
 //venue filters
-"Show Pool Events" = "Show Pool Events"; //menu choice
-"Hide Pool Events" = "Hide Pool Events"; //menu choice
-"Pool Venue Filter On" = "Pool Venue Filter On"; //help text
-"Pool Venue Filter Off" = "Pool Venue Filter Off"; //help text
 
-"Show Lounge Events" = "Show Lounge Events"; //menu choice
-"Hide Lounge Events" = "Hide Lounge Events"; //menu choice
-"Lounge Venue Filter On" = "Lounge Venue Filter On"; //help text
-"Lounge Venue Filter Off" = "Lounge Venue Filter Off"; //help text
 
-"Show Theater Events" = "Show Theater Events"; //menu choice
-"Hide Theater Events" = "Hide Theater Events"; //menu choice
-"Theater Venue Filter On" = "Theater Venue Filter On"; //help text
-"Theater Venue Filter Off" = "Theater Venue Filter Off"; //help text
 
-"Show Rink Events" = "Show Rink Events"; //menu choice
-"Hide Rink Events" = "Hide Rink Events"; //menu choice
-"Rink Venue Filter On" = "Rink Venue Filter On"; //help text
-"Rink Venue Filter Off" = "Rink Venue Filter Off"; //help text
 
-"Show Other Venues" = "Show Other Venues"; //menu choice
-"Hide Other Venues" = "Hide Other Venues"; //menu choice
-"Show Other" = "Show Other"; //location filter (no "Events")
-"Hide Other" = "Hide Other"; //location filter (no "Events")
-"Other Venue Filter On" = "Other Venue Filter On"; //help text
-"Other Venue Filter Off" = "Other Venue Filter Off"; //help text
 
 //event filter
-"Show Meet & Greet Events" = "Show Meet & Greet Events"; //menu choice
-"Hide Meet & Greet Events" = "Hide Meet & Greet Events"; //menu choice
-"Meet and Greet Event Filter On" = "Meet and Greet Event Filter On"; //help text
-"Meet and Greet Event Filter Off" = "Meet and Greet Event Filter Off"; //help text
 
-"Show Unofficial Events" = "Show Unofficial Events"; //menu choice
-"Hide Unofficial Events" = "Hide Unofficial Events"; //menu choice
-"Unofficial Event Filter On" = "Unofficial Event Filter On"; //help text
-"Unofficial Event Filter Off" = "Unofficial Event Filter Off"; //help text
  
-"Show Special/Other Events" = "Show Special/Other Events"; //menu choice
-"Hide Special/Other Events" = "Hide Special/Other Events"; //menu choice
-"Special/Other Event Filter On" = "Special/Other Event Filter On"; //help text
-"Special/Other Event Filter Off" = "Special/Other Event Filter Off"; //help text
 
 //sorting
 "Sort By Name" = "Sort By Name"; //menu choice
 "Sort By Time" = "Sort By Time"; //menu choice
 
 //band preference filter
-"Show Must See Items" = "Show Must See Items"; //menu choice
-"Hide Must See Items" = "Hide Must See Items"; //menu choice
-"Must See Filter On" = "Must See Filter On"; //help text
-"Must See Filter Off" = "Must See Filter Off"; //help text
 
-"Show Might See Items" = "Show Might See Items"; //menu choice
-"Hide Might See Items" = "Hide Might See Items"; //menu choice
-"Might See Filter On" = "Might See Filter On"; //help text
-"Might See Filter Off" = "Might See Filter Off"; //help text
 
-"Show Wont See Items" = "Show Wont See Items"; //menu choice
-"Hide Wont See Items" = "Hide Wont See Items"; //menu choice
-"Wont See Filter On" = "Wont See Filter On"; //help text
-"Wont See Filter Off" = "Wont See Filter Off"; //help text
 
-"Show Unknown Items" = "Show Unknown Items"; //menu choice
-"Hide Unknown Items" = "Hide Unknown Items"; //menu choice
-"Unknown Filter On" = "Unknown Filter On"; //help text
-"Unknown Filter Off" = "Unknown Filter Off"; //help text
 
 "Filtering" = "Filtering"; //filtering indicator near counts
 "Filters" = "Filters"; //menu name
@@ -340,9 +201,6 @@
 
 // Keyboard toolbar buttons
 "Select All" = "Select All";
-"Cut" = "Cut";
-"Copy" = "Copy";
-"Paste" = "Paste";
 "Close" = "Close";
 
 // Information section
@@ -353,13 +211,10 @@
 // Advanced Preferences section
 "AdvancedPreferences" = "ADVANCED PREFERENCE.";
 "AdvancedPreferencesWarning" = "DO NOT MODIFY UNLESS YOU KNOW WHAT YOUR DOING!";
-"Bands URL" = "Bands URL";
-"Schedule URL" = "Schedule URL";
 "Pointer URL" = "Pointer URL";
 "Custom Pointer URL" = "Custom Pointer URL";
 "CustomPointerUrlPlaceholder" = "Leave empty to use default";
 "Minutes" = "Minutes";
-"Default" = "Default";
 
 // Default description text
 "DefaultDescription70K" = "Comment text is not available yet. Please wait for Aaron to add his description. You can add your own if you choose, but when his becomes available it will not overwrite your data, and will not display.";
@@ -370,7 +225,6 @@
 // About Screen
 "About" = "About";
 "AboutDescription1" = "This is an unofficial, open-source application designed to help users discover bands appearing at !FESTIVALE_NAME!, and to view event schedules, times, and venues in one place.";
-"AboutDescription2" = "The app allows users to browse artists, explore event listings, and stay organized while attending festivals. It is designed to work across different events without being tied to any single festival, promoter, or organizer.";
 "AboutDescription3" = "This application is not affiliated with, endorsed by, or officially connected to any festival, event organizer, promoter, or performing artist. All artist names, event names, and related information remain the property of their respective owners and are used for informational purposes only.";
 "AboutDescription4" = "The source code for this application is open-sourced and licensed under the GNU General Public License, version 2 (GPL-2.0).";
 "AboutCopyright" = "Copyright © 2015–present";
@@ -384,8 +238,6 @@
 "AboutTeamPhoto" = "Team Photo";
 
 // Toast and help messages
-"Venue Filter On Format" = "%@ Venue Filter On"; // Format for venue filter on message, %@ = venue name
-"Venue Filter Off Format" = "%@ Venue Filter Off"; // Format for venue filter off message, %@ = venue name
 "Invalid cell data - cannot add attendance" = "Invalid cell data - cannot add attendance"; // Toast message when cell data is invalid
 "No Show Is Associated With This Entry" = "No Show Is Associated With This Entry"; // Toast message when no show is associated with entry
 "Dismiss" = "Dismiss"; // Alert dismiss button
@@ -420,8 +272,6 @@
 
 // Create AI Schedule
 "AIScheduleTitle" = "Create AI schedule";
-"AIScheduleSleepHeader" = "Sleep";
-"AIScheduleSleepPrompt" = "Hours of sleep per night";
 "AIScheduleMeetGreetHeader" = "Meet and Greets";
 "AIScheduleMarkAllMustMeetGreets" = "Mark all Must-See Meet and Greets as will attend";
 "AIScheduleManualMeetGreets" = "I'll pick Meet and Greets myself.";
@@ -439,24 +289,12 @@
 "AIScheduleMustConflictBoth" = "Both";
 "AIScheduleSeeingThemNowhereElse" = "Seeing them: Nowhere else";
 "AIScheduleSeeingThemFormat" = "Seeing them: %@";
-"AIScheduleBothMissedTitle" = "Both shows would be missed";
-"AIScheduleBothMissedMessage" = "For %@ you'd miss both shows. Pick one or skip this band.";
-"AIScheduleAttendShowA" = "Attend Show A (%@)";
-"AIScheduleAttendShowAWithTime" = "Attend Show A: %@ %@";
-"AIScheduleAttendShowB" = "Attend Show B (%@)";
-"AIScheduleAttendShowBWithTime" = "Attend Show B: %@ %@";
-"AIScheduleSkipBand" = "Skip this band";
 "AIScheduleDoneTitle" = "Done";
 "AIScheduleDoneMessage" = "Marked %d events as will attend.";
 "AIScheduleDoneMessageDetail" = "You will now be taken to a view showing your schedule.\n\nIn the filter menu:\n• Click Clear All Filters to see all events\n• Click Show Flagged Events only to see only your events\n• Long press any event to change your attendance status.";
 "AIScheduleExistingAttendanceTitle" = "You already have events marked";
 "AIScheduleExistingAttendanceMessage" = "%d events are already marked for this year. The new schedule will be added and won't change those.";
 "AIScheduleExistingAttendanceContinue" = "Continue";
-"AIScheduleMenuHeader" = "AI schedule";
-"AIScheduleEraseChoices" = "Clear AI schedule";
-"AIScheduleEraseConfirmTitle" = "Restore your previous choices?";
-"AIScheduleEraseConfirmMessage" = "This will clear the AI schedule and put back what you had before.";
-"AIScheduleEraseConfirmRestore" = "Restore";
 "AIScheduleUnknownBandsTitle" = "Some bands are Unknown";
 "AIScheduleUnknownBandsMessage" = "%d bands don't have Must or Might set. Only Must and Might bands are added. Continue anyway?";
 "AIScheduleUnknownBandsContinue" = "Continue";
