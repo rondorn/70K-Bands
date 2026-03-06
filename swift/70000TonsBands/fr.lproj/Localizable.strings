@@ -149,6 +149,7 @@
 "Filters" = "Filtres"; //menu name
 
 "Day" = "Jour";
+"Day (Finish)" = "Jour (Fin)";
 
 "Viewing Day Format" = "Affichage %@";
 "No More Days" = "Plus de jours";

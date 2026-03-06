@@ -6,8 +6,6 @@
     <string name="must">Kyllä</string>
     <string name="wont">Ei</string>
     <string name="unknown">Tuntematon</string>
-    <string name="priority">Prioriteetti</string>
-    <string name="attended">Osallistunut</string>
     <string name="band_priority">Bändin prioriteetti</string>
     <string name="event_attendance">Tapahtuman läsnäolo</string>
 
@@ -25,20 +23,13 @@
     <string name="aischedule_unofficial_question">Mihin epävirallisiin / Cruiser Organized -tapahtumiin haluat osallistua?</string>
     <string name="aischedule_unofficial_checklist_hint">Valitse ne, joihin haluat osallistua. Vain Must-bändit.</string>
     <string name="aischedule_checklist_all">Kaikki</string>
-    <string name="meet_greet_choice">Haluatko osallistua Meet and Greet -tapaamisiin kaikille Must-bändeillesi? Voit aina merkitä nämä manuaalisesti, jos valitset „Ei kiinnosta“.</string>
-    <string name="mark_all_must_mg">Kaikki Must-bändisi</string>
-    <string name="mark_none_mg">Ei kiinnosta</string>
     <string name="aischedule_clinics_header">Clinics</string>
     <string name="clinics_choice">Mihin klinikoihin haluat osallistua?</string>
-    <string name="mark_all_must_clinics">Kaikki Must-bändit</string>
-    <string name="mark_none_clinics">Ei kiinnosta klinikat</string>
     <string name="aischedule_clinics_checklist_hint">Valitse ne, joihin haluat osallistua. Ohjelman huomautukset (esim. laulunkirjoitusklinikka, bassoklinikka).</string>
-    <string name="aischedule_no_clinics">Ei klinikoita aikataulussa.</string>
     <string name="aischedule_seeing_them_nowhere_else">Näet heidät: Ei missään muualla</string>
     <string name="aischedule_seeing_them_format">Näet heidät: %1$s</string>
     <string name="aischedule_special_events_header">Erikoistapahtumat</string>
     <string name="aischedule_special_events_hint">Valitse erikoistapahtumat, joihin haluat osallistua.</string>
-    <string name="aischedule_no_special_events">Ei erikoistapahtumia aikataulussa.</string>
     <string name="aischedule_must_conflict_title">Kaksi Must-esiintymistä samaan aikaan</string>
     <string name="aischedule_must_conflict_message">Valitse kumpaan osallistut.</string>
     <string name="aischedule_must_conflict_both">Molemmat</string>
@@ -50,7 +41,6 @@
     <string name="unknown_bands_fix_prompt">Sinulla on %d bändiä ilman prioriteettia (Tuntematon).</string>
     <string name="unknown_bands_fix_hint">Aseta Must, Might tai Wont kullekin, tai valitse „Käsittele Wontina“ ohittaaksesi ne.</string>
     <string name="unknown_bands_treat_as_wont">Käsittele Wontina</string>
-    <string name="unknown_bands_go_to_list">Siirry bändilistaan</string>
     <string name="unknown_bands_details">Tiedot</string>
     <string name="aischedule_done_title">Valmis</string>
     <string name="aischedule_done_message">%d tapahtumaa merkitty osallistun.</string>
@@ -58,12 +48,9 @@
     <string name="aischedule_build_schedule">Rakenna aikataulu</string>
     <string name="building_schedule">Rakennetaan aikatauluasi…</string>
     <string name="build_schedule_automatically">Rakenna aikatauluni automaattisesti</string>
-    <string name="clear_auto_chosen_schedule">Tyhjennä automaattisesti valittu aikataulu</string>
     <string name="clear_all_attendance_data">Tyhjennä kaikki läsnäolotiedot</string>
-    <string name="clear_auto_chosen_confirm">Palauta läsnäolo tilaan ennen „Suunnittele aikataulusi“ -toimintoa tälle vuodelle?</string>
     <string name="clear_all_attendance_confirm">Tyhjennä kaikki tapahtumat, jotka olet merkinnyt osallistuneeksi? Toimintoa ei voi perua.</string>
     <string name="SelectBand">Valitse Bändi</string>
-    <string name="WhichBandDoYouWant">Mille bändille haluat asettaa prioriteetin tai osallistumisen?</string>
     <string name="outdated_app_version_message">Käytät sovelluksen vanhempaa versiota. Päivitä uusimpaan versioon tänään</string>
 
     <string name="AlertOnMustSeeBands">Hälytä Kyllä-listan yhtyeistä</string>
@@ -80,11 +67,6 @@
     <string name="AlertForClinics">Hälytä klinikoista</string>
     <string name="AlertForAlbumListeningEvents">Hälytä levyjen kuuntelutapahtumista</string>
 
-    <string name="PoolVenue">Allas</string>
-    <string name="TheaterVenue">Teatteri</string>
-    <string name="LoungeVenue">Klubi</string>
-    <string name="RinkVenue">Jäähalli</string>
-    <string name="OtherVenue">Muut</string>
 
     <string name="SpecialEvents">Erikoistapahtumat</string>
     <string name="MeetAndGreet">Artistitapaamiset</string>
@@ -92,15 +74,12 @@
     <string name="AlbumListeningEvents">Levyjen kuuntelutapahtumat</string>
     <string name="unofficalEventLable">Kanssaristeilijöiden järjestämät</string>
 
-    <string name="UseLastYearsData">Käytä viime vuoden tietoja</string>
     <string name="LastYearsFeatureExplication">Käytä edellisten vuosien tietoja, kun nykyisen vuoden tietoja ei ole vielä saatavilla</string>
     <string name="AdvancedPreferences">Lisäasetukset.\nÄlä muuta, ellet tiedä mitä teet!</string>
     <string name="PreferenceHeader">70K Bands Asetukset</string>
 
     <string name="importMessage">Tämä muutos edellyttää sovelluksen uudelleenkäynnistystä.\n70K Bands suljetaan. Käynnistä uudelleen nähdäksesi uudet tiedot</string>
 
-    <string name="showAttendedFilterTrueHelp">Näytä vain tapahtumat, joihin aiot osallistua. Muut suodattimet poistetaan käytöstä</string>
-    <string name="showAttendedFilterFalseHelp">Näytä yhtyeet ja esitykset suodattimien mukaan</string>
 
     <string name="alertOnlyForShowWillAttend">Hälytä vain esityksistä, joihin aiot osallistua</string>
 
@@ -115,9 +94,6 @@
     <string name="EventAttendanceNone">Ei mitään</string>
 
     <string name="venueFilterHeader">Näytä/piilota paikka</string>
-    <string name="showTypeFilterHeader">Näytä/piilota tapahtumatyyppi</string>
-    <string name="showHideExpiredLabel">Näytä/piilota vanhentuneet tapahtumat</string>
-    <string name="hideExpiredEvents">Piilota vanhentuneet tapahtumat</string>
 
     <string name="AlertPreferences">Hälytysasetukset</string>
 
@@ -126,11 +102,7 @@
     <string name="YouTubeLinkHelp">Etsitään virallisia videoita YouTubesta</string>
     <string name="MetalArchiveLinkHelp">Etsitään Metal Archives-sivustolta</string>
 
-    <string name="PromptForAttendedStatusHeader">Kysy osallistumisesta</string>
-    <string name="PromptForAttendedStatus">Kysy osallistumisesta</string>
-    <string name="GoToDetails">Siirry lisätietoihin</string>
 
-    <string name="disableAttendedPrompt">Poista tämä kehote käytöstä</string>
 
     <string name="EndofList">Luettelon loppu</string>
     <string name="AlreadyAtStart">Jo luettelon alussa</string>
@@ -139,14 +111,11 @@
     <string name="calendar_start">Alku</string>
     <string name="calendar_end">Loppu</string>
 
-    <string name="ImportDataBackup">Tuo tietojen varmuuskopio</string>
     <string name="ShareTitle">Mitä haluat jakaa?</string>
     <string name="ShareBandChoices">Jaa yhtyevalinnat</string>
     <string name="ShareShowChoices">Jaa esitysvalinnat</string>
     <string name="ShareImportableData">Jaa Tuotavat Bändi/Tapahtuma Tiedot</string>
-    <string name="ExportUserData">Vie käyttäjätiedot</string>
 
-    <string name="visitBands">Linkit</string>
     <string name="country">Maa</string>
     <string name="genre">Tyylilaji</string>
     <string name="LastOnCruise">Viimeinen risteilyllä</string> <!--list of years a band was previously on -->
@@ -158,6 +127,15 @@
 
     <string name="waiting_for_data">Ladataan tietoja, odota hetki....</string>
     <string name="data_filter_issue">Suodatinasetukset piilottavat kaikki tiedot. Poista suodattimia nähdäksesi tietoja</string>
+
+    <!-- Startup diagnostics (stuck on splash) -->
+    <string name="startup_diag_title">Käynnistysdiagnostiikka</string>
+    <string name="startup_diag_body">Jos sovellus jumittaa käynnistyksessä, napauta Jaa ja lähetä tämä tuelle.</string>
+    <string name="startup_diag_share">Jaa</string>
+    <string name="startup_diag_close">Sulje</string>
+    <string name="startup_diag_share_subject">70K Bands käynnistysdiagnostiikka</string>
+    <string name="startup_watchdog_notification_title">70K Bands käynnistyy tavallista hitaammin</string>
+    <string name="startup_watchdog_notification_text">Napauta nähdäksesi diagnostiikan, jonka voit jakaa tuelle.</string>
 
     <!-- WebView Navigation Buttons -->
     <string name="navigation_close">Sulje</string>
@@ -172,7 +150,6 @@
     <string name="eventOrBandPrompt">Haluatko nähdä luettelon bändeistä vai tapahtumista?</string>
     <string name="bandListButton">Bändiluettelo</string>
     <string name="eventListButton">Tapahtumaluettelo</string>
-    <string name="changeYearDialogBoxTitle">Tapahtumavuoden vaihtaminen</string>
     <!-- this represents the current year in the choice menu -->
     <string name="Current">Nykyinen</string>
 
@@ -186,7 +163,6 @@
     <!-- menu header -->
     <string name="show_only_flagged_as_attended">Näytä vain kiinnostavat tapahtumat</string>
     <!-- menu header -->
-    <string name="sorting_options">Lajitteluasetukset</string>
     <!-- menu header -->
     <string name="event_type_filters">Tapahtumatyyppisuodattimet</string>
     <!-- menu header -->
@@ -196,55 +172,42 @@
     <!-- help text -->
     <!-- help text -->
     <string name="can_not_hide_all_statuses">Kaikkia tiloja ei voi piilottaa</string>
+    <string name="this_would_filter_out_all_data">Tämä suodattaisi kaikki tiedot pois</string>
     <string name="clear_all_filters">Tyhjennä kaikki suodattimet</string>
     <string name="venue_filter_done">Valmis</string>
-    <string name="venue_filter_calendar_description">Näytä tai piilota tapahtumapaikat. Samat asetukset kuin listanäkymässä — jos paikka on piilotettu listassa, se on piilotettu kalenterissa ja päinvastoin.</string>
     <string name="hide_venue_format">Piilota %1$s</string>
     <string name="show_venue_format">Näytä %1$s</string>
-    <string name="one_venue_hidden">1 paikka piilotettu</string>
-    <string name="venues_hidden_count">%d paikkaa piilotettu</string>
     <!-- menu choice -->
     <string name="show_all_events">Näytä kaikki tapahtumat</string>
     <!-- menu choice -->
     <string name="show_flaged_events_only">Näytä vain merkityt tapahtumat</string>
     <!-- menu choice -->
-    <string name="show_only_events_flagged_as_attending">Näytä vain tapahtumat, joihin aiot osallistua</string>
     <!-- venue filters -->
-    <string name="show_pool_events">Näytä allastapahtumat</string>
     <!-- menu choice -->
-    <string name="hide_pool_events">Piilota allastapahtumat</string>
     <!-- menu choice -->
     <string name="pool_venue_filter_on">Allaspaikan suodatin päällä</string>
     <!-- help text -->
     <string name="pool_venue_filter_off">Allaspaikan suodatin pois päältä</string>
     <!-- help text -->
-    <string name="show_lounge_events">Näytä klubitapahtumat</string>
     <!-- menu choice -->
-    <string name="hide_lounge_events">Piilota klubitapahtumat</string>
     <!-- menu choice -->
     <string name="lounge_venue_filter_on">Klubisuodatin päällä</string>
     <!-- help text -->
     <string name="lounge_venue_filter_off">Klubisuodatin pois päältä</string>
     <!-- help text -->
-    <string name="show_theater_events">Teatteritapahtumat</string>
     <!-- menu choice -->
-    <string name="hide_theater_events">Piilota teatteritapahtumat</string>
     <!-- menu choice -->
     <string name="theater_venue_filter_on">Teatterisuodatin päällä</string>
     <!-- help text -->
     <string name="theater_venue_filter_off">Teatterisuodatin pois päältä</string>
     <!-- help text -->
-    <string name="show_rink_events">Näytä jäähallitapahtumat</string>
     <!-- menu choice -->
-    <string name="hide_rink_events">Piilota jäähallitapahtumat</string>
     <!-- menu choice -->
     <string name="rink_venue_filter_on">Jäähallisuodatin päällä</string>
     <!-- help text -->
     <string name="rink_venue_filter_off">Jäähallisuodatin pois päältä</string>
     <!-- help text -->
-    <string name="show_other_events">Näytä muut tapahtumat</string>
     <!-- menu choice -->
-    <string name="hide_other_events">Piilota muut tapahtumat</string>
     <!-- menu choice -->
     <string name="other_venue_filter_on">Muun tapahtumapaikan suodatin päällä</string>
     <!-- help text -->
@@ -326,6 +289,10 @@
     <string name="Filters">Suodattimet</string>
 
     <string name="Day">Päivä</string>
+    <string name="viewing_day_format">Näytetään %s</string>
+    <string name="no_more_days">Ei enää päiviä</string>
+    <string name="no_previous_days">Ei aiempia päiviä</string>
+
     <string name="Bands">Bändit</string>
     <string name="Events">Tapahtumat</string>
 
@@ -385,18 +352,10 @@
     <string name="import_successful">Tuonti Onnistui</string>
     
     <!-- Profile Actions -->
-    <string name="choose_an_action">Valitse toiminto</string>
-    <string name="choose_action">Valitse toiminto</string>
-    <string name="rename_this_entry">Nimeä Tämä Merkintä Uudelleen</string>
     <string name="rename_entry">Nimeä Tämä Merkintä Uudelleen</string>
-    <string name="change_the_color">Vaihda Väri</string>
     <string name="change_color">Vaihda Väri</string>
-    <string name="make_settings_my_own">Tee Näistä Asetuksista Omat</string>
     <string name="make_settings_own">Tee Näistä Asetuksista Omat</string>
-    <string name="delete_this_entry">Poista Tämä Merkintä</string>
     <string name="delete_entry">Poista Tämä Merkintä</string>
-    <string name="are_you_sure_delete">Haluatko varmasti poistaa</string>
-    <string name="cannot_be_undone">Tätä ei voi peruuttaa.</string>
     <string name="delete_profile_message">Haluatko varmasti poistaa \"{profileName}\"?\n\nTätä ei voi peruuttaa.</string>
     
     <!-- Profile Tutorial -->
@@ -405,11 +364,6 @@
     
     <!-- Sharing Feature -->
     <string name="failed_to_export_preferences">Asetusten vienti epäonnistui. Yritä uudelleen.</string>
-    <string name="share_your_preferences">Jaa Asetuksesi</string>
-    <string name="share_priorities_and_events">Jaa Must/Might/Won\'t-prioriteettisi ja osallistutut tapahtumat toisen käyttäjän kanssa.</string>
-    <string name="export_your_profile">Vie Profiilisi</string>
-    <string name="export_profile_description">Oletusprofiilisi viedään. Vastaanottajat voivat tuoda sen ja tarkastella asetuksiasi.</string>
-    <string name="export_failed">Vienti Epäonnistui</string>
     <string name="name_your_share">Nimeä Jakosi</string>
     <string name="name_share_message">Anna tälle jaolle nimi, jotta vastaanottaja voi tunnistaa sinut.</string>
     <string name="import_button">Tuo</string>
@@ -421,39 +375,22 @@
     <string name="profile_updated">Profiili Päivitetty</string>
     
     <!-- Profile Management Additional -->
-    <string name="save">Tallenna</string>
     <string name="Save">Tallenna</string>
-    <string name="delete">Poista</string>
     <string name="Delete">Poista</string>
     <string name="Update">Päivitä</string>
     <string name="Preferences">Asetukset</string>
     <string name="profile_renamed">Profiili nimetty uudelleen</string>
     <string name="change_profile_color">Vaihda Profiilin Väri</string>
     <string name="color_changed">Väri vaihdettu</string>
-    <string name="choose_color">Valitse Väri</string>
-    <string name="select_color_for">Valitse väri kohteelle</string>
     <string name="rename_profile">Nimeä Profiili Uudelleen</string>
     <string name="rename_profile_message">Anna uusi nimi tälle profiilille</string>
-    <string name="enter_new_profile_name">Anna uusi nimi tälle profiilille</string>
-    <string name="delete_profile">Poista Profiili</string>
     <string name="profile_deleted">Profiili poistettu</string>
     <string name="make_my_own">Tee Omakseni</string>
     <string name="make_settings_own_message">Tämä kopioi kaikki prioriteetit ja osallistumiset profiilista \"{profileName}\" oletusprofiiliisi, korvaten nykyiset asetuksesi.\n\nOletko varma?</string>
-    <string name="make_settings_your_own">Tee Näistä Asetuksista Omasi</string>
     <string name="settings_copied_to_default">Asetukset Kopioitu Oletukseen</string>
-    <string name="are_you_sure_continue">Oletko varma, että haluat jatkaa?</string>
-    <string name="existing_data_lost">Nykyiset prioriteettisi ja osallistutut tapahtumat menetetään pysyvästi.</string>
-    <string name="overwrite_warning">Tämä korvaa kaikki nykyiset oletusprofiilisi asetukset</string>
-    <string name="overwrite_my_settings">Korvaa Asetukseni</string>
-    <string name="copied">Kopioitu</string>
-    <string name="to_your_profile">Profiiliisi</string>
-    <string name="done">Valmis</string>
     <string name="share_preferences">Jaa Asetukset</string>
     
     <!-- View Mode Filter Strings -->
-    <string name="view_mode">Katselutila</string>
-    <string name="show_schedule">Näytä Aikataulu</string>
-    <string name="show_bands_only">Näytä Vain Bändit</string>
     
     <!-- Import/Export -->
     <string name="update_profile">Päivitä Profiili</string>
@@ -462,7 +399,6 @@
     <!-- About Screen -->
     <string name="about">Tietoja</string>
     <string name="about_description1">Tämä on epävirallinen avoimen lähdekoodin sovellus, joka on suunniteltu auttamaan käyttäjiä löytämään !FESTIVALE_NAME! -tapahtumassa esiintyviä bändejä ja tarkastelemaan tapahtuma-aikatauluja, aikoja ja paikkoja yhdessä paikassa.</string>
-    <string name="about_description2">The app allows users to browse artists, explore event listings, and stay organized while attending festivals. It is designed to work across different events without being tied to any single festival, promoter, or organizer.</string>
     <string name="about_description3">Tämä sovellus ei ole yhteydessä, hyväksytty tai virallisesti yhdistetty mihinkään festivaaliin, tapahtuman järjestäjään, promoottoriin tai esiintyjään. Kaikki artistinimet, tapahtumanimet ja siihen liittyvät tiedot pysyvät niiden omistajien omaisuutena ja niitä käytetään vain tiedotustarkoituksiin.</string>
     <string name="about_description4">Tämän sovelluksen lähdekoodi on avoimen lähdekoodin ja se on lisensoitu GNU General Public License -lisenssillä, versio 2 (GPL-2.0).</string>
     <string name="about_copyright">Copyright © 2015–nykyhetki</string>

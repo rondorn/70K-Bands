@@ -5,8 +5,6 @@
     <string name="must">Ja</string>
     <string name="wont">Nein</string>
     <string name="unknown">Unbekannte</string>
-    <string name="priority">Priorität</string>
-    <string name="attended">Teilgenommen</string>
     <string name="band_priority">Band-Priorität</string>
     <string name="event_attendance">Veranstaltungsbesuch</string>
 
@@ -24,20 +22,13 @@
     <string name="aischedule_unofficial_question">An welchen inoffiziellen / Cruiser-Organized-Events möchten Sie teilnehmen?</string>
     <string name="aischedule_unofficial_checklist_hint">Aktivieren Sie die gewünschten. Nur Must-Bands.</string>
     <string name="aischedule_checklist_all">Alle</string>
-    <string name="meet_greet_choice">Möchten Sie an Meet and Greet für alle Ihre Must-Bands teilnehmen? Sie können diese jederzeit manuell markieren, wenn Sie „Nicht interessiert“ wählen.</string>
-    <string name="mark_all_must_mg">Alle Ihre Must-Bands</string>
-    <string name="mark_none_mg">Nicht interessiert</string>
     <string name="aischedule_clinics_header">Clinics</string>
     <string name="clinics_choice">An welchen Workshops möchten Sie teilnehmen?</string>
-    <string name="mark_all_must_clinics">Alle Must-Bands</string>
-    <string name="mark_none_clinics">Nicht interessiert an Workshops</string>
     <string name="aischedule_clinics_checklist_hint">Aktivieren Sie die gewünschten. Anmerkungen aus dem Programm (z. B. Songwriting-Workshop, Bass-Workshop).</string>
-    <string name="aischedule_no_clinics">Keine Workshops im Zeitplan.</string>
     <string name="aischedule_seeing_them_nowhere_else">Siehst du sie: Nirgendwo anders</string>
     <string name="aischedule_seeing_them_format">Siehst du sie: %1$s</string>
     <string name="aischedule_special_events_header">Special Events</string>
     <string name="aischedule_special_events_hint">Aktivieren Sie die gewünschten Sonderveranstaltungen.</string>
-    <string name="aischedule_no_special_events">Keine Sonderveranstaltungen im Zeitplan.</string>
     <string name="aischedule_must_conflict_title">Zwei Must-Shows zur gleichen Zeit</string>
     <string name="aischedule_must_conflict_message">Wählen Sie eine aus.</string>
     <string name="aischedule_must_conflict_both">Beide</string>
@@ -49,7 +40,6 @@
     <string name="unknown_bands_fix_prompt">Du hast %d Bands ohne Priorität (Unbekannt).</string>
     <string name="unknown_bands_fix_hint">Setze Must, Might oder Wont für jede, oder tippe auf „Als Wont behandeln“, um sie zu überspringen.</string>
     <string name="unknown_bands_treat_as_wont">Als Wont behandeln</string>
-    <string name="unknown_bands_go_to_list">Zur Bandliste</string>
     <string name="unknown_bands_details">Details</string>
     <string name="aischedule_done_title">Fertig</string>
     <string name="aischedule_done_message">%d Veranstaltungen als „Teilnehmen“ markiert.</string>
@@ -57,12 +47,9 @@
     <string name="aischedule_build_schedule">Zeitplan erstellen</string>
     <string name="building_schedule">Zeitplan wird erstellt…</string>
     <string name="build_schedule_automatically">Meinen Zeitplan automatisch erstellen</string>
-    <string name="clear_auto_chosen_schedule">Automatisch gewählten Zeitplan löschen</string>
     <string name="clear_all_attendance_data">Alle Anwesenheitsdaten löschen</string>
-    <string name="clear_auto_chosen_confirm">Anwesenheit auf den Stand vor „Deinen Zeitplan planen“ für dieses Jahr zurücksetzen?</string>
     <string name="clear_all_attendance_confirm">Alle von dir als „Teilnehmen“ markierten Veranstaltungen löschen? Das kann nicht rückgängig gemacht werden.</string>
     <string name="SelectBand">Band auswählen</string>
-    <string name="WhichBandDoYouWant">Für welches Band möchten Sie Priorität oder Teilnahme festlegen?</string>
     <string name="outdated_app_version_message">Du verwendest eine ältere Version der App. Bitte aktualisiere noch heute auf die neueste Version</string>
 
     <string name="AlertOnMustSeeBands">Alarm für \'Ja\' Bands</string>
@@ -78,11 +65,6 @@
     <string name="OnlyAlertForShowsYouWillAttend">Nur Benachrichtigungen für Shows, an denen Sie teilnehmen werden</string>
     <string name="AlertForShowsAccordingToSelection">Alarm für Sendungen entsprechend Ihrer Favoritenauswahl und den auf diesem Bildschirm angezeigten Einstellungen</string>
 
-    <string name="PoolVenue">Schwimmbad</string>
-    <string name="TheaterVenue">Theater</string>
-    <string name="LoungeVenue">Salon</string>
-    <string name="RinkVenue">Eisbahn</string>
-    <string name="OtherVenue">Andere</string>
 
     <string name="SpecialEvents">Special Events</string>
     <string name="MeetAndGreet">Meeting and Greet</string>
@@ -90,13 +72,10 @@
     <string name="AlbumListeningEvents">Album Listening Events</string>
     <string name="unofficalEventLable">Cruiser organisiert</string>
 
-    <string name="UseLastYearsData">Daten des letzten Jahres verwenden</string>
     <string name="LastYearsFeatureExplication">Verwenden Sie Daten aus den Vorjahren, wenn die Daten des aktuellen Jahres noch nicht verfügbar sind</string>
     <string name="AdvancedPreferences">Erweiterte Einstellungen.\nÄndern Sie nicht, wenn Sie nicht wissen, was Sie tun!</string>
     <string name="importMessage">Diese Änderung erfordert einen Neustart der App.\n70K Bands wird jetzt beendet. App neu starten, um die neuen Daten zu sehen.</string>
 
-    <string name="showAttendedFilterTrueHelp">Zeige nur Ereignisse, an denen du teilgenommen hast. Andere Filter werden nicht angewendet</string>
-    <string name="showAttendedFilterFalseHelp">Zeigen Sie Bands und Shows nach Filtern</string>
 
     <string name="alertOnlyForShowWillAttend">Warnung nur für Ereignisse</string>
 
@@ -111,9 +90,6 @@
     <string name="EventAttendanceNone">Keine</string>
 
     <string name="venueFilterHeader">Anzeigen/Ausblenden Tagungsort</string>
-    <string name="showTypeFilterHeader">Anzeigen/Ausblenden Ereignistyp</string>
-    <string name="showHideExpiredLabel">Anzeigen/Ausblenden Abgelaufene Ereignisse</string>
-    <string name="hideExpiredEvents">Ausblenden Abgelaufene Ereignissen</string>
 
     <string name="AlertPreferences">Benachrichtigungseinstellungen</string>
     <string name="PreferenceHeader">70K Badns Präferenzen</string>
@@ -124,11 +100,7 @@
     <string name="YouTubeLinkHelp">YouTube nach offiziellen Videos durchsuchen</string>
     <string name="MetalArchiveLinkHelp">Durchsuchen von Metal-Archiven</string>
 
-    <string name="PromptForAttendedStatusHeader">Aufforderung zur Teilnahme am Status</string>
-    <string name="PromptForAttendedStatus">Aufforderung zur Teilnahme am Status</string>
-    <string name="GoToDetails">Gehe zu Details</string>
 
-    <string name="disableAttendedPrompt">Deaktivieren Sie diese Eingabeaufforderung</string>
 
     <string name="EndofList">Ende der Liste</string>
     <string name="AlreadyAtStart">Bereits am Anfang der Liste</string>
@@ -137,14 +109,11 @@
     <string name="calendar_start">Anfang</string>
     <string name="calendar_end">Ende</string>
 
-    <string name="ImportDataBackup">Datensicherung importieren</string>
     <string name="ShareTitle">Was möchtest du teilen?</string>
     <string name="ShareBandChoices">Bandauswahl teilen</string>
     <string name="ShareShowChoices">Showauswahl teilen</string>
     <string name="ShareImportableData">Importierbare Band/Event-Daten Teilen</string>
-    <string name="ExportUserData">Benutzerdaten exportieren</string>
 
-    <string name="visitBands">Verknüpfungen</string>
     <string name="country">Land</string>
     <string name="genre">Stil</string>
     <string name="LastOnCruise">Zuletzt auf Kreuzfahrt</string> <!--list of years a band was previously on -->
@@ -156,6 +125,15 @@
 
     <string name="waiting_for_data">Warten auf das Laden der Daten, bitte Standby....</string>
     <string name="data_filter_issue">Alle Daten werden herausgefiltert, bitte entfernen Sie die Filter, um die Daten anzuzeigen</string>
+
+    <!-- Startup diagnostics (stuck on splash) -->
+    <string name="startup_diag_title">Startdiagnose</string>
+    <string name="startup_diag_body">Wenn die App beim Start hängt, tippen Sie auf Teilen und senden Sie dies an den Support.</string>
+    <string name="startup_diag_share">Teilen</string>
+    <string name="startup_diag_close">Schließen</string>
+    <string name="startup_diag_share_subject">70K Bands Startdiagnose</string>
+    <string name="startup_watchdog_notification_title">70K Bands braucht länger zum Starten</string>
+    <string name="startup_watchdog_notification_text">Tippen Sie, um die Diagnose anzuzeigen, die Sie an den Support senden können.</string>
 
     <!-- WebView Navigation Buttons -->
     <string name="navigation_close">Schließen</string>
@@ -170,7 +148,6 @@
     <string name="eventOrBandPrompt">Möchten Sie eine Liste von Bands oder eine Liste von Veranstaltungen anzeigen?</string>
     <string name="bandListButton">Bandliste</string>
     <string name="eventListButton">Veranstaltungsliste</string>
-    <string name="changeYearDialogBoxTitle">Das Veranstaltungsjahr ändern</string>
     <!-- this represents the current year in the choice menu -->
     <string name="Current">Aktuell</string>
 
@@ -184,7 +161,6 @@
     <!-- menu header -->
     <string name="show_only_flagged_as_attended">Nur als besucht markierte anzeigen</string>
     <!-- menu header -->
-    <string name="sorting_options">Sortieroptionen</string>
     <!-- menu header -->
     <string name="event_type_filters">Filter nach Veranstaltungstyp</string>
     <!-- menu header -->
@@ -194,55 +170,42 @@
     <!-- help text -->
     <string name="can_not_hide_all_statuses">Es können nicht alle Stati ausgeblendet werden</string>
     <!-- help text -->
+    <string name="this_would_filter_out_all_data">Das würde alle Daten ausfiltern</string>
     <string name="clear_all_filters">Alle Filter löschen</string>
     <string name="venue_filter_done">Fertig</string>
-    <string name="venue_filter_calendar_description">Veranstaltungsorte ein- oder ausblenden. Gleiche Einstellungen wie in der Listenansicht – wenn ein Ort in der Liste ausgeblendet ist, ist er auch im Kalender ausgeblendet und umgekehrt.</string>
     <string name="hide_venue_format">%1$s ausblenden</string>
     <string name="show_venue_format">%1$s anzeigen</string>
-    <string name="one_venue_hidden">1 Ort ausgeblendet</string>
-    <string name="venues_hidden_count">%d Orte ausgeblendet</string>
     <!-- menu choice -->
     <string name="show_all_events">Alle Veranstaltungen anzeigen</string>
     <!-- menu choice -->
     <string name="show_flaged_events_only">Nur markierte Veranstaltungen anzeigen</string>
     <!-- menu choice -->
-    <string name="show_only_events_flagged_as_attending">Nur Veranstaltungen anzeigen, die mit Teilnahme markiert sind</string>
     <!-- venue filters -->
-    <string name="show_pool_events">Veranstaltungen Poolbühne anzeigen</string>
     <!-- menu choice -->
-    <string name="hide_pool_events">Veranstaltungen Poolbühne ausblenden</string>
     <!-- menu choice -->
     <string name="pool_venue_filter_on">Filter „Pool-Veranstaltungen“ an</string>
     <!-- help text -->
     <string name="pool_venue_filter_off">Filter „Pool-Veranstaltungen“ aus</string>
     <!-- help text -->
-    <string name="show_lounge_events">Veranstaltungen Star Lounge anzeigen</string>
     <!-- menu choice -->
-    <string name="hide_lounge_events">Veranstaltungen Star Lounge ausblenden</string>
     <!-- menu choice -->
     <string name="lounge_venue_filter_on">Filter „Lounge-Veranstaltungen“ an</string>
     <!-- help text -->
     <string name="lounge_venue_filter_off">Filter „Lounge-Veranstaltungen“\u0020\u0020aus</string>
     <!-- help text -->
-    <string name="show_theater_events">Veranstaltungen Royal Theater anzeigen</string>
     <!-- menu choice -->
-    <string name="hide_theater_events">Veranstaltungen Royal Theater ausblenden</string>
     <!-- menu choice -->
     <string name="theater_venue_filter_on">Filter „Theater-Veranstaltungen“ an</string>
     <!-- help text -->
     <string name="theater_venue_filter_off">Filter „Theater-Veranstaltungen“ aus</string>
     <!-- help text -->
-    <string name="show_rink_events">Veranstaltungen Studio B Ice Rink anzeigen</string>
     <!-- menu choice -->
-    <string name="hide_rink_events">Veranstaltungen Studio B Ice Rink ausblenden</string>
     <!-- menu choice -->
     <string name="rink_venue_filter_on">Filter „IceRink-Veranstaltungen“ an</string>
     <!-- help text -->
     <string name="rink_venue_filter_off">Filter „IceRink-Veranstaltungen“ aus</string>
     <!-- help text -->
-    <string name="show_other_events">Veranstaltungen andere Orte anzeigen</string>
     <!-- menu choice -->
-    <string name="hide_other_events">Veranstaltungen andere Orte ausblenden</string>
     <!-- menu choice -->
     <string name="other_venue_filter_on">Filter „andere Orte“ an</string>
     <!-- help text -->
@@ -324,6 +287,10 @@
     <string name="Filters">Filter</string>
 
     <string name="Day">Tag</string>
+    <string name="viewing_day_format">Anzeige %s</string>
+    <string name="no_more_days">Keine weiteren Tage</string>
+    <string name="no_previous_days">Keine vorherigen Tage</string>
+
     <string name="Bands">Bands</string>
     <string name="Events">Veranstaltungen</string>
 
@@ -383,18 +350,10 @@
     <string name="import_successful">Import Erfolgreich</string>
     
     <!-- Profile Actions -->
-    <string name="choose_an_action">Wählen Sie eine Aktion</string>
-    <string name="choose_action">Wählen Sie eine Aktion</string>
-    <string name="rename_this_entry">Diesen Eintrag Umbenennen</string>
     <string name="rename_entry">Diesen Eintrag Umbenennen</string>
-    <string name="change_the_color">Farbe Ändern</string>
     <string name="change_color">Farbe Ändern</string>
-    <string name="make_settings_my_own">Diese Einstellungen Zu Meinen Machen</string>
     <string name="make_settings_own">Diese Einstellungen Zu Meinen Machen</string>
-    <string name="delete_this_entry">Diesen Eintrag Löschen</string>
     <string name="delete_entry">Diesen Eintrag Löschen</string>
-    <string name="are_you_sure_delete">Möchten Sie wirklich löschen</string>
-    <string name="cannot_be_undone">Dies kann nicht rückgängig gemacht werden.</string>
     <string name="delete_profile_message">Möchten Sie wirklich \"{profileName}\" löschen?\n\nDies kann nicht rückgängig gemacht werden.</string>
     
     <!-- Profile Tutorial -->
@@ -403,11 +362,6 @@
     
     <!-- Sharing Feature -->
     <string name="failed_to_export_preferences">Einstellungen konnten nicht exportiert werden. Bitte versuchen Sie es erneut.</string>
-    <string name="share_your_preferences">Teilen Sie Ihre Einstellungen</string>
-    <string name="share_priorities_and_events">Teilen Sie Ihre Must/Might/Won\'t-Prioritäten und besuchten Veranstaltungen mit einem anderen Benutzer.</string>
-    <string name="export_your_profile">Exportieren Sie Ihr Profil</string>
-    <string name="export_profile_description">Ihr Standardprofil wird exportiert. Empfänger können es importieren und Ihre Einstellungen anzeigen.</string>
-    <string name="export_failed">Export Fehlgeschlagen</string>
     <string name="name_your_share">Benennen Sie Ihre Freigabe</string>
     <string name="name_share_message">Geben Sie dieser Freigabe einen Namen, damit der Empfänger Sie identifizieren kann.</string>
     <string name="import_button">Import</string>
@@ -419,38 +373,21 @@
     <string name="profile_updated">Profil Aktualisiert</string>
     
     <!-- Profile Management Additional -->
-    <string name="save">Speichern</string>
     <string name="Save">Speichern</string>
-    <string name="delete">Löschen</string>
     <string name="Delete">Löschen</string>
     <string name="Update">Aktualisieren</string>
     <string name="profile_renamed">Profil umbenannt</string>
     <string name="change_profile_color">Profilfarbe Ändern</string>
     <string name="color_changed">Farbe geändert</string>
-    <string name="choose_color">Farbe Wählen</string>
-    <string name="select_color_for">Wählen Sie eine Farbe für</string>
     <string name="rename_profile">Profil Umbenennen</string>
     <string name="rename_profile_message">Geben Sie einen neuen Namen für dieses Profil ein</string>
-    <string name="enter_new_profile_name">Geben Sie einen neuen Namen für dieses Profil ein</string>
-    <string name="delete_profile">Profil Löschen</string>
     <string name="profile_deleted">Profil gelöscht</string>
     <string name="make_my_own">Zu Meinen Machen</string>
     <string name="make_settings_own_message">Dies kopiert alle Prioritäten und Teilnahmen von \"{profileName}\" in Ihr Standardprofil und ersetzt Ihre aktuellen Einstellungen.\n\nSind Sie sicher?</string>
-    <string name="make_settings_your_own">Diese Einstellungen Zu Ihren Eigenen Machen</string>
     <string name="settings_copied_to_default">Einstellungen Zu Standard Kopiert</string>
-    <string name="are_you_sure_continue">Sind Sie sicher, dass Sie fortfahren möchten?</string>
-    <string name="existing_data_lost">Ihre vorhandenen Prioritäten und besuchten Veranstaltungen gehen dauerhaft verloren.</string>
-    <string name="overwrite_warning">Dies überschreibt alle Ihre aktuellen Standardprofileinstellungen mit</string>
-    <string name="overwrite_my_settings">Meine Einstellungen Überschreiben</string>
-    <string name="copied">Kopiert</string>
-    <string name="to_your_profile">zu Ihrem Profil</string>
-    <string name="done">Fertig</string>
     <string name="share_preferences">Einstellungen Teilen</string>
     
     <!-- View Mode Filter Strings -->
-    <string name="view_mode">Ansichtsmodus</string>
-    <string name="show_schedule">Zeitplan Anzeigen</string>
-    <string name="show_bands_only">Nur Bands Anzeigen</string>
     
     <!-- Import/Export -->
     <string name="update_profile">Profil Aktualisieren</string>
@@ -459,7 +396,6 @@
     <!-- About Screen -->
     <string name="about">Über</string>
     <string name="about_description1">Dies ist eine inoffizielle Open-Source-Anwendung, die entwickelt wurde, um Benutzern zu helfen, Bands zu entdecken, die auf !FESTIVALE_NAME! auftreten, und Veranstaltungspläne, Zeiten und Orte an einem Ort anzuzeigen.</string>
-    <string name="about_description2">The app allows users to browse artists, explore event listings, and stay organized while attending festivals. It is designed to work across different events without being tied to any single festival, promoter, or organizer.</string>
     <string name="about_description3">Diese Anwendung ist nicht mit einem Festival, Veranstaltungsorganisator, Promoter oder Künstler verbunden, unterstützt oder offiziell verbunden. Alle Künstlernamen, Veranstaltungsnamen und verwandte Informationen bleiben Eigentum ihrer jeweiligen Eigentümer und werden nur zu Informationszwecken verwendet.</string>
     <string name="about_description4">Der Quellcode für diese Anwendung ist Open-Source und unter der GNU General Public License, Version 2 (GPL-2.0), lizenziert.</string>
     <string name="about_copyright">Copyright © 2015–heute</string>

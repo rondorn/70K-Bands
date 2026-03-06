@@ -277,28 +277,6 @@ public class preferencesHandler {
     }
 
     /**
-     * Initialize festival-specific event type filter visibility settings.
-     * This ensures proper defaults based on the current festival type.
-     */
-    private void initializeEventTypeFilterVisibility() {
-        FestivalConfig config = FestivalConfig.getInstance();
-        
-        // Only initialize if not already set (null values indicate not loaded from file)
-        if (meetAndGreetsEnabled == null || specialEventsEnabled == null || unofficalEventsEnabled == null) {
-            // Use festival-specific defaults from FestivalConfig
-            if (meetAndGreetsEnabled == null) meetAndGreetsEnabled = config.meetAndGreetsEnabledDefault;
-            if (specialEventsEnabled == null) specialEventsEnabled = config.specialEventsEnabledDefault;
-            if (unofficalEventsEnabled == null) unofficalEventsEnabled = config.unofficalEventsEnabledDefault;
-            
-            Log.d("PreferencesHandler", "Initialized event type filter visibility for festival: " + 
-                  config.festivalShortName + 
-                  " - meetAndGreets: " + meetAndGreetsEnabled + 
-                  ", specialEvents: " + specialEventsEnabled + 
-                  ", unofficalEvents: " + unofficalEventsEnabled);
-        }
-    }
-    
-    /**
      * IMMEDIATE initialization of event type filter visibility settings.
      * This is called right after preferences are loaded to ensure values are never null.
      */

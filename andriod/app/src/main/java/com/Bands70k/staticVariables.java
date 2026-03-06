@@ -1005,36 +1005,6 @@ public class staticVariables {
     }
     
     /**
-     * Compares new URLs with cached URLs to detect changes.
-     * @param newUrls The newly fetched URLs.
-     * @return True if any URL has changed, false if all are the same.
-     */
-    private static boolean compareUrls(Map<String, String> newUrls) {
-        if (newUrls == null || newUrls.isEmpty()) {
-            return false;
-        }
-        
-        // Compare each key
-        String[] keysToCompare = {"artistUrl", "scheduleUrl", "descriptionMap", "eventYear"};
-        for (String key : keysToCompare) {
-            String newValue = newUrls.get(key);
-            String cachedValue = storePointerData != null ? storePointerData.get(key) : null;
-            
-            // Handle null/empty cases
-            if (newValue == null) newValue = "";
-            if (cachedValue == null) cachedValue = "";
-            
-            if (!newValue.equals(cachedValue)) {
-                Log.d("lookupUrls", "Change detected for " + key + ": '" + cachedValue + "' -> '" + newValue + "'");
-                return true;
-            }
-        }
-        
-        Log.d("lookupUrls", "No changes detected in pointer data");
-        return false;
-    }
-    
-    /**
      * Updates cache with new URLs and sets main variables.
      * @param downloadUrls The new URLs to cache.
      */
@@ -1072,32 +1042,6 @@ public class staticVariables {
         Log.d("70K_NOTE_DEBUG", "Final URLs set - artistURL: " + artistURL);
         Log.d("70K_NOTE_DEBUG", "Final URLs set - descriptionMap: " + descriptionMap);
         Log.d("70K_NOTE_DEBUG", "Final URLs set - eventYearRaw: " + eventYearRaw);
-    }
-    
-    /**
-     * Safely triggers UI refresh from background thread.
-     * Uses ForegroundDownloadManager pattern to get current activity.
-     */
-    private static void triggerUIRefresh() {
-        // Use Handler to post to UI thread
-        Handler uiHandler = new Handler(Looper.getMainLooper());
-        uiHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Activity currentActivity = ForegroundDownloadManager.getCurrentActivity();
-                    if (currentActivity != null && currentActivity instanceof showBands) {
-                        showBands showBandsActivity = (showBands) currentActivity;
-                        Log.d("lookupUrls", "Triggering UI refresh due to pointer data change");
-                        showBandsActivity.refreshNewData();
-                    } else {
-                        Log.d("lookupUrls", "Cannot trigger refresh - no valid showBands activity");
-                    }
-                } catch (Exception e) {
-                    Log.e("lookupUrls", "Error triggering UI refresh: " + e.getMessage(), e);
-                }
-            }
-        });
     }
     
     /**
