@@ -25,13 +25,6 @@ public class NotificationPublisher extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-
-        //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-       //     context.startForegroundService(new Intent(context, BackgroundService.class));
-       // } else {
-       //     context.startService(new Intent(context, BackgroundService.class));
-       // }
-
         NotificationManager notificationManager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
 
         Notification notification = intent.getParcelableExtra(NOTIFICATION);

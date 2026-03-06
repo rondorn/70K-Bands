@@ -10,6 +10,18 @@ import SwiftUI
 
 // MARK: - Helper Functions for Filter Availability
 
+/// Returns a localized display string for a day label (e.g. "Day 1" → "Päivä 1", "Day (Finish)" → localized).
+func localizedDayLabel(for dayLabel: String) -> String {
+    if dayLabel == "Day (Finish)" {
+        return NSLocalizedString("Day (Finish)", comment: "Day label for final day")
+    }
+    if dayLabel.hasPrefix("Day ") {
+        let suffix = String(dayLabel.dropFirst(4))
+        return NSLocalizedString("Day", comment: "Day label") + " " + suffix
+    }
+    return dayLabel
+}
+
 // Helper function to check if any bands have been ranked (priority set) for a specific day
 func hasRankedBands(forDay dayLabel: String) -> Bool {
     // Get all events for the year (unfiltered)
@@ -482,7 +494,7 @@ struct LandscapeScheduleView: View {
                         if viewModel.canNavigateToNextDay {
                             viewModel.navigateToNextDay()
                             if let day = viewModel.currentDayData?.dayLabel {
-                                let msg = String(format: NSLocalizedString("Viewing Day Format", comment: ""), day)
+                                let msg = String(format: NSLocalizedString("Viewing Day Format", comment: ""), localizedDayLabel(for: day))
                                 onShowMessage?(msg)
                             }
                         } else {
@@ -501,7 +513,7 @@ struct LandscapeScheduleView: View {
                         if viewModel.canNavigateToPreviousDay {
                             viewModel.navigateToPreviousDay()
                             if let day = viewModel.currentDayData?.dayLabel {
-                                let msg = String(format: NSLocalizedString("Viewing Day Format", comment: ""), day)
+                                let msg = String(format: NSLocalizedString("Viewing Day Format", comment: ""), localizedDayLabel(for: day))
                                 onShowMessage?(msg)
                             }
                         } else {
@@ -592,7 +604,7 @@ struct LandscapeScheduleView: View {
             
             // Day label and event count (uses visible venues when filter is active)
             VStack(spacing: 2) {
-                Text("\(dayData.dayLabel) - \(visibleEventCount) Events")
+                Text("\(localizedDayLabel(for: dayData.dayLabel)) - \(visibleEventCount) \(NSLocalizedString("Events", comment: "Events count"))")
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.white)
             }

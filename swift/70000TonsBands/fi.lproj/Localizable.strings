@@ -182,6 +182,7 @@
 "Filters" = "Suodattimet"; //menu name
 
 "Day" = "Päivä";
+"Day (Finish)" = "Päivä (Loppu)";
 
 "Viewing Day Format" = "Näytetään %@";
 "No More Days" = "Ei enää päiviä";

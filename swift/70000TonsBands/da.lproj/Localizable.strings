@@ -121,6 +121,7 @@
 "Filters" = "Filtre"; //menu name
 
 "Day" = "Dag";
+"Day (Finish)" = "Dag (Afslutning)";
 
 "Viewing Day Format" = "Visning af %@";
 "No More Days" = "Ingen flere dage";

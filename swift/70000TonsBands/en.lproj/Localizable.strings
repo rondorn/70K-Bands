@@ -210,6 +210,7 @@
 "Filters" = "Filters"; //menu name
 
 "Day" = "Day";
+"Day (Finish)" = "Day (Finish)";
 
 "Viewing Day Format" = "Viewing %@";
 "No More Days" = "No More Days";

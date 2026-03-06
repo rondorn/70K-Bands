@@ -199,6 +199,7 @@ class MasterViewUIManager {
         startTimeView.text = cachedData.startTimeText
         endTimeView.text = cachedData.endTimeText
         dayView.text = cachedData.dayText
+        dayLabelView.text = NSLocalizedString("Day", comment: "Day label in list")
         bandNameNoSchedule.text = cachedData.bandName
         
         // Set images from cached data

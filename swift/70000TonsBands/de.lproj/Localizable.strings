@@ -200,6 +200,7 @@
 "Filters" = "Filter"; //menu name
 
 "Day" = "Tag";
+"Day (Finish)" = "Tag (Ende)";
 
 "Viewing Day Format" = "Anzeige %@";
 "No More Days" = "Keine weiteren Tage";
