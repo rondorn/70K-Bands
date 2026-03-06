@@ -18,6 +18,12 @@
     <string name="latest_show_cutoff">Det sidste show, du vil se.</string>
     <string name="latest_show_cutoff_hint">Shows, der begynder efter denne valgte tid, udelukkes. F.eks.: hvis du vælger kl. 2, inkluderes et show kl. 2, men et show kl. 2:30 eller senere udelukkes.</string>
     <string name="aischedule_meet_greet_header">Meet and Greets</string>
+    <string name="aischedule_meet_greet_question">Hvilke Meet and Greet vil du deltage i?</string>
+    <string name="aischedule_meet_greet_checklist_hint">Vælg dem, du vil deltage i. Kun Must-bands.</string>
+    <string name="aischedule_unofficial_header">Uofficiel / Cruiser Organized</string>
+    <string name="aischedule_unofficial_question">Hvilke uofficielle / Cruiser Organized begivenheder vil du deltage i?</string>
+    <string name="aischedule_unofficial_checklist_hint">Vælg dem, du vil deltage i. Kun Must-bands.</string>
+    <string name="aischedule_checklist_all">Alle</string>
     <string name="meet_greet_choice">Vil du deltage i Meet and Greet for alle dine Must-bands? Du kan altid markere disse manuelt, hvis du vælger „Ikke interesseret“.</string>
     <string name="mark_all_must_mg">Alle dine Must-bands</string>
     <string name="mark_none_mg">Ikke interesseret</string>
@@ -34,6 +40,7 @@
     <string name="aischedule_no_special_events">Ingen særlige begivenheder i programmet.</string>
     <string name="aischedule_must_conflict_title">To Must-shows på samme tid</string>
     <string name="aischedule_must_conflict_message">Vælg hvilken du vil deltage i.</string>
+    <string name="aischedule_must_conflict_both">Begge</string>
     <string name="replace_auto_schedule_title">Erstat automatisk program?</string>
     <string name="replace_auto_schedule_message">Alle eksisterende automatiske valg fjernes, og processen startes forfra. Begivenheder, du har markeret manuelt, bevares.</string>
     <string name="unknown_bands_title">Ukendte bands</string>

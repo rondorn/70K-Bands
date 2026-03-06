@@ -19,6 +19,8 @@ enum AIScheduleBuildStep: Equatable {
 /// User resolution for a conflict; pass back into nextStep.
 enum AIScheduleResolution {
     case mustConflict(choose: EventData)
+    /// User chose both events; add the current candidate without removing the overlapping one from chosen.
+    case mustConflictChooseBoth(currentEvent: EventData)
 }
 
 // MARK: - Builder
@@ -36,9 +38,10 @@ struct AIScheduleBuilder {
     private var chosen: Set<EventData> = []
     /// Events already marked will-attend; no new event may conflict with these (except M&G vs M&G).
     private var existingAttended: Set<EventData> = []
-    /// User-selected clinics/specials; participate in conflict resolution (mandatory when overlapping > 15 min).
+    /// User-selected clinics/specials/unofficial; participate in conflict resolution (mandatory when overlapping > 15 min).
     private var selectedClinicSet: Set<EventData> = []
     private var selectedSpecialSet: Set<EventData> = []
+    private var selectedUnofficialSet: Set<EventData> = []
     private var candidateIndex: Int = 0
     private var phase: Phase = .buildingShows
     
@@ -59,10 +62,14 @@ struct AIScheduleBuilder {
     /// - Parameter existingAttended: Events already marked will-attend; treated as mandatory (no new conflicts allowed except M&G vs M&G).
     /// - Parameter selectedClinicEvents: User-checked clinics; added to candidates and participate in conflict resolution.
     /// - Parameter selectedSpecialEvents: User-checked special events; added to candidates and participate in conflict resolution.
-    mutating func start(events: [EventData], existingAttended: [EventData] = [], selectedClinicEvents: [EventData] = [], selectedSpecialEvents: [EventData] = []) -> AIScheduleBuildStep {
+    /// - Parameter selectedMeetAndGreetEvents: User-checked Meet and Greets (e.g. from wizard checklist). When non-empty, only these M&G events are added; otherwise markAllMustMeetAndGreets + Must priority is used.
+    /// - Parameter selectedUnofficialEvents: User-checked Unofficial / Cruiser Organized events (e.g. from wizard checklist). When non-empty, only these are added.
+    mutating func start(events: [EventData], existingAttended: [EventData] = [], selectedClinicEvents: [EventData] = [], selectedSpecialEvents: [EventData] = [], selectedMeetAndGreetEvents: [EventData] = [], selectedUnofficialEvents: [EventData] = []) -> AIScheduleBuildStep {
         self.existingAttended = Set(existingAttended)
         self.selectedClinicSet = Set(selectedClinicEvents)
         self.selectedSpecialSet = Set(selectedSpecialEvents)
+        self.selectedUnofficialSet = Set(selectedUnofficialEvents)
+        let selectedMAndGSet = Set(selectedMeetAndGreetEvents)
         var candidates: [EventData] = []
         
         for event in events {
@@ -85,9 +92,13 @@ struct AIScheduleBuilder {
                 continue
             }
             
-            // Meet and Greet: only if option on and band is Must
+            // Meet and Greet: user-selected list, or all Must when markAllMustMeetAndGreets
             if eventType == meetAndGreetype {
-                if markAllMustMeetAndGreets && priority == 1 {
+                if !selectedMAndGSet.isEmpty {
+                    if selectedMAndGSet.contains(event) {
+                        candidates.append(event)
+                    }
+                } else if markAllMustMeetAndGreets && priority == 1 {
                     candidates.append(event)
                 }
                 continue
@@ -98,8 +109,11 @@ struct AIScheduleBuilder {
                 continue
             }
             
-            // Unofficial / Cruiser Organized: ignore for AI schedule; users add manually if desired
+            // Unofficial / Cruiser Organized: only added via selectedUnofficialEvents (user checklist)
             if eventType == unofficalEventType || eventType == unofficalEventTypeOld {
+                if selectedUnofficialSet.contains(event) {
+                    candidates.append(event)
+                }
                 continue
             }
             
@@ -138,6 +152,10 @@ struct AIScheduleBuilder {
                 print("📋 [AIScheduleBuilder] resolution: mustConflict(choose=\(eventLabel(ev)))")
                 // Remove only shows that overlap ev by more than 15 min (short-overlap exception keeps both)
                 chosen = chosen.filter { $0 == ev || !overlaps(ev, $0) || overlapDurationSeconds(ev, $0) <= Self.shortOverlapThresholdSeconds }
+                chosen.insert(ev)
+                candidateIndex += 1
+            case .mustConflictChooseBoth(currentEvent: let ev):
+                print("📋 [AIScheduleBuilder] resolution: mustConflictChooseBoth(current=\(eventLabel(ev)))")
                 chosen.insert(ev)
                 candidateIndex += 1
             }
@@ -333,6 +351,9 @@ struct AIScheduleBuilder {
         }
         if eventType == specialEventType {
             return selectedSpecialSet.contains(event)
+        }
+        if eventType == unofficalEventType || eventType == unofficalEventTypeOld {
+            return selectedUnofficialSet.contains(event)
         }
         return false
     }

@@ -206,10 +206,14 @@
 "AutoChooseAttendanceTitle" = "Deinen Zeitplan planen";
 "AutoChooseAttendanceIntro" = "Soll %@ dir helfen zu wählen, welche Veranstaltungen du besuchen möchtest?\n\nWir nutzen deine Must-, Might- und Wont-Auswahlen sowie ein paar kurze Fragen für einen ersten Vorschlag. Du kannst danach jedes Event ändern.";
 "AutoChooseAttendanceNoMeetAndGreets" = "Keine Meet-and-Greet-Veranstaltungen im Zeitplan.";
-"AutoChooseAttendanceMeetAndGreetQuestion" = "Möchten Sie an Meet and Greet für alle Ihre Must-Bands teilnehmen? Sie können diese jederzeit manuell markieren, wenn Sie „Nicht interessiert“ wählen.";
+"AutoChooseAttendanceMeetAndGreetQuestion" = "An welchen Meet-and-Greet-Veranstaltungen möchtest du teilnehmen?";
 "AutoChooseAttendanceMGOptionAll" = "Alle Ihre Must-Bands";
 "AutoChooseAttendanceMGOptionSome" = "Einige Ihrer Must-Bands";
 "AutoChooseAttendanceMGOptionNone" = "Nicht interessiert";
+"AIScheduleUnofficialEventsHeader" = "Inoffiziell / Cruiser Organized";
+"AutoChooseAttendanceNoUnofficialEvents" = "Keine inoffiziellen / Cruiser-Organized-Veranstaltungen im Zeitplan.";
+"AutoChooseAttendanceUnofficialQuestion" = "An welchen inoffiziellen / Cruiser-Organized-Veranstaltungen möchtest du teilnehmen?";
+"AutoChooseAttendanceMGSelectAll" = "Alle";
 
 "AutoChooseAttendanceNoClinics" = "Keine Workshops im Zeitplan.";
 "AutoChooseAttendanceClinicsQuestion" = "An welchen Workshops möchten Sie teilnehmen?";
@@ -263,6 +267,7 @@
 "AIScheduleNoEvents" = "Keine Events zum Planen.";
 "AIScheduleMustConflictTitle" = "Zwei Must-Konzerte zur gleichen Zeit";
 "AIScheduleMustConflictMessage" = "Wähle eines aus.";
+"AIScheduleMustConflictBoth" = "Beide";
 "AIScheduleDoneTitle" = "Fertig";
 "AIScheduleDoneMessage" = "%d Events als „nehme teil“ markiert.";
 "AIScheduleDoneMessageDetail" = "Du siehst jetzt deinen Zeitplan.\n\nIm Filtermenü:\n• Tippe auf Alle Filter löschen für alle Events\n• Tippe auf Nur markierte Events für deine Events\n• Halte ein Event gedrückt, um den Status zu ändern.";

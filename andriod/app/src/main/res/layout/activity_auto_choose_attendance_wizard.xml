@@ -1,18 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/wizard_scroll"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#1C1C1E"
-    android:fillViewport="true">
+    android:orientation="vertical"
+    android:background="#1C1C1E">
 
-    <LinearLayout
+    <ScrollView
+        android:id="@+id/wizard_scroll"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp"
-        android:paddingTop="88dp"
-        android:paddingEnd="24dp">
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true"
+        android:scrollbars="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:paddingTop="88dp"
+            android:paddingEnd="24dp"
+            android:paddingBottom="24dp">
 
         <TextView
             android:id="@+id/wizard_title"
@@ -146,7 +154,50 @@
                     android:popupBackground="@drawable/spinner_popup_background_dark" />
             </LinearLayout>
 
-            <!-- Step 3: Meet and Greet -->
+            <!-- Step: Unofficial / Cruiser Organized (only if any exist for Must bands) -->
+            <LinearLayout
+                android:id="@+id/wizard_step_unofficial"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone"
+                android:padding="24dp"
+                android:background="#1C1C1E">
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/aischedule_unofficial_question"
+                    android:textColor="#FFFFFF"
+                    android:paddingBottom="4dp" />
+                <TextView
+                    android:id="@+id/wizard_unofficial_hint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/aischedule_unofficial_checklist_hint"
+                    android:textColor="#B0B0B0"
+                    android:textSize="14sp"
+                    android:paddingBottom="8dp" />
+                <Button
+                    android:id="@+id/wizard_unofficial_all"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/aischedule_checklist_all"
+                    android:textColor="#FFFFFF"
+                    android:backgroundTint="#007AFF"
+                    android:layout_marginBottom="8dp" />
+                <ScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:maxHeight="280dp">
+                    <LinearLayout
+                        android:id="@+id/wizard_unofficial_list"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical" />
+                </ScrollView>
+            </LinearLayout>
+
+            <!-- Step: Meet and Greet (checklist, Must bands only) -->
             <LinearLayout
                 android:id="@+id/wizard_step_meet_greet"
                 android:layout_width="match_parent"
@@ -158,26 +209,35 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/meet_greet_choice"
+                    android:text="@string/aischedule_meet_greet_question"
                     android:textColor="#FFFFFF"
                     android:paddingBottom="4dp" />
-                <RadioGroup
-                    android:id="@+id/wizard_meet_greet_choice"
+                <TextView
+                    android:id="@+id/wizard_meet_greet_hint"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-                    <RadioButton
-                        android:id="@+id/wizard_mg_all"
+                    android:layout_height="wrap_content"
+                    android:text="@string/aischedule_meet_greet_checklist_hint"
+                    android:textColor="#B0B0B0"
+                    android:textSize="14sp"
+                    android:paddingBottom="8dp" />
+                <Button
+                    android:id="@+id/wizard_meet_greet_all"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/aischedule_checklist_all"
+                    android:textColor="#FFFFFF"
+                    android:backgroundTint="#007AFF"
+                    android:layout_marginBottom="8dp" />
+                <ScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:maxHeight="280dp">
+                    <LinearLayout
+                        android:id="@+id/wizard_meet_greet_list"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/mark_all_must_mg"
-                        android:textColor="#FFFFFF" />
-                    <RadioButton
-                        android:id="@+id/wizard_mg_none"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/mark_none_mg"
-                        android:textColor="#FFFFFF" />
-                </RadioGroup>
+                        android:orientation="vertical" />
+                </ScrollView>
             </LinearLayout>
 
             <!-- Step 4: Clinics (checklist) -->
@@ -273,40 +333,46 @@
                     android:indeterminate="true" />
             </LinearLayout>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="end"
-            android:paddingTop="24dp"
-            android:paddingBottom="16dp"
-            android:background="#1C1C1E"
-            android:elevation="4dp">
-
-            <Button
-                android:id="@+id/wizard_cancel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/Cancel" />
-
-            <Button
-                android:id="@+id/wizard_back"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:text="@string/navigation_back"
-                android:visibility="gone" />
-
-            <Button
-                android:id="@+id/wizard_next"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:text="@string/Next"
-                android:textColor="#FFFFFF"
-                android:backgroundTint="#007AFF"
-                android:focusable="true"
-                android:clickable="true" />
         </LinearLayout>
+    </ScrollView>
+
+    <!-- Fixed bottom bar: Cancel, Back, Next (static while content scrolls) -->
+    <LinearLayout
+        android:id="@+id/wizard_bottom_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end"
+        android:paddingTop="16dp"
+        android:paddingBottom="16dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="24dp"
+        android:background="#1C1C1E"
+        android:elevation="8dp">
+
+        <Button
+            android:id="@+id/wizard_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/Cancel" />
+
+        <Button
+            android:id="@+id/wizard_back"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:text="@string/navigation_back"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/wizard_next"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:text="@string/Next"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#007AFF"
+            android:focusable="true"
+            android:clickable="true" />
     </LinearLayout>
-</ScrollView>
+</LinearLayout>

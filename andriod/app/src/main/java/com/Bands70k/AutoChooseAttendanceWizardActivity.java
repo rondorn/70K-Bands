@@ -39,11 +39,12 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
     private static final int STEP_INTRO = 0;
     private static final int STEP_UNKNOWN_BANDS = 1;
     private static final int STEP_LATEST_SHOW = 2;
-    private static final int STEP_MEET_GREET = 3;
-    private static final int STEP_CLINICS = 4;
-    private static final int STEP_SPECIAL_EVENTS = 5;
-    private static final int STEP_BUILDING = 6;
-    private static final int STEP_DONE = 7;
+    private static final int STEP_UNOFFICIAL = 3;
+    private static final int STEP_MEET_GREET = 4;
+    private static final int STEP_CLINICS = 5;
+    private static final int STEP_SPECIAL_EVENTS = 6;
+    private static final int STEP_BUILDING = 7;
+    private static final int STEP_DONE = 8;
 
     private static final int REQUEST_BAND_DETAILS = 2001;
     /** Result code: wizard completed successfully; caller should navigate to list view. */
@@ -52,10 +53,12 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
     private int eventYear;
     private int step = STEP_INTRO;
     private int latestShowHalfHours = 11; // default: latest time (5:30 AM)
-    private boolean markAllMustMeetAndGreets = true;
 
     private List<EventData> events = new ArrayList<>();
     private boolean hasSpecialEvents = false;
+    private boolean hasUnofficialEvents = false;
+    private Set<String> selectedMeetAndGreetIds = new HashSet<>();
+    private Set<String> selectedUnofficialEventIds = new HashSet<>();
     private Set<String> selectedClinicIds = new HashSet<>();
     private Set<String> selectedSpecialEventIds = new HashSet<>();
     private List<String> unknownBandNames = new ArrayList<>();
@@ -66,6 +69,7 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
     private View stepIntroView;
     private View stepUnknownBandsView;
     private View stepLatestShowView;
+    private View stepUnofficialView;
     private View stepMeetGreetView;
     private View stepClinicsView;
     private View stepSpecialEventsView;
@@ -90,6 +94,7 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
         stepIntroView = findViewById(R.id.wizard_step_intro);
         stepUnknownBandsView = findViewById(R.id.wizard_step_unknown_bands);
         stepLatestShowView = findViewById(R.id.wizard_step_latest_show);
+        stepUnofficialView = findViewById(R.id.wizard_step_unofficial);
         stepMeetGreetView = findViewById(R.id.wizard_step_meet_greet);
         stepClinicsView = findViewById(R.id.wizard_step_clinics);
         stepSpecialEventsView = findViewById(R.id.wizard_step_special_events);
@@ -132,6 +137,7 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
         stepIntroView.setVisibility(step == STEP_INTRO ? View.VISIBLE : View.GONE);
         stepUnknownBandsView.setVisibility(step == STEP_UNKNOWN_BANDS ? View.VISIBLE : View.GONE);
         stepLatestShowView.setVisibility(step == STEP_LATEST_SHOW ? View.VISIBLE : View.GONE);
+        stepUnofficialView.setVisibility(step == STEP_UNOFFICIAL ? View.VISIBLE : View.GONE);
         stepMeetGreetView.setVisibility(step == STEP_MEET_GREET ? View.VISIBLE : View.GONE);
         stepClinicsView.setVisibility(step == STEP_CLINICS ? View.VISIBLE : View.GONE);
         stepSpecialEventsView.setVisibility(step == STEP_SPECIAL_EVENTS ? View.VISIBLE : View.GONE);
@@ -141,6 +147,7 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
         if (titleText != null) {
             if (step == STEP_UNKNOWN_BANDS) titleText.setText(R.string.unknown_bands_title);
             else if (step == STEP_LATEST_SHOW) titleText.setText(R.string.latest_show_title);
+            else if (step == STEP_UNOFFICIAL) titleText.setText(R.string.aischedule_unofficial_header);
             else if (step == STEP_MEET_GREET) titleText.setText(R.string.aischedule_meet_greet_header);
             else if (step == STEP_CLINICS) titleText.setText(R.string.aischedule_clinics_header);
             else if (step == STEP_SPECIAL_EVENTS) titleText.setText(R.string.aischedule_special_events_header);
@@ -174,8 +181,12 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
             }
         }
         if (step == STEP_MEET_GREET) {
-            RadioGroup rg = findViewById(R.id.wizard_meet_greet_choice);
-            if (rg != null) rg.check(markAllMustMeetAndGreets ? R.id.wizard_mg_all : R.id.wizard_mg_none);
+            ensureEventsLoaded();
+            populateMeetAndGreetList();
+        }
+        if (step == STEP_UNOFFICIAL) {
+            ensureEventsLoaded();
+            populateUnofficialList();
         }
         if (step == STEP_CLINICS) {
             ensureEventsLoaded();
@@ -193,6 +204,7 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
         String nextLabel = getString(R.string.Next);
         if (step == STEP_CLINICS) nextLabel = hasSpecialEvents ? getString(R.string.Next) : getString(R.string.aischedule_build_schedule);
         else if (step == STEP_SPECIAL_EVENTS) nextLabel = getString(R.string.aischedule_build_schedule);
+        else if (step == STEP_MEET_GREET || step == STEP_UNOFFICIAL) nextLabel = getString(R.string.Next);
         else if (step != STEP_INTRO) nextLabel = getString(R.string.Next);
         nextButton.setText(step == STEP_INTRO ? getString(R.string.Next) : nextLabel);
         if (step == STEP_UNKNOWN_BANDS) {
@@ -205,11 +217,18 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
             events = AIScheduleEventLoader.buildEventListForYear(eventYear);
         }
         hasSpecialEvents = false;
+        hasUnofficialEvents = false;
         for (EventData e : events) {
             if (staticVariables.specialEvent.equals(e.eventType != null ? e.eventType : "")) {
                 hasSpecialEvents = true;
-                break;
             }
+            String uo = staticVariables.unofficalEvent != null ? staticVariables.unofficalEvent : "";
+            String uoOld = staticVariables.unofficalEventOld != null ? staticVariables.unofficalEventOld : "";
+            String et = e.eventType != null ? e.eventType : "";
+            if ((uo.equals(et) || uoOld.equals(et)) && rankStore.getPriorityForBand(e.bandName) == 1) {
+                hasUnofficialEvents = true;
+            }
+            if (hasSpecialEvents && hasUnofficialEvents) break;
         }
     }
 
@@ -224,6 +243,120 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
         int[][] states = new int[][]{new int[]{android.R.attr.state_checked}, new int[]{}};
         int[] colors = new int[]{checkedColor, uncheckedColor};
         cb.setButtonTintList(new ColorStateList(states, colors));
+    }
+
+    private void populateMeetAndGreetList() {
+        LinearLayout container = findViewById(R.id.wizard_meet_greet_list);
+        if (container == null) return;
+        container.removeAllViews();
+        String mgType = staticVariables.meetAndGreet != null ? staticVariables.meetAndGreet : "Meet and Greet";
+        for (EventData e : events) {
+            if (!mgType.equals(e.eventType != null ? e.eventType : "")) continue;
+            if (rankStore.getPriorityForBand(e.bandName) != 1) continue;
+            String id = eventId(e);
+            String band = (e.bandName != null ? e.bandName : "");
+            String notesPart = (e.notes != null && !e.notes.isEmpty()) ? " — " + e.notes : "";
+            String sub = (e.location != null ? e.location : "") + " · " + (e.day != null ? e.day : "") + " · " + (e.startTime != null ? e.startTime : "");
+            String line = band + notesPart + " — " + sub;
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setPadding(0, 12, 0, 12);
+            row.setTag(id);
+            row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+            TextView tv = new TextView(this);
+            tv.setTextColor(Color.WHITE);
+            tv.setText(line);
+            tv.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+            row.addView(tv);
+            CheckBox cb = new CheckBox(this);
+            cb.setText("");
+            cb.setChecked(selectedMeetAndGreetIds.contains(id));
+            cb.setTag(id);
+            applyCheckboxTint(cb);
+            cb.setOnCheckedChangeListener((btn, checked) -> {
+                if (checked) selectedMeetAndGreetIds.add((String) btn.getTag());
+                else selectedMeetAndGreetIds.remove(btn.getTag());
+            });
+            row.addView(cb);
+            row.setOnClickListener(v -> cb.setChecked(!cb.isChecked()));
+            container.addView(row);
+        }
+        Button allBtn = findViewById(R.id.wizard_meet_greet_all);
+        if (allBtn != null) {
+            allBtn.setOnClickListener(v -> {
+                for (int i = 0; i < container.getChildCount(); i++) {
+                    View child = container.getChildAt(i);
+                    if (child instanceof LinearLayout) {
+                        for (int j = 0; j < ((LinearLayout) child).getChildCount(); j++) {
+                            View inner = ((LinearLayout) child).getChildAt(j);
+                            if (inner instanceof CheckBox) {
+                                String id = (String) ((LinearLayout) child).getTag();
+                                ((CheckBox) inner).setChecked(true);
+                                selectedMeetAndGreetIds.add(id);
+                                break;
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    private void populateUnofficialList() {
+        LinearLayout container = findViewById(R.id.wizard_unofficial_list);
+        if (container == null) return;
+        container.removeAllViews();
+        String uo = staticVariables.unofficalEvent != null ? staticVariables.unofficalEvent : "";
+        String uoOld = staticVariables.unofficalEventOld != null ? staticVariables.unofficalEventOld : "";
+        for (EventData e : events) {
+            String et = e.eventType != null ? e.eventType : "";
+            if (!uo.equals(et) && !uoOld.equals(et)) continue;
+            if (rankStore.getPriorityForBand(e.bandName) != 1) continue;
+            String id = eventId(e);
+            String label = (e.notes != null && !e.notes.isEmpty()) ? e.notes : (e.bandName != null ? e.bandName : "");
+            String sub = (e.location != null ? e.location : "") + " · " + (e.day != null ? e.day : "") + " · " + (e.startTime != null ? e.startTime : "");
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setPadding(0, 12, 0, 12);
+            row.setTag(id);
+            row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+            TextView tv = new TextView(this);
+            tv.setTextColor(Color.WHITE);
+            tv.setText(label + " — " + sub);
+            tv.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+            row.addView(tv);
+            CheckBox cb = new CheckBox(this);
+            cb.setText("");
+            cb.setChecked(selectedUnofficialEventIds.contains(id));
+            cb.setTag(id);
+            applyCheckboxTint(cb);
+            cb.setOnCheckedChangeListener((btn, checked) -> {
+                if (checked) selectedUnofficialEventIds.add((String) btn.getTag());
+                else selectedUnofficialEventIds.remove(btn.getTag());
+            });
+            row.addView(cb);
+            row.setOnClickListener(v -> cb.setChecked(!cb.isChecked()));
+            container.addView(row);
+        }
+        Button allBtn = findViewById(R.id.wizard_unofficial_all);
+        if (allBtn != null) {
+            allBtn.setOnClickListener(v -> {
+                for (int i = 0; i < container.getChildCount(); i++) {
+                    View child = container.getChildAt(i);
+                    if (child instanceof LinearLayout) {
+                        for (int j = 0; j < ((LinearLayout) child).getChildCount(); j++) {
+                            View inner = ((LinearLayout) child).getChildAt(j);
+                            if (inner instanceof CheckBox) {
+                                String id = (String) ((LinearLayout) child).getTag();
+                                ((CheckBox) inner).setChecked(true);
+                                selectedUnofficialEventIds.add(id);
+                                break;
+                            }
+                        }
+                    }
+                }
+            });
+        }
     }
 
     private void populateClinicsList() {
@@ -426,12 +559,15 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
         if (step == STEP_LATEST_SHOW) {
             Spinner spinner = findViewById(R.id.wizard_latest_show_spinner);
             if (spinner != null) latestShowHalfHours = spinner.getSelectedItemPosition();
+            ensureEventsLoaded();
+            showStep(hasUnofficialEvents ? STEP_UNOFFICIAL : STEP_MEET_GREET);
+            return;
+        }
+        if (step == STEP_UNOFFICIAL) {
             showStep(STEP_MEET_GREET);
             return;
         }
         if (step == STEP_MEET_GREET) {
-            RadioGroup rg = findViewById(R.id.wizard_meet_greet_choice);
-            if (rg != null) markAllMustMeetAndGreets = (rg.getCheckedRadioButtonId() == R.id.wizard_mg_all);
             showStep(STEP_CLINICS);
             return;
         }
@@ -468,10 +604,21 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
         attendedHandle.clearAttendanceForYear(eventYear);
         existingAttended.clear();
 
+        List<EventData> selectedMeetAndGreetList = new ArrayList<>();
+        List<EventData> selectedUnofficialList = new ArrayList<>();
         List<EventData> selectedClinicsList = new ArrayList<>();
         List<EventData> selectedSpecialsList = new ArrayList<>();
         for (EventData e : events) {
             String id = eventId(e);
+            if (staticVariables.meetAndGreet.equals(e.eventType != null ? e.eventType : "") && selectedMeetAndGreetIds.contains(id)) {
+                selectedMeetAndGreetList.add(e);
+            }
+            String uo = staticVariables.unofficalEvent != null ? staticVariables.unofficalEvent : "";
+            String uoOld = staticVariables.unofficalEventOld != null ? staticVariables.unofficalEventOld : "";
+            String et = e.eventType != null ? e.eventType : "";
+            if ((uo.equals(et) || uoOld.equals(et)) && selectedUnofficialEventIds.contains(id)) {
+                selectedUnofficialList.add(e);
+            }
             if (staticVariables.clinic.equals(e.eventType != null ? e.eventType : "") && selectedClinicIds.contains(id)) {
                 selectedClinicsList.add(e);
             }
@@ -480,9 +627,9 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
             }
         }
 
-        builder = new AIScheduleBuilder(markAllMustMeetAndGreets, false, eventYear, latestShowHalfHours);
+        builder = new AIScheduleBuilder(false, false, eventYear, latestShowHalfHours);
         new Thread(() -> {
-            currentBuildStep = builder.start(events, existingAttended, selectedClinicsList, selectedSpecialsList);
+            currentBuildStep = builder.start(events, existingAttended, selectedClinicsList, selectedSpecialsList, selectedMeetAndGreetList, selectedUnofficialList);
             runOnUiThread(this::handleBuildStep);
         }).start();
     }
@@ -576,14 +723,22 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
             dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
         }
 
+        TextView bothBtn = view.findViewById(R.id.conflict_both);
         optionA.setOnClickListener(v -> {
             dialog.dismiss();
-            resolveConflict(a);
+            resolveConflict(a, false);
         });
         optionB.setOnClickListener(v -> {
             dialog.dismiss();
-            resolveConflict(b);
+            resolveConflict(b, false);
         });
+        if (bothBtn != null) {
+            bothBtn.setOnClickListener(v -> {
+                dialog.dismiss();
+                // conflictEventA is the candidate (the one we're trying to add); keep both by adding candidate without removing the other
+                resolveConflict(a, true);
+            });
+        }
         cancelBtn.setOnClickListener(v -> {
             dialog.dismiss();
             finish();
@@ -591,10 +746,10 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    private void resolveConflict(EventData chosenEvent) {
+    private void resolveConflict(EventData chosenEvent, boolean chooseBoth) {
         if (builder == null || chosenEvent == null) return;
         new Thread(() -> {
-            currentBuildStep = builder.nextStep(chosenEvent);
+            currentBuildStep = builder.nextStep(chosenEvent, chooseBoth);
             runOnUiThread(this::handleBuildStep);
         }).start();
     }
@@ -653,7 +808,8 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
         int prev;
         if (step == STEP_UNKNOWN_BANDS) prev = STEP_INTRO;
         else if (step == STEP_LATEST_SHOW) prev = STEP_UNKNOWN_BANDS;
-        else if (step == STEP_MEET_GREET) prev = STEP_LATEST_SHOW;
+        else if (step == STEP_UNOFFICIAL) prev = STEP_LATEST_SHOW;
+        else if (step == STEP_MEET_GREET) prev = hasUnofficialEvents ? STEP_UNOFFICIAL : STEP_LATEST_SHOW;
         else if (step == STEP_CLINICS) prev = STEP_MEET_GREET;
         else if (step == STEP_SPECIAL_EVENTS) prev = STEP_CLINICS;
         else prev = STEP_INTRO;

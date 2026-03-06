@@ -18,6 +18,12 @@
     <string name="latest_show_cutoff">The latest show you want to see.</string>
     <string name="latest_show_cutoff_hint">Shows that begin after this specified time will be excluded. For instance, if you set this time to 2 am, a show scheduled for 2 am will be included, but a show scheduled for 2:30 am or later will be excluded.</string>
     <string name="aischedule_meet_greet_header">Meet and Greets</string>
+    <string name="aischedule_meet_greet_question">What Meet and Greet events do you want to attend?</string>
+    <string name="aischedule_meet_greet_checklist_hint">Check each you want to attend. Must bands only.</string>
+    <string name="aischedule_unofficial_header">Unofficial / Cruiser Organized</string>
+    <string name="aischedule_unofficial_question">What Unofficial / Cruiser Organized events do you want to attend?</string>
+    <string name="aischedule_unofficial_checklist_hint">Check each you want to attend. Must bands only.</string>
+    <string name="aischedule_checklist_all">All</string>
     <string name="meet_greet_choice">Do you want to attend Meet and Greet for all of your Must bands? You can always flag these manually if you select \'Not interested\'.</string>
     <string name="mark_all_must_mg">All of your Must bands</string>
     <string name="mark_none_mg">Not interested</string>
@@ -35,6 +41,7 @@
     <string name="aischedule_done_message_detail">You will now be taken to a view showing your schedule.\n\nIn the filter menu:\n• Click Clear All Filters to see all events\n• Click Show Flagged Events only to see only your events\n• Long press any event to change your attendance status.</string>
     <string name="aischedule_must_conflict_title">Two Must-see shows at the same time</string>
     <string name="aischedule_must_conflict_message">Pick which one to attend.</string>
+    <string name="aischedule_must_conflict_both">Both</string>
     <string name="aischedule_seeing_them_nowhere_else">Seeing them: Nowhere else</string>
     <string name="aischedule_seeing_them_format">Seeing them: %1$s</string>
     <string name="aischedule_build_schedule">Build schedule</string>

@@ -444,12 +444,16 @@ class PreferencesViewModel: ObservableObject {
     }
     
     /// User confirmed clearing all attendance. Sets every attendance record for the year to Not Attended (keeps records); sync pushes sawNone to iCloud.
+    /// Also clears the "has run AI" flag and backup for this year so "Build my schedule automatically" does not show the replace confirmation.
     func confirmClearAllAttendance() {
         showClearAllConfirmation = false
         guard FestivalConfig.current.aiSchedule else { return }
-        AttendanceManager().clearAllAttendance(forYear: selectedYearAsInt) { [weak self] in
+        let year = selectedYearAsInt
+        AttendanceManager().clearAllAttendance(forYear: year) { [weak self] in
             guard let self = self else { return }
-            ShowsAttended.clearLegacyStoreForYear(self.selectedYearAsInt)
+            ShowsAttended.clearLegacyStoreForYear(year)
+            AIScheduleStorage.setHasRunAI(for: year, value: false)
+            AIScheduleStorage.clearBackup(year: year)
             SQLiteiCloudSync().syncAttendanceToiCloud(completion: { [weak self] in
                 guard let self = self else { return }
                 self.refreshAutoChosenDataState()

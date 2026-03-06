@@ -18,6 +18,12 @@
     <string name="latest_show_cutoff">O último show que você quer ver.</string>
     <string name="latest_show_cutoff_hint">Shows que começam após este horário serão excluídos. Por exemplo, se você definir 2h, um show às 2h será incluído, mas um show às 2h30 ou mais tarde será excluído.</string>
     <string name="aischedule_meet_greet_header">Meet and Greets</string>
+    <string name="aischedule_meet_greet_question">Em quais Meet and Greet você quer participar?</string>
+    <string name="aischedule_meet_greet_checklist_hint">Marque os que deseja. Apenas bandas Must.</string>
+    <string name="aischedule_unofficial_header">Não oficial / Cruiser Organized</string>
+    <string name="aischedule_unofficial_question">Em quais eventos não oficiais / Cruiser Organized você quer participar?</string>
+    <string name="aischedule_unofficial_checklist_hint">Marque os que deseja. Apenas bandas Must.</string>
+    <string name="aischedule_checklist_all">Todos</string>
     <string name="meet_greet_choice">Quer participar de Meet and Greet de todas as suas bandas Must? Você sempre pode marcá-las manualmente se escolher «Não interessado».</string>
     <string name="mark_all_must_mg">Todas as suas bandas Must</string>
     <string name="mark_none_mg">Não interessado</string>
@@ -34,6 +40,7 @@
     <string name="aischedule_no_special_events">Nenhum evento especial na programação.</string>
     <string name="aischedule_must_conflict_title">Dois shows Must ao mesmo tempo</string>
     <string name="aischedule_must_conflict_message">Escolha qual assistir.</string>
+    <string name="aischedule_must_conflict_both">Ambos</string>
     <string name="replace_auto_schedule_title">Substituir horário automático?</string>
     <string name="replace_auto_schedule_message">Todas as escolhas automáticas serão removidas e o processo recomeçará. Os eventos que você marcou manualmente serão mantidos.</string>
     <string name="unknown_bands_title">Bandas desconhecidas</string>
