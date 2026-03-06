@@ -124,9 +124,43 @@ class LandscapeScheduleViewModel: ObservableObject {
     
     // MARK: - Public Methods
     
-    /// Apply all filters to events (same logic as list view)
+    /// Apply all filters to events (same logic as list view).
+    /// When "Show Flagged Events Only" is on, all other filters (event type, venue, priority) are disabled so only attendance is applied.
     private func applyFiltersToEvents(_ events: [EventData]) -> [EventData] {
         print("🔍 [LANDSCAPE_FILTER] Applying filters to \(events.count) events")
+        
+        // When Show Flagged Events Only is on: disable all other filters — only apply attendance (and hide-expired if set).
+        if getShowOnlyWillAttened() {
+            var filteredEvents = events.filter { event in
+                let bandName = event.bandName
+                let location = event.location
+                let eventType = event.eventType ?? ""
+                let startTime = event.startTime ?? ""
+                
+                if startTime.isEmpty {
+                    return false
+                }
+                
+                let eventYearString = String(eventYear)
+                let attendedStatus = attendedHandle.getShowAttendedStatus(
+                    band: bandName,
+                    location: location,
+                    startTime: startTime,
+                    eventType: eventType,
+                    eventYearString: eventYearString
+                )
+                
+                return attendedStatus != sawNoneStatus
+            }
+            
+            if filteredEvents.isEmpty && !events.isEmpty {
+                setShowOnlyWillAttened(false)
+                filteredEvents = events
+                print("🔍 [LANDSCAPE_FILTER] Show Flagged Only had no events; turned off and showing \(filteredEvents.count) events")
+            }
+            print("🔍 [LANDSCAPE_FILTER] Show Flagged Only: \(filteredEvents.count) events (other filters disabled)")
+            return filteredEvents
+        }
         
         // 1. EVENT TYPE FILTERS
         var excludedEventTypes: [String] = []
@@ -190,7 +224,7 @@ class LandscapeScheduleViewModel: ObservableObject {
         
         print("🔍 [LANDSCAPE_FILTER] After priority filtering: \(filteredEvents.count) events")
         
-        // 4. ATTENDANCE/FLAGGED EVENTS FILTER
+        // 4. ATTENDANCE/FLAGGED EVENTS FILTER (only when not already in "Show Flagged Only" path above)
         if getShowOnlyWillAttened() {
             let beforeFlaggedFilter = filteredEvents
             filteredEvents = filteredEvents.filter { event in

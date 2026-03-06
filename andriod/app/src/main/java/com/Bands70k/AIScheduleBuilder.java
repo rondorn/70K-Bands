@@ -32,6 +32,8 @@ public class AIScheduleBuilder {
     private Set<EventData> existingAttended = new HashSet<>();
     private Set<EventData> selectedClinicSet = new HashSet<>();
     private Set<EventData> selectedSpecialSet = new HashSet<>();
+    private Set<EventData> selectedMeetAndGreetSet = new HashSet<>();
+    private Set<EventData> selectedUnofficialSet = new HashSet<>();
     private int candidateIndex = 0;
 
     public AIScheduleBuilder(boolean markAllMustMeetAndGreets, boolean markAllMustClinics,
@@ -73,21 +75,27 @@ public class AIScheduleBuilder {
     /**
      * Start or continue building. Pass null for resolution when no user choice is needed,
      * or pass the chosen event when resolving a Must conflict.
+     * @param chooseBoth If true, add resolutionChosenEvent without removing the overlapping event (keep both).
      */
-    public BuildStep nextStep(EventData resolutionChosenEvent) {
+    public BuildStep nextStep(EventData resolutionChosenEvent, boolean chooseBoth) {
         if (resolutionChosenEvent != null) {
-            // Resolve Must conflict: remove overlapping (except <=15 min), add chosen
-            Set<EventData> newChosen = new HashSet<>();
-            for (EventData e : chosen) {
-                if (e.equals(resolutionChosenEvent)) { newChosen.add(e); continue; }
-                if (!overlaps(resolutionChosenEvent, e)) { newChosen.add(e); continue; }
-                if (overlapDurationSeconds(resolutionChosenEvent, e) <= SHORT_OVERLAP_THRESHOLD_SECONDS) {
-                    newChosen.add(e);
+            if (chooseBoth) {
+                chosen.add(resolutionChosenEvent);
+                candidateIndex++;
+            } else {
+                // Resolve Must conflict: remove overlapping (except <=15 min), add chosen
+                Set<EventData> newChosen = new HashSet<>();
+                for (EventData e : chosen) {
+                    if (e.equals(resolutionChosenEvent)) { newChosen.add(e); continue; }
+                    if (!overlaps(resolutionChosenEvent, e)) { newChosen.add(e); continue; }
+                    if (overlapDurationSeconds(resolutionChosenEvent, e) <= SHORT_OVERLAP_THRESHOLD_SECONDS) {
+                        newChosen.add(e);
+                    }
                 }
+                chosen = newChosen;
+                chosen.add(resolutionChosenEvent);
+                candidateIndex++;
             }
-            chosen = newChosen;
-            chosen.add(resolutionChosenEvent);
-            candidateIndex++;
         }
 
         // Phase 1: walk candidates and resolve overlaps
@@ -202,13 +210,16 @@ public class AIScheduleBuilder {
 
     /**
      * Build candidate list and return first step. existingAttended = events already marked will-attend.
-     * selectedClinicEvents and selectedSpecialEvents are user-picked clinics/specials; they are added to candidates and participate in conflict resolution.
+     * selectedClinicEvents, selectedSpecialEvents, selectedMeetAndGreetEvents, selectedUnofficialEvents are user-picked; they are added to candidates and participate in conflict resolution.
      */
     public BuildStep start(List<EventData> events, List<EventData> existingAttendedList,
-                          List<EventData> selectedClinicEvents, List<EventData> selectedSpecialEvents) {
+                          List<EventData> selectedClinicEvents, List<EventData> selectedSpecialEvents,
+                          List<EventData> selectedMeetAndGreetEvents, List<EventData> selectedUnofficialEvents) {
         existingAttended = new HashSet<>(existingAttendedList != null ? existingAttendedList : new ArrayList<>());
         selectedClinicSet = new HashSet<>(selectedClinicEvents != null ? selectedClinicEvents : new ArrayList<>());
         selectedSpecialSet = new HashSet<>(selectedSpecialEvents != null ? selectedSpecialEvents : new ArrayList<>());
+        selectedMeetAndGreetSet = new HashSet<>(selectedMeetAndGreetEvents != null ? selectedMeetAndGreetEvents : new ArrayList<>());
+        selectedUnofficialSet = new HashSet<>(selectedUnofficialEvents != null ? selectedUnofficialEvents : new ArrayList<>());
         List<EventData> candidates = new ArrayList<>();
 
         for (EventData event : events) {
@@ -227,7 +238,7 @@ public class AIScheduleBuilder {
                 continue;
             }
             if (staticVariables.meetAndGreet.equals(eventType)) {
-                if (markAllMustMeetAndGreets && priority == 1) candidates.add(event);
+                if (priority == 1 && (markAllMustMeetAndGreets || selectedMeetAndGreetSet.contains(event))) candidates.add(event);
                 continue;
             }
             if (staticVariables.clinic.equals(eventType)) {
@@ -238,8 +249,10 @@ public class AIScheduleBuilder {
                 if (selectedSpecialSet.contains(event)) candidates.add(event);
                 continue;
             }
-            if (staticVariables.unofficalEvent.equals(eventType) || staticVariables.unofficalEventOld.equals(eventType))
+            if (staticVariables.unofficalEvent.equals(eventType) || staticVariables.unofficalEventOld.equals(eventType)) {
+                if (priority == 1 && selectedUnofficialSet.contains(event)) candidates.add(event);
                 continue;
+            }
         }
 
         candidates.sort((a, b) -> Double.compare(a.timeIndex, b.timeIndex));
@@ -247,7 +260,7 @@ public class AIScheduleBuilder {
         chosen = new HashSet<>(existingAttended);
         candidateIndex = 0;
 
-        return nextStep(null);
+        return nextStep(null, false);
     }
 
     /**
@@ -309,13 +322,15 @@ public class AIScheduleBuilder {
         return staticVariables.meetAndGreet.equals(event.eventType != null ? event.eventType : "");
     }
 
-    /** True if event is Must show, M&G, or in user-selected clinics/specials. Used for conflict resolution. */
+    /** True if event is Must show, M&G, or in user-selected clinics/specials/unofficial. Used for conflict resolution. */
     private boolean isMandatory(EventData event) {
         if (event == null) return false;
         String type = event.eventType != null ? event.eventType : "";
         if (staticVariables.show.equals(type))
             return rankStore.getPriorityForBand(event.bandName) == 1;
         if (staticVariables.meetAndGreet.equals(type)) return true;
+        if (staticVariables.unofficalEvent.equals(type) || staticVariables.unofficalEventOld.equals(type))
+            return selectedUnofficialSet.contains(event);
         return selectedClinicSet.contains(event) || selectedSpecialSet.contains(event);
     }
 

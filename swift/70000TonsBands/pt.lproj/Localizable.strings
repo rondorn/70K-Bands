@@ -206,10 +206,14 @@
 "AutoChooseAttendanceTitle" = "Planeje sua programação";
 "AutoChooseAttendanceIntro" = "Quer que %@ ajude você a escolher a quais eventos assistir?\n\nUsaremos suas escolhas Must, Might e Wont e algumas perguntas rápidas para uma primeira versão. Você pode alterar qualquer evento depois.";
 "AutoChooseAttendanceNoMeetAndGreets" = "Nenhum Meet and Greet na programação.";
-"AutoChooseAttendanceMeetAndGreetQuestion" = "Quer participar de Meet and Greet de todas as suas bandas Must? Você sempre pode marcá-las manualmente se escolher «Não interessado».";
+"AutoChooseAttendanceMeetAndGreetQuestion" = "Em quais eventos Meet and Greet você quer participar?";
 "AutoChooseAttendanceMGOptionAll" = "Todas as suas bandas Must";
 "AutoChooseAttendanceMGOptionSome" = "Algumas das suas bandas Must";
 "AutoChooseAttendanceMGOptionNone" = "Não interessado";
+"AIScheduleUnofficialEventsHeader" = "Não oficial / Cruiser Organized";
+"AutoChooseAttendanceNoUnofficialEvents" = "Não há eventos não oficiais / Cruiser Organized na programação.";
+"AutoChooseAttendanceUnofficialQuestion" = "Em quais eventos não oficiais / Cruiser Organized você quer participar?";
+"AutoChooseAttendanceMGSelectAll" = "Todos";
 
 "AutoChooseAttendanceNoClinics" = "Nenhuma clínica na programação.";
 "AutoChooseAttendanceClinicsQuestion" = "Em quais clínicas você quer participar?";
@@ -263,6 +267,7 @@
 "AIScheduleNoEvents" = "Nenhum evento para construir.";
 "AIScheduleMustConflictTitle" = "Dois shows Must no mesmo horário";
 "AIScheduleMustConflictMessage" = "Escolha qual assistir.";
+"AIScheduleMustConflictBoth" = "Ambos";
 "AIScheduleDoneTitle" = "Concluído";
 "AIScheduleDoneMessage" = "Marcados %d eventos como vou assistir.";
 "AIScheduleDoneMessageDetail" = "Agora você verá uma tela com sua programação.\n\nNo menu de filtros:\n• Toque em Limpar filtros para ver todos os eventos\n• Toque em Só eventos marcados para ver apenas os seus\n• Toque e segure em qualquer evento para alterar sua presença.";

@@ -18,6 +18,12 @@
     <string name="latest_show_cutoff">Die letzte Show, die du sehen möchtest.</string>
     <string name="latest_show_cutoff_hint">Shows, die nach dieser gewählten Zeit beginnen, werden ausgeschlossen. Wenn du z. B. 2 Uhr wählst, wird ein Show um 2 Uhr einbezogen, ein Show um 2:30 Uhr oder später jedoch ausgeschlossen.</string>
     <string name="aischedule_meet_greet_header">Meet and Greets</string>
+    <string name="aischedule_meet_greet_question">An welchen Meet-and-Greet-Events möchten Sie teilnehmen?</string>
+    <string name="aischedule_meet_greet_checklist_hint">Aktivieren Sie die gewünschten. Nur Must-Bands.</string>
+    <string name="aischedule_unofficial_header">Inoffiziell / Cruiser Organized</string>
+    <string name="aischedule_unofficial_question">An welchen inoffiziellen / Cruiser-Organized-Events möchten Sie teilnehmen?</string>
+    <string name="aischedule_unofficial_checklist_hint">Aktivieren Sie die gewünschten. Nur Must-Bands.</string>
+    <string name="aischedule_checklist_all">Alle</string>
     <string name="meet_greet_choice">Möchten Sie an Meet and Greet für alle Ihre Must-Bands teilnehmen? Sie können diese jederzeit manuell markieren, wenn Sie „Nicht interessiert“ wählen.</string>
     <string name="mark_all_must_mg">Alle Ihre Must-Bands</string>
     <string name="mark_none_mg">Nicht interessiert</string>
@@ -34,6 +40,7 @@
     <string name="aischedule_no_special_events">Keine Sonderveranstaltungen im Zeitplan.</string>
     <string name="aischedule_must_conflict_title">Zwei Must-Shows zur gleichen Zeit</string>
     <string name="aischedule_must_conflict_message">Wählen Sie eine aus.</string>
+    <string name="aischedule_must_conflict_both">Beide</string>
     <string name="replace_auto_schedule_title">Automatischen Zeitplan ersetzen?</string>
     <string name="replace_auto_schedule_message">Alle bestehenden automatischen Auswahlen werden entfernt und der Vorgang beginnt von neuem. Von dir manuell markierte Veranstaltungen bleiben erhalten.</string>
     <string name="unknown_bands_title">Unbekannte Bands</string>

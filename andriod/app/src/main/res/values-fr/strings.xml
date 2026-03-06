@@ -18,6 +18,12 @@
     <string name="latest_show_cutoff">Le dernier spectacle que vous voulez voir.</string>
     <string name="latest_show_cutoff_hint">Les spectacles qui commencent après l\'heure indiquée seront exclus. Par exemple, si vous réglez 2 h, un spectacle à 2 h sera inclus, mais un spectacle à 2 h 30 ou plus tard sera exclu.</string>
     <string name="aischedule_meet_greet_header">Meet and Greets</string>
+    <string name="aischedule_meet_greet_question">À quels Meet and Greet souhaitez-vous assister ?</string>
+    <string name="aischedule_meet_greet_checklist_hint">Cochez ceux auxquels vous voulez assister. Bandes Must uniquement.</string>
+    <string name="aischedule_unofficial_header">Non officiel / Cruiser Organized</string>
+    <string name="aischedule_unofficial_question">À quels événements non officiels / Cruiser Organized souhaitez-vous assister ?</string>
+    <string name="aischedule_unofficial_checklist_hint">Cochez ceux auxquels vous voulez assister. Bandes Must uniquement.</string>
+    <string name="aischedule_checklist_all">Tous</string>
     <string name="meet_greet_choice">Voulez-vous participer aux Meet and Greet pour toutes vos bandes Must ? Vous pouvez toujours les marquer manuellement si vous choisissez « Pas intéressé ».</string>
     <string name="mark_all_must_mg">Toutes vos bandes Must</string>
     <string name="mark_none_mg">Pas intéressé</string>
@@ -34,6 +40,7 @@
     <string name="aischedule_no_special_events">Aucun événement spécial dans le programme.</string>
     <string name="aischedule_must_conflict_title">Deux shows Must en même temps</string>
     <string name="aischedule_must_conflict_message">Choisissez lequel.</string>
+    <string name="aischedule_must_conflict_both">Les deux</string>
     <string name="replace_auto_schedule_title">Remplacer l\'horaire automatique ?</string>
     <string name="replace_auto_schedule_message">Toutes les sélections automatiques seront supprimées et le processus redémarrera. Les événements que vous avez marqués manuellement seront conservés.</string>
     <string name="unknown_bands_title">Groupes inconnus</string>
