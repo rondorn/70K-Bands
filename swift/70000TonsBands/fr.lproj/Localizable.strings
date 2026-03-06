@@ -18,14 +18,11 @@
 "Must" = "Oui";
 "Might" = "Peut Être";
 "Wont" = "Non";
-"Priority" = "Priorité";
-"Attended" = "Assisté";
 "Band Priority" = "Priorité du groupe";
 "Event Attendance" = "Présence à l'événement";
 "EventAttendanceAll" = "Tous";
 "EventAttendancePartial" = "Partiel";
 "EventAttendanceNone" = "Aucun";
-"Wont Attend" = "Ne participera pas";
 "Unknown" = "Inconnu";
 
 "Ok" = "Oui";
@@ -38,11 +35,7 @@
 "Alert On Might See Bands"="Alerte pour peut-être Shows";
 "Alert Only for Will Attend Events"="Alerte uniquement pour les événements liés à la volonté";
 
-"Only alert for shows you will attend"="Seulement alerte pour les spectacles auxquels vous assisterez";
-"Alert for shows according to your favorites selection"="Alerte pour les spectacles en fonction de votre sélection de favoris et des paramètres indiqués sur cet écran";
 
-"showAttendedFilterTrueHelp"="N'affichez que les événements que vous indiquez. Les autres filtres ne s'appliqueront pas";
-"showAttendedFilterFalseHelp"="Afficher les groupes et les émissions en fonction des filtres";
 
 "Sorting Chronologically"="Tri chronologique";
 "Sorting Alphabetically"="Tri alphabétique";
@@ -51,13 +44,8 @@
 "Part Of Event"="Assister à certains de cet événement";
 "None Of Event"="Je ne verrai pas cet événement";
 
-"Prompt For Attended Status Header"="Demander le statut de présence";
-"Prompt For Attended Status"="Demander le statut de présence";
 
-"Go To Details"="Aller aux détails";
 
-"ShowHideEvents"="Afficher/Masquer Expiré";
-"HideExpiredEvents"="Masquer Les événements Expirés";
 
 "Minutes Before Event to Alert"="Alertez-moi avant l'événement (minutes)";
 "Alert For Shows"="Alerte pour les spectacles";
@@ -67,57 +55,34 @@
 "Alert For Album Listening Events"="Alerte pour l'album Listening Evénements";
 "Alert For Unofficial Events"="Alerte pour les événements organisés par Cruiser";
 
-"Special Event"="événements spéciaux";
-"Meet and Greet"="Meet and Greet Evénements";
-"Clinic"="Cliniques Evénements";
-"Listening Party"="l'album Listening Evénements";
 "Unofficial Events"="Croisière organisée";
 
 
-"officialWebSiteLinkHelp" = "Vous emmenant sur le site officiel";
-"WikipediaLinkHelp" = "Recherche sur Wikipedia";
-"YouTubeLinkHelp" = "Recherche de vidéos officielles sur YouTube";
-"MetalArchiveLinkHelp" = "Rechercher dans les archives métalliques";
 
-"PoolVenue" = "Piscine";
-"TheaterVenue" = "Théâtre";
-"LoungeVenue" = "Salon";
-"RinkVenue" = "Patinoire";
-"OtherVenue" = "Autre";
 
-"venueFilterHeader" = "Afficher/Masquer le Lieu";
-"showTypeFilterHeader" = "Afficher/Masquer Type d'événement";
 
-"showHideExpiredLabel" = "Afficher/Masquer Événements Expirés";
-"hideExpiredEvents" = "Masquer Événements Expirés";
 "Hide Expired Events" = "Masquer les événements passés";
 "Expired Events" = "Événements Expirés";
-"Flagged Header" = "Événements marqués";
-"Show Expired Events" = "Afficher Événements Expirés";
-"Hiding Expired Events" = "Masquage Événements Expirés";
-"Showing Expired Events" = "Affichage Événements Expirés";
 
 "AlertPreferences" = "Préférences d'alerte";
-"PreferenceHeader" = "Préférences";
 "Preferences" = "Préférences";
 
 // Default description text
 "DefaultDescription70K" = "Le texte de commentaire n'est pas encore disponible. Veuillez attendre qu'Aaron ajoute sa description. Vous pouvez ajouter la vôtre si vous le souhaitez, mais lorsque la sienne sera disponible, elle n'écrasera pas vos données et ne s'affichera pas.";
 "DefaultDescriptionMDF" = "Cliquez pour ajouter vos propres notes";
 
-"disableAttendedPrompt" = "Désactiver cette invite";
 
 "EndofList" = "Fin de liste";
 "AlreadyAtStart" = "Déjà au début de la liste";
-"Next" = "Prochain";
-"Previous" = "Précédent";
 
 "NoteFontSize" = "Notez que la taille de la police est grande";
 
-"ShareBandChoices" = "Partager les choix de groupe";
-"ShareShowChoices" = "Partager Afficher les choix";
+"Share Type" = "Type de partage";
+"Share Importable Band/Event Data" = "Partager les données bande/événement importables";
+"Share Band Report" = "Partager le rapport des groupes";
+"Share Event Report" = "Partager le rapport des événements";
+"Back" = "Retour";
 
-"visitBands" = "Liens";
 "country" = "Pays";
 "genre" = "Le Genre";
 "Last On Cruise" = "Dernier en croisière"; //list of years a band was previously on
@@ -137,7 +102,6 @@
 "AllLinksOpenInExternalBrowser"="Tous les liens s'ouvrent dans le navigateur externe";
 "DetailScreenSection"="Écran de détails";
 "MiscSection"="Divers";
-"restartTitle" = "Redémarrage Nécessaire";
 "restartMessage" = "Ne faites pas cela sur la croisière. CONNEXION INTERNET REQUISE.";
 "yearChangeAborted" = "Aucune connexion Internet n'est disponible, ne peut PAS changer d'année pour le moment";
 "eventOrBandPrompt" = "Voulez-vous voir une liste de groupes ou une liste d'événements ?";
@@ -149,95 +113,37 @@
 
 
 //new section for the filter menu control
-"Clear Filters" = "Effacer les filtres"; //menu choice
 "Band Ranking Filters" = "Filtres de classement des bandes"; //menu choice
-"Show Only Flagged As Attended" = "Afficher uniquement marqué comme étant présent"; //help text
 "Sorting Options" = "Options de tri"; //menu header
 "Event Type Filters" = "Filtres de types d'événements"; //menu header
-"Venue Filters" = "Filtres de sites"; //menu header
 "Location Filters" = "Filtres de sites"; //menu header (portrait + calendar: venues in use)
-"VenueFilterSheetDescription" = "Afficher ou masquer les lieux. Mêmes réglages que la vue liste—si un lieu est masqué dans la liste, il est masqué dans le calendrier et vice versa.";
-"OneVenueHidden" = "1 lieu masqué";
-"VenuesHiddenCount" = "%d lieux masqués";
 "All venues hidden" = "Tous les lieux masqués";
 "TapFilterToShowVenues" = "Appuyez sur l’icône de filtre ci-dessus pour afficher à nouveau les lieux.";
-"Show Venue Format" = "Afficher %@"; //venue filter option, %@ = venue name
-"Hide Venue Format" = "Masquer %@"; //venue filter option, %@ = venue name
 
-"Can not hide all venues" = "Impossible de masquer tous les lieux"; //help text
-"Can not hide all statuses" = "Impossible de masquer tous les statuts"; //help text
 "Clear All Filters" = "Effacer tous les filtres"; //menu choice
 
-"Show All Events" = "Afficher tous les événements"; //menu choice
 "Show Flagged Events Only" = "Afficher uniquement les événements marqués"; //menu choice
-"Show Only Events Flagged As Attending" = "Afficher uniquement les événements marqués comme participants"; //help text
 
 //venue filters
-"Show Pool Events" = "Afficher les événements de la piscine"; //menu choice
-"Hide Pool Events" = "Masquer les événements de la piscine"; //menu choice
-"Pool Venue Filter On" = "Filtre de salle de piscine activé"; //help text
-"Pool Venue Filter Off" = "Filtre de salle de piscine désactivé"; //help text
 
-"Show Lounge Events" = "Événements du salon d’exposition"; //menu choice
-"Hide Lounge Events" = "Masquer les événements du salon"; //menu choice
-"Lounge Venue Filter On" = "Filtre de salle de salon activé"; //help text
-"Lounge Venue Filter Off" = "Filtre de salle de salon désactivé"; //help text
 
-"Show Theater Events" = "Événements de théâtre"; //menu choice
-"Hide Theater Events" = "Masquer les événements du théâtre"; //menu choice
-"Theater Venue Filter On" = "Filtre de salle de cinéma activé"; //help text
-"Theater Venue Filter Off" = "Filtre de salle de cinéma désactivé"; //help text
 
-"Show Rink Events" = "Afficher les événements de la patinoire"; //menu choice
-"Hide Rink Events" = "Masquer les événements de la patinoire"; //menu choice
-"Rink Venue Filter On" = "Filtrer le site de la patinoire activé"; //help text
-"Rink Venue Filter Off" = "Filtre des sites de patinoire désactivé"; //help text
 
 "Show Other Events" = "Afficher d'autres événements"; //menu choice
 "Hide Other Events" = "Masquer les autres événements"; //menu choice
-"Other Venue Filter On" = "Filtre autre lieu activé"; //help text
-"Other Venue Filter Off" = "Filtre autre lieu désactivé"; //help text
 
 //event filter
-"Show Meet & Greet Events" = "Afficher les événements Meet & Greet"; //menu choice
-"Hide Meet & Greet Events" = "Masquer les événements Meet & Greet"; //menu choice
-"Meet and Greet Event Filter On" = "Filtre d'événement Meet and Greet activé"; //help text
-"Meet and Greet Event Filter Off" = "Filtre d'événement de rencontre et d'accueil désactivé"; //help text
 
-"Show Unofficial Events" = "Afficher les événements non officiels"; //menu choice
-"Hide Unofficial Events" = "Masquer les événements non officiels"; //menu choice
-"Unofficial Event Filter On" = "Filtre d'événements non officiel activé"; //help text
-"Unofficial Event Filter Off" = "Filtre d'événements non officiel désactivé"; //help text
 
-"Show Special/Other Events" = "Afficher les événements spéciaux/autres"; //menu choice
-"Hide Special/Other Events" = "Masquer les événements spéciaux/autres"; //menu choice
-"Special/Other Event Filter On" = "Filtre d'événements spéciaux/autres activé"; //help text
-"Special/Other Event Filter Off" = "Filtre d'événements spéciaux/autres désactivé"; //help text
 
 //sorting
 "Sort By Name" = "Trier par nom"; //menu choice
 "Sort By Time" = "Trier par heure"; //menu choice
  
 //band preference filter
-"Show Must See Items" = "Afficher les éléments incontournables"; //menu choice
-"Hide Must See Items" = "Masquer les éléments incontournables"; //menu choice
-"Must See Filter On" = "Filtrer à voir absolument"; //help text
-"Must See Filter Off" = "À voir absolument Filtre désactivé"; //help text
 
-"Show Might See Items" = "Afficher les éléments susceptibles de voir"; //menu choice
-"Hide Might See Items" = "Masquer les éléments susceptibles de voir"; //menu choice
-"Might See Filter On" = "Peut voir le filtre activé"; //help text
-"Might See Filter Off" = "Pourrait voir le filtre désactivé"; //help text
 
-"Show Wont See Items" = "Afficher les éléments que je ne verrai pas"; //menu choice
-"Hide Wont See Items" = "Masquer les éléments que je ne verrai pas"; //menu choice
-"Wont See Filter On" = "Ne verra pas le filtre activé"; //help text
-"Wont See Filter Off" = "Je ne verrai pas le filtre désactivé"; //help text
 
-"Show Unknown Items" = "Afficher les éléments inconnus"; //menu choice
-"Hide Unknown Items" = "Masquer les éléments inconnus"; //menu choice
-"Unknown Filter On" = "Filtre inconnu activé"; //help text
-"Unknown Filter Off" = "Filtre inconnu désactivé"; //help text
 
 "Filtering" = "Filtration"; //filtering indicator near counts
 "Filters" = "Filtres"; //menu name
@@ -255,8 +161,6 @@
 
 // Keyboard toolbar buttons
 "Select All" = "Tout sélectionner";
-"Copy" = "Copier";
-"Paste" = "Coller";
 
 // Information section
 "Information" = "Information";
@@ -266,13 +170,10 @@
 // Advanced Preferences section
 "AdvancedPreferences" = "PRÉFÉRENCES AVANCÉES.";
 "AdvancedPreferencesWarning" = "NE PAS MODIFIER SAUF SI VOUS SAVEZ CE QUE VOUS FAITES!";
-"Bands URL" = "URL des groupes";
-"Schedule URL" = "URL du calendrier";
 "Pointer URL" = "URL du pointeur";
 "Custom Pointer URL" = "URL du pointeur personnalisée";
 "CustomPointerUrlPlaceholder" = "Laisser vide pour utiliser la valeur par défaut";
 "Minutes" = "Minutes";
-"Default" = "Par défaut";
 
 "year_change_loading" = "Chargement des données pour la nouvelle année, veuillez patienter...";
 
@@ -342,7 +243,6 @@
 // About Screen
 "About" = "À propos";
 "AboutDescription1" = "Il s'agit d'une application non officielle et open-source conçue pour aider les utilisateurs à découvrir les groupes se produisant à !FESTIVALE_NAME!, et à consulter les horaires des événements, les heures et les lieux en un seul endroit.";
-"AboutDescription2" = "The app allows users to browse artists, explore event listings, and stay organized while attending festivals. It is designed to work across different events without being tied to any single festival, promoter, or organizer.";
 "AboutDescription3" = "Cette application n'est pas affiliée, approuvée ou officiellement connectée à un festival, organisateur d'événements, promoteur ou artiste. Tous les noms d'artistes, noms d'événements et informations connexes restent la propriété de leurs propriétaires respectifs et sont utilisés à des fins informatives uniquement.";
 "AboutDescription4" = "Le code source de cette application est open-source et sous licence GNU General Public License, version 2 (GPL-2.0).";
 "AboutCopyright" = "Copyright © 2015–présent";
@@ -356,8 +256,6 @@
 "AboutTeamPhoto" = "Photo d'Équipe";
 
 // Toast and help messages
-"Venue Filter On Format" = "%@ Venue Filter On"; // Format for venue filter on message, %@ = venue name
-"Venue Filter Off Format" = "%@ Venue Filter Off"; // Format for venue filter off message, %@ = venue name
 "Invalid cell data - cannot add attendance" = "Invalid cell data - cannot add attendance"; // Toast message when cell data is invalid
 "No Show Is Associated With This Entry" = "No Show Is Associated With This Entry"; // Toast message when no show is associated with entry
 "Dismiss" = "Rejeter"; // Alert dismiss button
@@ -395,12 +293,7 @@
 "ClinicsPlural" = "Cliniques";
 "Close" = "Fermer";
 "CruiseEventsPlural" = "Événements de Croisière";
-"Cut" = "Couper";
-"Event Location Filter" = "Filtre d'Emplacement d'Événement";
 "EventsAttended" = "Événements Assistés";
-"Hide Other" = "Masquer Autres";
-"Hide Other Venues" = "Masquer Autres Lieux";
-"Locations" = "Emplacements";
 "MeetAndGreetsPlural" = "Rencontres";
 "MightSeeBands" = "Bandes à Peut-être Voir";
 
@@ -410,9 +303,6 @@
 "AutoChooseAttendanceIntro" = "Voulez-vous que %@ vous aide à choisir les événements auxquels assister ?\n\nNous utiliserons vos choix Must, Might et Wont ainsi que quelques questions rapides pour une première proposition. Vous pourrez modifier tout événement par la suite.";
 "AutoChooseAttendanceNoMeetAndGreets" = "Aucun Meet and Greet dans le programme.";
 "AutoChooseAttendanceMeetAndGreetQuestion" = "À quels Meet and Greet souhaitez-vous assister ?";
-"AutoChooseAttendanceMGOptionAll" = "Toutes vos bandes Must";
-"AutoChooseAttendanceMGOptionSome" = "Certaines de vos bandes Must";
-"AutoChooseAttendanceMGOptionNone" = "Pas intéressé";
 "AIScheduleUnofficialEventsHeader" = "Non officiel / Cruiser Organized";
 "AutoChooseAttendanceNoUnofficialEvents" = "Aucun événement non officiel / Cruiser Organized dans le programme.";
 "AutoChooseAttendanceUnofficialQuestion" = "À quels événements non officiels / Cruiser Organized souhaitez-vous assister ?";
@@ -433,36 +323,11 @@
 "AutoChooseAttendanceGoToBandList" = "Aller à la liste des groupes";
 "AutoChooseAttendanceDetails" = "Détails";
 "AutoChooseAttendanceNext" = "Suivant";
-"AutoChooseAttendanceHoursSleep" = "heures de sommeil par nuit";
 "AutoChooseAttendanceLatestShowTitle" = "Dernier concert";
 "AutoChooseAttendanceLatestShowPrompt" = "Le dernier concert que vous voulez voir.";
-"AutoChooseAttendanceLatestShowMidnight" = "Minuit (0 h)";
-"AutoChooseAttendanceLatestShow1am" = "1 h";
-"AutoChooseAttendanceLatestShow2am" = "2 h";
-"AutoChooseAttendanceLatestShow3am" = "3 h";
-"AutoChooseAttendanceLatestShow4am" = "4 h";
-"AutoChooseAttendanceLatestShow5am" = "5 h";
-"AutoChooseAttendanceLatestShow1200am" = "0 h 00";
-"AutoChooseAttendanceLatestShow1230am" = "0 h 30";
-"AutoChooseAttendanceLatestShow100am" = "1 h 00";
-"AutoChooseAttendanceLatestShow130am" = "1 h 30";
-"AutoChooseAttendanceLatestShow200am" = "2 h 00";
-"AutoChooseAttendanceLatestShow230am" = "2 h 30";
-"AutoChooseAttendanceLatestShow300am" = "3 h 00";
-"AutoChooseAttendanceLatestShow330am" = "3 h 30";
-"AutoChooseAttendanceLatestShow400am" = "4 h 00";
-"AutoChooseAttendanceLatestShow430am" = "4 h 30";
-"AutoChooseAttendanceLatestShow500am" = "5 h 00";
-"AutoChooseAttendanceLatestShow530am" = "5 h 30";
 "AutoChooseAttendanceNoSpecialEvents" = "Aucun événement spécial au programme.";
 "AutoChooseAttendanceSpecialEventsQuestion" = "À quels événements spéciaux voulez-vous assister ?";
-"AutoChooseAttendanceClinicsOptionAll" = "Toutes les bandes Must";
-"AutoChooseAttendanceClinicsOptionSome" = "Certaines bandes Must";
-"AutoChooseAttendanceClinicsOptionNone" = "Pas intéressé par les cliniques";
-"AutoChooseAttendanceBuild" = "Construire le programme";
 "AIScheduleTitle" = "Créer le programme automatique";
-"AIScheduleSleepHeader" = "Sommeil";
-"AIScheduleSleepPrompt" = "Heures de sommeil par nuit";
 "AIScheduleMeetGreetHeader" = "Meet and Greets";
 "AIScheduleClinicsHeader" = "Cliniques";
 "AIScheduleSpecialEventsHeader" = "Événements spéciaux";
@@ -479,11 +344,7 @@
 "AIScheduleExistingAttendanceContinue" = "Continuer";
 "AutoChooseAttendanceBuilding" = "Construction de votre programme…";
 "AutoChooseAttendanceTriggerWizard" = "Construire mon programme automatiquement";
-"AutoChooseAttendanceClearData" = "Effacer le programme choisi automatiquement";
 "AutoChooseAttendanceClearAll" = "Effacer toutes les données de présence";
-"AutoChooseAttendanceClearAutoTitle" = "Effacer le programme automatique ?";
-"AutoChooseAttendanceClearAutoMessage" = "Cela supprimera %d enregistrement(s) de présence choisi(s) automatiquement cette année. Les présences saisies manuellement seront conservées.";
-"AutoChooseAttendanceClearAutoMessageNone" = "Aucun enregistrement automatique cette année. Rien à effacer.";
 "AutoChooseAttendanceClearAllTitle" = "Effacer toutes les présences ?";
 "AutoChooseAttendanceClearAllMessage" = "Cela supprimera les %d enregistrement(s) de présence de cette année, automatiques et manuels. Cette action est irréversible.";
 "AutoChooseAttendanceClearAllMessageNone" = "Aucune donnée de présence cette année. Rien à effacer.";
@@ -492,11 +353,6 @@
 
 "Multiple bands share this event. Which band would you like to view?" = "Plusieurs groupes partagent cet événement. Quel groupe souhaitez-vous voir ?";
 "MustSeeBands" = "Bandes à Voir Absolument";
-"Show Bands Only" = "Afficher Seulement les Groupes";
-"Show Other" = "Afficher Autres";
-"Show Other Venues" = "Afficher Autres Lieux";
-"Show Schedule" = "Afficher le Calendrier";
 "ShowsPlural" = "Concerts";
 "SpecialEventsPlural" = "Événements Spéciaux";
 "UnofficialEventsPlural" = "Événements Non Officiels";
-"View Mode" = "Mode d'Affichage";

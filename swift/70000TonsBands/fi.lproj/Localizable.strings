@@ -21,14 +21,11 @@
 "Must"="Kyllä";
 "Might"="Ehkä";
 "Wont"="Ei";
-"Priority"="Prioriteetti";
-"Attended"="Osallistunut";
 "Band Priority"="Bändin prioriteetti";
 "Event Attendance"="Tapahtuman läsnäolo";
 "EventAttendanceAll"="Kaikki";
 "EventAttendancePartial"="Osittain";
 "EventAttendanceNone"="Ei mitään";
-"Wont Attend"="En osallistu";
 
 "Ok"="Kyllä";
 "Cancel"="Peruuta";
@@ -40,8 +37,6 @@
 "Alert On Might See Bands"="Hälytä Ehkä-listan yhtyeistä";
 "Alert Only for Will Attend Events"="Hälytä vain tapahtumista, joihin aiot osallistua";
 
-"showAttendedFilterTrueHelp"="Näytä vain tapahtumat, joihin aiot osallistua. Muut suodattimet poistetaan käytöstä";
-"showAttendedFilterFalseHelp"="Näytä yhtyeet ja esitykset suodattimien mukaan";
 
 "Sorting Chronologically"="Lajittelu aikajärjestyksessä";
 "Sorting Alphabetically"="Lajittelu aakkosjärjestyksessä";
@@ -50,15 +45,8 @@
 "Part Of Event"="Osallistun osaan tapahtumasta";
 "None Of Event"="En tule osallistumaan tähän tapahtumaan";
 
-"Prompt For Attended Status Header"="Kysy osallistumisesta";
-"Prompt For Attended Status"="Kysy osallistumisesta";
-"Go To Details"="Siirry lisätietoihin";
 
-"Only alert for shows you will attend"="Hälytä vain esityksistä, joihin aiot osallistua";
-"Alert for shows according to your favorites selection"="Hälytä esityksistä valitsemiesi suosikkien ja tämän sivun asetusten mukaan";
 
-"ShowHideEvents"="Näytä/piilota vanhentunut";
-"HideExpiredEvents"="Piilota vanhentuneet tapahtumat";
 
 "Minutes Before Event to Alert"="Hälytä (minuuttia) ennen tapahtumaa";
 "Alert For Shows"="Hälytä esityksistä";
@@ -69,49 +57,24 @@
 "Alert For Album Listening Events"="Hälytä levyjen kuuntelutapahtumista";
 "Alert For Unofficial Events"="Hälytä kanssaristeilijöiden järjestämistä tapahtumista";
 
-"Special Event"="Erikoistapahtumat";
-"Meet and Greet"="Artistitapaamiset";
-"Clinic"="Klinikat";
-"Listening Party"="Levyn kuuntelutapahtumat";
 "Unofficial Events"="Kanssaristeilijöiden järjestämät tapahtumat";
 
-"officialWebSiteLinkHelp" = "Ohjataan viralliselle sivustolle";
-"WikipediaLinkHelp" = "Etsitään Wikipediasta";
-"YouTubeLinkHelp" = "Etsitään virallisia videoita YouTubesta";
-"MetalArchiveLinkHelp" = "Etsitään Metal Archives-sivustolta";
 
 
-"PoolVenue" = "Allas";
-"TheaterVenue" = "Teatteri";
-"LoungeVenue" = "Klubi";
-"RinkVenue" = "Jäähalli";
-"OtherVenue" = "Muut";
 
-"venueFilterHeader" = "Näytä/piilota paikka";
-"showTypeFilterHeader" = "Näytä/piilota tapahtumatyyppi";
 
-"showHideExpiredLabel" = "Näytä/piilota vanhentuneet tapahtumat";
-"hideExpiredEvents" = "Piilota vanhentuneet tapahtumat";
 "Hide Expired Events" = "Piilota vanhentuneet tapahtumat";
 "Expired Events" = "Vanhentuneet tapahtumat";
-"Flagged Header" = "Merkityt";
-"Show Expired Events" = "Näytä vanhentuneet tapahtumat";
-"Hiding Expired Events" = "Piilotetaan vanhentuneita tapahtumia";
-"Showing Expired Events" = "Näytetään vanhentuneita tapahtumia";
 
 "AlertPreferences" = "Hälytysasetukset";
-"PreferenceHeader" = "Asetukset";
 
 // Default description text
 "DefaultDescription70K" = "Kommenttiteksti ei ole vielä saatavilla. Odota, että Aaron lisää kuvauksensa. Voit lisätä omasi, jos haluat, mutta kun hänen kuvauksensa tulee saataville, se ei korvaa tietojasi eikä näy.";
 "DefaultDescriptionMDF" = "Napsauta lisätäksesi omat muistiinpanot";
 
-"disableAttendedPrompt" = "Poista tämä kehote käytöstä";
 
 "EndofList" = "Luettelon loppu";
 "AlreadyAtStart" = "Jo luettelon alussa";
-"Next" = "Seuraava";
-"Previous" = "Edellinen";
 
 "NoteFontSize" = "Suuri fonttikoko";
 "OpenYouTubeApp"="Avaa YouTube-sovellus";
@@ -120,7 +83,6 @@
 "MiscSection"="Muut";
 "NoteFontSize"="Suuri muistiinpanojen fonttikoko";
 
-"restartTitle" = "Vaatii uudelleenkäynnistyksen";
 "restartMessage" = "ÄLÄ KÄYTÄ TÄTÄ RISTEILYN AIKANA. VAATII INTERNET-YHTEYDEN.";
 "yearChangeAborted" = "Internet-yhteyttä ei ole saatavilla, EI voi vaihtaa vuotta tällä hetkellä";
 "eventOrBandPrompt" = "Haluatko nähdä luettelon bändeistä vai tapahtumista?";
@@ -131,59 +93,25 @@
 "Current" = "Nykyinen";
 
 //new section for the filter menu control
-"Clear Filters" = "Tyhjennä suodattimet"; //menu choice
 "Band Ranking Filters" = "Kiinnostussuodattimet"; //menu header
-"Show Only Flagged As Attended" = "Näytä vain kiinnostavat tapahtumat"; //menu header
 "Sorting Options" = "Lajitteluasetukset"; //menu header
 "Event Type Filters" = "Tapahtumatyyppisuodattimet"; //menu header
-"Venue Filters" = "Tapahtumapaikkasuodattimet"; //menu header
 "Location Filters" = "Tapahtumapaikkasuodattimet"; //menu header (portrait + calendar: venues in use)
-"VenueFilterSheetDescription" = "Näytä tai piilota tapahtumapaikat. Samat asetukset kuin listanäkymässä—jos paikka on piilotettu listassa, se on piilotettu kalenterissa ja päinvastoin.";
-"OneVenueHidden" = "1 paikka piilotettu";
-"VenuesHiddenCount" = "%d paikkaa piilotettu";
 "All venues hidden" = "Kaikki paikat piilotettu";
 "TapFilterToShowVenues" = "Napauta yllä olevaa suodatin-kuvaketta nähdäksesi paikat uudelleen.";
-"Show Venue Format" = "Näytä %@"; //venue filter option, %@ = venue name
-"Hide Venue Format" = "Piilota %@"; //venue filter option, %@ = venue name
 
-"Can not hide all venues" = "Kaikkia tapahtumapaikkoja ei voi piilottaa"; //help text
-"Can not hide all statuses" = "Kaikkia tiloja ei voi piilottaa"; //help text
 "Clear All Filters" = "Tyhjennä kaikki suodattimet";  //menu choice
-"Show All Events" = "Näytä kaikki tapahtumat"; //menu choice
 "Show Flagged Events Only" = "Näytä vain merkityt tapahtumat"; //menu choice
-"Show Only Events Flagged As Attending" = "Näytä vain tapahtumat, joihin aiot osallistua"; //help text
 
 //venue filters
-"Show Pool Events" = "Näytä allastapahtumat"; //menu choice
-"Hide Pool Events" = "Piilota allastapahtumat"; //menu choice
-"Pool Venue Filter On" = "Allaspaikan suodatin päällä"; //help text
-"Pool Venue Filter Off" = "Allaspaikan suodatin pois päältä"; //help text
 
-"Show Lounge Events" = "Näytä klubitapahtumat"; //menu choice
-"Hide Lounge Events" = "Piilota klubitapahtumat"; //menu choice
-"Lounge Venue Filter On" = "Klubisuodatin päällä"; //help text
-"Lounge Venue Filter Off" = "Klubisuodatin pois päältä"; //help text
 
-"Show Theater Events" = "Teatteritapahtumat"; //menu choice
-"Hide Theater Events" = "Piilota teatteritapahtumat"; //menu choice
-"Theater Venue Filter On" = "Teatterisuodatin päällä"; //help text
-"Theater Venue Filter Off" = "Teatterisuodatin pois päältä"; //help text
 
-"Show Rink Events" = "Näytä jäähallitapahtumat"; //menu choice
-"Hide Rink Events" = "Piilota jäähallitapahtumat"; //menu choice
-"Rink Venue Filter On" = "Jäähallisuodatin päällä"; //help text
-"Rink Venue Filter Off" = "Jäähallisuodatin pois päältä"; //help text
 
 "Show Other Events" = "Näytä muut tapahtumat"; //menu choice
 "Hide Other Events" = "Piilota muut tapahtumat"; //menu choice
-"Other Venue Filter On" = "Muun tapahtumapaikan suodatin päällä"; //help text
-"Other Venue Filter Off" = "Muun tapahtumapaikan suodatin pois päältä"; //help text
 
 //event filter
-"Show Meet & Greet Events" = "Näytä artistitapaamiset"; //menu choice
-"Hide Meet & Greet Events" = "Piilota artistitapaamiset"; //menu choice
-"Meet and Greet Event Filter On" = "Artistitapaamissuodatin päällä"; //help text
-"Meet and Greet Event Filter Off" = "Artistitapaamissuodatin pois päältä"; //help text
 
 // Auto Choose Attendance wizard – Meet and Greet step
 "AutoChooseAttendanceSection" = "Suunnittele aikataulusi";
@@ -191,9 +119,6 @@
 "AutoChooseAttendanceIntro" = "Haluatko, että %@ auttaa sinua valitsemaan, mitä tapahtumiin osallistut?\n\nKäytämme Must-, Might- ja Wont-valintojasi sekä muutaman pikakysymyksen ensimmäiseen luonnokseen. Voit muuttaa mitä tahansa tapahtumaa myöhemmin.";
 "AutoChooseAttendanceNoMeetAndGreets" = "Ei artistitapaamisia aikataulussa.";
 "AutoChooseAttendanceMeetAndGreetQuestion" = "Mihin Meet and Greet -tapaamisiin haluat osallistua?";
-"AutoChooseAttendanceMGOptionAll" = "Kaikki Must-bändisi";
-"AutoChooseAttendanceMGOptionSome" = "Osa Must-bändeistäsi";
-"AutoChooseAttendanceMGOptionNone" = "Ei kiinnosta";
 "AIScheduleUnofficialEventsHeader" = "Epävirallinen / Cruiser Organized";
 "AutoChooseAttendanceNoUnofficialEvents" = "Ei epävirallisia / Cruiser Organized -tapahtumia aikataulussa.";
 "AutoChooseAttendanceUnofficialQuestion" = "Mihin epävirallisiin / Cruiser Organized -tapahtumiin haluat osallistua?";
@@ -214,36 +139,11 @@
 "AutoChooseAttendanceGoToBandList" = "Siirry bändilistaan";
 "AutoChooseAttendanceDetails" = "Tiedot";
 "AutoChooseAttendanceNext" = "Seuraava";
-"AutoChooseAttendanceHoursSleep" = "tuntia unta per yö";
 "AutoChooseAttendanceLatestShowTitle" = "Viimeinen keikka";
 "AutoChooseAttendanceLatestShowPrompt" = "Viimeinen keikka, jonka haluat nähdä.";
-"AutoChooseAttendanceLatestShowMidnight" = "Keskiyö (0:00)";
-"AutoChooseAttendanceLatestShow1am" = "1:00";
-"AutoChooseAttendanceLatestShow2am" = "2:00";
-"AutoChooseAttendanceLatestShow3am" = "3:00";
-"AutoChooseAttendanceLatestShow4am" = "4:00";
-"AutoChooseAttendanceLatestShow5am" = "5:00";
-"AutoChooseAttendanceLatestShow1200am" = "0:00";
-"AutoChooseAttendanceLatestShow1230am" = "0:30";
-"AutoChooseAttendanceLatestShow100am" = "1:00";
-"AutoChooseAttendanceLatestShow130am" = "1:30";
-"AutoChooseAttendanceLatestShow200am" = "2:00";
-"AutoChooseAttendanceLatestShow230am" = "2:30";
-"AutoChooseAttendanceLatestShow300am" = "3:00";
-"AutoChooseAttendanceLatestShow330am" = "3:30";
-"AutoChooseAttendanceLatestShow400am" = "4:00";
-"AutoChooseAttendanceLatestShow430am" = "4:30";
-"AutoChooseAttendanceLatestShow500am" = "5:00";
-"AutoChooseAttendanceLatestShow530am" = "5:30";
 "AutoChooseAttendanceNoSpecialEvents" = "Ei erikois tapahtumia aikataulussa.";
 "AutoChooseAttendanceSpecialEventsQuestion" = "Mihin erikois tapahtumiin haluat osallistua?";
-"AutoChooseAttendanceClinicsOptionAll" = "Kaikki Must-bändit";
-"AutoChooseAttendanceClinicsOptionSome" = "Osa Must-bändeistä";
-"AutoChooseAttendanceClinicsOptionNone" = "Ei kiinnosta klinikat";
-"AutoChooseAttendanceBuild" = "Rakenna aikataulu";
 "AIScheduleTitle" = "Luo automaattinen aikataulu";
-"AIScheduleSleepHeader" = "Uni";
-"AIScheduleSleepPrompt" = "Tuntia unta per yö";
 "AIScheduleMeetGreetHeader" = "Meet and Greet -tapaamiset";
 "AIScheduleClinicsHeader" = "Klinikat";
 "AIScheduleSpecialEventsHeader" = "Erikois tapahtumat";
@@ -260,51 +160,23 @@
 "AIScheduleExistingAttendanceContinue" = "Jatka";
 "AutoChooseAttendanceBuilding" = "Rakennetaan aikatauluasi…";
 "AutoChooseAttendanceTriggerWizard" = "Rakenna aikatauluni automaattisesti";
-"AutoChooseAttendanceClearData" = "Tyhjennä automaattisesti valittu aikataulu";
 "AutoChooseAttendanceClearAll" = "Tyhjennä kaikki osallistumistiedot";
-"AutoChooseAttendanceClearAutoTitle" = "Tyhjennetäänkö automaattinen aikataulu?";
-"AutoChooseAttendanceClearAutoMessage" = "Tämä poistaa %d tämän vuoden automaattisesti valittua osallistumistietoa. Manuaalisesti merkityt säilytetään.";
-"AutoChooseAttendanceClearAutoMessageNone" = "Tämän vuoden automaattisia tietoja ei ole. Ei mitään tyhjennettävää.";
 "AutoChooseAttendanceClearAllTitle" = "Tyhjennetäänkö kaikki osallistumistiedot?";
 "AutoChooseAttendanceClearAllMessage" = "Tämä poistaa kaikki %d tämän vuoden osallistumistietoa (automaattiset ja manuaaliset). Toimintoa ei voi perua.";
 "AutoChooseAttendanceClearAllMessageNone" = "Tämän vuoden osallistumistietoja ei ole. Ei mitään tyhjennettävää.";
 "AIScheduleSeeingThemNowhereElse" = "Näet heidät: Ei missään muualla";
 "AIScheduleSeeingThemFormat" = "Näet heidät: %@";
 
-"Show Unofficial Events" = "Näytä epäviralliset tapahtumat"; //menu choice
-"Hide Unofficial Events" = "Piilota epäviralliset tapahtumat"; //menu choice
-"Unofficial Event Filter On" = "Epävirallinen tapahtumasuodatin päällä"; //help text
-"Unofficial Event Filter Off" = "Epävirallinen tapahtumasuodatin pois päältä"; //help text
 
-"Show Special/Other Events" = "Näytä erikoistapahtumat"; //menu choice
-"Hide Special/Other Events" = "Piilota erikoistapahtumat"; //menu choice
-"Special/Other Event Filter On" = "Erikoistapahtumasuodatin päällä"; //help text
-"Special/Other Event Filter Off" = "Erikoistapahtumasuodatin pois päältä"; //help text
 
 //sorting
 "Sort By Name" = "Lajittele nimen mukaan"; //menu choice
 "Sort By Time" = "Lajittele ajan mukaan"; //menu choice
 
 //band preference filter
-"Show Must See Items" = "Näytä Kyllä-tapahtumat"; //menu choice
-"Hide Must See Items" = "Piilota Kyllä-tapahtumat"; //menu choice
-"Must See Filter On" = "Kyllä-tapahtumien suodatin päällä"; //help text
-"Must See Filter Off" = "Kyllä-tapahtumien suodatin pois päältä"; //help text
 
-"Show Might See Items" = "Näytä Ehkä-tapahtumat"; //menu choice
-"Hide Might See Items" = "Piilota Ehkä-tapahtumat"; //menu choice
-"Might See Filter On" = "Ehkä-tapahtumien suodatin päällä"; //help text
-"Might See Filter Off" = "Ehkä-tapahtumien suodatin pois päältä"; //help text
 
-"Show Wont See Items" = "Näytä Ei-tapahtumat"; //menu choice
-"Hide Wont See Items" = "Piilota Ei-tapahtumat"; //menu choice
-"Wont See Filter On" = "Ei-tapahtumien suodatin päällä"; //help text
-"Wont See Filter Off" = "Ei-tapahtumien suodatin pois päältä"; //help text
 
-"Show Unknown Items" = "Näytä merkitsemättömät"; //menu choice
-"Hide Unknown Items" = "Piilota merkitsemättömät"; //menu choice
-"Unknown Filter On" = "Merkitsemättömien suodatin päällä"; //help text
-"Unknown Filter Off" = "Merkitsemättömien suodatin pois päältä"; //help text
 
 "Filtering" = "Suodatus"; //filtering indicator near counts
 "Filters" = "Suodattimet"; //menu name
@@ -369,13 +241,10 @@
 // Advanced Preferences section
 "AdvancedPreferences" = "EDISTYNEET ASETUKSET.";
 "AdvancedPreferencesWarning" = "ÄLÄ MUUTA ELETTÄ TIEDÄ MITÄ TEET!";
-"Bands URL" = "Bändien URL";
-"Schedule URL" = "Aikataulun URL";
 "Pointer URL" = "Osoittimen URL";
 "Custom Pointer URL" = "Mukautettu osoittimen URL";
 "CustomPointerUrlPlaceholder" = "Jätä tyhjäksi käyttääksesi oletusta";
 "Minutes" = "Minuuttia";
-"Default" = "Oletus";
 "Import Successful" = "Tuonti Onnistui";
 "Profile Updated" = "Profiili Päivitetty";
 "Import Failed" = "Tuonti Epäonnistui";
@@ -418,7 +287,6 @@
 // About Screen
 "About" = "Tietoja";
 "AboutDescription1" = "Tämä on epävirallinen avoimen lähdekoodin sovellus, joka on suunniteltu auttamaan käyttäjiä löytämään !FESTIVALE_NAME! -tapahtumassa esiintyviä bändejä ja tarkastelemaan tapahtuma-aikatauluja, aikoja ja paikkoja yhdessä paikassa.";
-"AboutDescription2" = "The app allows users to browse artists, explore event listings, and stay organized while attending festivals. It is designed to work across different events without being tied to any single festival, promoter, or organizer.";
 "AboutDescription3" = "Tämä sovellus ei ole yhteydessä, hyväksytty tai virallisesti yhdistetty mihinkään festivaaliin, tapahtuman järjestäjään, promoottoriin tai esiintyjään. Kaikki artistinimet, tapahtumanimet ja siihen liittyvät tiedot pysyvät niiden omistajien omaisuutena ja niitä käytetään vain tiedotustarkoituksiin.";
 "AboutDescription4" = "Tämän sovelluksen lähdekoodi on avoimen lähdekoodin ja se on lisensoitu GNU General Public License -lisenssillä, versio 2 (GPL-2.0).";
 "AboutCopyright" = "Copyright © 2015–nykyhetki";
@@ -432,8 +300,6 @@
 "AboutTeamPhoto" = "Tiimikuva";
 
 // Toast and help messages
-"Venue Filter On Format" = "%@ Venue Filter On"; // Format for venue filter on message, %@ = venue name
-"Venue Filter Off Format" = "%@ Venue Filter Off"; // Format for venue filter off message, %@ = venue name
 "Invalid cell data - cannot add attendance" = "Invalid cell data - cannot add attendance"; // Toast message when cell data is invalid
 "No Show Is Associated With This Entry" = "No Show Is Associated With This Entry"; // Toast message when no show is associated with entry
 "Dismiss" = "Hylkää"; // Alert dismiss button
@@ -468,27 +334,18 @@
 
 // Missing keys from Base
 "Close" = "Sulje";
-"Copy" = "Kopioi";
-"Cut" = "Leikkaa";
-"Event Location Filter" = "Tapahtumapaikan Suodatin";
-"Hide Other" = "Piilota Muut";
-"Hide Other Venues" = "Piilota Muut Tapahtumapaikat";
 "Last On Cruise" = "Viimeksi Risteilyllä";
-"Locations" = "Sijainnit";
 "Multiple bands share this event. Which band would you like to view?" = "Useat bändit jakavat tämän tapahtuman. Mitä bändiä haluaisit nähdä?";
 "Note" = "Huomautus";
-"Paste" = "Liitä";
 "Preferences" = "Asetukset";
 "Select All" = "Valitse Kaikki";
 "SelectYearLabel" = "Valitse Näytettävä Vuosi";
-"ShareBandChoices" = "Jaa Bändivalinnat";
-"ShareShowChoices" = "Jaa Näytösvalinnat";
-"Show Bands Only" = "Näytä Vain Bändit";
-"Show Other" = "Näytä Muut";
-"Show Other Venues" = "Näytä Muut Tapahtumapaikat";
-"Show Schedule" = "Näytä Aikataulu";
+"Share Type" = "Jaa";
+"Share Importable Band/Event Data" = "Jaa tuotavat bändi/tapahtumatiedot";
+"Share Band Report" = "Jaa bändiraportti";
+"Share Event Report" = "Jaa tapahtumaraportti";
+"Back" = "Takaisin";
 "Unknown" = "Tuntematon";
-"View Mode" = "Näkymätila";
 "confirmCountry" = "Vahvista";
 "correctCountry" = "Muuta";
 "correctCountryDescription" = "Korjaa Maasi Tarvittaessa";
@@ -496,5 +353,4 @@
 "data_filter_issue" = "Kaikki tiedot suodatetaan pois, poista suodattimet nähdäksesi tiedot";
 "genre" = "Tyylilaji";
 "verifyCountry" = "Vahvista Maasi";
-"visitBands" = "Linkit";
 "waiting_for_data" = "Odotetaan tietojen latautumista, odota hetki....";

@@ -17,14 +17,11 @@
 "Must"="Skal";
 "Might"="MÂske";
 "Wont"="Skal ikke";
-"Priority"="Prioritet";
-"Attended"="Deltaget";
 "Band Priority"="Bandprioritet";
 "Event Attendance"="Begivenhedsdeltagelse";
 "EventAttendanceAll"="Alle";
 "EventAttendancePartial"="Delvist";
 "EventAttendanceNone"="Ingen";
-"Wont Attend"="Vil ikke deltage";
 
 "Ok"="Ja";
 "Cancel"="Ingen";
@@ -36,11 +33,7 @@
 "Alert On Might See Bands"="Notifikation ved bands der mÂske skal ses";
 "Alert Only for Will Attend Events"="Alarmer kun for at deltage i begivenheder";
 
-"showAttendedFilterTrueHelp"="Vis kun begivenheder, som du angiver, du vil deltage i. Andre filtre gælder ikke";
-"showAttendedFilterFalseHelp"="Vis bands og shows i henhold til filtre";
 
-"Only alert for shows you will attend"="Kun advarsel om shows, du vil deltage i";
-"Alert for shows according to your favorites selection"="Advarsel til shows i henhold til dit valgvalg og de indstillinger, der er angivet på denne skærm";
 
 "Sorting Chronologically"="Sortering Kronologisk";
 "Sorting Alphabetically"="Sortering Alfabetisk";
@@ -49,12 +42,7 @@
 "Part Of Event"="Deltager nogle af denne begivenhed";
 "None Of Event"="Jeg vil ikke se denne begivenhed";
 
-"Prompt For Attended Status Header"="Spørg om deltaget status";
-"Prompt For Attended Status"="Spørg om deltaget status";
-"Go To Details"="Gå til detaljer";
 
-"ShowHideEvents"="Vis/Skjul Udløbet";
-"HideExpiredEvents"="Skjul Udløbet Begivenheder";
 
 "Minutes Before Event to Alert"="Antal minutter f¯r begivenhed for notifikation";
 "Alert For Shows"="Notifikation for shows";
@@ -64,56 +52,30 @@
 "Alert For Album Listening Events"="Notifikation for prÊsentation af nyt album";
 "Alert For Unofficial Events"="Alert for Cruiser järjestettyihin tapahtumiin";
 
-"Special Event"="Specielle Begivenheder";
-"Meet and Greet"="Meet and Greet begivenheder";
-"Clinic"="Clinics";
-"Listening Party"="PrÊsentation af nyt Album";
 "Unofficial Events"="Cruiser Organiseret";
 
-"officialWebSiteLinkHelp" = "Tager dig til den officielle hjemmeside";
-"WikipediaLinkHelp" = "Søgning på Wikipedia";
-"YouTubeLinkHelp" = "Søgning på YouTube til officielle videoer";
-"MetalArchiveLinkHelp" = "Søgning på metalarkiver";
 
-"PoolVenue" = "Pool";
-"TheaterVenue" = "Teater";
-"LoungeVenue" = "Lounge";
-"RinkVenue" = "Rink";
-"OtherVenue" = "Andet";
 
-"venueFilterHeader" = "Vis/Skjul Lokalitet";
-"showTypeFilterHeader" = "Vis/Skjul Begivenhedstype";
 
-"showHideExpiredLabel" = "Vis/Skjul Udløbet Begivenheder";
-"hideExpiredEvents" = "Skjul Udløbet Begivenheder";
 "Hide Expired Events" = "Skjul udløbne begivenheder";
 "Expired Events" = "Udløbet Begivenheder";
-"Flagged Header" = "Markerede";
-"Show Expired Events" = "Vis Udløbet Begivenheder";
-"Hiding Expired Events" = "Skjuler Udløbet Begivenheder";
-"Showing Expired Events" = "Viser Udløbet Begivenheder";
 
 "AlertPreferences" = "Indstillinger for Alarm";
-"PreferenceHeader" = "Præferencer";
 "Preferences" = "Præferencer";
 
 // Default description text
 "DefaultDescription70K" = "Kommentartekst er endnu ikke tilgængelig. Vent venligst på, at Aaron tilføjer sin beskrivelse. Du kan tilføje din egen, hvis du ønsker det, men når hans bliver tilgængelig, vil den ikke overskrive dine data og vil ikke blive vist.";
 "DefaultDescriptionMDF" = "Klik for at tilføje dine egne noter";
 
-"disableAttendedPrompt" = "Deaktiver denne prompt";
 
 "EndofList" = "Slut på listen";
 "AlreadyAtStart" = "Allerede ved start af listen";
-"Next" = "Næste";
-"Previous" = "Tidligere";
 
 "NoteFontSize" = "Bemærk skriftstørrelsen stor";
 "OpenYouTubeApp"="Åbn YouTube-app";
 "AllLinksOpenInExternalBrowser"="Alle links åbner i ekstern browser";
 "DetailScreenSection"="Detalje skærm";
 "MiscSection"="Diverse";
-"restartTitle" = "Genstart pÂkrÊvet";
 "restartMessage" = "GÿR IKKE DETTE P≈ B≈DEN. INTERNET P≈KR∆VET.";
 "yearChangeAborted" = "Ingen internetforbindelse er tilgængelig, kan IKKE skifte år på nuværende tidspunkt";
 "eventOrBandPrompt" = "Vil du se en liste over bands eller en liste over begivenheder?";
@@ -124,94 +86,36 @@
 "Current" = "Nuværende";
 
 //new section for the filter menu control
-"Clear Filters" = "Ryd filtre"; //menu choice
 "Band Ranking Filters" = "Båndrangeringsfiltre"; //menu header
-"Show Only Flagged As Attended" = "Vis kun markeret som deltog"; //menu header
 "Sorting Options" = "Sorteringsmuligheder"; //menu header
 "Event Type Filters" = "Hændelsestypefiltre"; //menu header
-"Venue Filters" = "Lokale filtre"; //menu header
 "Location Filters" = "Lokale filtre"; //menu header (portrait + calendar: venues in use)
-"VenueFilterSheetDescription" = "Vis eller skjul spillesteder. Samme indstillinger som listen—hvis et spillested er skjult i listen, er det skjult i kalenderen og omvendt.";
-"OneVenueHidden" = "1 spillested skjult";
-"VenuesHiddenCount" = "%d spillesteder skjult";
 "All venues hidden" = "Alle spillesteder skjult";
 "TapFilterToShowVenues" = "Tryk på filterikonet ovenfor for at vise spillesteder igen.";
-"Show Venue Format" = "Vis %@"; //venue filter option, %@ = venue name
-"Hide Venue Format" = "Skjul %@"; //venue filter option, %@ = venue name
 
-"Can not hide all venues" = "Can not hide all venues";
-"Can not hide all statuses" = "Kan ikke skjule al status";
 "Clear All Filters" = "Ryd alle filtre";  //menu choice
-"Show All Events" = "Vis alle begivenheder";  //menu choice
 "Show Flagged Events Only" = "Vis kun markerede begivenheder";  //menu choice
-"Show Only Events Flagged As Attending" = "Vis kun begivenheder, der er markeret som tilstedeværende"; //help text
 
 //venue filters
-"Show Pool Events" = "Vis poolbegivenheder";  //menu choice
-"Hide Pool Events" = "Skjul poolbegivenheder";  //menu choice
-"Pool Venue Filter On" = "Pool Venue Filter On"; //help text
-"Pool Venue Filter Off" = "Pool Venue Filter Off"; //help text
 
-"Show Lounge Events" = "Vis Lounge-begivenheder";  //menu choice
-"Hide Lounge Events" = "Skjul Lounge-begivenheder";  //menu choice
-"Lounge Venue Filter On" = "Lounge Venue Filter On"; //help text
-"Lounge Venue Filter Off" = "Lounge Venue Filter Off"; //help text
 
-"Show Theater Events" = "Vis teaterbegivenheder";  //menu choice
-"Hide Theater Events" = "Skjul teaterbegivenheder";  //menu choice
-"Theater Venue Filter On" = "Teaterstedsfilter til"; //help text
-"Theater Venue Filter Off" = "Teaterstedsfilter fra"; //help text
 
-"Show Rink Events" = "Vis Rink-begivenheder";  //menu choice
-"Hide Rink Events" = "Skjul Rink-begivenheder";  //menu choice
-"Rink Venue Filter On" = "Rink Venue Filter On"; //help text
-"Rink Venue Filter Off" = "Rink Venue Filter Off"; //help text
 
 "Show Other Events" = "Vis andre begivenheder";  //menu choice
 "Hide Other Events" = "Skjul andre begivenheder";  //menu choice
-"Other Venue Filter On" = "Andet spillestedsfilter til"; //help text
-"Other Venue Filter Off" = "Andet spillestedsfilter fra"; //help text
 
 //event filter
-"Show Meet & Greet Events" = "Vis Meet & Greet-begivenheder";  //menu choice
-"Hide Meet & Greet Events" = "Skjul Meet & Greet-begivenheder";  //menu choice
-"Meet and Greet Event Filter On" = "Mød og hils begivenhedsfilter til"; //help text
-"Meet and Greet Event Filter Off" = "Mød og hils begivenhedsfilter fra"; //help text
 
-"Show Unofficial Events" = "Vis uofficielle begivenheder";  //menu choice
-"Hide Unofficial Events" = "Skjul uofficielle begivenheder";  //menu choice
-"Unofficial Event Filter On" = "Uofficielt hændelsesfilter er slået til"; //help text
-"Unofficial Event Filter Off" = "Uofficielt hændelsesfilter fra"; //help text
 
-"Show Special/Other Events" = "Vis særlige/andre begivenheder"; //menu choice
-"Hide Special/Other Events" = "Skjul særlige/andre begivenheder"; //menu choice
-"Special/Other Event Filter On" = "Speciel/Anden hændelsesfilter Til"; //help text
-"Special/Other Event Filter Off" = "Speciel/Anden hændelsesfilter Fra"; //help text
 
 //sorting
 "Sort By Name" = "Sorter efter navn";  //menu choice
 "Sort By Time" = "Sorter efter tid";  //menu choice
 
 //band preference filter
-"Show Must See Items" = "Vis varer, der skal ses";  //menu choice
-"Hide Must See Items" = "Skjul varer, du skal se";  //menu choice
-"Must See Filter On" = "Skal se filter på"; //help text
-"Must See Filter Off" = "Skal se filter fra"; //help text
 
-"Show Might See Items" = "Vis måske genstande";  //menu choice
-"Hide Might See Items" = "Skjul muligvis genstande";  //menu choice
-"Might See Filter On" = "Kan se filter slået til"; //help text
-"Might See Filter Off" = "Måske se filter fra"; //help text
 
-"Show Wont See Items" = "Vis ikke se varer";  //menu choice
-"Hide Wont See Items" = "Skjul genstande, der ikke kan ses";  //menu choice
-"Wont See Filter On" = "Vil ikke se filter på"; //help text
-"Wont See Filter Off" = "Vil ikke se filter fra"; //help text
 
-"Show Unknown Items" = "Vis ukendte genstande";  //menu choice
-"Hide Unknown Items" = "Skjul ukendte genstande";  //menu choice
-"Unknown Filter On" = "Ukendt filter til"; //help text
-"Unknown Filter Off" = "Ukendt filter fra"; //help text
 
 "Filtering" = "Filtrering"; //filtering indicator near counts
 "Filters" = "Filtre"; //menu name
@@ -244,9 +148,6 @@
 "AutoChooseAttendanceIntro" = "Vil du have %@ til at hjælpe dig med at vælge, hvilke begivenheder du vil deltage i?\n\nVi bruger dine Must-, Might- og Wont-valg plus et par korte spørgsmål til et første udkast. Du kan ændre enhver begivenhed bagefter.";
 "AutoChooseAttendanceNoMeetAndGreets" = "Ingen Meet and Greet i programmet.";
 "AutoChooseAttendanceMeetAndGreetQuestion" = "Hvilke Meet and Greet-begivenheder vil du deltage i?";
-"AutoChooseAttendanceMGOptionAll" = "Alle dine Must-bands";
-"AutoChooseAttendanceMGOptionSome" = "Nogle af dine Must-bands";
-"AutoChooseAttendanceMGOptionNone" = "Ikke interesseret";
 "AIScheduleUnofficialEventsHeader" = "Uofficiel / Cruiser Organized";
 "AutoChooseAttendanceNoUnofficialEvents" = "Ingen uofficielle / Cruiser Organized begivenheder i programmet.";
 "AutoChooseAttendanceUnofficialQuestion" = "Hvilke uofficielle / Cruiser Organized begivenheder vil du deltage i?";
@@ -267,36 +168,11 @@
 "AutoChooseAttendanceGoToBandList" = "Gå til bandliste";
 "AutoChooseAttendanceDetails" = "Detaljer";
 "AutoChooseAttendanceNext" = "Næste";
-"AutoChooseAttendanceHoursSleep" = "timers søvn per nat";
 "AutoChooseAttendanceLatestShowTitle" = "Sidste show";
 "AutoChooseAttendanceLatestShowPrompt" = "Det sidste show, du vil se.";
-"AutoChooseAttendanceLatestShowMidnight" = "Midnat (0:00)";
-"AutoChooseAttendanceLatestShow1am" = "1:00";
-"AutoChooseAttendanceLatestShow2am" = "2:00";
-"AutoChooseAttendanceLatestShow3am" = "3:00";
-"AutoChooseAttendanceLatestShow4am" = "4:00";
-"AutoChooseAttendanceLatestShow5am" = "5:00";
-"AutoChooseAttendanceLatestShow1200am" = "0:00";
-"AutoChooseAttendanceLatestShow1230am" = "0:30";
-"AutoChooseAttendanceLatestShow100am" = "1:00";
-"AutoChooseAttendanceLatestShow130am" = "1:30";
-"AutoChooseAttendanceLatestShow200am" = "2:00";
-"AutoChooseAttendanceLatestShow230am" = "2:30";
-"AutoChooseAttendanceLatestShow300am" = "3:00";
-"AutoChooseAttendanceLatestShow330am" = "3:30";
-"AutoChooseAttendanceLatestShow400am" = "4:00";
-"AutoChooseAttendanceLatestShow430am" = "4:30";
-"AutoChooseAttendanceLatestShow500am" = "5:00";
-"AutoChooseAttendanceLatestShow530am" = "5:30";
 "AutoChooseAttendanceNoSpecialEvents" = "Ingen specialevents i tidsplanen.";
 "AutoChooseAttendanceSpecialEventsQuestion" = "Hvilke specialevents vil du deltage i?";
-"AutoChooseAttendanceClinicsOptionAll" = "Alle Must-bands";
-"AutoChooseAttendanceClinicsOptionSome" = "Nogle Must-bands";
-"AutoChooseAttendanceClinicsOptionNone" = "Ikke interesseret i klinikker";
-"AutoChooseAttendanceBuild" = "Byg tidsplan";
 "AIScheduleTitle" = "Opret automatisk tidsplan";
-"AIScheduleSleepHeader" = "Søvn";
-"AIScheduleSleepPrompt" = "Timers søvn per nat";
 "AIScheduleMeetGreetHeader" = "Meet and Greets";
 "AIScheduleClinicsHeader" = "Klinikker";
 "AIScheduleSpecialEventsHeader" = "Specialevents";
@@ -313,11 +189,7 @@
 "AIScheduleExistingAttendanceContinue" = "Fortsæt";
 "AutoChooseAttendanceBuilding" = "Bygger din tidsplan…";
 "AutoChooseAttendanceTriggerWizard" = "Byg min tidsplan automatisk";
-"AutoChooseAttendanceClearData" = "Ryd auto-valgt tidsplan";
 "AutoChooseAttendanceClearAll" = "Ryd alle deltagelsesdata";
-"AutoChooseAttendanceClearAutoTitle" = "Rydde auto-tidsplan?";
-"AutoChooseAttendanceClearAutoMessage" = "Dette fjerner %d auto-valgte deltagelsespost(er) for dette år. Manuelt angivne bevares.";
-"AutoChooseAttendanceClearAutoMessageNone" = "Der er ingen auto-poster for dette år. Intet at rydde.";
 "AutoChooseAttendanceClearAllTitle" = "Rydde alle deltagelsesdata?";
 "AutoChooseAttendanceClearAllMessage" = "Dette fjerner alle %d deltagelsespost(er) for dette år, både auto og manuelle. Kan ikke fortrydes.";
 "AutoChooseAttendanceClearAllMessageNone" = "Der er ingen deltagelsesdata for dette år. Intet at rydde.";
@@ -366,13 +238,10 @@
 // Advanced Preferences section
 "AdvancedPreferences" = "AVANCEREDE PRÆFERENCER.";
 "AdvancedPreferencesWarning" = "ÆNDR IKKE MEDMINDRE DU VED, HVAD DU GØR!";
-"Bands URL" = "Bands URL";
-"Schedule URL" = "Tidsplan URL";
 "Pointer URL" = "Pegestreg URL";
 "Custom Pointer URL" = "Brugerdefineret peger-URL";
 "CustomPointerUrlPlaceholder" = "Lad stå tom for at bruge standard";
 "Minutes" = "Minutter";
-"Default" = "Standard";
 
 // Profile Management
 "Choose an action" = "Vælg en handling";
@@ -412,7 +281,6 @@
 // About Screen
 "About" = "Om";
 "AboutDescription1" = "Dette er en uofficiel open-source-applikation designet til at hjælpe brugere med at opdage bands, der optræder på !FESTIVALE_NAME!, og se begivenhedsprogrammer, tidspunkter og steder på ét sted.";
-"AboutDescription2" = "The app allows users to browse artists, explore event listings, and stay organized while attending festivals. It is designed to work across different events without being tied to any single festival, promoter, or organizer.";
 "AboutDescription3" = "Denne applikation er ikke tilknyttet, godkendt af eller officielt forbundet med nogen festival, begivenhedsarrangør, promoter eller kunstner. Alle kunstnernavne, begivenhedsnavne og relaterede oplysninger forbliver ejendommen til deres respektive ejere og bruges kun til informationsformål.";
 "AboutDescription4" = "Kildekoden til denne applikation er open-source og licenseret under GNU General Public License, version 2 (GPL-2.0).";
 "AboutCopyright" = "Copyright © 2015–nu";
@@ -426,8 +294,6 @@
 "AboutTeamPhoto" = "Holdbillede";
 
 // Toast and help messages
-"Venue Filter On Format" = "%@ Venue Filter On"; // Format for venue filter on message, %@ = venue name
-"Venue Filter Off Format" = "%@ Venue Filter Off"; // Format for venue filter off message, %@ = venue name
 "Invalid cell data - cannot add attendance" = "Invalid cell data - cannot add attendance"; // Toast message when cell data is invalid
 "No Show Is Associated With This Entry" = "No Show Is Associated With This Entry"; // Toast message when no show is associated with entry
 "Dismiss" = "Afvis"; // Alert dismiss button
@@ -462,27 +328,18 @@
 
 // Missing keys from Base
 "Close" = "Luk";
-"Copy" = "Kopiér";
-"Cut" = "Klip";
-"Event Location Filter" = "Begivenhedsstedfilter";
-"Hide Other" = "Skjul Andre";
-"Hide Other Venues" = "Skjul Andre Steder";
 "Last On Cruise" = "Sidst På Krydstogt";
-"Locations" = "Steder";
 "Multiple bands share this event. Which band would you like to view?" = "Flere bands deler denne begivenhed. Hvilket band vil du se?";
 "Note" = "Note";
 "NoteFontSize" = "Note Skriftstørrelse Stor";
-"Paste" = "Indsæt";
 "Select All" = "Vælg Alle";
 "SelectYearLabel" = "Vælg Året At Vise";
-"ShareBandChoices" = "Del Bandvalg";
-"ShareShowChoices" = "Del Showvalg";
-"Show Bands Only" = "Vis Kun Bands";
-"Show Other" = "Vis Andre";
-"Show Other Venues" = "Vis Andre Steder";
-"Show Schedule" = "Vis Tidsplan";
+"Share Type" = "Del";
+"Share Importable Band/Event Data" = "Del importerbare band/eventdata";
+"Share Band Report" = "Del bandrapport";
+"Share Event Report" = "Del eventrapport";
+"Back" = "Tilbage";
 "Unknown" = "Ukendt";
-"View Mode" = "Visningstilstand";
 "confirmCountry" = "Bekræft";
 "correctCountry" = "Ændre";
 "correctCountryDescription" = "Korriger Dit Land Hvis Nødvendigt";
@@ -490,5 +347,4 @@
 "data_filter_issue" = "Alle data filtreres væk, fjern venligst filtrene for at se data";
 "genre" = "Genre";
 "verifyCountry" = "Bekræft Dit Land";
-"visitBands" = "Links";
 "waiting_for_data" = "Venter på at data indlæses, vent venligst....";
