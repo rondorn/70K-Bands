@@ -2420,15 +2420,15 @@ public class LandscapeScheduleView extends LinearLayout {
     
     /**
      * Check if an event should be included based on all active filters.
-     * Applies event type, venue, priority, and attendance filters.
+     * When "Show Flagged Events Only" is enabled, all other filters (event type, venue, priority) are disabled.
      */
     private boolean shouldIncludeEvent(ScheduleBlock block, String bandName) {
-        // If "Show Flagged Events Only" is enabled, only show events that have been attended
-        // (same logic as list view: exclude events with "sawNone" status)
+        // If "Show Flagged Events Only" is enabled, only apply attendance — disable event type, venue, and priority filters
         if (staticVariables.preferences.getShowWillAttend()) {
             if (block.attendedStatus == null || block.attendedStatus.equals(staticVariables.sawNoneStatus)) {
                 return false;
             }
+            return true;
         }
         
         // Event type filters

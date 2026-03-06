@@ -192,11 +192,15 @@
 "AutoChooseAttendanceLatestShow430am" = "4:30am";
 "AutoChooseAttendanceLatestShow500am" = "5:00am";
 "AutoChooseAttendanceLatestShow530am" = "5:30am";
+"AIScheduleUnofficialEventsHeader" = "Unofficial / Cruiser Organized";
+"AutoChooseAttendanceNoUnofficialEvents" = "No Unofficial / Cruiser Organized events in the schedule.";
+"AutoChooseAttendanceUnofficialQuestion" = "What Unofficial / Cruiser Organized events do you want to attend?";
 "AutoChooseAttendanceNoMeetAndGreets" = "No Meet and Greet events in the schedule.";
-"AutoChooseAttendanceMeetAndGreetQuestion" = "Do you want to attend Meet and Greet for all of your Must bands? You can always flag these manually if you select 'Not interested'.";
+"AutoChooseAttendanceMeetAndGreetQuestion" = "What Meet and Greet Events do you want to attend?";
 "AutoChooseAttendanceMGOptionAll" = "All of your Must bands";
 "AutoChooseAttendanceMGOptionSome" = "Some of your Must bands";
 "AutoChooseAttendanceMGOptionNone" = "Not interested";
+"AutoChooseAttendanceMGSelectAll" = "All";
 "AutoChooseAttendanceNoClinics" = "No clinic events in the schedule.";
 "AutoChooseAttendanceClinicsQuestion" = "Which clinics do you want to attend?";
 "AutoChooseAttendanceClinicsOptionAll" = "All Must bands";
@@ -221,6 +225,7 @@
 "AIScheduleNoEvents" = "No events to build from.";
 "AIScheduleMustConflictTitle" = "Two Must-see shows at the same time";
 "AIScheduleMustConflictMessage" = "Pick which one to attend.";
+"AIScheduleMustConflictBoth" = "Both";
 "AIScheduleSeeingThemNowhereElse" = "Seeing them: Nowhere else";
 "AIScheduleSeeingThemFormat" = "Seeing them: %@";
 "AIScheduleBothMissedTitle" = "Both shows would be missed";

@@ -13,6 +13,7 @@ private enum WizardStep: Int, CaseIterable {
     case intro
     case unknownBands
     case sleepHours
+    case unofficialEvents
     case meetAndGreet
     case clinics
     case specialEvents
@@ -41,7 +42,8 @@ struct AutoChooseAttendanceWizardView: View {
     @State private var latestShowHalfHours: Int = 0
     /// Max half-hour offered in picker (0–11), derived from schedule so e.g. latest show 5:15am → offer up to 5:30am (11).
     @State private var latestShowHalfHoursOptionMax: Int = 11
-    @State private var meetAndGreetChoice: MGOption = .allMust
+    @State private var selectedUnofficialEventIds: Set<String> = []
+    @State private var selectedMeetAndGreetIds: Set<String> = []
     @State private var clinicsChoice: ClinicsOption = .allMust
     @State private var selectedClinicIds: Set<String> = []
     @State private var selectedSpecialEventIds: Set<String> = []
@@ -54,14 +56,13 @@ struct AutoChooseAttendanceWizardView: View {
     @State private var completedCount = 0
     @State private var isBuilding = false
     
-    private enum MGOption: String, CaseIterable {
+    private enum ClinicsOption: String, CaseIterable {
         case allMust = "All"
         case notInterested = "None"
     }
     
-    private enum ClinicsOption: String, CaseIterable {
-        case allMust = "All"
-        case notInterested = "None"
+    private var hasUnofficialEvents: Bool {
+        events.contains { let t = $0.eventType ?? ""; return t == unofficalEventType || t == unofficalEventTypeOld }
     }
     
     private var hasMeetAndGreets: Bool {
@@ -130,6 +131,7 @@ struct AutoChooseAttendanceWizardView: View {
         case .intro: return NSLocalizedString("AutoChooseAttendanceTitle", comment: "")
         case .unknownBands: return NSLocalizedString("AutoChooseAttendanceUnknownBandsTitle", comment: "")
         case .sleepHours: return NSLocalizedString("AutoChooseAttendanceLatestShowTitle", comment: "Latest show")
+        case .unofficialEvents: return NSLocalizedString("AIScheduleUnofficialEventsHeader", comment: "Unofficial / Cruiser Organized")
         case .meetAndGreet: return NSLocalizedString("AIScheduleMeetGreetHeader", comment: "")
         case .clinics: return NSLocalizedString("AIScheduleClinicsHeader", comment: "")
         case .specialEvents: return NSLocalizedString("AIScheduleSpecialEventsHeader", comment: "Special Events")
@@ -148,6 +150,8 @@ struct AutoChooseAttendanceWizardView: View {
                 unknownBandsStep
             case .sleepHours:
                 sleepStep
+            case .unofficialEvents:
+                unofficialEventsStep
             case .meetAndGreet:
                 meetAndGreetStep
             case .clinics:
@@ -189,7 +193,7 @@ struct AutoChooseAttendanceWizardView: View {
     
     private var wizardNextButtonTitle: String {
         switch step {
-        case .intro, .unknownBands, .sleepHours, .meetAndGreet:
+        case .intro, .unknownBands, .sleepHours, .unofficialEvents, .meetAndGreet:
             return NSLocalizedString("AutoChooseAttendanceNext", comment: "Next")
         case .clinics:
             return hasSpecialEvents ? NSLocalizedString("AutoChooseAttendanceNext", comment: "Next") : NSLocalizedString("AIScheduleBuild", comment: "Build schedule")
@@ -212,6 +216,8 @@ struct AutoChooseAttendanceWizardView: View {
             }
         case .sleepHours:
             step = nextStep(after: .sleepHours)
+        case .unofficialEvents:
+            step = nextStep(after: .unofficialEvents)
         case .meetAndGreet:
             step = nextStep(after: .meetAndGreet)
         case .clinics:
@@ -340,22 +346,116 @@ struct AutoChooseAttendanceWizardView: View {
             if !hasMeetAndGreets {
                 Text(NSLocalizedString("AutoChooseAttendanceNoMeetAndGreets", comment: ""))
                     .foregroundColor(.white)
+            } else if meetAndGreetEventsForMustBands.isEmpty {
+                Text(NSLocalizedString("AutoChooseAttendanceNoMeetAndGreets", comment: ""))
+                    .foregroundColor(.white)
             } else {
                 Text(NSLocalizedString("AutoChooseAttendanceMeetAndGreetQuestion", comment: ""))
                     .foregroundColor(.white)
-                radioOption(selected: meetAndGreetChoice == .allMust) {
-                    meetAndGreetChoice = .allMust
-                } label: {
-                    Text(NSLocalizedString("AutoChooseAttendanceMGOptionAll", comment: "All of your Must bands"))
+                Text(NSLocalizedString("AutoChooseAttendanceClinicsChecklistHint", comment: "Check each you want to attend. Notes from schedule (e.g. Song writing clinic)."))
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                Button(NSLocalizedString("AutoChooseAttendanceMGSelectAll", comment: "All")) {
+                    selectedMeetAndGreetIds = Set(meetAndGreetEventsForMustBands.map { eventId($0) })
                 }
-                radioOption(selected: meetAndGreetChoice == .notInterested) {
-                    meetAndGreetChoice = .notInterested
-                } label: {
-                    Text(NSLocalizedString("AutoChooseAttendanceMGOptionNone", comment: "Not interested"))
+                .font(.subheadline)
+                .foregroundColor(.white)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .background(Color.gray.opacity(0.6))
+                .cornerRadius(10)
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 12) {
+                        ForEach(meetAndGreetEventsForMustBands, id: \.self, content: meetAndGreetChecklistRow)
+                    }
                 }
+                .frame(maxHeight: .infinity)
             }
             Spacer(minLength: 20)
         }
+    }
+    
+    private func meetAndGreetChecklistRow(_ event: EventData) -> some View {
+        let id = eventId(event)
+        let notesText = (event.notes ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        return Toggle(isOn: Binding(
+            get: { selectedMeetAndGreetIds.contains(id) },
+            set: { if $0 { selectedMeetAndGreetIds.insert(id) } else { selectedMeetAndGreetIds.remove(id) } }
+        )) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(notesText.isEmpty ? event.bandName : "\(event.bandName) – \(notesText)")
+                    .foregroundColor(.white)
+                Text("\(event.location) · \(event.day ?? "") · \(formatTimeStringForDisplay(event.startTime ?? ""))")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            }
+        }
+        .tint(.accentColor)
+    }
+    
+    private var unofficialEventsStep: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            if !hasUnofficialEvents || unofficialEventsForMustBands.isEmpty {
+                Text(NSLocalizedString("AutoChooseAttendanceNoUnofficialEvents", comment: "No Unofficial / Cruiser Organized events in the schedule."))
+                    .foregroundColor(.white)
+            } else {
+                Text(NSLocalizedString("AutoChooseAttendanceUnofficialQuestion", comment: "What Unofficial / Cruiser Organized events do you want to attend?"))
+                    .foregroundColor(.white)
+                Text(NSLocalizedString("AutoChooseAttendanceClinicsChecklistHint", comment: "Check each you want to attend. Notes from schedule (e.g. Song writing clinic)."))
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                Button(NSLocalizedString("AutoChooseAttendanceMGSelectAll", comment: "All")) {
+                    selectedUnofficialEventIds = Set(unofficialEventsForMustBands.map { eventId($0) })
+                }
+                .font(.subheadline)
+                .foregroundColor(.white)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .background(Color.gray.opacity(0.6))
+                .cornerRadius(10)
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 12) {
+                        ForEach(unofficialEventsForMustBands, id: \.self, content: unofficialChecklistRow)
+                    }
+                }
+                .frame(maxHeight: .infinity)
+            }
+            Spacer(minLength: 20)
+        }
+    }
+    
+    private func unofficialChecklistRow(_ event: EventData) -> some View {
+        let id = eventId(event)
+        let notesText = (event.notes ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        return Toggle(isOn: Binding(
+            get: { selectedUnofficialEventIds.contains(id) },
+            set: { if $0 { selectedUnofficialEventIds.insert(id) } else { selectedUnofficialEventIds.remove(id) } }
+        )) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(notesText.isEmpty ? event.bandName : "\(event.bandName) – \(notesText)")
+                    .foregroundColor(.white)
+                Text("\(event.location) · \(event.day ?? "") · \(formatTimeStringForDisplay(event.startTime ?? ""))")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            }
+        }
+        .tint(.accentColor)
+    }
+    
+    /// Unofficial / Cruiser Organized events for bands the user marked as Must (priority 1). Used for the unofficial checklist.
+    private var unofficialEventsForMustBands: [EventData] {
+        events.filter { event in
+            let t = event.eventType ?? ""
+            guard t == unofficalEventType || t == unofficalEventTypeOld else { return false }
+            return priorityManager.getPriority(for: event.bandName, eventYear: eventYear) == 1
+        }
+        .sorted { ($0.timeIndex, $0.bandName) < ($1.timeIndex, $1.bandName) }
+    }
+    
+    /// Meet and Greet events for bands the user marked as Must (priority 1). Used for the M&G checklist.
+    private var meetAndGreetEventsForMustBands: [EventData] {
+        events.filter { ($0.eventType ?? "") == meetAndGreetype && priorityManager.getPriority(for: $0.bandName, eventYear: eventYear) == 1 }
+            .sorted { ($0.timeIndex, $0.bandName) < ($1.timeIndex, $1.bandName) }
     }
     
     private var clinicEvents: [EventData] {
@@ -480,27 +580,55 @@ struct AutoChooseAttendanceWizardView: View {
     }
     
     private func mustConflictResolutionView(eventA: EventData, eventB: EventData) -> some View {
-        VStack(alignment: .leading, spacing: 20) {
-            Text(NSLocalizedString("AIScheduleMustConflictTitle", comment: ""))
-                .font(.headline)
-                .foregroundColor(.white)
-            Text(NSLocalizedString("AIScheduleMustConflictMessage", comment: ""))
-                .foregroundColor(.gray)
-                .font(.subheadline)
-            ScrollView {
-                VStack(spacing: 12) {
-                    conflictEventCard(event: eventA) {
-                        resolveMustConflict(choose: eventA)
-                    }
-                    conflictEventCard(event: eventB) {
-                        resolveMustConflict(choose: eventB)
+        VStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 20) {
+                Text(NSLocalizedString("AIScheduleMustConflictTitle", comment: ""))
+                    .font(.headline)
+                    .foregroundColor(.white)
+                Text(NSLocalizedString("AIScheduleMustConflictMessage", comment: ""))
+                    .foregroundColor(.gray)
+                    .font(.subheadline)
+                ScrollView {
+                    VStack(spacing: 12) {
+                        conflictEventCard(event: eventA) {
+                            resolveMustConflict(choose: eventA)
+                        }
+                        conflictEventCard(event: eventB) {
+                            resolveMustConflict(choose: eventB)
+                        }
                     }
                 }
             }
-            Button(NSLocalizedString("Cancel", comment: ""), role: .cancel) {
-                onDismiss(false)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(.horizontal)
+
+            // Fixed bottom row: Cancel (left), Both (right) as proper buttons
+            HStack(alignment: .center, spacing: 16) {
+                Button(NSLocalizedString("Cancel", comment: "")) {
+                    onDismiss(false)
+                }
+                .font(.subheadline.weight(.medium))
+                .foregroundColor(.white)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .background(Color.gray.opacity(0.5))
+                .cornerRadius(10)
+
+                Spacer(minLength: 0)
+
+                Button(NSLocalizedString("AIScheduleMustConflictBoth", comment: "Both")) {
+                    resolveMustConflictChooseBoth(currentEvent: eventA)
+                }
+                .font(.subheadline.weight(.medium))
+                .foregroundColor(.white)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .background(Color.accentColor)
+                .cornerRadius(10)
             }
-            .foregroundColor(.gray)
+            .padding(.top, 20)
+            .padding(.bottom, 8)
+            .padding(.horizontal)
         }
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -686,6 +814,12 @@ struct AutoChooseAttendanceWizardView: View {
         case .intro: return .unknownBands
         case .unknownBands: return .sleepHours
         case .sleepHours:
+            if hasUnofficialEvents { return .unofficialEvents }
+            if hasMeetAndGreets { return .meetAndGreet }
+            if hasClinics { return .clinics }
+            if hasSpecialEvents { return .specialEvents }
+            startBuilding(); return .building
+        case .unofficialEvents:
             if hasMeetAndGreets { return .meetAndGreet }
             if hasClinics { return .clinics }
             if hasSpecialEvents { return .specialEvents }
@@ -709,8 +843,9 @@ struct AutoChooseAttendanceWizardView: View {
         case .intro: break
         case .unknownBands: step = .intro
         case .sleepHours: step = .unknownBands
-        case .meetAndGreet: step = .sleepHours
-        case .clinics: step = hasMeetAndGreets ? .meetAndGreet : .sleepHours
+        case .unofficialEvents: step = .sleepHours
+        case .meetAndGreet: step = hasUnofficialEvents ? .unofficialEvents : .sleepHours
+        case .clinics: step = hasMeetAndGreets ? .meetAndGreet : (hasUnofficialEvents ? .unofficialEvents : .sleepHours)
         case .specialEvents: step = .clinics
         case .building, .done: break
         }
@@ -732,8 +867,14 @@ struct AutoChooseAttendanceWizardView: View {
     private func startBuilding() {
         step = .building
         isBuilding = true
-        let markMAndG = (hasMeetAndGreets && meetAndGreetChoice == .allMust)
-        // Clinics and special events come from checklists only; builder does not add them
+        // Meet and Greet: checklist selection; when empty, builder adds no M&G (markAllMustMeetAndGreets false)
+        let selectedMeetAndGreetList = events.filter { ($0.eventType ?? "") == meetAndGreetype && selectedMeetAndGreetIds.contains(eventId($0)) }
+        // Unofficial / Cruiser Organized: checklist selection (Must bands only)
+        let selectedUnofficialList = events.filter { event in
+            let t = event.eventType ?? ""
+            guard t == unofficalEventType || t == unofficalEventTypeOld else { return false }
+            return selectedUnofficialEventIds.contains(eventId(event))
+        }
         let yearString = String(eventYear)
         let existingAttended = events.filter { event in
             guard let startTime = event.startTime, !startTime.isEmpty else { return false }
@@ -751,13 +892,13 @@ struct AutoChooseAttendanceWizardView: View {
         let selectedClinicsList = events.filter { ($0.eventType ?? "") == clinicType && selectedClinicIds.contains(eventId($0)) }
         let selectedSpecialsList = events.filter { ($0.eventType ?? "") == specialEventType && selectedSpecialEventIds.contains(eventId($0)) }
         var b = AIScheduleBuilder(
-            markAllMustMeetAndGreets: markMAndG,
+            markAllMustMeetAndGreets: false,
             markAllMustClinics: false,
             priorityManager: priorityManager,
             eventYear: eventYear,
             latestShowCutoffHalfHours: latestShowHalfHours
         )
-        let firstStep = b.start(events: events, existingAttended: existingAttended, selectedClinicEvents: selectedClinicsList, selectedSpecialEvents: selectedSpecialsList)
+        let firstStep = b.start(events: events, existingAttended: existingAttended, selectedClinicEvents: selectedClinicsList, selectedSpecialEvents: selectedSpecialsList, selectedMeetAndGreetEvents: selectedMeetAndGreetList, selectedUnofficialEvents: selectedUnofficialList)
         builder = b
         currentBuildStep = firstStep
         if case .completed = firstStep {
@@ -804,6 +945,14 @@ struct AutoChooseAttendanceWizardView: View {
     private func resolveMustConflict(choose event: EventData) {
         guard var b = builder else { return }
         let next = b.nextStep(resolution: .mustConflict(choose: event))
+        builder = b
+        currentBuildStep = next
+        checkStepForAlerts()
+    }
+    
+    private func resolveMustConflictChooseBoth(currentEvent: EventData) {
+        guard var b = builder else { return }
+        let next = b.nextStep(resolution: .mustConflictChooseBoth(currentEvent: currentEvent))
         builder = b
         currentBuildStep = next
         checkStepForAlerts()

@@ -409,10 +409,14 @@
 "AutoChooseAttendanceTitle" = "Planifier votre horaire";
 "AutoChooseAttendanceIntro" = "Voulez-vous que %@ vous aide à choisir les événements auxquels assister ?\n\nNous utiliserons vos choix Must, Might et Wont ainsi que quelques questions rapides pour une première proposition. Vous pourrez modifier tout événement par la suite.";
 "AutoChooseAttendanceNoMeetAndGreets" = "Aucun Meet and Greet dans le programme.";
-"AutoChooseAttendanceMeetAndGreetQuestion" = "Voulez-vous participer aux Meet and Greet pour toutes vos bandes Must ? Vous pouvez toujours les marquer manuellement si vous choisissez « Pas intéressé ».";
+"AutoChooseAttendanceMeetAndGreetQuestion" = "À quels Meet and Greet souhaitez-vous assister ?";
 "AutoChooseAttendanceMGOptionAll" = "Toutes vos bandes Must";
 "AutoChooseAttendanceMGOptionSome" = "Certaines de vos bandes Must";
 "AutoChooseAttendanceMGOptionNone" = "Pas intéressé";
+"AIScheduleUnofficialEventsHeader" = "Non officiel / Cruiser Organized";
+"AutoChooseAttendanceNoUnofficialEvents" = "Aucun événement non officiel / Cruiser Organized dans le programme.";
+"AutoChooseAttendanceUnofficialQuestion" = "À quels événements non officiels / Cruiser Organized souhaitez-vous assister ?";
+"AutoChooseAttendanceMGSelectAll" = "Tous";
 
 "AutoChooseAttendanceNoClinics" = "Aucun atelier dans le programme.";
 "AutoChooseAttendanceClinicsQuestion" = "À quels ateliers souhaitez-vous assister ?";
@@ -466,6 +470,7 @@
 "AIScheduleNoEvents" = "Aucun événement à planifier.";
 "AIScheduleMustConflictTitle" = "Deux concerts Must en même temps";
 "AIScheduleMustConflictMessage" = "Choisissez auquel assister.";
+"AIScheduleMustConflictBoth" = "Les deux";
 "AIScheduleDoneTitle" = "Terminé";
 "AIScheduleDoneMessage" = "%d événements marqués comme « j'assiste ».";
 "AIScheduleDoneMessageDetail" = "Vous allez voir votre programme.\n\nDans le menu des filtres :\n• Appuyez sur Effacer les filtres pour tout voir\n• Appuyez sur Événements marqués pour ne voir que les vôtres\n• Maintenez appuyé sur un événement pour changer votre statut.";

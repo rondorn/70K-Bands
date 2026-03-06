@@ -165,7 +165,21 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
     }
     
     // Apply filters directly on structs
+    // When "Show Flagged Events Only" is on, disable event type and venue filters (only expiration + attendance apply)
     let filteredEvents = allEvents.filter { event in
+        // Show Flagged Only: ignore event type and venue; only apply expiration if enabled
+        if getShowOnlyWillAttened() {
+            if getHideExpireScheduleData() {
+                let currentTime = Date().timeIntervalSinceReferenceDate
+                guard let dateString = event.date, let endTimeString = event.endTime else { return true }
+                var endTimeIndex = calculateTimeIndexForFiltering(date: dateString, time: endTimeString)
+                if event.timeIndex > endTimeIndex { endTimeIndex += 86400 }
+                let bufferEndTime = endTimeIndex + 600
+                return bufferEndTime > currentTime
+            }
+            return true
+        }
+        
         let eventType = event.eventType ?? ""
         let location = event.location
         
@@ -273,22 +287,28 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
     }
     
     // APPLY PRIORITY FILTERING (post-filter since priority data is separate)
-    let priorityFilteredEvents = filteredEvents.filter { event in
-        let bandName = event.bandName
-        guard !bandName.isEmpty else { return true } // Include standalone events
-        
-        let priority = priorityManager.getPriority(for: bandName)
-        
-        // Check priority filters
-        if priority == 1 && !getMustSeeOn() { return false }
-        if priority == 2 && !getMightSeeOn() { return false }
-        if priority == 3 && !getWontSeeOn() { return false }
-        if priority == 0 && !getUnknownSeeOn() { return false }
-        
-        return true
+    // When Show Flagged Only is on, skip priority filter (all filters disabled except attendance)
+    let priorityFilteredEvents: [EventData]
+    if getShowOnlyWillAttened() {
+        priorityFilteredEvents = filteredEvents
+        print("🔍 [FILTER] Show Flagged Only: skipping priority filter")
+    } else {
+        priorityFilteredEvents = filteredEvents.filter { event in
+            let bandName = event.bandName
+            guard !bandName.isEmpty else { return true } // Include standalone events
+            
+            let priority = priorityManager.getPriority(for: bandName)
+            
+            // Check priority filters
+            if priority == 1 && !getMustSeeOn() { return false }
+            if priority == 2 && !getMightSeeOn() { return false }
+            if priority == 3 && !getWontSeeOn() { return false }
+            if priority == 0 && !getUnknownSeeOn() { return false }
+            
+            return true
+        }
+        print("🔍 [FILTER] After priority filtering: \(priorityFilteredEvents.count) events")
     }
-    
-    print("🔍 [FILTER] After priority filtering: \(priorityFilteredEvents.count) events")
     
     // APPLY ATTENDANCE FILTER (if enabled)
     var finalEvents: [EventData]

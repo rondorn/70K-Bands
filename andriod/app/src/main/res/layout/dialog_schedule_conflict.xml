@@ -110,14 +110,32 @@
             android:paddingTop="4dp" />
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/conflict_cancel"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/Cancel"
-        android:textColor="#FFFFFF"
-        android:textSize="16sp"
-        android:clickable="true"
-        android:focusable="true"
-        android:padding="8dp" />
+        android:orientation="horizontal"
+        android:gravity="end"
+        android:paddingTop="8dp">
+        <TextView
+            android:id="@+id/conflict_both"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/aischedule_must_conflict_both"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="8dp"
+            android:layout_marginEnd="16dp" />
+        <TextView
+            android:id="@+id/conflict_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/Cancel"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="8dp" />
+    </LinearLayout>
 </LinearLayout>

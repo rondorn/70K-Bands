@@ -19,6 +19,12 @@
     <string name="latest_show_cutoff">Viimeinen keikka, jonka haluat nähdä.</string>
     <string name="latest_show_cutoff_hint">Keikat, jotka alkavat tämän valitun ajan jälkeen, suljetaan pois. Esimerkiksi jos valitset klo 2, klo 2 alkava keikka sisällytetään, mutta klo 2:30 tai myöhemmin alkava keikka suljetaan pois.</string>
     <string name="aischedule_meet_greet_header">Meet and Greets</string>
+    <string name="aischedule_meet_greet_question">Mihin Meet and Greet -tapaamisiin haluat osallistua?</string>
+    <string name="aischedule_meet_greet_checklist_hint">Valitse ne, joihin haluat osallistua. Vain Must-bändit.</string>
+    <string name="aischedule_unofficial_header">Epävirallinen / Cruiser Organized</string>
+    <string name="aischedule_unofficial_question">Mihin epävirallisiin / Cruiser Organized -tapahtumiin haluat osallistua?</string>
+    <string name="aischedule_unofficial_checklist_hint">Valitse ne, joihin haluat osallistua. Vain Must-bändit.</string>
+    <string name="aischedule_checklist_all">Kaikki</string>
     <string name="meet_greet_choice">Haluatko osallistua Meet and Greet -tapaamisiin kaikille Must-bändeillesi? Voit aina merkitä nämä manuaalisesti, jos valitset „Ei kiinnosta“.</string>
     <string name="mark_all_must_mg">Kaikki Must-bändisi</string>
     <string name="mark_none_mg">Ei kiinnosta</string>
@@ -35,6 +41,7 @@
     <string name="aischedule_no_special_events">Ei erikoistapahtumia aikataulussa.</string>
     <string name="aischedule_must_conflict_title">Kaksi Must-esiintymistä samaan aikaan</string>
     <string name="aischedule_must_conflict_message">Valitse kumpaan osallistut.</string>
+    <string name="aischedule_must_conflict_both">Molemmat</string>
     <string name="replace_auto_schedule_title">Korvataanko automaattinen aikataulu?</string>
     <string name="replace_auto_schedule_message">Kaikki olemassa olevat automaattiset valinnat poistetaan ja prosessi aloitetaan alusta. Manuaalisesti merkitsemäsi tapahtumat säilytetään.</string>
     <string name="unknown_bands_title">Tuntemattomat bändit</string>

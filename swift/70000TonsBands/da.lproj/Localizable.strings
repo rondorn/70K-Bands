@@ -243,10 +243,14 @@
 "AutoChooseAttendanceTitle" = "Planlæg din tidsplan";
 "AutoChooseAttendanceIntro" = "Vil du have %@ til at hjælpe dig med at vælge, hvilke begivenheder du vil deltage i?\n\nVi bruger dine Must-, Might- og Wont-valg plus et par korte spørgsmål til et første udkast. Du kan ændre enhver begivenhed bagefter.";
 "AutoChooseAttendanceNoMeetAndGreets" = "Ingen Meet and Greet i programmet.";
-"AutoChooseAttendanceMeetAndGreetQuestion" = "Vil du deltage i Meet and Greet for alle dine Must-bands? Du kan altid markere disse manuelt, hvis du vælger „Ikke interesseret“.";
+"AutoChooseAttendanceMeetAndGreetQuestion" = "Hvilke Meet and Greet-begivenheder vil du deltage i?";
 "AutoChooseAttendanceMGOptionAll" = "Alle dine Must-bands";
 "AutoChooseAttendanceMGOptionSome" = "Nogle af dine Must-bands";
 "AutoChooseAttendanceMGOptionNone" = "Ikke interesseret";
+"AIScheduleUnofficialEventsHeader" = "Uofficiel / Cruiser Organized";
+"AutoChooseAttendanceNoUnofficialEvents" = "Ingen uofficielle / Cruiser Organized begivenheder i programmet.";
+"AutoChooseAttendanceUnofficialQuestion" = "Hvilke uofficielle / Cruiser Organized begivenheder vil du deltage i?";
+"AutoChooseAttendanceMGSelectAll" = "Alle";
 
 "AutoChooseAttendanceNoClinics" = "Ingen klinikker i programmet.";
 "AutoChooseAttendanceClinicsQuestion" = "Hvilke klinikker vil du deltage i?";
@@ -300,6 +304,7 @@
 "AIScheduleNoEvents" = "Ingen events at planlægge.";
 "AIScheduleMustConflictTitle" = "To Must-shows på samme tid";
 "AIScheduleMustConflictMessage" = "Vælg hvilken du deltager i.";
+"AIScheduleMustConflictBoth" = "Begge";
 "AIScheduleDoneTitle" = "Færdig";
 "AIScheduleDoneMessage" = "%d events markeret som deltager.";
 "AIScheduleDoneMessageDetail" = "Du ser nu din tidsplan.\n\nI filtermenuen:\n• Tryk Ryd filtre for alle events\n• Tryk Vis kun markerede for dine events\n• Langt tryk på et event for at ændre status.";

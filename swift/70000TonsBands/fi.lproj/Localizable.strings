@@ -190,10 +190,14 @@
 "AutoChooseAttendanceTitle" = "Suunnittele aikataulusi";
 "AutoChooseAttendanceIntro" = "Haluatko, että %@ auttaa sinua valitsemaan, mitä tapahtumiin osallistut?\n\nKäytämme Must-, Might- ja Wont-valintojasi sekä muutaman pikakysymyksen ensimmäiseen luonnokseen. Voit muuttaa mitä tahansa tapahtumaa myöhemmin.";
 "AutoChooseAttendanceNoMeetAndGreets" = "Ei artistitapaamisia aikataulussa.";
-"AutoChooseAttendanceMeetAndGreetQuestion" = "Haluatko osallistua Meet and Greet -tapaamisiin kaikille Must-bändeillesi? Voit aina merkitä nämä manuaalisesti, jos valitset „Ei kiinnosta“.";
+"AutoChooseAttendanceMeetAndGreetQuestion" = "Mihin Meet and Greet -tapaamisiin haluat osallistua?";
 "AutoChooseAttendanceMGOptionAll" = "Kaikki Must-bändisi";
 "AutoChooseAttendanceMGOptionSome" = "Osa Must-bändeistäsi";
 "AutoChooseAttendanceMGOptionNone" = "Ei kiinnosta";
+"AIScheduleUnofficialEventsHeader" = "Epävirallinen / Cruiser Organized";
+"AutoChooseAttendanceNoUnofficialEvents" = "Ei epävirallisia / Cruiser Organized -tapahtumia aikataulussa.";
+"AutoChooseAttendanceUnofficialQuestion" = "Mihin epävirallisiin / Cruiser Organized -tapahtumiin haluat osallistua?";
+"AutoChooseAttendanceMGSelectAll" = "Kaikki";
 
 "AutoChooseAttendanceNoClinics" = "Ei klinikoita aikataulussa.";
 "AutoChooseAttendanceClinicsQuestion" = "Mihin klinikoihin haluat osallistua?";
@@ -247,6 +251,7 @@
 "AIScheduleNoEvents" = "Ei tapahtumia suunniteltavaksi.";
 "AIScheduleMustConflictTitle" = "Kaksi Must-keikkaa samaan aikaan";
 "AIScheduleMustConflictMessage" = "Valitse kumpaan osallistut.";
+"AIScheduleMustConflictBoth" = "Molemmat";
 "AIScheduleDoneTitle" = "Valmis";
 "AIScheduleDoneMessage" = "%d tapahtumaa merkitty osallistuvaksi.";
 "AIScheduleDoneMessageDetail" = "Näet nyt aikataulusi.\n\nSuodatinvalikossa:\n• Tyhjennä suodattimet nähdäksesi kaikki\n• Näytä vain merkityt nähdäksesi omasi\n• Pitkä painallus muuttaa osallistumistilaa.";
