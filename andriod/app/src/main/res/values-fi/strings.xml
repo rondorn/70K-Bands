@@ -11,6 +11,8 @@
 
     <string name="Ok">Kyllä</string>
     <string name="Cancel">Ei</string>
+    <string name="Yes">Kyllä</string>
+    <string name="No">Ei</string>
     <string name="plan_your_schedule">Suunnittele aikataulusi</string>
     <string name="plan_schedule_intro">Haluatko, että 70K Bands auttaa sinua valitsemaan, mitä tapahtumiin osallistut?\n\nKäytämme Must-, Might- ja Wont-valintojasi sekä muutaman pikakysymyksen ensimmäiseen luonnokseen. Voit muuttaa mitä tahansa tapahtumaa myöhemmin.</string>
     <string name="latest_show_title">Viimeinen keikka</string>

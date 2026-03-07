@@ -25,6 +25,8 @@
 
 "Ok"="Ok";
 "Cancel"="Cancel";
+"Yes"="Yes";
+"No"="No";
 
 "Select Band"="Select Band";
 "Which band do you want to set priority or attendance for?"="Which band do you want to set priority or attendance for?";
@@ -123,6 +125,8 @@
 "AutoChooseAttendanceReplaceMessage" = "All existing auto choices will be removed and the process will start over. Any events you marked manually will be kept.";
 "AutoChooseAttendanceTitle" = "Plan Your Schedule";
 "AutoChooseAttendanceImportPrompt" = "Schedule imported. Would you like to plan your schedule automatically?";
+"AutoScheduleReleasedCreatePrompt" = "The Showing Schedule has been released.\n\nWould you like to run a wizard that will generate a personalized schedule for you based on your Must, Might, and Won't preferences, as well as your own choices based on the questions we'll ask.";
+"AutoScheduleReleasedRerunPrompt" = "The Show Schedule has been released.\n\nWould you like to rerun the personalized schedule wizard? This will run a wizard that will generate a personalized schedule for you based on your Must, Might, and Won't preferences, as well as your own choices based on the questions we'll ask.";
 "AutoChooseAttendanceIntro" = "Do you want %@ to help you choose what events to attend?\n\nWe'll use your Must, Might, and Wont choices plus a few quick questions to build a first pass. You can change any event afterward.";
 "AutoChooseAttendanceNext" = "Next";
 "AutoChooseAttendanceUnknownBandsTitle" = "Unknown bands";

@@ -42,27 +42,27 @@ struct PreferencesView: View {
                 viewModel.refreshAutoChosenDataState()
             })
         }
-        .alert(NSLocalizedString("AutoChooseAttendanceReplaceTitle", comment: ""), isPresented: $viewModel.showReplaceAutoChoicesConfirmation) {
-            Button(NSLocalizedString("Cancel", comment: ""), role: .cancel) {
-                viewModel.showReplaceAutoChoicesConfirmation = false
+        .overlay {
+            if viewModel.showReplaceAutoChoicesConfirmation {
+                darkConfirmOverlay(
+                    title: NSLocalizedString("AutoChooseAttendanceReplaceTitle", comment: ""),
+                    message: NSLocalizedString("AutoChooseAttendanceReplaceMessage", comment: ""),
+                    noAction: { viewModel.showReplaceAutoChoicesConfirmation = false },
+                    yesAction: { viewModel.showReplaceAutoChoicesConfirmation = false; viewModel.confirmReplaceAutoChoicesAndStartWizard() }
+                )
             }
-            Button(NSLocalizedString("OK", comment: "")) {
-                viewModel.confirmReplaceAutoChoicesAndStartWizard()
-            }
-        } message: {
-            Text(NSLocalizedString("AutoChooseAttendanceReplaceMessage", comment: ""))
         }
-        .alert(NSLocalizedString("AutoChooseAttendanceClearAllTitle", comment: ""), isPresented: $viewModel.showClearAllConfirmation) {
-            Button(NSLocalizedString("Cancel", comment: ""), role: .cancel) {
-                viewModel.showClearAllConfirmation = false
+        .overlay {
+            if viewModel.showClearAllConfirmation {
+                darkConfirmOverlay(
+                    title: NSLocalizedString("AutoChooseAttendanceClearAllTitle", comment: ""),
+                    message: viewModel.clearAllCount == 0
+                        ? NSLocalizedString("AutoChooseAttendanceClearAllMessageNone", comment: "")
+                        : String(format: NSLocalizedString("AutoChooseAttendanceClearAllMessage", comment: ""), viewModel.clearAllCount),
+                    noAction: { viewModel.showClearAllConfirmation = false },
+                    yesAction: { viewModel.showClearAllConfirmation = false; viewModel.confirmClearAllAttendance() }
+                )
             }
-            Button(NSLocalizedString("OK", comment: ""), role: .destructive) {
-                viewModel.confirmClearAllAttendance()
-            }
-        } message: {
-            Text(viewModel.clearAllCount == 0
-                 ? NSLocalizedString("AutoChooseAttendanceClearAllMessageNone", comment: "")
-                 : String(format: NSLocalizedString("AutoChooseAttendanceClearAllMessage", comment: ""), viewModel.clearAllCount))
         }
         .onAppear {
             viewModel.refreshAutoChosenDataState()
@@ -94,6 +94,47 @@ struct PreferencesView: View {
                 .transition(.opacity)
                 .animation(.easeInOut(duration: 0.3), value: viewModel.isLoadingData)
             }
+        }
+    }
+    
+    /// Dark-styled confirmation dialog to match Plan Your Schedule prompt (dark background, No left / Yes right).
+    private func darkConfirmOverlay(title: String, message: String, noAction: @escaping () -> Void, yesAction: @escaping () -> Void) -> some View {
+        ZStack {
+            Color.black.opacity(0.5)
+                .ignoresSafeArea()
+                .onTapGesture { }
+            VStack(spacing: 16) {
+                Text(title)
+                    .font(.headline)
+                    .foregroundColor(.white)
+                Text(message)
+                    .font(.subheadline)
+                    .foregroundColor(Color(.secondaryLabel))
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                HStack(spacing: 12) {
+                    Button(NSLocalizedString("No", comment: "")) {
+                        noAction()
+                    }
+                    .font(.body.weight(.medium))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    Button(NSLocalizedString("Yes", comment: "")) {
+                        yesAction()
+                    }
+                    .font(.body.weight(.medium))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                }
+                .padding(.top, 8)
+            }
+            .padding(24)
+            .frame(maxWidth: 300)
+            .background(Color(white: 0.10))
+            .cornerRadius(14)
+            .shadow(color: .black.opacity(0.4), radius: 20, x: 0, y: 10)
         }
     }
     

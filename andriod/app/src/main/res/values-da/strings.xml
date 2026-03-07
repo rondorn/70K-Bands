@@ -10,6 +10,8 @@
 
     <string name="Ok">Ja</string>
     <string name="Cancel">Ingen</string>
+    <string name="Yes">Ja</string>
+    <string name="No">Nej</string>
     <string name="plan_your_schedule">Planlæg din tidsplan</string>
     <string name="plan_schedule_intro">Vil du have 70K Bands til at hjælpe dig med at vælge, hvilke begivenheder du vil deltage i?\n\nVi bruger dine Must-, Might- og Wont-valg plus et par korte spørgsmål til et første udkast. Du kan ændre enhver begivenhed bagefter.</string>
     <string name="latest_show_title">Sidste show</string>

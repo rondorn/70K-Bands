@@ -16,6 +16,8 @@
     <string name="event_attendance">Asistencia al evento</string>
     <string name="Ok">Sí</string>
     <string name="Cancel">Cancelar</string>
+    <string name="Yes">Sí</string>
+    <string name="No">No</string>
     <string name="plan_your_schedule">Planifica tu horario</string>
     <string name="plan_schedule_intro">¿Quieres que 70K Bands te ayude a elegir a qué eventos asistir?\n\nUsaremos tus elecciones Must, Might y Wont y algunas preguntas rápidas para hacer una primera propuesta. Puedes cambiar cualquier evento después.</string>
     <string name="latest_show_title">Último show</string>

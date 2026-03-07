@@ -508,6 +508,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print("🔔 MIGRATION DIALOG OBSERVER REGISTERED SUCCESSFULLY")
         NotificationCenter.default.addObserver(self, selector: #selector(iCloudAttendedDataRestoredHandler), name: Notification.Name("iCloudAttendedDataRestored"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleAutoChooseAttendanceWizardRequested(_:)), name: Notification.Name("AutoChooseAttendanceWizardRequested"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handlePresentAutoChooseAttendanceWizardWithoutAlert(_:)), name: Notification.Name("PresentAutoChooseAttendanceWizardWithoutAlert"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleAutoChooseAttendanceOpenBandDetail(_:)), name: Notification.Name("AutoChooseAttendanceOpenBandDetail"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(bandNamesCacheReadyHandler), name: NSNotification.Name("BandNamesDataReady"), object: nil)
         
@@ -2067,6 +2068,15 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             })
             alert.addAction(UIAlertAction(title: NSLocalizedString("Cancel", comment: ""), style: .cancel))
             self.present(alert, animated: true)
+        }
+    }
+    
+    /// Presents the schedule wizard without showing the import prompt (used when auto-schedule pointer flags trigger).
+    @objc private func handlePresentAutoChooseAttendanceWizardWithoutAlert(_ notification: Notification) {
+        guard FestivalConfig.current.aiSchedule else { return }
+        let year = notification.userInfo?["eventYear"] as? Int ?? eventYear
+        DispatchQueue.main.async { [weak self] in
+            self?.presentAutoChooseAttendanceWizard(eventYear: year)
         }
     }
     
@@ -6217,6 +6227,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // It will force a refresh of the band list to ensure the UI is updated.
         print("Pointer data updated, forcing refresh of band list.")
         MinimumVersionWarningManager.checkAndShowIfNeeded(reason: "PointerDataUpdated (launch pointer refresh)")
+        AutoScheduleWizardManager.checkAndShowIfNeeded(reason: "PointerDataUpdated")
         refreshBandList(reason: "Pointer data updated")
     }
     
@@ -7034,6 +7045,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             if pointerUpdated {
                 print("✅ [UNIFIED_REFRESH] Pointer file updated successfully")
+                
+                // Notify pointer consumers (wizard, band list refresh, etc.) so they run on foreground return as well as launch.
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(name: Notification.Name("PointerDataUpdated"), object: nil)
+                }
                 
                 // STEP 2: Check if year changed
                 let newYear = getPointerUrlData(keyValue: "eventYear") ?? String(eventYear)

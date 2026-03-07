@@ -10,6 +10,8 @@
 
     <string name="Ok">Ja</string>
     <string name="Cancel">Nein</string>
+    <string name="Yes">Ja</string>
+    <string name="No">Nein</string>
     <string name="plan_your_schedule">Deinen Zeitplan planen</string>
     <string name="plan_schedule_intro">Soll 70K Bands dir helfen zu wählen, welche Veranstaltungen du besuchen möchtest?\n\nWir nutzen deine Must-, Might- und Wont-Auswahlen sowie ein paar kurze Fragen für einen ersten Vorschlag. Du kannst danach jedes Event ändern.</string>
     <string name="latest_show_title">Letzte Show</string>
