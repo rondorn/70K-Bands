@@ -27,6 +27,8 @@
 
 "Ok" = "Oui";
 "Cancel" = "Non";
+"Yes" = "Oui";
+"No" = "Non";
 
 "Select Band" = "Sélectionner un groupe";
 "Which band do you want to set priority or attendance for?" = "Pour quel groupe souhaitez-vous définir la priorité ou la présence ?";

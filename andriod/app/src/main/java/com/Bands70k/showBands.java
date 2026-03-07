@@ -788,7 +788,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                         scheduleAlertHandler alerts = new scheduleAlertHandler();
                         alerts.execute();
 
-                        offerAutoScheduleWizardIfNeeded();
+                        offerAutoSchedulePromptFromPointerThenMaybeWizard();
                     } catch (Exception e) {
                         Log.e("PullToRefresh", "Error refreshing UI after pull-to-refresh downloads", e);
                     }
@@ -3181,7 +3181,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                                 Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Background callback: Schedule has data, refreshing");
                                 Log.d("ScheduleCache", "Cached schedule parsed with " + BandInfo.scheduleRecords.size() + " records; refreshing schedule view");
                                 refreshData(true);
-                                offerAutoScheduleWizardIfNeeded();
+                                offerAutoSchedulePromptFromPointerThenMaybeWizard();
                                 Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Background callback: Refresh complete");
                             } else {
                                 Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Background callback: Schedule still empty after parse, skipping refresh (already showing bands-only view)");
@@ -4442,7 +4442,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                     }
                     reloadData();
                     refreshData();
-                    offerAutoScheduleWizardIfNeeded();
+                    offerAutoSchedulePromptFromPointerThenMaybeWizard();
                 }
             }
         } else {
@@ -4837,11 +4837,19 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 Log.d("Refresh", "CSV processing complete, starting bulk downloads");
                 ForegroundDownloadManager.startDownloadsAfterCSV(showBands.this);
 
-                offerAutoScheduleWizardIfNeeded();
+                offerAutoSchedulePromptFromPointerThenMaybeWizard();
 
                 Log.d("Refresh", "Refresh Stage = Post-Stop");
             }
         );
+    }
+
+    /**
+     * Checks pointer for AutoScheduleFlag=Yes and shows Plan Your Schedule prompt if needed (dark dialog, No/Yes).
+     * When prompt is not shown or user dismisses, runs offerAutoScheduleWizardIfNeeded() (30+ events path).
+     */
+    void offerAutoSchedulePromptFromPointerThenMaybeWizard() {
+        AutoScheduleWizardManager.checkAndShowIfNeeded(this, this::offerAutoScheduleWizardIfNeeded);
     }
 
     /** Number of bands with Must (1), Might (2), or Wont (3) set. Used to avoid offering Plan Your Schedule when not relevant. */

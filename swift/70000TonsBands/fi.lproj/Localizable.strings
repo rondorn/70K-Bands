@@ -29,6 +29,8 @@
 
 "Ok"="Kyllä";
 "Cancel"="Peruuta";
+"Yes"="Kyllä";
+"No"="Ei";
 
 "Select Band"="Valitse Bändi";
 "Which band do you want to set priority or attendance for?"="Mille bändille haluat asettaa prioriteetin tai osallistumisen?";

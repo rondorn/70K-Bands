@@ -87,7 +87,7 @@ public final class CoreDataRefreshManager {
                             showBands main = (showBands) activity;
                             Log.d(TAG, "Refreshing main UI after core refresh");
                             main.refreshData();
-                            main.offerAutoScheduleWizardIfNeeded();
+                            main.offerAutoSchedulePromptFromPointerThenMaybeWizard();
                         }
                     } catch (Exception ignored) {
                         // UI refresh is best-effort; core refresh already finished.
