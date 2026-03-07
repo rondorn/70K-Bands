@@ -25,6 +25,8 @@
 
 "Ok"="Ja";
 "Cancel"="Ingen";
+"Yes"="Ja";
+"No"="Nej";
 
 "Select Band"="Vælg Band";
 "Which band do you want to set priority or attendance for?"="Hvilket band vil du angive prioritet eller deltagelse for?";

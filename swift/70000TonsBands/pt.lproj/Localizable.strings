@@ -26,6 +26,8 @@
 
 "Ok"="Ok";
 "Cancel"="Cancelar";
+"Yes"="Sim";
+"No"="Não";
 
 "Select Band"="Selecionar Banda";
 "Which band do you want to set priority or attendance for?"="Para qual banda você deseja definir prioridade ou participação?";

@@ -371,6 +371,9 @@
 		82F2265E50F74313A6F60BE1 /* LandscapeScheduleViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DDB7E0B0AC440BA94B56DBD /* LandscapeScheduleViewModel.swift */; };
 		9DE58C80B71FF2933BD45C36 /* Pods_MDF_Bands.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DDAE333FDF216D5113AD6F14 /* Pods_MDF_Bands.framework */; };
 		A0E332C6C3514EE2A65FF3DC /* LandscapeScheduleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA018E4476A45C994ED91C0 /* LandscapeScheduleView.swift */; };
+		A1B2C3D4E5F60718293A4B5C /* AutoScheduleWizardManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5B /* AutoScheduleWizardManager.swift */; };
+		A1B2C3D4E5F60718293A4B5D /* AutoScheduleWizardManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5B /* AutoScheduleWizardManager.swift */; };
+		A1B2C3D4E5F60718293A4B5E /* AutoScheduleWizardManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5B /* AutoScheduleWizardManager.swift */; };
 		B0B1C2D3E4F5061728394A5C /* MinimumVersionWarningManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0B1C2D3E4F5061728394A5B /* MinimumVersionWarningManager.swift */; };
 		B0B1C2D3E4F5061728394A5D /* MinimumVersionWarningManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0B1C2D3E4F5061728394A5B /* MinimumVersionWarningManager.swift */; };
 		B0B1C2D3E4F5061728394A5E /* MinimumVersionWarningManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0B1C2D3E4F5061728394A5B /* MinimumVersionWarningManager.swift */; };
@@ -567,6 +570,7 @@
 		77777021F00AE7B5605B50B9 /* Pods-70K Bands.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-70K Bands.debug.xcconfig"; path = "Target Support Files/Pods-70K Bands/Pods-70K Bands.debug.xcconfig"; sourceTree = "<group>"; };
 		8CA018E4476A45C994ED91C0 /* LandscapeScheduleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandscapeScheduleView.swift; sourceTree = "<group>"; };
 		8DDB7E0B0AC440BA94B56DBD /* LandscapeScheduleViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandscapeScheduleViewModel.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A4B5B /* AutoScheduleWizardManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoScheduleWizardManager.swift; sourceTree = "<group>"; };
 		B0B1C2D3E4F5061728394A5B /* MinimumVersionWarningManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MinimumVersionWarningManager.swift; sourceTree = "<group>"; };
 		DDAE333FDF216D5113AD6F14 /* Pods_MDF_Bands.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MDF_Bands.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		E5280282B2B9A8824CA090AF /* Pods-MDF Bands.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MDF Bands.release.xcconfig"; path = "Target Support Files/Pods-MDF Bands/Pods-MDF Bands.release.xcconfig"; sourceTree = "<group>"; };
@@ -679,6 +683,7 @@
 			isa = PBXGroup;
 			children = (
 				11C061EC2F55FDAA0037A875 /* AutoChooseAttendanceWizardView.swift */,
+				A1B2C3D4E5F60718293A4B5B /* AutoScheduleWizardManager.swift */,
 				115F0DD22F551DE7003CD82C /* AIScheduleStorage.swift */,
 				115F0DCA2F551A76003CD82C /* AIScheduleBuilder.swift */,
 				115F0DCB2F551A76003CD82C /* CreateAIScheduleSheet.swift */,
@@ -1382,6 +1387,7 @@
 				11C62E8E2E6661F0000D9AF2 /* EventCSVImporter.swift in Sources */,
 				1122E3EE23DC8E38005EE50D /* NetworkTesting.swift in Sources */,
 				1154F6111A575893003F4764 /* MasterViewController.swift in Sources */,
+				A1B2C3D4E5F60718293A4B5C /* AutoScheduleWizardManager.swift in Sources */,
 				B0B1C2D3E4F5061728394A5C /* MinimumVersionWarningManager.swift in Sources */,
 				115F0DD02F551A76003CD82C /* AIScheduleBuilder.swift in Sources */,
 				115F0DD12F551A76003CD82C /* CreateAIScheduleSheet.swift in Sources */,
@@ -1486,6 +1492,7 @@
 				11ED61821A91105000D29A5B /* UtilityHandler.swift in Sources */,
 				1155E3B41A8B126500D51ED9 /* localNotificationHandler.swift in Sources */,
 				1155E3B51A8B126500D51ED9 /* MasterViewController.swift in Sources */,
+				A1B2C3D4E5F60718293A4B5D /* AutoScheduleWizardManager.swift in Sources */,
 				B0B1C2D3E4F5061728394A5D /* MinimumVersionWarningManager.swift in Sources */,
 				11C62E8C2E6661F0000D9AF2 /* EventCSVImporter.swift in Sources */,
 				110E08552AECB6E200075618 /* DropDown+Appearance.swift in Sources */,
@@ -1597,6 +1604,7 @@
 				1172EE1E2E5A1C4D006E3596 /* MasterViewController.swift in Sources */,
 				115F0DCE2F551A76003CD82C /* AIScheduleBuilder.swift in Sources */,
 				115F0DCF2F551A76003CD82C /* CreateAIScheduleSheet.swift in Sources */,
+				A1B2C3D4E5F60718293A4B5E /* AutoScheduleWizardManager.swift in Sources */,
 				B0B1C2D3E4F5061728394A5E /* MinimumVersionWarningManager.swift in Sources */,
 				1172EE1F2E5A1C4D006E3596 /* DropDown+Appearance.swift in Sources */,
 				1172EE202E5A1C4D006E3596 /* httpHandler.swift in Sources */,
@@ -1833,7 +1841,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260305003;
+				CURRENT_PROJECT_VERSION = 20260307001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1861,7 +1869,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260305003;
+				MARKETING_VERSION = 20260307001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -1917,7 +1925,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260305003;
+				CURRENT_PROJECT_VERSION = 20260307001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1942,7 +1950,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260305003;
+				MARKETING_VERSION = 20260307001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -2139,7 +2147,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260305003;
+				CURRENT_PROJECT_VERSION = 20260307001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -2160,7 +2168,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260305003;
+				MARKETING_VERSION = 20260307001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -2216,7 +2224,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260305003;
+				CURRENT_PROJECT_VERSION = 20260307001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -2241,7 +2249,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260305003;
+				MARKETING_VERSION = 20260307001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",

@@ -10,6 +10,8 @@
 
     <string name="Ok">Oui</string>
     <string name="Cancel">Non</string>
+    <string name="Yes">Oui</string>
+    <string name="No">Non</string>
     <string name="plan_your_schedule">Planifier votre horaire</string>
     <string name="plan_schedule_intro">Voulez-vous que 70K Bands vous aide à choisir les événements auxquels assister ?\n\nNous utiliserons vos choix Must, Might et Wont ainsi que quelques questions rapides pour une première proposition. Vous pourrez modifier tout événement par la suite.</string>
     <string name="latest_show_title">Dernier spectacle</string>

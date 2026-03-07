@@ -7,6 +7,40 @@
 
 import SwiftUI
 
+// MARK: - Custom toggle row with lighter off-state so switches stay visible on black (list view and preference sheet)
+
+private let wizardToggleOffTrack = Color(white: 0.35)
+
+private struct WizardToggleRow<Label: View>: View {
+    @Binding var isOn: Bool
+    @ViewBuilder let label: () -> Label
+    
+    var body: some View {
+        HStack {
+            label()
+            Spacer(minLength: 8)
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isOn.toggle()
+                }
+            }) {
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(isOn ? Color.accentColor : wizardToggleOffTrack)
+                        .frame(width: 51, height: 31)
+                    Circle()
+                        .fill(Color.white)
+                        .frame(width: 27, height: 27)
+                        .padding(2)
+                        .offset(x: isOn ? 20 : 0)
+                }
+                .frame(width: 51, height: 31)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+}
+
 // MARK: - Wizard steps
 
 private enum WizardStep: Int, CaseIterable {
@@ -113,16 +147,46 @@ struct AutoChooseAttendanceWizardView: View {
                 loadEvents()
             }
         }
-        .alert(NSLocalizedString("AIScheduleDoneTitle", comment: "Done"), isPresented: $showDoneAlert) {
-            Button(NSLocalizedString("OK", comment: "")) {
-                showDoneAlert = false
-                setShowOnlyWillAttened(true)
-                writeFiltersFile()
-                NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
-                onDismiss(true)
+        .overlay {
+            if showDoneAlert {
+                doneAlertOverlay
             }
-        } message: {
-            Text(String(format: NSLocalizedString("AIScheduleDoneMessage", comment: ""), completedCount) + "\n\n" + NSLocalizedString("AIScheduleDoneMessageDetail", comment: ""))
+        }
+    }
+    
+    /// Custom done alert with dark background to match the initial Plan Your Schedule prompt.
+    private var doneAlertOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.5)
+                .ignoresSafeArea()
+                .onTapGesture { }
+            VStack(spacing: 16) {
+                Text(NSLocalizedString("AIScheduleDoneTitle", comment: "Done"))
+                    .font(.headline)
+                    .foregroundColor(.white)
+                Text(String(format: NSLocalizedString("AIScheduleDoneMessage", comment: ""), completedCount) + "\n\n" + NSLocalizedString("AIScheduleDoneMessageDetail", comment: ""))
+                    .font(.subheadline)
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                Button(NSLocalizedString("OK", comment: "")) {
+                    showDoneAlert = false
+                    setShowOnlyWillAttened(true)
+                    writeFiltersFile()
+                    NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
+                    onDismiss(true)
+                }
+                .font(.body.weight(.medium))
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .padding(.top, 8)
+            }
+            .padding(24)
+            .frame(maxWidth: 280)
+            .background(Color(white: 0.10))
+            .cornerRadius(14)
+            .shadow(color: .black.opacity(0.4), radius: 20, x: 0, y: 10)
         }
     }
     
@@ -378,7 +442,7 @@ struct AutoChooseAttendanceWizardView: View {
     private func meetAndGreetChecklistRow(_ event: EventData) -> some View {
         let id = eventId(event)
         let notesText = (event.notes ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        return Toggle(isOn: Binding(
+        return WizardToggleRow(isOn: Binding(
             get: { selectedMeetAndGreetIds.contains(id) },
             set: { if $0 { selectedMeetAndGreetIds.insert(id) } else { selectedMeetAndGreetIds.remove(id) } }
         )) {
@@ -390,7 +454,6 @@ struct AutoChooseAttendanceWizardView: View {
                     .foregroundColor(.gray)
             }
         }
-        .tint(.accentColor)
     }
     
     private var unofficialEventsStep: some View {
@@ -427,7 +490,7 @@ struct AutoChooseAttendanceWizardView: View {
     private func unofficialChecklistRow(_ event: EventData) -> some View {
         let id = eventId(event)
         let notesText = (event.notes ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        return Toggle(isOn: Binding(
+        return WizardToggleRow(isOn: Binding(
             get: { selectedUnofficialEventIds.contains(id) },
             set: { if $0 { selectedUnofficialEventIds.insert(id) } else { selectedUnofficialEventIds.remove(id) } }
         )) {
@@ -439,7 +502,6 @@ struct AutoChooseAttendanceWizardView: View {
                     .foregroundColor(.gray)
             }
         }
-        .tint(.accentColor)
     }
     
     /// Unofficial / Cruiser Organized events for bands the user marked as Must (priority 1). Used for the unofficial checklist.
@@ -488,7 +550,7 @@ struct AutoChooseAttendanceWizardView: View {
     private func clinicChecklistRow(_ event: EventData) -> some View {
         let id = eventId(event)
         let notesText = (event.notes ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        return Toggle(isOn: Binding(
+        return WizardToggleRow(isOn: Binding(
             get: { selectedClinicIds.contains(id) },
             set: { if $0 { selectedClinicIds.insert(id) } else { selectedClinicIds.remove(id) } }
         )) {
@@ -500,7 +562,6 @@ struct AutoChooseAttendanceWizardView: View {
                     .foregroundColor(.gray)
             }
         }
-        .tint(.accentColor)
     }
     
     private var specialEvents: [EventData] {
@@ -530,7 +591,7 @@ struct AutoChooseAttendanceWizardView: View {
     private func specialEventChecklistRow(_ event: EventData) -> some View {
         let id = eventId(event)
         let notesText = (event.notes ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        return Toggle(isOn: Binding(
+        return WizardToggleRow(isOn: Binding(
             get: { selectedSpecialEventIds.contains(id) },
             set: { if $0 { selectedSpecialEventIds.insert(id) } else { selectedSpecialEventIds.remove(id) } }
         )) {
@@ -542,7 +603,6 @@ struct AutoChooseAttendanceWizardView: View {
                     .foregroundColor(.gray)
             }
         }
-        .tint(.accentColor)
     }
     
     /// Radio-button style row: circle (filled when selected) + label. Tappable to select.

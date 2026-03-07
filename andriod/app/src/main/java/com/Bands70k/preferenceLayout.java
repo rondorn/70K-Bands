@@ -1,7 +1,6 @@
 package com.Bands70k;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -27,6 +26,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.LinearLayout;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.NavUtils;
 
 import java.io.BufferedInputStream;
@@ -163,10 +163,11 @@ public class preferenceLayout  extends Activity {
                         showsAttended attendedForCheck = staticVariables.attendedHandler != null ? staticVariables.attendedHandler : new showsAttended();
                         boolean hasExistingAttendance = attendedForCheck.countAttendanceForYear(yearForSchedule) > 0;
                         if (AIScheduleStorage.hasRunAI(yearForSchedule) && hasExistingAttendance) {
-                            new AlertDialog.Builder(preferenceLayout.this)
+                            AlertDialog replaceDialog = new AlertDialog.Builder(preferenceLayout.this)
                                     .setTitle(R.string.replace_auto_schedule_title)
                                     .setMessage(R.string.replace_auto_schedule_message)
-                                    .setPositiveButton(R.string.Ok, new DialogInterface.OnClickListener() {
+                                    .setNegativeButton(R.string.No, null)
+                                    .setPositiveButton(R.string.Yes, new DialogInterface.OnClickListener() {
                                         @Override
                                         public void onClick(DialogInterface dialog, int which) {
                                             showsAttended attendedHandle = staticVariables.attendedHandler != null
@@ -183,8 +184,9 @@ public class preferenceLayout  extends Activity {
                                             startActivityForResult(intent, REQUEST_WIZARD);
                                         }
                                     })
-                                    .setNegativeButton(R.string.Cancel, null)
-                                    .show();
+                                    .create();
+                            replaceDialog.show();
+                            AutoScheduleWizardManager.applyDarkDialogStyle(replaceDialog, preferenceLayout.this);
                         } else {
                             Intent intent = new Intent(preferenceLayout.this, AutoChooseAttendanceWizardActivity.class);
                             intent.putExtra("eventYear", eventYearForWizard);
@@ -201,10 +203,11 @@ public class preferenceLayout  extends Activity {
                 clearAllItem.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        new AlertDialog.Builder(preferenceLayout.this)
+                        AlertDialog clearDialog = new AlertDialog.Builder(preferenceLayout.this)
                                 .setTitle(R.string.clear_all_attendance_data)
                                 .setMessage(R.string.clear_all_attendance_confirm)
-                                .setPositiveButton(R.string.Ok, new DialogInterface.OnClickListener() {
+                                .setNegativeButton(R.string.No, null)
+                                .setPositiveButton(R.string.Yes, new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
                                         // Use the same instance the rest of the app uses so in-memory state is cleared
@@ -217,14 +220,15 @@ public class preferenceLayout  extends Activity {
                                         attendedHandle.clearAllAttendance();
                                         AIScheduleStorage.clearBackup(yearForSchedule);
                                         AIScheduleStorage.setHasRunAI(yearForSchedule, false);
-                                        Toast.makeText(preferenceLayout.this, getString(R.string.Ok), Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(preferenceLayout.this, getString(R.string.Yes), Toast.LENGTH_SHORT).show();
                                         Intent refresh = new Intent("RefreshLandscapeSchedule");
                                         androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(preferenceLayout.this).sendBroadcast(refresh);
                                         refreshPlanScheduleButtonsState(yearForSchedule);
                                     }
                                 })
-                                .setNegativeButton(R.string.Cancel, null)
-                                .show();
+                                .create();
+                        clearDialog.show();
+                        AutoScheduleWizardManager.applyDarkDialogStyle(clearDialog, preferenceLayout.this);
                     }
                 });
             }

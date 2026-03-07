@@ -792,7 +792,7 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
         // Turn on Show Flagged Events Only so the list shows the new schedule
         staticVariables.preferences.setShowWillAttend(true);
         String message = getString(R.string.aischedule_done_message, actualCount) + "\n\n" + getString(R.string.aischedule_done_message_detail);
-        new AlertDialog.Builder(this)
+        AlertDialog doneDialog = new AlertDialog.Builder(this)
                 .setTitle(R.string.aischedule_done_title)
                 .setMessage(message)
                 .setPositiveButton(R.string.Ok, (dialog, which) -> {
@@ -800,7 +800,9 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
                     finish();
                 })
                 .setCancelable(false)
-                .show();
+                .create();
+        doneDialog.show();
+        AutoScheduleWizardManager.applyDarkDialogStyle(doneDialog, this);
     }
 
     private void goToPreviousStep() {
