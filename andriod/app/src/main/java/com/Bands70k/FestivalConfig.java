@@ -44,20 +44,13 @@ class Venue {
     public final String goingIcon;
     public final String notGoingIcon;
     public final String location; // Deck location (e.g., "Deck 11", "TBD")
-    public final boolean showInFilters; // Whether this venue should appear in the filters menu
-    
-    public Venue(String name, String color, String goingIcon, String notGoingIcon, String location, boolean showInFilters) {
+
+    public Venue(String name, String color, String goingIcon, String notGoingIcon, String location) {
         this.name = name;
         this.color = color;
         this.goingIcon = goingIcon;
         this.notGoingIcon = notGoingIcon;
         this.location = location;
-        this.showInFilters = showInFilters;
-    }
-    
-    // Constructor with default showInFilters = true for backward compatibility
-    public Venue(String name, String color, String goingIcon, String notGoingIcon, String location) {
-        this(name, color, goingIcon, notGoingIcon, location, true);
     }
 }
 
@@ -214,14 +207,14 @@ public class FestivalConfig {
             this.preferencesIcon = Defaults.PREFERENCES_ICON;
             this.shareIcon = Defaults.SHARE_ICON;
             this.statsIcon = Defaults.STATS_ICON;
-            // MDF venues: Real venue names with Market Street addresses (all shown in filters)
+            // MDF venues: Real venue names with Market Street addresses
             this.venues = Arrays.asList(
-                new Venue("Rams Head", "EA580C", "icon_theater", "icon_theater_alt", "20 Market", true),      // Orange
-                new Venue("Market", "047857", "icon_theater", "icon_theater_alt", "121 Market", true),        // Emerald
-                new Venue("Power Plant", "1D4ED8", "icon_theater", "icon_theater_alt", "34 Market", true),    // Blue
-                new Venue("Nevermore", "0891B2", "icon_theater", "icon_theater_alt", "20 Market", true),      // Cyan
-                new Venue("Soundstage", "991B1B", "icon_theater", "icon_theater_alt", "124 Market", true),    // Dark red
-                new Venue("Angels Rock", "A16207", "icon_theater", "icon_theater_alt", "10 Market", true)     // Yellow (dark)
+                new Venue("Rams Head", "EA580C", "icon_theater", "icon_theater_alt", "20 Market"),      // Orange
+                new Venue("Market", "047857", "icon_theater", "icon_theater_alt", "121 Market"),        // Emerald
+                new Venue("Power Plant", "1D4ED8", "icon_theater", "icon_theater_alt", "34 Market"),    // Blue
+                new Venue("Nevermore", "0891B2", "icon_theater", "icon_theater_alt", "20 Market"),      // Cyan
+                new Venue("Soundstage", "991B1B", "icon_theater", "icon_theater_alt", "124 Market"),    // Dark red
+                new Venue("Angels Rock", "A16207", "icon_theater", "icon_theater_alt", "10 Market")     // Yellow (dark)
             );
             
             // MDF: Hide all event type filters by default
@@ -274,20 +267,26 @@ public class FestivalConfig {
             this.preferencesIcon = Defaults.PREFERENCES_ICON;
             this.shareIcon = Defaults.SHARE_ICON;
             this.statsIcon = Defaults.STATS_ICON;
-            // 70K venues: Main venues shown in filters, others grouped as "Other"
+            // 70K venues. Each Venue(name, color, goingIcon, notGoingIcon, location):
+            //   name         - Display name (must match schedule data).
+            //   color        - Hex color for this venue (no leading #), e.g. "1D4ED8".
+            //   goingIcon    - Drawable resource name for "going" state.
+            //   notGoingIcon - Drawable resource name for "not going" state.
+            //   location     - Deck/location text, e.g. "Deck 11".
             this.venues = Arrays.asList(
-                new Venue("Pool", "1D4ED8", "icon_pool", "icon_pool_alt", "Deck 11", true),                  // Blue
-                new Venue("Lounge", "047857", "icon_lounge", "icon_lounge_alt", "Deck 5", true),              // Emerald
-                new Venue("Theater", "B45309", "icon_theater", "icon_theater_alt", "Deck 3/4", true),         // Amber
-                new Venue("Rink", "C026D3", "ice_rink", "ice_rink_alt", "Deck 3", true),                      // Magenta
-                new Venue("Sports Bar", "EA580C", "icon_unknown", "icon_unknown_alt", "Deck 4", false),       // Orange
-                new Venue("Viking Crown", "7C3AED", "icon_unknown", "icon_unknown_alt", "Deck 14", false),    // Violet
-                new Venue("Boleros Lounge", "92400E", "icon_unknown", "icon_unknown_alt", "Deck 4", false),   // Brown
-                new Venue("Solarium", "0891B2", "icon_unknown", "icon_unknown_alt", "Deck 11", false),        // Cyan
-                new Venue("Ale And Anchor Pub", "A16207", "icon_unknown", "icon_unknown_alt", "Deck 5", false), // Yellow (dark)
-                new Venue("Ale & Anchor Pub", "A16207", "icon_unknown", "icon_unknown_alt", "Deck 5", false),   // Yellow (dark)
-                new Venue("Bull And Bear Pub", "991B1B", "icon_unknown", "icon_unknown_alt", "Deck 5", false),  // Dark red
-                new Venue("Bull & Bear Pub", "991B1B", "icon_unknown", "icon_unknown_alt", "Deck 5", false)     // Dark red
+                new Venue("Pool", "1D4ED8", "icon_pool", "icon_pool_alt", "Deck 11"),                  // Blue
+                new Venue("Lounge", "047857", "icon_lounge", "icon_lounge_alt", "Deck 5"),              // Emerald
+                new Venue("Theater", "B45309", "icon_theater", "icon_theater_alt", "Deck 3/4"),         // Amber
+                new Venue("Rink", "C026D3", "ice_rink", "ice_rink_alt", "Deck 3"),                      // Magenta
+                new Venue("Schooner Pub", "C2185B", "icon_unknown", "icon_unknown_alt", "Deck 4"),     // Dark pink (readable white text)
+                new Venue("Sports Bar", "EA580C", "icon_unknown", "icon_unknown_alt", "Deck 5"),       // Orange
+                new Venue("Viking Crown", "7C3AED", "icon_unknown", "icon_unknown_alt", "Deck 14"),   // Violet
+                new Venue("Boleros Lounge", "92400E", "icon_unknown", "icon_unknown_alt", "Deck 4"),   // Brown
+                new Venue("Solarium", "0891B2", "icon_unknown", "icon_unknown_alt", "Deck 11"),        // Cyan
+                new Venue("Ale And Anchor Pub", "A16207", "icon_unknown", "icon_unknown_alt", "Deck 5"), // Yellow (dark)
+                new Venue("Ale & Anchor Pub", "A16207", "icon_unknown", "icon_unknown_alt", "Deck 5"),   // Yellow (dark)
+                new Venue("Bull And Bear Pub", "991B1B", "icon_unknown", "icon_unknown_alt", "Deck 5"),  // Dark red
+                new Venue("Bull & Bear Pub", "991B1B", "icon_unknown", "icon_unknown_alt", "Deck 5")     // Dark red
             );
             
             // 70K: Show all event type filters by default (maintain existing behavior)
@@ -485,20 +484,6 @@ public class FestivalConfig {
         List<String> names = new ArrayList<>();
         for (Venue venue : venues) {
             names.add(venue.name);
-        }
-        return names;
-    }
-    
-    /**
-     * Get venue names that should appear in the filter menu (showInFilters = true)
-     * Venues with showInFilters = false are handled by the "Other Venues" filter
-     */
-    public List<String> getFilterVenueNames() {
-        List<String> names = new ArrayList<>();
-        for (Venue venue : venues) {
-            if (venue.showInFilters) {
-                names.add(venue.name);
-            }
         }
         return names;
     }

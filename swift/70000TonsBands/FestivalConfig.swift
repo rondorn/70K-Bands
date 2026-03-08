@@ -49,9 +49,8 @@ struct Venue {
     let goingIcon: String
     let notGoingIcon: String
     let location: String // Deck location (e.g., "Deck 11", "TBD")
-    let showInFilters: Bool // Whether this venue should appear in the filters menu
-    
-    init(name: String, color: String, goingIcon: String, notGoingIcon: String, location: String, showInFilters: Bool = true) {
+
+    init(name: String, color: String, goingIcon: String, notGoingIcon: String, location: String) {
         self.name = name
         self.color = color
         self.uiColor = UIColor(hex: color) ?? UIColor.gray
@@ -59,7 +58,6 @@ struct Venue {
         self.goingIcon = goingIcon
         self.notGoingIcon = notGoingIcon
         self.location = location
-        self.showInFilters = showInFilters
     }
 }
 
@@ -246,12 +244,12 @@ struct FestivalConfig {
         self.shareIcon = Defaults.shareIcon
         self.statsIcon = Defaults.statsIcon
         self.venues = [
-            Venue(name: "Rams Head", color: "EA580C", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "20 Market", showInFilters: true),
-            Venue(name: "Market", color: "047857", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "121 Market", showInFilters: true),
-            Venue(name: "Power Plant", color: "1D4ED8", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "34 Market", showInFilters: true),
-            Venue(name: "Nevermore", color: "0891B2", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "20 Market", showInFilters: true),
-            Venue(name: "Soundstage", color: "991B1B", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "124 Market", showInFilters: true),
-            Venue(name: "Angels Rock", color: "A16207", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "10 Market", showInFilters: true)
+            Venue(name: "Rams Head", color: "EA580C", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "20 Market"),
+            Venue(name: "Market", color: "047857", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "121 Market"),
+            Venue(name: "Power Plant", color: "1D4ED8", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "34 Market"),
+            Venue(name: "Nevermore", color: "0891B2", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "20 Market"),
+            Venue(name: "Soundstage", color: "991B1B", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "124 Market"),
+            Venue(name: "Angels Rock", color: "A16207", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "10 Market")
         ]
         self.meetAndGreetsEnabledDefault = false
         self.specialEventsEnabledDefault = false
@@ -294,18 +292,19 @@ struct FestivalConfig {
         self.shareIcon = Defaults.shareIcon
         self.statsIcon = Defaults.statsIcon
         self.venues = [
-            Venue(name: "Pool", color: "1D4ED8", goingIcon: "Pool-Deck-Going-wBox", notGoingIcon: "Pool-Deck-NotGoing-wBox", location: "Deck 11", showInFilters: true),
-            Venue(name: "Lounge", color: "047857", goingIcon: "Lounge-Going-wBox", notGoingIcon: "Lounge-NotGoing-wBox", location: "Deck 5", showInFilters: true),
-            Venue(name: "Theater", color: "B45309", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "Deck 3/4", showInFilters: true),
-            Venue(name: "Rink", color: "C026D3", goingIcon: "Ice-Rink-Going-wBox", notGoingIcon: "Ice-Rink-NotGoing-wBox", location: "Deck 3", showInFilters: true),
-            Venue(name: "Sports Bar", color: "EA580C", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 4", showInFilters: false),
-            Venue(name: "Viking Crown", color: "7C3AED", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 14", showInFilters: false),
-            Venue(name: "Boleros Lounge", color: "92400E", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 4", showInFilters: false),
-            Venue(name: "Solarium", color: "0891B2", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 11", showInFilters: false),
-            Venue(name: "Ale And Anchor Pub", color: "A16207", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 5", showInFilters: false),
-            Venue(name: "Ale & Anchor Pub", color: "A16207", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 5", showInFilters: false),
-            Venue(name: "Bull And Bear Pub", color: "B22222", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 5", showInFilters: false),
-            Venue(name: "Bull & Bear Pub", color: "B22222", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 5", showInFilters: false)
+            Venue(name: "Pool", color: "1D4ED8", goingIcon: "Pool-Deck-Going-wBox", notGoingIcon: "Pool-Deck-NotGoing-wBox", location: "Deck 11"),
+            Venue(name: "Lounge", color: "047857", goingIcon: "Lounge-Going-wBox", notGoingIcon: "Lounge-NotGoing-wBox", location: "Deck 5"),
+            Venue(name: "Theater", color: "B45309", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "Deck 3/4"),
+            Venue(name: "Rink", color: "C026D3", goingIcon: "Ice-Rink-Going-wBox", notGoingIcon: "Ice-Rink-NotGoing-wBox", location: "Deck 3"),
+            Venue(name: "Schooner Pub", color: "C2185B", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 4"),
+            Venue(name: "Sports Bar", color: "EA580C", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 5"),
+            Venue(name: "Viking Crown", color: "7C3AED", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 14"),
+            Venue(name: "Boleros Lounge", color: "92400E", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 4"),
+            Venue(name: "Solarium", color: "0891B2", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 11"),
+            Venue(name: "Ale And Anchor Pub", color: "A16207", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 5"),
+            Venue(name: "Ale & Anchor Pub", color: "A16207", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 5"),
+            Venue(name: "Bull And Bear Pub", color: "B22222", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 5"),
+            Venue(name: "Bull & Bear Pub", color: "B22222", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 5")
         ]
         self.meetAndGreetsEnabledDefault = true
         self.specialEventsEnabledDefault = true
@@ -379,17 +378,7 @@ struct FestivalConfig {
     func getAllVenueNames() -> [String] {
         return venues.map { $0.name }
     }
-    
-    /// Get venues that should be shown in the filters menu
-    func getFilterVenues() -> [Venue] {
-        return venues.filter { $0.showInFilters }
-    }
-    
-    /// Get venue names that should be shown in the filters menu
-    func getFilterVenueNames() -> [String] {
-        return venues.filter { $0.showInFilters }.map { $0.name }
-    }
-    
+
     /// Get venue color for a given venue name (returns UIColor) - EXACT match only
     func getVenueColor(for venueName: String) -> UIColor {
         let venue = getVenue(named: venueName)

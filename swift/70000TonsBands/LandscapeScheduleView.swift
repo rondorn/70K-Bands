@@ -780,13 +780,22 @@ struct LandscapeScheduleView: View {
         }
         
         private func venueHeaderViewSticky(venue: VenueColumn, columnWidth: CGFloat) -> some View {
-            VStack(spacing: 2) {
+            let location = FestivalConfig.current.getVenueLocation(for: venue.name)
+            return VStack(spacing: 2) {
                 Text(venueDisplayName(for: venue.name))
                     .font(.system(size: 14, weight: .bold))
                     .foregroundColor(.white)
-                    .lineLimit(2)
+                    .lineLimit(1)
                     .multilineTextAlignment(.center)
                     .minimumScaleFactor(0.6)
+                if !location.isEmpty {
+                    Text(location)
+                        .font(.system(size: 11, weight: .regular))
+                        .foregroundColor(.white.opacity(0.95))
+                        .lineLimit(1)
+                        .multilineTextAlignment(.center)
+                        .minimumScaleFactor(0.6)
+                }
             }
             .frame(width: columnWidth, height: 44)
             .background(venue.color)
