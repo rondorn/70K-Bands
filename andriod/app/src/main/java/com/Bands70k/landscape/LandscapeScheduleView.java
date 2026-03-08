@@ -1172,67 +1172,64 @@ public class LandscapeScheduleView extends LinearLayout {
         int columnWidth = currentDay.venues.isEmpty() ? availableWidth : availableWidth / currentDay.venues.size();
         Log.d(TAG, "Column width (fit to screen): " + columnWidth + ", venues: " + currentDay.venues.size());
         
-        // Venue headers - measure first to find max height, then recreate with fixed height
+        // Venue headers - measure first to find max height (name + location), then recreate with fixed height
         int maxHeaderHeight = dpToPx(44); // Minimum height
-        
+        FestivalConfig config = FestivalConfig.getInstance();
+
         // Create a temporary parent layout for accurate measurement
         LinearLayout tempParent = new LinearLayout(context);
         tempParent.setOrientation(LinearLayout.HORIZONTAL);
-        
-        // First pass: measure all venue headers to find the maximum height needed
+
+        // First pass: measure all venue headers (name + location) to find the maximum height needed
         java.util.List<String> venueNames = new java.util.ArrayList<>();
         java.util.List<Integer> venueColors = new java.util.ArrayList<>();
         for (VenueColumn venue : currentDay.venues) {
-            TextView tempHeader = new TextView(context);
-            tempHeader.setText(venue.name != null ? staticVariables.venueDisplayName(venue.name) : "");
-            tempHeader.setTextSize(12);
-            tempHeader.setTypeface(null, android.graphics.Typeface.BOLD);
-            tempHeader.setGravity(Gravity.CENTER);
+            String location = venue.name != null ? config.getVenueLocation(venue.name) : "";
+            LinearLayout tempRow = new LinearLayout(context);
+            tempRow.setOrientation(LinearLayout.VERTICAL);
+            tempRow.setGravity(Gravity.CENTER);
             int padding = dpToPx(4);
-            tempHeader.setPadding(padding, padding, padding, padding);
-            tempHeader.setSingleLine(false);
-            tempHeader.setMaxLines(2); // Limit to 2 lines
-            tempHeader.setEllipsize(android.text.TextUtils.TruncateAt.END); // Ellipsize if text doesn't fit
-            tempHeader.setIncludeFontPadding(false);
-            
-            // Enable auto-sizing text: max 12sp, min 8sp, shrink if needed
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                tempHeader.setAutoSizeTextTypeWithDefaults(TextView.AUTO_SIZE_TEXT_TYPE_NONE); // Disable default, use custom
-                tempHeader.setAutoSizeTextTypeUniformWithConfiguration(
-                    8,  // minTextSize in sp
-                    12, // maxTextSize in sp (current size)
-                    1,  // autoSizeStepGranularity in sp
-                    android.util.TypedValue.COMPLEX_UNIT_SP
-                );
+            tempRow.setPadding(padding, padding, padding, padding);
+
+            TextView tempName = new TextView(context);
+            tempName.setText(venue.name != null ? staticVariables.venueDisplayName(venue.name) : "");
+            tempName.setTextSize(12);
+            tempName.setTypeface(null, android.graphics.Typeface.BOLD);
+            tempName.setGravity(Gravity.CENTER);
+            tempName.setIncludeFontPadding(false);
+            tempRow.addView(tempName);
+
+            if (location != null && !location.isEmpty()) {
+                TextView tempLoc = new TextView(context);
+                tempLoc.setText(location);
+                tempLoc.setTextSize(10);
+                tempLoc.setGravity(Gravity.CENTER);
+                tempLoc.setIncludeFontPadding(false);
+                tempRow.addView(tempLoc);
             }
-            
-            // Measure with exact width constraint
+
             LinearLayout.LayoutParams measureParams = new LinearLayout.LayoutParams(
                 columnWidth, ViewGroup.LayoutParams.WRAP_CONTENT
             );
-            tempHeader.setLayoutParams(measureParams);
-            tempParent.addView(tempHeader);
-            
-            // Force measurement
+            tempRow.setLayoutParams(measureParams);
+            tempParent.addView(tempRow);
+
             int widthSpec = View.MeasureSpec.makeMeasureSpec(columnWidth, View.MeasureSpec.EXACTLY);
             int heightSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
-            tempHeader.measure(widthSpec, heightSpec);
-            
-            int measuredHeight = tempHeader.getMeasuredHeight();
-            Log.d(TAG, "Venue header measurement: " + venue.name + " -> height=" + measuredHeight + 
+            tempRow.measure(widthSpec, heightSpec);
+
+            int measuredHeight = tempRow.getMeasuredHeight();
+            Log.d(TAG, "Venue header measurement: " + venue.name + " -> height=" + measuredHeight +
                   ", columnWidth=" + columnWidth);
-            
+
             if (measuredHeight > maxHeaderHeight) {
                 maxHeaderHeight = measuredHeight;
                 Log.d(TAG, "New maxHeaderHeight: " + maxHeaderHeight + " for venue: " + venue.name);
             }
-            
-            // Store venue info for recreation
+
             venueNames.add(venue.name);
             venueColors.add(venue.color);
-            
-            // Clean up
-            tempParent.removeView(tempHeader);
+            tempParent.removeView(tempRow);
         }
         
         // Add some extra padding to ensure text doesn't get cut off
@@ -1263,11 +1260,11 @@ public class LandscapeScheduleView extends LinearLayout {
         
         Log.d(TAG, "Header height set to: " + maxHeaderHeight + "dp (" + (maxHeaderHeight / getResources().getDisplayMetrics().density) + "dp)");
         
-        // Second pass: create all venue headers wrapped in FrameLayouts for strict height enforcement
+        // Second pass: create all venue headers (name + location) wrapped in FrameLayouts
         for (int i = 0; i < currentDay.venues.size(); i++) {
             VenueColumn venue = currentDay.venues.get(i);
-            
-            // Create FrameLayout wrapper to strictly enforce height and clip content
+            String location = venue.name != null ? config.getVenueLocation(venue.name) : "";
+
             FrameLayout headerWrapper = new FrameLayout(context);
             LinearLayout.LayoutParams wrapperParams = new LinearLayout.LayoutParams(
                 columnWidth, maxHeaderHeight
@@ -1275,53 +1272,44 @@ public class LandscapeScheduleView extends LinearLayout {
             headerWrapper.setLayoutParams(wrapperParams);
             headerWrapper.setClipChildren(true);
             headerWrapper.setClipToPadding(true);
-            
-            // Create TextView for the header text
-            TextView venueHeader = new TextView(context);
-            venueHeader.setText(venue.name != null ? staticVariables.venueDisplayName(venue.name) : "");
-            venueHeader.setTextColor(Color.WHITE);
-            venueHeader.setTextSize(12);
-            venueHeader.setTypeface(null, android.graphics.Typeface.BOLD);
-            venueHeader.setGravity(Gravity.CENTER);
-            venueHeader.setBackgroundColor(venue.color);
+
+            LinearLayout headerContent = new LinearLayout(context);
+            headerContent.setOrientation(LinearLayout.VERTICAL);
+            headerContent.setGravity(Gravity.CENTER);
+            headerContent.setBackgroundColor(venue.color);
             int padding = dpToPx(4);
-            venueHeader.setPadding(padding, padding, padding, padding);
-            
-            // TextView fills the wrapper but will be clipped if it exceeds
-            FrameLayout.LayoutParams textParams = new FrameLayout.LayoutParams(
+            headerContent.setPadding(padding, padding, padding, padding);
+            FrameLayout.LayoutParams contentParams = new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT
             );
-            venueHeader.setLayoutParams(textParams);
-            
-            // Enforce height constraints strictly
-            venueHeader.setMinHeight(maxHeaderHeight);
-            venueHeader.setMaxHeight(maxHeaderHeight);
-            venueHeader.setHeight(maxHeaderHeight); // Explicitly set height
-            
-            // Allow text to wrap but limit to 2 lines with ellipsize
-            venueHeader.setSingleLine(false);
-            venueHeader.setMaxLines(2); // Limit to 2 lines to ensure consistent height
-            venueHeader.setEllipsize(android.text.TextUtils.TruncateAt.END); // Show ellipsis if text doesn't fit
-            venueHeader.setIncludeFontPadding(false);
-            
-            // Enable auto-sizing text: max 12sp (current size), min 8sp, shrink if needed to fit
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                venueHeader.setAutoSizeTextTypeWithDefaults(TextView.AUTO_SIZE_TEXT_TYPE_NONE); // Disable default, use custom
-                venueHeader.setAutoSizeTextTypeUniformWithConfiguration(
-                    8,  // minTextSize in sp
-                    12, // maxTextSize in sp (current size)
-                    1,  // autoSizeStepGranularity in sp
-                    android.util.TypedValue.COMPLEX_UNIT_SP
-                );
+            headerContent.setLayoutParams(contentParams);
+
+            TextView venueNameView = new TextView(context);
+            venueNameView.setText(venue.name != null ? staticVariables.venueDisplayName(venue.name) : "");
+            venueNameView.setTextColor(Color.WHITE);
+            venueNameView.setTextSize(12);
+            venueNameView.setTypeface(null, android.graphics.Typeface.BOLD);
+            venueNameView.setGravity(Gravity.CENTER);
+            venueNameView.setSingleLine(true);
+            venueNameView.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            venueNameView.setIncludeFontPadding(false);
+            headerContent.addView(venueNameView);
+
+            if (location != null && !location.isEmpty()) {
+                TextView venueLocView = new TextView(context);
+                venueLocView.setText(location);
+                venueLocView.setTextColor(Color.argb(242, 255, 255, 255)); // white at ~95%
+                venueLocView.setTextSize(10);
+                venueLocView.setGravity(Gravity.CENTER);
+                venueLocView.setSingleLine(true);
+                venueLocView.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                venueLocView.setIncludeFontPadding(false);
+                headerContent.addView(venueLocView);
             }
-            
-            venueHeader.setVisibility(View.VISIBLE);
-            venueHeader.setAlpha(1.0f);
-            
-            // Add TextView to wrapper, then wrapper to row
-            headerWrapper.addView(venueHeader);
-            
-            Log.d(TAG, "Adding venue header: " + venue.name + ", height=" + maxHeaderHeight + 
+
+            headerWrapper.addView(headerContent);
+
+            Log.d(TAG, "Adding venue header: " + venue.name + ", height=" + maxHeaderHeight +
                   ", columnWidth=" + columnWidth);
             venueHeaderRow.addView(headerWrapper);
         }
