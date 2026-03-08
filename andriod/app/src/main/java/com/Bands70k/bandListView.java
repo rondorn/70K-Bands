@@ -379,9 +379,14 @@ public class bandListView extends ArrayAdapter<bandListItem> {
             viewHolder.rankImageNoSchedule.setVisibility(View.INVISIBLE);
             viewHolder.bandNameNoSchedule.setVisibility(View.VISIBLE);
 
-            // Show ranking icon in day area for bands-only view
-            viewHolder.rankingIconInDayArea.setVisibility(View.VISIBLE);
-            viewHolder.rankingIconInDayArea.setImageResource(bandData.getRankImg());
+            // Show ranking icon in day area for bands-only view (hide when unknown so no icon shown)
+            if (bandData.getRankImg() != 0) {
+                viewHolder.rankingIconInDayArea.setVisibility(View.VISIBLE);
+                viewHolder.rankingIconInDayArea.setImageResource(bandData.getRankImg());
+            } else {
+                viewHolder.rankingIconInDayArea.setVisibility(View.INVISIBLE);
+                viewHolder.rankingIconInDayArea.setImageResource(0);
+            }
 
             viewHolder.bandNameNoSchedule.setText(currentBandName);
 

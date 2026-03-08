@@ -87,7 +87,7 @@ public class LongPressMenuHelper {
         prioritySection.addView(addRow(activity, staticVariables.graphicMustSee != null ? staticVariables.graphicMustSee : 0, activity.getString(R.string.must), isMust, mustClick, density, rowHeight, textSizeSp));
         prioritySection.addView(addRow(activity, staticVariables.graphicMightSee != null ? staticVariables.graphicMightSee : 0, activity.getString(R.string.might), isMight, mightClick, density, rowHeight, textSizeSp));
         prioritySection.addView(addRow(activity, staticVariables.graphicWontSee != null ? staticVariables.graphicWontSee : 0, activity.getString(R.string.wont), isWont, wontClick, density, rowHeight, textSizeSp));
-        prioritySection.addView(addRow(activity, R.drawable.icon_empty, activity.getString(R.string.unknown), isUnknown, unknownClick, density, rowHeight, textSizeSp));
+        prioritySection.addView(addRow(activity, staticVariables.graphicUnknownSee != null ? staticVariables.graphicUnknownSee : R.drawable.icon_unknown, activity.getString(R.string.unknown), isUnknown, unknownClick, density, rowHeight, textSizeSp));
 
         if (isEvent && currentAttendedFinal != null) {
             final String loc = location;
@@ -117,8 +117,8 @@ public class LongPressMenuHelper {
                         if (onRefresh != null) onRefresh.run();
                     }
                 });
-                attendedSection.addView(addRow(activity, 0, activity.getString(R.string.EventAttendanceAll), staticVariables.sawAllStatus.equals(currentAttendedFinal), allClick, density, rowHeight, textSizeSp));
-                attendedSection.addView(addRow(activity, 0, activity.getString(R.string.EventAttendancePartial), staticVariables.sawSomeStatus.equals(currentAttendedFinal), partClick, density, rowHeight, textSizeSp));
+                attendedSection.addView(addRow(activity, staticVariables.graphicAttended != null ? staticVariables.graphicAttended : R.drawable.icon_seen, activity.getString(R.string.EventAttendanceAll), staticVariables.sawAllStatus.equals(currentAttendedFinal), allClick, density, rowHeight, textSizeSp));
+                attendedSection.addView(addRow(activity, staticVariables.graphicPartiallyAttended != null ? staticVariables.graphicPartiallyAttended : R.drawable.icon_partially_seen, activity.getString(R.string.EventAttendancePartial), staticVariables.sawSomeStatus.equals(currentAttendedFinal), partClick, density, rowHeight, textSizeSp));
                 attendedSection.addView(addRow(activity, 0, activity.getString(R.string.EventAttendanceNone), staticVariables.sawNoneStatus.equals(currentAttendedFinal), noneClick, density, rowHeight, textSizeSp));
             } else {
                 root.addView(addSectionHeader(activity, activity.getString(R.string.event_attendance), density));
@@ -140,8 +140,8 @@ public class LongPressMenuHelper {
                         if (onRefresh != null) onRefresh.run();
                     }
                 });
-                root.addView(addRow(activity, 0, activity.getString(R.string.EventAttendanceAll), staticVariables.sawAllStatus.equals(currentAttendedFinal), allClick, density, rowHeight, textSizeSp));
-                root.addView(addRow(activity, 0, activity.getString(R.string.EventAttendancePartial), staticVariables.sawSomeStatus.equals(currentAttendedFinal), partClick, density, rowHeight, textSizeSp));
+                root.addView(addRow(activity, staticVariables.graphicAttended != null ? staticVariables.graphicAttended : R.drawable.icon_seen, activity.getString(R.string.EventAttendanceAll), staticVariables.sawAllStatus.equals(currentAttendedFinal), allClick, density, rowHeight, textSizeSp));
+                root.addView(addRow(activity, staticVariables.graphicPartiallyAttended != null ? staticVariables.graphicPartiallyAttended : R.drawable.icon_partially_seen, activity.getString(R.string.EventAttendancePartial), staticVariables.sawSomeStatus.equals(currentAttendedFinal), partClick, density, rowHeight, textSizeSp));
                 root.addView(addRow(activity, 0, activity.getString(R.string.EventAttendanceNone), staticVariables.sawNoneStatus.equals(currentAttendedFinal), noneClick, density, rowHeight, textSizeSp));
             }
         }

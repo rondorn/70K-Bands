@@ -61,22 +61,17 @@ public class rankStore {
 
         Log.d("ReturningRankOf ", "Returning Rank Of " + ranking + " for " + bandName);
 
-        if (ranking == null){
-            imageId = R.drawable.icon_empty;
+        // Unknown/null: return 0 so list/calendar show no icon. Unknown icon used only in choice menus (long press, swipe, filter).
+        if (ranking == null) {
+            imageId = 0;
+        } else if (ranking.equals(staticVariables.mustSeeIcon)) {
+            imageId = staticVariables.graphicMustSee;
+        } else if (ranking.equals(staticVariables.mightSeeIcon)) {
+            imageId = staticVariables.graphicMightSee;
+        } else if (ranking.equals(staticVariables.wontSeeIcon)) {
+            imageId = staticVariables.graphicWontSee;
         } else {
-
-            if (ranking.equals(staticVariables.mustSeeIcon)) {
-                imageId = staticVariables.graphicMustSee;
-
-            } else if (ranking.equals(staticVariables.mightSeeIcon)){
-                imageId = staticVariables.graphicMightSee;
-
-            } else if (ranking.equals(staticVariables.wontSeeIcon)){
-                imageId = staticVariables.graphicWontSee;
-
-            } else {
-                imageId = R.drawable.icon_empty;
-            }
+            imageId = 0;
         }
 
         Log.d("ReturningRankOf ", "Returning Rank Image of " + imageId + " for " + bandName);

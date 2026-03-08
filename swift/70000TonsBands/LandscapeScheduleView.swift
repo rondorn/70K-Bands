@@ -850,12 +850,13 @@ struct LandscapeScheduleView: View {
             return formatter.string(from: date).lowercased()
         }
         
+        /// Priority icon for calendar display only. Unknown (0) returns "" so no icon is shown; use unknown icon only in choice menus.
         private func getPriorityIconName(_ priority: Int) -> String {
             switch priority {
             case 1: return FestivalConfig.current.mustSeeIconSmall
             case 2: return FestivalConfig.current.mightSeeIconSmall
             case 3: return FestivalConfig.current.wontSeeIconSmall
-            case 0: return FestivalConfig.current.unknownIconSmall
+            case 0: return ""  // No icon in list/calendar for unknown
             default: return ""
             }
         }
