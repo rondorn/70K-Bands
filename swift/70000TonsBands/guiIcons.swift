@@ -291,12 +291,14 @@ func getPriorityIcon(_ index: Int) -> String {
     }
 }
 
+/// Returns priority icon name for list/calendar display only. Unknown (0) returns "" so no icon is shown there.
+/// Use unknownIconSmall / unknownIcon only in choice menus (long press, pull down, swipe).
 func getPriorityGraphic(_ index: Int) -> String {
     switch index {
     case 1: return mustSeeIconSmall
     case 2: return mightSeeIconSmall
     case 3: return wontSeeIconSmall
-    case 0: return unknownIconSmall
+    case 0: return ""  // Unknown: no icon in list/calendar; use unknownIconSmall only in menus
     default: return ""
     }
 }
