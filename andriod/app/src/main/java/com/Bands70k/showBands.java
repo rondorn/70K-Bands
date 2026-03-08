@@ -4846,49 +4846,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
     /**
      * Checks pointer for AutoScheduleFlag=Yes and shows Plan Your Schedule prompt if needed (dark dialog, No/Yes).
-     * When prompt is not shown or user dismisses, runs offerAutoScheduleWizardIfNeeded() (30+ events path).
+     * Wizard offer is driven only by the Production Pointer file; no alternate trigger (e.g. 30+ new events) is used.
      */
     void offerAutoSchedulePromptFromPointerThenMaybeWizard() {
-        AutoScheduleWizardManager.checkAndShowIfNeeded(this, this::offerAutoScheduleWizardIfNeeded);
-    }
-
-    /** Number of bands with Must (1), Might (2), or Wont (3) set. Used to avoid offering Plan Your Schedule when not relevant. */
-    private int countMustMightWontChoices() {
-        Map<String, String> rankings = rankStore.getBandRankings();
-        if (rankings == null) return 0;
-        int count = 0;
-        for (String bandName : rankings.keySet()) {
-            int p = rankStore.getPriorityForBand(bandName);
-            if (p == 1 || p == 2 || p == 3) count++;
-        }
-        return count;
-    }
-
-    /**
-     * Offer Plan Your Schedule wizard when 30+ new events were added in this load (not a reload/update of existing).
-     * Uses in-memory "previous" keys only (set by loading paths before replacing schedule); no historical persistence.
-     */
-    void offerAutoScheduleWizardIfNeeded() {
-        if (!FestivalConfig.getInstance().aiSchedule || BandInfo.scheduleRecords == null) return;
-        java.util.Set<String> previousKeys = scheduleInfo.getAndClearLastPreviousEventKeysForWizard();
-        if (previousKeys.isEmpty()) return;
-        java.util.Set<String> currentKeys = scheduleInfo.collectEventKeys(BandInfo.scheduleRecords);
-        int newCount = 0;
-        for (String k : currentKeys) {
-            if (!previousKeys.contains(k)) newCount++;
-        }
-        int eventYear = staticVariables.eventYear != null ? staticVariables.eventYear : 0;
-        int currentYear = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR);
-        int rankedCount = countMustMightWontChoices();
-        if (eventYear == currentYear
-                && !AIScheduleStorage.hasRunAI(eventYear)
-                && rankedCount >= 20
-                && newCount >= 30) {
-            scheduleInfo.clearLastScheduleDataChanged();
-            Intent wizard = new Intent(this, AutoChooseAttendanceWizardActivity.class);
-            wizard.putExtra("eventYear", eventYear);
-            startActivity(wizard);
-        }
+        AutoScheduleWizardManager.checkAndShowIfNeeded(this, null);
     }
 
     class AsyncNotesLoader extends AsyncTask<String, Void, ArrayList<String>> {

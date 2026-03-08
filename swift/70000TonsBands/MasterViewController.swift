@@ -507,7 +507,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         NotificationCenter.default.addObserver(self, selector: #selector(showMigrationResultsDialog(_:)), name: Notification.Name("ShowMigrationResultsDialog"), object: nil)
         print("🔔 MIGRATION DIALOG OBSERVER REGISTERED SUCCESSFULLY")
         NotificationCenter.default.addObserver(self, selector: #selector(iCloudAttendedDataRestoredHandler), name: Notification.Name("iCloudAttendedDataRestored"), object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleAutoChooseAttendanceWizardRequested(_:)), name: Notification.Name("AutoChooseAttendanceWizardRequested"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handlePresentAutoChooseAttendanceWizardWithoutAlert(_:)), name: Notification.Name("PresentAutoChooseAttendanceWizardWithoutAlert"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleAutoChooseAttendanceOpenBandDetail(_:)), name: Notification.Name("AutoChooseAttendanceOpenBandDetail"), object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(bandNamesCacheReadyHandler), name: NSNotification.Name("BandNamesDataReady"), object: nil)
@@ -2048,26 +2047,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             hostingController.removeFromParent()
             self.currentFilterMenuHostingController = nil
             self.mainTableView.isScrollEnabled = true
-        }
-    }
-    
-    @objc private func handleAutoChooseAttendanceWizardRequested(_ notification: Notification) {
-        guard FestivalConfig.current.aiSchedule else { return }
-        let year = notification.userInfo?["eventYear"] as? Int ?? eventYear
-        let rankedCount = SQLitePriorityManager.shared.getRankedChoiceCount(eventYear: year)
-        guard rankedCount >= 20 else { return }
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            let alert = UIAlertController(
-                title: NSLocalizedString("AutoChooseAttendanceTitle", comment: "Auto Choose Attendance"),
-                message: NSLocalizedString("AutoChooseAttendanceImportPrompt", comment: "Schedule has new events - offer to plan schedule automatically"),
-                preferredStyle: .alert
-            )
-            alert.addAction(UIAlertAction(title: NSLocalizedString("Ok", comment: ""), style: .default) { [weak self] _ in
-                self?.presentAutoChooseAttendanceWizard(eventYear: year)
-            })
-            alert.addAction(UIAlertAction(title: NSLocalizedString("Cancel", comment: ""), style: .cancel))
-            self.present(alert, animated: true)
         }
     }
     
