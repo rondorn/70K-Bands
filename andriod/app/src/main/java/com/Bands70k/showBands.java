@@ -2233,6 +2233,14 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             }
         });
 
+        // Apply festival-configurable toolbar icons (same as Swift: preferences, share, stats)
+        FestivalConfig config = FestivalConfig.getInstance();
+        int prefsResId = config.getPreferencesIconResId(this);
+        if (prefsResId != 0 && preferencesButton != null) preferencesButton.setImageResource(prefsResId);
+        int shareResId = config.getShareIconResId(this);
+        if (shareResId != 0 && shareButton != null) shareButton.setBackgroundResource(shareResId);
+        int statsResId = config.getStatsIconResId(this);
+        if (statsResId != 0 && downloadReportButton != null) downloadReportButton.setCompoundDrawablesWithIntrinsicBounds(statsResId, 0, 0, 0);
     }
 
     private String readCachedFile(String filePath) throws IOException {

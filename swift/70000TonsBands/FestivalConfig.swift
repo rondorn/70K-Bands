@@ -6,6 +6,37 @@
 //  Copyright (c) 2025. All rights reserved.
 //
 
+// MARK: - How to configure a new festival
+//
+// This file is structured to scale to many festivals (12+). Follow these steps to add one:
+//
+// 1. BUILD SETTING: Add a new Swift compiler flag for the festival (e.g. FESTIVAL_XYZ).
+//    In Xcode: Target → Build Settings → Swift Compiler - Custom Flags → Other Swift Flags.
+//    Add -D FESTIVAL_XYZ for the scheme/target that builds that festival’s app.
+//
+// 2. DEFAULTS: Shared values live in the "Defaults" section below. Only add a value there
+//    if it is the same across all (or most) festivals. Any festival can override a default
+//    by setting that property in its own section.
+//
+// 3. FESTIVAL SECTION: Add #elseif FESTIVAL_XYZ above the #else. Copy the #else (70K) block as a template. Then:
+//    - Set festival-specific required properties: festivalName, festivalShortName,
+//      appName, bundleIdentifier, defaultStorageUrl, defaultStorageUrlTest,
+//      firebaseConfigFile, logoUrl, shareUrl, venues.
+//    - Set optional overrides: meetAndGreetsEnabledDefault, specialEventsEnabledDefault,
+//      unofficalEventsEnabledDefault, commentsNotAvailableTranslationKey, aiSchedule.
+//    - For any property that should match the default, assign Defaults.xxx so the
+//      default is the single source of truth and can change later without editing
+//      every festival.
+//
+// 4. ORDER: Keep the #if / #elseif / #else order so the intended “default fallback”
+//    festival is in the #else block (currently 70K).
+//
+// FILE STRUCTURE:
+// - Venue model and Color/UIColor hex extensions
+// - FestivalConfig struct (properties and helpers)
+// - Defaults: shared values used by multiple festivals; overridable per festival
+// - One section per festival: #else = 70K (default), #if FESTIVAL_MDF = MDF, etc.
+
 import Foundation
 import UIKit
 import SwiftUI
@@ -116,6 +147,26 @@ struct FestivalConfig {
     let logoUrl: String
     let shareUrl: String
     
+    // Configurable graphic elements (forward-looking for future festivals; 70K and MDF keep existing assets)
+    /// Must/Might/Wont priority icons (small, for swipe actions and menus)
+    let mustSeeIconSmall: String
+    let mightSeeIconSmall: String
+    let wontSeeIconSmall: String
+    let unknownIconSmall: String
+    /// Must/Might/Wont priority graphics (large, select state)
+    let mustSeeIcon: String
+    let mustSeeIconAlt: String
+    let mightSeeIcon: String
+    let mightSeeIconAlt: String
+    let wontSeeIcon: String
+    let wontSeeIconAlt: String
+    let unknownIcon: String
+    let unknownIconAlt: String
+    /// Toolbar icons
+    let preferencesIcon: String
+    let shareIcon: String
+    let statsIcon: String
+    
     // Venue configuration
     let venues: [Venue]
     
@@ -131,146 +182,134 @@ struct FestivalConfig {
     // Comments not available message configuration
     let commentsNotAvailableTranslationKey: String
     
+    // MARK: - Defaults (shared across festivals; any festival section can override)
+    /// Values used when a festival does not override. Add here only settings that are
+    /// the same for 70K and MDF (and likely future festivals). Per-festival sections
+    /// assign Defaults.xxx for shared values and use literals for overrides.
+    private struct Defaults {
+        static let subscriptionTopic = "global"
+        static let subscriptionTopicTest = "Testing20250824"
+        static let subscriptionUnofficalTopic = "unofficalEvents"
+        static let artistUrlDefault = ""
+        static let scheduleUrlDefault = ""
+        // Priority / toolbar icons (same assets for 70K and MDF; future festivals can override)
+        static let mustSeeIconSmall = "icon-going-yes"
+        static let mightSeeIconSmall = "icon-going-maybe"
+        static let wontSeeIconSmall = "icon-going-no"
+        static let unknownIconSmall = "icon-unknown"
+        static let mustSeeIcon = "Going-Devil-Yeah-rev1-Select-wBox"
+        static let mustSeeIconAlt = "Going-Devil-Yeah-rev1-DeSelect-wBox"
+        static let mightSeeIcon = "Maybe-Devil-Meh-rev1-Select-wBox"
+        static let mightSeeIconAlt = "Maybe-Devil-Meh-rev1-DeSelect-wBox"
+        static let wontSeeIcon = "No-way-Devil-Bah-rev2-Select-wBox"
+        static let wontSeeIconAlt = "No-way-Devil-Bah-rev2-DeSelect-wBox"
+        static let unknownIcon = "Unknown-v2-Select-wBox"
+        static let unknownIconAlt = "Unknown-v2-DeSelect-wBox"
+        static let preferencesIcon = "icon-gear-alt-Raw"
+        static let shareIcon = "icon-share"
+        static let statsIcon = "Stats v 4On Black"
+    }
+    
     private init() {
         print("🏛️ [MDF_DEBUG] FestivalConfig init() called")
-        #if FESTIVAL_70K
-        print("🏛️ [MDF_DEBUG] Building 70K configuration")
-        // 70,000 Tons of Metal configuration
-        self.festivalName = "70,000 Tons Of Metal"
-        self.festivalShortName = "70K"
-        self.appName = "70K Bands"
-        self.bundleIdentifier = "com.rdorn.-0000TonsBands"
         
-        self.defaultStorageUrl = "https://www.dropbox.com/scl/fi/kd5gzo06yrrafgz81y0ao/productionPointer.txt?rlkey=gt1lpaf11nay0skb6fe5zv17g&raw=1"
-        self.defaultStorageUrlTest = "https://www.dropbox.com/s/f3raj8hkfbd81mp/productionPointer2024-Test.txt?raw=1"
-        
-        self.firebaseConfigFile = "GoogleService-Info-70K"
-        
-        self.subscriptionTopic = "global"
-        self.subscriptionTopicTest = "Testing20250824"
-        self.subscriptionUnofficalTopic = "unofficalEvents"
-        
-        self.artistUrlDefault = ""
-        self.scheduleUrlDefault = ""
-        
-        self.logoUrl = "70000TonsLogo"
-        self.shareUrl = "http://www.facebook.com/70kBands"
-        
-        // 70K venues: All venues with their deck locations
-        self.venues = [
-            Venue(name: "Pool", color: "1D4ED8", goingIcon: "Pool-Deck-Going-wBox", notGoingIcon: "Pool-Deck-NotGoing-wBox", location: "Deck 11", showInFilters: true), // Blue
-            Venue(name: "Lounge", color: "047857", goingIcon: "Lounge-Going-wBox", notGoingIcon: "Lounge-NotGoing-wBox", location: "Deck 5", showInFilters: true), // Emerald
-            Venue(name: "Theater", color: "B45309", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "Deck 3/4", showInFilters: true), // Amber
-            Venue(name: "Rink", color: "C026D3", goingIcon: "Ice-Rink-Going-wBox", notGoingIcon: "Ice-Rink-NotGoing-wBox", location: "Deck 3", showInFilters: true), // Magenta
-            Venue(name: "Sports Bar", color: "EA580C", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 4", showInFilters: false), // Orange
-            Venue(name: "Viking Crown", color: "7C3AED", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 14", showInFilters: false), // Violet
-            Venue(name: "Boleros Lounge", color: "92400E", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 4", showInFilters: false), // Brown
-            Venue(name: "Solarium", color: "0891B2", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 11", showInFilters: false), // Cyan
-            Venue(name: "Ale And Anchor Pub", color: "A16207", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 5", showInFilters: false), // Yellow (dark)
-            Venue(name: "Ale & Anchor Pub", color: "A16207", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 5", showInFilters: false), // Yellow (dark)
-            Venue(name: "Bull And Bear Pub", color: "991B1B", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 5", showInFilters: false), // Dark red
-            Venue(name: "Bull & Bear Pub", color: "991B1B", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 5", showInFilters: false) // Dark red
-        ]
-        
-        // 70K event type filter visibility - all enabled
-        self.meetAndGreetsEnabledDefault = true
-        self.specialEventsEnabledDefault = true
-        self.unofficalEventsEnabledDefault = true
-        
-        // 70K comments not available message
-        self.commentsNotAvailableTranslationKey = "DefaultDescription70K"
-        
-        self.aiSchedule = true
-        
-        #elseif FESTIVAL_MDF
+        #if FESTIVAL_MDF
+        // MARK: ---- FESTIVAL: Maryland Deathfest (MDF) ----
         print("🏛️ [MDF_DEBUG] Building MDF configuration")
-        // Maryland Death Fest configuration
         self.festivalName = "Maryland Deathfest"
         self.festivalShortName = "MDF"
         self.appName = "MDF Bands"
         self.bundleIdentifier = "com.rdorn.mdfbands"
-        
         self.defaultStorageUrl = "https://www.dropbox.com/scl/fi/39jr2f37rhrdk14koj0pz/mdf_productionPointer.txt?rlkey=ij3llf5y1mxwpq2pmwbj03e6t&raw=1"
         self.defaultStorageUrlTest = "https://www.dropbox.com/scl/fi/erdm6rrda8kku1svq8jwk/mdf_productionPointer_test.txt?rlkey=fhjftwb1uakiy83axcpfwrh1e&raw=1"
-        
-        self.firebaseConfigFile = "GoogleService-Info-MDF" // Will use placeholder for now
-        
-        self.subscriptionTopic = "global"
-        self.subscriptionTopicTest = "Testing20250824"
-        self.subscriptionUnofficalTopic = "unofficalEvents"
-        
-        // MDF-specific URLs (will be configured via pointer file)
-        self.artistUrlDefault = ""
-        self.scheduleUrlDefault = ""
-        
+        self.firebaseConfigFile = "GoogleService-Info-MDF"
+        self.subscriptionTopic = Defaults.subscriptionTopic
+        self.subscriptionTopicTest = Defaults.subscriptionTopicTest
+        self.subscriptionUnofficalTopic = Defaults.subscriptionUnofficalTopic
+        self.artistUrlDefault = Defaults.artistUrlDefault
+        self.scheduleUrlDefault = Defaults.scheduleUrlDefault
         self.logoUrl = "mdf_logo"
         self.shareUrl = "https://www.facebook.com/profile.php?id=61580889273388"
-        
-        // MDF venues: Real venue names with Market Street addresses
+        self.mustSeeIconSmall = Defaults.mustSeeIconSmall
+        self.mightSeeIconSmall = Defaults.mightSeeIconSmall
+        self.wontSeeIconSmall = Defaults.wontSeeIconSmall
+        self.unknownIconSmall = Defaults.unknownIconSmall
+        self.mustSeeIcon = Defaults.mustSeeIcon
+        self.mustSeeIconAlt = Defaults.mustSeeIconAlt
+        self.mightSeeIcon = Defaults.mightSeeIcon
+        self.mightSeeIconAlt = Defaults.mightSeeIconAlt
+        self.wontSeeIcon = Defaults.wontSeeIcon
+        self.wontSeeIconAlt = Defaults.wontSeeIconAlt
+        self.unknownIcon = Defaults.unknownIcon
+        self.unknownIconAlt = Defaults.unknownIconAlt
+        self.preferencesIcon = Defaults.preferencesIcon
+        self.shareIcon = Defaults.shareIcon
+        self.statsIcon = Defaults.statsIcon
         self.venues = [
-            Venue(name: "Rams Head", color: "EA580C", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "20 Market", showInFilters: true), // Orange
-            Venue(name: "Market", color: "047857", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "121 Market", showInFilters: true), // Emerald
-            Venue(name: "Power Plant", color: "1D4ED8", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "34 Market", showInFilters: true), // Blue
-            Venue(name: "Nevermore", color: "0891B2", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "20 Market", showInFilters: true), // Cyan
-            Venue(name: "Soundstage", color: "991B1B", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "124 Market", showInFilters: true), // Dark red
-            Venue(name: "Angels Rock", color: "A16207", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "10 Market", showInFilters: true) // Yellow (dark)
+            Venue(name: "Rams Head", color: "EA580C", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "20 Market", showInFilters: true),
+            Venue(name: "Market", color: "047857", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "121 Market", showInFilters: true),
+            Venue(name: "Power Plant", color: "1D4ED8", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "34 Market", showInFilters: true),
+            Venue(name: "Nevermore", color: "0891B2", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "20 Market", showInFilters: true),
+            Venue(name: "Soundstage", color: "991B1B", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "124 Market", showInFilters: true),
+            Venue(name: "Angels Rock", color: "A16207", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "10 Market", showInFilters: true)
         ]
-        
-        // MDF event type filter visibility - all disabled
         self.meetAndGreetsEnabledDefault = false
         self.specialEventsEnabledDefault = false
         self.unofficalEventsEnabledDefault = false
-        
-        // MDF comments not available message
         self.commentsNotAvailableTranslationKey = "DefaultDescriptionMDF"
-        
         self.aiSchedule = false
         
+        // Future festivals: add #elseif FESTIVAL_XYZ above, then copy a block and override as needed.
+        
         #else
-        print("🏛️ [MDF_DEBUG] Building DEFAULT (70K) configuration - no macro defined")
-        // Default to 70K configuration if no macro is defined
+        // MARK: ---- FESTIVAL: 70,000 Tons Of Metal (70K) — default, no macro ----
+        print("🏛️ [MDF_DEBUG] Building 70K configuration")
         self.festivalName = "70,000 Tons Of Metal"
         self.festivalShortName = "70K"
         self.appName = "70K Bands"
         self.bundleIdentifier = "com.rdorn.-0000TonsBands"
-        
         self.defaultStorageUrl = "https://www.dropbox.com/scl/fi/kd5gzo06yrrafgz81y0ao/productionPointer.txt?rlkey=gt1lpaf11nay0skb6fe5zv17g&raw=1"
         self.defaultStorageUrlTest = "https://www.dropbox.com/s/f3raj8hkfbd81mp/productionPointer2024-Test.txt?raw=1"
-        
-        self.firebaseConfigFile = "GoogleService-Info"
-        
-        self.subscriptionTopic = "global"
-        self.subscriptionTopicTest = "Testing20250801"
-        self.subscriptionUnofficalTopic = "unofficalEvents"
-        
-        self.artistUrlDefault = ""
-        self.scheduleUrlDefault = ""
-        
+        self.firebaseConfigFile = "GoogleService-Info-70K"
+        self.subscriptionTopic = Defaults.subscriptionTopic
+        self.subscriptionTopicTest = Defaults.subscriptionTopicTest
+        self.subscriptionUnofficalTopic = Defaults.subscriptionUnofficalTopic
+        self.artistUrlDefault = Defaults.artistUrlDefault
+        self.scheduleUrlDefault = Defaults.scheduleUrlDefault
         self.logoUrl = "70000TonsLogo"
         self.shareUrl = "http://www.facebook.com/70kBands"
-        
-        // Default venues (same as 70K): All venues with their deck locations
+        self.mustSeeIconSmall = Defaults.mustSeeIconSmall
+        self.mightSeeIconSmall = Defaults.mightSeeIconSmall
+        self.wontSeeIconSmall = Defaults.wontSeeIconSmall
+        self.unknownIconSmall = Defaults.unknownIconSmall
+        self.mustSeeIcon = Defaults.mustSeeIcon
+        self.mustSeeIconAlt = Defaults.mustSeeIconAlt
+        self.mightSeeIcon = Defaults.mightSeeIcon
+        self.mightSeeIconAlt = Defaults.mightSeeIconAlt
+        self.wontSeeIcon = Defaults.wontSeeIcon
+        self.wontSeeIconAlt = Defaults.wontSeeIconAlt
+        self.unknownIcon = Defaults.unknownIcon
+        self.unknownIconAlt = Defaults.unknownIconAlt
+        self.preferencesIcon = Defaults.preferencesIcon
+        self.shareIcon = Defaults.shareIcon
+        self.statsIcon = Defaults.statsIcon
         self.venues = [
-            Venue(name: "Pool", color: "1D4ED8", goingIcon: "Pool-Deck-Going-wBox", notGoingIcon: "Pool-Deck-NotGoing-wBox", location: "Deck 11", showInFilters: true), // Blue
-            Venue(name: "Lounge", color: "047857", goingIcon: "Lounge-Going-wBox", notGoingIcon: "Lounge-NotGoing-wBox", location: "Deck 5", showInFilters: true), // Emerald
-            Venue(name: "Theater", color: "B45309", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "Deck 3/4", showInFilters: true), // Amber
-            Venue(name: "Rink", color: "C026D3", goingIcon: "Ice-Rink-Going-wBox", notGoingIcon: "Ice-Rink-NotGoing-wBox", location: "Deck 3", showInFilters: true), // Magenta
-            Venue(name: "Sports Bar", color: "EA580C", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 4", showInFilters: false), // Orange
-            Venue(name: "Viking Crown", color: "7C3AED", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 14", showInFilters: false), // Violet
-            Venue(name: "Boleros Lounge", color: "92400E", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 4", showInFilters: false), // Brown
-            Venue(name: "Solarium", color: "0891B2", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 11", showInFilters: false), // Cyan
-            Venue(name: "Ale And Anchor Pub", color: "A16207", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 5", showInFilters: false), // Yellow (dark)
-            Venue(name: "Ale & Anchor Pub", color: "A16207", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 5", showInFilters: false), // Yellow (dark)
+            Venue(name: "Pool", color: "1D4ED8", goingIcon: "Pool-Deck-Going-wBox", notGoingIcon: "Pool-Deck-NotGoing-wBox", location: "Deck 11", showInFilters: true),
+            Venue(name: "Lounge", color: "047857", goingIcon: "Lounge-Going-wBox", notGoingIcon: "Lounge-NotGoing-wBox", location: "Deck 5", showInFilters: true),
+            Venue(name: "Theater", color: "B45309", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "Deck 3/4", showInFilters: true),
+            Venue(name: "Rink", color: "C026D3", goingIcon: "Ice-Rink-Going-wBox", notGoingIcon: "Ice-Rink-NotGoing-wBox", location: "Deck 3", showInFilters: true),
+            Venue(name: "Sports Bar", color: "EA580C", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 4", showInFilters: false),
+            Venue(name: "Viking Crown", color: "7C3AED", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 14", showInFilters: false),
+            Venue(name: "Boleros Lounge", color: "92400E", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 4", showInFilters: false),
+            Venue(name: "Solarium", color: "0891B2", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 11", showInFilters: false),
+            Venue(name: "Ale And Anchor Pub", color: "A16207", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 5", showInFilters: false),
+            Venue(name: "Ale & Anchor Pub", color: "A16207", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 5", showInFilters: false),
             Venue(name: "Bull And Bear Pub", color: "B22222", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 5", showInFilters: false),
             Venue(name: "Bull & Bear Pub", color: "B22222", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 5", showInFilters: false)
         ]
-        
-        // Default event type filter visibility (same as 70K) - all enabled
         self.meetAndGreetsEnabledDefault = true
         self.specialEventsEnabledDefault = true
         self.unofficalEventsEnabledDefault = true
-        
-        // Default comments not available message (same as 70K)
         self.commentsNotAvailableTranslationKey = "DefaultDescription70K"
         self.aiSchedule = true
         #endif
@@ -292,29 +331,19 @@ struct FestivalConfig {
     }
     
     func isMDF() -> Bool {
-        #if FESTIVAL_MDF
-        return true
-        #else
-        return false
-        #endif
+        return festivalShortName == "MDF"
     }
     
     func is70K() -> Bool {
-        #if FESTIVAL_70K
-        return true
-        #else
-        return false
-        #endif
+        return festivalShortName == "70K"
     }
     
     /// Returns the localized default description text for the current festival
     func getDefaultDescriptionText() -> String {
-        #if FESTIVAL_70K
-        return NSLocalizedString("DefaultDescription70K", comment: "Default description for 70K festival")
-        #elseif FESTIVAL_MDF
+        #if FESTIVAL_MDF
         return NSLocalizedString("DefaultDescriptionMDF", comment: "Default description for MDF festival")
         #else
-        return NSLocalizedString("DefaultDescription70K", comment: "Default description fallback")
+        return NSLocalizedString("DefaultDescription70K", comment: "Default description for 70K festival")
         #endif
     }
     

@@ -53,6 +53,7 @@ public class Bands70k extends Application implements Application.ActivityLifecyc
         super.onCreate();
 
         Bands70k.context = getApplicationContext();
+        staticVariables.initGraphicResources(getApplicationContext());
 
         StartupTracker.initProcess(this);
         StartupTracker.markStep(this, "app:onCreate");

@@ -408,8 +408,9 @@ public class CommonFilterMenuBuilder {
         parent.addView(header);
         
         // Must See
-        createFilterRow(context, parent, 
-            R.drawable.icon_going_yes, R.drawable.icon_going_yes_alt,
+        createFilterRow(context, parent,
+            staticVariables.graphicMustSee != null ? staticVariables.graphicMustSee : R.drawable.icon_going_yes,
+            staticVariables.graphicMustSeeAlt != null ? staticVariables.graphicMustSeeAlt : R.drawable.icon_going_yes_alt,
             R.string.hide_must_see_items, R.string.show_must_see_items,
             staticVariables.preferences.getShowMust(),
             new View.OnClickListener() {
@@ -425,7 +426,8 @@ public class CommonFilterMenuBuilder {
         
         // Might See
         createFilterRow(context, parent,
-            R.drawable.icon_going_maybe, R.drawable.icon_going_maybe_alt,
+            staticVariables.graphicMightSee != null ? staticVariables.graphicMightSee : R.drawable.icon_going_maybe,
+            staticVariables.graphicMightSeeAlt != null ? staticVariables.graphicMightSeeAlt : R.drawable.icon_going_maybe_alt,
             R.string.hide_might_see_items, R.string.show_might_see_items,
             staticVariables.preferences.getShowMight(),
             new View.OnClickListener() {
@@ -441,7 +443,8 @@ public class CommonFilterMenuBuilder {
         
         // Wont See
         createFilterRow(context, parent,
-            R.drawable.icon_going_no, R.drawable.icon_going_no_alt,
+            staticVariables.graphicWontSee != null ? staticVariables.graphicWontSee : R.drawable.icon_going_no,
+            staticVariables.graphicWontSeeAlt != null ? staticVariables.graphicWontSeeAlt : R.drawable.icon_going_no_alt,
             R.string.hide_wont_see_items, R.string.show_wont_see_items,
             staticVariables.preferences.getShowWont(),
             new View.OnClickListener() {
@@ -457,7 +460,8 @@ public class CommonFilterMenuBuilder {
         
         // Unknown
         createFilterRow(context, parent,
-            R.drawable.icon_unknown, R.drawable.icon_unknown_alt,
+            staticVariables.graphicUnknownSee != null ? staticVariables.graphicUnknownSee : R.drawable.icon_unknown,
+            staticVariables.graphicUnknownSeeAlt != null ? staticVariables.graphicUnknownSeeAlt : R.drawable.icon_unknown_alt,
             R.string.hide_unknown_items, R.string.show_unknown_items,
             staticVariables.preferences.getShowUnknown(),
             new View.OnClickListener() {

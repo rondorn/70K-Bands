@@ -52,22 +52,23 @@ let meetAndGreetIconAlt = "Meet-And-Greet-full-DeSelect-wBox"
 let generalEvent = "Ship-Event-Select-wBox"
 let generalEventAlt = "Ship-Event-DeSelect-wBox"
 
-let mustSeeIconSmall = "icon-going-yes"
-let mightSeeIconSmall = "icon-going-maybe"
-let wontSeeIconSmall = "icon-going-no"
-let unknownIconSmall = "icon-unknown"
+// Priority icons (small and large) — resolved from FestivalConfig for future festival customization
+var mustSeeIconSmall: String { FestivalConfig.current.mustSeeIconSmall }
+var mightSeeIconSmall: String { FestivalConfig.current.mightSeeIconSmall }
+var wontSeeIconSmall: String { FestivalConfig.current.wontSeeIconSmall }
+var unknownIconSmall: String { FestivalConfig.current.unknownIconSmall }
 
-let mustSeeIcon = "Going-Devil-Yeah-rev1-Select-wBox"
-let mustSeeIconAlt = "Going-Devil-Yeah-rev1-DeSelect-wBox"
+var mustSeeIcon: String { FestivalConfig.current.mustSeeIcon }
+var mustSeeIconAlt: String { FestivalConfig.current.mustSeeIconAlt }
 
-let mightSeeIcon = "Maybe-Devil-Meh-rev1-Select-wBox"
-let mightSeeIconAlt = "Maybe-Devil-Meh-rev1-DeSelect-wBox"
+var mightSeeIcon: String { FestivalConfig.current.mightSeeIcon }
+var mightSeeIconAlt: String { FestivalConfig.current.mightSeeIconAlt }
 
-let wontSeeIcon = "No-way-Devil-Bah-rev2-Select-wBox"
-let wontSeeIconAlt = "No-way-Devil-Bah-rev2-DeSelect-wBox"
+var wontSeeIcon: String { FestivalConfig.current.wontSeeIcon }
+var wontSeeIconAlt: String { FestivalConfig.current.wontSeeIconAlt }
 
-let unknownIcon = "Unknown-v2-Select-wBox"
-let unknownIconAlt = "Unknown-v2-DeSelect-wBox"
+var unknownIcon: String { FestivalConfig.current.unknownIcon }
+var unknownIconAlt: String { FestivalConfig.current.unknownIconAlt }
 
 let iceRinkIcon = "Ice-Rink-Going-wBox"
 let iceRinkIconAlt = "Ice-Rink-NotGoing-wBox"
@@ -291,19 +292,12 @@ func getPriorityIcon(_ index: Int) -> String {
 }
 
 func getPriorityGraphic(_ index: Int) -> String {
-
     switch index {
-    case 1:
-        return "icon-going-yes"
-        
-    case 2:
-        return "icon-going-maybe"
-        
-    case 3:
-        return "icon-going-no"
-        
-    default:
-        return ""
+    case 1: return mustSeeIconSmall
+    case 2: return mightSeeIconSmall
+    case 3: return wontSeeIconSmall
+    case 0: return unknownIconSmall
+    default: return ""
     }
 }
 

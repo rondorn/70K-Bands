@@ -44,7 +44,7 @@ class ConfigurationTest {
             return false
         }
         
-        // Festival-specific validation
+        // Festival-specific validation (70K = default, MDF = FESTIVAL_MDF)
         #if FESTIVAL_MDF
         guard config.isMDF() && !config.is70K() else {
             print("❌ Configuration validation failed: MDF flags incorrect")
@@ -54,7 +54,7 @@ class ConfigurationTest {
             print("❌ Configuration validation failed: MDF should use MDF storage URL")
             return false
         }
-        #elseif FESTIVAL_70K
+        #else
         guard config.is70K() && !config.isMDF() else {
             print("❌ Configuration validation failed: 70K flags incorrect")
             return false
