@@ -1,9 +1,39 @@
 package com.Bands70k;
 
+import android.content.Context;
 import android.util.Log;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
+
+/**
+ * =============================================================================
+ * How to configure a new festival (aligns with Swift FestivalConfig)
+ * =============================================================================
+ *
+ * 1. BUILD CONFIG: 70K is the default. Only non-default festivals get a flavor.
+ *    In app/build.gradle, productFlavors:
+ *    - bands70k: default flavor (FESTIVAL_TYPE "70K") — 70K config lives in the else block.
+ *    - mdfbands: FESTIVAL_TYPE "MDF".
+ *    - Future: add a new flavor (e.g. xyzbands) with buildConfigField "FESTIVAL_TYPE", '"XYZ"'.
+ *
+ * 2. DEFAULTS: Shared values live in the Defaults class below. Only add a value there
+ *    if it is the same across all (or most) festivals. Any festival branch can override
+ *    by assigning a literal instead of Defaults.xxx.
+ *
+ * 3. FESTIVAL SECTION: Add a new "else if (FESTIVAL_XYZ.equals(festivalType))" block above
+ *    the else. Copy the else (70K) block as a template, then set festival-specific
+ *    properties and use Defaults.xxx for shared ones.
+ *
+ * 4. ORDER: Check FESTIVAL_MDF first, then future festivals, then else (70K). The else
+ *    is 70K only (single definition).
+ *
+ * FILE STRUCTURE:
+ * - Venue model
+ * - FestivalConfig: properties, Defaults (shared values), constructor with one section
+ *   per festival (MDF, then 70K default), helpers.
+ * =============================================================================
+ */
 
 /**
  * Venue configuration class that holds venue-specific settings
@@ -35,10 +65,8 @@ class Venue {
  * Festival-specific configuration class that provides centralized access to
  * festival-dependent settings like URLs, app names, Firebase configs, etc.
  * 
- * This class uses build variants to determine which festival configuration to use.
- * The build variant is determined by the BuildConfig.FESTIVAL_TYPE field.
- * 
- * Created to support multiple festivals (70K and MDF) from a single codebase.
+ * This class uses product flavors (BuildConfig.FESTIVAL_TYPE) to select configuration.
+ * 70K is the default (bands70k flavor); MDF and others override. See file-level comment above.
  */
 public class FestivalConfig {
     
@@ -77,6 +105,26 @@ public class FestivalConfig {
     
     public final String shareUrl;
     
+    // Configurable graphic elements (same abstraction as Swift; 70K and MDF use same assets, future festivals can override)
+    /** Must/Might/Wont priority icons (small, for swipe actions and menus). Drawable resource names. */
+    public final String mustSeeIconSmall;
+    public final String mightSeeIconSmall;
+    public final String wontSeeIconSmall;
+    public final String unknownIconSmall;
+    /** Must/Might/Wont priority graphics (large, select/deselect). Drawable resource names. */
+    public final String mustSeeIcon;
+    public final String mustSeeIconAlt;
+    public final String mightSeeIcon;
+    public final String mightSeeIconAlt;
+    public final String wontSeeIcon;
+    public final String wontSeeIconAlt;
+    public final String unknownIcon;
+    public final String unknownIconAlt;
+    /** Toolbar icons. Drawable resource names. */
+    public final String preferencesIcon;
+    public final String shareIcon;
+    public final String statsIcon;
+    
     // Venue configuration
     public final List<Venue> venues;
     
@@ -91,18 +139,42 @@ public class FestivalConfig {
     /** Whether the "Plan Your Schedule" / AI schedule builder feature is enabled. */
     public final boolean aiSchedule;
     
+    // ---- Defaults: shared across festivals; any festival section can override ----
+    /** Values used when a festival does not override. Add here only settings that are
+     *  the same for 70K and MDF (and likely future festivals). */
+    private static final class Defaults {
+        static final String SUBSCRIPTION_TOPIC = "global";
+        static final String SUBSCRIPTION_TOPIC_TEST = "Testing20251016";
+        static final String SUBSCRIPTION_UNOFFICAL_TOPIC = "unofficalEvents";
+        static final String ARTIST_URL_DEFAULT = "";
+        static final String SCHEDULE_URL_DEFAULT = "";
+        // Priority / toolbar icons (drawable resource names; same for 70K and MDF)
+        static final String MUST_SEE_ICON_SMALL = "icon_going_yes_small";
+        static final String MIGHT_SEE_ICON_SMALL = "icon_going_maybe_small";
+        static final String WONT_SEE_ICON_SMALL = "icon_going_no_small";
+        static final String UNKNOWN_ICON_SMALL = "icon_unknown_small";
+        static final String MUST_SEE_ICON = "icon_going_yes";
+        static final String MUST_SEE_ICON_ALT = "icon_going_yes_alt";
+        static final String MIGHT_SEE_ICON = "icon_going_maybe";
+        static final String MIGHT_SEE_ICON_ALT = "icon_going_maybe_alt";
+        static final String WONT_SEE_ICON = "icon_going_no";
+        static final String WONT_SEE_ICON_ALT = "icon_going_no_alt";
+        static final String UNKNOWN_ICON = "icon_unknown";
+        static final String UNKNOWN_ICON_ALT = "icon_unknown_alt";
+        static final String PREFERENCES_ICON = "icon_gear";
+        static final String SHARE_ICON = "icon_share";
+        static final String STATS_ICON = "stats_icon";
+    }
+    
     /**
      * Private constructor that initializes configuration based on build variant
      */
     private FestivalConfig() {
-        // Determine festival type from build configuration
-        // For now, we'll use a simple approach - this can be enhanced with build variants later
         String festivalType = getFestivalTypeFromBuild();
-        
         Log.d("FestivalConfig", "Initializing configuration for festival: " + festivalType);
         
         if (FESTIVAL_MDF.equals(festivalType)) {
-            // Maryland Death Fest configuration
+            // ---- FESTIVAL: Maryland Deathfest (MDF) ----
             this.festivalName = "Maryland Deathfest";
             this.festivalShortName = "MDF";
             this.appName = "MDF Bands";
@@ -111,13 +183,10 @@ public class FestivalConfig {
             this.defaultStorageUrl = "https://www.dropbox.com/scl/fi/39jr2f37rhrdk14koj0pz/mdf_productionPointer.txt?rlkey=ij3llf5y1mxwpq2pmwbj03e6t&raw=1";
             this.defaultStorageUrlTest = "https://www.dropbox.com/scl/fi/erdm6rrda8kku1svq8jwk/mdf_productionPointer_test.txt?rlkey=fhjftwb1uakiy83axcpfwrh1e&raw=1";
             
-            this.firebaseConfigFile = "google-services-mdf.json"; // Will use placeholder for now
-            
-            this.subscriptionTopic = "global";
-            this.subscriptionTopicTest = "Testing20251016";
-            this.subscriptionUnofficalTopic = "unofficalEvents";
-            
-            // MDF-specific URLs (will be configured via pointer file)
+            this.firebaseConfigFile = "google-services-mdf.json";
+            this.subscriptionTopic = Defaults.SUBSCRIPTION_TOPIC;
+            this.subscriptionTopicTest = Defaults.SUBSCRIPTION_TOPIC_TEST;
+            this.subscriptionUnofficalTopic = Defaults.SUBSCRIPTION_UNOFFICAL_TOPIC;
             this.artistUrlDefault = "https://www.dropbox.com/scl/fi/6eg74y11n070airoewsfz/mdf_artistLineup_2026.csv?rlkey=35i20kxtc6pc6v673dnmp1465&raw=1";
             this.scheduleUrlDefault = "https://www.dropbox.com/scl/fi/3u1sr1312az0wd3dcpbfe/mdf_artistsSchedule2026_test.csv?rlkey=t96hj530o46q9fzz83ei7fllj&raw=1";
             
@@ -130,7 +199,21 @@ public class FestivalConfig {
             this.notificationChannelDescription = "Channel for the MDF Bands local show alerts with custom sound";
             
             this.shareUrl = "https://www.facebook.com/profile.php?id=61580889273388";
-            
+            this.mustSeeIconSmall = Defaults.MUST_SEE_ICON_SMALL;
+            this.mightSeeIconSmall = Defaults.MIGHT_SEE_ICON_SMALL;
+            this.wontSeeIconSmall = Defaults.WONT_SEE_ICON_SMALL;
+            this.unknownIconSmall = Defaults.UNKNOWN_ICON_SMALL;
+            this.mustSeeIcon = Defaults.MUST_SEE_ICON;
+            this.mustSeeIconAlt = Defaults.MUST_SEE_ICON_ALT;
+            this.mightSeeIcon = Defaults.MIGHT_SEE_ICON;
+            this.mightSeeIconAlt = Defaults.MIGHT_SEE_ICON_ALT;
+            this.wontSeeIcon = Defaults.WONT_SEE_ICON;
+            this.wontSeeIconAlt = Defaults.WONT_SEE_ICON_ALT;
+            this.unknownIcon = Defaults.UNKNOWN_ICON;
+            this.unknownIconAlt = Defaults.UNKNOWN_ICON_ALT;
+            this.preferencesIcon = Defaults.PREFERENCES_ICON;
+            this.shareIcon = Defaults.SHARE_ICON;
+            this.statsIcon = Defaults.STATS_ICON;
             // MDF venues: Real venue names with Market Street addresses (all shown in filters)
             this.venues = Arrays.asList(
                 new Venue("Rams Head", "EA580C", "icon_theater", "icon_theater_alt", "20 Market", true),      // Orange
@@ -152,24 +235,20 @@ public class FestivalConfig {
             this.aiSchedule = false;
             
         } else {
-            // Default to 70K configuration
+            // Future festivals: add "else if (FESTIVAL_XYZ.equals(festivalType))" above and copy this block.
+            // ---- FESTIVAL: 70,000 Tons Of Metal (70K) — default ----
             this.festivalName = "70,000 Tons Of Metal";
             this.festivalShortName = "70K";
             this.appName = "70K Bands";
             this.packageName = "com.Bands70k";
-            
             this.defaultStorageUrl = "https://www.dropbox.com/scl/fi/kd5gzo06yrrafgz81y0ao/productionPointer.txt?rlkey=gt1lpaf11nay0skb6fe5zv17g&raw=1";
             this.defaultStorageUrlTest = "https://www.dropbox.com/s/f3raj8hkfbd81mp/productionPointer2024-Test.txt?raw=1";
-            
             this.firebaseConfigFile = "google-services-70k.json";
-            
-            this.subscriptionTopic = "mdf_global";
-            this.subscriptionTopicTest = "Testing20251016";
-            this.subscriptionUnofficalTopic = "global";
-            
-            // 70K URLs will be determined by pointer file, these are fallbacks
-            this.artistUrlDefault = ""; // Will be set by pointer file
-            this.scheduleUrlDefault = ""; // Will be set by pointer file
+            this.subscriptionTopic = Defaults.SUBSCRIPTION_TOPIC;
+            this.subscriptionTopicTest = Defaults.SUBSCRIPTION_TOPIC_TEST;
+            this.subscriptionUnofficalTopic = Defaults.SUBSCRIPTION_UNOFFICAL_TOPIC;
+            this.artistUrlDefault = Defaults.ARTIST_URL_DEFAULT;
+            this.scheduleUrlDefault = Defaults.SCHEDULE_URL_DEFAULT;
             
             this.logoResourceName = "bands_70k_icon";
             this.logoResourceId = R.drawable.bands_70k_icon;
@@ -180,7 +259,21 @@ public class FestivalConfig {
             this.notificationChannelDescription = "Channel for the " + BuildConfig.FESTIVAL_TYPE + " Bands local show alerts with custom sound1";
             
             this.shareUrl = "http://www.facebook.com/70kBands";
-            
+            this.mustSeeIconSmall = Defaults.MUST_SEE_ICON_SMALL;
+            this.mightSeeIconSmall = Defaults.MIGHT_SEE_ICON_SMALL;
+            this.wontSeeIconSmall = Defaults.WONT_SEE_ICON_SMALL;
+            this.unknownIconSmall = Defaults.UNKNOWN_ICON_SMALL;
+            this.mustSeeIcon = Defaults.MUST_SEE_ICON;
+            this.mustSeeIconAlt = Defaults.MUST_SEE_ICON_ALT;
+            this.mightSeeIcon = Defaults.MIGHT_SEE_ICON;
+            this.mightSeeIconAlt = Defaults.MIGHT_SEE_ICON_ALT;
+            this.wontSeeIcon = Defaults.WONT_SEE_ICON;
+            this.wontSeeIconAlt = Defaults.WONT_SEE_ICON_ALT;
+            this.unknownIcon = Defaults.UNKNOWN_ICON;
+            this.unknownIconAlt = Defaults.UNKNOWN_ICON_ALT;
+            this.preferencesIcon = Defaults.PREFERENCES_ICON;
+            this.shareIcon = Defaults.SHARE_ICON;
+            this.statsIcon = Defaults.STATS_ICON;
             // 70K venues: Main venues shown in filters, others grouped as "Other"
             this.venues = Arrays.asList(
                 new Venue("Pool", "1D4ED8", "icon_pool", "icon_pool_alt", "Deck 11", true),                  // Blue
@@ -301,6 +394,35 @@ public class FestivalConfig {
         return text.contains("Comment text is not available yet") || 
                text.contains("No notes are available, right now, feel free to add your own");
     }
+    
+    // ---- Drawable resolution (same usage as Swift: config holds asset names, resolve to resource ID) ----
+    
+    /**
+     * Resolves a drawable resource name to a resource ID. Use for configurable icons.
+     * @param context Application or activity context (for getPackageName() and getResources())
+     * @param drawableName Name of the drawable (e.g. "icon_going_yes")
+     * @return Resource ID, or 0 if not found
+     */
+    public static int getDrawableResourceId(Context context, String drawableName) {
+        if (context == null || drawableName == null || drawableName.isEmpty()) return 0;
+        return context.getResources().getIdentifier(drawableName, "drawable", context.getPackageName());
+    }
+    
+    public int getMustSeeIconSmallResId(Context context) { return getDrawableResourceId(context, mustSeeIconSmall); }
+    public int getMightSeeIconSmallResId(Context context) { return getDrawableResourceId(context, mightSeeIconSmall); }
+    public int getWontSeeIconSmallResId(Context context) { return getDrawableResourceId(context, wontSeeIconSmall); }
+    public int getUnknownIconSmallResId(Context context) { return getDrawableResourceId(context, unknownIconSmall); }
+    public int getMustSeeIconResId(Context context) { return getDrawableResourceId(context, mustSeeIcon); }
+    public int getMustSeeIconAltResId(Context context) { return getDrawableResourceId(context, mustSeeIconAlt); }
+    public int getMightSeeIconResId(Context context) { return getDrawableResourceId(context, mightSeeIcon); }
+    public int getMightSeeIconAltResId(Context context) { return getDrawableResourceId(context, mightSeeIconAlt); }
+    public int getWontSeeIconResId(Context context) { return getDrawableResourceId(context, wontSeeIcon); }
+    public int getWontSeeIconAltResId(Context context) { return getDrawableResourceId(context, wontSeeIconAlt); }
+    public int getUnknownIconResId(Context context) { return getDrawableResourceId(context, unknownIcon); }
+    public int getUnknownIconAltResId(Context context) { return getDrawableResourceId(context, unknownIconAlt); }
+    public int getPreferencesIconResId(Context context) { return getDrawableResourceId(context, preferencesIcon); }
+    public int getShareIconResId(Context context) { return getDrawableResourceId(context, shareIcon); }
+    public int getStatsIconResId(Context context) { return getDrawableResourceId(context, statsIcon); }
     
     // MARK: - Venue Helper Methods
     

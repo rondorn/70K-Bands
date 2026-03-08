@@ -114,8 +114,8 @@ public class MustMightFilterHandler {
 
         TextView mustFilterText = (TextView) popupWindow.getContentView().findViewById(R.id.mustSeeFilter);
         ImageView mustFilterIcon = (ImageView) popupWindow.getContentView().findViewById(R.id.mustSeeFilterIcon);
-        Drawable mustSeeYes = AppCompatResources.getDrawable(context, R.drawable.icon_going_yes);
-        Drawable mustSeeYesAlt = AppCompatResources.getDrawable(context, R.drawable.icon_going_yes_alt);
+        Drawable mustSeeYes = AppCompatResources.getDrawable(context, staticVariables.graphicMustSee != null ? staticVariables.graphicMustSee : R.drawable.icon_going_yes);
+        Drawable mustSeeYesAlt = AppCompatResources.getDrawable(context, staticVariables.graphicMustSeeAlt != null ? staticVariables.graphicMustSeeAlt : R.drawable.icon_going_yes_alt);
         if (staticVariables.preferences.getShowMust() == true) {
             mustFilterIcon.setImageDrawable(mustSeeYes);
             mustFilterText.setText(R.string.hide_must_see_items);
@@ -126,8 +126,8 @@ public class MustMightFilterHandler {
 
         TextView mightFilterText = (TextView) popupWindow.getContentView().findViewById(R.id.mightSeeFilter);
         ImageView mightFilterIcon = (ImageView) popupWindow.getContentView().findViewById(R.id.mightSeeFilterIcon);
-        Drawable mightSeeYes = AppCompatResources.getDrawable(context, R.drawable.icon_going_maybe);
-        Drawable mightSeeYesAlt = AppCompatResources.getDrawable(context, R.drawable.icon_going_maybe_alt);
+        Drawable mightSeeYes = AppCompatResources.getDrawable(context, staticVariables.graphicMightSee != null ? staticVariables.graphicMightSee : R.drawable.icon_going_maybe);
+        Drawable mightSeeYesAlt = AppCompatResources.getDrawable(context, staticVariables.graphicMightSeeAlt != null ? staticVariables.graphicMightSeeAlt : R.drawable.icon_going_maybe_alt);
         if (staticVariables.preferences.getShowMight() == true) {
             mightFilterIcon.setImageDrawable(mightSeeYes);
             mightFilterText.setText(R.string.hide_might_see_items);
@@ -138,8 +138,8 @@ public class MustMightFilterHandler {
 
         TextView wontFilterText = (TextView) popupWindow.getContentView().findViewById(R.id.wontSeeFilter);
         ImageView wontFilterIcon = (ImageView) popupWindow.getContentView().findViewById(R.id.wontSeeFilterIcon);
-        Drawable wontSeeYes = AppCompatResources.getDrawable(context, R.drawable.icon_going_no);
-        Drawable wontSeeYesAlt = AppCompatResources.getDrawable(context, R.drawable.icon_going_no_alt);
+        Drawable wontSeeYes = AppCompatResources.getDrawable(context, staticVariables.graphicWontSee != null ? staticVariables.graphicWontSee : R.drawable.icon_going_no);
+        Drawable wontSeeYesAlt = AppCompatResources.getDrawable(context, staticVariables.graphicWontSeeAlt != null ? staticVariables.graphicWontSeeAlt : R.drawable.icon_going_no_alt);
         if (staticVariables.preferences.getShowWont() == true) {
             wontFilterIcon.setImageDrawable(wontSeeYes);
             wontFilterText.setText(R.string.hide_wont_see_items);
@@ -150,8 +150,8 @@ public class MustMightFilterHandler {
 
         TextView unknownFilterText = (TextView) popupWindow.getContentView().findViewById(R.id.unknownSeeFilter);
         ImageView unknownFilterIcon = (ImageView) popupWindow.getContentView().findViewById(R.id.unknownSeeFilterIcon);
-        Drawable unknownSeeYes = AppCompatResources.getDrawable(context, R.drawable.icon_unknown);
-        Drawable unknownSeeYesAlt = AppCompatResources.getDrawable(context, R.drawable.icon_unknown_alt);
+        Drawable unknownSeeYes = AppCompatResources.getDrawable(context, staticVariables.graphicUnknownSee != null ? staticVariables.graphicUnknownSee : R.drawable.icon_unknown);
+        Drawable unknownSeeYesAlt = AppCompatResources.getDrawable(context, staticVariables.graphicUnknownSeeAlt != null ? staticVariables.graphicUnknownSeeAlt : R.drawable.icon_unknown_alt);
         if (staticVariables.preferences.getShowUnknown() == true) {
             unknownFilterIcon.setImageDrawable(unknownSeeYes);
             unknownFilterText.setText(R.string.hide_unknown_items);

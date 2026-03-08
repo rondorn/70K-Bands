@@ -223,6 +223,7 @@ public class staticVariables {
     public static Boolean showUnofficalEventButtons = true;
     public static Boolean filteringInPlace = false;
 
+    // Priority graphics: resolved from FestivalConfig (same abstraction as Swift) when initGraphicResources(Context) is called.
     public static Integer graphicMustSeeAlt = R.drawable.icon_going_yes_alt;
     public static Integer graphicMustSee = R.drawable.icon_going_yes;
     public static Integer graphicMustSeeSmall = R.drawable.icon_going_yes_small;
@@ -235,6 +236,28 @@ public class staticVariables {
     public static Integer graphicUnknownSeeAlt = R.drawable.icon_unknown_alt;
     public static Integer graphicUnknownSee = R.drawable.icon_unknown;
     public static Integer graphicUnknownSeeSmall = R.drawable.icon_unknown_small;
+
+    /**
+     * Initializes priority/toolbar graphic resource IDs from FestivalConfig (same as Swift).
+     * Call once when app context is available (e.g. from Bands70k.onCreate).
+     */
+    public static void initGraphicResources(Context ctx) {
+        if (ctx == null) return;
+        FestivalConfig config = FestivalConfig.getInstance();
+        int id;
+        if ((id = config.getMustSeeIconResId(ctx)) != 0) graphicMustSee = id;
+        if ((id = config.getMustSeeIconAltResId(ctx)) != 0) graphicMustSeeAlt = id;
+        if ((id = config.getMustSeeIconSmallResId(ctx)) != 0) graphicMustSeeSmall = id;
+        if ((id = config.getMightSeeIconResId(ctx)) != 0) graphicMightSee = id;
+        if ((id = config.getMightSeeIconAltResId(ctx)) != 0) graphicMightSeeAlt = id;
+        if ((id = config.getMightSeeIconSmallResId(ctx)) != 0) graphicMightSeeSmall = id;
+        if ((id = config.getWontSeeIconResId(ctx)) != 0) graphicWontSee = id;
+        if ((id = config.getWontSeeIconAltResId(ctx)) != 0) graphicWontSeeAlt = id;
+        if ((id = config.getWontSeeIconSmallResId(ctx)) != 0) graphicWontSeeSmall = id;
+        if ((id = config.getUnknownIconResId(ctx)) != 0) graphicUnknownSee = id;
+        if ((id = config.getUnknownIconAltResId(ctx)) != 0) graphicUnknownSeeAlt = id;
+        if ((id = config.getUnknownIconSmallResId(ctx)) != 0) graphicUnknownSeeSmall = id;
+    }
     public static Integer graphicAttended = R.drawable.icon_seen;
     public static Integer graphicAttendedSmall = R.drawable.icon_seen_small;
     public static Integer graphicAttendedAlt = R.drawable.icon_seen_alt;
