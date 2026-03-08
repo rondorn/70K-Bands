@@ -279,6 +279,7 @@ public class FestivalConfig {
                 new Venue("Theater", "B45309", "icon_theater", "icon_theater_alt", "Deck 3/4"),         // Amber
                 new Venue("Rink", "C026D3", "ice_rink", "ice_rink_alt", "Deck 3"),                      // Magenta
                 new Venue("Schooner Pub", "C2185B", "icon_unknown", "icon_unknown_alt", "Deck 4"),     // Dark pink (readable white text)
+                new Venue("Arcade", "334155", "icon_unknown", "icon_unknown_alt", "Deck 12"),          // Slate blue (distinct from Lounge emerald)
                 new Venue("Sports Bar", "EA580C", "icon_unknown", "icon_unknown_alt", "Deck 5"),       // Orange
                 new Venue("Viking Crown", "7C3AED", "icon_unknown", "icon_unknown_alt", "Deck 14"),   // Violet
                 new Venue("Boleros Lounge", "92400E", "icon_unknown", "icon_unknown_alt", "Deck 4"),   // Brown
