@@ -852,9 +852,10 @@ struct LandscapeScheduleView: View {
         
         private func getPriorityIconName(_ priority: Int) -> String {
             switch priority {
-            case 1: return "icon-going-yes"     // Must see
-            case 2: return "icon-going-maybe"   // Might see
-            case 3: return "icon-going-no"      // Won't see
+            case 1: return FestivalConfig.current.mustSeeIconSmall
+            case 2: return FestivalConfig.current.mightSeeIconSmall
+            case 3: return FestivalConfig.current.wontSeeIconSmall
+            case 0: return FestivalConfig.current.unknownIconSmall
             default: return ""
             }
         }

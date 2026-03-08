@@ -422,10 +422,10 @@ public class OtherFilterHandler {
             // Venue filter icons are now managed dynamically by VenueFilterHandler
             // No need to manually set their states here
 
-            mightSeeFilterIcon.setImageDrawable(AppCompatResources.getDrawable(context, R.drawable.icon_going_yes_alt));
-            mustSeeFilterIcon.setImageDrawable(AppCompatResources.getDrawable(context, R.drawable.icon_going_maybe_alt));
-            wontSeeFilterIcon.setImageDrawable(AppCompatResources.getDrawable(context, R.drawable.icon_going_no_alt));
-            unknownSeeFilterIcon.setImageDrawable(AppCompatResources.getDrawable(context, R.drawable.icon_unknown_alt));
+            mustSeeFilterIcon.setImageDrawable(AppCompatResources.getDrawable(context, staticVariables.graphicMustSeeAlt != null ? staticVariables.graphicMustSeeAlt : R.drawable.icon_going_yes_alt));
+            mightSeeFilterIcon.setImageDrawable(AppCompatResources.getDrawable(context, staticVariables.graphicMightSeeAlt != null ? staticVariables.graphicMightSeeAlt : R.drawable.icon_going_maybe_alt));
+            wontSeeFilterIcon.setImageDrawable(AppCompatResources.getDrawable(context, staticVariables.graphicWontSeeAlt != null ? staticVariables.graphicWontSeeAlt : R.drawable.icon_going_no_alt));
+            unknownSeeFilterIcon.setImageDrawable(AppCompatResources.getDrawable(context, staticVariables.graphicUnknownSeeAlt != null ? staticVariables.graphicUnknownSeeAlt : R.drawable.icon_unknown_alt));
 
             meetAndGreetFilterIcon.setImageDrawable(AppCompatResources.getDrawable(context, R.drawable.icon_meet_and_greet_alt));
             specialOtherEventFilterIcon.setImageDrawable(AppCompatResources.getDrawable(context, R.drawable.icon_all_star_jam_alt));

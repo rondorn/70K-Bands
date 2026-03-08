@@ -325,6 +325,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         if let searchImg = UIImage(named: "70KSearch") {
             bandSearch?.setImage(searchImg, for: .init(rawValue: 0)!, state: .normal)
         }
+        // Apply festival-configurable toolbar icons (Preferences, Share)
+        if let prefImg = UIImage(named: FestivalConfig.current.preferencesIcon) {
+            preferenceButton?.image = prefImg
+        }
+        if let shareImg = UIImage(named: FestivalConfig.current.shareIcon) {
+            shareButton?.image = shareImg
+        }
         readFiltersFile()
         
         // Data loading now uses SQLite directly - no preload system needed
@@ -1386,7 +1393,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     /// Updates left bar button with stats icon (far left, symmetric with preferences on right). Uses customView to stay visible when scrolling.
     private func installStatsBarButton() {
         let btn = UIButton(type: .system)
-        btn.setImage(UIImage(named: "Stats v 4On Black"), for: .normal)
+        btn.setImage(UIImage(named: FestivalConfig.current.statsIcon), for: .normal)
         btn.tintColor = .white
         btn.addTarget(self, action: #selector(statsButtonTapped(_:)), for: .touchUpInside)
         btn.frame = CGRect(x: 0, y: 0, width: 44, height: 44)
@@ -4384,7 +4391,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         searchBar.setContentHuggingPriority(.defaultLow, for: .horizontal)
         
         let shareBtn = UIButton(type: .system)
-        shareBtn.setImage(UIImage(named: "icon-share"), for: .normal)
+        shareBtn.setImage(UIImage(named: FestivalConfig.current.shareIcon), for: .normal)
         shareBtn.tintColor = UIColor(white: 0.67, alpha: 1)
         shareBtn.addTarget(self, action: #selector(customShareButtonTapped(_:)), for: .touchUpInside)
         shareBtn.translatesAutoresizingMaskIntoConstraints = false
