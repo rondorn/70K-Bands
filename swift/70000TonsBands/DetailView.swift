@@ -762,10 +762,12 @@ struct DetailView: View {
     
     private var prioritySection: some View {
         HStack(alignment: .center, spacing: 12) {
-            // Priority icon on the far left, aligned with the picker
-            Image(viewModel.priorityImageName)
-                .resizable()
-                .frame(width: 24, height: 24)
+            // Priority icon on the far left (none for Unknown)
+            if !viewModel.priorityImageName.isEmpty {
+                Image(viewModel.priorityImageName)
+                    .resizable()
+                    .frame(width: 24, height: 24)
+            }
             
             // Priority picker takes up the rest of the space
             Picker("Priority", selection: $viewModel.selectedPriority) {
