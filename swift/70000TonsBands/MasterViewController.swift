@@ -2806,8 +2806,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             return
         }
         
-        // Create or update toggle button with appropriate icon based on current state
-        let iconName = isManualCalendarView ? "list.bullet" : "calendar"
+        // Create or update toggle button: show icon for the *other* view (based on what's on screen)
+        let iconName = isShowingLandscapeSchedule ? "list.bullet" : "calendar"
         
         if let existingButton = viewToggleButton {
             // Update existing button icon
