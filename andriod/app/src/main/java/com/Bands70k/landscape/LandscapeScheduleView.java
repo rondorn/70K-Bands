@@ -1013,19 +1013,21 @@ public class LandscapeScheduleView extends LinearLayout {
             
             DayScheduleData currentDay = days.get(currentDayIndex);
             Log.d(TAG, "updateDisplay() - currentDayIndex=" + currentDayIndex + ", dayLabel='" + currentDay.dayLabel + "'");
-            int visibleEventCount = 0;
+            // Count visible events (blocks): combined rows = 2 events, single = 1, so badge matches iOS
+            int visibleBlockCount = countVisibleEventBlocks(currentDay);
+            int visibleRowCount = 0;
             for (VenueColumn venue : currentDay.venues) {
-                visibleEventCount += venue.events.size();
+                visibleRowCount += venue.events.size();
             }
             // Count hidden records (events) for this day
             int hiddenRecordsCount = 0;
             Integer unfilteredCount = unfilteredEventCountsPerDay.get(currentDay.dayLabel);
             if (unfilteredCount != null) {
-                hiddenRecordsCount = unfilteredCount - visibleEventCount;
+                hiddenRecordsCount = unfilteredCount - visibleBlockCount;
             }
             String localizedDay = getLocalizedDayLabel(currentDay.dayLabel);
             String eventsLabel = context.getResources().getString(R.string.Events);
-            dayLabel.setText(localizedDay + " - " + visibleEventCount + " " + eventsLabel);
+            dayLabel.setText(localizedDay + " - " + visibleRowCount + " " + eventsLabel);
             Log.d(TAG, "updateDisplay() - displaying day: '" + localizedDay + "' (raw dayLabel='" + currentDay.dayLabel + "')");
             // iOS-style: badge shows hidden records count for current day
             if (hiddenRecordsCount > 0) {
@@ -2716,7 +2718,8 @@ public class LandscapeScheduleView extends LinearLayout {
             }
         }
         
-        // Store unfiltered counts per day
+        // Store unfiltered event (block) counts per day for filter badge; count actual events so
+        // combined rows (2 bands, 1 row) count as 2 and badge matches iOS (e.g. "60 events filtered")
         unfilteredEventCountsPerDay.clear();
         for (Map.Entry<String, List<ScheduleBlock>> entry : unfilteredDayGroups.entrySet()) {
             unfilteredEventCountsPerDay.put(entry.getKey(), entry.getValue().size());
@@ -3384,9 +3387,47 @@ public class LandscapeScheduleView extends LinearLayout {
     }
     
     /**
-     * Build a unique key for an event based on date, startTime, endTime, location, and eventType
-     * Used to identify duplicate events (same time/location/type, different band)
+     * Count visible event blocks for the current day. Combined rows (2 bands, 1 row) count as 2 events
+     * so the filter badge matches iOS (e.g. "60 events filtered" when hiding Meet and Greet).
      */
+    private int countVisibleEventBlocks(DayScheduleData day) {
+        if (day == null || day.venues == null) return 0;
+        int count = 0;
+        for (VenueColumn venue : day.venues) {
+            if (venue.events == null) continue;
+            for (ScheduleBlock block : venue.events) {
+                count += isCombinedEventName(block.bandName) ? 2 : 1;
+            }
+        }
+        return count;
+    }
+
+    /**
+     * Count display rows for a list of blocks using the same combining rule as the calendar:
+     * same time/venue/type with exactly 2 distinct bands = 1 row; otherwise each block = 1 row.
+     * Used so the "filtered" badge is 0 when no filters are applied.
+     */
+    private int countDisplayRowsAfterCombining(List<ScheduleBlock> blocks) {
+        if (blocks == null || blocks.isEmpty()) return 0;
+        Map<String, List<ScheduleBlock>> eventGroups = new HashMap<>();
+        for (ScheduleBlock event : blocks) {
+            String eventKey = buildEventKey(event);
+            if (!eventGroups.containsKey(eventKey)) {
+                eventGroups.put(eventKey, new ArrayList<>());
+            }
+            eventGroups.get(eventKey).add(event);
+        }
+        int rows = 0;
+        for (List<ScheduleBlock> groupEvents : eventGroups.values()) {
+            if (groupEvents.size() == 2 && !groupEvents.get(0).bandName.equals(groupEvents.get(1).bandName)) {
+                rows += 1; // combined event
+            } else {
+                rows += groupEvents.size();
+            }
+        }
+        return rows;
+    }
+
     private String buildEventKey(ScheduleBlock event) {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.US);
