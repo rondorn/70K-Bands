@@ -7,10 +7,23 @@
 //
 
 import SwiftUI
+import UIKit
+
+// MARK: - Environment: presenter for modal (avoids SwiftUI sheet re-presentation when Preferences re-renders)
+private struct PreferencesPresenterKey: EnvironmentKey {
+    static let defaultValue: UIViewController? = nil
+}
+extension EnvironmentValues {
+    var preferencesPresenter: UIViewController? {
+        get { self[PreferencesPresenterKey.self] }
+        set { self[PreferencesPresenterKey.self] = newValue }
+    }
+}
 
 struct PreferencesView: View {
     @StateObject private var viewModel = PreferencesViewModel()
     @Environment(\.presentationMode) var presentationMode
+    @Environment(\.preferencesPresenter) private var preferencesPresenter: UIViewController?
     @State private var minutesText: String = ""
     
     var body: some View {
@@ -321,9 +334,52 @@ struct PreferencesView: View {
                     .keyboardType(.URL)
             }
             .padding(.vertical, 4)
+            
+            // Scan QR Code Schedule (BinaryQRScanner; 1 or 2 binary QRs) – presented via UIKit to avoid SwiftUI sheet re-presentation when Preferences re-renders
+            Button(action: presentQRScannerIfAvailable) {
+                HStack {
+                    Image(systemName: "qrcode.viewfinder")
+                        .foregroundColor(.blue)
+                    Text(NSLocalizedString("Scan QR Code Schedule", comment: "Preferences button to scan schedule QR"))
+                        .foregroundColor(.primary)
+                }
+            }
+            .padding(.vertical, 4)
         } header: {
             Text(NSLocalizedString("AdvancedPreferences", comment: ""))
         }
+        .alert(NSLocalizedString("Schedule from QR", comment: "QR import result title"), isPresented: Binding(
+            get: { viewModel.scheduleQRImportResult != nil },
+            set: { if !$0 { viewModel.scheduleQRImportResult = nil } }
+        )) {
+            Button(NSLocalizedString("OK", comment: "")) {
+                viewModel.scheduleQRImportResult = nil
+            }
+        } message: {
+            if let result = viewModel.scheduleQRImportResult {
+                Text(result.message)
+            }
+        }
+    }
+
+    /// Presents the schedule QR scanner modally via UIKit so it is only presented once (avoids SwiftUI sheet re-present when Preferences re-renders).
+    private func presentQRScannerIfAvailable() {
+        guard let presenter = preferencesPresenter else { return }
+        var scannerVC: UIHostingController<ScheduleBinaryQRScannerView>!
+        scannerVC = UIHostingController(rootView: ScheduleBinaryQRScannerView(
+            onScan: { payloads in
+                let done = viewModel.handleScannedPayload(payloads)
+                if done {
+                    scannerVC.dismiss(animated: true)
+                }
+                return done
+            },
+            onCancel: {
+                scannerVC.dismiss(animated: true)
+            }
+        ))
+        scannerVC.modalPresentationStyle = .pageSheet
+        presenter.present(scannerVC, animated: true)
     }
 }
 

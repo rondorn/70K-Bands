@@ -219,6 +219,17 @@
 // Import Feature
 "This file is not a valid 70K Bands share file." = "Denne fil er ikke en gyldig 70K Bands delingsfil.";
 "Import Shared Preferences" = "Importér Delte Præferencer";
+
+// Share Schedule via QR Code – instructions
+"QRShareInstructionsIntro" = "Denne QR-kode er beregnet til deling under følgende betingelser.";
+"QRShareCondition1" = "En bruger har internetadgang og har nye programdata";
+"QRShareCondition2" = "En anden bruger har brug for programdataene, men har ikke internet";
+"QRShareInstructionsHow" = "Denne QR-kode gør det muligt at dele programdata. For at bruge dataene kan brugeren uden internet:";
+"QRShareStep1" = "Gå til Præferencer";
+"QRShareStep2" = "Vælg \"Scan QR-kode program\"";
+"QRShareStep3" = "Scan koden på denne skærm";
+"QRShareStep4" = "Få det samme program som på denne telefon";
+"Preparing camera…" = "Forbereder kamera…";
 "New profile received!" = "Ny profil modtaget!";
 "band priorities" = "band prioriteter";
 "scheduled events" = "planlagte begivenheder";

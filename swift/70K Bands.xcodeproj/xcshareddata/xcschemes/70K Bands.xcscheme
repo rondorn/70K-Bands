@@ -37,6 +37,16 @@
          </BuildableReference>
       </MacroExpansion>
       <Testables>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "1154F61F1A575893003F4764"
+               BuildableName = "70K BandsTests.xctest"
+               BlueprintName = "70K BandsTests"
+               ReferencedContainer = "container:70K Bands.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction
