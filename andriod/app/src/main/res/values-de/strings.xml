@@ -409,4 +409,30 @@
     <string name="about_team_aaron">Aaron Copeland</string>
     <string name="about_role_curator">70K Bands Zusammenfassungskurator (links)</string>
     <string name="about_team_photo">Teamfoto</string>
+
+    <!-- Schedule QR -->
+    <string name="Done">Fertig</string>
+    <string name="schedule_qr_share_title">Zeitplan per QR-Code teilen</string>
+    <string name="schedule_qr_scan_title">Zeitplan per QR-Code scannen</string>
+    <string name="schedule_qr_share_preference">Zeitplan per QR-Code teilen</string>
+    <string name="schedule_qr_scan_preference">Zeitplan per QR-Code scannen</string>
+    <string name="QRShareInstructionsIntro">Dieser QR-Code ist für die Weitergabe unter folgenden Bedingungen gedacht.</string>
+    <string name="QRShareCondition1">Ein Nutzer hat Internetzugang und hat neue Zeitplandaten</string>
+    <string name="QRShareCondition2">Ein anderer Nutzer braucht die Zeitplandaten, hat aber kein Internet</string>
+    <string name="QRShareInstructionsHow">Dieser QR-Code ermöglicht das Teilen von Zeitplandaten. Um diese Daten zu nutzen, kann der Nutzer ohne Internet:</string>
+    <string name="QRShareStep1">Zu Einstellungen gehen</string>
+    <string name="QRShareStep2">\"Zeitplan per QR-Code scannen\" auswählen</string>
+    <string name="QRShareStep3">Den Code auf diesem Bildschirm scannen</string>
+    <string name="QRShareStep4">Den gleichen Zeitplan wie auf diesem Gerät erhalten</string>
+    <string name="Preparing_camera">Kamera wird vorbereitet…</string>
+    <string name="schedule_qr_scan_hint">Zeitplan-QR-Code scannen</string>
+    <string name="schedule_qr_scan_first">Ersten QR-Code scannen</string>
+    <string name="schedule_qr_scan_second">Zweiten QR-Code scannen</string>
+    <string name="schedule_qr_import_success">Zeitplan erfolgreich importiert.</string>
+    <string name="schedule_qr_import_failed">Zeitplan-Import fehlgeschlagen.</string>
+    <string name="schedule_qr_invalid_payload">Ungültiger QR-Inhalt.</string>
+    <string name="schedule_qr_empty_schedule">Kein Zeitplan zum Teilen. Zuerst Zeitplan laden.</string>
+    <string name="schedule_qr_compression_failed">QR-Code konnte nicht erstellt werden.</string>
+    <string name="schedule_qr_camera_required">Kamerazugriff ist zum Scannen des Zeitplan-QR-Codes erforderlich. In Einstellungen aktivieren.</string>
+    <string name="schedule_qr_camera_unavailable">Kamera konnte nicht geöffnet werden.</string>
 </resources>

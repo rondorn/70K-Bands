@@ -18,6 +18,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static android.app.ActivityManager.isRunningInTestHarness;
@@ -82,6 +83,17 @@ public class BandInfo {
         return selectedBand;
     }
     public FileHandler70k fileHandle = new FileHandler70k();
+
+    /**
+     * Returns the full band list from the band CSV, sorted case-insensitively.
+     * Used for QR encode/decode so creator and scanner use the same canonical order (indices match).
+     */
+    public static List<String> getCanonicalBandNamesForQR() {
+        BandInfo bi = new BandInfo();
+        ArrayList<String> names = bi.ParseBandCSV();
+        Collections.sort(names, String.CASE_INSENSITIVE_ORDER);
+        return names;
+    }
 
     /**
      * Returns a list of filtered band names based on user preferences.

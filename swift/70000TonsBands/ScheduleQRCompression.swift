@@ -12,12 +12,12 @@
 //  1. Preprocess: replace "https://www.dropbox.com/" with "!DB!"; strip trailing commas per line.
 //  2. Split: header row + data rows. Chunk1 = header + first half of data rows. Chunk2 = second half only (no header).
 //  3. Per chunk: output 8 columns (omit Description URL, ImageURL, ImageDate) so each QR stays small and scannable. Substitute Band→2-digit, Location→2-digit, Type→1-digit; shorten Date/Day/Time.
-//  4. LZMA-compress chunk UTF-8; prepend 4-byte little-endian uncompressed size. That is the payload (raw binary).
+//  4. zlib-compress chunk UTF-8; prepend 4-byte little-endian uncompressed size. That is the payload (raw binary).
 //  5. Store raw binary in the QR (no Base64; smaller payload → less dense QR → more reliable scan). Three QRs: top, middle, bottom.
 //
 //  DECODE (client):
 //  1. Read three QRs (scanner returns raw payload via Vision payloadData). Order by vertical position: top, middle, bottom.
-//  2. Per payload: bytes 0..<4 = LE uncompressed size n; bytes 4..<end = LZMA. Decode LZMA → n bytes UTF-8 CSV. If first 4 bytes not valid size, try Base64-decode (fallback).
+//  2. Per payload: bytes 0..<4 = LE uncompressed size n; bytes 4..<end = zlib. Decode zlib → n bytes UTF-8 CSV. If first 4 bytes not valid size, try Base64-decode (fallback).
 //  3. Expand codes (2-digit→band/venue, 1-digit→type, date/day/time). Postprocess: "!DB!"→full URL; pad to 11 columns; header row → full 11-col header.
 //  4. If two payloads: csv1 + "\n" + csv2 → one CSV (one header, all rows). Import that.
 //
@@ -313,24 +313,24 @@ extension ScheduleQRCompressionError: LocalizedError {
     }
 }
 
-// MARK: - LZMA (single QR binary payload)
+// MARK: - zlib (single QR binary payload; cross-platform with Android)
 
 /// Max bytes per QR for binary payload (Version 40 Low). Single or two-QR schedule share.
 private let maxBytesPerBinaryQR: Int = 2953
 
-/// Payload type byte: 0 = full schedule (1 QR), 1 = chunk 1 of 2, 2 = chunk 2 of 2. Followed by 4-byte LE size + LZMA.
+/// Payload type byte: 0 = full schedule (1 QR), 1 = chunk 1 of 2, 2 = chunk 2 of 2. Followed by 4-byte LE size + zlib.
 let scheduleQRTypeFull: UInt8 = 0
 let scheduleQRTypeChunk1: UInt8 = 1
 let scheduleQRTypeChunk2: UInt8 = 2
 
-/// Compress with LZMA and prepend 4-byte LE uncompressed size. Returns raw bytes for binary QR.
+/// Compress with zlib and prepend 4-byte LE uncompressed size. Returns raw bytes for binary QR. Matches Android (zlib).
 private func compressForQR(source: Data) throws -> Data {
     let srcCount = source.count
     let dstCapacity = srcCount + 4096
     var dstBuffer = [UInt8](repeating: 0, count: dstCapacity)
     let written: Int = source.withUnsafeBytes { srcRaw in
         guard let srcPtr = srcRaw.baseAddress?.assumingMemoryBound(to: UInt8.self) else { return 0 }
-        return compression_encode_buffer(&dstBuffer, dstCapacity, srcPtr, srcCount, nil, COMPRESSION_LZMA)
+        return compression_encode_buffer(&dstBuffer, dstCapacity, srcPtr, srcCount, nil, COMPRESSION_ZLIB)
     }
     guard written > 0 else { throw ScheduleQRCompressionError.compressionFailed }
     var out = Data()
@@ -342,7 +342,7 @@ private func compressForQR(source: Data) throws -> Data {
     return out
 }
 
-/// Decompress LZMA stream (4-byte LE size header + compressed bytes).
+/// Decompress zlib stream (4-byte LE size header + compressed bytes).
 private func decompressFromQR(compressed: Data) throws -> Data {
     guard compressed.count > 4 else {
         print("[QRDecompress] FAIL: payload too short count=\(compressed.count)")
@@ -359,17 +359,17 @@ private func decompressFromQR(compressed: Data) throws -> Data {
     }
     let payloadStart = compressed.index(compressed.startIndex, offsetBy: 4)
     let payloadData = compressed.subdata(in: payloadStart..<compressed.endIndex)
-    let scratchSize = compression_decode_scratch_buffer_size(COMPRESSION_LZMA)
+    let scratchSize = compression_decode_scratch_buffer_size(COMPRESSION_ZLIB)
     var scratch = [UInt8](repeating: 0, count: scratchSize)
     var dstBuffer = [UInt8](repeating: 0, count: n)
     let written: Int = payloadData.withUnsafeBytes { srcRaw in
         guard let srcPtr = srcRaw.baseAddress?.assumingMemoryBound(to: UInt8.self) else { return 0 }
-        return compression_decode_buffer(&dstBuffer, n, srcPtr, payloadData.count, &scratch, COMPRESSION_LZMA)
+        return compression_decode_buffer(&dstBuffer, n, srcPtr, payloadData.count, &scratch, COMPRESSION_ZLIB)
     }
-    print("[QRDecompress] lzmaBytes=\(payloadData.count) written=\(written)")
+    print("[QRDecompress] zlibBytes=\(payloadData.count) written=\(written)")
     guard written == n else {
         print("[QRDecompress] FAIL: written=\(written) expected=\(n)")
-        throw ScheduleQRCompressionError.decompressionFailed(reason: "LZMA decode returned \(written), expected \(n)")
+        throw ScheduleQRCompressionError.decompressionFailed(reason: "zlib decode returned \(written), expected \(n)")
     }
     return Data(bytes: &dstBuffer, count: written)
 }
@@ -428,7 +428,7 @@ func compressScheduleForThreeQRs(csvString: String, eventYear: Int) throws -> (t
     return (top: topPayload, middle: middlePayload, bottom: bottomPayload)
 }
 
-/// Scanner/QR pipeline can corrupt the first 4 bytes (size header) while leaving LZMA intact. Try normal header+offset, then try skipping 4 bytes and probing plausible uncompressed sizes.
+/// Scanner/QR pipeline can corrupt the first 4 bytes (size header) while leaving zlib intact. Try normal header+offset, then try skipping 4 bytes and probing plausible uncompressed sizes.
 private func rawPayloadFromScanned(_ payload: Data) -> Data {
     guard payload.count > 8 else { return payload }
     let maxSkip = min(32, payload.count - 8)
@@ -439,14 +439,14 @@ private func rawPayloadFromScanned(_ payload: Data) -> Data {
         let n = Int(b0 | (b1 << 8) | (b2 << 16) | (b3 << 24))
         guard n > 0, n <= 2_000_000 else { continue }
         let payloadStart = 4
-        let lzmaLen = slice.count - payloadStart
-        guard lzmaLen > 0 else { continue }
-        let scratchSize = compression_decode_scratch_buffer_size(COMPRESSION_LZMA)
+        let zlibLen = slice.count - payloadStart
+        guard zlibLen > 0 else { continue }
+        let scratchSize = compression_decode_scratch_buffer_size(COMPRESSION_ZLIB)
         var scratch = [UInt8](repeating: 0, count: scratchSize)
         var dstBuffer = [UInt8](repeating: 0, count: n)
         let written: Int = slice.subdata(in: payloadStart..<slice.endIndex).withUnsafeBytes { srcRaw in
             guard let srcPtr = srcRaw.baseAddress?.assumingMemoryBound(to: UInt8.self) else { return 0 }
-            return compression_decode_buffer(&dstBuffer, n, srcPtr, lzmaLen, &scratch, COMPRESSION_LZMA)
+            return compression_decode_buffer(&dstBuffer, n, srcPtr, zlibLen, &scratch, COMPRESSION_ZLIB)
         }
         if written == n {
             if offset > 0 {
@@ -455,66 +455,66 @@ private func rawPayloadFromScanned(_ payload: Data) -> Data {
             return slice
         }
     }
-    // Recovery: first 4–10 bytes may be corrupted (or duplicated header); LZMA may start at 0,4,6,8,9,10. Try trimming end. Probe n step 1.
-    let scratchSize = compression_decode_scratch_buffer_size(COMPRESSION_LZMA)
+    // Recovery: first 4–10 bytes may be corrupted (or duplicated header); zlib may start at 0,4,6,8,9,10. Try trimming end. Probe n step 1.
+    let scratchSize = compression_decode_scratch_buffer_size(COMPRESSION_ZLIB)
     var scratch = [UInt8](repeating: 0, count: scratchSize)
     let candidateSizes: [Int] = [2009, 2037, 2613, 2000, 2500, 2100, 2600, 1500, 3000, 1000, 3500, 2035, 2040, 2025, 776, 768, 552]
     var didLogProbe = false
-    for lzmaStart in [0, 4, 5, 6, 7, 8, 9, 10] where payload.count > lzmaStart + 64 {
-        let fullLzma = payload.subdata(in: lzmaStart..<payload.endIndex)
-        let trimMax = min(10, fullLzma.count - 64)
+    for zlibStart in [0, 4, 5, 6, 7, 8, 9, 10] where payload.count > zlibStart + 64 {
+        let fullZlib = payload.subdata(in: zlibStart..<payload.endIndex)
+        let trimMax = min(10, fullZlib.count - 64)
         for trim in 0...trimMax {
-            let lzmaLen = fullLzma.count - trim
-            let lzmaData = fullLzma.subdata(in: 0..<lzmaLen)
+            let zlibLen = fullZlib.count - trim
+            let zlibData = fullZlib.subdata(in: 0..<zlibLen)
             for n in candidateSizes where n <= 2_000_000 {
                 var dstBuffer = [UInt8](repeating: 0, count: n)
-                let written: Int = lzmaData.withUnsafeBytes { srcRaw in
+                let written: Int = zlibData.withUnsafeBytes { srcRaw in
                     guard let srcPtr = srcRaw.baseAddress?.assumingMemoryBound(to: UInt8.self) else { return 0 }
-                    return compression_decode_buffer(&dstBuffer, n, srcPtr, lzmaData.count, &scratch, COMPRESSION_LZMA)
+                    return compression_decode_buffer(&dstBuffer, n, srcPtr, zlibData.count, &scratch, COMPRESSION_ZLIB)
                 }
-                if !didLogProbe, lzmaStart == 4, trim == 0, n == 2037, written > 0 {
-                    print("[QRDecompress] probe lzmaStart=4 trim=0 n=2037 → written=\(written) (first4 decoded: \(dstBuffer.prefix(4).map { String(format: "%02X", $0) }.joined(separator: " ")))")
+                if !didLogProbe, zlibStart == 4, trim == 0, n == 2037, written > 0 {
+                    print("[QRDecompress] probe zlibStart=4 trim=0 n=2037 → written=\(written) (first4 decoded: \(dstBuffer.prefix(4).map { String(format: "%02X", $0) }.joined(separator: " ")))")
                     didLogProbe = true
                 }
                 if written == n {
                     var out = Data()
                     var le = UInt32(n).littleEndian
                     out.append(Data(bytes: &le, count: 4))
-                    out.append(lzmaData)
-                    print("[QRDecompress] Recovered: first \(lzmaStart) bytes corrupted, trim=\(trim), n=\(n) → payload \(out.count) bytes")
+                    out.append(zlibData)
+                    print("[QRDecompress] Recovered: first \(zlibStart) bytes corrupted, trim=\(trim), n=\(n) → payload \(out.count) bytes")
                     return out
                 }
             }
             for n in 1000...3500 {
                 var dstBuffer = [UInt8](repeating: 0, count: n)
-                let written: Int = lzmaData.withUnsafeBytes { srcRaw in
+                let written: Int = zlibData.withUnsafeBytes { srcRaw in
                     guard let srcPtr = srcRaw.baseAddress?.assumingMemoryBound(to: UInt8.self) else { return 0 }
-                    return compression_decode_buffer(&dstBuffer, n, srcPtr, lzmaData.count, &scratch, COMPRESSION_LZMA)
+                    return compression_decode_buffer(&dstBuffer, n, srcPtr, zlibData.count, &scratch, COMPRESSION_ZLIB)
                 }
                 if written == n {
                     var out = Data()
                     var le = UInt32(n).littleEndian
                     out.append(Data(bytes: &le, count: 4))
-                    out.append(lzmaData)
-                    print("[QRDecompress] Recovered: first \(lzmaStart) bytes corrupted, trim=\(trim), n=\(n) (probe) → payload \(out.count) bytes")
+                    out.append(zlibData)
+                    print("[QRDecompress] Recovered: first \(zlibStart) bytes corrupted, trim=\(trim), n=\(n) (probe) → payload \(out.count) bytes")
                     return out
                 }
             }
         }
     }
-    // Diagnostic: try decoding bytes 4..end (and trimmed) as LZMA with plausible n to find if stream is valid
+    // Diagnostic: try decoding bytes 4..end (and trimmed) as zlib with plausible n to find if stream is valid
     var diagnosticHadMatch = false
     if payload.count > 8 {
-        let scratchSize = compression_decode_scratch_buffer_size(COMPRESSION_LZMA)
+        let scratchSize = compression_decode_scratch_buffer_size(COMPRESSION_ZLIB)
         var scratch = [UInt8](repeating: 0, count: scratchSize)
         for trimEnd in 0...min(6, payload.count - 4 - 64) {
-            let lzmaLen = payload.count - 4 - trimEnd
-            let lzmaFrom4 = payload.subdata(in: 4..<(payload.endIndex - trimEnd))
+            let zlibLen = payload.count - 4 - trimEnd
+            let zlibFrom4 = payload.subdata(in: 4..<(payload.endIndex - trimEnd))
             for tryN in [2037, 2613, 2009, 1973, 2500, 2100] {
                 var dst = [UInt8](repeating: 0, count: tryN)
-                let w = lzmaFrom4.withUnsafeBytes { srcRaw in
+                let w = zlibFrom4.withUnsafeBytes { srcRaw in
                     guard let src = srcRaw.baseAddress?.assumingMemoryBound(to: UInt8.self) else { return 0 }
-                    return compression_decode_buffer(&dst, tryN, src, lzmaLen, &scratch, COMPRESSION_LZMA)
+                    return compression_decode_buffer(&dst, tryN, src, zlibLen, &scratch, COMPRESSION_ZLIB)
                 }
                 if w > 0 {
                     diagnosticHadMatch = true
@@ -529,11 +529,11 @@ private func rawPayloadFromScanned(_ payload: Data) -> Data {
             }
         }
         if !diagnosticHadMatch {
-            print("[QRDecompress] diagnostic: tried bytes 4..end (trimEnd 0..6), n in [2037,2613,2009,...] — all written=0 (Vision payload not valid LZMA)")
+            print("[QRDecompress] diagnostic: tried bytes 4..end (trimEnd 0..6), n in [2037,2613,2009,...] — all written=0 (Vision payload not valid zlib)")
         }
     }
     let first16 = payload.prefix(16).map { String(format: "%02X", $0) }.joined(separator: " ")
-    print("[QRDecompress] No valid header+LZMA at any offset 0..\(maxSkip), payload.count=\(payload.count), first16=\(first16)")
+    print("[QRDecompress] No valid header+zlib at any offset 0..\(maxSkip), payload.count=\(payload.count), first16=\(first16)")
     let decoded: Data? = {
         if let str = String(data: payload, encoding: .utf8), let d = Data(base64Encoded: str), d.count > 4 { return d }
         let latin1 = String(data: payload, encoding: .isoLatin1)
@@ -550,9 +550,9 @@ private func rawPayloadFromScanned(_ payload: Data) -> Data {
     return payload
 }
 
-// MARK: - One or two binary QRs (BinaryQRScanner; type byte + 4-byte size + LZMA)
+// MARK: - One or two binary QRs (BinaryQRScanner; type byte + 4-byte size + zlib)
 
-/// Compress schedule for 1 or 2 binary QRs. If compressed full schedule fits in maxBytesPerBinaryQR, returns 1 payload; else 2. Each payload: type (0/1/2) + 4-byte LE size + LZMA.
+/// Compress schedule for 1 or 2 binary QRs. If compressed full schedule fits in maxBytesPerBinaryQR, returns 1 payload; else 2. Each payload: type (0/1/2) + 4-byte LE size + zlib.
 func compressScheduleForOneOrTwoQRs(csvString: String, eventYear: Int) throws -> [Data] {
     let singlePayload = try compressScheduleForQRData(csvString: csvString, eventYear: eventYear)
     var withType = Data()
@@ -598,7 +598,7 @@ func compressScheduleForOneOrTwoQRs(csvString: String, eventYear: Int) throws ->
     return [out1, out2]
 }
 
-/// Parse type byte from payload. Returns (type, payloadWithoutType) where payloadWithoutType is 4-byte size + LZMA.
+/// Parse type byte from payload. Returns (type, payloadWithoutType) where payloadWithoutType is 4-byte size + zlib.
 func scheduleQRBinaryPayloadType(_ payload: Data) -> (type: UInt8, body: Data)? {
     guard payload.count > 5 else { return nil }
     let t = payload[0]
@@ -606,7 +606,7 @@ func scheduleQRBinaryPayloadType(_ payload: Data) -> (type: UInt8, body: Data)? 
     return (t, payload.subdata(in: 1..<payload.count))
 }
 
-/// Decompress one or two binary QR payloads (type + 4-byte size + LZMA) and merge into one CSV.
+/// Decompress one or two binary QR payloads (type + 4-byte size + zlib) and merge into one CSV.
 func decompressAndMergeOneOrTwoPayloads(_ payloads: [Data], eventYear: Int) throws -> String {
     guard !payloads.isEmpty, payloads.count <= 2 else {
         throw ScheduleQRCompressionError.decompressionFailed(reason: "Expected 1 or 2 payloads, got \(payloads.count).")
@@ -648,7 +648,7 @@ private let maxBytesPerPlainQRLowDensity: Int = 1200
 /// Even tighter for 24-chunk "very low density" QRs (~800 bytes each).
 private let maxBytesPerPlainQRVeryLowDensity: Int = 800
 
-/// Build shortened 8-column CSV string (same format as LZMA path) for plain-UTF-8 chunks. Returns full shortened CSV.
+/// Build shortened 8-column CSV string (same format as binary/zlib path) for plain-UTF-8 chunks. Returns full shortened CSV.
 private func buildShortenedScheduleCSV(csvString: String, eventYear: Int) throws -> String {
     let preprocessed = preprocessCSVForCompression(csvString)
     let bandNames = canonicalBandNames(forYear: eventYear)
@@ -685,7 +685,7 @@ private func buildShortenedScheduleCSV(csvString: String, eventYear: Int) throws
     return outLines.joined(separator: "\n")
 }
 
-/// Split schedule into 6 plain UTF-8 chunks (no LZMA), each ≤ maxBytesPerPlainQR. Chunk 1 has header + rows; chunks 2–6 rows only. Order: row-major (top-left → bottom-right).
+/// Split schedule into 6 plain UTF-8 chunks (no zlib), each ≤ maxBytesPerPlainQR. Chunk 1 has header + rows; chunks 2–6 rows only. Order: row-major (top-left → bottom-right).
 func splitScheduleForSixQRs(csvString: String, eventYear: Int) throws -> [Data] {
     let fullShort = try buildShortenedScheduleCSV(csvString: csvString, eventYear: eventYear)
     let lines = fullShort.components(separatedBy: .newlines)
@@ -734,7 +734,7 @@ func splitScheduleForSixQRs(csvString: String, eventYear: Int) throws -> [Data] 
     return payloads
 }
 
-/// Merge 6 plain UTF-8 QR payloads (order: row-major, same as scanner sort) into one CSV. No LZMA; payloads are raw UTF-8 shortened CSV.
+/// Merge 6 plain UTF-8 QR payloads (order: row-major, same as scanner sort) into one CSV. No zlib; payloads are raw UTF-8 shortened CSV.
 func mergeSixPlainUTF8Payloads(_ payloads: [Data], eventYear: Int) throws -> String {
     guard payloads.count == 6 else {
         throw ScheduleQRCompressionError.decompressionFailed(reason: "Expected 6 payloads, got \(payloads.count).")
@@ -848,7 +848,7 @@ func mergePlainUTF8SchedulePayloads(_ payloads: [Data], eventYear: Int) throws -
     return postprocessCSVAfterDecompression(fullCSV)
 }
 
-/// Compress schedule for a single binary QR: preprocess (Dropbox URL shorten, strip trailing commas), substitute codes (band/venue/type/date/time/day), then LZMA with size header. Returns raw bytes (≤ ~2953) for one QR.
+/// Compress schedule for a single binary QR: preprocess (Dropbox URL shorten, strip trailing commas), substitute codes (band/venue/type/date/time/day), then zlib with size header. Returns raw bytes (≤ ~2953) for one QR.
 func compressScheduleForQRData(csvString: String, eventYear: Int) throws -> Data {
     let preprocessed = preprocessCSVForCompression(csvString)
     let bandNames = canonicalBandNames(forYear: eventYear)
@@ -892,7 +892,7 @@ func compressScheduleForQRData(csvString: String, eventYear: Int) throws -> Data
     return payload
 }
 
-/// Decompress QR payload: binary = 4-byte LE size + LZMA. Caller must pass raw binary (after Base64 decode if QR contained Base64).
+/// Decompress QR payload: binary = 4-byte LE size + zlib. Caller must pass raw binary (after Base64 decode if QR contained Base64).
 func decompressScheduleFromQR(compressedData: Data, eventYear: Int) throws -> String {
     let decompressed = try decompressFromQR(compressed: compressedData)
     let compressedCSV = String(decoding: decompressed, as: UTF8.self)
@@ -933,8 +933,13 @@ private func decompressCSVToFull(compressedCSV: String, eventYear: Int) -> Strin
 // MARK: - Export schedule to CSV (from SQLite events)
 
 /// Build full schedule CSV string from current year's events (for host to compress and show as QR).
+/// Excludes Unofficial Event and Cruiser Organized to reduce payload size; scanner merges those from existing data.
 func exportScheduleCSV(eventYear: Int) -> String? {
-    let events = DataManager.shared.fetchEvents(forYear: eventYear)
+    let allEvents = DataManager.shared.fetchEvents(forYear: eventYear)
+    let events = allEvents.filter { event in
+        let t = event.eventType ?? ""
+        return t != "Unofficial Event" && t != "Cruiser Organized"
+    }
     if events.isEmpty { return nil }
 
     var lines: [String] = [scheduleCSVHeader]
