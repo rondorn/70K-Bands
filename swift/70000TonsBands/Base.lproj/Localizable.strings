@@ -214,6 +214,17 @@
 "Build" = "Build";
 
 // Advanced Preferences section
+// Share Schedule via QR Code – instructions on QR screen
+"QRShareInstructionsIntro" = "This QR code is meant to be shared under the following conditions.";
+"QRShareCondition1" = "A user has internet access and has new schedule data";
+"QRShareCondition2" = "Another user needs the schedule data, but has no internet";
+"QRShareInstructionsHow" = "This QR code allows for the sharing of schedule data. To use this data the user with no internet can:";
+"QRShareStep1" = "Go to Preferences";
+"QRShareStep2" = "Select \"Scan QR Code Schedule\"";
+"QRShareStep3" = "Scan the code on this screen";
+"QRShareStep4" = "Get the same schedule available on this phone";
+"Preparing camera…" = "Preparing camera…";
+
 "AdvancedPreferences" = "ADVANCED PREFERENCE.";
 "AdvancedPreferencesWarning" = "DO NOT MODIFY UNLESS YOU KNOW WHAT YOUR DOING!";
 "Pointer URL" = "Pointer URL";

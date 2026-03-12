@@ -259,6 +259,17 @@
 // Import Feature
 "This file is not a valid 70K Bands share file." = "Diese Datei ist keine gültige 70K Bands-Freigabedatei.";
 "Import Shared Preferences" = "Geteilte Einstellungen Importieren";
+
+// Share Schedule via QR Code – instructions
+"QRShareInstructionsIntro" = "Dieser QR-Code ist für die Weitergabe unter folgenden Bedingungen gedacht.";
+"QRShareCondition1" = "Ein Nutzer hat Internetzugang und hat neue Zeitplandaten";
+"QRShareCondition2" = "Ein anderer Nutzer braucht die Zeitplandaten, hat aber kein Internet";
+"QRShareInstructionsHow" = "Dieser QR-Code ermöglicht das Teilen von Zeitplandaten. Um diese Daten zu nutzen, kann der Nutzer ohne Internet:";
+"QRShareStep1" = "Zu Einstellungen gehen";
+"QRShareStep2" = "\"Zeitplan per QR-Code scannen\" auswählen";
+"QRShareStep3" = "Den Code auf diesem Bildschirm scannen";
+"QRShareStep4" = "Den gleichen Zeitplan wie auf diesem Gerät erhalten";
+"Preparing camera…" = "Kamera wird vorbereitet…";
 "New profile received!" = "Neues Profil empfangen!";
 "band priorities" = "Band-Prioritäten";
 "scheduled events" = "geplante Veranstaltungen";

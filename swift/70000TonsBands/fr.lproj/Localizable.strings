@@ -194,6 +194,17 @@
 // Import Feature
 "This file is not a valid 70K Bands share file." = "Ce fichier n'est pas un fichier de partage 70K Bands valide.";
 "Import Shared Preferences" = "Importer les Préférences Partagées";
+
+// Share Schedule via QR Code – instructions
+"QRShareInstructionsIntro" = "Ce code QR est destiné à être partagé dans les conditions suivantes.";
+"QRShareCondition1" = "Un utilisateur a accès à Internet et dispose de nouvelles données d’emploi du temps";
+"QRShareCondition2" = "Un autre utilisateur a besoin des données d’emploi du temps mais n’a pas Internet";
+"QRShareInstructionsHow" = "Ce code QR permet de partager les données d’emploi du temps. Pour les utiliser, l’utilisateur sans Internet peut :";
+"QRShareStep1" = "Aller dans Préférences";
+"QRShareStep2" = "Sélectionner « Scanner l’emploi du temps par code QR »";
+"QRShareStep3" = "Scanner le code sur cet écran";
+"QRShareStep4" = "Obtenir le même emploi du temps que sur ce téléphone";
+"Preparing camera…" = "Préparation de la caméra…";
 "New profile received!" = "Nouveau profil reçu!";
 "band priorities" = "priorités de groupe";
 "scheduled events" = "événements prévus";

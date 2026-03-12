@@ -225,6 +225,17 @@
 // Import Feature
 "This file is not a valid 70K Bands share file." = "Tämä tiedosto ei ole kelvollinen 70K Bands -jakotiedosto.";
 "Import Shared Preferences" = "Tuo Jaetut Asetukset";
+
+// Share Schedule via QR Code – instructions
+"QRShareInstructionsIntro" = "Tätä QR-koodia on tarkoitettu jaettavaksi seuraavissa olosuhteissa.";
+"QRShareCondition1" = "Käyttäjällä on internetyhteys ja uudet aikataulutiedot";
+"QRShareCondition2" = "Toinen käyttäjä tarvitsee aikataulutiedot, mutta ei ole internetyhteyttä";
+"QRShareInstructionsHow" = "Tämä QR-koodi mahdollistaa aikataulutietojen jakamisen. Käyttääkseen tietoja internettiin pääsemätön käyttäjä voi:";
+"QRShareStep1" = "Siirry Asetukset-kohtaan";
+"QRShareStep2" = "Valitse \"Skannaa aikataulu QR-koodilla\"";
+"QRShareStep3" = "Skannaa tämän näytön koodi";
+"QRShareStep4" = "Saada sama aikataulu kuin tässä puhelimessa";
+"Preparing camera…" = "Valmistellaan kameraa…";
 "New profile received!" = "Uusi profiili vastaanotettu!";
 "band priorities" = "bändin prioriteetit";
 "scheduled events" = "aikataulutetut tapahtumat";

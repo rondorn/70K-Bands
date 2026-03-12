@@ -10,6 +10,12 @@ import Foundation
 import SwiftUI
 import UIKit
 
+/// Identifiable sheet item for QR scanner; used with .sheet(item:) so content is built once per presentation.
+enum ScheduleQRScannerSheetItem: Identifiable {
+    case scanner
+    var id: String { "scheduleQRScanner" }
+}
+
 class PreferencesViewModel: ObservableObject {
     
     // Static request IDs to manage data loading
@@ -146,6 +152,10 @@ class PreferencesViewModel: ObservableObject {
     @Published var showDownloadError = false
     @Published var showValidationError = false
     @Published var isLoadingData = false
+    /// Sheet item for QR scanner; use with .sheet(item:) so content is built once per presentation (avoids "already presenting" when parent re-renders).
+    @Published var scheduleQRScannerSheetItem: ScheduleQRScannerSheetItem? = nil
+    /// When non-nil, show an alert with the message (success or failure of QR schedule import).
+    @Published var scheduleQRImportResult: (success: Bool, message: String)? = nil
     
     // Info Display
     @Published var userId: String = ""
@@ -1324,7 +1334,47 @@ class PreferencesViewModel: ObservableObject {
         NotificationCenter.default.post(name: Notification.Name(rawValue: "DismissPreferencesScreenAfterYearChange"), object: nil)
     }
     
-    
+    /// Handles scanned QR payload(s) from Vision (one or two QRs; two = top first, bottom second). Returns true to dismiss the scanner.
+    func handleScannedPayload(_ payloads: [Data]) -> Bool {
+        print("[QRScanner] ViewModel: handleScannedPayload called with \(payloads.count) payload(s)")
+        importScheduleFromQRPayloads(payloads)
+        return true
+    }
+
+    /// Import schedule from QR payloads. 1 or 2 = binary LZMA (BinaryQRScanner); 8/16/24 = plain UTF-8 chunks.
+    func importScheduleFromQRPayloads(_ payloads: [Data]) {
+        print("[QRScanner] ViewModel: importScheduleFromQRPayloads setting scheduleQRScannerSheetItem = nil")
+        scheduleQRScannerSheetItem = nil
+        let year = selectedYearAsInt
+        do {
+            guard !payloads.isEmpty, payloads.allSatisfy({ !$0.isEmpty }) else {
+                scheduleQRImportResult = (false, "Invalid QR payload.")
+                return
+            }
+            let csvString: String
+            if payloads.count == 1 || payloads.count == 2 {
+                csvString = try decompressAndMergeOneOrTwoPayloads(payloads, eventYear: year)
+            } else if payloads.count == 8 || payloads.count == 16 || payloads.count == 24 {
+                csvString = try mergePlainUTF8SchedulePayloads(payloads, eventYear: year)
+            } else {
+                scheduleQRImportResult = (false, "Scan 1 or 2 schedule QR codes (binary), or 8/16/24 (plain).")
+                return
+            }
+            let ok = masterView.schedule.importScheduleFromCSVString(csvString)
+            scheduleQRImportResult = (
+                ok,
+                ok ? NSLocalizedString("Schedule imported successfully.", comment: "QR schedule import success")
+                   : NSLocalizedString("Schedule import failed.", comment: "QR schedule import failure")
+            )
+            if ok {
+                masterView.refreshBandList(reason: "Schedule imported from QR", skipDataLoading: true)
+            }
+        } catch {
+            print("[QRImport] Merge/import failed: \(error)")
+            scheduleQRImportResult = (false, error.localizedDescription)
+        }
+    }
+
     /// Perform CSV download with proper race condition protection
     /// This ensures only one CSV download can happen at a time across the entire app
     private func performProtectedCsvDownload() async {
