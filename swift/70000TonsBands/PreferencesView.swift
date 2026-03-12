@@ -335,16 +335,18 @@ struct PreferencesView: View {
             }
             .padding(.vertical, 4)
             
-            // Scan QR Code Schedule (BinaryQRScanner; 1 or 2 binary QRs) – presented via UIKit to avoid SwiftUI sheet re-presentation when Preferences re-renders
-            Button(action: presentQRScannerIfAvailable) {
-                HStack {
-                    Image(systemName: "qrcode.viewfinder")
-                        .foregroundColor(.blue)
-                    Text(NSLocalizedString("Scan QR Code Schedule", comment: "Preferences button to scan schedule QR"))
-                        .foregroundColor(.primary)
+            // Scan QR Code Schedule (70K only; MDF has no real-world use case)
+            if FestivalConfig.current.scheduleQRShareEnabled {
+                Button(action: presentQRScannerIfAvailable) {
+                    HStack {
+                        Image(systemName: "qrcode.viewfinder")
+                            .foregroundColor(.blue)
+                        Text(NSLocalizedString("Scan QR Code Schedule", comment: "Preferences button to scan schedule QR"))
+                            .foregroundColor(.primary)
+                    }
                 }
+                .padding(.vertical, 4)
             }
-            .padding(.vertical, 4)
         } header: {
             Text(NSLocalizedString("AdvancedPreferences", comment: ""))
         }
@@ -370,7 +372,9 @@ struct PreferencesView: View {
             onScan: { payloads in
                 let done = viewModel.handleScannedPayload(payloads)
                 if done {
-                    scannerVC.dismiss(animated: true)
+                    scannerVC.dismiss(animated: true) {
+                        NotificationCenter.default.post(name: Notification.Name("DismissPreferencesScreen"), object: nil)
+                    }
                 }
                 return done
             },

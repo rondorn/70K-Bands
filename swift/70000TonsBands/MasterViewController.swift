@@ -4944,9 +4944,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             print("⚠️ [SHARE_MENU] isEmpty is TRUE - NOT adding 'Share Event Report' option")
         }
         
-        // Share Schedule via QR Code (when schedule events are present)
+        // Share Schedule via QR Code (70K only; when schedule events present and feature enabled)
         let hasScheduleEvents = DataManager.shared.fetchEvents(forYear: eventYear).count > 0
-        if hasScheduleEvents {
+        if hasScheduleEvents && FestivalConfig.current.scheduleQRShareEnabled {
             let shareScheduleQR = UIAlertAction(title: NSLocalizedString("Share Schedule via QR Code", comment: "Share menu option for QR schedule"), style: .default) { _ in
                 self.showScheduleQRCode()
             }

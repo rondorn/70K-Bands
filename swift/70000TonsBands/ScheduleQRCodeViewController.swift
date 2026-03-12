@@ -11,6 +11,8 @@ import CoreImage.CIFilterBuiltins
 /// Grid width for iPhone SE (320pt): 288pt leaves 16pt margin. 16pt spacing for quiet zone.
 private let scheduleQRGridWidth: CGFloat = 288
 private let scheduleQRSpacing: CGFloat = 16
+/// White border (quiet zone) around single QR image in points. Helps Android (ZXing) recognize the symbol.
+private let scheduleQRImageWhiteBorder: CGFloat = 24
 
 /// Localized instructions for sharing schedule via QR (conditions + steps). Built from Localizable.strings.
 private func qrShareInstructionsText() -> String {
@@ -119,7 +121,7 @@ final class ScheduleQRCodeViewController: UIViewController {
                 stack.addArrangedSubview(iv)
             }
         } else if let first = payloads.first {
-            stack.addArrangedSubview(qrImageView(for: first, size: 280))
+            stack.addArrangedSubview(qrImageView(for: first, size: 320))
         }
 
         let stackContainer = UIView()
@@ -148,15 +150,15 @@ final class ScheduleQRCodeViewController: UIViewController {
         }
 
         var constraints: [NSLayoutConstraint] = [
-            label.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 24),
+            label.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
             label.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
             label.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
-            instructionsLabel.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 12),
+            instructionsLabel.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 8),
             instructionsLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
             instructionsLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
             doneButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -24),
             doneButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            stackContainer.topAnchor.constraint(equalTo: instructionsLabel.bottomAnchor, constant: 16),
+            stackContainer.topAnchor.constraint(equalTo: instructionsLabel.bottomAnchor, constant: 12),
             stackContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             stackContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             stackContainer.bottomAnchor.constraint(equalTo: doneButton.topAnchor, constant: -16),
@@ -225,21 +227,29 @@ final class ScheduleQRCodeViewController: UIViewController {
         dismiss(animated: true)
     }
 
-    /// Generate QR from raw binary payload. Scanner returns payload via Vision payloadData; client uses as-is (or Base64 fallback if payload is UTF-8).
+    /// Generate QR from raw binary payload with white border (quiet zone). Use EC "L" so symbol is less dense and Android (ZXing) can recognize it; larger render size improves scan reliability.
     private func generateQRImage(from data: Data) -> UIImage? {
         guard !data.isEmpty else { return nil }
         let filter = CIFilter.qrCodeGenerator()
         filter.setValue(data, forKey: "inputMessage")
-        filter.setValue("M", forKey: "inputCorrectionLevel")
+        filter.setValue("L", forKey: "inputCorrectionLevel")
         guard let output = filter.outputImage,
               output.extent.width > 0, output.extent.height > 0 else { return nil }
-        let size: CGFloat = 400
-        let scale = size / min(output.extent.width, output.extent.height)
+        let qrSize: CGFloat = 520
+        let scale = qrSize / min(output.extent.width, output.extent.height)
         let scaled = output.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
         let bounds = scaled.extent.integral
         guard bounds.width > 0, bounds.height > 0 else { return nil }
         let context = CIContext(options: [.useSoftwareRenderer: true])
         guard let cgImage = context.createCGImage(scaled, from: bounds) else { return nil }
-        return UIImage(cgImage: cgImage)
+        let border = scheduleQRImageWhiteBorder
+        let totalSize = qrSize + 2 * border
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: totalSize, height: totalSize))
+        let imageWithBorder = renderer.image { ctx in
+            UIColor.white.setFill()
+            ctx.fill(CGRect(origin: .zero, size: CGSize(width: totalSize, height: totalSize)))
+            UIImage(cgImage: cgImage).draw(in: CGRect(x: border, y: border, width: qrSize, height: qrSize))
+        }
+        return imageWithBorder
     }
 }

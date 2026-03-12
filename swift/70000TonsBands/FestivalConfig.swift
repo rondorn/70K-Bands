@@ -176,7 +176,10 @@ struct FestivalConfig {
     /// When true, the "Create AI schedule" feature is available (schedule present + this flag).
     /// 70K Bands: true. MDF Bands: false (for now).
     let aiSchedule: Bool
-    
+
+    /// When true, schedule share/scan via QR code is available. 70K Bands: true. MDF Bands: false.
+    let scheduleQRShareEnabled: Bool
+
     // Comments not available message configuration
     let commentsNotAvailableTranslationKey: String
     
@@ -256,7 +259,8 @@ struct FestivalConfig {
         self.unofficalEventsEnabledDefault = false
         self.commentsNotAvailableTranslationKey = "DefaultDescriptionMDF"
         self.aiSchedule = false
-        
+        self.scheduleQRShareEnabled = false
+
         // Future festivals: add #elseif FESTIVAL_XYZ above, then copy a block and override as needed.
         
         #else
@@ -312,6 +316,7 @@ struct FestivalConfig {
         self.unofficalEventsEnabledDefault = true
         self.commentsNotAvailableTranslationKey = "DefaultDescription70K"
         self.aiSchedule = true
+        self.scheduleQRShareEnabled = true
         #endif
         
         print("🏛️ [MDF_DEBUG] FestivalConfig init() completed")
