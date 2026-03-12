@@ -105,7 +105,8 @@ dependencies {
     implementation 'com.google.mlkit:translate:17.0.3'
     implementation 'com.google.mlkit:language-id:17.0.6'
 
-    // Schedule QR (cross-platform with iOS: binary payload, LZMA, ZXing)
+    // Schedule QR (cross-platform with iOS: binary payload; Nayuki = single Byte segment like iOS)
+    implementation 'io.nayuki:qrcodegen:1.8.0'
     implementation 'com.google.zxing:core:3.5.2'
     implementation 'org.apache.commons:commons-compress:1.26.0'
     implementation 'org.tukaani:xz:1.10'  // required at runtime for Commons Compress LZMA

@@ -2046,8 +2046,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             Log.d(TAG, "✅ [SHARE_MENU] Event Report button ENABLED");
         }
 
-        // Share Schedule via QR Code (same as iOS: only show when schedule events are present)
-        if (hasScheduleData) {
+        // Share Schedule via QR Code (70K only; only show when schedule events present and feature enabled)
+        if (hasScheduleData && FestivalConfig.getInstance().scheduleQRShareEnabled) {
             shareScheduleQR.setVisibility(View.VISIBLE);
             shareScheduleQR.setEnabled(true);
             shareScheduleQR.setAlpha(1f);

@@ -131,7 +131,10 @@ public class FestivalConfig {
 
     /** Whether the "Plan Your Schedule" / AI schedule builder feature is enabled. */
     public final boolean aiSchedule;
-    
+
+    /** Whether schedule share/scan via QR code is enabled. 70K: on; MDF: off. */
+    public final boolean scheduleQRShareEnabled;
+
     // ---- Defaults: shared across festivals; any festival section can override ----
     /** Values used when a festival does not override. Add here only settings that are
      *  the same for 70K and MDF (and likely future festivals). */
@@ -226,7 +229,8 @@ public class FestivalConfig {
             this.commentsNotAvailableStringResourceId = R.string.DefaultDescriptionMDF;
 
             this.aiSchedule = false;
-            
+            this.scheduleQRShareEnabled = false;
+
         } else {
             // Future festivals: add "else if (FESTIVAL_XYZ.equals(festivalType))" above and copy this block.
             // ---- FESTIVAL: 70,000 Tons Of Metal (70K) — default ----
@@ -299,6 +303,7 @@ public class FestivalConfig {
             this.commentsNotAvailableStringResourceId = R.string.DefaultDescription70K;
 
             this.aiSchedule = true;
+            this.scheduleQRShareEnabled = true;
         }
         
         Log.d("FestivalConfig", "Configuration initialized:");

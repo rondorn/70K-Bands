@@ -340,27 +340,28 @@ public final class ScheduleQRCompression {
     // ---------- zlib: compress with 4-byte LE size header (cross-platform with iOS) ----------
 
     /**
-     * Compress UTF-8 bytes with zlib and prepend 4-byte little-endian uncompressed size.
-     * Returns raw bytes (size header + zlib). Uses zlib format (nowrap=false) to match iOS.
+     * Compress UTF-8 bytes and prepend 4-byte little-endian uncompressed size.
+     * Uses raw DEFLATE (nowrap=true) to match iOS: Apple's COMPRESSION_ZLIB outputs raw DEFLATE
+     * (no zlib header/footer), so the QR payload is identical in format and ~6 bytes smaller.
      */
     private static byte[] compressForQR(byte[] source) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ByteBuffer le = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN);
         le.putInt(source.length);
         baos.write(le.array());
-        Deflater def = new Deflater(Deflater.DEFAULT_COMPRESSION, false); // zlib header
+        Deflater def = new Deflater(Deflater.DEFAULT_COMPRESSION, true); // raw DEFLATE (match iOS)
         try (DeflaterOutputStream zos = new DeflaterOutputStream(baos, def)) {
             zos.write(source);
         }
         byte[] out = baos.toByteArray();
-        Log.d(TAG, "[QRCreate] zlib: uncompressedSize=" + source.length + " totalPayload=" + out.length + " (4-byte LE size + zlib)");
+        Log.d(TAG, "[QRCreate] deflate: uncompressedSize=" + source.length + " totalPayload=" + out.length + " (4-byte LE size + raw deflate)");
         return out;
     }
 
     /**
-     * Decompress: first 4 bytes = LE uncompressed size, rest = zlib or raw deflate.
-     * Android produces zlib (with header); iOS Compression framework produces raw DEFLATE (no header).
-     * Try zlib first, then raw deflate on "incorrect header check".
+     * Decompress: first 4 bytes = LE uncompressed size, rest = compressed stream.
+     * Both Android and iOS now produce raw DEFLATE (no zlib header). Try zlib first for backward
+     * compatibility with old QRs, then raw deflate on "incorrect header check".
      */
     private static byte[] decompressFromQR(byte[] compressed) throws IOException {
         if (compressed == null || compressed.length <= 4) {
