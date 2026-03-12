@@ -412,4 +412,30 @@
     <string name="about_team_aaron">Aaron Copeland</string>
     <string name="about_role_curator">70K Bands Yhteenvedon kuraattori (vasemmalla)</string>
     <string name="about_team_photo">Tiimikuva</string>
+
+    <!-- Schedule QR -->
+    <string name="Done">Valmis</string>
+    <string name="schedule_qr_share_title">Jaa aikataulu QR-koodilla</string>
+    <string name="schedule_qr_scan_title">Skannaa aikataulu QR-koodilla</string>
+    <string name="schedule_qr_share_preference">Jaa aikataulu QR-koodilla</string>
+    <string name="schedule_qr_scan_preference">Skannaa aikataulu QR-koodilla</string>
+    <string name="QRShareInstructionsIntro">Tätä QR-koodia on tarkoitettu jaettavaksi seuraavissa olosuhteissa.</string>
+    <string name="QRShareCondition1">Käyttäjällä on internetyhteys ja uudet aikataulutiedot</string>
+    <string name="QRShareCondition2">Toinen käyttäjä tarvitsee aikataulutiedot, mutta ei ole internetyhteyttä</string>
+    <string name="QRShareInstructionsHow">Tämä QR-koodi mahdollistaa aikataulutietojen jakamisen. Käyttääkseen tietoja internettiin pääsemätön käyttäjä voi:</string>
+    <string name="QRShareStep1">Siirry Asetukset-kohtaan</string>
+    <string name="QRShareStep2">Valitse \"Skannaa aikataulu QR-koodilla\"</string>
+    <string name="QRShareStep3">Skannaa tämän näytön koodi</string>
+    <string name="QRShareStep4">Saada sama aikataulu kuin tässä puhelimessa</string>
+    <string name="Preparing_camera">Valmistellaan kameraa…</string>
+    <string name="schedule_qr_scan_hint">Skannaa aikataulun QR-koodi</string>
+    <string name="schedule_qr_scan_first">Skannaa ensimmäinen QR-koodi</string>
+    <string name="schedule_qr_scan_second">Skannaa toinen QR-koodi</string>
+    <string name="schedule_qr_import_success">Aikataulu tuotu onnistuneesti.</string>
+    <string name="schedule_qr_import_failed">Aikataulun tuonti epäonnistui.</string>
+    <string name="schedule_qr_invalid_payload">Virheellinen QR-sisältö.</string>
+    <string name="schedule_qr_empty_schedule">Ei aikataulua jaettavaksi. Lataa aikataulu ensin.</string>
+    <string name="schedule_qr_compression_failed">QR-koodia ei voitu luoda.</string>
+    <string name="schedule_qr_camera_required">Kameran käyttöoikeus tarvitaan QR-koodin skannaamiseen. Ota se käyttöön Asetuksissa.</string>
+    <string name="schedule_qr_camera_unavailable">Kameraan ei voitu yhteyttä.</string>
 </resources>

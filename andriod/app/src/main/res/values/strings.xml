@@ -423,4 +423,31 @@
     <string name="about_team_aaron">Aaron Copeland</string>
     <string name="about_role_curator">70K Bands Summary Curator (left)</string>
     <string name="about_team_photo">Team Photo</string>
+
+    <!-- Schedule QR (match iOS keys where applicable) -->
+    <string name="Done">Done</string>
+    <string name="schedule_qr_share_title">Share Schedule via QR Code</string>
+    <string name="schedule_qr_scan_title">Scan QR Code Schedule</string>
+    <string name="schedule_qr_share_preference">Share Schedule via QR Code</string>
+    <string name="schedule_qr_scan_preference">Scan QR Code Schedule</string>
+    <string name="schedule_qr_share_instructions">Instructions built from steps below.</string>
+    <string name="QRShareInstructionsIntro">This QR code is meant to be shared under the following conditions.</string>
+    <string name="QRShareCondition1">A user has internet access and has new schedule data</string>
+    <string name="QRShareCondition2">Another user needs the schedule data, but has no internet</string>
+    <string name="QRShareInstructionsHow">This QR code allows for the sharing of schedule data. To use this data the user with no internet can:</string>
+    <string name="QRShareStep1">Go to Preferences</string>
+    <string name="QRShareStep2">Select \"Scan QR Code Schedule\"</string>
+    <string name="QRShareStep3">Scan the code on this screen</string>
+    <string name="QRShareStep4">Get the same schedule available on this phone</string>
+    <string name="Preparing_camera">Preparing camera…</string>
+    <string name="schedule_qr_scan_hint">Scan schedule QR code</string>
+    <string name="schedule_qr_scan_first">Scan first QR code</string>
+    <string name="schedule_qr_scan_second">Scan second QR code</string>
+    <string name="schedule_qr_import_success">Schedule imported successfully.</string>
+    <string name="schedule_qr_import_failed">Schedule import failed.</string>
+    <string name="schedule_qr_invalid_payload">Invalid QR payload.</string>
+    <string name="schedule_qr_empty_schedule">No schedule to share. Load schedule first.</string>
+    <string name="schedule_qr_compression_failed">Could not create QR code.</string>
+    <string name="schedule_qr_camera_required">Camera access is required to scan the schedule QR code. Enable it in Settings.</string>
+    <string name="schedule_qr_camera_unavailable">Could not access the camera.</string>
 </resources>

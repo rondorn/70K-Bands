@@ -1360,7 +1360,31 @@ class PreferencesViewModel: ObservableObject {
                 scheduleQRImportResult = (false, "Scan 1 or 2 schedule QR codes (binary), or 8/16/24 (plain).")
                 return
             }
+            // Preserve Unofficial Event and Cruiser Organized from existing schedule (QR payload excludes them to reduce size)
+            let preserved = DataManager.shared.fetchEvents(forYear: year).filter { event in
+                let t = event.eventType ?? ""
+                return t == "Unofficial Event" || t == "Cruiser Organized"
+            }
             let ok = masterView.schedule.importScheduleFromCSVString(csvString)
+            if ok, !preserved.isEmpty {
+                for event in preserved {
+                    _ = DataManager.shared.createOrUpdateEvent(
+                        bandName: event.bandName,
+                        timeIndex: event.timeIndex,
+                        endTimeIndex: event.endTimeIndex,
+                        location: event.location,
+                        date: event.date,
+                        day: event.day,
+                        startTime: event.startTime,
+                        endTime: event.endTime,
+                        eventType: event.eventType,
+                        eventYear: event.eventYear,
+                        notes: event.notes,
+                        descriptionUrl: event.descriptionUrl,
+                        eventImageUrl: event.eventImageUrl
+                    )
+                }
+            }
             scheduleQRImportResult = (
                 ok,
                 ok ? NSLocalizedString("Schedule imported successfully.", comment: "QR schedule import success")
