@@ -48,6 +48,17 @@
         android:text="Attending Some Of This Event" />
 
     <Button
+        android:id="@+id/ShareScheduleQR"
+        android:layout_width="300dp"
+        android:layout_height="50dp"
+        android:layout_gravity="center_vertical|center_horizontal"
+        android:foregroundGravity="center_vertical|center_horizontal"
+        android:gravity="center"
+        android:background="#d3d3d3"
+        android:layout_margin="10dp"
+        android:text="@string/schedule_qr_share_preference" />
+
+    <Button
         android:id="@+id/AttendeNone"
         android:layout_width="300dp"
         android:layout_height="50dp"

@@ -408,4 +408,30 @@
     <string name="about_team_aaron">Aaron Copeland</string>
     <string name="about_role_curator">70K Bands Resume-kurator (venstre)</string>
     <string name="about_team_photo">Holdbillede</string>
+
+    <!-- Schedule QR -->
+    <string name="Done">Færdig</string>
+    <string name="schedule_qr_share_title">Del program via QR-kode</string>
+    <string name="schedule_qr_scan_title">Scan QR-kode program</string>
+    <string name="schedule_qr_share_preference">Del program via QR-kode</string>
+    <string name="schedule_qr_scan_preference">Scan QR-kode program</string>
+    <string name="QRShareInstructionsIntro">Denne QR-kode er beregnet til deling under følgende betingelser.</string>
+    <string name="QRShareCondition1">En bruger har internetadgang og har nye programdata</string>
+    <string name="QRShareCondition2">En anden bruger har brug for programdataene, men har ikke internet</string>
+    <string name="QRShareInstructionsHow">Denne QR-kode gør det muligt at dele programdata. For at bruge dataene kan brugeren uden internet:</string>
+    <string name="QRShareStep1">Gå til Præferencer</string>
+    <string name="QRShareStep2">Vælg \"Scan QR-kode program\"</string>
+    <string name="QRShareStep3">Scan koden på denne skærm</string>
+    <string name="QRShareStep4">Få det samme program som på denne telefon</string>
+    <string name="Preparing_camera">Forbereder kamera…</string>
+    <string name="schedule_qr_scan_hint">Scan program-QR-kode</string>
+    <string name="schedule_qr_scan_first">Scan første QR-kode</string>
+    <string name="schedule_qr_scan_second">Scan anden QR-kode</string>
+    <string name="schedule_qr_import_success">Program importeret.</string>
+    <string name="schedule_qr_import_failed">Kunne ikke importere program.</string>
+    <string name="schedule_qr_invalid_payload">Ugyldigt QR-indhold.</string>
+    <string name="schedule_qr_empty_schedule">Intet program at dele. Indlæs programmet først.</string>
+    <string name="schedule_qr_compression_failed">Kunne ikke oprette QR-kode.</string>
+    <string name="schedule_qr_camera_required">Kameraadgang er påkrævet for at scanne QR-koden. Aktivér i Indstillinger.</string>
+    <string name="schedule_qr_camera_unavailable">Kunne ikke få adgang til kameraet.</string>
 </resources>

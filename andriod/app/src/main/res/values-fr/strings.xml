@@ -412,4 +412,30 @@
     <string name="about_team_aaron">Aaron Copeland</string>
     <string name="about_role_curator">Curateur de résumé 70K Bands (gauche)</string>
     <string name="about_team_photo">Photo d\'Équipe</string>
+
+    <!-- Schedule QR -->
+    <string name="Done">Terminé</string>
+    <string name="schedule_qr_share_title">Partager l\'emploi du temps par code QR</string>
+    <string name="schedule_qr_scan_title">Scanner l\'emploi du temps par code QR</string>
+    <string name="schedule_qr_share_preference">Partager l\'emploi du temps par code QR</string>
+    <string name="schedule_qr_scan_preference">Scanner l\'emploi du temps par code QR</string>
+    <string name="QRShareInstructionsIntro">Ce code QR est destiné à être partagé dans les conditions suivantes.</string>
+    <string name="QRShareCondition1">Un utilisateur a accès à Internet et dispose de nouvelles données d\'emploi du temps</string>
+    <string name="QRShareCondition2">Un autre utilisateur a besoin des données d\'emploi du temps mais n\'a pas Internet</string>
+    <string name="QRShareInstructionsHow">Ce code QR permet de partager les données d\'emploi du temps. Pour les utiliser, l\'utilisateur sans Internet peut :</string>
+    <string name="QRShareStep1">Aller dans Préférences</string>
+    <string name="QRShareStep2">Sélectionner « Scanner l\'emploi du temps par code QR »</string>
+    <string name="QRShareStep3">Scanner le code sur cet écran</string>
+    <string name="QRShareStep4">Obtenir le même emploi du temps que sur ce téléphone</string>
+    <string name="Preparing_camera">Préparation de la caméra…</string>
+    <string name="schedule_qr_scan_hint">Scanner le code QR de l\'emploi du temps</string>
+    <string name="schedule_qr_scan_first">Scanner le premier code QR</string>
+    <string name="schedule_qr_scan_second">Scanner le deuxième code QR</string>
+    <string name="schedule_qr_import_success">Emploi du temps importé avec succès.</string>
+    <string name="schedule_qr_import_failed">Échec de l\'import de l\'emploi du temps.</string>
+    <string name="schedule_qr_invalid_payload">Contenu QR invalide.</string>
+    <string name="schedule_qr_empty_schedule">Aucun emploi du temps à partager. Chargez d\'abord l\'emploi du temps.</string>
+    <string name="schedule_qr_compression_failed">Impossible de créer le code QR.</string>
+    <string name="schedule_qr_camera_required">L\'accès à la caméra est requis pour scanner le code QR. Activez-le dans Réglages.</string>
+    <string name="schedule_qr_camera_unavailable">Impossible d\'accéder à la caméra.</string>
 </resources>

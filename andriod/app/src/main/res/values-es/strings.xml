@@ -399,4 +399,30 @@
     <string name="about_team_aaron">Aaron Copeland</string>
     <string name="about_role_curator">Curador de resúmenes de 70K Bands (izquierda)</string>
     <string name="about_team_photo">Foto del Equipo</string>
+
+    <!-- Schedule QR -->
+    <string name="Done">Listo</string>
+    <string name="schedule_qr_share_title">Compartir horario por código QR</string>
+    <string name="schedule_qr_scan_title">Escanear horario por código QR</string>
+    <string name="schedule_qr_share_preference">Compartir horario por código QR</string>
+    <string name="schedule_qr_scan_preference">Escanear horario por código QR</string>
+    <string name="QRShareInstructionsIntro">Este código QR está pensado para compartirse en las siguientes condiciones.</string>
+    <string name="QRShareCondition1">Un usuario tiene acceso a internet y tiene datos del horario nuevos</string>
+    <string name="QRShareCondition2">Otro usuario necesita los datos del horario, pero no tiene internet</string>
+    <string name="QRShareInstructionsHow">Este código QR permite compartir los datos del horario. Para usar estos datos, el usuario sin internet puede:</string>
+    <string name="QRShareStep1">Ir a Preferencias</string>
+    <string name="QRShareStep2">Seleccionar \"Escanear horario por código QR\"</string>
+    <string name="QRShareStep3">Escanear el código de esta pantalla</string>
+    <string name="QRShareStep4">Obtener el mismo horario disponible en este teléfono</string>
+    <string name="Preparing_camera">Preparando cámara…</string>
+    <string name="schedule_qr_scan_hint">Escanear código QR del horario</string>
+    <string name="schedule_qr_scan_first">Escanear primer código QR</string>
+    <string name="schedule_qr_scan_second">Escanear segundo código QR</string>
+    <string name="schedule_qr_import_success">Horario importado correctamente.</string>
+    <string name="schedule_qr_import_failed">Error al importar el horario.</string>
+    <string name="schedule_qr_invalid_payload">Código QR no válido.</string>
+    <string name="schedule_qr_empty_schedule">No hay horario para compartir. Carga el horario primero.</string>
+    <string name="schedule_qr_compression_failed">No se pudo crear el código QR.</string>
+    <string name="schedule_qr_camera_required">Se necesita el permiso de cámara para escanear el código QR. Actívalo en Ajustes.</string>
+    <string name="schedule_qr_camera_unavailable">No se pudo acceder a la cámara.</string>
 </resources>

@@ -1987,12 +1987,14 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         Button shareImportableData = (Button) customLayout.findViewById(R.id.GoToDetails);
         Button shareBandReport = (Button) customLayout.findViewById(R.id.AttendedAll);
         Button shareEventReport = (Button) customLayout.findViewById(R.id.AttendeSome);
+        Button shareScheduleQR = (Button) customLayout.findViewById(R.id.ShareScheduleQR);
         Button na1 = (Button) customLayout.findViewById(R.id.AttendeNone);
         Button na2 = (Button) customLayout.findViewById(R.id.Disable);
 
         shareImportableData.setText(getString(R.string.ShareImportableData));
         shareBandReport.setText(getString(R.string.ShareBandChoices));
         shareEventReport.setText(getString(R.string.ShareShowChoices));
+        shareScheduleQR.setText(getString(R.string.schedule_qr_share_preference));
         na1.setVisibility(View.INVISIBLE);
         na2.setVisibility(View.INVISIBLE);
         
@@ -2042,6 +2044,15 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 (!hasAttendanceData ? "No attendance data" : ""));
         } else {
             Log.d(TAG, "✅ [SHARE_MENU] Event Report button ENABLED");
+        }
+
+        // Share Schedule via QR Code (same as iOS: only show when schedule events are present)
+        if (hasScheduleData) {
+            shareScheduleQR.setVisibility(View.VISIBLE);
+            shareScheduleQR.setEnabled(true);
+            shareScheduleQR.setAlpha(1f);
+        } else {
+            shareScheduleQR.setVisibility(View.GONE);
         }
 
         // add a button
@@ -2107,6 +2118,14 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 
                 Log.d(TAG, "📊 [EVENT_REPORT] Launching share chooser...");
                 startActivity(Intent.createChooser(sharingIntent, "Share via"));
+            }
+        });
+
+        // Share Schedule via QR Code - Fourth option (matches iOS share menu)
+        shareScheduleQR.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                dialog.dismiss();
+                startActivity(new Intent(showBands.this, ScheduleQRShareActivity.class));
             }
         });
 

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:id="@+id/schedule_qr_share_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/schedule_qr_share_title"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:gravity="center"
+            android:paddingBottom="12dp" />
+
+        <TextView
+            android:id="@+id/schedule_qr_share_instructions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/schedule_qr_share_instructions"
+            android:textSize="14sp"
+            android:textColor="#FFFFFF"
+            android:lineSpacingMultiplier="1.2"
+            android:paddingBottom="16dp" />
+
+        <LinearLayout
+            android:id="@+id/schedule_qr_share_qr_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingTop="8dp"
+            android:paddingBottom="24dp">
+
+            <ImageView
+                android:id="@+id/schedule_qr_image_1"
+                android:layout_width="400dp"
+                android:layout_height="400dp"
+                android:scaleType="fitCenter"
+                android:background="#FFFFFF"
+                android:contentDescription="@string/schedule_qr_share_title" />
+
+            <ImageView
+                android:id="@+id/schedule_qr_image_2"
+                android:layout_width="400dp"
+                android:layout_height="400dp"
+                android:scaleType="fitCenter"
+                android:background="#FFFFFF"
+                android:visibility="gone"
+                android:contentDescription="@string/schedule_qr_share_title" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/schedule_qr_share_done"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/Done"
+            android:textColor="#FFFFFF"
+            android:background="?android:attr/selectableItemBackground"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:padding="16dp" />
+    </LinearLayout>
+</ScrollView>
