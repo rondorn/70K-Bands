@@ -139,25 +139,20 @@ public class preferenceLayout  extends Activity {
                 }
             });
         }
-        // Share Schedule via QR Code
-        View scheduleQrShareRow = findViewById(R.id.schedule_qr_share_row);
-        if (scheduleQrShareRow != null) {
-            scheduleQrShareRow.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    startActivity(new Intent(preferenceLayout.this, ScheduleQRShareActivity.class));
-                }
-            });
-        }
-        // Scan QR Code Schedule
+        // Scan QR Code Schedule (70K only; MDF has no real-world use case)
         View scheduleQrScanRow = findViewById(R.id.schedule_qr_scan_row);
         if (scheduleQrScanRow != null) {
-            scheduleQrScanRow.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    startActivity(new Intent(preferenceLayout.this, ScheduleQRScanActivity.class));
-                }
-            });
+            if (FestivalConfig.getInstance().scheduleQRShareEnabled) {
+                scheduleQrScanRow.setVisibility(View.VISIBLE);
+                scheduleQrScanRow.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        startActivity(new Intent(preferenceLayout.this, ScheduleQRScanActivity.class));
+                    }
+                });
+            } else {
+                scheduleQrScanRow.setVisibility(View.GONE);
+            }
         }
         View planScheduleSection = findViewById(R.id.plan_schedule_section);
         if (FestivalConfig.getInstance().aiSchedule && planScheduleSection != null) {

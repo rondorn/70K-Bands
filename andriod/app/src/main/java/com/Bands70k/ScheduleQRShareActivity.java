@@ -6,25 +6,18 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.EncodeHintType;
-import com.google.zxing.WriterException;
-import com.google.zxing.common.BitMatrix;
-import com.google.zxing.qrcode.QRCodeWriter;
-import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
+import io.nayuki.qrcodegen.QrCode;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Share schedule via one or two QR codes. Uses raw cached schedule CSV (same source as download)
@@ -35,8 +28,12 @@ public class ScheduleQRShareActivity extends AppCompatActivity {
 
     private static final String TAG = "ScheduleQRShare";
 
-    /** Match iOS: 400pt display; use 600px bitmap so QR is less dense and scannable (iOS uses 400pt scaled from CIFilter). */
+    /** Target bitmap size (symbol only); quiet zone added separately. */
     private static final int QR_SIZE = 600;
+    /** ISO 18004: quiet zone = 4 modules on all sides. Required for reliable scanning. */
+    private static final int QUIET_ZONE_MODULES = 4;
+    /** Minimum pixels per module so cameras can resolve the symbol (avoid too-dense QRs). */
+    private static final int MIN_PIXELS_PER_MODULE = 6;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,7 +75,7 @@ public class ScheduleQRShareActivity extends AppCompatActivity {
                 finish();
                 return;
             }
-            Log.d(TAG, "[QRCreate] encoding " + payloads.size() + " payload(s) to QR bitmap size=" + QR_SIZE + "px ISO-8859-1 Byte mode");
+            Log.d(TAG, "[QRCreate] encoding " + payloads.size() + " payload(s) to QR bitmap size=" + QR_SIZE + "px (Nayuki single Byte segment, like iOS)");
             Bitmap bmp1 = encodePayloadToQR(payloads.get(0));
             if (bmp1 != null) {
                 qr1.setImageBitmap(bmp1);
@@ -96,8 +93,6 @@ public class ScheduleQRShareActivity extends AppCompatActivity {
                     Log.e(TAG, "[QRCreate] QR2 encode failed for payload length=" + payloads.get(1).length);
                 }
                 qr2.setVisibility(View.VISIBLE);
-                LinearLayout container = findViewById(R.id.schedule_qr_share_qr_container);
-                if (container != null) container.setOrientation(LinearLayout.VERTICAL);
             } else {
                 qr2.setVisibility(View.GONE);
             }
@@ -122,31 +117,36 @@ public class ScheduleQRShareActivity extends AppCompatActivity {
                 + getString(R.string.QRShareStep4);
     }
 
-    /** Encode binary payload to QR as ISO-8859-1 so scanner returns raw bytes (Byte mode). */
+    /**
+     * Encode binary payload to QR using Nayuki: single Byte-mode segment (like iOS CIFilter),
+     * so iOS Vision may return the full payload instead of truncating at first segment.
+     * Adds 4-module quiet zone (ISO 18004) and enforces minimum pixels per module for scannability.
+     */
     private Bitmap encodePayloadToQR(byte[] payload) {
         if (payload == null || payload.length == 0) return null;
-        Log.d(TAG, "[QRCreate] encodePayloadToQR: payloadLength=" + payload.length + " QR_SIZE=" + QR_SIZE);
-        String asString = new String(payload, StandardCharsets.ISO_8859_1);
-        Map<EncodeHintType, Object> hints = new java.util.EnumMap<>(EncodeHintType.class);
-        hints.put(EncodeHintType.CHARACTER_SET, "ISO-8859-1");
-        hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);
+        Log.d(TAG, "[QRCreate] encodePayloadToQR: payloadLength=" + payload.length);
         try {
-            QRCodeWriter writer = new QRCodeWriter();
-            BitMatrix matrix = writer.encode(asString, BarcodeFormat.QR_CODE, QR_SIZE, QR_SIZE, hints);
-            int w = matrix.getWidth();
-            int h = matrix.getHeight();
-            int[] pixels = new int[w * h];
-            for (int y = 0; y < h; y++) {
-                for (int x = 0; x < w; x++) {
-                    pixels[y * w + x] = matrix.get(x, y) ? 0xFF000000 : 0xFFFFFFFF;
+            QrCode qr = QrCode.encodeBinary(payload, QrCode.Ecc.MEDIUM);
+            int moduleSize = qr.size;
+            int scale = Math.max(MIN_PIXELS_PER_MODULE, Math.max(1, QR_SIZE / moduleSize));
+            int symbolPx = moduleSize * scale;
+            int borderPx = QUIET_ZONE_MODULES * scale;
+            int bitmapSize = symbolPx + 2 * borderPx;
+            int[] pixels = new int[bitmapSize * bitmapSize];
+            Arrays.fill(pixels, 0xFFFFFFFF);
+            for (int y = 0; y < symbolPx; y++) {
+                for (int x = 0; x < symbolPx; x++) {
+                    boolean dark = qr.getModule(x / scale, y / scale);
+                    int px = (borderPx + y) * bitmapSize + (borderPx + x);
+                    pixels[px] = dark ? 0xFF000000 : 0xFFFFFFFF;
                 }
             }
-            Bitmap bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
-            bitmap.setPixels(pixels, 0, w, 0, 0, w, h);
-            Log.d(TAG, "[QRCreate] ZXing encode OK: matrix " + w + "x" + h);
+            Bitmap bitmap = Bitmap.createBitmap(bitmapSize, bitmapSize, Bitmap.Config.ARGB_8888);
+            bitmap.setPixels(pixels, 0, bitmapSize, 0, 0, bitmapSize, bitmapSize);
+            Log.d(TAG, "[QRCreate] Nayuki encode OK: modules=" + moduleSize + " scale=" + scale + " px/module bitmap=" + bitmapSize + "x" + bitmapSize);
             return bitmap;
-        } catch (WriterException e) {
-            Log.e(TAG, "[QRCreate] ZXing WriterException: " + e.getMessage(), e);
+        } catch (Exception e) {
+            Log.e(TAG, "[QRCreate] Nayuki encode failed: " + e.getMessage(), e);
             return null;
         }
     }

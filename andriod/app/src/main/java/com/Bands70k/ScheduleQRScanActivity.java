@@ -51,7 +51,10 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
 
     private static final String TAG = "ScheduleQRScan";
     private static final int REQUEST_CAMERA = 1001;
-    private static final int FRAMES_BETWEEN_SCANS = 5;
+    /** Try decode every N frames; lower = more attempts/sec (helps lock onto iOS QRs). */
+    private static final int FRAMES_BETWEEN_SCANS = 3;
+    /** Log "no QR decoded" every this many analyses (iOS→Android troubleshooting). */
+    private static final int NO_DECODE_LOG_INTERVAL = 50;
 
     private PreviewView previewView;
     private TextView hintText;
@@ -61,6 +64,8 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
     private byte[] chunk2;
     private boolean didSucceed;
     private int frameCount;
+    /** Consecutive analyses that did not yield a decoded QR; reset when a QR is decoded. */
+    private int noDecodeCount;
     private final ExecutorService analysisExecutor = Executors.newSingleThreadExecutor();
 
     @Override
@@ -153,6 +158,7 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
         try {
             byte[] payload = decodeQRFromImage(image);
             if (payload != null && payload.length > 5) {
+                noDecodeCount = 0;
                 logScanPayloadReceived(payload);
                 ScheduleQRCompression.PayloadTypeResult result = ScheduleQRCompression.scheduleQRBinaryPayloadType(payload);
                 if (result != null) {
@@ -161,6 +167,11 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
                 } else {
                     int typeByte = payload[0] & 0xFF;
                     Log.d(TAG, "[QRScan] payload rejected: typeByte=" + typeByte + " (expected 0/1/2); length=" + payload.length + " firstBytesHex=" + bytesToHex(payload, 30));
+                }
+            } else {
+                noDecodeCount++;
+                if (noDecodeCount % NO_DECODE_LOG_INTERVAL == 0) {
+                    Log.d(TAG, "[QRScan] iOS→Android troubleshooting: no QR decoded in last " + NO_DECODE_LOG_INTERVAL + " attempts (total noDecode=" + noDecodeCount + ")");
                 }
             }
         } catch (Exception e) {
@@ -223,7 +234,7 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
                 logPayloadFirstBytes(TAG, "[QRScan] decoded", payload);
                 return payload;
             }
-            Log.d(TAG, "[QRScan] decode returned result but getDecodedBytePayload returned null/empty");
+            logZxingResultWhenPayloadEmpty(result);
         }
         return null;
     }
@@ -316,6 +327,44 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
         return null;
     }
 
+    /**
+     * iOS→Android troubleshooting: ZXing decoded a QR but we got no usable binary payload.
+     * Log what ZXing actually returned (BYTE_SEGMENTS, getRawBytes, getText) to see if the
+     * iOS QR is being decoded as text or with an unexpected structure.
+     */
+    private static void logZxingResultWhenPayloadEmpty(com.google.zxing.Result result) {
+        if (result == null) return;
+        Log.d(TAG, "[QRScan] iOS→Android troubleshooting: ZXing returned result but payload null/empty");
+        java.util.Map<ResultMetadataType, Object> meta = result.getResultMetadata();
+        if (meta != null) {
+            @SuppressWarnings("unchecked")
+            java.util.List<byte[]> segments = (java.util.List<byte[]>) meta.get(ResultMetadataType.BYTE_SEGMENTS);
+            if (segments != null) {
+                int total = 0;
+                for (byte[] seg : segments) total += seg.length;
+                Log.d(TAG, "[QRScan] ZXing BYTE_SEGMENTS: segments=" + segments.size() + " totalBytes=" + total
+                        + (total > 0 ? " first20hex=" + bytesToHex(segments.get(0), 20) : ""));
+            } else {
+                Log.d(TAG, "[QRScan] ZXing BYTE_SEGMENTS: not present");
+            }
+        } else {
+            Log.d(TAG, "[QRScan] ZXing resultMetadata: null");
+        }
+        byte[] raw = result.getRawBytes();
+        if (raw != null) {
+            Log.d(TAG, "[QRScan] ZXing getRawBytes: length=" + raw.length + " first20hex=" + bytesToHex(raw, 20));
+        } else {
+            Log.d(TAG, "[QRScan] ZXing getRawBytes: null");
+        }
+        String text = result.getText();
+        if (text != null) {
+            String prefix = text.length() > 60 ? text.substring(0, 60) + "..." : text;
+            Log.d(TAG, "[QRScan] ZXing getText: length=" + text.length() + " prefix=" + prefix);
+        } else {
+            Log.d(TAG, "[QRScan] ZXing getText: null");
+        }
+    }
+
     private void handlePayload(byte[] payload, ScheduleQRCompression.PayloadTypeResult result) {
         if (result.type == ScheduleQRCompression.SCHEDULE_QR_TYPE_FULL) {
             onPayloadsComplete(Collections.singletonList(payload));
@@ -374,6 +423,9 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
             Intent refresh = new Intent("RefreshLandscapeSchedule");
             androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(this).sendBroadcast(refresh);
             Toast.makeText(this, R.string.schedule_qr_import_success, Toast.LENGTH_LONG).show();
+            Intent main = new Intent(this, showBands.class);
+            main.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(main);
         } catch (IOException e) {
             Log.e(TAG, "[QRScan] Decompress/import failed: " + e.getMessage(), e);
             Toast.makeText(this, R.string.schedule_qr_import_failed, Toast.LENGTH_LONG).show();

@@ -935,45 +935,6 @@
                     android:background="#3A3A3C"
                     android:layout_marginLeft="16dp" />
 
-                <!-- Share Schedule via QR Code -->
-                <LinearLayout
-                    android:id="@+id/schedule_qr_share_row"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:paddingLeft="16dp"
-                    android:paddingRight="16dp"
-                    android:paddingTop="12dp"
-                    android:paddingBottom="12dp"
-                    android:gravity="center_vertical"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:background="?android:attr/selectableItemBackground">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/schedule_qr_share_preference"
-                        android:textSize="17sp"
-                        android:textColor="#FFFFFF" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="&gt;"
-                        android:textSize="17sp"
-                        android:textColor="#8E8E93"
-                        android:paddingLeft="8dp" />
-                </LinearLayout>
-
-                <!-- Divider -->
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="0.5dp"
-                    android:background="#3A3A3C"
-                    android:layout_marginLeft="16dp" />
-
                 <!-- Scan QR Code Schedule -->
                 <LinearLayout
                     android:id="@+id/schedule_qr_scan_row"
