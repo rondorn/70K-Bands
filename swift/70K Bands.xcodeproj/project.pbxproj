@@ -350,6 +350,23 @@
 		11E4EDAB2ACBAE5E0036D002 /* Settings70k.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E4EDA92ACBAE5E0036D002 /* Settings70k.swift */; };
 		11E6F41B2AEC6C47007C1387 /* CustomListEntry.xib in Resources */ = {isa = PBXBuildFile; fileRef = 11E6F4142AEC6C47007C1387 /* CustomListEntry.xib */; };
 		11E6F41C2AEC6C47007C1387 /* CustomListEntry.xib in Resources */ = {isa = PBXBuildFile; fileRef = 11E6F4142AEC6C47007C1387 /* CustomListEntry.xib */; };
+		11E8A0022EE8A10008472A3 /* ScheduleQRCompression.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E8A0012EE8A10008472A3 /* ScheduleQRCompression.swift */; };
+		11E8A0032EE8A10008472A3 /* ScheduleQRCompression.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E8A0012EE8A10008472A3 /* ScheduleQRCompression.swift */; };
+		11E8A0042EE8A10008472A3 /* ScheduleQRCompression.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E8A0012EE8A10008472A3 /* ScheduleQRCompression.swift */; };
+		11E8A0312EE8A10008472A3 /* ScheduleQRDecompressFromImageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E8A0302EE8A10008472A3 /* ScheduleQRDecompressFromImageTests.swift */; };
+		11E8A0332EE8A10008472A3 /* ScheduleQRTestImage.png in Resources */ = {isa = PBXBuildFile; fileRef = 11E8A0322EE8A10008472A3 /* ScheduleQRTestImage.png */; };
+		11E8A0432EE8A10008472A3 /* qr_top.bin in Resources */ = {isa = PBXBuildFile; fileRef = 11E8A0402EE8A10008472A3 /* qr_top.bin */; };
+		11E8A0442EE8A10008472A3 /* qr_middle.bin in Resources */ = {isa = PBXBuildFile; fileRef = 11E8A0412EE8A10008472A3 /* qr_middle.bin */; };
+		11E8A0452EE8A10008472A3 /* qr_bottom.bin in Resources */ = {isa = PBXBuildFile; fileRef = 11E8A0422EE8A10008472A3 /* qr_bottom.bin */; };
+		11E8A0122EE8A10008472A3 /* ScheduleQRCodeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E8A0112EE8A10008472A3 /* ScheduleQRCodeViewController.swift */; };
+		11E8A0132EE8A10008472A3 /* ScheduleQRCodeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E8A0112EE8A10008472A3 /* ScheduleQRCodeViewController.swift */; };
+		11E8A0142EE8A10008472A3 /* ScheduleQRCodeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E8A0112EE8A10008472A3 /* ScheduleQRCodeViewController.swift */; };
+		11E8A0222EE8A10008472A3 /* ScheduleQRScannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E8A0212EE8A10008472A3 /* ScheduleQRScannerViewController.swift */; };
+		11E8A0232EE8A10008472A3 /* ScheduleQRScannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E8A0212EE8A10008472A3 /* ScheduleQRScannerViewController.swift */; };
+		11E8A0242EE8A10008472A3 /* ScheduleQRScannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E8A0212EE8A10008472A3 /* ScheduleQRScannerViewController.swift */; };
+		11E8A0522EE8A10008472A3 /* ScheduleBinaryQRScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E8A0512EE8A10008472A3 /* ScheduleBinaryQRScannerView.swift */; };
+		11E8A0532EE8A10008472A3 /* ScheduleBinaryQRScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E8A0512EE8A10008472A3 /* ScheduleBinaryQRScannerView.swift */; };
+		11E8A0542EE8A10008472A3 /* ScheduleBinaryQRScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E8A0512EE8A10008472A3 /* ScheduleBinaryQRScannerView.swift */; };
 		11EB86AB2F3530C8007D5AD0 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11EB86AA2F3530C8007D5AD0 /* AboutView.swift */; };
 		11EB86AC2F3530C8007D5AD0 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11EB86AA2F3530C8007D5AD0 /* AboutView.swift */; };
 		11EB86AD2F3530C8007D5AD0 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11EB86AA2F3530C8007D5AD0 /* AboutView.swift */; };
@@ -556,6 +573,15 @@
 		11E2F2432E8D78530004D6F4 /* AttendanceManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttendanceManager.swift; sourceTree = "<group>"; };
 		11E4EDA92ACBAE5E0036D002 /* Settings70k.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings70k.swift; sourceTree = "<group>"; };
 		11E6F4142AEC6C47007C1387 /* CustomListEntry.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = CustomListEntry.xib; sourceTree = "<group>"; };
+		11E8A0012EE8A10008472A3 /* ScheduleQRCompression.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleQRCompression.swift; sourceTree = "<group>"; };
+		11E8A0302EE8A10008472A3 /* ScheduleQRDecompressFromImageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleQRDecompressFromImageTests.swift; sourceTree = "<group>"; };
+		11E8A0322EE8A10008472A3 /* ScheduleQRTestImage.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ScheduleQRTestImage.png; sourceTree = "<group>"; };
+		11E8A0402EE8A10008472A3 /* qr_top.bin */ = {isa = PBXFileReference; lastKnownFileType = file; path = qr_top.bin; sourceTree = "<group>"; };
+		11E8A0412EE8A10008472A3 /* qr_middle.bin */ = {isa = PBXFileReference; lastKnownFileType = file; path = qr_middle.bin; sourceTree = "<group>"; };
+		11E8A0422EE8A10008472A3 /* qr_bottom.bin */ = {isa = PBXFileReference; lastKnownFileType = file; path = qr_bottom.bin; sourceTree = "<group>"; };
+		11E8A0112EE8A10008472A3 /* ScheduleQRCodeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleQRCodeViewController.swift; sourceTree = "<group>"; };
+		11E8A0212EE8A10008472A3 /* ScheduleQRScannerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleQRScannerViewController.swift; sourceTree = "<group>"; };
+		11E8A0512EE8A10008472A3 /* ScheduleBinaryQRScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleBinaryQRScannerView.swift; sourceTree = "<group>"; };
 		11EB86AA2F3530C8007D5AD0 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		11EB86AE2F353160007D5AD0 /* about-team.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "about-team.png"; sourceTree = "<group>"; };
 		11ED61801A9103C100D29A5B /* UtilityHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UtilityHandler.swift; sourceTree = "<group>"; };
@@ -769,6 +795,10 @@
 				1530C58547653A0C1AAAA76C /* ProfileTutorialOverlay.swift */,
 				1169374420F555CD00038DA5 /* Reachability.swift */,
 				11C62E7C2E64B9EE000D9AF2 /* ScheduleCSVImporter.swift */,
+				11E8A0012EE8A10008472A3 /* ScheduleQRCompression.swift */,
+				11E8A0112EE8A10008472A3 /* ScheduleQRCodeViewController.swift */,
+				11E8A0212EE8A10008472A3 /* ScheduleQRScannerViewController.swift */,
+				11E8A0512EE8A10008472A3 /* ScheduleBinaryQRScannerView.swift */,
 				11C8BDC51A7D25E700037F2B /* scheduleHandler.swift */,
 				11E4EDA92ACBAE5E0036D002 /* Settings70k.swift */,
 				1129138A2EE74F7F008472A3 /* SharedPreferencesImportHandler.swift */,
@@ -817,10 +847,23 @@
 			children = (
 				1154F6261A575893003F4764 /* _0000TonsBandsTests.swift */,
 				1154F6241A575893003F4764 /* Supporting Files */,
+				11E8A0342EE8A10008472A3 /* Resources */,
 				1155E3A21A8B0A0400D51ED9 /* bandNamesTest.swift */,
+				11E8A0302EE8A10008472A3 /* ScheduleQRDecompressFromImageTests.swift */,
 				1155E3B91A8B20BF00D51ED9 /* scheduleHandlerTest.swift */,
 			);
 			path = 70000TonsBandsTests;
+			sourceTree = "<group>";
+		};
+		11E8A0342EE8A10008472A3 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				11E8A0322EE8A10008472A3 /* ScheduleQRTestImage.png */,
+				11E8A0402EE8A10008472A3 /* qr_top.bin */,
+				11E8A0412EE8A10008472A3 /* qr_middle.bin */,
+				11E8A0422EE8A10008472A3 /* qr_bottom.bin */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 		1154F6241A575893003F4764 /* Supporting Files */ = {
@@ -864,6 +907,9 @@
 			dependencies = (
 			);
 			name = "70K Bands";
+			packageProductDependencies = (
+				11E8A0622EE8A10008472A3 /* BinaryQRScanner */,
+			);
 			productName = 70000TonsBands;
 			productReference = 1154F6061A575893003F4764 /* 70K Bands.app */;
 			productType = "com.apple.product-type.application";
@@ -978,6 +1024,9 @@
 				cs,
 			);
 			mainGroup = 1154F5FD1A575893003F4764;
+			packageReferences = (
+				11E8A0612EE8A10008472A3 /* XCRemoteSwiftPackageReference "BinaryQRScanner" */,
+			);
 			productRefGroup = 1154F6071A575893003F4764 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -988,6 +1037,25 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		11E8A0612EE8A10008472A3 /* XCRemoteSwiftPackageReference "BinaryQRScanner" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Gadave/BinaryQRScanner";
+			requirement = {
+				kind = branch;
+				branch = main;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		11E8A0622EE8A10008472A3 /* BinaryQRScanner */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 11E8A0612EE8A10008472A3 /* XCRemoteSwiftPackageReference "BinaryQRScanner" */;
+			productName = BinaryQRScanner;
+		};
+/* End XCSwiftPackageProductDependency section */
 
 /* Begin PBXResourcesBuildPhase section */
 		114CC0731C79211200CF5BF1 /* Resources */ = {
@@ -1017,6 +1085,10 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				11E8A0332EE8A10008472A3 /* ScheduleQRTestImage.png in Resources */,
+				11E8A0432EE8A10008472A3 /* qr_top.bin in Resources */,
+				11E8A0442EE8A10008472A3 /* qr_middle.bin in Resources */,
+				11E8A0452EE8A10008472A3 /* qr_bottom.bin in Resources */,
 				11E6F41C2AEC6C47007C1387 /* CustomListEntry.xib in Resources */,
 				1172A2391B5AC7DC00C28AB3 /* Localizable.strings in Resources */,
 				117BAADC2DC1315900A2830A /* SNL-More_Cowbell.mov in Resources */,
@@ -1402,6 +1474,10 @@
 				1145F0D62E69ED1A002B7511 /* CellDataCache.swift in Sources */,
 				11C62E7E2E64B9EE000D9AF2 /* DataCollectionCoordinator.swift in Sources */,
 				11C62E7F2E64B9EE000D9AF2 /* ScheduleCSVImporter.swift in Sources */,
+				11E8A0022EE8A10008472A3 /* ScheduleQRCompression.swift in Sources */,
+				11E8A0122EE8A10008472A3 /* ScheduleQRCodeViewController.swift in Sources */,
+				11E8A0222EE8A10008472A3 /* ScheduleQRScannerViewController.swift in Sources */,
+				11E8A0522EE8A10008472A3 /* ScheduleBinaryQRScannerView.swift in Sources */,
 				11C8BDC61A7D25E700037F2B /* scheduleHandler.swift in Sources */,
 				29EC6AF2BCA8A12239CBE201 /* ProfilePickerViewController.swift in Sources */,
 				31BA99733FDAE4BB78AD4B5F /* ProfileTutorialOverlay.swift in Sources */,
@@ -1440,6 +1516,7 @@
 				1155E3B01A8B126500D51ED9 /* AppDelegate.swift in Sources */,
 				11895B9C2EE4D4F1008CC4A9 /* SQLiteDataManager.swift in Sources */,
 				1155E3BA1A8B20BF00D51ED9 /* scheduleHandlerTest.swift in Sources */,
+				11E8A0312EE8A10008472A3 /* ScheduleQRDecompressFromImageTests.swift in Sources */,
 				11111FA820D03DBF008E41F6 /* ShowAttendedReport.swift in Sources */,
 				116C9D8E2F415D370036743C /* FilePaths.swift in Sources */,
 				116C9D8F2F415D370036743C /* CSVFields.swift in Sources */,
@@ -1510,6 +1587,10 @@
 				1145F0D72E69ED1A002B7511 /* CellDataCache.swift in Sources */,
 				11C62E812E64B9EE000D9AF2 /* DataCollectionCoordinator.swift in Sources */,
 				11C62E822E64B9EE000D9AF2 /* ScheduleCSVImporter.swift in Sources */,
+				11E8A0032EE8A10008472A3 /* ScheduleQRCompression.swift in Sources */,
+				11E8A0132EE8A10008472A3 /* ScheduleQRCodeViewController.swift in Sources */,
+				11E8A0232EE8A10008472A3 /* ScheduleQRScannerViewController.swift in Sources */,
+				11E8A0532EE8A10008472A3 /* ScheduleBinaryQRScannerView.swift in Sources */,
 				112913A22EE7D8B2008472A3 /* ProfileTutorialOverlay.swift in Sources */,
 				11F0333E1AB3B26D00AA29B8 /* scheduleHandler.swift in Sources */,
 			);
@@ -1617,6 +1698,10 @@
 				1145F0D52E69ED1A002B7511 /* CellDataCache.swift in Sources */,
 				11C62E842E64B9EE000D9AF2 /* DataCollectionCoordinator.swift in Sources */,
 				11C62E852E64B9EE000D9AF2 /* ScheduleCSVImporter.swift in Sources */,
+				11E8A0042EE8A10008472A3 /* ScheduleQRCompression.swift in Sources */,
+				11E8A0142EE8A10008472A3 /* ScheduleQRCodeViewController.swift in Sources */,
+				11E8A0242EE8A10008472A3 /* ScheduleQRScannerViewController.swift in Sources */,
+				11E8A0542EE8A10008472A3 /* ScheduleBinaryQRScannerView.swift in Sources */,
 				112913A32EE7D8B2008472A3 /* ProfileTutorialOverlay.swift in Sources */,
 				1172EE262E5A1C4D006E3596 /* scheduleHandler.swift in Sources */,
 			);
@@ -1841,7 +1926,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260309001;
+				CURRENT_PROJECT_VERSION = 20260311001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1869,7 +1954,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260309001;
+				MARKETING_VERSION = 20260311001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -1925,7 +2010,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260309001;
+				CURRENT_PROJECT_VERSION = 20260311001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1950,7 +2035,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260309001;
+				MARKETING_VERSION = 20260311001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -2147,7 +2232,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260309001;
+				CURRENT_PROJECT_VERSION = 20260311001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -2168,7 +2253,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260309001;
+				MARKETING_VERSION = 20260311001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -2224,7 +2309,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260309001;
+				CURRENT_PROJECT_VERSION = 20260311001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -2249,7 +2334,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260309001;
+				MARKETING_VERSION = 20260311001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",

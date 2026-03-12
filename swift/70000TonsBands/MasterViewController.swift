@@ -4840,6 +4840,29 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         self.present(alert, animated: true, completion: nil)
     }
     
+    func showScheduleQRCode() {
+        guard let csvString = exportScheduleCSV(eventYear: eventYear), !csvString.isEmpty else {
+            let alert = UIAlertController(title: NSLocalizedString("Share Schedule via QR Code", comment: ""), message: NSLocalizedString("No schedule events to share.", comment: "QR schedule empty"), preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: ""), style: .default))
+            present(alert, animated: true)
+            return
+        }
+        do {
+            let payloads = try compressScheduleForOneOrTwoQRs(csvString: csvString, eventYear: eventYear)
+            let qrVC = payloads.count == 1
+                ? ScheduleQRCodeViewController(payloadData: payloads[0])
+                : ScheduleQRCodeViewController(schedulePayloads: payloads)
+            if DeviceSizeManager.isLargeDisplay() {
+                qrVC.modalPresentationStyle = .formSheet
+            }
+            present(qrVC, animated: true)
+        } catch {
+            let alert = UIAlertController(title: NSLocalizedString("Share Schedule via QR Code", comment: ""), message: error.localizedDescription, preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: ""), style: .default))
+            present(alert, animated: true)
+        }
+    }
+    
     func showSharingView() {
         let sharingView = SharingHostingController()
         if DeviceSizeManager.isLargeDisplay() {
@@ -4916,6 +4939,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             print("✅ [SHARE_MENU] Added option 3: Share Event Report")
         } else {
             print("⚠️ [SHARE_MENU] isEmpty is TRUE - NOT adding 'Share Event Report' option")
+        }
+        
+        // Share Schedule via QR Code (when schedule events are present)
+        let hasScheduleEvents = DataManager.shared.fetchEvents(forYear: eventYear).count > 0
+        if hasScheduleEvents {
+            let shareScheduleQR = UIAlertAction(title: NSLocalizedString("Share Schedule via QR Code", comment: "Share menu option for QR schedule"), style: .default) { _ in
+                self.showScheduleQRCode()
+            }
+            alert.addAction(shareScheduleQR)
+            print("✅ [SHARE_MENU] Added option 4: Share Schedule via QR Code")
         }
         
         let cancelDialog = UIAlertAction.init(title: NSLocalizedString("Cancel", comment: ""), style: .cancel) { _ in

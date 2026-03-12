@@ -987,6 +987,22 @@ open class scheduleHandler {
         }
     }
     
+    /// Import schedule from CSV string (e.g. from QR scan). Uses same path as URL download; reloads cache after.
+    /// Call from main thread when triggered by user (e.g. Preferences "Scan QR Code Schedule").
+    func importScheduleFromCSVString(_ csvString: String) -> Bool {
+        let capturedEventYear = eventYear
+        let ok = csvImporter.importEventsFromCSVString(csvString)
+        if ok {
+            cacheLoaded = false
+            loadCacheFromCoreDataInternal(useYear: capturedEventYear)
+            dictionaryQueue.sync {
+                cacheVariables.scheduleStaticCache = self._schedulingData
+                cacheVariables.scheduleTimeStaticCache = self._schedulingDataByTime
+            }
+        }
+        return ok
+    }
+    
     func getDateIndex(_ dateString: String, timeString: String, band: String) -> TimeInterval {
         let fullTimeString: String = dateString + " " + timeString
         

@@ -16,39 +16,64 @@ class PreferencesHostingController: UIHostingController<AnyView> {
     private var dismissedAfterYearChange: Bool = false
     
     init() {
-        // Determine if we need NavigationView based on device and presentation
+        // Build with nil presenter first (cannot use self before super.init)
         let rootView: AnyView
         if DeviceSizeManager.isLargeDisplay() {
             rootView = AnyView(
                 NavigationView {
-                    PreferencesView().environmentObject(DeviceSizeManager.shared)
+                    PreferencesView()
+                        .environmentObject(DeviceSizeManager.shared)
+                        .environment(\.preferencesPresenter, nil)
                 }
                 .navigationViewStyle(StackNavigationViewStyle())
             )
         } else {
-            rootView = AnyView(PreferencesView().environmentObject(DeviceSizeManager.shared))
+            rootView = AnyView(PreferencesView()
+                .environmentObject(DeviceSizeManager.shared)
+                .environment(\.preferencesPresenter, nil))
         }
-        
         super.init(rootView: rootView)
         setupController()
+        injectPresenter()
     }
-    
+
     @MainActor required dynamic init?(coder aDecoder: NSCoder) {
-        // Same logic for coder init
         let rootView: AnyView
         if DeviceSizeManager.isLargeDisplay() {
             rootView = AnyView(
                 NavigationView {
-                    PreferencesView().environmentObject(DeviceSizeManager.shared)
+                    PreferencesView()
+                        .environmentObject(DeviceSizeManager.shared)
+                        .environment(\.preferencesPresenter, nil)
                 }
                 .navigationViewStyle(StackNavigationViewStyle())
             )
         } else {
-            rootView = AnyView(PreferencesView().environmentObject(DeviceSizeManager.shared))
+            rootView = AnyView(PreferencesView()
+                .environmentObject(DeviceSizeManager.shared)
+                .environment(\.preferencesPresenter, nil))
         }
-
         super.init(coder: aDecoder, rootView: rootView)
         setupController()
+        injectPresenter()
+    }
+
+    /// Set rootView with self as preferencesPresenter (must run after super.init).
+    private func injectPresenter() {
+        if DeviceSizeManager.isLargeDisplay() {
+            rootView = AnyView(
+                NavigationView {
+                    PreferencesView()
+                        .environmentObject(DeviceSizeManager.shared)
+                        .environment(\.preferencesPresenter, self)
+                }
+                .navigationViewStyle(StackNavigationViewStyle())
+            )
+        } else {
+            rootView = AnyView(PreferencesView()
+                .environmentObject(DeviceSizeManager.shared)
+                .environment(\.preferencesPresenter, self))
+        }
     }
     
     private func setupController() {
