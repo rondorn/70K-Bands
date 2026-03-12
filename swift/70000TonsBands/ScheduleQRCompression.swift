@@ -355,7 +355,7 @@ private func decompressFromQR(compressed: Data) throws -> Data {
     print("[QRDecompress] payloadCount=\(compressed.count) headerHex=\(headerHex) n=\(n)")
     guard n > 0, n <= 2_000_000 else {
         print("[QRDecompress] FAIL: invalid size header n=\(n)")
-        throw ScheduleQRCompressionError.decompressionFailed(reason: "Invalid size header (n=\(n))")
+        throw ScheduleQRCompressionError.decompressionFailed(reason: "The scanner only received part of the QR data. Try holding the camera very close and steady and scan again, or generate the schedule QR from this app and scan that instead.")
     }
     let payloadStart = compressed.index(compressed.startIndex, offsetBy: 4)
     let payloadData = compressed.subdata(in: payloadStart..<compressed.endIndex)
@@ -559,7 +559,7 @@ func compressScheduleForOneOrTwoQRs(csvString: String, eventYear: Int) throws ->
     withType.append(scheduleQRTypeFull)
     withType.append(singlePayload)
     if withType.count <= maxBytesPerBinaryQR {
-        print("[QRHost] 1 QR, \(withType.count) bytes")
+        logCreationPayload(label: "1QR", payload: withType)
         return [withType]
     }
     let preprocessed = preprocessCSVForCompression(csvString)
@@ -594,7 +594,8 @@ func compressScheduleForOneOrTwoQRs(csvString: String, eventYear: Int) throws ->
     guard out1.count <= maxBytesPerBinaryQR, out2.count <= maxBytesPerBinaryQR else {
         throw ScheduleQRCompressionError.decompressionFailed(reason: "Schedule too large for two QRs.")
     }
-    print("[QRHost] 2 QRs, \(out1.count) + \(out2.count) bytes")
+    logCreationPayload(label: "2QR_chunk1", payload: out1)
+    logCreationPayload(label: "2QR_chunk2", payload: out2)
     return [out1, out2]
 }
 
@@ -604,6 +605,80 @@ func scheduleQRBinaryPayloadType(_ payload: Data) -> (type: UInt8, body: Data)? 
     let t = payload[0]
     guard t == scheduleQRTypeFull || t == scheduleQRTypeChunk1 || t == scheduleQRTypeChunk2 else { return nil }
     return (t, payload.subdata(in: 1..<payload.count))
+}
+
+/// Extract raw message from Vision-style payloadData (QR segment structure: mode 4 = BYTE, then count, then bytes). Vision can return segment headers; this strips them to get the actual payload. Returns nil if parsing fails or result is empty.
+func extractVisionQRByteModePayload(_ payload: Data) -> Data? {
+    guard payload.count >= 2 else { return nil }
+    // If already our format (type 0/1/2 at start), return as-is
+    if payload[0] == scheduleQRTypeFull || payload[0] == scheduleQRTypeChunk1 || payload[0] == scheduleQRTypeChunk2 {
+        return nil
+    }
+    var bitOffset = 0
+    let bitsAvailable = { payload.count * 8 - bitOffset }
+    func readBits(_ n: Int) -> Int? {
+        guard n > 0, n <= 24, bitsAvailable() >= n else { return nil }
+        var acc = 0
+        for i in 0..<n {
+            let byteIdx = (bitOffset + i) / 8
+            let bitIdx = 7 - (bitOffset + i) % 8
+            let bit = Int((payload[byteIdx] >> bitIdx) & 1)
+            acc = (acc << 1) | bit
+        }
+        bitOffset += n
+        return acc
+    }
+    var out = Data()
+    while bitsAvailable() >= 4 {
+        guard let mode = readBits(4) else { break }
+        if mode == 0 { break }
+        if mode == 7 {
+            guard let b1 = readBits(8) else { return nil }
+            if (b1 & 0x80) == 0 { continue }
+            _ = readBits(8)
+            if (b1 & 0xC0) != 0x80 { _ = readBits(8) }
+            continue
+        }
+        if mode == 4 {
+            let startBits = bitOffset
+            var count = readBits(8) ?? 0
+            if count < 0 || bitsAvailable() < count * 8 {
+                bitOffset = startBits
+                count = readBits(16) ?? 0
+            }
+            guard count > 0, bitsAvailable() >= count * 8 else { return nil }
+            for _ in 0..<count {
+                guard let b = readBits(8) else { return nil }
+                out.append(UInt8(b))
+            }
+            continue
+        }
+        return nil
+    }
+    while out.count > 0 && (out.last == 0xEC || out.last == 0x11) { out.removeLast() }
+    return out.isEmpty ? nil : out
+}
+
+/// Vision/QR pipeline may prepend segment headers or return segment-wrapped data. Try extracting BYTE-mode payload first (Vision can return QR segment structure), then try stripping 0..<maxSkip leading bytes to find our payload (type 0/1/2, then 4-byte LE size + zlib).
+func normalizedScheduleQRPayload(fromScanned payload: Data) -> Data? {
+    if let extracted = extractVisionQRByteModePayload(payload), !extracted.isEmpty, scheduleQRBinaryPayloadType(extracted) != nil {
+        if extracted.count > payload.count {
+            print("[QRScan] extracted Vision BYTE segment → payload length=\(extracted.count)")
+        }
+        return extracted
+    }
+    guard payload.count > 6 else { return nil }
+    let maxSkip = min(32, payload.count - 6)
+    for offset in 0...maxSkip {
+        let slice = payload.subdata(in: offset..<payload.endIndex)
+        guard let (_, body) = scheduleQRBinaryPayloadType(slice) else { continue }
+        guard body.count >= 4 else { continue }
+        if offset > 0 {
+            print("[QRScan] stripped \(offset) leading bytes → payload type=\(slice[0]) length=\(slice.count)")
+        }
+        return slice
+    }
+    return nil
 }
 
 /// Decompress one or two binary QR payloads (type + 4-byte size + zlib) and merge into one CSV.
@@ -884,12 +959,35 @@ func compressScheduleForQRData(csvString: String, eventYear: Int) throws -> Data
         outLines.append(buildCSVLine(newFields))
     }
     let compressedCSV = outLines.joined(separator: "\n")
+    logCreationCompressedCSV(compressedCSV)
     guard let csvData = compressedCSV.data(using: .utf8) else { throw ScheduleQRCompressionError.compressionFailed }
     let beforeBytes = csvData.count
     let payload = try compressForQR(source: csvData)
     let afterBytes = payload.count
     print("[QRCompress] before=\(beforeBytes) bytes → after=\(afterBytes) bytes (ratio \(String(format: "%.2f", Double(beforeBytes) / Double(max(1, afterBytes)))))")
     return payload
+}
+
+/// Cross-platform creation logging: compressed CSV (before zlib) first lines. Grep [QRCreate].
+private func logCreationCompressedCSV(_ compressedCSV: String) {
+    let len = compressedCSV.count
+    print("[QRCreate] compressedCSV length=\(len)")
+    let lines = compressedCSV.components(separatedBy: .newlines)
+    if !lines.isEmpty { print("[QRCreate] compressedCSV line0=\(lines[0])") }
+    if lines.count > 1 { print("[QRCreate] compressedCSV line1=\(lines[1])") }
+}
+
+/// Cross-platform creation logging: final payload (type + 4-byte LE size + zlib). Grep [QRCreate].
+private func logCreationPayload(label: String, payload: Data) {
+    guard !payload.isEmpty else {
+        print("[QRCreate] \(label) payload=null or empty")
+        return
+    }
+    let show = min(30, payload.count)
+    let hex = payload.prefix(show).map { String(format: "%02X", $0) }.joined(separator: " ")
+    let hexSuffix = payload.count > show ? " ..." : ""
+    print("[QRCreate] \(label) payloadLength=\(payload.count) typeByte=\(payload[0])")
+    print("[QRCreate] \(label) firstBytesHex=\(hex)\(hexSuffix)")
 }
 
 /// Decompress QR payload: binary = 4-byte LE size + zlib. Caller must pass raw binary (after Base64 decode if QR contained Base64).
@@ -928,6 +1026,18 @@ private func decompressCSVToFull(compressedCSV: String, eventYear: Int) -> Strin
     }
 
     return outLines.joined(separator: "\n")
+}
+
+// MARK: - Raw schedule CSV cache (same source as Android for identical payload processing)
+
+/// Read raw schedule CSV from cached download file when available. Used for QR so both platforms process the same input.
+func rawScheduleCSVFromCache() -> String? {
+    let path = FilePaths.scheduleFile
+    guard let csv = try? String(contentsOfFile: path, encoding: .utf8),
+          !csv.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+          csv.contains("Band"),
+          csv.contains("Location") else { return nil }
+    return csv
 }
 
 // MARK: - Export schedule to CSV (from SQLite events)

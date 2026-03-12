@@ -17,6 +17,7 @@ import com.google.zxing.EncodeHintType;
 import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
+import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -26,8 +27,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Share schedule via one or two QR codes. Builds full CSV from schedule, compresses for QR,
- * displays QR image(s) and instructions matching iOS.
+ * Share schedule via one or two QR codes. Uses raw cached schedule CSV (same source as download)
+ * when available so both platforms process the same input; otherwise builds CSV from in-memory schedule.
+ * Compresses for QR and displays QR image(s) matching iOS.
  */
 public class ScheduleQRShareActivity extends AppCompatActivity {
 
@@ -56,7 +58,8 @@ public class ScheduleQRShareActivity extends AppCompatActivity {
             eventYear = staticVariables.eventYear;
         }
 
-        String csv = ScheduleCSVExport.buildFullCSVFromSchedule();
+        // Use cached schedule CSV for QR with Unofficial/Cruiser stripped (matches iOS; import adds them back).
+        String csv = ScheduleCSVExport.readScheduleCsvForQRExport();
         if (csv == null || csv.isEmpty()) {
             Toast.makeText(this, R.string.schedule_qr_empty_schedule, Toast.LENGTH_LONG).show();
             finish();
@@ -126,6 +129,7 @@ public class ScheduleQRShareActivity extends AppCompatActivity {
         String asString = new String(payload, StandardCharsets.ISO_8859_1);
         Map<EncodeHintType, Object> hints = new java.util.EnumMap<>(EncodeHintType.class);
         hints.put(EncodeHintType.CHARACTER_SET, "ISO-8859-1");
+        hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);
         try {
             QRCodeWriter writer = new QRCodeWriter();
             BitMatrix matrix = writer.encode(asString, BarcodeFormat.QR_CODE, QR_SIZE, QR_SIZE, hints);

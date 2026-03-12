@@ -67,6 +67,20 @@ struct ScheduleBinaryQRScannerView: View {
         }
     }
 
+    /// Cross-platform scan logging: payload received (length, typeByte, first 30 hex). Grep [QRScan].
+    private func logScanPayloadReceived(_ payload: Data) {
+        guard !payload.isEmpty else { return }
+        let typeByte = payload[0]
+        print("[QRScan] payload received length=\(payload.count) typeByte=\(typeByte)")
+        print("[QRScan] payload firstBytesHex=\(bytesToHex(payload, 30))")
+    }
+
+    private func bytesToHex(_ payload: Data, _ maxLen: Int) -> String {
+        let show = min(maxLen, payload.count)
+        let hex = payload.prefix(show).map { String(format: "%02X", $0) }.joined(separator: " ")
+        return payload.count > show ? hex + " ..." : hex
+    }
+
     private func handleScan(
         result: Result<BinaryQRScanner.ScanResult, BinaryQRScanner.ScanError>,
         dismissScanner: @escaping () -> Void,
@@ -87,21 +101,32 @@ struct ScheduleBinaryQRScannerView: View {
                 continueScanning()
                 return
             }
-            guard let (type, _) = scheduleQRBinaryPayloadType(payload) else {
+            logScanPayloadReceived(payload)
+            let normalized: Data
+            if let _ = scheduleQRBinaryPayloadType(payload) {
+                normalized = payload
+            } else if let stripped = normalizedScheduleQRPayload(fromScanned: payload) {
+                normalized = stripped
+            } else {
+                print("[QRScan] payload rejected: typeByte=\(payload[0]) (expected 0/1/2); length=\(payload.count) firstBytesHex=\(bytesToHex(payload, 30))")
+                continueScanning()
+                return
+            }
+            guard let (type, _) = scheduleQRBinaryPayloadType(normalized) else {
                 continueScanning()
                 return
             }
             if type == scheduleQRTypeFull {
-                let done = onScan([payload])
+                let done = onScan([normalized])
                 if done { dismissScanner() }
                 else { continueScanning() }
                 return
             }
             if type == scheduleQRTypeChunk1 {
-                chunk1 = payload
+                chunk1 = normalized
                 hintText = NSLocalizedString("Scan second QR code", comment: "Binary QR scanner second")
                 if let c2 = chunk2 {
-                    let done = onScan([payload, c2])
+                    let done = onScan([normalized, c2])
                     if done { dismissScanner() }
                     else { continueScanning() }
                 } else {
@@ -110,9 +135,9 @@ struct ScheduleBinaryQRScannerView: View {
                 return
             }
             if type == scheduleQRTypeChunk2 {
-                chunk2 = payload
+                chunk2 = normalized
                 if let c1 = chunk1 {
-                    let done = onScan([c1, payload])
+                    let done = onScan([c1, normalized])
                     if done { dismissScanner() }
                     else { continueScanning() }
                 } else {

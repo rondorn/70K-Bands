@@ -858,6 +858,12 @@ open class scheduleHandler {
         }
         
         if !httpData.isEmpty {
+            // Cache raw schedule CSV so QR share uses same source as Android (identical payload processing)
+            do {
+                try httpData.write(toFile: FilePaths.scheduleFile, atomically: true, encoding: .utf8)
+            } catch {
+                print("⚠️ [QR_CACHE] Could not write raw schedule CSV to cache: \(error)")
+            }
             // CRITICAL DEBUG: Check CSV content for unofficial events BEFORE import
             print("🔧 [UNOFFICIAL_DEBUG] Checking downloaded CSV for unofficial events...")
             let csvLines = httpData.components(separatedBy: .newlines)

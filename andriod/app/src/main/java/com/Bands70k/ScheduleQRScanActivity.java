@@ -153,12 +153,14 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
         try {
             byte[] payload = decodeQRFromImage(image);
             if (payload != null && payload.length > 5) {
+                logScanPayloadReceived(payload);
                 ScheduleQRCompression.PayloadTypeResult result = ScheduleQRCompression.scheduleQRBinaryPayloadType(payload);
                 if (result != null) {
                     Log.d(TAG, "[QRScan] valid payload type=" + (result.type & 0xFF) + " length=" + payload.length + " -> handlePayload");
                     runOnUiThread(() -> handlePayload(payload, result));
                 } else {
-                    Log.d(TAG, "[QRScan] payload length=" + payload.length + " but scheduleQRBinaryPayloadType=null (wrong format, not schedule QR)");
+                    int typeByte = payload[0] & 0xFF;
+                    Log.d(TAG, "[QRScan] payload rejected: typeByte=" + typeByte + " (expected 0/1/2); length=" + payload.length + " firstBytesHex=" + bytesToHex(payload, 30));
                 }
             }
         } catch (Exception e) {
@@ -259,6 +261,23 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
         Log.d(tag, label + " length=" + payload.length + " firstBytesHex=" + hex.toString().trim());
     }
 
+    /** Cross-platform scan logging: when we get a payload from the camera, log type byte and first 30 bytes hex. Grep [QRScan]. */
+    private static void logScanPayloadReceived(byte[] payload) {
+        if (payload == null || payload.length == 0) return;
+        int typeByte = payload[0] & 0xFF;
+        Log.d(TAG, "[QRScan] payload received length=" + payload.length + " typeByte=" + typeByte);
+        Log.d(TAG, "[QRScan] payload firstBytesHex=" + bytesToHex(payload, 30));
+    }
+
+    private static String bytesToHex(byte[] payload, int maxLen) {
+        if (payload == null) return "";
+        int show = Math.min(maxLen, payload.length);
+        StringBuilder hex = new StringBuilder();
+        for (int i = 0; i < show; i++) hex.append(String.format("%02X ", payload[i] & 0xFF));
+        if (payload.length > show) hex.append("...");
+        return hex.toString().trim();
+    }
+
     /**
      * Get decoded binary payload from QR result. ZXing treats QR Byte mode as binary; the decoded bytes
      * are in BYTE_SEGMENTS metadata. Fallback: getRawBytes() then text as ISO-8859-1 (lossy for binary).
@@ -339,10 +358,11 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
         List<String> venueNames = FestivalConfig.getInstance().getAllVenueNames();
 
         try {
+            Log.d(TAG, "[QRScan] calling decompressAndMergeOneOrTwoPayloads payloadCount=" + (payloads != null ? payloads.size() : 0));
             String csv = ScheduleQRCompression.decompressAndMergeOneOrTwoPayloads(
                     payloads, eventYear, bandNames, venueNames);
             Log.d(TAG, "[QRScan] decompress OK csvLength=" + (csv != null ? csv.length() : 0));
-            // Get current schedule from file before overwriting (to preserve Unofficial/Cruiser events)
+            // Pull Unofficial/Cruiser from cached schedule before overwrite; then overwrite with QR data; add them back; write merged.
             scheduleInfo parser = new scheduleInfo();
             Map<String, scheduleTimeTracker> currentMap = parser.ParseScheduleCSV();
             writeScheduleFileSafe(csv);
@@ -355,10 +375,10 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
             androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(this).sendBroadcast(refresh);
             Toast.makeText(this, R.string.schedule_qr_import_success, Toast.LENGTH_LONG).show();
         } catch (IOException e) {
-            Log.e(TAG, "[QRScan] Decompress/import failed", e);
+            Log.e(TAG, "[QRScan] Decompress/import failed: " + e.getMessage(), e);
             Toast.makeText(this, R.string.schedule_qr_import_failed, Toast.LENGTH_LONG).show();
         } catch (Exception e) {
-            Log.e(TAG, "[QRScan] Import failed", e);
+            Log.e(TAG, "[QRScan] Import failed: " + e.getMessage(), e);
             Toast.makeText(this, R.string.schedule_qr_invalid_payload, Toast.LENGTH_LONG).show();
         }
         finish();

@@ -1353,6 +1353,7 @@ class PreferencesViewModel: ObservableObject {
             }
             let csvString: String
             if payloads.count == 1 || payloads.count == 2 {
+                print("[QRScan] calling decompressAndMergeOneOrTwoPayloads payloadCount=\(payloads.count)")
                 csvString = try decompressAndMergeOneOrTwoPayloads(payloads, eventYear: year)
             } else if payloads.count == 8 || payloads.count == 16 || payloads.count == 24 {
                 csvString = try mergePlainUTF8SchedulePayloads(payloads, eventYear: year)
