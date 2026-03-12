@@ -13,7 +13,9 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
+import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
+import java.util.zip.ZipException;
 
 /**
  * Schedule QR payload format (matches iOS exactly):
@@ -356,7 +358,9 @@ public final class ScheduleQRCompression {
     }
 
     /**
-     * Decompress: first 4 bytes = LE uncompressed size, rest = zlib.
+     * Decompress: first 4 bytes = LE uncompressed size, rest = zlib or raw deflate.
+     * Android produces zlib (with header); iOS Compression framework produces raw DEFLATE (no header).
+     * Try zlib first, then raw deflate on "incorrect header check".
      */
     private static byte[] decompressFromQR(byte[] compressed) throws IOException {
         if (compressed == null || compressed.length <= 4) {
@@ -366,21 +370,34 @@ public final class ScheduleQRCompression {
         if (n <= 0 || n > 2_000_000) {
             throw new IOException("Invalid size header (n=" + n + ")");
         }
-        byte[] zlibBytes = new byte[compressed.length - 4];
-        System.arraycopy(compressed, 4, zlibBytes, 0, zlibBytes.length);
-        ByteArrayInputStream bais = new ByteArrayInputStream(zlibBytes);
-        InflaterInputStream infIn = new InflaterInputStream(bais); // default: zlib
-        ByteArrayOutputStream decompressed = new ByteArrayOutputStream(n);
+        byte[] streamBytes = new byte[compressed.length - 4];
+        System.arraycopy(compressed, 4, streamBytes, 0, streamBytes.length);
+        try {
+            return decompressWithInflater(streamBytes, n, false);
+        } catch (ZipException e) {
+            Log.d(TAG, "[QRDecompress] zlib failed (" + e.getMessage() + "), retrying as raw deflate (iOS format)");
+            return decompressWithInflater(streamBytes, n, true);
+        }
+    }
+
+    private static byte[] decompressWithInflater(byte[] streamBytes, int expectedSize, boolean rawDeflate) throws IOException {
+        ByteArrayInputStream bais = new ByteArrayInputStream(streamBytes);
+        Inflater inflater = new Inflater(rawDeflate);
+        InflaterInputStream infIn = new InflaterInputStream(bais, inflater);
+        ByteArrayOutputStream decompressed = new ByteArrayOutputStream(expectedSize);
         byte[] buf = new byte[8192];
         int total = 0;
         int read;
-        while (total < n && (read = infIn.read(buf, 0, Math.min(buf.length, n - total))) != -1) {
-            decompressed.write(buf, 0, read);
-            total += read;
+        try {
+            while (total < expectedSize && (read = infIn.read(buf, 0, Math.min(buf.length, expectedSize - total))) != -1) {
+                decompressed.write(buf, 0, read);
+                total += read;
+            }
+        } finally {
+            infIn.close();
         }
-        infIn.close();
-        if (total != n) {
-            throw new IOException("zlib decode returned " + total + ", expected " + n);
+        if (total != expectedSize) {
+            throw new IOException((rawDeflate ? "raw deflate" : "zlib") + " decode returned " + total + ", expected " + expectedSize);
         }
         return decompressed.toByteArray();
     }
@@ -420,26 +437,41 @@ public final class ScheduleQRCompression {
             outLines.add(buildCSVLine(newFields));
         }
         String compressedCSV = String.join("\n", outLines);
+        logCreationCompressedCSV(compressedCSV);
         byte[] csvData = compressedCSV.getBytes("UTF-8");
         return compressForQR(csvData);
     }
 
-    /** Log payload length and first bytes (type + 4-byte LE size + zlib) for QR creation debugging. */
-    private static void logPayloadSummary(String label, byte[] payload) {
+    /** Cross-platform creation logging: compressed CSV (before zlib) first lines. Grep [QRCreate]. */
+    private static void logCreationCompressedCSV(String compressedCSV) {
+        if (compressedCSV == null) return;
+        int len = compressedCSV.length();
+        Log.d(TAG, "[QRCreate] compressedCSV length=" + len);
+        String[] lines = compressedCSV.split("\\n", -1);
+        if (lines.length > 0) Log.d(TAG, "[QRCreate] compressedCSV line0=" + lines[0]);
+        if (lines.length > 1) Log.d(TAG, "[QRCreate] compressedCSV line1=" + lines[1]);
+    }
+
+    /** Cross-platform creation logging: final payload (type + 4-byte LE size + zlib). Grep [QRCreate]. */
+    private static void logCreationPayload(String label, byte[] payload) {
         if (payload == null || payload.length == 0) {
-            Log.d(TAG, label + ": payload=null or empty");
+            Log.d(TAG, "[QRCreate] " + label + " payload=null or empty");
             return;
         }
+        int show = Math.min(30, payload.length);
         StringBuilder hex = new StringBuilder();
-        int show = Math.min(12, payload.length);
         for (int i = 0; i < show; i++) {
             if (i > 0) hex.append(" ");
             hex.append(String.format("%02X", payload[i] & 0xFF));
         }
         if (payload.length > show) hex.append(" ...");
-        Log.d(TAG, label + ": length=" + payload.length
-                + " typeByte=" + (payload[0] & 0xFF)
-                + " firstBytesHex=" + hex.toString());
+        Log.d(TAG, "[QRCreate] " + label + " payloadLength=" + payload.length + " typeByte=" + (payload[0] & 0xFF));
+        Log.d(TAG, "[QRCreate] " + label + " firstBytesHex=" + hex.toString());
+    }
+
+    /** Log payload length and first bytes (type + 4-byte LE size + zlib) for QR creation debugging. */
+    private static void logPayloadSummary(String label, byte[] payload) {
+        logCreationPayload(label, payload);
     }
 
     // ---------- Public API ----------
@@ -464,7 +496,7 @@ public final class ScheduleQRCompression {
         withType[0] = SCHEDULE_QR_TYPE_FULL;
         System.arraycopy(singlePayload, 0, withType, 1, singlePayload.length);
         if (withType.length <= MAX_BYTES_PER_BINARY_QR) {
-            logPayloadSummary("[QRCreate] 1 QR", withType);
+            logCreationPayload("1QR", withType);
             List<byte[]> list = new ArrayList<>();
             list.add(withType);
             return list;
@@ -503,8 +535,8 @@ public final class ScheduleQRCompression {
         if (out1.length > MAX_BYTES_PER_BINARY_QR || out2.length > MAX_BYTES_PER_BINARY_QR) {
             throw new IOException("Schedule too large for two QRs.");
         }
-        logPayloadSummary("[QRCreate] 2 QRs chunk1", out1);
-        logPayloadSummary("[QRCreate] 2 QRs chunk2", out2);
+        logCreationPayload("2QR_chunk1", out1);
+        logCreationPayload("2QR_chunk2", out2);
         List<byte[]> list = new ArrayList<>();
         list.add(out1);
         list.add(out2);
