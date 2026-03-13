@@ -225,6 +225,12 @@
 "QRShareStep4" = "Get the same schedule available on this phone";
 "Preparing camera…" = "Preparing camera…";
 
+// Band file required for schedule QR (share/scan)
+"QR band file missing no network" = "The band list file is required for schedule QR but is missing. Connect to the internet to download it, then try again.";
+"QR downloading band list" = "Downloading band list…";
+"QR band file download failed" = "Could not download band list. Please try again.";
+"QR import validation failed" = "Data was imported successfully, but failed validation checks. The data appears corrupted.\n\nExample: %@";
+
 "AdvancedPreferences" = "ADVANCED PREFERENCE.";
 "AdvancedPreferencesWarning" = "DO NOT MODIFY UNLESS YOU KNOW WHAT YOUR DOING!";
 "Pointer URL" = "Pointer URL";

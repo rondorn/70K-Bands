@@ -63,6 +63,9 @@ public final class ScheduleQRCompression {
     private static final Pattern TRAILING_COMMAS = Pattern.compile(",+$");
 
     // ---------- Helpers: two-digit / one-digit codes ----------
+    // Band code contract (must match iOS): position P (1-based row in file) = code "%02d", index = P-1 (0-based).
+    // Encode: indexOf(bandName) in canonical list -> twoDigitCode(index). Decode: code -> indexFromTwoDigitCode -> bandNames.get(index).
+    // Same canonical list must be used for both encode and decode so the same code always resolves to the same band.
 
     private static String twoDigitCode(int index) {
         int n = index + 1;
@@ -295,10 +298,13 @@ public final class ScheduleQRCompression {
 
     // ---------- Compress/expand column codes ----------
 
+    /** Encode band: same list as decode. Only replace with 2-digit code when value is in the artist lineup list (position 1 = first row = "01").
+     * Names not in the list (e.g. Skipper's Thank You) are left unchanged and must not be replaced with a number. */
     private static String compressBandColumn(String value, List<String> bandNames) {
         if (value == null || bandNames == null) return value != null ? value : "";
+        String trimmed = value.trim();
         for (int i = 0; i < bandNames.size(); i++) {
-            if (value.equalsIgnoreCase(bandNames.get(i))) return twoDigitCode(i);
+            if (trimmed.equalsIgnoreCase(bandNames.get(i).trim())) return twoDigitCode(i);
         }
         return value;
     }
@@ -319,10 +325,12 @@ public final class ScheduleQRCompression {
         return value;
     }
 
+    /** Decode band: same list as encode. Only values that are exactly 2-digit codes (01-99) are looked up; anything else is returned as-is. */
     private static String decompressBandColumn(String value, List<String> bandNames) {
+        if (value == null || value.length() != 2) return value != null ? value : "";
         Integer idx = indexFromTwoDigitCode(value);
         if (idx != null && bandNames != null && idx < bandNames.size()) return bandNames.get(idx);
-        return value != null ? value : "";
+        return value;
     }
 
     private static String decompressLocationColumn(String value, List<String> venueNames) {

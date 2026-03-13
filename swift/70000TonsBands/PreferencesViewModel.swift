@@ -156,7 +156,9 @@ class PreferencesViewModel: ObservableObject {
     @Published var scheduleQRScannerSheetItem: ScheduleQRScannerSheetItem? = nil
     /// When non-nil, show an alert with the message (success or failure of QR schedule import).
     @Published var scheduleQRImportResult: (success: Bool, message: String)? = nil
-    
+    @Published var scheduleQRBandFileDownloading = false
+    @Published var scheduleQRScanReadyAfterDownload = false
+
     // Info Display
     @Published var userId: String = ""
     @Published var buildInfo: String = ""
@@ -1361,6 +1363,13 @@ class PreferencesViewModel: ObservableObject {
                 scheduleQRImportResult = (false, "Scan 1 or 2 schedule QR codes (binary), or 8/16/24 (plain).")
                 return
             }
+            let currentCsvContent = try? String(contentsOfFile: scheduleFile, encoding: .utf8)
+            let (validationSuccess, validationExample) = validateScheduleQRImport(currentCsvContent: currentCsvContent, newCsvContent: csvString)
+            if !validationSuccess, let example = validationExample {
+                scheduleQRImportResult = (false, String(format: NSLocalizedString("QR import validation failed", comment: "Validation failed message with example"), example))
+                return
+            }
+
             // Preserve Unofficial Event and Cruiser Organized from existing schedule (QR payload excludes them to reduce size)
             let preserved = DataManager.shared.fetchEvents(forYear: year).filter { event in
                 let t = event.eventType ?? ""

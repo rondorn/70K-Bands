@@ -63,6 +63,33 @@ public class ScheduleQRShareActivity extends AppCompatActivity {
             return;
         }
 
+        if (!BandInfo.isBandFileAvailableForQR()) {
+            String bandFileError = BandInfo.getBandFileRequiredForQRMessage(this);
+            if (bandFileError != null) {
+                Toast.makeText(this, bandFileError, Toast.LENGTH_LONG).show();
+                finish();
+                return;
+            }
+            Toast.makeText(this, R.string.schedule_qr_downloading_band_list, Toast.LENGTH_SHORT).show();
+            new Thread(() -> {
+                BandInfo bi = new BandInfo();
+                bi.DownloadBandFile();
+                runOnUiThread(() -> {
+                    if (BandInfo.isBandFileAvailableForQR()) {
+                        buildAndShowQR(csv, eventYear, qr1, qr2, done);
+                    } else {
+                        Toast.makeText(this, R.string.schedule_qr_band_file_download_failed, Toast.LENGTH_LONG).show();
+                        finish();
+                    }
+                });
+            }).start();
+            return;
+        }
+
+        buildAndShowQR(csv, eventYear, qr1, qr2, done);
+    }
+
+    private void buildAndShowQR(String csv, int eventYear, ImageView qr1, ImageView qr2, Button done) {
         List<String> bandNames = BandInfo.getCanonicalBandNamesForQR();
         List<String> venueNames = FestivalConfig.getInstance().getAllVenueNames();
 

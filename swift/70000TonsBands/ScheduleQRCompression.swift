@@ -37,7 +37,9 @@ private let eventTypeOrder: [String] = [
     "Cruiser Organized"
 ]
 
-/// Two-digit code for index (01, 02, ... 99). Index is 0-based.
+/// Band code contract (must match Android): position P (1-based row in file) = code String(format: "%02d", P). Index = P-1 (0-based).
+/// Encode: indexOf(bandName) in canonical list → twoDigitCode(index). Decode: code → indexFromTwoDigitCode → bandNames[index].
+/// Same canonical list must be used for both encode and decode so the same code always resolves to the same band.
 private func twoDigitCode(for index: Int) -> String {
     let n = index + 1
     if n < 1 || n > 99 { return "" }
@@ -64,10 +66,24 @@ private func indexFromOneDigitTypeCode(_ code: String) -> Int? {
 
 // MARK: - Compression (Host)
 
-/// Build band list in canonical order: sorted alphabetically by name.
+/// Build band list in canonical order: first data row = position 1 = code "01". One entry per CSV data row (same count/order as Android).
+/// Only bands in this list get a 2-digit code; names not in the list (e.g. Skipper's Thank You) are left as literal text.
+/// Source of truth: cached artist lineup file (bandFile.txt from artistUrl). Must match Android 70kbandInfo.csv parsing.
+/// Uses first column by index only (same as Android RowData[0]) so encode and decode use the exact same list.
+/// If file is missing or unreadable, returns empty list so we never encode with a different list (bands stay literal).
 private func canonicalBandNames(forYear year: Int) -> [String] {
-    let bands = DataManager.shared.fetchBands(forYear: year)
-    return bands.map { $0.bandName }.sorted(by: { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending })
+    let path = (getDocumentsDirectory() as String) + "/bandFile.txt"
+    guard let content = try? String(contentsOfFile: path, encoding: .utf8), !content.isEmpty,
+          let csvData = try? CSV(csvStringToParse: content), let firstColKey = csvData.headers.first else {
+        return []
+    }
+    var names: [String] = []
+    for lineData in csvData.rows {
+        let raw = lineData[firstColKey] ?? ""
+        let bandName = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        names.append(bandName)
+    }
+    return names
 }
 
 /// Build venue list in canonical order: FestivalConfig order.
@@ -80,9 +96,11 @@ private func canonicalEventTypes() -> [String] {
     return eventTypeOrder
 }
 
-/// Substitute first column (Band): if band is in list, replace with 2-digit code; else leave as-is.
+/// Encode band: same list as decode. Only if value is in canonical list, replace with 2-digit code (position 1 = first row = "01").
+/// Names not in the list (e.g. Skipper's Thank You) are left unchanged and must not be replaced with a number.
 private func compressBandColumn(_ value: String, bandNames: [String]) -> String {
-    guard let idx = bandNames.firstIndex(where: { $0.caseInsensitiveCompare(value) == .orderedSame }) else {
+    let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard let idx = bandNames.firstIndex(where: { $0.caseInsensitiveCompare(trimmed) == .orderedSame }) else {
         return value
     }
     return twoDigitCode(for: idx)
@@ -104,12 +122,12 @@ private func compressTypeColumn(_ value: String, eventTypes: [String]) -> String
     return oneDigitCodeForType(index: idx)
 }
 
-/// Reverse: 2-digit code → band name, or return original if not a valid code.
+/// Decode band: same list as encode. Only values that are exactly 2-digit codes (01–99) are looked up; anything else is returned as-is.
 private func decompressBandColumn(_ value: String, bandNames: [String]) -> String {
-    if let idx = indexFromTwoDigitCode(value), idx < bandNames.count {
-        return bandNames[idx]
+    guard value.count == 2, let idx = indexFromTwoDigitCode(value), idx < bandNames.count else {
+        return value
     }
-    return value
+    return bandNames[idx]
 }
 
 private func decompressLocationColumn(_ value: String, venueNames: [String]) -> String {
@@ -290,6 +308,18 @@ private func escapeCSVField(_ s: String) -> String {
 /// Build a single CSV line from fields.
 private func buildCSVLine(_ fields: [String]) -> String {
     return fields.map { escapeCSVField($0) }.joined(separator: ",")
+}
+
+// MARK: - Band file required for QR (share/scan)
+
+/// Returns true if the cached artist lineup file is present and yields a non-empty band list (required for reliable QR encode/decode).
+func isBandFileAvailableForQR(eventYear: Int) -> Bool {
+    !canonicalBandNames(forYear: eventYear).isEmpty
+}
+
+/// User-facing message when band file is missing and network is not available (only case we show error; otherwise we auto-download).
+func bandFileRequiredMessageNoNetwork() -> String {
+    NSLocalizedString("QR band file missing no network", comment: "Band list file required for schedule QR but missing; no internet")
 }
 
 // MARK: - Public API
@@ -1026,6 +1056,105 @@ private func decompressCSVToFull(compressedCSV: String, eventYear: Int) -> Strin
     }
 
     return outLines.joined(separator: "\n")
+}
+
+// MARK: - QR import validation (after decompression, before overwriting schedule)
+
+private let scheduleQRValidationColBand = 0
+private let scheduleQRValidationColLocation = 1
+private let scheduleQRValidationColDay = 3
+private let scheduleQRValidationColStartTime = 4
+private let scheduleQRValidationMinColumns = 5
+
+/// Returns (success, exampleMessage). Run after decompression, before overwriting schedule cache.
+/// 1) No 2-digit band names (unresolved codes). 2) Day 1 slots must match current schedule.
+func validateScheduleQRImport(currentCsvContent: String?, newCsvContent: String) -> (success: Bool, exampleMessage: String?) {
+    guard !newCsvContent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+        return (false, "Imported schedule is empty.")
+    }
+
+    if let example = findUnresolvedBandExample(in: newCsvContent) {
+        return (false, "Band \(example) could not resolve")
+    }
+
+    if let current = currentCsvContent?.trimmingCharacters(in: .whitespacesAndNewlines), !current.isEmpty,
+       let mismatch = findDay1MismatchExample(currentCsv: current, newCsv: newCsvContent) {
+        return (false, mismatch)
+    }
+
+    return (true, nil)
+}
+
+private func isExactlyTwoDigits(_ s: String) -> Bool {
+    let t = s.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard t.count == 2 else { return false }
+    return t.allSatisfy { $0.isNumber }
+}
+
+private func findUnresolvedBandExample(in csv: String) -> String? {
+    let lines = csv.components(separatedBy: .newlines)
+    var first = true
+    for line in lines {
+        let trimmed = line.trimmingCharacters(in: .whitespaces)
+        if trimmed.isEmpty { continue }
+        let fields = parseCSVLine(trimmed)
+        if first {
+            first = false
+            if fields.first?.trimmingCharacters(in: .whitespaces).lowercased() == "band" { continue }
+        }
+        guard fields.count > scheduleQRValidationColBand else { continue }
+        let band = fields[scheduleQRValidationColBand].trimmingCharacters(in: .whitespaces)
+        if isExactlyTwoDigits(band) { return band }
+    }
+    return nil
+}
+
+private func isDay1(_ dayCol: String?) -> Bool {
+    guard let d = dayCol?.trimmingCharacters(in: .whitespaces), !d.isEmpty else { return false }
+    if d.lowercased() == "day 1" { return true }
+    if d == "1" { return true }
+    if d.lowercased().hasPrefix("1/") { return true }
+    return false
+}
+
+private func slotKey(day: String, location: String, startTime: String) -> String {
+    "1|\(location.trimmingCharacters(in: .whitespaces))|\(startTime.trimmingCharacters(in: .whitespaces))"
+}
+
+private func buildDay1SlotToBand(_ csv: String) -> [String: String] {
+    var map: [String: String] = [:]
+    let lines = csv.components(separatedBy: .newlines)
+    var first = true
+    for line in lines {
+        let trimmed = line.trimmingCharacters(in: .whitespaces)
+        if trimmed.isEmpty { continue }
+        let fields = parseCSVLine(trimmed)
+        if first {
+            first = false
+            if fields.first?.trimmingCharacters(in: .whitespaces).lowercased() == "band" { continue }
+        }
+        guard fields.count >= scheduleQRValidationMinColumns else { continue }
+        let day = fields[scheduleQRValidationColDay]
+        guard isDay1(day) else { continue }
+        let band = fields[scheduleQRValidationColBand].trimmingCharacters(in: .whitespaces)
+        let location = fields[scheduleQRValidationColLocation]
+        let startTime = fields[scheduleQRValidationColStartTime]
+        map[slotKey(day: day, location: location, startTime: startTime)] = band
+    }
+    return map
+}
+
+private func findDay1MismatchExample(currentCsv: String, newCsv: String) -> String? {
+    let currentSlots = buildDay1SlotToBand(currentCsv)
+    let newSlots = buildDay1SlotToBand(newCsv)
+    for (key, newBand) in newSlots {
+        guard let currentBand = currentSlots[key], currentBand != newBand else { continue }
+        let parts = key.split(separator: "|", omittingEmptySubsequences: false)
+        let venue = parts.count > 1 ? String(parts[1]) : "?"
+        let time = parts.count > 2 ? String(parts[2]) : "?"
+        return "Expected Day 1 \(venue) \(time) to be \(currentBand) but was \(newBand)"
+    }
+    return nil
 }
 
 // MARK: - Raw schedule CSV cache (same source as Android for identical payload processing)

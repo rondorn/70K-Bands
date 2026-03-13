@@ -106,6 +106,21 @@ struct PreferencesView: View {
                 }
                 .transition(.opacity)
                 .animation(.easeInOut(duration: 0.3), value: viewModel.isLoadingData)
+            } else if viewModel.scheduleQRBandFileDownloading {
+                ZStack {
+                    Color.black.opacity(0.8)
+                        .edgesIgnoringSafeArea(.all)
+                    VStack(spacing: 20) {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .scaleEffect(2.0)
+                        Text(NSLocalizedString("QR downloading band list", comment: ""))
+                            .foregroundColor(.white)
+                            .font(.system(size: 22, weight: .medium, design: .default))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 40)
+                    }
+                }
             }
         }
     }
@@ -362,10 +377,37 @@ struct PreferencesView: View {
                 Text(result.message)
             }
         }
+        .onChange(of: viewModel.scheduleQRScanReadyAfterDownload) { newValue in
+            if newValue { presentQRScannerIfReadyAfterDownload() }
+        }
     }
 
     /// Presents the schedule QR scanner modally via UIKit so it is only presented once (avoids SwiftUI sheet re-present when Preferences re-renders).
     private func presentQRScannerIfAvailable() {
+        guard let presenter = preferencesPresenter else { return }
+        let year = viewModel.selectedYearAsInt
+        if !isBandFileAvailableForQR(eventYear: year) {
+            guard NetworkTesting.isNetworkAvailable() else {
+                viewModel.scheduleQRImportResult = (false, bandFileRequiredMessageNoNetwork())
+                return
+            }
+            viewModel.scheduleQRBandFileDownloading = true
+            BandCSVImporter().downloadAndImportBands(forceDownload: true) { [viewModel] success in
+                DispatchQueue.main.async {
+                    viewModel.scheduleQRBandFileDownloading = false
+                    if success, isBandFileAvailableForQR(eventYear: year) {
+                        viewModel.scheduleQRScanReadyAfterDownload = true
+                    } else {
+                        viewModel.scheduleQRImportResult = (false, NSLocalizedString("QR band file download failed", comment: ""))
+                    }
+                }
+            }
+            return
+        }
+        presentQRScanner()
+    }
+
+    private func presentQRScanner() {
         guard let presenter = preferencesPresenter else { return }
         var scannerVC: UIHostingController<ScheduleBinaryQRScannerView>!
         scannerVC = UIHostingController(rootView: ScheduleBinaryQRScannerView(
@@ -384,6 +426,16 @@ struct PreferencesView: View {
         ))
         scannerVC.modalPresentationStyle = .pageSheet
         presenter.present(scannerVC, animated: true)
+    }
+}
+
+// MARK: - QR scan after band file download
+extension PreferencesView {
+    /// When band file download completes successfully, present the scanner (called from onChange).
+    func presentQRScannerIfReadyAfterDownload() {
+        guard viewModel.scheduleQRScanReadyAfterDownload else { return }
+        viewModel.scheduleQRScanReadyAfterDownload = false
+        presentQRScanner()
     }
 }
 
