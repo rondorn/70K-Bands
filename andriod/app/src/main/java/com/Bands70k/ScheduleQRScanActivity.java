@@ -6,12 +6,14 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.Size;
+import android.view.ContextThemeWrapper;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
@@ -56,9 +58,12 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
     /** Log "no QR decoded" every this many analyses (iOS→Android troubleshooting). */
     private static final int NO_DECODE_LOG_INTERVAL = 50;
 
+    private static final String TAG_QR_ERROR = "QR Error";
+
     private PreviewView previewView;
     private TextView hintText;
     private ProgressBar progressBar;
+    private ProcessCameraProvider cameraProvider;
 
     private byte[] chunk1;
     private byte[] chunk2;
@@ -123,6 +128,7 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
     }
 
     private void bindCamera(ProcessCameraProvider provider) {
+        cameraProvider = provider;
         Preview preview = new Preview.Builder().build();
         preview.setSurfaceProvider(previewView.getSurfaceProvider());
 
@@ -140,6 +146,18 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
             Log.e(TAG, "bindToLifecycle failed", e);
         }
         runOnUiThread(() -> progressBar.setVisibility(View.GONE));
+    }
+
+    /** Unbind camera so it closes before validation/import. Call from main thread. */
+    private void closeCamera() {
+        if (cameraProvider != null) {
+            try {
+                cameraProvider.unbindAll();
+            } catch (Exception e) {
+                Log.e(TAG, "closeCamera unbindAll", e);
+            }
+            cameraProvider = null;
+        }
     }
 
     private void analyzeFrame(@NonNull ImageProxy image) {
@@ -397,6 +415,8 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
         if (didSucceed) return;
         didSucceed = true;
 
+        closeCamera();
+
         Log.d(TAG, "[QRScan] onPayloadsComplete payloadCount=" + (payloads != null ? payloads.size() : 0));
 
         if (!BandInfo.isBandFileAvailableForQR()) {
@@ -413,17 +433,19 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     if (BandInfo.isBandFileAvailableForQR()) {
                         doImportPayloads(payloads);
+                        // finish() only on success path inside doImportPayloads
                     } else {
                         Toast.makeText(this, R.string.schedule_qr_band_file_download_failed, Toast.LENGTH_LONG).show();
+                        finish();
                     }
-                    finish();
                 });
             }).start();
             return;
         }
 
         doImportPayloads(payloads);
-        finish();
+        // Do not finish() here: only finish on success path inside doImportPayloads (after navigating to showBands).
+        // When validation fails, stay on this screen so the user can read the dialog and press Back.
     }
 
     private void doImportPayloads(List<byte[]> payloads) {
@@ -445,7 +467,17 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
             ScheduleQRImportValidation.Result validation = ScheduleQRImportValidation.validate(currentCsv, csv);
             if (!validation.success) {
                 String message = getString(R.string.schedule_qr_import_validation_failed, validation.failureExampleMessage);
-                Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+                Log.e(TAG_QR_ERROR, message);
+                AlertDialog dialog = new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.DarkDialogTheme))
+                        .setTitle(R.string.schedule_qr_import_validation_failed_title)
+                        .setMessage(message)
+                        .setPositiveButton(android.R.string.ok, (d, which) -> d.dismiss())
+                        .setCancelable(true)
+                        .create();
+                dialog.show();
+                if (dialog.getWindow() != null) {
+                    dialog.getWindow().setBackgroundDrawableResource(android.R.color.black);
+                }
                 return;
             }
 
@@ -463,6 +495,7 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
             Intent main = new Intent(this, showBands.class);
             main.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(main);
+            finish();
         } catch (IOException e) {
             Log.e(TAG, "[QRScan] Decompress/import failed: " + e.getMessage(), e);
             Toast.makeText(this, R.string.schedule_qr_import_failed, Toast.LENGTH_LONG).show();
