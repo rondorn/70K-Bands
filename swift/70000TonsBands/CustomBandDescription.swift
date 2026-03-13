@@ -41,14 +41,21 @@ open class CustomBandDescription {
     }
     
     init(){
+        let t0 = Date()
+        let thread = Thread.isMainThread ? "MAIN" : "BG"
+        LaunchTiming.logStart("CustomBandDescription.init", thread: thread)
         descriptionMapQueue.setSpecific(key: descriptionMapQueueKey, value: true)
         refreshCache()
+        LaunchTiming.logEnd("CustomBandDescription.init", startTime: t0, thread: thread)
     }
     
     func refreshCache(){
-        
+        let t0 = Date()
+        let thread = Thread.isMainThread ? "MAIN" : "BG"
+        LaunchTiming.logStart("CustomBandDescription.refreshCache", thread: thread)
+
         let currentQueueLabel = OperationQueue.current?.underlyingQueue?.label
-        
+
         // Use a safer approach to cache refresh
         bandDescriptionLock.sync() {
             // Check if we already have cached data
@@ -90,8 +97,9 @@ open class CustomBandDescription {
                 }
             }
         }
+        LaunchTiming.logEnd("CustomBandDescription.refreshCache", startTime: t0, thread: thread)
     }
-    
+
     func refreshData(){
         
         print ("commentFile refreshData: Starting data refresh")
@@ -578,8 +586,13 @@ open class CustomBandDescription {
     private static let failureCooldown: TimeInterval = 30 // 30 seconds
     
     func getDescriptionMap(){
+        let t0 = Date()
+        let thread = Thread.isMainThread ? "MAIN" : "BG"
+        LaunchTiming.logStart("CustomBandDescription.getDescriptionMap", thread: thread)
+        defer { LaunchTiming.logEnd("CustomBandDescription.getDescriptionMap", startTime: t0, thread: thread) }
+
         let currentTime = Date().timeIntervalSince1970
-        
+
         // IMPORTANT:
         // - We must ALWAYS parse from disk if the file exists (even if prior attempts failed).
         // - Cooldown/throttling should only prevent repeated *download attempts* when the file is missing,

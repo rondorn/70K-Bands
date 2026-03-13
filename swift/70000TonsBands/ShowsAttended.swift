@@ -39,10 +39,15 @@ open class ShowsAttended {
      Loads cached show attendance data, using a static cache if available.
      */
     func getCachedData(){
+        let t0 = Date()
+        let thread = Thread.isMainThread ? "MAIN" : "BG"
+        LaunchTiming.logStart("ShowsAttended.getCachedData", thread: thread)
+        defer { LaunchTiming.logEnd("ShowsAttended.getCachedData", startTime: t0, thread: thread) }
+
         // SQLite.swift is thread-safe, so we can access cacheVariables directly
         // cacheVariables already has thread-safe accessors
         let cacheIsEmpty = cacheVariables.attendedStaticCache.isEmpty
-        
+
         if cacheIsEmpty {
             print("📊 [DEADLOCK_FIX] Cache empty, loading shows attended")
             loadShowsAttended()
@@ -118,8 +123,13 @@ open class ShowsAttended {
      but it's designed to not block if called from main thread by avoiding nested sync calls.
      */
     func loadShowsAttended(){
+        let t0 = Date()
+        let thread = Thread.isMainThread ? "MAIN" : "BG"
+        LaunchTiming.logStart("ShowsAttended.loadShowsAttended", thread: thread)
+        defer { LaunchTiming.logEnd("ShowsAttended.loadShowsAttended", startTime: t0, thread: thread) }
+
         print("📊 [THREAD_SAFE] loadShowsAttended: Starting on thread: \(Thread.isMainThread ? "MAIN" : "BACKGROUND")")
-        
+
         // SQLite.swift is thread-safe, so we can access data directly without blocking sync calls
         // We don't actually use 'allBands' in this method, so we can skip it entirely
         // let bandNameHandle = bandNamesHandler.shared

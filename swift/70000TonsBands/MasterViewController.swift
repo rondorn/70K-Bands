@@ -306,7 +306,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        let viewDidLoadStart = Date()
+        LaunchTiming.logStart("MasterViewController.viewDidLoad", thread: "MAIN")
+        defer { LaunchTiming.logEnd("MasterViewController.viewDidLoad", startTime: viewDidLoadStart, thread: "MAIN") }
+
         print("🎮 [MDF_DEBUG] MasterViewController.viewDidLoad() called")
         print("🎮 [MDF_DEBUG] Festival: \(FestivalConfig.current.festivalShortName)")
         print("🎮 [MDF_DEBUG] App Name: \(FestivalConfig.current.appName)")
@@ -2270,7 +2273,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             // Continue with UI updates on main thread
             DispatchQueue.main.async {
+                let mainThreadStartDate = Date()
                 let mainThreadStartTime = CFAbsoluteTimeGetCurrent()
+                LaunchTiming.logStart("refreshBandList.completion TOTAL (main thread)", thread: "MAIN")
                 print("🕐 [\(String(format: "%.3f", mainThreadStartTime))] refreshBandList main thread START")
                 
                 self.filterRequestID += 1
@@ -2306,6 +2311,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 bandsResult = self.deduplicatePreservingOrder(bandsResult)
             }
             let sortedBy = getSortedBy()
+            let sortStart = Date()
             if sortedBy == "name" {
                 bandsResult.sort { item1, item2 in
                     let isEvent1 = item1.contains(":") && item1.components(separatedBy: ":").first?.doubleValue != nil
@@ -2343,6 +2349,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     }
                 }
             }
+            LaunchTiming.logEnd("refreshBandList.completion SORT", startTime: sortStart, thread: "MAIN")
             print("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] [YEAR_CHANGE_DEBUG] refreshBandList: Loaded \(bandsResult.count) bands for year \(eventYear)")
             
             // CRITICAL FIX: Detect if we loaded data for year 0 with very few bands
@@ -2359,8 +2366,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
             
             // Safely merge new band data with existing data to prevent race conditions
+            let mergeStart = Date()
             self.safelyMergeBandData(bandsResult, reason: reason)
-            
+            LaunchTiming.logEnd("refreshBandList.completion MERGE (safelyMergeBandData)", startTime: mergeStart, thread: "MAIN")
+
             // Pre-load priority data for all bands to improve table view performance
             let priorityStartTime = CFAbsoluteTimeGetCurrent()
             print("🕐 [\(String(format: "%.3f", priorityStartTime))] Starting priority data preload")
@@ -2372,8 +2381,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             // Remove the duplicate table view reload logic
             let tableReloadStartTime = CFAbsoluteTimeGetCurrent()
             print("🕐 [\(String(format: "%.3f", tableReloadStartTime))] Table view reload handled by safelyMergeBandData")
-            
+
+            let updateCountStart = Date()
             self.updateCountLable()
+            LaunchTiming.logEnd("refreshBandList.completion updateCountLable", startTime: updateCountStart, thread: "MAIN")
             let updateCountEndTime = CFAbsoluteTimeGetCurrent()
             print("🕐 [\(String(format: "%.3f", updateCountEndTime))] updateCountLable END - time: \(String(format: "%.3f", (updateCountEndTime - tableReloadStartTime) * 1000))ms")
             
@@ -2410,6 +2421,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             print("🕐 [\(String(format: "%.3f", filterEndTime))] getFilteredBands END - time: \(String(format: "%.3f", (filterEndTime - filterStartTime) * 1000))ms")
             
             let mainThreadEndTime = CFAbsoluteTimeGetCurrent()
+            LaunchTiming.logEnd("refreshBandList.completion TOTAL (main thread)", startTime: mainThreadStartDate, thread: "MAIN")
             print("🕐 [\(String(format: "%.3f", mainThreadEndTime))] refreshBandList main thread END - total time: \(String(format: "%.3f", (mainThreadEndTime - mainThreadStartTime) * 1000))ms")
                 } // End of DispatchQueue.main.async for UI operations
             } // End of getFilteredBands completion handler
@@ -3620,17 +3632,20 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     /// Counts the number of unofficial/cruiser organized events that are actually in the displayed bands array
     /// This counts what's actually on screen, not what's in the database
     private func countUnofficialEventsInDisplayedBands() -> Int {
-        // Only count if unofficial events are supposed to be shown.
-        // If they are filtered out, they shouldn't be in self.bands anyway.
+        return countUnofficialEventsInDisplayedBands(bands: self.bands)
+    }
+
+    /// Same as above but takes a snapshot of bands (for use on background queue to avoid main-thread blocking).
+    private func countUnofficialEventsInDisplayedBands(bands bandsSnapshot: [String]) -> Int {
         guard getShowUnofficalEvents() else {
             print("📊 [UNOFFICIAL_COUNT_DEBUG] getShowUnofficalEvents() is false, returning 0 unofficial events.")
             return 0
         }
 
         var count = 0
-        print("📊 [UNOFFICIAL_COUNT_DEBUG] Starting countUnofficialEventsInDisplayedBands (self.bands.count: \(self.bands.count))")
-        
-        for item in self.bands {
+        print("📊 [UNOFFICIAL_COUNT_DEBUG] Starting countUnofficialEventsInDisplayedBands (bands.count: \(bandsSnapshot.count))")
+
+        for item in bandsSnapshot {
             // Items in bands array are either "timeIndex:bandName" (events) or "bandName" (bands only)
             // Check if this item has a timeIndex (contains ":")
             if item.contains(":") {
@@ -3665,10 +3680,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
         }
         
-        print("📊 [UNOFFICIAL_COUNT] Counted \(count) unofficial events in displayed bands array (out of \(self.bands.count) total items)")
-        if count == 0 && self.bands.count > 0 {
+        print("📊 [UNOFFICIAL_COUNT] Counted \(count) unofficial events in displayed bands array (out of \(bandsSnapshot.count) total items)")
+        if count == 0 && bandsSnapshot.count > 0 {
             // Debug: Show what items we're checking
-            let eventItems = self.bands.filter { $0.contains(":") }
+            let eventItems = bandsSnapshot.filter { $0.contains(":") }
             print("📊 [UNOFFICIAL_COUNT_DEBUG] Found \(eventItems.count) items with ':' (potential events)")
             for (index, item) in eventItems.prefix(5).enumerated() {
                 print("📊 [UNOFFICIAL_COUNT_DEBUG] [\(index)] Item: '\(item)'")
@@ -3920,15 +3935,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print("📊 [ASYNC_COUNT] Starting async event count for year \(currentYear)")
         print("📊 [ASYNC_COUNT] Using current eventCounterUnoffical=\(eventCounterUnoffical) for immediate display")
         print("📊 [ASYNC_COUNT] Will update when async count completes")
-        
-        // Perform SQLite fetch fully asynchronously - NO BLOCKING
+
+        let bandsSnapshot = Array(self.bands)
+        let filtersOnTextSnapshot = filtersOnText
+
+        // Perform SQLite fetch and heavy title computation on background - only set UI on main
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
-            
+
             print("📊 [ASYNC_COUNT] Fetching events from SQLite on background thread...")
             let allEvents = DataManager.shared.fetchEvents(forYear: currentYear)
             print("📊 [ASYNC_COUNT] Fetched \(allEvents.count) events from SQLite")
-            
+
             var count = 0
             var eventTypes: Set<String> = []
             for event in allEvents {
@@ -3938,111 +3956,61 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     count += 1
                 }
             }
-            
+
             print("📊 [ASYNC_COUNT] Event types found: \(Array(eventTypes).sorted())")
             print("📊 [ASYNC_COUNT] Looking for: '\(unofficalEventType)' or '\(unofficalEventTypeOld)'")
             print("📊 [ASYNC_COUNT] Count completed: \(count) unofficial events out of \(allEvents.count) total")
-            
-            // Update the counter and refresh display on main thread
+
+            // Heavy work on background thread (was blocking main ~230ms)
+            let displayedCount = bandsSnapshot.count
+            let effectiveDisplayedCount = (displayedCount == 0 && listCount > 0) ? listCount : displayedCount
+            let showUnofficalEvents = getShowUnofficalEvents()
+            let displayedUnofficialCount = showUnofficalEvents ? self.countUnofficialEventsInDisplayedBands(bands: bandsSnapshot) : 0
+            let unofficialCountToSubtract = showUnofficalEvents ? displayedUnofficialCount : 0
+            let hasEvents = eventCount > 0
+            let hasBands = effectiveDisplayedCount > unofficialCountToSubtract
+            let allEventsAreUnofficial = self.areAllVisibleEventsUnofficialOrCruiserOrganized()
+            let hasNonUnofficalEvents = eventCount > 0 && !allEventsAreUnofficial
+            let showScheduleView = getShowScheduleView()
+
+            let (labeleCounter, lableCounterString): (Int, String)
+            if !showScheduleView {
+                labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
+                lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnTextSnapshot
+            } else if !hasEvents && hasBands {
+                labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
+                lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnTextSnapshot
+            } else if hasEvents && !hasBands {
+                labeleCounter = max(eventCount, 0)
+                lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + filtersOnTextSnapshot
+            } else if hasEvents && hasBands && allEventsAreUnofficial {
+                labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
+                lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnTextSnapshot
+            } else if hasNonUnofficalEvents {
+                labeleCounter = max(eventCount, 0)
+                lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + filtersOnTextSnapshot
+            } else {
+                labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
+                lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnTextSnapshot
+            }
+
+            let currentYearSetting = getScheduleUrl()
+            let titleText: String
+            if currentYearSetting != "Current" && currentYearSetting != "Default" {
+                titleText = "(" + currentYearSetting + ") " + String(labeleCounter) + lableCounterString
+            } else {
+                titleText = String(labeleCounter) + lableCounterString
+            }
+
             DispatchQueue.main.async {
-                // Only update if the year hasn't changed since we started counting
                 if Int32(eventYear) == currentYear {
                     eventCounterUnoffical = count
                     print("📊 [ASYNC_COUNT] Updated eventCounterUnoffical to \(count)")
-                    
-                    // CRITICAL FIX: Use the same logic as the synchronous part to ensure consistency
-                    // This prevents the async block from overwriting the correct count with an incorrect one
-                    // Use self.bands.count (which includes search filter) instead of listCount
-                    let displayedCount = self.bands.count
-                    print("📊 [ASYNC_COUNT] self.bands.count (actual displayed) = \(displayedCount)")
-                    print("📊 [ASYNC_COUNT] listCount = \(listCount) (from getFilteredBands)")
-                    
-                    // Use the same fallback logic as synchronous part
-                    let effectiveDisplayedCount: Int
-                    if displayedCount == 0 && listCount > 0 {
-                        print("⚠️ [ASYNC_COUNT] WARNING: bands.count is 0 but listCount is \(listCount) - using listCount as fallback")
-                        effectiveDisplayedCount = listCount
-                    } else {
-                        effectiveDisplayedCount = displayedCount
-                    }
-                    
-                    // Just update the title directly without recursing into updateCountLable
                     self.setFilterTitleText()
-                    let lableCounterString: String
-                    let labeleCounter: Int
-                    
-                    // Use the same logic from updateCountLable to determine display
-                    let hasEvents = eventCount > 0
-                    // CRITICAL FIX: Use countUnofficialEventsInDisplayedBands() instead of countDisplayedUnofficialEvents()
-                    // This ensures search filter is correctly accounted for (countDisplayedUnofficialEvents doesn't account for search)
-                    let showUnofficalEvents = getShowUnofficalEvents()
-                    let displayedUnofficialCount: Int
-                    if showUnofficalEvents {
-                        displayedUnofficialCount = self.countUnofficialEventsInDisplayedBands()
-                    } else {
-                        displayedUnofficialCount = 0
-                    }
-                    // Only subtract unofficial events if they're being shown
-                    let unofficialCountToSubtract = showUnofficalEvents ? displayedUnofficialCount : 0
-                    let hasBands = effectiveDisplayedCount > unofficialCountToSubtract
-                    // FIX: Check visible events directly instead of comparing database counts
-                    // This ensures filtering is correctly accounted for
-                    let allEventsAreUnofficial = self.areAllVisibleEventsUnofficialOrCruiserOrganized()
-                    let hasNonUnofficalEvents = eventCount > 0 && !allEventsAreUnofficial
-                    
-                    print("📊 [ASYNC_LOGIC] hasEvents=\(hasEvents), hasBands=\(hasBands), allEventsAreUnofficial=\(allEventsAreUnofficial)")
-                    print("📊 [ASYNC_LOGIC] effectiveDisplayedCount=\(effectiveDisplayedCount), listCount=\(listCount), bandCount=\(bandCount), eventCount=\(eventCount)")
-                    print("📊 [ASYNC_LOGIC] displayedUnofficialCount=\(displayedUnofficialCount), eventCounterUnoffical=\(eventCounterUnoffical)")
-                    print("📊 [ASYNC_LOGIC] showScheduleView=\(getShowScheduleView()), unofficialCountToSubtract=\(unofficialCountToSubtract)")
-                    
-                    // Apply the same rules as updateCountLable (using effectiveDisplayedCount)
-                    if !getShowScheduleView() {
-                        // SPECIAL CASE: "Show Bands Only" mode - always show "Bands"
-                        labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
-                        lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + self.filtersOnText
-                        print("📊 [ASYNC_LOGIC] Decision: Show BANDS (Bands Only mode) - count=\(labeleCounter) (effectiveDisplayedCount=\(effectiveDisplayedCount) - unofficial=\(unofficialCountToSubtract))")
-                    } else if !hasEvents && hasBands {
-                        // RULE 1: ONLY bands, NO events - show "Bands"
-                        labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
-                        lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + self.filtersOnText
-                        print("📊 [ASYNC_LOGIC] Decision: Show BANDS (Rule 1: Only bands) - count=\(labeleCounter) (effectiveDisplayedCount=\(effectiveDisplayedCount) - unofficial=\(unofficialCountToSubtract))")
-                    } else if hasEvents && !hasBands {
-                        // RULE 2/4: ONLY events, NO standalone bands - show "Events" (regardless of event type)
-                        labeleCounter = max(eventCount, 0)
-                        lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + self.filtersOnText
-                        print("📊 [ASYNC_LOGIC] Decision: Show EVENTS (Rule 2/4: Only events, regardless of type) - count=\(labeleCounter) (eventCount=\(eventCount))")
-                    } else if hasEvents && hasBands && allEventsAreUnofficial {
-                        // RULE 3a: MIXTURE with ALL events being unofficial/cruiser organized - show "Bands"
-                        labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
-                        lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + self.filtersOnText
-                        print("📊 [ASYNC_LOGIC] Decision: Show BANDS (Rule 3a: Mixed, all unofficial) - count=\(labeleCounter) (effectiveDisplayedCount=\(effectiveDisplayedCount) - unofficial=\(unofficialCountToSubtract))")
-                    } else if hasNonUnofficalEvents {
-                        // RULE 3b: MIXTURE with ANY official events - show "Events"
-                        labeleCounter = max(eventCount, 0)
-                        lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + self.filtersOnText
-                        print("📊 [ASYNC_LOGIC] Decision: Show EVENTS (Rule 3b: Mixed with official events) - count=\(labeleCounter) (eventCount=\(eventCount))")
-                    } else {
-                        // FALLBACK
-                        labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
-                        lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + self.filtersOnText
-                        print("📊 [ASYNC_LOGIC] Decision: Fallback - Show BANDS - count=\(labeleCounter) (effectiveDisplayedCount=\(effectiveDisplayedCount) - unofficial=\(unofficialCountToSubtract))")
-                    }
-                    
-                    let currentYearSetting = getScheduleUrl()
-                    let titleText: String
-                    if currentYearSetting != "Current" && currentYearSetting != "Default" {
-                        titleText = "(" + currentYearSetting + ") " + String(labeleCounter) + lableCounterString
-                    } else {
-                        titleText = String(labeleCounter) + lableCounterString
-                    }
-                    
-                    // Set the title on the IBOutlet titleButton
                     self.titleButton.title = titleText
-                    print("🎯 [ASYNC_UPDATE] titleButton.title set to: '\(titleText)'")
-                    
+                    self.navigationItem.title = nil
                     let profileColor = self.getColorForCurrentProfile()
                     self.navigationItem.titleView = self.makeTitleViewWithStats(text: titleText, profileColor: profileColor)
-                    
                     print("📊 [ASYNC_COUNT] Display updated: \(titleText)")
                 } else {
                     print("📊 [ASYNC_COUNT] Year changed during count, skipping update")
@@ -4051,203 +4019,59 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
         
         print("📊 [COUNT_DEBUG] updateCountLable: listCount=\(listCount), eventCount=\(eventCount), bandCount=\(bandCount), eventCounterUnoffical=\(eventCounterUnoffical)")
-        
-        // ========================================================================
-        // CRITICAL REGRESSION PREVENTION: EVENT/BAND COUNT DISPLAY LOGIC
-        // ========================================================================
-        // This function has been fixed multiple times for the same regression.
-        // DO NOT MODIFY without understanding these rules completely!
-        //
-        // RULES FOR DISPLAYING "{x} Events" vs "{x} Bands" at top of list:
-        //
-        // 1. If there are ONLY bands (no events): 
-        //    → Display "{x} Bands"
-        //
-        // 2. If there are ONLY events (no standalone bands):
-        //    → Display "{x} Events" (regardless of event type - even if all are Cruise Organized/Unofficial)
-        //
-        // 3. If there are MIXTURES of bands and events:
-        //    a) If ALL events are "Unofficial" or "Cruiser Organized":
-        //       → Display "{x} Bands" (ignore event count)
-        //    b) If ANY events are NOT "Unofficial" or "Cruiser Organized":
-        //       → Display "{x} Events" (ignore band count)
-        //
-        // 4. If ONLY events are being displayed (no standalone bands):
-        //    → Display "{x} Events" (regardless of event type)
-        //    NOTE: This is the same as Rule 2, explicitly stated for clarity
-        //
-        // SPECIAL CASE: "Show Bands Only" mode ALWAYS shows "{x} Bands"
-        // ========================================================================
-        
-        // CRITICAL FIX: Use the actual displayed items count (what's on screen)
-        // This ensures search filters and all other filters are correctly accounted for
-        // IMPORTANT: Use self.bands explicitly to avoid confusion with global bands array
-        let displayedCount = self.bands.count
-        print("📊 [COUNT_DEBUG] self.bands.count (actual displayed) = \(displayedCount)")
-        print("📊 [COUNT_DEBUG] listCount = \(listCount) (from getFilteredBands)")
-        print("📊 [COUNT_DEBUG] filteredBandCount = \(filteredBandCount) (from getFilteredBands)")
-        
-        // CRITICAL: If bands.count is 0 but listCount > 0, there's a sync issue
-        // Use listCount as fallback if bands is empty but we know there should be items
-        let effectiveDisplayedCount: Int
-        if displayedCount == 0 && listCount > 0 {
-            print("⚠️ [COUNT_DEBUG] WARNING: bands.count is 0 but listCount is \(listCount) - using listCount as fallback")
-            effectiveDisplayedCount = listCount
-        } else {
-            effectiveDisplayedCount = displayedCount
-        }
-        
-        if effectiveDisplayedCount > 0 && effectiveDisplayedCount <= 20 {
-            print("📊 [COUNT_DEBUG] Contents of bands array (first \(min(effectiveDisplayedCount, 10)) items):")
-            for (index, item) in self.bands.prefix(10).enumerated() {
-                let name = getNameFromSortable(item, sortedBy: getSortedBy())
-                print("📊 [COUNT_DEBUG] [\(index)] '\(item)' -> name: '\(name)'")
+
+        // Run heavy count/title computation on background so main thread is not blocked (~230ms)
+        let bandsSnapshotSync = Array(self.bands)
+        let capturedListCount = listCount
+        let capturedEventCount = eventCount
+        let capturedFiltersOnText = filtersOnText
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            let displayedCount = bandsSnapshotSync.count
+            let effectiveDisplayedCount = (displayedCount == 0 && capturedListCount > 0) ? capturedListCount : displayedCount
+            let showUnofficalEvents = getShowUnofficalEvents()
+            let displayedUnofficialCount = showUnofficalEvents ? self.countUnofficialEventsInDisplayedBands(bands: bandsSnapshotSync) : 0
+            let unofficialCountToSubtract = showUnofficalEvents ? displayedUnofficialCount : 0
+            let hasEvents = capturedEventCount > 0
+            let hasBands = effectiveDisplayedCount > unofficialCountToSubtract
+            let allEventsAreUnofficial = self.areAllVisibleEventsUnofficialOrCruiserOrganized()
+            let hasNonUnofficalEvents = capturedEventCount > 0 && !allEventsAreUnofficial
+            let showScheduleView = getShowScheduleView()
+            let (labeleCounter, lableCounterString): (Int, String)
+            if !showScheduleView {
+                labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
+                lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + capturedFiltersOnText
+            } else if !hasEvents && hasBands {
+                labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
+                lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + capturedFiltersOnText
+            } else if hasEvents && !hasBands {
+                labeleCounter = max(capturedEventCount, 0)
+                lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + capturedFiltersOnText
+            } else if hasEvents && hasBands && allEventsAreUnofficial {
+                labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
+                lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + capturedFiltersOnText
+            } else if hasNonUnofficalEvents {
+                labeleCounter = max(capturedEventCount, 0)
+                lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + capturedFiltersOnText
+            } else {
+                labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
+                lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + capturedFiltersOnText
+            }
+            let currentYearSetting = getScheduleUrl()
+            let titleText: String
+            if currentYearSetting != "Current" && currentYearSetting != "Default" {
+                titleText = "(" + currentYearSetting + ") " + String(labeleCounter) + lableCounterString
+            } else {
+                titleText = String(labeleCounter) + lableCounterString
+            }
+            DispatchQueue.main.async {
+                self.titleButton.title = titleText
+                self.navigationItem.title = nil
+                let profileColor = self.getColorForCurrentProfile()
+                self.navigationItem.titleView = self.makeTitleViewWithStats(text: titleText, profileColor: profileColor)
+                self.navigationItem.title = nil
             }
         }
-        
-        // Count unofficial events that are actually displayed on screen
-        // CRITICAL: Only count if unofficial events are actually being shown
-        // If they're filtered out, they shouldn't be in bands array, but check anyway
-        let showUnofficalEvents = getShowUnofficalEvents()
-        print("📊 [COUNT_DEBUG] getShowUnofficalEvents() = \(showUnofficalEvents)")
-        
-        let displayedUnofficialCount: Int
-        if showUnofficalEvents {
-            // Only count unofficial events if they're being shown
-            // If filtered out, they shouldn't be in bands, so this should return 0
-            displayedUnofficialCount = countUnofficialEventsInDisplayedBands()
-            print("📊 [COUNT_DEBUG] displayedUnofficialCount (from bands array) = \(displayedUnofficialCount)")
-        } else {
-            // Unofficial events are filtered out - they shouldn't be in bands array
-            // But if they somehow are, don't count them
-            displayedUnofficialCount = 0
-            print("📊 [COUNT_DEBUG] Unofficial events are FILTERED OUT - not counting them (displayedUnofficialCount = 0)")
-        }
-        
-        // CRITICAL FIX: Only subtract unofficial events if they're actually being shown
-        // If they're filtered out, they shouldn't be in bands array, so displayedUnofficialCount should be 0
-        // But to be safe, explicitly check that we're showing them before subtracting
-        let unofficialCountToSubtract = showUnofficalEvents ? displayedUnofficialCount : 0
-        print("📊 [COUNT_DEBUG] unofficialCountToSubtract = \(unofficialCountToSubtract) (showUnofficalEvents=\(showUnofficalEvents), displayedUnofficialCount=\(displayedUnofficialCount))")
-        
-        // Calculate what we have in the current list
-        // Use effectiveDisplayedCount instead of displayedCount to handle sync issues
-        let hasEvents = eventCount > 0
-        let hasBands = effectiveDisplayedCount > unofficialCountToSubtract
-        // FIX: Check visible events directly instead of comparing database counts
-        // This ensures filtering is correctly accounted for
-        let allEventsAreUnofficial = areAllVisibleEventsUnofficialOrCruiserOrganized()
-        let hasNonUnofficalEvents = eventCount > 0 && !allEventsAreUnofficial
-        
-        // DEBUG: Show the logic calculations
-        print("📊 [LOGIC_DEBUG] ==================== SYNCHRONOUS DISPLAY LOGIC ====================")
-        print("📊 [LOGIC_DEBUG] displayedCount (self.bands.count): \(displayedCount)")
-        print("📊 [LOGIC_DEBUG] effectiveDisplayedCount: \(effectiveDisplayedCount) ⭐ USING THIS FOR CALCULATION")
-        print("📊 [LOGIC_DEBUG] listCount: \(listCount) (from getFilteredBands, used as fallback if bands.count=0)")
-        print("📊 [LOGIC_DEBUG] bandCount: \(bandCount) (may be out of sync)")
-        print("📊 [LOGIC_DEBUG] eventCount: \(eventCount)")
-        print("📊 [LOGIC_DEBUG] displayedUnofficialCount: \(displayedUnofficialCount) (from bands array)")
-        print("📊 [LOGIC_DEBUG] eventCounterUnoffical: \(eventCounterUnoffical) (total in database, may differ from displayed)")
-        print("📊 [LOGIC_DEBUG] getShowUnofficalEvents(): \(getShowUnofficalEvents())")
-        print("📊 [LOGIC_DEBUG] unofficialCountToSubtract: \(unofficialCountToSubtract)")
-        print("📊 [LOGIC_DEBUG] hasEvents: \(hasEvents)")
-        print("📊 [LOGIC_DEBUG] hasBands: \(hasBands) (calc: effectiveDisplayedCount > unofficialCountToSubtract)")
-        print("📊 [LOGIC_DEBUG] allEventsAreUnofficial: \(allEventsAreUnofficial)")
-        print("📊 [LOGIC_DEBUG] hasNonUnofficalEvents: \(hasNonUnofficalEvents)")
-        print("📊 [LOGIC_DEBUG] ==================================================================")
-        
-        // CRITICAL FIX: Check view mode first - if "Show Bands Only", always show "Bands"
-        let showScheduleView = getShowScheduleView()
-        print("📊 [LOGIC_DEBUG] showScheduleView: \(showScheduleView)")
-        
-        if !showScheduleView {
-            // ========================================================================
-            // SPECIAL CASE: "Show Bands Only" mode
-            // ALWAYS show band count, NEVER show "Events" regardless of content
-            // Use effectiveDisplayedCount which handles sync issues
-            // ========================================================================
-            labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
-            lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnText
-            print("🎵 [VIEW_MODE_FIX] Show Bands Only mode - showing \(labeleCounter) bands (effectiveDisplayedCount=\(effectiveDisplayedCount) - unofficial=\(unofficialCountToSubtract))")
-            
-        } else if !hasEvents && hasBands {
-            // ========================================================================
-            // RULE 1: ONLY bands, NO events
-            // Display "{x} Bands"
-            // Use effectiveDisplayedCount which handles sync issues
-            // ========================================================================
-            labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
-            lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnText
-            print("📊 [COUNT_LOGIC] Rule 1: Only bands (\(labeleCounter)) - showing Bands (effectiveDisplayedCount=\(effectiveDisplayedCount) - unofficial=\(unofficialCountToSubtract))")
-            
-        } else if hasEvents && !hasBands {
-            // ========================================================================
-            // RULE 2/4: ONLY events, NO standalone bands
-            // Display "{x} Events" (regardless of event type - even if all are Cruise Organized/Unofficial)
-            // Use eventCount to show only the event count, not bands
-            // ========================================================================
-            labeleCounter = max(eventCount, 0)
-            lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + filtersOnText
-            print("📊 [COUNT_LOGIC] Rule 2/4: Only events (\(labeleCounter)) - showing Events (eventCount=\(eventCount))")
-            
-        } else if (hasEvents && hasBands && allEventsAreUnofficial) {
-            // ========================================================================
-            // RULE 3a: MIXTURE with ALL events being "Unofficial" or "Cruiser Organized"
-            // Display "{x} Bands" (ignore unofficial event count)
-            // Use effectiveDisplayedCount which handles sync issues
-            // ========================================================================
-            labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
-            lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnText
-            print("📊 [COUNT_LOGIC] Rule 3a: Mixed with ALL unofficial events - showing \(labeleCounter) Bands (effectiveDisplayedCount=\(effectiveDisplayedCount) - unofficialCount=\(unofficialCountToSubtract))")
-            
-        } else if (hasNonUnofficalEvents) {
-            // ========================================================================
-            // RULE 3b: MIXTURE with ANY events being official (NOT "Unofficial" or "Cruiser Organized")
-            // Display "{x} Events" (ignore band count)
-            // Use eventCount to show only the event count, not bands
-            // ========================================================================
-            labeleCounter = max(eventCount, 0)
-            lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + filtersOnText
-            print("📊 [COUNT_LOGIC] Rule 3b: Mixed with official events - showing \(labeleCounter) Events (eventCount=\(eventCount))")
-            
-        } else {
-            // ========================================================================
-            // FALLBACK: Should not reach here, but default to bands for safety
-            // Use effectiveDisplayedCount which handles sync issues
-            // ========================================================================
-            labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
-            lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnText
-            print("⚠️ [COUNT_LOGIC] Fallback case - showing \(labeleCounter) Bands (effectiveDisplayedCount=\(effectiveDisplayedCount) - unofficialCount=\(unofficialCountToSubtract))")
-        }
-
-        var currentYearSetting = getScheduleUrl()
-        let titleText: String
-        if (currentYearSetting != "Current" && currentYearSetting != "Default"){
-            titleText = "(" + currentYearSetting + ") " + String(labeleCounter) + lableCounterString
-            
-        } else {
-            titleText = String(labeleCounter) + lableCounterString
-        }
-        
-        print("🎯 [FINAL_DISPLAY] Setting title to: '\(titleText)'")
-        print("🎯 [FINAL_DISPLAY] labeleCounter=\(labeleCounter), lableCounterString='\(lableCounterString)'")
-        
-        // Set the title on the IBOutlet titleButton
-        titleButton.title = titleText
-        print("🎯 [FINAL_DISPLAY] titleButton.title is now: '\(titleButton.title ?? "nil")'")
-        
-        // CRITICAL: Clear navigationItem.title to ensure titleView is displayed
-        if navigationItem.title != nil {
-            print("⚠️ [FINAL_DISPLAY] navigationItem.title was set to '\(navigationItem.title!)' - clearing it to show titleView")
-            navigationItem.title = nil
-        }
-        
-        let profileColor = getColorForCurrentProfile()
-        navigationItem.titleView = makeTitleViewWithStats(text: titleText, profileColor: profileColor)
-        
-        // KISS: Ensure navigationItem.title is cleared (it hides titleView)
-        navigationItem.title = nil
-;
     }
     
     @IBAction func shareButtonClicked(_ sender: UIBarButtonItem){
