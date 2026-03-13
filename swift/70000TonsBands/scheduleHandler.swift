@@ -609,6 +609,25 @@ open class scheduleHandler {
         }
     }
     
+    /// Updates the stored schedule checksum to match the given CSV content.
+    /// Call after importing schedule from a non-download source (e.g. QR scan) so that
+    /// populateSchedule(forceDownload: true) won’t skip a needed import when the network
+    /// file later differs (e.g. fewer events), avoiding stale data.
+    func updateStoredScheduleChecksum(toMatchCSV csvString: String) {
+        guard !csvString.isEmpty else { return }
+        let checksum = calculateChecksum(csvString)
+        storeChecksum(checksum)
+        print("✅ [SCHEDULE_CHECKSUM] Updated stored checksum after non-download import (e.g. QR)")
+    }
+    
+    /// Clears the stored schedule checksum. Call when the schedule file is deleted (e.g. year change)
+    /// so the next download is always treated as new and imported.
+    func clearStoredScheduleChecksum() {
+        let checksumFile = getDocumentsDirectory().appendingPathComponent("scheduleFile.checksum")
+        try? FileManager.default.removeItem(atPath: checksumFile)
+        print("✅ [SCHEDULE_CHECKSUM] Cleared stored checksum (schedule file removed or reset)")
+    }
+    
     func populateSchedule(forceDownload: Bool = false, isYearChangeOperation: Bool = false) {
         let operationId = UUID()
         

@@ -11,8 +11,8 @@ import CoreImage.CIFilterBuiltins
 /// Grid width for iPhone SE (320pt): 288pt leaves 16pt margin. 16pt spacing for quiet zone.
 private let scheduleQRGridWidth: CGFloat = 288
 private let scheduleQRSpacing: CGFloat = 16
-/// White border (quiet zone) around single QR image in points. Helps Android (ZXing) recognize the symbol.
-private let scheduleQRImageWhiteBorder: CGFloat = 24
+/// White border (quiet zone) around single QR image in points. Smaller = larger QR on screen for easier Android scan.
+private let scheduleQRImageWhiteBorder: CGFloat = 16
 
 /// Localized instructions for sharing schedule via QR (conditions + steps). Built from Localizable.strings.
 private func qrShareInstructionsText() -> String {
@@ -121,7 +121,8 @@ final class ScheduleQRCodeViewController: UIViewController {
                 stack.addArrangedSubview(iv)
             }
         } else if let first = payloads.first {
-            stack.addArrangedSubview(qrImageView(for: first, size: 320))
+            // Single QR: add image view; size will be set by constraint to fill width (see below)
+            stack.addArrangedSubview(qrImageView(for: first, size: nil))
         }
 
         let stackContainer = UIView()
@@ -184,6 +185,13 @@ final class ScheduleQRCodeViewController: UIViewController {
                 stack.trailingAnchor.constraint(equalTo: stackContainer.trailingAnchor),
             ]
         }
+        // Single QR: make QR fill container width (minus margin) so Android can scan more easily
+        if payloads.count == 1, let qrView = stack.arrangedSubviews.first {
+            constraints += [
+                qrView.widthAnchor.constraint(equalTo: stackContainer.widthAnchor, constant: -32),
+                qrView.heightAnchor.constraint(equalTo: qrView.widthAnchor),
+            ]
+        }
         NSLayoutConstraint.activate(constraints)
 
         if payloads.count == 8 || payloads.count == 16 || payloads.count == 24 {
@@ -235,7 +243,8 @@ final class ScheduleQRCodeViewController: UIViewController {
         filter.setValue("L", forKey: "inputCorrectionLevel")
         guard let output = filter.outputImage,
               output.extent.width > 0, output.extent.height > 0 else { return nil }
-        let qrSize: CGFloat = 520
+        /// Render at high resolution so when scaled to fill screen the modules stay sharp for Android scanning.
+        let qrSize: CGFloat = 640
         let scale = qrSize / min(output.extent.width, output.extent.height)
         let scaled = output.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
         let bounds = scaled.extent.integral

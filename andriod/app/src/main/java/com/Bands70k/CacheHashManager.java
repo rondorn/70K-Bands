@@ -6,6 +6,7 @@ import android.util.Log;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -164,23 +165,42 @@ public class CacheHashManager {
         }
         
         if (hasFileChanged(tempFile, dataType)) {
-            // File has changed, move temp to final location
+            // File has changed: replace final with temp. Use copy-then-delete so we don't lose
+            // data if renameTo() fails (e.g. on Android when temp and final are on different storage).
             if (finalFile.exists()) {
                 finalFile.delete();
             }
-            
+            boolean replaced = false;
             if (tempFile.renameTo(finalFile)) {
-                // Update cached hash with the new file
+                replaced = true;
+            } else {
+                // Fallback: copy temp to final, then delete temp
+                try (FileInputStream in = new FileInputStream(tempFile);
+                     FileOutputStream out = new FileOutputStream(finalFile)) {
+                    byte[] buf = new byte[8192];
+                    int len;
+                    while ((len = in.read(buf)) > 0) {
+                        out.write(buf, 0, len);
+                    }
+                    out.getFD().sync();
+                    replaced = true;
+                    Log.d(TAG, "Replaced " + dataType + " via copy (renameTo failed)");
+                } catch (IOException e) {
+                    Log.e(TAG, "Failed to copy temp to final: " + tempFile.getPath() + " -> " + finalFile.getPath(), e);
+                }
+                if (tempFile.exists()) {
+                    tempFile.delete();
+                }
+            }
+            if (replaced) {
                 String newHash = calculateFileHash(finalFile);
                 if (newHash != null) {
                     saveCachedHash(dataType, newHash);
                 }
                 Log.i(TAG, "Processed changed file for " + dataType + ": " + finalFile.getPath());
                 return true;
-            } else {
-                Log.e(TAG, "Failed to move temp file to final location: " + tempFile.getPath() + " -> " + finalFile.getPath());
-                return false;
             }
+            return false;
         } else {
             // File unchanged, delete temp file
             tempFile.delete();

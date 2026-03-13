@@ -226,6 +226,7 @@ class YearManagementService {
             
             if let masterView = masterView {
                 masterView.schedule.clearCache()
+                masterView.schedule.clearStoredScheduleChecksum()
                 
                 // Clear MasterViewController's cached data arrays
                 masterView.clearMasterViewCachedData()
