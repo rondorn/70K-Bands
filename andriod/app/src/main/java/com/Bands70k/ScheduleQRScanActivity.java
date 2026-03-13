@@ -199,9 +199,10 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
         }
     }
 
-    private static final int LUMINANCE_UPSCALE_FACTOR = 2;
+    /** Upscale Y plane for denser QRs (e.g. iOS-generated); helps iOS→Android scan. */
+    private static final int LUMINANCE_UPSCALE_FACTOR = 3;
 
-    /** Decode QR from ImageProxy (YUV_420_888) and return raw bytes. Upscales Y plane 2x for denser QRs, then tries HybridBinarizer then GlobalHistogramBinarizer. */
+    /** Decode QR from ImageProxy (YUV_420_888) and return raw bytes. Upscales Y plane for denser QRs, then tries HybridBinarizer then GlobalHistogramBinarizer, then PURE_BARCODE fallback for on-screen QRs. */
     private byte[] decodeQRFromImage(ImageProxy image) {
         if (image.getPlanes() == null || image.getPlanes().length == 0) return null;
         ImageProxy.PlaneProxy yPlane = image.getPlanes()[0];
@@ -240,11 +241,26 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
         com.google.zxing.MultiFormatReader reader = new com.google.zxing.MultiFormatReader();
         reader.setHints(hints);
 
-        com.google.zxing.Result result = tryDecode(reader, new com.google.zxing.BinaryBitmap(
-                new com.google.zxing.common.HybridBinarizer(source)));
+        com.google.zxing.BinaryBitmap hybridBitmap = new com.google.zxing.BinaryBitmap(
+                new com.google.zxing.common.HybridBinarizer(source));
+        com.google.zxing.BinaryBitmap globalBitmap = new com.google.zxing.BinaryBitmap(
+                new com.google.zxing.common.GlobalHistogramBinarizer(source));
+
+        com.google.zxing.Result result = tryDecode(reader, hybridBitmap);
         if (result == null) {
-            result = tryDecode(reader, new com.google.zxing.BinaryBitmap(
-                    new com.google.zxing.common.GlobalHistogramBinarizer(source)));
+            result = tryDecode(reader, globalBitmap);
+        }
+        // iOS→Android: try PURE_BARCODE (image mostly barcode, e.g. camera pointed at phone screen)
+        if (result == null) {
+            Map<DecodeHintType, Object> pureHints = new EnumMap<>(DecodeHintType.class);
+            pureHints.put(DecodeHintType.POSSIBLE_FORMATS, Collections.singleton(BarcodeFormat.QR_CODE));
+            pureHints.put(DecodeHintType.PURE_BARCODE, Boolean.TRUE);
+            reader.setHints(pureHints);
+            result = tryDecode(reader, hybridBitmap);
+            if (result == null) {
+                result = tryDecode(reader, globalBitmap);
+            }
+            reader.setHints(hints); // restore for next frame
         }
         if (result != null) {
             byte[] payload = getDecodedBytePayload(result);
@@ -484,11 +500,15 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
             scheduleInfo parser = new scheduleInfo();
             Map<String, scheduleTimeTracker> currentMap = parser.ParseScheduleCSV();
             writeScheduleFileSafe(csv);
+            updateScheduleCacheHashAfterWrite();
             Map<String, scheduleTimeTracker> importedMap = parser.ParseScheduleCSV();
             mergePreservedUnofficialCruiserInto(currentMap, importedMap);
             BandInfo.scheduleRecords = importedMap;
             String combinedCsv = ScheduleCSVExport.buildFullCSVFromSchedule();
-            if (combinedCsv != null) writeScheduleFileSafe(combinedCsv);
+            if (combinedCsv != null) {
+                writeScheduleFileSafe(combinedCsv);
+                updateScheduleCacheHashAfterWrite();
+            }
             Intent refresh = new Intent("RefreshLandscapeSchedule");
             androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(this).sendBroadcast(refresh);
             Toast.makeText(this, R.string.schedule_qr_import_success, Toast.LENGTH_LONG).show();
@@ -525,6 +545,20 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
                     target.addToscheduleByTime(h.getEpochStart(), h);
                 }
             }
+        }
+    }
+
+    /**
+     * Updates CacheHashManager's scheduleInfo hash to match the current schedule file on disk.
+     * Must be called after any write to FileHandler70k.schedule (e.g. QR import) so that a
+     * subsequent network download correctly detects that the file content differs and replaces it.
+     */
+    private void updateScheduleCacheHashAfterWrite() {
+        CacheHashManager cacheManager = CacheHashManager.getInstance();
+        String hash = cacheManager.calculateFileHash(FileHandler70k.schedule);
+        if (hash != null) {
+            cacheManager.saveCachedHash("scheduleInfo", hash);
+            Log.d(TAG, "[QRScan] Updated schedule cache hash after write");
         }
     }
 

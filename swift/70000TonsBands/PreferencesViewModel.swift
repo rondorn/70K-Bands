@@ -809,6 +809,7 @@ class PreferencesViewModel: ObservableObject {
         // Remove old files
         do {
             try FileManager.default.removeItem(atPath: scheduleFile)
+            masterView.schedule.clearStoredScheduleChecksum()
             try FileManager.default.removeItem(atPath: bandFile)
             try FileManager.default.removeItem(atPath: eventYearFile)
             print("🗑️ Old files removed")
@@ -1394,6 +1395,10 @@ class PreferencesViewModel: ObservableObject {
                         eventImageUrl: event.eventImageUrl
                     )
                 }
+            }
+            if ok {
+                // So populateSchedule(forceDownload: true) won’t skip import when network file later differs
+                masterView.schedule.updateStoredScheduleChecksum(toMatchCSV: csvString)
             }
             scheduleQRImportResult = (
                 ok,

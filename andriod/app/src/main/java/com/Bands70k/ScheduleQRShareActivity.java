@@ -28,8 +28,8 @@ public class ScheduleQRShareActivity extends AppCompatActivity {
 
     private static final String TAG = "ScheduleQRShare";
 
-    /** Target bitmap size (symbol only); quiet zone added separately. */
-    private static final int QR_SIZE = 600;
+    /** Target bitmap size (symbol only); quiet zone added separately. Larger = sharper when displayed full-width for iOS scanning. */
+    private static final int QR_SIZE = 720;
     /** ISO 18004: quiet zone = 4 modules on all sides. Required for reliable scanning. */
     private static final int QUIET_ZONE_MODULES = 4;
     /** Minimum pixels per module so cameras can resolve the symbol (avoid too-dense QRs). */
