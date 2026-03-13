@@ -454,4 +454,5 @@
     <string name="schedule_qr_downloading_band_list">Downloading band list…</string>
     <string name="schedule_qr_band_file_download_failed">Could not download band list. Please try again.</string>
     <string name="schedule_qr_import_validation_failed">Data was imported successfully, but failed validation checks. The data appears corrupted.\n\nExample: %1$s</string>
+    <string name="schedule_qr_import_validation_failed_title">Schedule import validation failed</string>
 </resources>

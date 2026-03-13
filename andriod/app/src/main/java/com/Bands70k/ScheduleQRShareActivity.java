@@ -54,6 +54,7 @@ public class ScheduleQRShareActivity extends AppCompatActivity {
             staticVariables.ensureEventYearIsSet();
             eventYear = staticVariables.eventYear;
         }
+        final int yearForQR = eventYear;
 
         // Use cached schedule CSV for QR with Unofficial/Cruiser stripped (matches iOS; import adds them back).
         String csv = ScheduleCSVExport.readScheduleCsvForQRExport();
@@ -76,7 +77,7 @@ public class ScheduleQRShareActivity extends AppCompatActivity {
                 bi.DownloadBandFile();
                 runOnUiThread(() -> {
                     if (BandInfo.isBandFileAvailableForQR()) {
-                        buildAndShowQR(csv, eventYear, qr1, qr2, done);
+                        buildAndShowQR(csv, yearForQR, qr1, qr2, done);
                     } else {
                         Toast.makeText(this, R.string.schedule_qr_band_file_download_failed, Toast.LENGTH_LONG).show();
                         finish();
@@ -86,7 +87,7 @@ public class ScheduleQRShareActivity extends AppCompatActivity {
             return;
         }
 
-        buildAndShowQR(csv, eventYear, qr1, qr2, done);
+        buildAndShowQR(csv, yearForQR, qr1, qr2, done);
     }
 
     private void buildAndShowQR(String csv, int eventYear, ImageView qr1, ImageView qr2, Button done) {

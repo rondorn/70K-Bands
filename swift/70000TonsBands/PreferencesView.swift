@@ -365,16 +365,12 @@ struct PreferencesView: View {
         } header: {
             Text(NSLocalizedString("AdvancedPreferences", comment: ""))
         }
-        .alert(NSLocalizedString("Schedule from QR", comment: "QR import result title"), isPresented: Binding(
+        .sheet(isPresented: Binding(
             get: { viewModel.scheduleQRImportResult != nil },
             set: { if !$0 { viewModel.scheduleQRImportResult = nil } }
         )) {
-            Button(NSLocalizedString("OK", comment: "")) {
-                viewModel.scheduleQRImportResult = nil
-            }
-        } message: {
             if let result = viewModel.scheduleQRImportResult {
-                Text(result.message)
+                ScheduleQRImportResultSheet(message: result.message, onDismiss: { viewModel.scheduleQRImportResult = nil })
             }
         }
         .onChange(of: viewModel.scheduleQRScanReadyAfterDownload) { newValue in
@@ -426,6 +422,41 @@ struct PreferencesView: View {
         ))
         scannerVC.modalPresentationStyle = .pageSheet
         presenter.present(scannerVC, animated: true)
+    }
+}
+
+// MARK: - QR import result / validation failure dialog (full message, dark theme)
+struct ScheduleQRImportResultSheet: View {
+    let message: String
+    let onDismiss: () -> Void
+    private let darkBackground = Color(white: 0.15)
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Text(NSLocalizedString("Schedule from QR", comment: "QR import result title"))
+                .font(.headline)
+                .foregroundColor(.white)
+                .padding()
+            ScrollView {
+                Text(message)
+                    .font(.body)
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 20)
+            }
+            Button(NSLocalizedString("OK", comment: "")) {
+                onDismiss()
+            }
+            .font(.body.weight(.medium))
+            .foregroundColor(Color(red: 0, green: 0.48, blue: 1))
+            .frame(maxWidth: .infinity)
+            .padding()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(darkBackground)
+        .presentationDetents([.medium, .large])
     }
 }
 
