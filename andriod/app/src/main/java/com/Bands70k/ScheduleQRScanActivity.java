@@ -398,6 +398,35 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
         didSucceed = true;
 
         Log.d(TAG, "[QRScan] onPayloadsComplete payloadCount=" + (payloads != null ? payloads.size() : 0));
+
+        if (!BandInfo.isBandFileAvailableForQR()) {
+            String bandFileError = BandInfo.getBandFileRequiredForQRMessage(this);
+            if (bandFileError != null) {
+                Toast.makeText(this, bandFileError, Toast.LENGTH_LONG).show();
+                finish();
+                return;
+            }
+            Toast.makeText(this, R.string.schedule_qr_downloading_band_list, Toast.LENGTH_SHORT).show();
+            new Thread(() -> {
+                BandInfo bi = new BandInfo();
+                bi.DownloadBandFile();
+                runOnUiThread(() -> {
+                    if (BandInfo.isBandFileAvailableForQR()) {
+                        doImportPayloads(payloads);
+                    } else {
+                        Toast.makeText(this, R.string.schedule_qr_band_file_download_failed, Toast.LENGTH_LONG).show();
+                    }
+                    finish();
+                });
+            }).start();
+            return;
+        }
+
+        doImportPayloads(payloads);
+        finish();
+    }
+
+    private void doImportPayloads(List<byte[]> payloads) {
         int eventYear = staticVariables.eventYear != null ? staticVariables.eventYear : 0;
         if (eventYear == 0) {
             staticVariables.ensureEventYearIsSet();
@@ -411,7 +440,15 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
             String csv = ScheduleQRCompression.decompressAndMergeOneOrTwoPayloads(
                     payloads, eventYear, bandNames, venueNames);
             Log.d(TAG, "[QRScan] decompress OK csvLength=" + (csv != null ? csv.length() : 0));
-            // Pull Unofficial/Cruiser from cached schedule before overwrite; then overwrite with QR data; add them back; write merged.
+
+            String currentCsv = ScheduleQRImportValidation.readCurrentScheduleContent();
+            ScheduleQRImportValidation.Result validation = ScheduleQRImportValidation.validate(currentCsv, csv);
+            if (!validation.success) {
+                String message = getString(R.string.schedule_qr_import_validation_failed, validation.failureExampleMessage);
+                Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+                return;
+            }
+
             scheduleInfo parser = new scheduleInfo();
             Map<String, scheduleTimeTracker> currentMap = parser.ParseScheduleCSV();
             writeScheduleFileSafe(csv);
@@ -433,7 +470,6 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
             Log.e(TAG, "[QRScan] Import failed: " + e.getMessage(), e);
             Toast.makeText(this, R.string.schedule_qr_invalid_payload, Toast.LENGTH_LONG).show();
         }
-        finish();
     }
 
     /** Copy Unofficial Event and Cruiser Organized events from currentMap into importedMap (reduces QR payload; scanner restores them). */
