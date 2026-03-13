@@ -4841,6 +4841,35 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     func showScheduleQRCode() {
+        if !isBandFileAvailableForQR(eventYear: eventYear) {
+            guard NetworkTesting.isNetworkAvailable() else {
+                let alert = UIAlertController(title: NSLocalizedString("Share Schedule via QR Code", comment: ""), message: bandFileRequiredMessageNoNetwork(), preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: ""), style: .default))
+                present(alert, animated: true)
+                return
+            }
+            let loadingAlert = UIAlertController(title: NSLocalizedString("Share Schedule via QR Code", comment: ""), message: NSLocalizedString("QR downloading band list", comment: "Downloading band list..."), preferredStyle: .alert)
+            present(loadingAlert, animated: true)
+            BandCSVImporter().downloadAndImportBands(forceDownload: true) { [weak self] success in
+                guard let self = self else { return }
+                DispatchQueue.main.async {
+                    loadingAlert.dismiss(animated: true) {
+                        if success, isBandFileAvailableForQR(eventYear: eventYear) {
+                            self.proceedShowScheduleQRCode()
+                        } else {
+                            let failAlert = UIAlertController(title: NSLocalizedString("Share Schedule via QR Code", comment: ""), message: NSLocalizedString("QR band file download failed", comment: "Could not download band list"), preferredStyle: .alert)
+                            failAlert.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: ""), style: .default))
+                            self.present(failAlert, animated: true)
+                        }
+                    }
+                }
+            }
+            return
+        }
+        proceedShowScheduleQRCode()
+    }
+
+    private func proceedShowScheduleQRCode() {
         // Prefer raw cached schedule CSV (same source as Android). Fall back to CSV built from current events when cache is missing (e.g. schedule from SQLite only).
         let csvString: String? = rawScheduleCSVFromCache().flatMap { $0.isEmpty ? nil : $0 }
             ?? exportScheduleCSV(eventYear: eventYear)
@@ -4865,7 +4894,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             present(alert, animated: true)
         }
     }
-    
+
     func showSharingView() {
         let sharingView = SharingHostingController()
         if DeviceSizeManager.isLargeDisplay() {

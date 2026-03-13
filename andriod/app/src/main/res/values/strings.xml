@@ -450,4 +450,8 @@
     <string name="schedule_qr_compression_failed">Could not create QR code.</string>
     <string name="schedule_qr_camera_required">Camera access is required to scan the schedule QR code. Enable it in Settings.</string>
     <string name="schedule_qr_camera_unavailable">Could not access the camera.</string>
+    <string name="schedule_qr_band_file_missing_no_network">The band list file is required for schedule QR but is missing. Connect to the internet to download it, then try again.</string>
+    <string name="schedule_qr_downloading_band_list">Downloading band list…</string>
+    <string name="schedule_qr_band_file_download_failed">Could not download band list. Please try again.</string>
+    <string name="schedule_qr_import_validation_failed">Data was imported successfully, but failed validation checks. The data appears corrupted.\n\nExample: %1$s</string>
 </resources>

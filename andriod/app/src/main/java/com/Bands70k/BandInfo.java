@@ -1,5 +1,8 @@
 package com.Bands70k;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Environment;
 import android.os.Looper;
 import android.os.StrictMode;
@@ -85,14 +88,53 @@ public class BandInfo {
     public FileHandler70k fileHandle = new FileHandler70k();
 
     /**
-     * Returns the full band list from the band CSV, sorted case-insensitively.
-     * Used for QR encode/decode so creator and scanner use the same canonical order (indices match).
+     * Returns the full band list from the cached artist lineup CSV (70kbandInfo.csv) in file row order.
+     * First column only (RowData[0]), one entry per data row (same count/order as iOS bandFile.txt). First data row = position 1 = code "01".
+     * Only names in this list get a 2-digit code; names not in the list (e.g. Skipper's Thank You) are left as literal.
+     * Do not sort. Same list must be used for both encode and decode so the same code always resolves to the same band.
      */
     public static List<String> getCanonicalBandNamesForQR() {
         BandInfo bi = new BandInfo();
-        ArrayList<String> names = bi.ParseBandCSV();
-        Collections.sort(names, String.CASE_INSENSITIVE_ORDER);
-        return names;
+        ArrayList<String> raw = bi.ParseBandCSV();
+        ArrayList<String> trimmed = new ArrayList<>(raw.size());
+        for (String name : raw) {
+            trimmed.add(name != null ? name.trim() : "");
+        }
+        return trimmed;
+    }
+
+    /**
+     * Returns true if the cached artist lineup file exists and yields a non-empty band list (required for QR share/scan).
+     */
+    public static boolean isBandFileAvailableForQR() {
+        if (FileHandler70k.bandInfo == null || !FileHandler70k.bandInfo.exists()) return false;
+        List<String> names = getCanonicalBandNamesForQR();
+        return names != null && !names.isEmpty();
+    }
+
+    /**
+     * If the band file is not available for QR, returns a user-facing error message (and network is not present to download).
+     * If the band file is available, or if network is present (user can refresh), returns null so caller can decide to show a message or prompt refresh.
+     * Call this before QR share or scan; when non-null, show the message and do not proceed.
+     *
+     * @param context Used to check network availability (ConnectivityManager).
+     * @return null if band file is available or network is available (caller should auto-download); otherwise the "connect to internet" message.
+     */
+    public static String getBandFileRequiredForQRMessage(Context context) {
+        if (isBandFileAvailableForQR()) return null;
+        if (isNetworkAvailableForQR(context)) return null;
+        return context != null ? context.getString(R.string.schedule_qr_band_file_missing_no_network) : "Band list file is missing. Connect to the internet to download it.";
+    }
+
+    /**
+     * Returns true if network is available (for auto-downloading band file when missing).
+     */
+    public static boolean isNetworkAvailableForQR(Context context) {
+        if (context == null) return false;
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (cm == null) return false;
+        NetworkInfo active = cm.getActiveNetworkInfo();
+        return active != null && active.isConnected();
     }
 
     /**
