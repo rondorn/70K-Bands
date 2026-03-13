@@ -663,6 +663,7 @@ public class preferenceLayout  extends Activity {
                                     try {
                                         Log.d("preferenceLayout", "Deleting schedule file");
                                         FileHandler70k.schedule.delete();
+                                        CacheHashManager.getInstance().clearHash("scheduleInfo");
                                     } catch (Exception ignored) {}
                                     try {
                                         Log.d("preferenceLayout", "Deleting descriptionMap file");
