@@ -17,6 +17,9 @@ class SQLiteDataManager: DataManagerProtocol {
     
     private var db: Connection?
     
+    /// Read-only connection for UI reads (filter/count, detail launch). Reduces contention with writes; never use for writes.
+    private var readOnlyDb: Connection?
+    
     // Database version for schema migrations
     private let currentSchemaVersion = 9  // v9: bands.lineIndex for canonical order (offline QR)
     private let schemaVersionKey = "SQLiteSchemaVersion"
@@ -149,9 +152,19 @@ class SQLiteDataManager: DataManagerProtocol {
             if needsMigration {
                 UserDefaults.standard.set(currentSchemaVersion, forKey: schemaVersionKey)
             }
+            
+            // Open read-only connection for UI reads (filter, count, detail launch). WAL allows one writer + readers.
+            readOnlyDb = try Connection(dbPath)
+            try readOnlyDb?.execute("PRAGMA busy_timeout = 30000")
+            try readOnlyDb?.execute("PRAGMA query_only = 1")
         } catch {
             // Initialization failed
         }
+    }
+    
+    /// Connection for read-only operations. Uses dedicated read-only connection when available to avoid blocking on writes.
+    private func forRead() -> Connection? {
+        readOnlyDb ?? db
     }
     
     private func verifyUniqueConstraints() throws {
@@ -268,7 +281,7 @@ class SQLiteDataManager: DataManagerProtocol {
     // MARK: - Band Operations
     
     func fetchBands(forYear year: Int) -> [BandData] {
-        guard let db = db else { return [] }
+        guard let db = forRead() else { return [] }
         
         do {
             let query = bandsTable.filter(eventYear == year)
@@ -297,7 +310,7 @@ class SQLiteDataManager: DataManagerProtocol {
     }
     
     func fetchBands() -> [BandData] {
-        guard let db = db else { return [] }
+        guard let db = forRead() else { return [] }
         
         do {
             var bands: [BandData] = []
@@ -326,7 +339,7 @@ class SQLiteDataManager: DataManagerProtocol {
     }
     
     func fetchBand(byName name: String, eventYear year: Int) -> BandData? {
-        guard let db = db else { return nil }
+        guard let db = forRead() else { return nil }
         
         do {
             let query = bandsTable.filter(bandName == name && eventYear == year).limit(1)
@@ -358,7 +371,7 @@ class SQLiteDataManager: DataManagerProtocol {
     /// Only bands with non-nil lineIndex are included (schedule-only bands have nil and are excluded).
     /// If this returns empty, band list import (BandCSVImporter) did not run or failed for this year.
     func fetchBandNamesInCanonicalOrder(forYear year: Int) -> [String] {
-        guard let db = db else {
+        guard let db = forRead() else {
             print("[LineIndex] LOOKUP year=\(year) db=nil → count=0")
             return []
         }
@@ -634,7 +647,7 @@ class SQLiteDataManager: DataManagerProtocol {
     // MARK: - Event Operations
     
     func fetchEvents(forYear year: Int) -> [EventData] {
-        guard let db = db else { return [] }
+        guard let db = forRead() else { return [] }
         
         do {
             let query = eventsTable.filter(eventYear_col == year)
@@ -665,7 +678,7 @@ class SQLiteDataManager: DataManagerProtocol {
     }
     
     func fetchEvents() -> [EventData] {
-        guard let db = db else { return [] }
+        guard let db = forRead() else { return [] }
         
         do {
             var events: [EventData] = []
@@ -695,7 +708,7 @@ class SQLiteDataManager: DataManagerProtocol {
     }
     
     func fetchEventsForBand(_ bandName: String, forYear year: Int) -> [EventData] {
-        guard let db = db else { return [] }
+        guard let db = forRead() else { return [] }
         
         do {
             let query = eventsTable.filter(eventBandName == bandName && eventYear_col == year)
@@ -726,7 +739,7 @@ class SQLiteDataManager: DataManagerProtocol {
     }
     
     func fetchEvents(forYear year: Int, location locationFilter: String?, eventType typeFilter: String?) -> [EventData] {
-        guard let db = db else { return [] }
+        guard let db = forRead() else { return [] }
         
         do {
             var query = eventsTable.filter(eventYear_col == year)
@@ -882,7 +895,7 @@ class SQLiteDataManager: DataManagerProtocol {
     // MARK: - User Priority Operations
     
     func fetchUserPriorities() -> [UserPriorityData] {
-        guard let db = db else { return [] }
+        guard let db = forRead() else { return [] }
         
         do {
             var priorities: [UserPriorityData] = []
@@ -940,7 +953,7 @@ class SQLiteDataManager: DataManagerProtocol {
     // MARK: - User Attendance Operations
     
     func fetchUserAttendances() -> [UserAttendanceData] {
-        guard let db = db else { return [] }
+        guard let db = forRead() else { return [] }
         
         do {
             var attendances: [UserAttendanceData] = []
@@ -1005,7 +1018,7 @@ class SQLiteDataManager: DataManagerProtocol {
     
     /// Get description URL for a band or event
     func getDescriptionUrl(forEntity entityName: String, eventYear year: Int) -> String? {
-        guard let db = db else { return nil }
+        guard let db = forRead() else { return nil }
         
         do {
             let query = descriptionMapTable.filter(descMapEntityName == entityName && descMapEventYear == year)
@@ -1020,7 +1033,7 @@ class SQLiteDataManager: DataManagerProtocol {
     
     /// Get all description URLs for a given year
     func getAllDescriptionUrls(forYear year: Int) -> [String: String] {
-        guard let db = db else { return [:] }
+        guard let db = forRead() else { return [:] }
         
         var descriptionMap: [String: String] = [:]
         
