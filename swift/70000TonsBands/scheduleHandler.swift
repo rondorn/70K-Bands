@@ -692,7 +692,6 @@ open class scheduleHandler {
         
         // Only download from network if explicitly forced
         if forceDownload && isInternetAvailable() == true {
-            // Clear current data only when we're actually downloading new data
             print("🔍 [SCHEDULE_DEBUG] populateSchedule: Clearing cache before download")
             clearCache()
             print("DEBUG_MARKER: Starting CSV download process (SQLite backend)")
@@ -750,6 +749,12 @@ open class scheduleHandler {
                 let newChecksum = calculateChecksum(httpData)
                 var storedChecksum = getStoredChecksum()
                 
+                // On initial app launch only: always import the downloaded schedule (bypass checksum so we never show stale count from a previous install).
+                if cacheVariables.justLaunched {
+                    storedChecksum = nil
+                    print("🔍 [SCHEDULE] Initial launch — bypassing checksum, will import downloaded schedule")
+                }
+                
                 print("🔍 New data checksum: \(String(newChecksum.prefix(8)))...")
                 if let stored = storedChecksum {
                     print("🔍 Stored checksum: \(String(stored.prefix(8)))...")
@@ -757,7 +762,7 @@ open class scheduleHandler {
                     print("🔍 No stored checksum found (first run or missing)")
                 }
                 
-                // Smart import detection: Force import if we have large CSV but few events, or CSV has many more rows than SQLite (e.g. restore from Dropbox)
+                // Smart import detection: Force import when CSV and SQLite are out of sync (so we always replace with downloaded file when it clearly differs).
                 let currentEventCount = dataManager.fetchEvents(forYear: eventYear).count
                 let dataRowCount = max(0, lines.count - 1) // subtract header
                 if httpData.count > 1000 && currentEventCount < 5 {
@@ -768,29 +773,25 @@ open class scheduleHandler {
                     storedChecksum = nil // Force import
                 }
                 
-                // Compare checksums to determine if data has changed
                 if storedChecksum != newChecksum {
                     print("DEBUG_MARKER: Data has changed - importing to SQLite")
-                    print("DEBUG_MARKER: Old checksum: \(storedChecksum?.prefix(8) ?? "none")")
-                    print("DEBUG_MARKER: New checksum: \(newChecksum.prefix(8))")
                     dataChanged = true
-                    
-                    // Import new data to SQLite with smart update/delete logic
-                    print("DEBUG_MARKER: Calling smart CSV import")
-                    let importSuccess = csvImporter.importEventsFromCSVString(httpData)
-                    print("DEBUG_MARKER: Smart CSV import result: \(importSuccess)")
+                    let (importSuccess, importedCount) = csvImporter.importEventsFromCSVString(httpData)
+                    print("DEBUG_MARKER: Smart CSV import result: \(importSuccess), importedCount: \(importedCount)")
                     
                     if importSuccess {
-                        // Store new checksum only if import was successful
-                        storeChecksum(newChecksum)
-                        print("DEBUG_MARKER: Successfully updated SQLite and stored new checksum")
-                        
-                        // Reload cache from SQLite
+                        let actualCount = dataManager.fetchEvents(forYear: eventYear).count
+                        if actualCount == importedCount {
+                            storeChecksum(newChecksum)
+                            print("DEBUG_MARKER: Successfully updated SQLite and stored new checksum (verified \(actualCount) events)")
+                        } else {
+                            print("DEBUG_MARKER: Import reported success but DB has \(actualCount) events, expected \(importedCount) — not storing checksum")
+                        }
                         cacheLoaded = false
                         loadCacheFromCoreData()
-                } else {
-                        print("DEBUG_MARKER: Import failed - keeping old checksum")
-                }
+                    } else {
+                        print("DEBUG_MARKER: Import failed (e.g. database locked) - keeping old checksum")
+                    }
                 } else {
                     print("DEBUG_MARKER: Data unchanged - checksum: \(newChecksum.prefix(8))")
                     dataChanged = false
@@ -933,7 +934,7 @@ open class scheduleHandler {
                     eventYear = capturedEventYear
                     print("🔧 [YEAR_SYNC_DEBUG] Temporarily set global eventYear to \(eventYear) for import consistency")
                     
-                    result = csvImporter.importEventsFromCSVString(httpData)
+                    result = csvImporter.importEventsFromCSVString(httpData).success
                     
                     // Restore original global eventYear after import
                     eventYear = originalEventYear
@@ -950,7 +951,7 @@ open class scheduleHandler {
                 eventYear = capturedEventYear
                 print("🔧 [YEAR_SYNC_DEBUG] Temporarily set global eventYear to \(eventYear) for import consistency")
                 
-                importSuccess = csvImporter.importEventsFromCSVString(httpData)
+                importSuccess = csvImporter.importEventsFromCSVString(httpData).success
                 
                 // Restore original global eventYear after import
                 eventYear = originalEventYear
@@ -1016,7 +1017,7 @@ open class scheduleHandler {
     /// Call from main thread when triggered by user (e.g. Preferences "Scan QR Code Schedule").
     func importScheduleFromCSVString(_ csvString: String) -> Bool {
         let capturedEventYear = eventYear
-        let ok = csvImporter.importEventsFromCSVString(csvString)
+        let (ok, _) = csvImporter.importEventsFromCSVString(csvString)
         if ok {
             cacheLoaded = false
             loadCacheFromCoreDataInternal(useYear: capturedEventYear)

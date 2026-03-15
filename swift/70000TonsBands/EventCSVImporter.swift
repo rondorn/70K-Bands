@@ -3,6 +3,7 @@ import Foundation
 /// Imports event/schedule data from CSV files directly into SQLite (via DataManager)
 /// Replaces the legacy scheduleHandler dictionary system with database storage
 /// All data writes go directly to SQLite - no Core Data intermediate step
+/// Band table: only ensures a band row exists (createBandIfNotExists). Never sets or changes lineIndex; that is only set when the full band list is imported (BandCSVImporter).
 class EventCSVImporter {
     private let dataManager = DataManager.shared
     
@@ -127,7 +128,7 @@ class EventCSVImporter {
                     print("   Event Year: \(eventYear)")
                 }
                 
-                // Ensure band exists in SQLite (create if needed)
+                // Ensure band exists in SQLite (create if needed). Does not set lineIndex; band list is never changed by schedule import.
                 _ = dataManager.createBandIfNotExists(name: bandName, eventYear: eventYear)
                 
                 // Create unique identifier for this event
