@@ -6965,40 +6965,26 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             // Create a dispatch group to track all 3 parallel operations
             let refreshGroup = DispatchGroup()
             
-            // Thread 1: Download and import Bands CSV
+            // Run Bands then Schedule sequentially to avoid SQLite lock contention (same DB file).
             refreshGroup.enter()
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                 guard let self = self else {
                     refreshGroup.leave()
                     return
                 }
-                
-                print("🔄 [UNIFIED_REFRESH] Thread 1 - Downloading Bands CSV")
+                print("🔄 [UNIFIED_REFRESH] Step 1 - Downloading Bands CSV")
                 self.bandNameHandle.gatherData(forceDownload: true) { [weak self] in
                     guard let self = self else {
                         refreshGroup.leave()
                         return
                     }
-                    print("✅ [UNIFIED_REFRESH] Thread 1 - Bands CSV download complete")
+                    print("✅ [UNIFIED_REFRESH] Bands CSV complete - now downloading Schedule CSV (sequential to avoid DB lock)")
+                    self.schedule.populateSchedule(forceDownload: true)
                     refreshGroup.leave()
                 }
             }
             
-            // Thread 2: Download and import Events CSV
-            refreshGroup.enter()
-            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-                guard let self = self else {
-                    refreshGroup.leave()
-                    return
-                }
-                
-                print("🔄 [UNIFIED_REFRESH] Thread 2 - Downloading Events CSV")
-                self.schedule.populateSchedule(forceDownload: true)
-                print("✅ [UNIFIED_REFRESH] Thread 2 - Events CSV download complete")
-                refreshGroup.leave()
-            }
-            
-            // Thread 3: Download iCloud data (parallel)
+            // Thread 3: Download iCloud data (parallel with bands+schedule)
             refreshGroup.enter()
             DispatchQueue.global(qos: .utility).async { [weak self] in
                 guard let self = self else {

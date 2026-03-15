@@ -17,9 +17,14 @@ protocol DataManagerProtocol {
     func fetchBands(forYear year: Int) -> [BandData]
     func fetchBands() -> [BandData]
     func fetchBand(byName name: String, eventYear year: Int) -> BandData?
-    func createOrUpdateBand(name: String, eventYear: Int, officialSite: String?, imageUrl: String?, youtube: String?, metalArchives: String?, wikipedia: String?, country: String?, genre: String?, noteworthy: String?, priorYears: String?) -> BandData
+    /// Only band list import (full artist CSV) should pass lineIndex; schedule/event import must not. Pass nil to leave lineIndex unchanged or set to nil.
+    func createOrUpdateBand(name: String, eventYear: Int, officialSite: String?, imageUrl: String?, youtube: String?, metalArchives: String?, wikipedia: String?, country: String?, genre: String?, noteworthy: String?, priorYears: String?, lineIndex: Int?) -> BandData
     func createBandIfNotExists(name: String, eventYear: Int) -> Bool
     func deleteBand(name: String, eventYear: Int)
+    /// Band names in canonical (artist CSV) order for QR encode/decode. lineIndex only; no fallback.
+    func fetchBandNamesInCanonicalOrder(forYear year: Int) -> [String]
+    /// Ensures only bands in the artist list have lineIndex set. Clears lineIndex for any band in this year not in the set (e.g. schedule-only entries).
+    func clearLineIndexForBandsNotIn(eventYear year: Int, bandNamesInArtistList: Set<String>)
     
     // MARK: - Event Operations
     func fetchEvents(forYear year: Int) -> [EventData]
@@ -28,6 +33,8 @@ protocol DataManagerProtocol {
     func fetchEvents(forYear year: Int, location: String?, eventType: String?) -> [EventData]  // For filtering by location/type
     func createOrUpdateEvent(bandName: String, timeIndex: Double, endTimeIndex: Double, location: String, date: String?, day: String?, startTime: String?, endTime: String?, eventType: String?, eventYear: Int, notes: String?, descriptionUrl: String?, eventImageUrl: String?) -> EventData
     func deleteEvent(bandName: String, timeIndex: Double, eventYear: Int)
+    /// Replaces all events for the given year with the provided list (atomic: delete then insert in one transaction). Returns true only if the transaction committed; use this so checksum is not stored when DB write failed (e.g. locked).
+    func replaceEvents(forYear year: Int, events: [EventData]) -> Bool
     func cleanupProblematicEvents(currentYear year: Int)
     
     // MARK: - User Priority Operations

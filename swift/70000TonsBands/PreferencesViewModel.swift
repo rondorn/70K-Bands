@@ -1364,10 +1364,15 @@ class PreferencesViewModel: ObservableObject {
                 scheduleQRImportResult = (false, "Scan 1 or 2 schedule QR codes (binary), or 8/16/24 (plain).")
                 return
             }
+            // Band list is never modified by QR/schedule import; it comes only from band file. Decode uses this device's canonical list; sender and receiver must match.
             let currentCsvContent = try? String(contentsOfFile: scheduleFile, encoding: .utf8)
             let (validationSuccess, validationExample) = validateScheduleQRImport(currentCsvContent: currentCsvContent, newCsvContent: csvString)
-            if !validationSuccess, let example = validationExample {
-                scheduleQRImportResult = (false, String(format: NSLocalizedString("QR import validation failed", comment: "Validation failed message with example"), example))
+            if !validationSuccess {
+                let detail = validationExample ?? NSLocalizedString("QR import validation failed", comment: "Fallback when no example")
+                let formatStr = NSLocalizedString("QR import validation failed", comment: "Validation failed message with example")
+                let message = (formatStr as NSString).contains("%@") ? String(format: formatStr, detail) : "\(formatStr)\n\n\(detail)"
+                print("[QRImport] Validation failed: \(detail)")
+                scheduleQRImportResult = (false, message)
                 return
             }
 

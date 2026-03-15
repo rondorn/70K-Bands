@@ -66,24 +66,29 @@ private func indexFromOneDigitTypeCode(_ code: String) -> Int? {
 
 // MARK: - Compression (Host)
 
-/// Build band list in canonical order: first data row = position 1 = code "01". One entry per CSV data row (same count/order as Android).
-/// Only bands in this list get a 2-digit code; names not in the list (e.g. Skipper's Thank You) are left as literal text.
-/// Source of truth: cached artist lineup file (bandFile.txt from artistUrl). Must match Android 70kbandInfo.csv parsing.
-/// Uses first column by index only (same as Android RowData[0]) so encode and decode use the exact same list.
-/// If file is missing or unreadable, returns empty list so we never encode with a different list (bands stay literal).
+/// Band list in canonical (artist CSV) order for QR encode/decode. lineIndex only; no fallback. Only names in this list get a 2-digit code.
+/// If this returns empty, that is a bug: band list import or eventYear. Fix the root cause (BandCSVImporter, eventYear before download); do not add workarounds.
 private func canonicalBandNames(forYear year: Int) -> [String] {
-    let path = (getDocumentsDirectory() as String) + "/bandFile.txt"
-    guard let content = try? String(contentsOfFile: path, encoding: .utf8), !content.isEmpty,
-          let csvData = try? CSV(csvStringToParse: content), let firstColKey = csvData.headers.first else {
-        return []
+    DataManager.shared.fetchBandNamesInCanonicalOrder(forYear: year)
+}
+
+/// Log the exact band list with codes used for encode/decode.
+/// Troubleshooting: filter logs on the tags below to compare sender vs receiver band lists and payloads.
+/// - iOS (Console/Xcode): filter text: `QRBandList` (band list with codes), `QRImport` (validation/import), `QRScan` (payload received), `QRDecompress` (zlib), `QRCreate` (encode payload), `QRCompress` (size/ratio).
+/// - Android (logcat): tag `ScheduleQRScan` (scan + "[QRScan]" in message), tag `ScheduleQRCompression` (encode/decode + "[QRDecompress]"), tag `ScheduleQRShare` (share). For user-facing QR errors: tag `QR Error`.
+/// Expected minimum band count for 2026 testing window only; used to flag a likely lineIndex/import issue in logs.
+private let qrBandListExpectedMinForTesting = 61
+
+private func logBandListForQR(direction: String, eventYear: Int, bandNames: [String]) {
+    let n = bandNames.count
+    print("[QRBandList] \(direction) year=\(eventYear) count=\(n)")
+    if n < qrBandListExpectedMinForTesting {
+        print("[QRBandList] *** count=\(n) < \(qrBandListExpectedMinForTesting) — possible major issue (testing window: 2026 has 61 bands); check band list import / lineIndex")
     }
-    var names: [String] = []
-    for lineData in csvData.rows {
-        let raw = lineData[firstColKey] ?? ""
-        let bandName = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        names.append(bandName)
+    for (idx, name) in bandNames.enumerated() {
+        let code = twoDigitCode(for: idx)
+        print("[QRBandList]   \(code)=\(name)")
     }
-    return names
 }
 
 /// Build venue list in canonical order: FestivalConfig order.
@@ -312,7 +317,7 @@ private func buildCSVLine(_ fields: [String]) -> String {
 
 // MARK: - Band file required for QR (share/scan)
 
-/// Returns true if the cached artist lineup file is present and yields a non-empty band list (required for reliable QR encode/decode).
+/// Returns true only when the canonical band list (lineIndex) for this year is non-empty. Required for both encode and decode; no workaround when empty.
 func isBandFileAvailableForQR(eventYear: Int) -> Bool {
     !canonicalBandNames(forYear: eventYear).isEmpty
 }
@@ -757,6 +762,7 @@ private let maxBytesPerPlainQRVeryLowDensity: Int = 800
 private func buildShortenedScheduleCSV(csvString: String, eventYear: Int) throws -> String {
     let preprocessed = preprocessCSVForCompression(csvString)
     let bandNames = canonicalBandNames(forYear: eventYear)
+    logBandListForQR(direction: "ENCODE", eventYear: eventYear, bandNames: bandNames)
     let venueNames = canonicalVenueNames()
     let eventTypes = canonicalEventTypes()
     let lines = preprocessed.components(separatedBy: .newlines)
@@ -957,6 +963,7 @@ func mergePlainUTF8SchedulePayloads(_ payloads: [Data], eventYear: Int) throws -
 func compressScheduleForQRData(csvString: String, eventYear: Int) throws -> Data {
     let preprocessed = preprocessCSVForCompression(csvString)
     let bandNames = canonicalBandNames(forYear: eventYear)
+    logBandListForQR(direction: "ENCODE", eventYear: eventYear, bandNames: bandNames)
     let venueNames = canonicalVenueNames()
     let eventTypes = canonicalEventTypes()
     let lines = preprocessed.components(separatedBy: .newlines)
@@ -1030,6 +1037,7 @@ func decompressScheduleFromQR(compressedData: Data, eventYear: Int) throws -> St
 
 private func decompressCSVToFull(compressedCSV: String, eventYear: Int) -> String {
     let bandNames = canonicalBandNames(forYear: eventYear)
+    logBandListForQR(direction: "DECODE", eventYear: eventYear, bandNames: bandNames)
     let venueNames = canonicalVenueNames()
     let eventTypes = canonicalEventTypes()
 
@@ -1068,6 +1076,7 @@ private let scheduleQRValidationMinColumns = 5
 
 /// Returns (success, exampleMessage). Run after decompression, before overwriting schedule cache.
 /// 1) No 2-digit band names (unresolved codes). 2) Day 1 slots must match current schedule.
+/// Band list comes only from band file (artist import); schedule/QR import never changes it. Receiver must have same band list as sender for codes to resolve.
 func validateScheduleQRImport(currentCsvContent: String?, newCsvContent: String) -> (success: Bool, exampleMessage: String?) {
     guard !newCsvContent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
         return (false, "Imported schedule is empty.")

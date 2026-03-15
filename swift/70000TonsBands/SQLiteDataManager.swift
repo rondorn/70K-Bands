@@ -18,7 +18,7 @@ class SQLiteDataManager: DataManagerProtocol {
     private var db: Connection?
     
     // Database version for schema migrations
-    private let currentSchemaVersion = 8  // v8: Added description_map table
+    private let currentSchemaVersion = 9  // v9: bands.lineIndex for canonical order (offline QR)
     private let schemaVersionKey = "SQLiteSchemaVersion"
     
     // Table definitions
@@ -41,6 +41,8 @@ class SQLiteDataManager: DataManagerProtocol {
     private let genre = Expression<String?>("genre")
     private let noteworthy = Expression<String?>("noteworthy")
     private let priorYears = Expression<String?>("priorYears")
+    /// 0-based position in source artist CSV; used for canonical band order when bandFile.txt is missing (offline).
+    private let lineIndex = Expression<Int?>("lineIndex")
     
     // Event columns
     private let eventId = Expression<Int64>("id")
@@ -163,24 +165,25 @@ class SQLiteDataManager: DataManagerProtocol {
         let storedVersion = UserDefaults.standard.integer(forKey: schemaVersionKey)
         
         if storedVersion < currentSchemaVersion {
-            // Drop old tables
-            try? db.run(bandsTable.drop(ifExists: true))
-            try? db.run(eventsTable.drop(ifExists: true))
-            try? db.run(userPrioritiesTable.drop(ifExists: true))
-            try? db.run(userAttendancesTable.drop(ifExists: true))
-            try? db.run(descriptionMapTable.drop(ifExists: true))
-            
-            // Reset batch insert counters for all years since we're starting fresh
-            for year in 2011...2030 {
-                UserDefaults.standard.removeObject(forKey: "batchInsertCallCount_\(year)")
+            // v8 -> v9: Add lineIndex to bands (no drop; preserve data). Only when upgrading from 8 (table exists).
+            if storedVersion == 8 {
+                try? db.execute("ALTER TABLE bands ADD COLUMN lineIndex INTEGER")
             }
-            
+            // Major schema bumps: drop and recreate (only when needed in future)
+            if storedVersion < 8 {
+                try? db.run(bandsTable.drop(ifExists: true))
+                try? db.run(eventsTable.drop(ifExists: true))
+                try? db.run(userPrioritiesTable.drop(ifExists: true))
+                try? db.run(userAttendancesTable.drop(ifExists: true))
+                try? db.run(descriptionMapTable.drop(ifExists: true))
+                for year in 2011...2030 {
+                    UserDefaults.standard.removeObject(forKey: "batchInsertCallCount_\(year)")
+                }
+            }
             // Return true to indicate migration was performed
-            // Version will be saved AFTER tables are successfully created
             return true
-        } else {
-            return false
         }
+        return false
     }
     
     private func createTables() throws {
@@ -200,6 +203,7 @@ class SQLiteDataManager: DataManagerProtocol {
             t.column(genre)
             t.column(noteworthy)
             t.column(priorYears)
+            t.column(lineIndex)
             t.unique(bandName, eventYear)
         })
         
@@ -350,7 +354,37 @@ class SQLiteDataManager: DataManagerProtocol {
         }
     }
     
-    func createOrUpdateBand(name: String, eventYear year: Int, officialSite: String?, imageUrl: String?, youtube: String?, metalArchives: String?, wikipedia: String?, country: String?, genre: String?, noteworthy: String?, priorYears: String?) -> BandData {
+    /// Band names in canonical (artist CSV) order for QR; uses lineIndex only. No fallback.
+    /// Only bands with non-nil lineIndex are included (schedule-only bands have nil and are excluded).
+    /// If this returns empty, band list import (BandCSVImporter) did not run or failed for this year.
+    func fetchBandNamesInCanonicalOrder(forYear year: Int) -> [String] {
+        guard let db = db else {
+            print("[LineIndex] LOOKUP year=\(year) db=nil → count=0")
+            return []
+        }
+        do {
+            let query = bandsTable
+                .filter(eventYear == year && lineIndex !== nil)
+                .order(lineIndex.asc)
+            var names: [String] = []
+            for row in try db.prepare(query) {
+                names.append(row[bandName])
+            }
+            if !names.isEmpty {
+                print("[LineIndex] LOOKUP year=\(year) → count=\(names.count)")
+            } else {
+                let totalForYear = try Int(db.scalar(bandsTable.filter(eventYear == year).count))
+                print("[LineIndex] LOOKUP year=\(year) → count=0 (bands in DB for year: \(totalForYear), none have lineIndex)")
+            }
+            return names
+        } catch {
+            print("[LineIndex] LOOKUP year=\(year) error=\(error) → count=0")
+            return []
+        }
+    }
+    
+    /// lineIndex: only set when called from full band list import (BandCSVImporter); pass nil for schedule/event paths so existing lineIndex is not overwritten.
+    func createOrUpdateBand(name: String, eventYear year: Int, officialSite: String?, imageUrl: String?, youtube: String?, metalArchives: String?, wikipedia: String?, country: String?, genre: String?, noteworthy: String?, priorYears: String?, lineIndex lineIndexParam: Int? = nil) -> BandData {
         guard let db = db else {
             fatalError("Database not initialized")
         }
@@ -380,6 +414,11 @@ class SQLiteDataManager: DataManagerProtocol {
         }
         
         do {
+            if let idx = lineIndexParam {
+                print("[LineIndex] WRITE single year=\(year) name=\(name) lineIndex=\(idx)")
+            } else {
+                print("[LineIndex] WRITE nil year=\(year) name=\(name) (replace — overwrites existing lineIndex if any)")
+            }
             let insert = bandsTable.insert(
                 or: .replace,
                 bandName <- name,
@@ -392,13 +431,14 @@ class SQLiteDataManager: DataManagerProtocol {
                 self.country <- country,
                 self.genre <- genre,
                 self.noteworthy <- noteworthy,
-                self.priorYears <- priorYears
+                self.priorYears <- priorYears,
+                self.lineIndex <- lineIndexParam
             )
             try db.run(insert)
         } catch {
             // Insert/update failed
         }
-        
+
         // Return the band as a plain struct (no Core Data!)
         return BandData(
             bandName: name,
@@ -415,8 +455,8 @@ class SQLiteDataManager: DataManagerProtocol {
         )
     }
     
-    /// Create band only if it doesn't exist (won't overwrite existing data)
-    /// Used by schedule importer to ensure band exists without destroying existing metadata
+    /// Create band only if it doesn't exist (won't overwrite existing data). Used by schedule/event import only.
+    /// Never sets lineIndex (new rows get nil). Does not modify existing bands; lineIndex is only set when the full band list is imported (BandCSVImporter).
     func createBandIfNotExists(name: String, eventYear year: Int) -> Bool {
         guard let db = db else { return false }
         
@@ -431,6 +471,7 @@ class SQLiteDataManager: DataManagerProtocol {
             }
             
             // Band doesn't exist, create minimal entry
+            print("[LineIndex] INSERT nil year=\(year) name=\(name) (new band, schedule/event path)")
             let insert = bandsTable.insert(
                 or: .ignore,  // ✅ IGNORE if already exists (race condition safety)
                 bandName <- name,
@@ -443,7 +484,8 @@ class SQLiteDataManager: DataManagerProtocol {
                 self.country <- nil,
                 self.genre <- nil,
                 self.noteworthy <- nil,
-                self.priorYears <- nil
+                self.priorYears <- nil,
+                self.lineIndex <- nil
             )
             try db.run(insert)
             return true
@@ -456,70 +498,88 @@ class SQLiteDataManager: DataManagerProtocol {
     private var isBatchInserting = false
     private let batchInsertLock = NSLock()
     
-    /// Batch insert/update bands within a single transaction for better performance
-    func batchCreateOrUpdateBands(_ bands: [(name: String, eventYear: Int, officialSite: String?, imageUrl: String?, youtube: String?, metalArchives: String?, wikipedia: String?, country: String?, genre: String?, noteworthy: String?, priorYears: String?)]) {
+    private static func isDatabaseLocked(_ error: Error) -> Bool {
+        let s = String(describing: error)
+        return s.contains("database is locked") || s.contains("SQLITE_BUSY") || s.contains("code: 5")
+    }
+    
+    /// Batch insert/update bands within a single transaction. lineIndex = 0-based row order from the full band list CSV only (count varies by year). Only this path and createOrUpdateBand(..., lineIndex:) set lineIndex; schedule/event import must never set it.
+    /// Retries on "database is locked" so band list import can succeed when other threads hold the DB briefly.
+    /// - Returns: true if the batch wrote successfully; false if DB was nil, locked after retries, or another error. Caller must not run delete/clear when false (leave existing records alone).
+    func batchCreateOrUpdateBands(_ bands: [(name: String, eventYear: Int, officialSite: String?, imageUrl: String?, youtube: String?, metalArchives: String?, wikipedia: String?, country: String?, genre: String?, noteworthy: String?, priorYears: String?, lineIndex: Int?)]) -> Bool {
         // Prevent concurrent batch inserts
         batchInsertLock.lock()
         defer { batchInsertLock.unlock() }
         
-        if isBatchInserting { return }
+        if isBatchInserting { return false }
         
         isBatchInserting = true
         defer { isBatchInserting = false }
         
-        guard let db = db else { return }
+        guard let db = db else { return false }
         
         let callCount = UserDefaults.standard.integer(forKey: "batchInsertCallCount_\(bands.first?.eventYear ?? 0)") + 1
         UserDefaults.standard.set(callCount, forKey: "batchInsertCallCount_\(bands.first?.eventYear ?? 0)")
         
-        do {
-            
-            // Helper to validate image URLs
-            func isValidImageURL(_ url: String?) -> Bool {
-                guard let url = url else { return false }
-                let trimmed = url.trimmingCharacters(in: .whitespacesAndNewlines)
-                return !trimmed.isEmpty && trimmed != "http://" && trimmed != "https://"
-            }
-            
-            try db.transaction {
-                for (index, bandData) in bands.enumerated() {
-                    // Determine final image URL: use new one if valid, otherwise preserve existing
-                    var finalImageUrl = bandData.imageUrl
-                    if !isValidImageURL(bandData.imageUrl) {
-                        // New URL is invalid - check if we should preserve existing
-                        let query = bandsTable.filter(bandName == bandData.name && eventYear == bandData.eventYear)
-                        if let existingBand = try db.pluck(query),
-                           let existingImageUrl = existingBand[self.imageUrl],
-                           isValidImageURL(existingImageUrl) {
-                            // Preserve existing valid image URL
-                            finalImageUrl = existingImageUrl
+        let year = bands.first?.eventYear ?? -1
+        let count = bands.count
+        let firstLineIndex = bands.first?.lineIndex
+        let lastLineIndex = bands.last?.lineIndex
+        print("[LineIndex] WRITE batch year=\(year) count=\(count) lineIndex range: first=\(firstLineIndex.map { String($0) } ?? "nil") last=\(lastLineIndex.map { String($0) } ?? "nil")")
+        
+        let maxRetries = 5
+        var lastError: Error?
+        for attempt in 1...maxRetries {
+            do {
+                try db.transaction {
+                    for (index, bandData) in bands.enumerated() {
+                        var finalImageUrl = bandData.imageUrl
+                        if bandData.imageUrl?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true
+                            || bandData.imageUrl == "http://" || bandData.imageUrl == "https://" {
+                            let query = bandsTable.filter(bandName == bandData.name && eventYear == bandData.eventYear)
+                            if let existingBand = try db.pluck(query),
+                               let existingImageUrl = existingBand[self.imageUrl],
+                               !(existingImageUrl.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty),
+                               existingImageUrl != "http://" {
+                                finalImageUrl = existingImageUrl
+                            }
                         }
-                    }
-                    
-                    let insert = bandsTable.insert(
-                        or: .replace,
-                        bandName <- bandData.name,
-                        eventYear <- bandData.eventYear,
-                        self.officialSite <- bandData.officialSite,
-                        self.imageUrl <- finalImageUrl,  // ✅ Use validated/preserved URL
-                        self.youtube <- bandData.youtube,
-                        self.metalArchives <- bandData.metalArchives,
-                        self.wikipedia <- bandData.wikipedia,
-                        self.country <- bandData.country,
-                        self.genre <- bandData.genre,
-                        self.noteworthy <- bandData.noteworthy,
-                        self.priorYears <- bandData.priorYears
-                    )
-                    try db.run(insert)
-                    
-                    if (index + 1) % 10 == 0 {
-                        // Progress every 10 bands
+                        let insert = bandsTable.insert(
+                            or: .replace,
+                            bandName <- bandData.name,
+                            eventYear <- bandData.eventYear,
+                            self.officialSite <- bandData.officialSite,
+                            self.imageUrl <- finalImageUrl,
+                            self.youtube <- bandData.youtube,
+                            self.metalArchives <- bandData.metalArchives,
+                            self.wikipedia <- bandData.wikipedia,
+                            self.country <- bandData.country,
+                            self.genre <- bandData.genre,
+                            self.noteworthy <- bandData.noteworthy,
+                            self.priorYears <- bandData.priorYears,
+                            self.lineIndex <- bandData.lineIndex
+                        )
+                        try db.run(insert)
                     }
                 }
+                print("[LineIndex] WRITE batch year=\(year) completed \(count) rows")
+                return true
+            } catch {
+                lastError = error
+                if Self.isDatabaseLocked(error) && attempt < maxRetries {
+                    let delayMs = 200 * attempt
+                    print("[LineIndex] WRITE batch year=\(year) database locked, retry \(attempt)/\(maxRetries) in \(delayMs)ms")
+                    Thread.sleep(forTimeInterval: Double(delayMs) / 1000.0)
+                } else {
+                    print("[LineIndex] WRITE batch failed year=\(year) error=\(error)")
+                    return false
+                }
             }
-        } catch {
-            // Batch insert failed
         }
+        if let e = lastError {
+            print("[LineIndex] WRITE batch failed year=\(year) after \(maxRetries) attempts error=\(e)")
+        }
+        return false
     }
     
     func deleteBand(name: String, eventYear year: Int) {
@@ -530,6 +590,44 @@ class SQLiteDataManager: DataManagerProtocol {
             try db.run(bandToDelete.delete())
         } catch {
             // Delete failed
+        }
+    }
+    
+    /// Called only after full band list import. Clears lineIndex for any band in this year not in the artist list (e.g. schedule-only names). Retries on "database is locked".
+    func clearLineIndexForBandsNotIn(eventYear year: Int, bandNamesInArtistList: Set<String>) {
+        guard let db = db else { return }
+        let maxRetries = 5
+        var lastError: Error?
+        for attempt in 1...maxRetries {
+            do {
+                let bands = bandsTable.filter(eventYear == year)
+                var cleared = 0
+                for row in try db.prepare(bands) {
+                    let name = row[bandName]
+                    if !bandNamesInArtistList.contains(name) {
+                        try db.run(bandsTable.filter(bandName == name && eventYear == year).update(lineIndex <- nil))
+                        cleared += 1
+                        print("[LineIndex] CLEAR year=\(year) name=\(name) (not in artist list)")
+                    }
+                }
+                if cleared > 0 {
+                    print("[LineIndex] CLEAR year=\(year) cleared \(cleared) bands (artist list size=\(bandNamesInArtistList.count))")
+                }
+                return
+            } catch {
+                lastError = error
+                if Self.isDatabaseLocked(error) && attempt < maxRetries {
+                    let delayMs = 200 * attempt
+                    print("[LineIndex] CLEAR year=\(year) database locked, retry \(attempt)/\(maxRetries) in \(delayMs)ms")
+                    Thread.sleep(forTimeInterval: Double(delayMs) / 1000.0)
+                } else {
+                    print("[LineIndex] CLEAR year=\(year) error=\(error)")
+                    return
+                }
+            }
+        }
+        if let e = lastError {
+            print("[LineIndex] CLEAR year=\(year) failed after \(maxRetries) attempts error=\(e)")
         }
     }
     
@@ -726,6 +824,55 @@ class SQLiteDataManager: DataManagerProtocol {
         } catch {
             // Delete failed
         }
+    }
+    
+    /// Replaces all events for the given year with the provided list. Runs in a single transaction with retry on "database is locked" so we never leave partial state or store a checksum when the write failed.
+    func replaceEvents(forYear year: Int, events: [EventData]) -> Bool {
+        guard let db = db else { return false }
+        let maxRetries = 5
+        var lastError: Error?
+        for attempt in 1...maxRetries {
+            do {
+                try db.transaction {
+                    _ = try db.run(eventsTable.filter(eventYear_col == year).delete())
+                    for e in events {
+                        _ = self.createBandIfNotExists(name: e.bandName, eventYear: year)
+                        let insert = eventsTable.insert(
+                            or: .replace,
+                            eventBandName <- e.bandName,
+                            eventYear_col <- year,
+                            self.location <- e.location,
+                            self.eventType <- e.eventType,
+                            self.date <- e.date,
+                            self.day <- e.day,
+                            self.startTime <- e.startTime,
+                            self.endTime <- e.endTime,
+                            self.timeIndex <- e.timeIndex,
+                            self.endTimeIndex <- e.endTimeIndex,
+                            self.notes <- e.notes,
+                            self.descriptionUrl <- e.descriptionUrl,
+                            self.eventImageUrl <- e.eventImageUrl
+                        )
+                        try db.run(insert)
+                    }
+                }
+                return true
+            } catch {
+                lastError = error
+                if Self.isDatabaseLocked(error) && attempt < maxRetries {
+                    let delayMs = 200 * attempt
+                    print("[ScheduleImport] replaceEvents year=\(year) database locked, retry \(attempt)/\(maxRetries) in \(delayMs)ms")
+                    Thread.sleep(forTimeInterval: Double(delayMs) / 1000.0)
+                } else {
+                    print("[ScheduleImport] replaceEvents year=\(year) failed: \(error)")
+                    return false
+                }
+            }
+        }
+        if let e = lastError {
+            print("[ScheduleImport] replaceEvents year=\(year) failed after \(maxRetries) attempts: \(e)")
+        }
+        return false
     }
     
     func cleanupProblematicEvents(currentYear year: Int) {
