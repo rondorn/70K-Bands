@@ -13,8 +13,8 @@ android {
         // applicationId will be set by product flavors
         minSdkVersion 26
         targetSdkVersion 35
-        versionCode 302603091
-        versionName "302603091"
+        versionCode 302603151
+        versionName "302603151"
         android.compileOptions.incremental = false
         multiDexEnabled false
     }
@@ -107,7 +107,7 @@ dependencies {
 
     // Schedule QR (cross-platform with iOS: binary payload). Nayuki = encode; ML Kit = scan (replaces ZXing).
     implementation 'io.nayuki:qrcodegen:1.8.0'
-    implementation 'com.google.mlkit:barcode-scanning:17.2.0'
+    implementation 'com.google.mlkit:barcode-scanning:17.3.0'
     implementation 'org.apache.commons:commons-compress:1.26.0'
     implementation 'org.tukaani:xz:1.10'  // required at runtime for Commons Compress LZMA
 
