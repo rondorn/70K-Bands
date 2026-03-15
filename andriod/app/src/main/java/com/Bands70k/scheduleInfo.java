@@ -63,10 +63,15 @@ public class scheduleInfo {
             
             try {
                 Log.d("ScheduleLine", "DownloadScheduleFile - 2 URL=" + scheduleUrl);
-                URL u = new URL(scheduleUrl);
+                // Append cache-busting param so same URL with updated content (e.g. Dropbox file replaced) returns fresh response.
+                String urlWithBust = scheduleUrl + (scheduleUrl.contains("?") ? "&" : "?") + "_t=" + System.currentTimeMillis();
+                URL u = new URL(urlWithBust);
                 java.net.HttpURLConnection connection = (java.net.HttpURLConnection) u.openConnection();
                 connection.setInstanceFollowRedirects(true);
                 HttpConnectionHelper.applyTimeouts(connection);
+                connection.setUseCaches(false);
+                connection.setRequestProperty("Cache-Control", "no-cache, no-store, must-revalidate");
+                connection.setRequestProperty("Pragma", "no-cache");
                 InputStream is = connection.getInputStream();
 
                 DataInputStream dis = new DataInputStream(is);

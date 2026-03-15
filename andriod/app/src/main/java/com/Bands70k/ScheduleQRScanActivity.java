@@ -15,19 +15,25 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.camera.core.Camera;
 import androidx.camera.core.CameraSelector;
+import androidx.camera.core.FocusMeteringAction;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
+import androidx.camera.core.MeteringPoint;
+import androidx.camera.core.MeteringPointFactory;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.DecodeHintType;
-import com.google.zxing.ResultMetadataType;
-
+import com.google.android.gms.tasks.Tasks;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.mlkit.vision.barcode.BarcodeScanner;
+import com.google.mlkit.vision.barcode.BarcodeScannerOptions;
+import com.google.mlkit.vision.barcode.BarcodeScanning;
+import com.google.mlkit.vision.barcode.common.Barcode;
+import com.google.mlkit.vision.common.InputImage;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -35,17 +41,17 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import androidx.camera.view.PreviewView;
 
 /**
  * Scan 1 or 2 schedule QR codes (binary payload: type + 4-byte LE size + zlib).
- * Uses BYTE_SEGMENTS for decoded bytes (like iOS BinaryQRScanner binary mode). Collects payloads
+ * Uses ML Kit for decoding (getRawBytes() for binary payload). Collects payloads
  * by type (0=full, 1=chunk1, 2=chunk2), then decompresses, writes to FileHandler70k.schedule,
  * parses and sets BandInfo.scheduleRecords, sends refresh.
  */
@@ -53,9 +59,9 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
 
     private static final String TAG = "ScheduleQRScan";
     private static final int REQUEST_CAMERA = 1001;
-    /** Try decode every N frames; lower = more attempts/sec (helps lock onto iOS QRs). */
-    private static final int FRAMES_BETWEEN_SCANS = 3;
-    /** Log "no QR decoded" every this many analyses (iOS→Android troubleshooting). */
+    /** Try decode every N frames. */
+    private static final int FRAMES_BETWEEN_SCANS = 4;
+    /** Log "no QR decoded" every this many analyses. */
     private static final int NO_DECODE_LOG_INTERVAL = 50;
 
     private static final String TAG_QR_ERROR = "QR Error";
@@ -64,6 +70,7 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
     private TextView hintText;
     private ProgressBar progressBar;
     private ProcessCameraProvider cameraProvider;
+    private BarcodeScanner barcodeScanner;
 
     private byte[] chunk1;
     private byte[] chunk2;
@@ -129,23 +136,48 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
 
     private void bindCamera(ProcessCameraProvider provider) {
         cameraProvider = provider;
+        if (barcodeScanner == null) {
+            BarcodeScannerOptions options = new BarcodeScannerOptions.Builder()
+                    .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
+                    .build();
+            barcodeScanner = BarcodeScanning.getClient(options);
+        }
         Preview preview = new Preview.Builder().build();
         preview.setSurfaceProvider(previewView.getSurfaceProvider());
 
+        // Higher resolution so each QR module has enough pixels (dense/small QRs decode more reliably).
         ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .setTargetResolution(new Size(1280, 720))
+                .setTargetResolution(new Size(1920, 1080))
                 .build();
         imageAnalysis.setAnalyzer(analysisExecutor, this::analyzeFrame);
 
         CameraSelector selector = new CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_BACK).build();
         try {
             provider.unbindAll();
-            provider.bindToLifecycle(this, selector, preview, imageAnalysis);
+            Camera camera = provider.bindToLifecycle(this, selector, preview, imageAnalysis);
+            // Focus and meter on center so QR in frame center gets sharp and well-exposed.
+            if (camera != null) {
+                previewView.postDelayed(() -> startCenterFocusAndMetering(camera), 350);
+            }
         } catch (Exception e) {
             Log.e(TAG, "bindToLifecycle failed", e);
         }
         runOnUiThread(() -> progressBar.setVisibility(View.GONE));
+    }
+
+    /** Trigger focus and exposure metering at view center (where user typically holds the QR). */
+    private void startCenterFocusAndMetering(Camera camera) {
+        try {
+            MeteringPointFactory factory = previewView.getMeteringPointFactory();
+            MeteringPoint point = factory.createPoint(0.5f, 0.5f);
+            FocusMeteringAction action = new FocusMeteringAction.Builder(point)
+                    .setAutoCancelDuration(2, TimeUnit.SECONDS)
+                    .build();
+            camera.getCameraControl().startFocusAndMetering(action);
+        } catch (Exception e) {
+            Log.d(TAG, "startFocusAndMetering not supported or failed", e);
+        }
     }
 
     /** Unbind camera so it closes before validation/import. Call from main thread. */
@@ -199,103 +231,35 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
         }
     }
 
-    /** Upscale Y plane for denser QRs (e.g. iOS-generated); helps iOS→Android scan. */
-    private static final int LUMINANCE_UPSCALE_FACTOR = 3;
-
-    /** Decode QR from ImageProxy (YUV_420_888) and return raw bytes. Upscales Y plane for denser QRs, then tries HybridBinarizer then GlobalHistogramBinarizer, then PURE_BARCODE fallback for on-screen QRs. */
+    /** Decode QR from ImageProxy using ML Kit; returns raw binary payload or null. */
     private byte[] decodeQRFromImage(ImageProxy image) {
-        if (image.getPlanes() == null || image.getPlanes().length == 0) return null;
-        ImageProxy.PlaneProxy yPlane = image.getPlanes()[0];
-        java.nio.ByteBuffer yBuffer = yPlane.getBuffer();
-        int ySize = yBuffer.remaining();
-        byte[] yBytes = new byte[ySize];
-        yBuffer.get(yBytes);
-        int width = image.getWidth();
-        int height = image.getHeight();
-        int rowStride = yPlane.getRowStride();
-
-        byte[] luminance;
-        int lumWidth;
-        int lumHeight;
-        int lumRowStride;
-        if (LUMINANCE_UPSCALE_FACTOR > 1 && width > 0 && height > 0) {
-            int outW = width * LUMINANCE_UPSCALE_FACTOR;
-            int outH = height * LUMINANCE_UPSCALE_FACTOR;
-            luminance = upscaleLuminanceNearest(yBytes, width, height, rowStride, LUMINANCE_UPSCALE_FACTOR);
-            lumWidth = outW;
-            lumHeight = outH;
-            lumRowStride = outW;
-        } else {
-            luminance = yBytes;
-            lumWidth = width;
-            lumHeight = height;
-            lumRowStride = rowStride;
-        }
-
-        com.google.zxing.PlanarYUVLuminanceSource source = new com.google.zxing.PlanarYUVLuminanceSource(
-                luminance, lumRowStride, lumHeight, 0, 0, lumWidth, lumHeight, false);
-        Map<DecodeHintType, Object> hints = new EnumMap<>(DecodeHintType.class);
-        hints.put(DecodeHintType.POSSIBLE_FORMATS, Collections.singleton(BarcodeFormat.QR_CODE));
-        hints.put(DecodeHintType.TRY_HARDER, Boolean.TRUE);
-
-        com.google.zxing.MultiFormatReader reader = new com.google.zxing.MultiFormatReader();
-        reader.setHints(hints);
-
-        com.google.zxing.BinaryBitmap hybridBitmap = new com.google.zxing.BinaryBitmap(
-                new com.google.zxing.common.HybridBinarizer(source));
-        com.google.zxing.BinaryBitmap globalBitmap = new com.google.zxing.BinaryBitmap(
-                new com.google.zxing.common.GlobalHistogramBinarizer(source));
-
-        com.google.zxing.Result result = tryDecode(reader, hybridBitmap);
-        if (result == null) {
-            result = tryDecode(reader, globalBitmap);
-        }
-        // iOS→Android: try PURE_BARCODE (image mostly barcode, e.g. camera pointed at phone screen)
-        if (result == null) {
-            Map<DecodeHintType, Object> pureHints = new EnumMap<>(DecodeHintType.class);
-            pureHints.put(DecodeHintType.POSSIBLE_FORMATS, Collections.singleton(BarcodeFormat.QR_CODE));
-            pureHints.put(DecodeHintType.PURE_BARCODE, Boolean.TRUE);
-            reader.setHints(pureHints);
-            result = tryDecode(reader, hybridBitmap);
-            if (result == null) {
-                result = tryDecode(reader, globalBitmap);
+        if (barcodeScanner == null) return null;
+        android.media.Image mediaImage = image.getImage();
+        if (mediaImage == null) return null;
+        try {
+            int rotation = image.getImageInfo().getRotationDegrees();
+            InputImage inputImage = InputImage.fromMediaImage(mediaImage, rotation);
+            List<Barcode> barcodes = Tasks.await(barcodeScanner.process(inputImage));
+            if (barcodes == null || barcodes.isEmpty()) return null;
+            for (Barcode barcode : barcodes) {
+                byte[] raw = barcode.getRawBytes();
+                if (raw != null && raw.length > 0) {
+                    logPayloadFirstBytes(TAG, "[QRScan] decoded", raw);
+                    return raw;
+                }
             }
-            reader.setHints(hints); // restore for next frame
-        }
-        if (result != null) {
-            byte[] payload = getDecodedBytePayload(result);
-            if (payload != null && payload.length > 0) {
-                logPayloadFirstBytes(TAG, "[QRScan] decoded", payload);
-                return payload;
+            // ML Kit found QR(s) but no raw bytes; fallback to raw value as bytes (e.g. if encoded as text)
+            Barcode first = barcodes.get(0);
+            String rawValue = first.getRawValue();
+            if (rawValue != null && !rawValue.isEmpty()) {
+                byte[] fromText = rawValue.getBytes(StandardCharsets.ISO_8859_1);
+                Log.d(TAG, "[QRScan] payload source=rawValue(ISO-8859-1) length=" + fromText.length);
+                return fromText;
             }
-            logZxingResultWhenPayloadEmpty(result);
+        } catch (Exception e) {
+            Log.v(TAG, "[QRScan] ML Kit decode " + e.getClass().getSimpleName() + ": " + e.getMessage());
         }
         return null;
-    }
-
-    /** Nearest-neighbor upscale of Y plane by scaleFactor (e.g. 2). Caller must ensure scaleFactor >= 1 and dimensions valid. */
-    private static byte[] upscaleLuminanceNearest(byte[] in, int width, int height, int rowStride, int scaleFactor) {
-        int outW = width * scaleFactor;
-        int outH = height * scaleFactor;
-        byte[] out = new byte[outW * outH];
-        for (int y = 0; y < outH; y++) {
-            int sy = y / scaleFactor;
-            for (int x = 0; x < outW; x++) {
-                int sx = x / scaleFactor;
-                out[y * outW + x] = in[sy * rowStride + sx];
-            }
-        }
-        return out;
-    }
-
-    /** Try decode and return result or null; log exception type on failure. */
-    private com.google.zxing.Result tryDecode(com.google.zxing.Reader reader, com.google.zxing.BinaryBitmap bitmap) {
-        try {
-            return reader.decode(bitmap);
-        } catch (Exception e) {
-            Log.v(TAG, "[QRScan] ZXing decode " + e.getClass().getSimpleName() + ": " + e.getMessage());
-            return null;
-        }
     }
 
     private static void logPayloadFirstBytes(String tag, String label, byte[] payload) {
@@ -321,82 +285,6 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
         for (int i = 0; i < show; i++) hex.append(String.format("%02X ", payload[i] & 0xFF));
         if (payload.length > show) hex.append("...");
         return hex.toString().trim();
-    }
-
-    /**
-     * Get decoded binary payload from QR result. ZXing treats QR Byte mode as binary; the decoded bytes
-     * are in BYTE_SEGMENTS metadata. Fallback: getRawBytes() then text as ISO-8859-1 (lossy for binary).
-     */
-    private static byte[] getDecodedBytePayload(com.google.zxing.Result result) {
-        if (result == null) return null;
-        java.util.Map<ResultMetadataType, Object> meta = result.getResultMetadata();
-        if (meta != null) {
-            @SuppressWarnings("unchecked")
-            java.util.List<byte[]> segments = (java.util.List<byte[]>) meta.get(ResultMetadataType.BYTE_SEGMENTS);
-            if (segments != null && !segments.isEmpty()) {
-                int total = 0;
-                for (byte[] seg : segments) total += seg.length;
-                byte[] out = new byte[total];
-                int off = 0;
-                for (byte[] seg : segments) {
-                    System.arraycopy(seg, 0, out, off, seg.length);
-                    off += seg.length;
-                }
-                Log.d(TAG, "[QRScan] payload source=BYTE_SEGMENTS segments=" + segments.size() + " totalBytes=" + total);
-                return out;
-            }
-        }
-        byte[] raw = result.getRawBytes();
-        if (raw != null && raw.length > 0) {
-            Log.d(TAG, "[QRScan] payload source=getRawBytes length=" + raw.length);
-            return raw;
-        }
-        String text = result.getText();
-        if (text != null) {
-            byte[] fromText = text.getBytes(StandardCharsets.ISO_8859_1);
-            Log.d(TAG, "[QRScan] payload source=getText(ISO-8859-1) textLen=" + text.length() + " bytes=" + fromText.length);
-            return fromText;
-        }
-        Log.d(TAG, "[QRScan] payload source=none (meta no BYTE_SEGMENTS, getRawBytes null, getText null)");
-        return null;
-    }
-
-    /**
-     * iOS→Android troubleshooting: ZXing decoded a QR but we got no usable binary payload.
-     * Log what ZXing actually returned (BYTE_SEGMENTS, getRawBytes, getText) to see if the
-     * iOS QR is being decoded as text or with an unexpected structure.
-     */
-    private static void logZxingResultWhenPayloadEmpty(com.google.zxing.Result result) {
-        if (result == null) return;
-        Log.d(TAG, "[QRScan] iOS→Android troubleshooting: ZXing returned result but payload null/empty");
-        java.util.Map<ResultMetadataType, Object> meta = result.getResultMetadata();
-        if (meta != null) {
-            @SuppressWarnings("unchecked")
-            java.util.List<byte[]> segments = (java.util.List<byte[]>) meta.get(ResultMetadataType.BYTE_SEGMENTS);
-            if (segments != null) {
-                int total = 0;
-                for (byte[] seg : segments) total += seg.length;
-                Log.d(TAG, "[QRScan] ZXing BYTE_SEGMENTS: segments=" + segments.size() + " totalBytes=" + total
-                        + (total > 0 ? " first20hex=" + bytesToHex(segments.get(0), 20) : ""));
-            } else {
-                Log.d(TAG, "[QRScan] ZXing BYTE_SEGMENTS: not present");
-            }
-        } else {
-            Log.d(TAG, "[QRScan] ZXing resultMetadata: null");
-        }
-        byte[] raw = result.getRawBytes();
-        if (raw != null) {
-            Log.d(TAG, "[QRScan] ZXing getRawBytes: length=" + raw.length + " first20hex=" + bytesToHex(raw, 20));
-        } else {
-            Log.d(TAG, "[QRScan] ZXing getRawBytes: null");
-        }
-        String text = result.getText();
-        if (text != null) {
-            String prefix = text.length() > 60 ? text.substring(0, 60) + "..." : text;
-            Log.d(TAG, "[QRScan] ZXing getText: length=" + text.length() + " prefix=" + prefix);
-        } else {
-            Log.d(TAG, "[QRScan] ZXing getText: null");
-        }
     }
 
     private void handlePayload(byte[] payload, ScheduleQRCompression.PayloadTypeResult result) {
@@ -589,6 +477,14 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         analysisExecutor.shutdown();
+        if (barcodeScanner != null) {
+            try {
+                barcodeScanner.close();
+            } catch (Exception e) {
+                Log.d(TAG, "barcodeScanner.close", e);
+            }
+            barcodeScanner = null;
+        }
         super.onDestroy();
     }
 }

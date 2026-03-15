@@ -1075,7 +1075,7 @@ private let scheduleQRValidationColStartTime = 4
 private let scheduleQRValidationMinColumns = 5
 
 /// Returns (success, exampleMessage). Run after decompression, before overwriting schedule cache.
-/// 1) No 2-digit band names (unresolved codes). 2) Day 1 slots must match current schedule.
+/// 1) No 2-digit band names (unresolved codes). 2) If the phone has Day 1 data, Day 1 slots must match; if the phone has no Day 1 data, pass (nothing to corrupt; no schedule is worse than accepting import).
 /// Band list comes only from band file (artist import); schedule/QR import never changes it. Receiver must have same band list as sender for codes to resolve.
 func validateScheduleQRImport(currentCsvContent: String?, newCsvContent: String) -> (success: Bool, exampleMessage: String?) {
     guard !newCsvContent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
@@ -1086,9 +1086,14 @@ func validateScheduleQRImport(currentCsvContent: String?, newCsvContent: String)
         return (false, "Band \(example) could not resolve")
     }
 
-    if let current = currentCsvContent?.trimmingCharacters(in: .whitespacesAndNewlines), !current.isEmpty,
-       let mismatch = findDay1MismatchExample(currentCsv: current, newCsv: newCsvContent) {
-        return (false, mismatch)
+    if let current = currentCsvContent?.trimmingCharacters(in: .whitespacesAndNewlines), !current.isEmpty {
+        let currentDay1Slots = buildDay1SlotToBand(current)
+        if currentDay1Slots.isEmpty {
+            return (true, nil)
+        }
+        if let mismatch = findDay1MismatchExample(currentCsv: current, newCsv: newCsvContent) {
+            return (false, mismatch)
+        }
     }
 
     return (true, nil)

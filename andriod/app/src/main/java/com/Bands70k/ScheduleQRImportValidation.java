@@ -13,7 +13,8 @@ import java.util.Map;
  * Validates decompressed QR schedule CSV before overwriting the schedule cache.
  * Run after decompression (all codes resolved to band names) but before writing the file.
  * 1) No unresolved bands: band column must not be exactly 2 digits (e.g. "51" = unresolved code).
- * 2) Day 1 consistency: sample Day 1 events must match existing schedule (same band at same venue/time).
+ * 2) Day 1 consistency: if the phone has Day 1 data, sample Day 1 events must match (same band at same venue/time).
+ *    If the phone has no Day 1 data, we pass: nothing to corrupt and no schedule is worse than a validated import.
  */
 public final class ScheduleQRImportValidation {
 
@@ -51,8 +52,13 @@ public final class ScheduleQRImportValidation {
             return new Result(false, "Band " + unresolvedExample + " could not resolve");
         }
 
-        // 2) Day 1: same (day, venue, startTime) should have same band as current
+        // 2) Day 1: if phone has no Day 1 events, pass (nothing to corrupt; no schedule is worse than accepting import).
+        //    If phone has Day 1 data, same (day, venue, startTime) should have same band as current.
         if (currentCsvContent != null && !currentCsvContent.trim().isEmpty()) {
+            Map<String, String> currentDay1Slots = buildDay1SlotToBand(currentCsvContent);
+            if (currentDay1Slots.isEmpty()) {
+                return new Result(true, null);
+            }
             String day1Mismatch = findDay1MismatchExample(currentCsvContent, newCsvContent);
             if (day1Mismatch != null) {
                 return new Result(false, day1Mismatch);
