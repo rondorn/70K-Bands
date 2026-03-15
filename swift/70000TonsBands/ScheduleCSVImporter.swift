@@ -4,6 +4,7 @@
 //
 //  SQLite-only CSV importer for schedule/event data
 //  NO Core Data - uses DataManager (SQLite) exclusively
+//  Band table: only ensures a band row exists (createBandIfNotExists). Never sets or changes lineIndex; that is only set when the full band list is imported (BandCSVImporter).
 //
 
 import Foundation
@@ -12,17 +13,15 @@ class ScheduleCSVImporter {
     
     private let dataManager = DataManager.shared
     
-    /// Imports schedule data from CSV string into SQLite
-    /// Uses smart import logic: updates existing events, adds new ones
-    /// - Parameter csvString: The CSV data as a string
-    /// - Returns: True if import was successful, false otherwise
-    func importEventsFromCSVString(_ csvString: String) -> Bool {
+    /// Imports schedule data from CSV string into SQLite (atomic replace with retry on DB lock).
+    /// - Returns: (success, importedCount). Only store checksum when success and DB event count equals importedCount.
+    func importEventsFromCSVString(_ csvString: String) -> (success: Bool, importedCount: Int) {
         print("DEBUG_MARKER: Starting schedule CSV import to SQLite (NO Core Data)")
         print("DEBUG_MARKER: CSV data length: \(csvString.count) characters")
         
         guard !csvString.isEmpty else {
             print("DEBUG_MARKER: CSV string is empty, skipping import")
-            return false
+            return (false, 0)
         }
         
         // CRITICAL DEBUG: Check if CSV contains unofficial events at the raw level
@@ -41,7 +40,7 @@ class ScheduleCSVImporter {
         // Parse CSV
         guard let csvData = try? CSV(csvStringToParse: csvString) else {
             print("DEBUG_MARKER: Failed to parse CSV")
-            return false
+            return (false, 0)
         }
         
         print("DEBUG_MARKER: CSV parsed successfully, found \(csvData.rows.count) rows")
@@ -60,30 +59,15 @@ class ScheduleCSVImporter {
         let headerSet = Set(csvData.headers.map { $0.trimmingCharacters(in: .whitespaces) })
         guard requiredHeaders.isSubset(of: headerSet) else {
             print("⚠️ [EVENT_VALIDATION] CSV missing required headers - aborting import")
-            print("⚠️ [EVENT_VALIDATION] Expected: Band, Location, Date, Day, Start Time, End Time, Type")
-            print("⚠️ [EVENT_VALIDATION] Found headers: \(csvData.headers)")
-            return false
+            return (false, 0)
         }
         
-        // STEP 1: DELETE ALL old events for this year (CSV validation passed)
-        // This ensures test data doesn't persist when production data is downloaded
-        print("🗑️ [EVENT_CLEANUP] STEP 1: Deleting ALL old events for year \(eventYear)")
-        let existingEvents = dataManager.fetchEvents(forYear: eventYear)
-        print("🗑️ [EVENT_CLEANUP] Found \(existingEvents.count) existing events to delete")
-        
-        for event in existingEvents {
-            dataManager.deleteEvent(bandName: event.bandName, timeIndex: event.timeIndex, eventYear: eventYear)
-        }
-        print("🗑️ [EVENT_CLEANUP] Deleted \(existingEvents.count) old events for year \(eventYear)")
-        
-        // STEP 2: Import new events from CSV
-        print("🚀 [EVENT_IMPORT] STEP 2: Importing \(csvData.rows.count) events from CSV")
-        
-        var successCount = 0
+        // Build event list from CSV (same validation and time-index logic). Then replace all events for this year in one atomic transaction with retry on DB lock.
+        print("🚀 [EVENT_IMPORT] Building \(csvData.rows.count) events from CSV for atomic replace")
+        var eventsToImport: [EventData] = []
         var errorCount = 0
         var skippedUnofficialCount = 0
         
-        // CSV rows are dictionaries with string keys matching the header names
         for (rowIndex, lineData) in csvData.rows.enumerated() {
             guard let bandName = lineData[bandField],
                   let location = lineData[locationField],
@@ -97,40 +81,21 @@ class ScheduleCSVImporter {
                 continue
             }
             
-            // Check if this is an unofficial event
             let isUnofficialEvent = (eventType == "Unofficial Event" || eventType == "Cruiser Organized")
-            
             if isUnofficialEvent || rowIndex < 3 {
-                print("🔍 [CSV_ROW_DEBUG] Row \(rowIndex + 1):")
-                print("  - bandName: '\(bandName)'")
-                print("  - location: '\(location)'")
-                print("  - date: '\(date)'")
-                print("  - day: '\(day)'")
-                print("  - startTime: '\(startTime)'")
-                print("  - endTime: '\(endTime)'")
-                print("  - eventType: '\(eventType)'")
+                print("🔍 [CSV_ROW_DEBUG] Row \(rowIndex + 1): bandName: '\(bandName)', location: '\(location)', eventType: '\(eventType)'")
             }
             
-            // Calculate time indices
             let startTimeIndex = calculateTimeIndex(date: date, time: startTime)
             let endTimeIndex = calculateTimeIndex(date: date, time: endTime)
-            
-            // CRITICAL: Skip events with invalid timeIndex
             if startTimeIndex == -1 || endTimeIndex == -1 || startTimeIndex <= 0 {
-                if isUnofficialEvent {
-                    print("🔧 [UNOFFICIAL_DEBUG] ❌ UNOFFICIAL event REJECTED due to invalid timeIndex!")
-                    skippedUnofficialCount += 1
-                }
+                if isUnofficialEvent { skippedUnofficialCount += 1 }
                 continue
             }
             
-            // Ensure band exists in SQLite WITHOUT overwriting existing data
-            // This won't destroy imageUrl and other metadata from the bands CSV import
-            _ = dataManager.createBandIfNotExists(name: bandName, eventYear: eventYear)
-            
-            // Create event in SQLite
-            _ = dataManager.createOrUpdateEvent(
+            let event = EventData(
                 bandName: bandName,
+                eventYear: eventYear,
                 timeIndex: startTimeIndex,
                 endTimeIndex: endTimeIndex,
                 location: location,
@@ -139,36 +104,27 @@ class ScheduleCSVImporter {
                 startTime: startTime,
                 endTime: endTime,
                 eventType: eventType,
-                eventYear: eventYear,
                 notes: lineData[notesField],
                 descriptionUrl: lineData[descriptionUrlField],
                 eventImageUrl: lineData[imageUrlField]
             )
-            
-            if isUnofficialEvent {
-                print("🔧 [UNOFFICIAL_DEBUG] ✅ Imported unofficial event to SQLite: '\(bandName)' at '\(location)'")
-            }
-            
-            successCount += 1
+            eventsToImport.append(event)
         }
         
-        print("DEBUG_MARKER: Processed \(csvData.rows.count) CSV rows: \(successCount) successful, \(errorCount) errors")
-        print("🔧 [UNOFFICIAL_DEBUG] Skipped \(skippedUnofficialCount) unofficial events due to invalid timeIndex")
+        print("DEBUG_MARKER: Processed \(csvData.rows.count) CSV rows: \(eventsToImport.count) valid, \(errorCount) errors. Skipped \(skippedUnofficialCount) unofficial (invalid timeIndex).")
         
-        // Verify events were written to SQLite
+        // Atomic replace: delete all events for year, insert new list. Single transaction with retry on "database is locked". Returns false if DB write failed so caller does not store checksum.
+        let replaced = dataManager.replaceEvents(forYear: eventYear, events: eventsToImport)
+        if !replaced {
+            print("❌ [EVENT_IMPORT] replaceEvents failed (e.g. database locked) — DB unchanged; do not store checksum")
+            return (false, 0)
+        }
+        
         let eventsInSQLite = dataManager.fetchEvents(forYear: eventYear)
         print("✅ [SQLITE_FIX] Total events in SQLite for year \(eventYear): \(eventsInSQLite.count)")
-        
-        let unofficialEventsInSQLite = eventsInSQLite.filter { event in
-            let type = event.eventType ?? ""
-            return type == "Unofficial Event" || type == "Cruiser Organized"
-        }
-        print("✅ [SQLITE_FIX] Unofficial events in SQLite for year \(eventYear): \(unofficialEventsInSQLite.count)")
-        
-        // Auto Schedule wizard is offered only via the Production Pointer file (AutoScheduleWizardManager), not on import.
-        
-        // Import succeeded if we completed the process (including empty/small CSVs - schedule is now correct)
-        return true
+        let unofficialInDb = eventsInSQLite.filter { ($0.eventType ?? "").contains("Unofficial") || ($0.eventType ?? "").contains("Cruiser") }
+        print("✅ [SQLITE_FIX] Unofficial events in SQLite for year \(eventYear): \(unofficialInDb.count)")
+        return (true, eventsToImport.count)
     }
     
     // MARK: - Time Index Calculation

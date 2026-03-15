@@ -4766,7 +4766,15 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                         }
                         Log.d("FILTER_DEBUG", "🔍 STARTUP: About to download schedule from URL: " + scheduleUrl);
                         scheduleInfo.setLastPreviousEventKeysForWizard(scheduleInfo.collectEventKeys(BandInfo.scheduleRecords));
+                        // Force schedule reload on initial launch only: bypass hash check so downloaded schedule is always applied.
+                        if (staticVariables.justLaunched) {
+                            CacheHashManager.getInstance().clearHash("scheduleInfo");
+                            Log.d("ScheduleInfo", "Initial launch: cleared schedule hash to force reload");
+                        }
                         BandInfo.scheduleRecords = schedule.DownloadScheduleFile(scheduleUrl);
+                        if (staticVariables.justLaunched) {
+                            staticVariables.justLaunched = false;
+                        }
                         Log.d("FILTER_DEBUG", "🔍 STARTUP: Schedule download complete, scheduleRecords has " +
                                 (BandInfo.scheduleRecords != null ? BandInfo.scheduleRecords.size() : "NULL") + " records");
 

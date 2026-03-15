@@ -460,7 +460,8 @@ open class bandNamesHandler {
         
         // Only download from network if explicitly forced
         if forceDownload && isInternetAvailable() == true {
-            // Use eventYear as-is (should be set correctly during app launch or year change)
+            // Ensure eventYear is set before import (BandCSVImporter uses it; QR list is per-year). Zero = bug, no workarounds.
+            loadCachedYearIfNeeded()
             print("DEBUG_MARKER: Starting CSV download process (SQLite backend)")
             print("DEBUG_MARKER: Event year: \(eventYear)")
             

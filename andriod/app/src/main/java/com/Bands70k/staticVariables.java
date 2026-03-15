@@ -217,6 +217,9 @@ public class staticVariables {
     public static Boolean loadingBands = false;
     public static Boolean loadingSchedule = false;
     public static Boolean loadingNotes = false;
+
+    /** True on app process start; set false after first schedule download. Used to force schedule reload on initial launch (bypass hash check). */
+    public static volatile boolean justLaunched = true;
     public static Boolean schedulingAlert = false;
 
     public static Boolean showEventButtons = true;

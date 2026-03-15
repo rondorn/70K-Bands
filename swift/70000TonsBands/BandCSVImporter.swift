@@ -76,8 +76,15 @@ class BandCSVImporter {
     
     /// Download and import bands from URL
     /// This replaces bandNamesHandler.gatherData()
+    /// Ensures eventYear is valid so imported bands get lineIndex for the correct year; QR encode/decode use that list. Zero bands in QR list = bug (fix this path), no workarounds.
     func downloadAndImportBands(forceDownload: Bool = false, completion: @escaping (Bool) -> Void) {
         print("🌐 Starting band data download and import...")
+        
+        if eventYear <= 0 {
+            print("❌ [BAND_DOWNLOAD] eventYear=\(eventYear) invalid; band import would store for wrong year and QR would see 0 bands. Ensure eventYear is set before calling.")
+            completion(false)
+            return
+        }
         
         // Only download if forced or if we have no bands for current year in database
         let existingBandCount = dataManager.fetchBands(forYear: eventYear).count
@@ -88,10 +95,16 @@ class BandCSVImporter {
             return
         }
         
-        // Get the artist URL from pointer data
+        // Get the artist URL from pointer data (empty when offline and no cached pointer file)
         let artistUrl = getPointerUrlData(keyValue: "artistUrl") ?? ""
-        guard !artistUrl.isEmpty else {
-            print("❌ Could not get artist URL from pointer data")
+        if artistUrl.isEmpty {
+            // Offline / no pointer cache: try cached band file so QR scanner can still work
+            if importBandsFromFile() {
+                print("📚 Using cached band file (offline or no pointer data)")
+                completion(true)
+                return
+            }
+            print("❌ Could not get artist URL from pointer data and no cached band file")
             completion(false)
             return
         }
@@ -186,16 +199,23 @@ extension BandCSVImporter {
     }
     
     /// Import bands directly to SQLite
+    /// If this runs successfully, QR encode/decode must see the same band count for this year. Zero bands in QR list = bug (fix import or eventYear); no workarounds.
     private func importBandsDirectlyToSQLite(_ csvData: CSV) -> Bool {
         print("🔍 [IMPORT_DEBUG] ========== BAND CSV IMPORT STARTING ==========")
         print("🔍 [IMPORT_DEBUG] CSV has \(csvData.rows.count) rows to process")
         print("🔍 [IMPORT_DEBUG] ⚠️ CRITICAL: Using eventYear = \(eventYear) for import")
+        if eventYear <= 0 {
+            print("❌ [IMPORT_DEBUG] ROOT CAUSE: eventYear=\(eventYear) is invalid. Refusing to import; QR would see 0 bands. Ensure eventYear is set (e.g. from pointer/cache) before band download.")
+            return false
+        }
         print("🔍 [IMPORT_DEBUG] This means ALL bands will be imported with eventYear = \(eventYear)")
         print("🔍 [IMPORT_DEBUG] ==============================================")
         
-        // CRITICAL FIX: Track which bands are in the CSV so we can delete old ones
+        // CRITICAL: lineIndex is ONLY set in this path (full band list import). Schedule/event import must never change it.
         var bandsInCSV = Set<String>()
-        var bandsToInsert: [(name: String, eventYear: Int, officialSite: String?, imageUrl: String?, youtube: String?, metalArchives: String?, wikipedia: String?, country: String?, genre: String?, noteworthy: String?, priorYears: String?)] = []
+        // lineIndex = 0-based row order in this band file only; count varies by year.
+        var bandsToInsert: [(name: String, eventYear: Int, officialSite: String?, imageUrl: String?, youtube: String?, metalArchives: String?, wikipedia: String?, country: String?, genre: String?, noteworthy: String?, priorYears: String?, lineIndex: Int?)] = []
+        var lineIndexCounter = 0  // 0, 1, 2, ... = exact order of rows in the artist CSV (count varies by year; must match band file order for QR)
         
         for (index, lineData) in csvData.rows.enumerated() {
             guard let bandName = lineData["bandName"], !bandName.isEmpty else {
@@ -217,8 +237,10 @@ extension BandCSVImporter {
                 country: lineData["country"],
                 genre: lineData["genre"],
                 noteworthy: lineData["noteworthy"],
-                priorYears: lineData["priorYears"]
+                priorYears: lineData["priorYears"],
+                lineIndex: lineIndexCounter
             ))
+            lineIndexCounter += 1
         }
         
         print("🚀 [SQLITE_DIRECT] Prepared \(bandsToInsert.count) bands for batch insert with year \(eventYear)")
@@ -231,31 +253,13 @@ extension BandCSVImporter {
             return false
         }
         
-        // STEP 1: DELETE old bands for this year that are NOT in the new CSV
-        // Only runs if CSV has valid records (safety check passed above - bandsToInsert is not empty)
-        // This removes bands that exist in database but are NOT in the downloaded CSV file
-        print("🗑️ [SQLITE_CLEANUP] STEP 1: Removing bands for year \(eventYear) that are NOT in CSV")
-        print("🗑️ [SQLITE_CLEANUP] CSV has \(bandsToInsert.count) bands - will keep only these bands")
-        let existingBands = dataManager.fetchBands(forYear: eventYear)
-        print("🗑️ [SQLITE_CLEANUP] Found \(existingBands.count) existing bands in database for year \(eventYear)")
+        // STEP 1: Write band list first. If this fails (e.g. database locked when offline), leave all existing records alone — do not delete or clear lineIndex.
+        print("🚀 [SQLITE_DIRECT] STEP 1: Inserting/updating \(bandsToInsert.count) bands from CSV")
+        print("[LineIndex] Band list import about to WRITE year=\(eventYear) count=\(bandsToInsert.count) (lineIndex 0..<\(bandsToInsert.count))")
         
-        var deletedCount = 0
-        for existingBand in existingBands {
-            if !bandsInCSV.contains(existingBand.bandName) {
-                print("🗑️ [SQLITE_CLEANUP] Deleting band: \(existingBand.bandName) (not in CSV)")
-                dataManager.deleteBand(name: existingBand.bandName, eventYear: eventYear)
-                deletedCount += 1
-            }
-        }
-        print("🗑️ [SQLITE_CLEANUP] Deleted \(deletedCount) bands for year \(eventYear) (not in CSV)")
-        
-        // STEP 2: Insert/update new bands from CSV
-        print("🚀 [SQLITE_DIRECT] STEP 2: Inserting/updating \(bandsToInsert.count) bands from CSV")
-        
-        // Use batch insert for much better performance (single transaction)
-        // SQLite handles bulk operations efficiently without needing to suspend monitoring
+        let batchSuccess: Bool
         if let sqliteManager = dataManager as? SQLiteDataManager {
-            sqliteManager.batchCreateOrUpdateBands(bandsToInsert)
+            batchSuccess = sqliteManager.batchCreateOrUpdateBands(bandsToInsert)
         } else {
             print("❌ [SQLITE_DIRECT] DataManager is not SQLiteDataManager, falling back to individual inserts")
             for (index, bandData) in bandsToInsert.enumerated() {
@@ -271,9 +275,45 @@ extension BandCSVImporter {
                     country: bandData.country,
                     genre: bandData.genre,
                     noteworthy: bandData.noteworthy,
-                    priorYears: bandData.priorYears
+                    priorYears: bandData.priorYears,
+                    lineIndex: bandData.lineIndex
                 )
             }
+            batchSuccess = true
+        }
+        
+        guard batchSuccess else {
+            print("⚠️ [SQLITE_SAFETY] Band list write failed (e.g. database locked). Leaving existing records unchanged — no delete, no lineIndex clear.")
+            return false
+        }
+        
+        // STEP 2: Only after successful write — delete bands for this year that are NOT in the new CSV, and clear lineIndex for schedule-only names.
+        print("🗑️ [SQLITE_CLEANUP] STEP 2: Removing bands for year \(eventYear) that are NOT in CSV")
+        print("🗑️ [SQLITE_CLEANUP] CSV has \(bandsToInsert.count) bands - will keep only these bands")
+        let existingBands = dataManager.fetchBands(forYear: eventYear)
+        print("🗑️ [SQLITE_CLEANUP] Found \(existingBands.count) existing bands in database for year \(eventYear)")
+        
+        var deletedCount = 0
+        for existingBand in existingBands {
+            if !bandsInCSV.contains(existingBand.bandName) {
+                print("🗑️ [SQLITE_CLEANUP] Deleting band: \(existingBand.bandName) (not in CSV)")
+                dataManager.deleteBand(name: existingBand.bandName, eventYear: eventYear)
+                deletedCount += 1
+            }
+        }
+        print("🗑️ [SQLITE_CLEANUP] Deleted \(deletedCount) bands for year \(eventYear) (not in CSV)")
+        
+        // Clear lineIndex for bands not in this CSV (e.g. schedule-only names); only the full band list defines order.
+        dataManager.clearLineIndexForBandsNotIn(eventYear: eventYear, bandNamesInArtistList: bandsInCSV)
+        
+        // ROOT CAUSE CHECK: QR encode/decode use fetchBandNamesInCanonicalOrder(forYear:). If that returns 0 here, QR will see 0 bands — fix this path, no workarounds.
+        let canonicalCount = dataManager.fetchBandNamesInCanonicalOrder(forYear: eventYear).count
+        if canonicalCount == 0 {
+            print("❌ [IMPORT_DEBUG] ROOT CAUSE: After band import, canonical list for year \(eventYear) has 0 bands. QR encode/decode will see 0. Fix: ensure batchCreateOrUpdateBands/lineIndex ran and eventYear is correct.")
+        } else if canonicalCount != bandsToInsert.count {
+            print("⚠️ [IMPORT_DEBUG] After import, canonical list has \(canonicalCount) bands but we inserted \(bandsToInsert.count). QR will use \(canonicalCount). Investigate lineIndex/order.")
+        } else {
+            print("✅ [IMPORT_DEBUG] Canonical list for year \(eventYear) has \(canonicalCount) bands — QR encode/decode will use this list.")
         }
         
         print("🚀 [SQLITE_DIRECT] Import complete!")
