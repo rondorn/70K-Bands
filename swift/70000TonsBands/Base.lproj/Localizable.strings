@@ -19,6 +19,15 @@
 "EventAttendanceNone"="None";
 "Unknown" = "Unknown";
 
+// Filter option labels (band classification and event type)
+"Show Must See" = "Show Must See";
+"Show Might See" = "Show Might See";
+"Show Wont See" = "Show Wont See";
+"Show Unknown" = "Show Unknown";
+"Show Meet & Greet" = "Show Meet & Greet";
+"Show Special/Other" = "Show Special/Other";
+"Show Unofficial" = "Show Unofficial";
+
 "SelectBandMessage"="Select a band from the list to view details";
 
 "OutdatedAppVersionMessage"="You are running an older version of the app. Please update to the latest version today";
@@ -214,6 +223,10 @@
 "Build" = "Build";
 
 // Advanced Preferences section
+// Share Schedule via QR Code – button and menu strings
+"Share Schedule via QR Code" = "Share Schedule via QR Code";
+"Scan QR Code Schedule" = "Scan QR Code Schedule";
+
 // Share Schedule via QR Code – instructions on QR screen
 "QRShareInstructionsIntro" = "This QR code is meant to be shared under the following conditions.";
 "QRShareCondition1" = "A user has internet access and has new schedule data";
@@ -230,6 +243,21 @@
 "QR downloading band list" = "Downloading band list…";
 "QR band file download failed" = "Could not download band list. Please try again.";
 "QR import validation failed" = "Data was imported successfully, but failed validation checks. The data appears corrupted.\n\nExample: %@";
+"No schedule events to share." = "No schedule events to share.";
+
+// QR scanner (binary and multi-QR)
+"Scan schedule QR code" = "Scan schedule QR code";
+"Scan second QR code" = "Scan second QR code";
+"Scan first QR code" = "Scan first QR code";
+"Scan each schedule QR — 0 of 24" = "Scan each schedule QR — 0 of 24";
+"Scan each schedule QR — %d of %d" = "Scan each schedule QR — %d of %d";
+"No valid schedule QR code found. Position the QR code in frame and try again." = "No valid schedule QR code found. Position the QR code in frame and try again.";
+"No QR Code" = "No QR Code";
+"Camera Access" = "Camera Access";
+"Camera access is required to scan the schedule QR code. Enable it in Settings." = "Camera access is required to scan the schedule QR code. Enable it in Settings.";
+"Camera Unavailable" = "Camera Unavailable";
+"Could not access the camera." = "Could not access the camera.";
+"Scan 1 or 2 schedule QR codes (binary), or 8/16/24 (plain)." = "Scan 1 or 2 schedule QR codes (binary), or 8/16/24 (plain).";
 
 "AdvancedPreferences" = "ADVANCED PREFERENCE.";
 "AdvancedPreferencesWarning" = "DO NOT MODIFY UNLESS YOU KNOW WHAT YOUR DOING!";

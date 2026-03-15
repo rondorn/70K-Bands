@@ -36,6 +36,7 @@
 		111608642F647C0D00B1B407 /* LaunchTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111608622F647C0D00B1B407 /* LaunchTiming.swift */; };
 		111608652F647C0D00B1B407 /* LaunchTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111608622F647C0D00B1B407 /* LaunchTiming.swift */; };
 		1116C9D52F63033300E1ACC0 /* BinaryQRScanner in Frameworks */ = {isa = PBXBuildFile; productRef = 11E8A0622EE8A10008472A3 /* BinaryQRScanner */; };
+		1116C9D62F63033300E1ACC1 /* BinaryQRScanner in Frameworks */ = {isa = PBXBuildFile; productRef = 11E8A0622EE8A10008472A3 /* BinaryQRScanner */; };
 		111A936D2E4F8FAB00EA4ABD /* SwiftUITranslationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111A936C2E4F8FAB00EA4ABD /* SwiftUITranslationHelper.swift */; };
 		111A936E2E4F8FAB00EA4ABD /* SwiftUITranslationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111A936C2E4F8FAB00EA4ABD /* SwiftUITranslationHelper.swift */; };
 		1122E3EE23DC8E38005EE50D /* NetworkTesting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1122E3ED23DC8E38005EE50D /* NetworkTesting.swift */; };
@@ -643,6 +644,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1116C9D62F63033300E1ACC1 /* BinaryQRScanner in Frameworks */,
 				1172EE282E5A1C4D006E3596 /* UserNotifications.framework in Frameworks */,
 				1172EE292E5A1C4D006E3596 /* SystemConfiguration.framework in Frameworks */,
 				1172EE2A2E5A1C4D006E3596 /* WebKit.framework in Frameworks */,
@@ -958,6 +960,9 @@
 			dependencies = (
 			);
 			name = "MDF Bands";
+			packageProductDependencies = (
+				11E8A0622EE8A10008472A3 /* BinaryQRScanner */,
+			);
 			productName = 70000TonsBands;
 			productReference = 1172EE472E5A1C4D006E3596 /* MDF Bands.app */;
 			productType = "com.apple.product-type.application";

@@ -220,6 +220,10 @@
 "This file is not a valid 70K Bands share file." = "Denne fil er ikke en gyldig 70K Bands delingsfil.";
 "Import Shared Preferences" = "Importér Delte Præferencer";
 
+// Share Schedule via QR Code – button and menu strings
+"Share Schedule via QR Code" = "Del program via QR-kode";
+"Scan QR Code Schedule" = "Scan QR-kode program";
+
 // Share Schedule via QR Code – instructions
 "QRShareInstructionsIntro" = "Denne QR-kode er beregnet til deling under følgende betingelser.";
 "QRShareCondition1" = "En bruger har internetadgang og har nye programdata";
@@ -230,6 +234,19 @@
 "QRShareStep3" = "Scan koden på denne skærm";
 "QRShareStep4" = "Få det samme program som på denne telefon";
 "Preparing camera…" = "Forbereder kamera…";
+"No schedule events to share." = "Ingen programbegivenheder at dele.";
+"Scan schedule QR code" = "Scan program QR-kode";
+"Scan second QR code" = "Scan anden QR-kode";
+"Scan first QR code" = "Scan første QR-kode";
+"Scan each schedule QR — 0 of 24" = "Scan hver program-QR — 0 af 24";
+"Scan each schedule QR — %d of %d" = "Scan hver program-QR — %d af %d";
+"No valid schedule QR code found. Position the QR code in frame and try again." = "Ingen gyldig program-QR-kode fundet. Placer QR-koden i rammen og prøv igen.";
+"No QR Code" = "Ingen QR-kode";
+"Camera Access" = "Kameradgang";
+"Camera access is required to scan the schedule QR code. Enable it in Settings." = "Kameradgang er påkrævet for at scanne program-QR-koden. Aktivér den i Indstillinger.";
+"Camera Unavailable" = "Kamera utilgængeligt";
+"Could not access the camera." = "Kunne ikke få adgang til kameraet.";
+"Scan 1 or 2 schedule QR codes (binary), or 8/16/24 (plain)." = "Scan 1 eller 2 program-QR-koder (binær), eller 8/16/24 (tekst).";
 "New profile received!" = "Ny profil modtaget!";
 "band priorities" = "band prioriteter";
 "scheduled events" = "planlagte begivenheder";
@@ -354,6 +371,16 @@
 "Share Event Report" = "Del eventrapport";
 "Back" = "Tilbage";
 "Unknown" = "Ukendt";
+
+// Filter option labels
+"Show Must See" = "Vis Must See";
+"Show Might See" = "Vis Might See";
+"Show Wont See" = "Vis Wont See";
+"Show Unknown" = "Vis Ukendt";
+"Show Meet & Greet" = "Vis Meet & Greet";
+"Show Special/Other" = "Vis Special/Andet";
+"Show Unofficial" = "Vis Uofficiel";
+
 "confirmCountry" = "Bekræft";
 "correctCountry" = "Ændre";
 "correctCountryDescription" = "Korriger Dit Land Hvis Nødvendigt";

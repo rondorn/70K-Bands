@@ -25,6 +25,15 @@
 "EventAttendanceNone" = "Aucun";
 "Unknown" = "Inconnu";
 
+// Filter option labels
+"Show Must See" = "Afficher Must See";
+"Show Might See" = "Afficher Might See";
+"Show Wont See" = "Afficher Wont See";
+"Show Unknown" = "Afficher Inconnu";
+"Show Meet & Greet" = "Afficher Meet & Greet";
+"Show Special/Other" = "Afficher Spécial/Autre";
+"Show Unofficial" = "Afficher Non officiel";
+
 "Ok" = "Oui";
 "Cancel" = "Non";
 "Yes" = "Oui";
@@ -195,6 +204,10 @@
 "This file is not a valid 70K Bands share file." = "Ce fichier n'est pas un fichier de partage 70K Bands valide.";
 "Import Shared Preferences" = "Importer les Préférences Partagées";
 
+// Share Schedule via QR Code – button and menu strings
+"Share Schedule via QR Code" = "Partager l'emploi du temps par code QR";
+"Scan QR Code Schedule" = "Scanner l'emploi du temps par code QR";
+
 // Share Schedule via QR Code – instructions
 "QRShareInstructionsIntro" = "Ce code QR est destiné à être partagé dans les conditions suivantes.";
 "QRShareCondition1" = "Un utilisateur a accès à Internet et dispose de nouvelles données d’emploi du temps";
@@ -205,6 +218,19 @@
 "QRShareStep3" = "Scanner le code sur cet écran";
 "QRShareStep4" = "Obtenir le même emploi du temps que sur ce téléphone";
 "Preparing camera…" = "Préparation de la caméra…";
+"No schedule events to share." = "Aucun événement d'emploi du temps à partager.";
+"Scan schedule QR code" = "Scanner le code QR de l'emploi du temps";
+"Scan second QR code" = "Scanner le deuxième code QR";
+"Scan first QR code" = "Scanner le premier code QR";
+"Scan each schedule QR — 0 of 24" = "Scannez chaque code QR de l'emploi du temps — 0 sur 24";
+"Scan each schedule QR — %d of %d" = "Scannez chaque code QR de l'emploi du temps — %d sur %d";
+"No valid schedule QR code found. Position the QR code in frame and try again." = "Aucun code QR d'emploi du temps valide. Placez le code QR dans le cadre et réessayez.";
+"No QR Code" = "Pas de code QR";
+"Camera Access" = "Accès à la caméra";
+"Camera access is required to scan the schedule QR code. Enable it in Settings." = "L'accès à la caméra est requis pour scanner le code QR. Activez-le dans Réglages.";
+"Camera Unavailable" = "Caméra indisponible";
+"Could not access the camera." = "Impossible d'accéder à la caméra.";
+"Scan 1 or 2 schedule QR codes (binary), or 8/16/24 (plain)." = "Scannez 1 ou 2 codes QR de l'emploi du temps (binaire), ou 8/16/24 (texte).";
 "New profile received!" = "Nouveau profil reçu!";
 "band priorities" = "priorités de groupe";
 "scheduled events" = "événements prévus";

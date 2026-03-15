@@ -1361,7 +1361,7 @@ class PreferencesViewModel: ObservableObject {
             } else if payloads.count == 8 || payloads.count == 16 || payloads.count == 24 {
                 csvString = try mergePlainUTF8SchedulePayloads(payloads, eventYear: year)
             } else {
-                scheduleQRImportResult = (false, "Scan 1 or 2 schedule QR codes (binary), or 8/16/24 (plain).")
+                scheduleQRImportResult = (false, NSLocalizedString("Scan 1 or 2 schedule QR codes (binary), or 8/16/24 (plain).", comment: "QR import wrong count"))
                 return
             }
             // Band list is never modified by QR/schedule import; it comes only from band file. Decode uses this device's canonical list; sender and receiver must match.

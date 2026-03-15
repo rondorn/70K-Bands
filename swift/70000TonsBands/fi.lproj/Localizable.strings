@@ -226,6 +226,10 @@
 "This file is not a valid 70K Bands share file." = "Tämä tiedosto ei ole kelvollinen 70K Bands -jakotiedosto.";
 "Import Shared Preferences" = "Tuo Jaetut Asetukset";
 
+// Share Schedule via QR Code – button and menu strings
+"Share Schedule via QR Code" = "Jaa aikataulu QR-koodilla";
+"Scan QR Code Schedule" = "Skannaa aikataulu QR-koodilla";
+
 // Share Schedule via QR Code – instructions
 "QRShareInstructionsIntro" = "Tätä QR-koodia on tarkoitettu jaettavaksi seuraavissa olosuhteissa.";
 "QRShareCondition1" = "Käyttäjällä on internetyhteys ja uudet aikataulutiedot";
@@ -236,6 +240,19 @@
 "QRShareStep3" = "Skannaa tämän näytön koodi";
 "QRShareStep4" = "Saada sama aikataulu kuin tässä puhelimessa";
 "Preparing camera…" = "Valmistellaan kameraa…";
+"No schedule events to share." = "Ei aikataulutapahtumia jaettavaksi.";
+"Scan schedule QR code" = "Skannaa aikataulun QR-koodi";
+"Scan second QR code" = "Skannaa toinen QR-koodi";
+"Scan first QR code" = "Skannaa ensimmäinen QR-koodi";
+"Scan each schedule QR — 0 of 24" = "Skannaa jokainen aikataulu-QR — 0 / 24";
+"Scan each schedule QR — %d of %d" = "Skannaa jokainen aikataulu-QR — %d / %d";
+"No valid schedule QR code found. Position the QR code in frame and try again." = "Kelpaavaa aikataulu-QR-koodia ei löytynyt. Aseta QR-koodi kehykseen ja yritä uudelleen.";
+"No QR Code" = "Ei QR-koodia";
+"Camera Access" = "Kameran käyttöoikeus";
+"Camera access is required to scan the schedule QR code. Enable it in Settings." = "Kameran käyttöoikeus tarvitaan aikataulun QR-koodin skannaamiseen. Ota se käyttöön Asetuksissa.";
+"Camera Unavailable" = "Kamera ei käytettävissä";
+"Could not access the camera." = "Kameraan ei saatu yhteyttä.";
+"Scan 1 or 2 schedule QR codes (binary), or 8/16/24 (plain)." = "Skannaa 1 tai 2 aikataulu-QR-koodia (binääri) tai 8/16/24 (teksti).";
 "New profile received!" = "Uusi profiili vastaanotettu!";
 "band priorities" = "bändin prioriteetit";
 "scheduled events" = "aikataulutetut tapahtumat";
@@ -360,6 +377,16 @@
 "Share Event Report" = "Jaa tapahtumaraportti";
 "Back" = "Takaisin";
 "Unknown" = "Tuntematon";
+
+// Filter option labels
+"Show Must See" = "Näytä Must See";
+"Show Might See" = "Näytä Might See";
+"Show Wont See" = "Näytä Wont See";
+"Show Unknown" = "Näytä Tuntematon";
+"Show Meet & Greet" = "Näytä Meet & Greet";
+"Show Special/Other" = "Näytä Erikois/Muu";
+"Show Unofficial" = "Näytä Epävirallinen";
+
 "confirmCountry" = "Vahvista";
 "correctCountry" = "Muuta";
 "correctCountryDescription" = "Korjaa Maasi Tarvittaessa";
