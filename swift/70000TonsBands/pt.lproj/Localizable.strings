@@ -265,6 +265,10 @@
 "This file is not a valid 70K Bands share file." = "Este arquivo não é um arquivo de compartilhamento 70K Bands válido.";
 "Import Shared Preferences" = "Importar Preferências Compartilhadas";
 
+// Share Schedule via QR Code – button and menu strings
+"Share Schedule via QR Code" = "Partilhar horário por código QR";
+"Scan QR Code Schedule" = "Escanear horário por código QR";
+
 // Share Schedule via QR Code – instructions
 "QRShareInstructionsIntro" = "Este código QR destina-se a ser partilhado nas seguintes condições.";
 "QRShareCondition1" = "Um utilizador tem acesso à Internet e tem dados de horário novos";
@@ -275,6 +279,19 @@
 "QRShareStep3" = "Escanear o código neste ecrã";
 "QRShareStep4" = "Obter o mesmo horário disponível neste telemóvel";
 "Preparing camera…" = "A preparar câmara…";
+"No schedule events to share." = "Nenhum evento do horário para partilhar.";
+"Scan schedule QR code" = "Escanear código QR do horário";
+"Scan second QR code" = "Escanear segundo código QR";
+"Scan first QR code" = "Escanear primeiro código QR";
+"Scan each schedule QR — 0 of 24" = "Escaneie cada código QR do horário — 0 de 24";
+"Scan each schedule QR — %d of %d" = "Escaneie cada código QR do horário — %d de %d";
+"No valid schedule QR code found. Position the QR code in frame and try again." = "Nenhum código QR de horário válido encontrado. Posicione o código QR no quadro e tente novamente.";
+"No QR Code" = "Sem código QR";
+"Camera Access" = "Acesso à câmara";
+"Camera access is required to scan the schedule QR code. Enable it in Settings." = "O acesso à câmara é necessário para escanear o código QR do horário. Ative-o em Definições.";
+"Camera Unavailable" = "Câmara indisponível";
+"Could not access the camera." = "Não foi possível aceder à câmara.";
+"Scan 1 or 2 schedule QR codes (binary), or 8/16/24 (plain)." = "Escaneie 1 ou 2 códigos QR do horário (binário), ou 8/16/24 (texto).";
 "New profile received!" = "Novo perfil recebido!";
 "band priorities" = "prioridades de bandas";
 "scheduled events" = "eventos agendados";
@@ -376,3 +393,12 @@
 "Close" = "Fechar";
 "Multiple bands share this event. Which band would you like to view?" = "Várias bandas compartilham este evento. Qual banda você gostaria de ver?";
 "Unknown" = "Desconhecido";
+
+// Filter option labels
+"Show Must See" = "Mostrar Must See";
+"Show Might See" = "Mostrar Might See";
+"Show Wont See" = "Mostrar Wont See";
+"Show Unknown" = "Mostrar Desconhecido";
+"Show Meet & Greet" = "Mostrar Meet & Greet";
+"Show Special/Other" = "Mostrar Especial/Outro";
+"Show Unofficial" = "Mostrar Não oficial";

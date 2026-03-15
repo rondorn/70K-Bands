@@ -26,6 +26,15 @@
 "EventAttendanceNone"="Keine";
 "Unknown" = "Unbekannt";
 
+// Filter option labels
+"Show Must See" = "Muss See anzeigen";
+"Show Might See" = "Kann See anzeigen";
+"Show Wont See" = "Wont See anzeigen";
+"Show Unknown" = "Unbekannt anzeigen";
+"Show Meet & Greet" = "Meet & Greet anzeigen";
+"Show Special/Other" = "Special/Other anzeigen";
+"Show Unofficial" = "Unofficial anzeigen";
+
 "Ok"="Ja";
 "Cancel"="Abbrechen";
 "Yes"="Ja";
@@ -260,6 +269,10 @@
 "This file is not a valid 70K Bands share file." = "Diese Datei ist keine gültige 70K Bands-Freigabedatei.";
 "Import Shared Preferences" = "Geteilte Einstellungen Importieren";
 
+// Share Schedule via QR Code – button and menu strings
+"Share Schedule via QR Code" = "Zeitplan per QR-Code teilen";
+"Scan QR Code Schedule" = "Zeitplan per QR-Code scannen";
+
 // Share Schedule via QR Code – instructions
 "QRShareInstructionsIntro" = "Dieser QR-Code ist für die Weitergabe unter folgenden Bedingungen gedacht.";
 "QRShareCondition1" = "Ein Nutzer hat Internetzugang und hat neue Zeitplandaten";
@@ -270,6 +283,19 @@
 "QRShareStep3" = "Den Code auf diesem Bildschirm scannen";
 "QRShareStep4" = "Den gleichen Zeitplan wie auf diesem Gerät erhalten";
 "Preparing camera…" = "Kamera wird vorbereitet…";
+"No schedule events to share." = "Keine Zeitplan-Events zum Teilen.";
+"Scan schedule QR code" = "Zeitplan-QR-Code scannen";
+"Scan second QR code" = "Zweiten QR-Code scannen";
+"Scan first QR code" = "Ersten QR-Code scannen";
+"Scan each schedule QR — 0 of 24" = "Scannen Sie jeden Zeitplan-QR — 0 von 24";
+"Scan each schedule QR — %d of %d" = "Scannen Sie jeden Zeitplan-QR — %d von %d";
+"No valid schedule QR code found. Position the QR code in frame and try again." = "Kein gültiger Zeitplan-QR-Code gefunden. Positionieren Sie den QR-Code im Rahmen und versuchen Sie es erneut.";
+"No QR Code" = "Kein QR-Code";
+"Camera Access" = "Kamerazugriff";
+"Camera access is required to scan the schedule QR code. Enable it in Settings." = "Kamerazugriff ist zum Scannen des Zeitplan-QR-Codes erforderlich. Aktivieren Sie ihn in den Einstellungen.";
+"Camera Unavailable" = "Kamera nicht verfügbar";
+"Could not access the camera." = "Kamera konnte nicht zugegriffen werden.";
+"Scan 1 or 2 schedule QR codes (binary), or 8/16/24 (plain)." = "Scannen Sie 1 oder 2 Zeitplan-QR-Codes (binär) oder 8/16/24 (Text).";
 "New profile received!" = "Neues Profil empfangen!";
 "band priorities" = "Band-Prioritäten";
 "scheduled events" = "geplante Veranstaltungen";
