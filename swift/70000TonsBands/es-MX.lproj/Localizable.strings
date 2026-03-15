@@ -25,6 +25,15 @@
 "EventAttendanceNone"="Ninguno";
 "Unknown" = "No lo sé";
 
+// Filter option labels
+"Show Must See" = "Mostrar Must See";
+"Show Might See" = "Mostrar Might See";
+"Show Wont See" = "Mostrar Wont See";
+"Show Unknown" = "Mostrar Desconocido";
+"Show Meet & Greet" = "Mostrar Meet & Greet";
+"Show Special/Other" = "Mostrar Especial/Otro";
+"Show Unofficial" = "Mostrar No oficial";
+
 "Ok"="Sí";
 "Cancel"="Cancelar";
 "Yes"="Sí";
@@ -236,6 +245,10 @@
 "This file is not a valid 70K Bands share file." = "Este archivo no es un archivo de compartir 70K Bands válido.";
 "Import Shared Preferences" = "Importar Preferencias Compartidas";
 
+// Share Schedule via QR Code – button and menu strings
+"Share Schedule via QR Code" = "Compartir horario por código QR";
+"Scan QR Code Schedule" = "Escanear horario por código QR";
+
 // Share Schedule via QR Code – instructions
 "QRShareInstructionsIntro" = "Este código QR está pensado para compartirse en las siguientes condiciones.";
 "QRShareCondition1" = "Un usuario tiene acceso a internet y tiene datos del horario nuevos";
@@ -246,6 +259,19 @@
 "QRShareStep3" = "Escanear el código de esta pantalla";
 "QRShareStep4" = "Obtener el mismo horario disponible en este teléfono";
 "Preparing camera…" = "Preparando cámara…";
+"No schedule events to share." = "No hay eventos del horario para compartir.";
+"Scan schedule QR code" = "Escanear código QR del horario";
+"Scan second QR code" = "Escanear segundo código QR";
+"Scan first QR code" = "Escanear primer código QR";
+"Scan each schedule QR — 0 of 24" = "Escanee cada código QR del horario — 0 de 24";
+"Scan each schedule QR — %d of %d" = "Escanee cada código QR del horario — %d de %d";
+"No valid schedule QR code found. Position the QR code in frame and try again." = "No se encontró un código QR de horario válido. Coloque el código QR en el marco e intente de nuevo.";
+"No QR Code" = "Sin código QR";
+"Camera Access" = "Acceso a la cámara";
+"Camera access is required to scan the schedule QR code. Enable it in Settings." = "Se necesita el permiso de cámara para escanear el código QR del horario. Actívelo en Ajustes.";
+"Camera Unavailable" = "Cámara no disponible";
+"Could not access the camera." = "No se pudo acceder a la cámara.";
+"Scan 1 or 2 schedule QR codes (binary), or 8/16/24 (plain)." = "Escanee 1 o 2 códigos QR del horario (binario), u 8/16/24 (texto).";
 "New profile received!" = "¡Nuevo perfil recibido!";
 "band priorities" = "prioridades de bandas";
 "scheduled events" = "eventos programados";
