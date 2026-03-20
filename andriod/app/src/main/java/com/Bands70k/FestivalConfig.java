@@ -228,7 +228,7 @@ public class FestivalConfig {
             // MDF comments not available message
             this.commentsNotAvailableStringResourceId = R.string.DefaultDescriptionMDF;
 
-            this.aiSchedule = false;
+            this.aiSchedule = true;
             this.scheduleQRShareEnabled = false;
 
         } else {

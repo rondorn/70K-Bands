@@ -307,7 +307,7 @@ class PreferencesViewModel: ObservableObject {
         let mustSee = getMustSeeAlertValue()
         let mightSee = getMightSeeAlertValue()
         let onlyAttended = getOnlyAlertForAttendedValue()
-        let minutes = getMinBeforeAlertValue()
+        let minutes = min(60, max(0, getMinBeforeAlertValue()))
         let shows = getAlertForShowsValue()
         let special = getAlertForSpecialValue()
         let cruiser = getAlertForUnofficalEventsValue()

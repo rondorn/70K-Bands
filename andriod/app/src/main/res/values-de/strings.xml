@@ -13,7 +13,8 @@
     <string name="Yes">Ja</string>
     <string name="No">Nein</string>
     <string name="plan_your_schedule">Deinen Zeitplan planen</string>
-    <string name="plan_schedule_intro">Soll 70K Bands dir helfen zu wählen, welche Veranstaltungen du besuchen möchtest?\n\nWir nutzen deine Must-, Might- und Wont-Auswahlen sowie ein paar kurze Fragen für einen ersten Vorschlag. Du kannst danach jedes Event ändern.</string>
+    <string name="ai_schedule_no_events">Keine Events zum Planen.</string>
+    <string name="plan_schedule_intro">Soll %1$s dir helfen zu wählen, welche Veranstaltungen du besuchen möchtest?\n\nWir nutzen deine Must-, Might- und Wont-Auswahlen sowie ein paar kurze Fragen für einen ersten Vorschlag. Du kannst danach jedes Event ändern.</string>
     <string name="latest_show_title">Letzte Show</string>
     <string name="latest_show_cutoff">Die letzte Show, die du sehen möchtest.</string>
     <string name="latest_show_cutoff_hint">Shows, die nach dieser gewählten Zeit beginnen, werden ausgeschlossen. Wenn du z. B. 2 Uhr wählst, wird ein Show um 2 Uhr einbezogen, ein Show um 2:30 Uhr oder später jedoch ausgeschlossen.</string>

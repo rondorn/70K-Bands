@@ -24,13 +24,11 @@ struct PreferencesView: View {
     @StateObject private var viewModel = PreferencesViewModel()
     @Environment(\.presentationMode) var presentationMode
     @Environment(\.preferencesPresenter) private var preferencesPresenter: UIViewController?
-    @State private var minutesText: String = ""
-    
     var body: some View {
         mainContent
             .modifier(NavigationModifier())
-            .modifier(AlertModifiers(viewModel: viewModel, minutesText: $minutesText))
-            .modifier(LifecycleModifiers(viewModel: viewModel, minutesText: $minutesText, presentationMode: presentationMode))
+            .modifier(AlertModifiers(viewModel: viewModel))
+            .modifier(LifecycleModifiers(viewModel: viewModel, presentationMode: presentationMode))
             .overlay(loadingOverlay)
     }
     
@@ -223,15 +221,15 @@ struct PreferencesView: View {
         HStack {
             Text(NSLocalizedString("Minutes Before Event to Alert", comment: ""))
             Spacer()
-            TextField(NSLocalizedString("Minutes", comment: "Minutes number field placeholder"), text: $minutesText)
-                .keyboardType(.numberPad)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .frame(width: 60)
-                .onChange(of: minutesText) { newValue in
-                    if let intValue = Int(newValue), intValue >= 0 && intValue <= 60 {
-                        viewModel.minutesBeforeAlert = intValue
-                    }
+            Picker(selection: $viewModel.minutesBeforeAlert) {
+                ForEach(0...60, id: \.self) { value in
+                    Text("\(value)").tag(value)
                 }
+            } label: {
+                EmptyView()
+            }
+            .labelsHidden()
+            .pickerStyle(.menu)
         }
     }
     
@@ -495,7 +493,6 @@ struct NavigationModifier: ViewModifier {
 
 struct AlertModifiers: ViewModifier {
     @ObservedObject var viewModel: PreferencesViewModel
-    @Binding var minutesText: String
     
     func body(content: Content) -> some View {
         content
@@ -510,9 +507,7 @@ struct AlertModifiers: ViewModifier {
                 Text(NSLocalizedString("restartMessage", comment: ""))
             }
             .alert("Invalid Input", isPresented: $viewModel.showValidationError) {
-                Button("OK") {
-                    minutesText = String(viewModel.minutesBeforeAlert)
-                }
+                Button("OK") { }
             } message: {
                 Text("Minutes must be a value between 0 and 60.")
             }
@@ -545,7 +540,6 @@ struct AlertModifiers: ViewModifier {
 
 struct LifecycleModifiers: ViewModifier {
     let viewModel: PreferencesViewModel
-    @Binding var minutesText: String
     let presentationMode: Binding<PresentationMode>
     @State private var hasLoadedInitialPreferences = false
     
@@ -562,11 +556,6 @@ struct LifecycleModifiers: ViewModifier {
                 } else {
                     print("🎛️ [PREFERENCES_SYNC] Skipping preference reload (subsequent appearance) - preserving user changes")
                 }
-                
-                minutesText = String(viewModel.minutesBeforeAlert)
-            }
-            .onChange(of: viewModel.minutesBeforeAlert) { newValue in
-                minutesText = String(newValue)
             }
             .onReceive(NotificationCenter.default.publisher(for: Notification.Name("DismissPreferencesScreen"))) { _ in
                 presentationMode.wrappedValue.dismiss()

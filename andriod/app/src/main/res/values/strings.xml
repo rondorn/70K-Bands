@@ -15,7 +15,8 @@
     <string name="auto_schedule_released_create_prompt">The %1$s has been released.\n\nWould you like to run a wizard that will generate a personalized schedule for you based on your Must, Might, and Won\'t preferences, as well as your own choices based on the questions we\'ll ask.</string>
     <string name="auto_schedule_released_rerun_prompt">The %1$s has been released.\n\nWould you like to rerun the personalized schedule wizard? This will run a wizard that will generate a personalized schedule for you based on your Must, Might, and Won\'t preferences, as well as your own choices based on the questions we\'ll ask.</string>
     <string name="plan_your_schedule">Plan Your Schedule</string>
-    <string name="plan_schedule_intro">Do you want 70K Bands to help you choose what events to attend?\n\nWe\'ll use your Must, Might, and Wont choices plus a few quick questions to build a first pass. You can change any event afterward.</string>
+    <string name="ai_schedule_no_events">No events to build from.</string>
+    <string name="plan_schedule_intro">Do you want %1$s to help you choose what events to attend?\n\nWe\'ll use your Must, Might, and Wont choices plus a few quick questions to build a first pass. You can change any event afterward.</string>
     <string name="latest_show_title">Latest show</string>
     <string name="latest_show_cutoff">The latest show you want to see.</string>
     <string name="latest_show_cutoff_hint">Shows that begin after this specified time will be excluded. For instance, if you set this time to 2 am, a show scheduled for 2 am will be included, but a show scheduled for 2:30 am or later will be excluded.</string>
