@@ -1,0 +1,4 @@
+# Schedule QR poster (repo root): pip install -r requirements-poster.txt
+Pillow>=10.0.0
+reportlab>=4.0.0
+qrcodegen>=1.6.0
