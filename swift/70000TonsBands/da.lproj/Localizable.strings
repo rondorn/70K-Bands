@@ -223,6 +223,7 @@
 // Share Schedule via QR Code – button and menu strings
 "Share Schedule via QR Code" = "Del program via QR-kode";
 "Scan QR Code Schedule" = "Scan QR-kode program";
+"QRCodeImportSection" = "Import med QR-kode";
 
 // Share Schedule via QR Code – instructions
 "QRShareInstructionsIntro" = "Denne QR-kode er beregnet til deling under følgende betingelser.";

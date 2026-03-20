@@ -36,12 +36,24 @@ struct PreferencesView: View {
     
     private var mainContent: some View {
         Form {
+            qrCodeImportSection
             alertPreferencesSection
             detailScreenSection
             miscSection
             autoChooseAttendanceSection
             informationSection
             advancedPreferencesSection
+        }
+        .sheet(isPresented: Binding(
+            get: { viewModel.scheduleQRImportResult != nil },
+            set: { if !$0 { viewModel.scheduleQRImportResult = nil } }
+        )) {
+            if let result = viewModel.scheduleQRImportResult {
+                ScheduleQRImportResultSheet(message: result.message, onDismiss: { viewModel.scheduleQRImportResult = nil })
+            }
+        }
+        .onChange(of: viewModel.scheduleQRScanReadyAfterDownload) { newValue in
+            if newValue { presentQRScannerIfReadyAfterDownload() }
         }
         .sheet(isPresented: $viewModel.showAutoChooseAttendanceWizard, onDismiss: {
             viewModel.showAutoChooseAttendanceWizard = false
@@ -167,6 +179,27 @@ struct PreferencesView: View {
     }
     
     // MARK: - View Components
+
+    /// Schedule QR import — first section when enabled (70K only).
+    private var qrCodeImportSection: some View {
+        Group {
+            if FestivalConfig.current.scheduleQRShareEnabled {
+                Section {
+                    Button(action: presentQRScannerIfAvailable) {
+                        HStack {
+                            Image(systemName: "qrcode.viewfinder")
+                                .foregroundColor(.blue)
+                            Text(NSLocalizedString("Scan QR Code Schedule", comment: "Preferences button to scan schedule QR"))
+                                .foregroundColor(.primary)
+                        }
+                    }
+                    .padding(.vertical, 4)
+                } header: {
+                    Text(NSLocalizedString("QRCodeImportSection", comment: "Preferences section header for schedule QR import"))
+                }
+            }
+        }
+    }
     
     private var alertPreferencesSection: some View {
         Section(NSLocalizedString("AlertPreferences", comment: "")) {
@@ -349,32 +382,8 @@ struct PreferencesView: View {
                     .keyboardType(.URL)
             }
             .padding(.vertical, 4)
-            
-            // Scan QR Code Schedule (70K only; MDF has no real-world use case)
-            if FestivalConfig.current.scheduleQRShareEnabled {
-                Button(action: presentQRScannerIfAvailable) {
-                    HStack {
-                        Image(systemName: "qrcode.viewfinder")
-                            .foregroundColor(.blue)
-                        Text(NSLocalizedString("Scan QR Code Schedule", comment: "Preferences button to scan schedule QR"))
-                            .foregroundColor(.primary)
-                    }
-                }
-                .padding(.vertical, 4)
-            }
         } header: {
             Text(NSLocalizedString("AdvancedPreferences", comment: ""))
-        }
-        .sheet(isPresented: Binding(
-            get: { viewModel.scheduleQRImportResult != nil },
-            set: { if !$0 { viewModel.scheduleQRImportResult = nil } }
-        )) {
-            if let result = viewModel.scheduleQRImportResult {
-                ScheduleQRImportResultSheet(message: result.message, onDismiss: { viewModel.scheduleQRImportResult = nil })
-            }
-        }
-        .onChange(of: viewModel.scheduleQRScanReadyAfterDownload) { newValue in
-            if newValue { presentQRScannerIfReadyAfterDownload() }
         }
     }
 

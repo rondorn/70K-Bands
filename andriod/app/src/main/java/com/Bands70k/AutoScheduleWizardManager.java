@@ -78,7 +78,8 @@ public final class AutoScheduleWizardManager {
         }
 
         boolean isRepeat = "yes".equalsIgnoreCase(trimOrEmpty(readPointerCurrentValue(POINTER_REPEAT)));
-        String message = activity.getString(isRepeat ? R.string.auto_schedule_released_rerun_prompt : R.string.auto_schedule_released_create_prompt);
+        int messageRes = isRepeat ? R.string.auto_schedule_released_rerun_prompt : R.string.auto_schedule_released_create_prompt;
+        String message = activity.getString(messageRes, scheduleNameFinal);
 
         String title = activity.getString(R.string.plan_your_schedule);
         String noStr = activity.getString(R.string.No);

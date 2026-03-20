@@ -61,6 +61,29 @@ public class AIScheduleStorage {
     }
 
     /**
+     * Saves year slice for wizard rollback (may be empty). Always writes a file so cancel-after-clear can restore.
+     */
+    public static void saveWizardRollbackBackup(Map<String, String> attended, int year) {
+        if (attended == null) attended = new HashMap<>();
+        String suffix = ":" + year;
+        Map<String, String> filtered = new HashMap<>();
+        for (Map.Entry<String, String> e : attended.entrySet()) {
+            if (e.getKey() != null && e.getKey().endsWith(suffix)) {
+                filtered.put(e.getKey(), e.getValue() != null ? e.getValue() : "");
+            }
+        }
+        try {
+            JSONObject json = new JSONObject(filtered);
+            File f = backupFileForYear(year);
+            try (FileOutputStream out = new FileOutputStream(f)) {
+                out.write(json.toString().getBytes(StandardCharsets.UTF_8));
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to save wizard rollback backup for year " + year + ": " + e.getMessage());
+        }
+    }
+
+    /**
      * Load backup for year, or null if none.
      */
     @SuppressWarnings("unchecked")

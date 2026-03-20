@@ -1938,6 +1938,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             return
         }
         
+        // Ensure filter state (Clear Filters / badge) is current when opening the sheet
+        setFilterTitleText()
+        
         // Create SwiftUI filter sheet with dismiss handler
         let filterSheetView = PortraitFilterSheetView(
             onDismiss: { [weak self] in
@@ -3916,9 +3919,15 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     func updateCountLable(){
         print("🔧 [INIT_DEBUG] updateCountLable() ENTERED")
         
-        print("🔧 [INIT_DEBUG] About to call setFilterTitleText()")
-        setFilterTitleText()
-        print("🔧 [INIT_DEBUG] setFilterTitleText() completed")
+        // Filter state (Clear Filters / badge) must always run on main so the sheet and header stay in sync
+        if Thread.isMainThread {
+            setFilterTitleText()
+        } else {
+            DispatchQueue.main.async { [weak self] in
+                self?.setFilterTitleText()
+            }
+        }
+        print("🔧 [INIT_DEBUG] setFilterTitleText() completed (or dispatched to main)")
         
         var lableCounterString = String();
         var labeleCounter = Int()
@@ -6506,33 +6515,39 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     
                     let sqliteiCloudSync = SQLiteiCloudSync()
                     
-                    // First write local data to iCloud to ensure it's backed up
-                    sqliteiCloudSync.syncPrioritiesToiCloud()
-                    sqliteiCloudSync.syncAttendanceToiCloud()
+                    // Pull from iCloud BEFORE push. syncAttendanceToiCloud() removes any KV key not present in
+                    // local SQLite; if we push first (e.g. fresh install with sparse local rows), we wipe iCloud
+                    // attendance before merge — user sees only a handful until another device re-uploads.
+                    print("iCloud Debug: Starting SQLite iCloud sync (pull then push)...")
                     
-                    // Then read any remote changes from iCloud
-                    print("iCloud Debug: Starting SQLite iCloud sync...")
-                    
-                    let syncGroup = DispatchGroup()
-                    
-                    // Sync priorities from iCloud
-                    syncGroup.enter()
+                    let pullGroup = DispatchGroup()
+                    pullGroup.enter()
                     sqliteiCloudSync.syncPrioritiesFromiCloud {
-                        print("iCloud Debug: Priority sync completed")
-                        syncGroup.leave()
+                        print("iCloud Debug: Priority pull completed")
+                        pullGroup.leave()
                     }
-                    
-                    // Sync attendance from iCloud
-                    syncGroup.enter()
+                    pullGroup.enter()
                     sqliteiCloudSync.syncAttendanceFromiCloud {
-                        print("iCloud Debug: Attendance sync completed")
-                        syncGroup.leave()
+                        print("iCloud Debug: Attendance pull completed")
+                        pullGroup.leave()
                     }
                     
-                    // Wait for both syncs to complete
-                    syncGroup.notify(queue: .global(qos: .utility)) {
-                        print("iCloud Debug: All SQLite sync completed")
-                        iCloudGroup.leave()
+                    pullGroup.notify(queue: .global(qos: .utility)) {
+                        let pushGroup = DispatchGroup()
+                        pushGroup.enter()
+                        sqliteiCloudSync.syncPrioritiesToiCloud {
+                            print("iCloud Debug: Priority push completed")
+                            pushGroup.leave()
+                        }
+                        pushGroup.enter()
+                        sqliteiCloudSync.syncAttendanceToiCloud {
+                            print("iCloud Debug: Attendance push completed")
+                            pushGroup.leave()
+                        }
+                        pushGroup.notify(queue: .global(qos: .utility)) {
+                            print("iCloud Debug: All SQLite iCloud sync completed")
+                            iCloudGroup.leave()
+                        }
                     }
                 }
                 
@@ -6739,34 +6754,35 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         print("☁️ Loading iCloud data...")
         
-        // Use SQLite iCloud sync system
+        // Use SQLite iCloud sync system — pull before push (see refreshDataWithBackgroundUpdate).
         let sqliteiCloudSync = SQLiteiCloudSync()
         
-        // First write local data to iCloud
-        sqliteiCloudSync.syncPrioritiesToiCloud()
-        sqliteiCloudSync.syncAttendanceToiCloud()
-        
-        // Then read remote changes from iCloud, waiting for both to complete
-        let syncGroup = DispatchGroup()
-        
-        // Sync priorities from iCloud
-        syncGroup.enter()
+        let pullGroup = DispatchGroup()
+        pullGroup.enter()
         sqliteiCloudSync.syncPrioritiesFromiCloud {
-            print("☁️ Priority sync completed")
-            syncGroup.leave()
+            print("☁️ Priority pull completed")
+            pullGroup.leave()
         }
-        
-        // Sync attendance from iCloud
-        syncGroup.enter()
+        pullGroup.enter()
         sqliteiCloudSync.syncAttendanceFromiCloud {
-            print("☁️ Attendance sync completed")
-            syncGroup.leave()
+            print("☁️ Attendance pull completed")
+            pullGroup.leave()
         }
         
-        // Wait for both syncs to complete
-        syncGroup.notify(queue: .main) {
-            print("✅ iCloud data loading completed")
-            completion?()
+        pullGroup.notify(queue: .main) {
+            let pushGroup = DispatchGroup()
+            pushGroup.enter()
+            sqliteiCloudSync.syncPrioritiesToiCloud {
+                pushGroup.leave()
+            }
+            pushGroup.enter()
+            sqliteiCloudSync.syncAttendanceToiCloud {
+                pushGroup.leave()
+            }
+            pushGroup.notify(queue: .main) {
+                print("✅ iCloud data loading completed")
+                completion?()
+            }
         }
     }
     

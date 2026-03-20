@@ -89,6 +89,8 @@ struct AutoChooseAttendanceWizardView: View {
     @State private var showDoneAlert = false
     @State private var completedCount = 0
     @State private var isBuilding = false
+    /// True after we clear attendance for a new build; cancel must restore from `AIScheduleStorage` backup.
+    @State private var attendanceClearedForActiveWizardRun = false
     
     private enum ClinicsOption: String, CaseIterable {
         case allMust = "All"
@@ -151,6 +153,9 @@ struct AutoChooseAttendanceWizardView: View {
             if showDoneAlert {
                 doneAlertOverlay
             }
+        }
+        .onDisappear {
+            restoreWizardAttendanceIfNeeded()
         }
     }
     
@@ -241,7 +246,7 @@ struct AutoChooseAttendanceWizardView: View {
     private var wizardBottomBar: some View {
         HStack(spacing: 12) {
             secondaryButton(NSLocalizedString("Cancel", comment: "")) {
-                onDismiss(false)
+                dismissWizardCancelled()
             }
             if step != .intro {
                 secondaryButton(NSLocalizedString("Back", comment: "Back button")) {
@@ -458,7 +463,7 @@ struct AutoChooseAttendanceWizardView: View {
     
     private var unofficialEventsStep: some View {
         VStack(alignment: .leading, spacing: 16) {
-            if !hasUnofficialEvents || unofficialEventsForMustBands.isEmpty {
+            if !hasUnofficialEvents || unofficialEventsForWizardChecklist.isEmpty {
                 Text(NSLocalizedString("AutoChooseAttendanceNoUnofficialEvents", comment: "No Unofficial / Cruiser Organized events in the schedule."))
                     .foregroundColor(.white)
             } else {
@@ -467,24 +472,15 @@ struct AutoChooseAttendanceWizardView: View {
                 Text(NSLocalizedString("AutoChooseAttendanceClinicsChecklistHint", comment: "Check each you want to attend. Notes from schedule (e.g. Song writing clinic)."))
                     .font(.caption)
                     .foregroundColor(.gray)
-                Button(NSLocalizedString("AutoChooseAttendanceMGSelectAll", comment: "All")) {
-                    selectedUnofficialEventIds = Set(unofficialEventsForMustBands.map { eventId($0) })
-                }
-                .font(.subheadline)
-                .foregroundColor(.white)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 12)
-                .background(Color.gray.opacity(0.6))
-                .cornerRadius(10)
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 12) {
-                        ForEach(unofficialEventsForMustBands, id: \.self, content: unofficialChecklistRow)
+                    LazyVStack(alignment: .leading, spacing: 12) {
+                        ForEach(unofficialEventsForWizardChecklist, id: \.self, content: unofficialChecklistRow)
                     }
                 }
-                .frame(maxHeight: .infinity)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            Spacer(minLength: 20)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
     
     private func unofficialChecklistRow(_ event: EventData) -> some View {
@@ -504,12 +500,11 @@ struct AutoChooseAttendanceWizardView: View {
         }
     }
     
-    /// Unofficial / Cruiser Organized events for bands the user marked as Must (priority 1). Used for the unofficial checklist.
-    private var unofficialEventsForMustBands: [EventData] {
+    /// All Unofficial / Cruiser Organized events (includes pre-party rows that use the event title as bandName and are not Must-ranked).
+    private var unofficialEventsForWizardChecklist: [EventData] {
         events.filter { event in
             let t = event.eventType ?? ""
-            guard t == unofficalEventType || t == unofficalEventTypeOld else { return false }
-            return priorityManager.getPriority(for: event.bandName, eventYear: eventYear) == 1
+            return t == unofficalEventType || t == unofficalEventTypeOld
         }
         .sorted { ($0.timeIndex, $0.bandName) < ($1.timeIndex, $1.bandName) }
     }
@@ -665,7 +660,7 @@ struct AutoChooseAttendanceWizardView: View {
             // Fixed bottom row: Cancel (left), Both (right) as proper buttons
             HStack(alignment: .center, spacing: 16) {
                 Button(NSLocalizedString("Cancel", comment: "")) {
-                    onDismiss(false)
+                    dismissWizardCancelled()
                 }
                 .font(.subheadline.weight(.medium))
                 .foregroundColor(.white)
@@ -764,7 +759,7 @@ struct AutoChooseAttendanceWizardView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
             primaryButton(NSLocalizedString("Done", comment: "")) {
-                onDismiss(false)
+                dismissWizardCancelled()
             }
         }
     }
@@ -929,28 +924,37 @@ struct AutoChooseAttendanceWizardView: View {
         isBuilding = true
         // Meet and Greet: checklist selection; when empty, builder adds no M&G (markAllMustMeetAndGreets false)
         let selectedMeetAndGreetList = events.filter { ($0.eventType ?? "") == meetAndGreetype && selectedMeetAndGreetIds.contains(eventId($0)) }
-        // Unofficial / Cruiser Organized: checklist selection (Must bands only)
+        // Unofficial / Cruiser Organized: checklist selection (all types in wizard list, e.g. pre-party)
         let selectedUnofficialList = events.filter { event in
             let t = event.eventType ?? ""
             guard t == unofficalEventType || t == unofficalEventTypeOld else { return false }
             return selectedUnofficialEventIds.contains(eventId(event))
         }
-        let yearString = String(eventYear)
-        let existingAttended = events.filter { event in
-            guard let startTime = event.startTime, !startTime.isEmpty else { return false }
-            var et = event.eventType ?? ""
-            if et == unofficalEventTypeOld { et = unofficalEventType }
-            let status = attendedHandle.getShowAttendedStatus(
-                band: event.bandName,
-                location: event.location,
-                startTime: startTime,
-                eventType: et,
-                eventYearString: yearString
-            )
-            return status != sawNoneStatus
-        }
         let selectedClinicsList = events.filter { ($0.eventType ?? "") == clinicType && selectedClinicIds.contains(eventId($0)) }
         let selectedSpecialsList = events.filter { ($0.eventType ?? "") == specialEventType && selectedSpecialEventIds.contains(eventId($0)) }
+
+        AIScheduleStorage.saveWizardRollbackBackup(attended: attendedHandle.getShowsAttended(), year: eventYear)
+        AttendanceManager().clearAllAttendance(forYear: eventYear) {
+            DispatchQueue.main.async {
+                self.attendanceClearedForActiveWizardRun = true
+                self.runScheduleBuilderAfterAttendanceClear(
+                    selectedMeetAndGreetList: selectedMeetAndGreetList,
+                    selectedUnofficialList: selectedUnofficialList,
+                    selectedClinicsList: selectedClinicsList,
+                    selectedSpecialsList: selectedSpecialsList
+                )
+            }
+        }
+    }
+
+    /// Runs after SQLite clears this year's attendance so `existingAttended` is empty (fresh run + Must conflicts prompt).
+    private func runScheduleBuilderAfterAttendanceClear(
+        selectedMeetAndGreetList: [EventData],
+        selectedUnofficialList: [EventData],
+        selectedClinicsList: [EventData],
+        selectedSpecialsList: [EventData]
+    ) {
+        let existingAttended: [EventData] = []
         var b = AIScheduleBuilder(
             markAllMustMeetAndGreets: false,
             markAllMustClinics: false,
@@ -958,7 +962,14 @@ struct AutoChooseAttendanceWizardView: View {
             eventYear: eventYear,
             latestShowCutoffHalfHours: latestShowHalfHours
         )
-        let firstStep = b.start(events: events, existingAttended: existingAttended, selectedClinicEvents: selectedClinicsList, selectedSpecialEvents: selectedSpecialsList, selectedMeetAndGreetEvents: selectedMeetAndGreetList, selectedUnofficialEvents: selectedUnofficialList)
+        let firstStep = b.start(
+            events: events,
+            existingAttended: existingAttended,
+            selectedClinicEvents: selectedClinicsList,
+            selectedSpecialEvents: selectedSpecialsList,
+            selectedMeetAndGreetEvents: selectedMeetAndGreetList,
+            selectedUnofficialEvents: selectedUnofficialList
+        )
         builder = b
         currentBuildStep = firstStep
         if case .completed = firstStep {
@@ -967,6 +978,17 @@ struct AutoChooseAttendanceWizardView: View {
             isBuilding = false
             checkStepForAlerts()
         }
+    }
+
+    private func dismissWizardCancelled() {
+        restoreWizardAttendanceIfNeeded()
+        onDismiss(false)
+    }
+
+    private func restoreWizardAttendanceIfNeeded() {
+        guard attendanceClearedForActiveWizardRun else { return }
+        attendanceClearedForActiveWizardRun = false
+        AIScheduleStorage.restoreWizardCancelled(attendedHandle: attendedHandle, year: eventYear)
     }
     
     private func checkStepForAlerts() {
@@ -981,10 +1003,9 @@ struct AutoChooseAttendanceWizardView: View {
     
     private func finishBuild(with buildStep: AIScheduleBuildStep) {
         guard case .completed(let toMark) = buildStep else { return }
+        attendanceClearedForActiveWizardRun = false
         // toMark already includes resolved shows, M&G, and any selected clinics/specials that survived conflict resolution
         let yearString = String(eventYear)
-        let currentAttended = attendedHandle.getShowsAttended()
-        AIScheduleStorage.saveBackup(attended: currentAttended, year: eventYear)
         let am = AttendanceManager()
         let ts = Date().timeIntervalSince1970
         for event in toMark {
@@ -992,9 +1013,10 @@ struct AutoChooseAttendanceWizardView: View {
             var et = event.eventType ?? showType
             if et == unofficalEventTypeOld { et = unofficalEventType }
             let index = "\(event.bandName):\(event.location):\(startTime):\(et):\(yearString)"
-            am.setAttendanceStatusByIndex(index: index, status: 2, timestamp: ts, attendanceSource: "Auto")
+            am.setAttendanceStatusByIndex(index: index, status: 2, timestamp: ts)
         }
         completedCount = toMark.count
+        AIScheduleStorage.clearBackup(year: eventYear)
         AIScheduleStorage.setHasRunAI(for: eventYear, value: true)
         currentBuildStep = nil
         builder = nil

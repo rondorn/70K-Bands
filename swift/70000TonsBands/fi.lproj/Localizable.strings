@@ -229,6 +229,7 @@
 // Share Schedule via QR Code – button and menu strings
 "Share Schedule via QR Code" = "Jaa aikataulu QR-koodilla";
 "Scan QR Code Schedule" = "Skannaa aikataulu QR-koodilla";
+"QRCodeImportSection" = "QR-koodin tuonti";
 
 // Share Schedule via QR Code – instructions
 "QRShareInstructionsIntro" = "Tätä QR-koodia on tarkoitettu jaettavaksi seuraavissa olosuhteissa.";

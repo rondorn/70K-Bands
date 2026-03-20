@@ -182,8 +182,8 @@
 // Auto Choose Attendance wizard – Meet and Greet step
 "AutoChooseAttendanceSection" = "Planifica tu horario";
 "AutoChooseAttendanceTitle" = "Planifica tu horario";
-"AutoScheduleReleasedCreatePrompt" = "El programa de shows ha sido publicado.\n\n¿Quieres ejecutar un asistente que genere un horario personalizado según tus preferencias Must, Might y Won't, y tus propias respuestas a las preguntas que haremos?";
-"AutoScheduleReleasedRerunPrompt" = "El programa de shows ha sido publicado.\n\n¿Quieres volver a ejecutar el asistente de horario personalizado? Esto ejecutará un asistente que generará un horario personalizado según tus preferencias Must, Might y Won't, y tus propias respuestas a las preguntas que haremos.";
+"AutoScheduleReleasedCreatePrompt" = "Se ha publicado %@.\n\n¿Quieres ejecutar un asistente que genere un horario personalizado según tus preferencias Must, Might y Won't, y tus propias respuestas a las preguntas que haremos?";
+"AutoScheduleReleasedRerunPrompt" = "Se ha publicado %@.\n\n¿Quieres volver a ejecutar el asistente de horario personalizado? Esto ejecutará un asistente que generará un horario personalizado según tus preferencias Must, Might y Won't, y tus propias respuestas a las preguntas que haremos.";
 "AutoChooseAttendanceIntro" = "¿Quieres que %@ te ayude a elegir a qué eventos asistir?\n\nUsaremos tus elecciones Must, Might y Wont y algunas preguntas rápidas para hacer una primera propuesta. Puedes cambiar cualquier evento después.";
 "AutoChooseAttendanceNoMeetAndGreets" = "No hay Meet and Greet en el programa.";
 "AutoChooseAttendanceMeetAndGreetQuestion" = "¿A qué eventos Meet and Greet quieres asistir?";
@@ -275,6 +275,7 @@
 // Share Schedule via QR Code – button and menu strings
 "Share Schedule via QR Code" = "Compartir horario por código QR";
 "Scan QR Code Schedule" = "Escanear horario por código QR";
+"QRCodeImportSection" = "Importación por código QR";
 
 // Share Schedule via QR Code – instructions
 "QRShareInstructionsIntro" = "Este código QR está pensado para compartirse en las siguientes condiciones.";

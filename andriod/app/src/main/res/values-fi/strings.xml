@@ -419,6 +419,7 @@
     <string name="schedule_qr_scan_title">Skannaa aikataulu QR-koodilla</string>
     <string name="schedule_qr_share_preference">Jaa aikataulu QR-koodilla</string>
     <string name="schedule_qr_scan_preference">Skannaa aikataulu QR-koodilla</string>
+    <string name="qr_code_import_section">QR-koodin tuonti</string>
     <string name="QRShareInstructionsIntro">Tätä QR-koodia on tarkoitettu jaettavaksi seuraavissa olosuhteissa.</string>
     <string name="QRShareCondition1">Käyttäjällä on internetyhteys ja uudet aikataulutiedot</string>
     <string name="QRShareCondition2">Toinen käyttäjä tarvitsee aikataulutiedot, mutta ei ole internetyhteyttä</string>

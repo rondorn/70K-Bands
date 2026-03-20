@@ -419,6 +419,7 @@
     <string name="schedule_qr_scan_title">Scanner l\'emploi du temps par code QR</string>
     <string name="schedule_qr_share_preference">Partager l\'emploi du temps par code QR</string>
     <string name="schedule_qr_scan_preference">Scanner l\'emploi du temps par code QR</string>
+    <string name="qr_code_import_section">Importation par code QR</string>
     <string name="QRShareInstructionsIntro">Ce code QR est destiné à être partagé dans les conditions suivantes.</string>
     <string name="QRShareCondition1">Un utilisateur a accès à Internet et dispose de nouvelles données d\'emploi du temps</string>
     <string name="QRShareCondition2">Un autre utilisateur a besoin des données d\'emploi du temps mais n\'a pas Internet</string>

@@ -416,6 +416,7 @@
     <string name="schedule_qr_scan_title">Escanear horário por código QR</string>
     <string name="schedule_qr_share_preference">Partilhar horário por código QR</string>
     <string name="schedule_qr_scan_preference">Escanear horário por código QR</string>
+    <string name="qr_code_import_section">Importação por código QR</string>
     <string name="QRShareInstructionsIntro">Este código QR destina-se a ser partilhado nas seguintes condições.</string>
     <string name="QRShareCondition1">Um utilizador tem acesso à Internet e tem dados de horário novos</string>
     <string name="QRShareCondition2">Outro utilizador precisa dos dados de horário, mas não tem Internet</string>

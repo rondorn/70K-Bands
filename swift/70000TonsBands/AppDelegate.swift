@@ -507,25 +507,33 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                     // Use new Core Data iCloud sync system
                     let sqliteiCloudSync = SQLiteiCloudSync()
                     
-                    // Sync priorities from iCloud
+                    // Pull before push — attendance push prunes KV keys missing from SQLite; pushing first on a
+                    // sparse DB deletes most iCloud attendance (see SQLiteiCloudSync.syncAttendanceToiCloud).
+                    let pullGroup = DispatchGroup()
+                    pullGroup.enter()
                     sqliteiCloudSync.syncPrioritiesFromiCloud {
-                        print("iCloud: Priority sync completed")
+                        print("iCloud: Priority pull completed")
+                        pullGroup.leave()
                     }
-                    
-                    // Sync attendance from iCloud
+                    pullGroup.enter()
                     sqliteiCloudSync.syncAttendanceFromiCloud {
-                        print("iCloud: Attendance sync completed")
+                        print("iCloud: Attendance pull completed")
+                        pullGroup.leave()
                     }
-                    
-                    // Write local data to iCloud
-                    sqliteiCloudSync.syncPrioritiesToiCloud()
-                    sqliteiCloudSync.syncAttendanceToiCloud()
-                    
-                    print("iCloud: Launch sync completed, refreshing display...")
-                    
-                    // Refresh the display on the main thread
-                    DispatchQueue.main.async {
-                        NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
+                    pullGroup.notify(queue: .global(qos: .background)) {
+                        let pushGroup = DispatchGroup()
+                        pushGroup.enter()
+                        sqliteiCloudSync.syncPrioritiesToiCloud {
+                            pushGroup.leave()
+                        }
+                        pushGroup.enter()
+                        sqliteiCloudSync.syncAttendanceToiCloud {
+                            pushGroup.leave()
+                        }
+                        pushGroup.notify(queue: .main) {
+                            print("iCloud: Launch sync completed, refreshing display...")
+                            NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
+                        }
                     }
                 } else {
                     print("iCloud: Schedule still loading, deferring iCloud sync to proper sequence")
@@ -1171,26 +1179,32 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             // NEW: Use Core Data iCloud sync system instead of old iCloudDataHandler
             let sqliteiCloudSync = SQLiteiCloudSync()
             
-            // Sync priorities from iCloud
+            let pullGroup = DispatchGroup()
+            pullGroup.enter()
             sqliteiCloudSync.syncPrioritiesFromiCloud {
-                print("iCloud: Priority sync completed from external change")
+                print("iCloud: Priority pull completed from external change")
+                pullGroup.leave()
             }
-            
-            // Sync attendance from iCloud
+            pullGroup.enter()
             sqliteiCloudSync.syncAttendanceFromiCloud {
-                print("iCloud: Attendance sync completed from external change")
+                print("iCloud: Attendance pull completed from external change")
+                pullGroup.leave()
             }
-            
-            // Write local data to iCloud
-            sqliteiCloudSync.syncPrioritiesToiCloud()
-            sqliteiCloudSync.syncAttendanceToiCloud()
-            
-            print("iCloud: External change processing completed, refreshing GUI...")
-            
-            // Refresh the UI on main thread after background processing
-            DispatchQueue.main.async {
-                print("iCloud: Sending GUI refresh")
-                NotificationCenter.default.post(name: Notification.Name(rawValue: "iCloudRefresh"), object: nil)
+            pullGroup.notify(queue: .global(qos: .utility)) {
+                let pushGroup = DispatchGroup()
+                pushGroup.enter()
+                sqliteiCloudSync.syncPrioritiesToiCloud {
+                    pushGroup.leave()
+                }
+                pushGroup.enter()
+                sqliteiCloudSync.syncAttendanceToiCloud {
+                    pushGroup.leave()
+                }
+                pushGroup.notify(queue: .main) {
+                    print("iCloud: External change processing completed, refreshing GUI...")
+                    print("iCloud: Sending GUI refresh")
+                    NotificationCenter.default.post(name: Notification.Name(rawValue: "iCloudRefresh"), object: nil)
+                }
             }
         }
     }

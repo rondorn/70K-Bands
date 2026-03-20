@@ -415,6 +415,7 @@
     <string name="schedule_qr_scan_title">Scan QR-kode program</string>
     <string name="schedule_qr_share_preference">Del program via QR-kode</string>
     <string name="schedule_qr_scan_preference">Scan QR-kode program</string>
+    <string name="qr_code_import_section">Import med QR-kode</string>
     <string name="QRShareInstructionsIntro">Denne QR-kode er beregnet til deling under følgende betingelser.</string>
     <string name="QRShareCondition1">En bruger har internetadgang og har nye programdata</string>
     <string name="QRShareCondition2">En anden bruger har brug for programdataene, men har ikke internet</string>

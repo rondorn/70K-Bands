@@ -139,11 +139,12 @@ public class preferenceLayout  extends Activity {
                 }
             });
         }
-        // Scan QR Code Schedule (70K only; MDF has no real-world use case)
+        // Scan QR Code Schedule — own section at top of preferences (70K only)
+        View scheduleQrImportSection = findViewById(R.id.schedule_qr_import_section);
         View scheduleQrScanRow = findViewById(R.id.schedule_qr_scan_row);
-        if (scheduleQrScanRow != null) {
+        if (scheduleQrImportSection != null && scheduleQrScanRow != null) {
             if (FestivalConfig.getInstance().scheduleQRShareEnabled) {
-                scheduleQrScanRow.setVisibility(View.VISIBLE);
+                scheduleQrImportSection.setVisibility(View.VISIBLE);
                 scheduleQrScanRow.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -151,7 +152,7 @@ public class preferenceLayout  extends Activity {
                     }
                 });
             } else {
-                scheduleQrScanRow.setVisibility(View.GONE);
+                scheduleQrImportSection.setVisibility(View.GONE);
             }
         }
         View planScheduleSection = findViewById(R.id.plan_schedule_section);

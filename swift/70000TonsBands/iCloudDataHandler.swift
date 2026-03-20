@@ -1027,6 +1027,76 @@ class iCloudDataHandler {
         }
     }
     
+    /// Parses Unix timestamp from KVS values produced by `SQLiteiCloudSync` / priority sync.
+    /// - Priorities: `priority:deviceUID:timestamp`
+    /// - Attendance: `status:deviceUID:timestamp` (older builds may append an extra field; timestamp stays at index 2)
+    /// Device UID has no colons, so the timestamp is always the 3rd field (index 2).
+    private func ubiquitousValueTimestamp(_ valueString: String) -> Double? {
+        let parts = valueString.split(separator: ":")
+        guard parts.count >= 3 else { return nil }
+        return Double(parts[2])
+    }
+    
+    /// Event year from `eventName:band:location:startTime:eventType:year` (same layout as pull-from-iCloud parsing in this file).
+    private func eventYearFromKvsEventNameKey(_ key: String) -> Int? {
+        guard key.hasPrefix("eventName:") else { return nil }
+        let parts = key.split(separator: ":", omittingEmptySubsequences: false).map(String.init)
+        guard parts.count >= 6, parts[0] == "eventName" else { return nil }
+        return Int(parts[5])
+    }
+    
+    /// When over the KVS key limit, purge order: non–pointer-current `eventName:` (oldest years first), then unparseable `eventName:`, then other keys (`bandName:` etc.), then undated, then pointer-current `eventName:` only if still over limit.
+    private func sortedKeysForKvsOverflowPurge(entries: [String: Any], pointerCurrentYear: Int) -> [String] {
+        enum Tier: Int {
+            case nonCurrentEvent = 0
+            case eventUnparsedYear = 1
+            case otherDated = 2
+            case undated = 3
+            case currentYearEvent = 4
+        }
+        struct Candidate {
+            let key: String
+            let tier: Tier
+            let eventYear: Int
+            let timestamp: Double
+        }
+        var candidates: [Candidate] = []
+        candidates.reserveCapacity(entries.count)
+        for (key, value) in entries {
+            let ts: Double?
+            if let valueString = value as? String {
+                ts = ubiquitousValueTimestamp(valueString)
+            } else {
+                ts = nil
+            }
+            if key.hasPrefix("eventName:") {
+                if let y = eventYearFromKvsEventNameKey(key) {
+                    if y == pointerCurrentYear {
+                        candidates.append(Candidate(key: key, tier: .currentYearEvent, eventYear: y, timestamp: ts ?? 0))
+                    } else {
+                        candidates.append(Candidate(key: key, tier: .nonCurrentEvent, eventYear: y, timestamp: ts ?? 0))
+                    }
+                } else {
+                    candidates.append(Candidate(key: key, tier: .eventUnparsedYear, eventYear: Int.max, timestamp: ts ?? 0))
+                }
+                continue
+            }
+            if let t = ts {
+                candidates.append(Candidate(key: key, tier: .otherDated, eventYear: Int.max, timestamp: t))
+            } else {
+                candidates.append(Candidate(key: key, tier: .undated, eventYear: Int.max, timestamp: 0))
+            }
+        }
+        candidates.sort { a, b in
+            if a.tier.rawValue != b.tier.rawValue { return a.tier.rawValue < b.tier.rawValue }
+            if a.tier == .nonCurrentEvent, a.eventYear != b.eventYear {
+                return a.eventYear < b.eventYear
+            }
+            return a.timestamp < b.timestamp
+        }
+        return candidates.map(\.key)
+    }
+    
     /// Purges iCloud KVS keys older than 3 years, or keys without a timestamp (old format)
     func purgeOldiCloudKeys() {
         print("KVS: Starting purgeOldiCloudKeys")
@@ -1044,7 +1114,7 @@ class iCloudDataHandler {
         for (key, value) in allEntries {
             if let valueString = value as? String {
                 let parts = valueString.split(separator: ":")
-                if parts.count == 3, let timestamp = Double(parts[2]) {
+                if let timestamp = ubiquitousValueTimestamp(valueString) {
                     if timestamp < threeYearsAgo {
                         print("Purging iCloud key '\(key)' (timestamp: \(timestamp))")
                         store.removeObject(forKey: key)
@@ -1068,46 +1138,20 @@ class iCloudDataHandler {
         store.synchronize()
         print("KVS: Total keys detected: \(totalCount), Purged: \(purgedCount), Kept: \(keptCount)")
 
-        // Second pass: if still over 1000 keys, purge oldest 100
+        // Second pass: if still over 1000 keys, purge down to limit — never prefer removing pointer-Current
+        // cruise year attendance before older years (see `pointerConfigCurrentEventYearInt()`).
         let postPurgeEntries = store.dictionaryRepresentation
         let postPurgeCount = postPurgeEntries.count
         if postPurgeCount > 1000 {
-            print("KVS: Over 1000 keys detected (\(postPurgeCount)). Purging oldest 100 keys.")
-            // Rebuild timestamped/undated lists from current store
-            var currentTimestamped: [(key: String, timestamp: Double)] = []
-            var currentUndated: [String] = []
-            for (key, value) in postPurgeEntries {
-                if let valueString = value as? String {
-                    let parts = valueString.split(separator: ":")
-                    if parts.count == 3, let timestamp = Double(parts[2]) {
-                        currentTimestamped.append((key, timestamp))
-                    } else {
-                        currentUndated.append(key)
-                    }
-                } else {
-                    currentUndated.append(key)
-                }
-            }
-            // Sort timestamped by oldest first
-            currentTimestamped.sort { $0.timestamp < $1.timestamp }
-            var keysPurgedThisRound: [String] = []
-            // Purge up to 100 oldest timestamped keys
-            for i in 0..<min(100, currentTimestamped.count) {
-                let key = currentTimestamped[i].key
+            let pointerYear = pointerConfigCurrentEventYearInt() ?? eventYear
+            let toRemove = postPurgeCount - 1000
+            let ordered = sortedKeysForKvsOverflowPurge(entries: postPurgeEntries, pointerCurrentYear: pointerYear)
+            let keysPurgedThisRound = Array(ordered.prefix(toRemove))
+            for key in keysPurgedThisRound {
                 store.removeObject(forKey: key)
-                keysPurgedThisRound.append(key)
-            }
-            // If fewer than 100 timestamped, fill with undated
-            if currentTimestamped.count < 100 {
-                let needed = 100 - currentTimestamped.count
-                for i in 0..<min(needed, currentUndated.count) {
-                    let key = currentUndated[i]
-                    store.removeObject(forKey: key)
-                    keysPurgedThisRound.append(key)
-                }
             }
             store.synchronize()
-            print("KVS: Purged \(keysPurgedThisRound.count) keys in oldest-100 pass. Keys: \(keysPurgedThisRound)")
+            print("KVS: Over 1000 keys (\(postPurgeCount)); removed \(keysPurgedThisRound.count) using pointer Current year=\(pointerYear) (non-current eventName first, oldest years first; current-year eventName last). Sample: \(keysPurgedThisRound.prefix(8))")
         }
     }
     

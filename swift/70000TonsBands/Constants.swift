@@ -512,6 +512,24 @@ func getPointerUrlData(keyValue: String) -> String {
     return dataString
 }
 
+/// Reads `Current::eventYear::YYYY` from the cached pointer file only.
+/// Does **not** follow the UI-selected cruise year (`getPointerUrlData("eventYear")` may return 2020 when browsing 2020).
+/// Used for iCloud KVS overflow purge so we always protect the festival’s current year from the pointer config.
+func pointerConfigCurrentEventYearInt() -> Int? {
+    let path = FilePaths.cachedPointerFile
+    guard FileManager.default.fileExists(atPath: path) else { return nil }
+    guard let data = try? String(contentsOfFile: path, encoding: .utf8) else { return nil }
+    for raw in data.components(separatedBy: .newlines) {
+        let line = raw.trimmingCharacters(in: .whitespaces)
+        guard line.hasPrefix("Current::eventYear::") else { continue }
+        let parts = line.components(separatedBy: "::")
+        guard parts.count >= 3 else { continue }
+        let yearStr = parts[2].trimmingCharacters(in: .whitespacesAndNewlines)
+        return Int(yearStr)
+    }
+    return nil
+}
+
 /// Returns sensible default values for pointer data keys when network/cache is unavailable during launch
 /// This prevents blocking the app launch while providing functional defaults
 /// - Parameter keyValue: The key for which to provide a default value
