@@ -47,7 +47,7 @@
                     android:id="@+id/wizard_intro_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/plan_schedule_intro"
+                    android:text=""
                     android:textColor="#FFFFFF"
                     android:textSize="16sp"
                     android:lineSpacingMultiplier="1.2"

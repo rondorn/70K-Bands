@@ -83,13 +83,26 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         setTheme(R.style.AppTheme_NoActionBar);
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_auto_choose_attendance_wizard);
 
         eventYear = getIntent().getIntExtra("eventYear", staticVariables.eventYear != null ? staticVariables.eventYear : 0);
         if (eventYear == 0) {
             staticVariables.ensureEventYearIsSet();
             eventYear = staticVariables.eventYear;
         }
+
+        if (!AIScheduleEventLoader.hasBuildableEventsForYear(eventYear)) {
+            AlertDialog blocked = new AlertDialog.Builder(this)
+                    .setTitle(R.string.plan_your_schedule)
+                    .setMessage(R.string.ai_schedule_no_events)
+                    .setPositiveButton(R.string.Ok, (d, w) -> finish())
+                    .setOnCancelListener(d -> finish())
+                    .create();
+            blocked.show();
+            AutoScheduleWizardManager.applyDarkDialogStyle(blocked, this);
+            return;
+        }
+
+        setContentView(R.layout.activity_auto_choose_attendance_wizard);
 
         titleText = findViewById(R.id.wizard_title);
         nextButton = findViewById(R.id.wizard_next);
@@ -115,7 +128,7 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
         // Force intro content visible and Next button clickable (matches iOS first screen)
         TextView introText = findViewById(R.id.wizard_intro_text);
         if (introText != null) {
-            introText.setText(getString(R.string.plan_schedule_intro));
+            introText.setText(getString(R.string.plan_schedule_intro, FestivalConfig.getInstance().appName));
             introText.setTextColor(Color.WHITE);
             introText.setVisibility(View.VISIBLE);
         }
@@ -573,7 +586,7 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
             events = AIScheduleEventLoader.buildEventListForYear(eventYear);
         }
         if (events.isEmpty()) {
-            Toast.makeText(this, "No schedule events for this year.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, getString(R.string.ai_schedule_no_events), Toast.LENGTH_LONG).show();
             finish();
             return;
         }

@@ -13,7 +13,8 @@
     <string name="Yes">Sim</string>
     <string name="No">Não</string>
     <string name="plan_your_schedule">Planeje sua programação</string>
-    <string name="plan_schedule_intro">Quer que o 70K Bands ajude você a escolher a quais eventos assistir?\n\nUsaremos suas escolhas Must, Might e Wont e algumas perguntas rápidas para uma primeira versão. Você pode alterar qualquer evento depois.</string>
+    <string name="ai_schedule_no_events">Nenhum evento para construir.</string>
+    <string name="plan_schedule_intro">Quer que o %1$s ajude você a escolher a quais eventos assistir?\n\nUsaremos suas escolhas Must, Might e Wont e algumas perguntas rápidas para uma primeira versão. Você pode alterar qualquer evento depois.</string>
     <string name="latest_show_title">Último show</string>
     <string name="latest_show_cutoff">O último show que você quer ver.</string>
     <string name="latest_show_cutoff_hint">Shows que começam após este horário serão excluídos. Por exemplo, se você definir 2h, um show às 2h será incluído, mas um show às 2h30 ou mais tarde será excluído.</string>

@@ -258,7 +258,7 @@ struct FestivalConfig {
         self.specialEventsEnabledDefault = false
         self.unofficalEventsEnabledDefault = false
         self.commentsNotAvailableTranslationKey = "DefaultDescriptionMDF"
-        self.aiSchedule = false
+        self.aiSchedule = true
         self.scheduleQRShareEnabled = false
 
         // Future festivals: add #elseif FESTIVAL_XYZ above, then copy a block and override as needed.

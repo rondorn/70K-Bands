@@ -14,7 +14,8 @@
     <string name="Yes">Kyllä</string>
     <string name="No">Ei</string>
     <string name="plan_your_schedule">Suunnittele aikataulusi</string>
-    <string name="plan_schedule_intro">Haluatko, että 70K Bands auttaa sinua valitsemaan, mitä tapahtumiin osallistut?\n\nKäytämme Must-, Might- ja Wont-valintojasi sekä muutaman pikakysymyksen ensimmäiseen luonnokseen. Voit muuttaa mitä tahansa tapahtumaa myöhemmin.</string>
+    <string name="ai_schedule_no_events">Ei tapahtumia suunniteltavaksi.</string>
+    <string name="plan_schedule_intro">Haluatko, että %1$s auttaa sinua valitsemaan, mitä tapahtumiin osallistut?\n\nKäytämme Must-, Might- ja Wont-valintojasi sekä muutaman pikakysymyksen ensimmäiseen luonnokseen. Voit muuttaa mitä tahansa tapahtumaa myöhemmin.</string>
     <string name="latest_show_title">Viimeinen keikka</string>
     <string name="latest_show_cutoff">Viimeinen keikka, jonka haluat nähdä.</string>
     <string name="latest_show_cutoff_hint">Keikat, jotka alkavat tämän valitun ajan jälkeen, suljetaan pois. Esimerkiksi jos valitset klo 2, klo 2 alkava keikka sisällytetään, mutta klo 2:30 tai myöhemmin alkava keikka suljetaan pois.</string>

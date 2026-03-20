@@ -81,4 +81,12 @@ public class AIScheduleEventLoader {
         out.sort((a, b) -> Double.compare(a.timeIndex, b.timeIndex));
         return out;
     }
+
+    /**
+     * True if {@link #buildEventListForYear(int)} would return a non-empty list.
+     * Used to block the plan-schedule wizard when there is nothing to build from (matches iOS AIScheduleNoEvents).
+     */
+    public static boolean hasBuildableEventsForYear(int eventYear) {
+        return !buildEventListForYear(eventYear).isEmpty();
+    }
 }

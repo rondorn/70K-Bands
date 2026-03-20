@@ -86,7 +86,7 @@ public class preferenceLayout  extends Activity {
 
     private String eventYearText = "";
     private String localCurrentEventYear = "";
-    private EditText alertMin;
+    private Spinner minBeforeAlertSpinner;
 
     private EditText customPointerUrl;
     private Spinner pointerUrl;
@@ -195,18 +195,14 @@ public class preferenceLayout  extends Activity {
                                             AIScheduleStorage.restore(attendedHandle, yearForSchedule);
                                             Intent refresh = new Intent("RefreshLandscapeSchedule");
                                             androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(preferenceLayout.this).sendBroadcast(refresh);
-                                            Intent intent = new Intent(preferenceLayout.this, AutoChooseAttendanceWizardActivity.class);
-                                            intent.putExtra("eventYear", eventYearForWizard);
-                                            startActivityForResult(intent, REQUEST_WIZARD);
+                                            startPlanScheduleWizardIfSchedulePresent(eventYearForWizard);
                                         }
                                     })
                                     .create();
                             replaceDialog.show();
                             AutoScheduleWizardManager.applyDarkDialogStyle(replaceDialog, preferenceLayout.this);
                         } else {
-                            Intent intent = new Intent(preferenceLayout.this, AutoChooseAttendanceWizardActivity.class);
-                            intent.putExtra("eventYear", eventYearForWizard);
-                            startActivityForResult(intent, REQUEST_WIZARD);
+                            startPlanScheduleWizardIfSchedulePresent(eventYearForWizard);
                         }
                     }
                 });
@@ -250,6 +246,23 @@ public class preferenceLayout  extends Activity {
             }
         }
 
+    }
+
+    /** Starts the plan-schedule wizard when the loaded schedule has buildable events; otherwise shows a message (matches iOS). */
+    private void startPlanScheduleWizardIfSchedulePresent(int eventYearForWizard) {
+        if (!AIScheduleEventLoader.hasBuildableEventsForYear(eventYearForWizard)) {
+            AlertDialog dlg = new AlertDialog.Builder(this)
+                    .setTitle(R.string.plan_your_schedule)
+                    .setMessage(R.string.ai_schedule_no_events)
+                    .setPositiveButton(R.string.Ok, null)
+                    .create();
+            dlg.show();
+            AutoScheduleWizardManager.applyDarkDialogStyle(dlg, this);
+            return;
+        }
+        Intent intent = new Intent(preferenceLayout.this, AutoChooseAttendanceWizardActivity.class);
+        intent.putExtra("eventYear", eventYearForWizard);
+        startActivityForResult(intent, REQUEST_WIZARD);
     }
 
     /** Updates enabled state of "Clear all attendance data" based on current data. */
@@ -937,8 +950,25 @@ public class preferenceLayout  extends Activity {
             }
         });
 
-        alertMin = (EditText)findViewById(R.id.minBeforeEvent);
-        alertMin.setText(staticVariables.preferences.getMinBeforeToAlert().toString());
+        minBeforeAlertSpinner = (Spinner) findViewById(R.id.minBeforeEvent);
+        String[] minuteChoices = new String[61];
+        for (int m = 0; m <= 60; m++) {
+            minuteChoices[m] = String.valueOf(m);
+        }
+        ArrayAdapter<String> minBeforeAdapter = new ArrayAdapter<>(
+                this,
+                R.layout.spinner_item_white,
+                minuteChoices
+        );
+        minBeforeAdapter.setDropDownViewResource(R.layout.spinner_dropdown_item_dark);
+        minBeforeAlertSpinner.setAdapter(minBeforeAdapter);
+        int savedMinutes = staticVariables.preferences.getMinBeforeToAlert();
+        if (savedMinutes < 0) {
+            savedMinutes = 0;
+        } else if (savedMinutes > 60) {
+            savedMinutes = 60;
+        }
+        minBeforeAlertSpinner.setSelection(savedMinutes);
 
         pointerUrl = (Spinner)findViewById(R.id.pointerUrl);
         ArrayAdapter<String> pointerAdapter = new ArrayAdapter<>(
@@ -996,7 +1026,7 @@ public class preferenceLayout  extends Activity {
     @Override
     public void onBackPressed() {
 
-        staticVariables.preferences.setMinBeforeToAlert(Integer.valueOf(alertMin.getText().toString()));
+        staticVariables.preferences.setMinBeforeToAlert(minBeforeAlertSpinner.getSelectedItemPosition());
         staticVariables.preferences.setPointerUrl(String.valueOf(pointerUrl.getSelectedItem()));
         String customUrl = customPointerUrl.getText().toString().trim();
         staticVariables.preferences.setCustomPointerUrl(customUrl.isEmpty() ? null : customUrl);

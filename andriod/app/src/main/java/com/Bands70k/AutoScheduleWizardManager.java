@@ -93,6 +93,21 @@ public final class AutoScheduleWizardManager {
             if (whenNotShownOrDismissed != null) whenNotShownOrDismissed.run();
         });
         builder.setPositiveButton(yesStr, (dialog, which) -> {
+            if (!AIScheduleEventLoader.hasBuildableEventsForYear(eventYearInt)) {
+                AlertDialog err = new AlertDialog.Builder(activity)
+                        .setTitle(title)
+                        .setMessage(R.string.ai_schedule_no_events)
+                        .setPositiveButton(R.string.Ok, (d, w) -> {
+                            if (whenNotShownOrDismissed != null) whenNotShownOrDismissed.run();
+                        })
+                        .setOnCancelListener(d -> {
+                            if (whenNotShownOrDismissed != null) whenNotShownOrDismissed.run();
+                        })
+                        .create();
+                err.show();
+                applyDarkDialogStyle(err, activity);
+                return;
+            }
             prefs.edit().putString(KEY_LAST_RUN_SCHEDULE_NAME, scheduleNameFinal).apply();
             Intent wizard = new Intent(activity, AutoChooseAttendanceWizardActivity.class);
             wizard.putExtra("eventYear", eventYearInt);

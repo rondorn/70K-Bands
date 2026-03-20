@@ -256,17 +256,13 @@
                         android:paddingTop="8dp"
                         android:paddingBottom="8dp">
 
-                        <EditText
+                        <Spinner
                             android:id="@+id/minBeforeEvent"
-                            android:layout_width="60dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:inputType="number"
-                            android:textSize="17sp"
-                            android:textColor="#FFFFFF"
-                            android:textColorHint="#8E8E93"
+                            android:minWidth="72dp"
                             android:background="@android:color/transparent"
-                            android:gravity="center"
-                            android:maxLength="3" />
+                            android:spinnerMode="dropdown" />
                     </LinearLayout>
                 </LinearLayout>
 
