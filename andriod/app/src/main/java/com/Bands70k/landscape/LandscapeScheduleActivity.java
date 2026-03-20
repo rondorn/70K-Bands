@@ -311,9 +311,31 @@ public class LandscapeScheduleActivity extends Activity {
     
     @Override
     public void onBackPressed() {
-        Log.d(TAG, "Back button pressed");
-        finishWithResult(scheduleView != null ? scheduleView.getCurrentDay() : null);
-        super.onBackPressed();
+        Log.d(TAG, "Back button pressed — previous day (same as swipe back), or list only if view missing");
+        provideSwipeFeedback();
+        navigateToPreviousDayLikeSwipe();
+    }
+
+    /**
+     * Previous-day navigation and messaging; matches swipe-right (back) in {@link #initializeSwipeGestureDetector()}.
+     * Caller may invoke {@link #provideSwipeFeedback()} first for parity with fling.
+     */
+    private void navigateToPreviousDayLikeSwipe() {
+        if (scheduleView == null) {
+            finishWithResult(null);
+            return;
+        }
+        if (scheduleView.performSwipeToPreviousDay()) {
+            String day = scheduleView.getCurrentDay();
+            if (day != null) {
+                com.Bands70k.HelpMessageHandler.showMessage(
+                    getString(com.Bands70k.R.string.viewing_day_format, day), scheduleView);
+            }
+        } else {
+            com.Bands70k.HelpMessageHandler.showMessage(
+                getString(com.Bands70k.R.string.no_previous_days), scheduleView);
+            scheduleView.performRubberBand(false);
+        }
     }
 
     private void initializeSwipeGestureDetector() {
@@ -333,17 +355,7 @@ public class LandscapeScheduleActivity extends Activity {
                     Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
                     provideSwipeFeedback();
                     if (deltaX > 0) {
-                        if (scheduleView.performSwipeToPreviousDay()) {
-                            String day = scheduleView.getCurrentDay();
-                            if (day != null) {
-                                com.Bands70k.HelpMessageHandler.showMessage(
-                                    getString(com.Bands70k.R.string.viewing_day_format, day), scheduleView);
-                            }
-                        } else {
-                            com.Bands70k.HelpMessageHandler.showMessage(
-                                getString(com.Bands70k.R.string.no_previous_days), scheduleView);
-                            scheduleView.performRubberBand(false);
-                        }
+                        navigateToPreviousDayLikeSwipe();
                     } else {
                         if (scheduleView.performSwipeToNextDay()) {
                             String day = scheduleView.getCurrentDay();

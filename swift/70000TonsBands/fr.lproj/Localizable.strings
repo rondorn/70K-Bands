@@ -207,6 +207,7 @@
 // Share Schedule via QR Code – button and menu strings
 "Share Schedule via QR Code" = "Partager l'emploi du temps par code QR";
 "Scan QR Code Schedule" = "Scanner l'emploi du temps par code QR";
+"QRCodeImportSection" = "Importation par code QR";
 
 // Share Schedule via QR Code – instructions
 "QRShareInstructionsIntro" = "Ce code QR est destiné à être partagé dans les conditions suivantes.";

@@ -53,7 +53,8 @@ final class AutoScheduleWizardManager {
         }()
 
         let messageKey = isRepeat ? "AutoScheduleReleasedRerunPrompt" : "AutoScheduleReleasedCreatePrompt"
-        let message = NSLocalizedString(messageKey, comment: "Auto schedule released - offer wizard")
+        let messageFormat = NSLocalizedString(messageKey, comment: "Auto schedule released - offer wizard; first line includes %@ for Current::AutoScheduleName")
+        let message = String(format: messageFormat, locale: Locale.current, scheduleName)
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             guard let presenter = topMostViewController() else {

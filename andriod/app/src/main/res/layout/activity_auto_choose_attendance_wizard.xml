@@ -154,7 +154,7 @@
                     android:popupBackground="@drawable/spinner_popup_background_dark" />
             </LinearLayout>
 
-            <!-- Step: Unofficial / Cruiser Organized (only if any exist for Must bands) -->
+            <!-- Step: Unofficial / Cruiser Organized (all entries, e.g. pre-party + cruiser events) -->
             <LinearLayout
                 android:id="@+id/wizard_step_unofficial"
                 android:layout_width="match_parent"
@@ -177,18 +177,11 @@
                     android:textColor="#B0B0B0"
                     android:textSize="14sp"
                     android:paddingBottom="8dp" />
-                <Button
-                    android:id="@+id/wizard_unofficial_all"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/aischedule_checklist_all"
-                    android:textColor="#FFFFFF"
-                    android:backgroundTint="#007AFF"
-                    android:layout_marginBottom="8dp" />
                 <ScrollView
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:maxHeight="280dp">
+                    android:layout_height="@dimen/wizard_unofficial_list_height"
+                    android:fillViewport="true"
+                    android:nestedScrollingEnabled="true">
                     <LinearLayout
                         android:id="@+id/wizard_unofficial_list"
                         android:layout_width="match_parent"

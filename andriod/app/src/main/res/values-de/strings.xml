@@ -416,6 +416,7 @@
     <string name="schedule_qr_scan_title">Zeitplan per QR-Code scannen</string>
     <string name="schedule_qr_share_preference">Zeitplan per QR-Code teilen</string>
     <string name="schedule_qr_scan_preference">Zeitplan per QR-Code scannen</string>
+    <string name="qr_code_import_section">QR-Code-Import</string>
     <string name="QRShareInstructionsIntro">Dieser QR-Code ist für die Weitergabe unter folgenden Bedingungen gedacht.</string>
     <string name="QRShareCondition1">Ein Nutzer hat Internetzugang und hat neue Zeitplandaten</string>
     <string name="QRShareCondition2">Ein anderer Nutzer braucht die Zeitplandaten, hat aber kein Internet</string>

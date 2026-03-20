@@ -37,6 +37,32 @@ enum AIScheduleStorage {
             print("AIScheduleStorage: Failed to save backup for year \(year): \(error)")
         }
     }
+
+    /// Saves year slice for wizard rollback (may be empty `{}`). Always writes a file so cancel-after-clear can restore.
+    static func saveWizardRollbackBackup(attended: [String: String], year: Int) {
+        let suffix = ":" + String(year)
+        let filtered = attended.filter { $0.key.hasSuffix(suffix) }
+        do {
+            let data = try JSONSerialization.data(withJSONObject: filtered)
+            try data.write(to: backupFileURL(for: year))
+        } catch {
+            print("AIScheduleStorage: Failed to save wizard rollback backup for year \(year): \(error)")
+        }
+    }
+
+    /// Restores attendance from the wizard pre-build snapshot and removes the backup file. Does not change hasRunAI.
+    static func restoreWizardCancelled(attendedHandle: ShowsAttended, year: Int) {
+        guard let backup = loadBackup(year: year) else { return }
+        let yearStr = String(year)
+        let current = attendedHandle.getShowsAttended()
+        for (index, status) in backup {
+            attendedHandle.changeShowAttendedStatus(index: index, status: status, skipICloud: false)
+        }
+        for (index, _) in current where index.hasSuffix(":" + yearStr) && backup[index] == nil {
+            attendedHandle.changeShowAttendedStatus(index: index, status: sawNoneStatus, skipICloud: false)
+        }
+        clearBackup(year: year)
+    }
     
     /// Load backup for year, or nil if none.
     static func loadBackup(year: Int) -> [String: String]? {

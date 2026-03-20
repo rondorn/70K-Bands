@@ -145,7 +145,6 @@ class PreferencesViewModel: ObservableObject {
     @Published var showReplaceAutoChoicesConfirmation = false
     @Published var showClearAllConfirmation = false
     @Published var clearAllCount = 0
-    @Published var hasAutoChosenDataForSelectedYear = false
     @Published var showYearChangeTimeoutWarning = false
     @Published var showBandEventChoice = false
     @Published var showNetworkError = false
@@ -398,38 +397,35 @@ class PreferencesViewModel: ObservableObject {
         selectedYear == "Current" ? eventYear : (Int(selectedYear) ?? eventYear)
     }
     
-    /// Refreshes whether the selected year has auto-chosen attendance data and total attendance count (for Clear button state).
-    /// Runs the SQLite checks on a background queue so the main thread is never blocked (avoids hang from manual/auto attendance changes).
-    /// - Parameter completion: If provided, called on main with the result; use when you need the value for follow-up logic (e.g. wizard trigger).
-    func refreshAutoChosenDataState(completion: ((Bool) -> Void)? = nil) {
+    /// Refreshes total attendance count for the selected year (Clear All button state).
+    /// Runs the SQLite check on a background queue so the main thread is never blocked.
+    func refreshAutoChosenDataState(completion: (() -> Void)? = nil) {
         guard FestivalConfig.current.aiSchedule else {
-            hasAutoChosenDataForSelectedYear = false
             clearAllCount = 0
-            completion?(false)
+            completion?()
             return
         }
         let year = selectedYearAsInt
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             let am = AttendanceManager()
-            let hasAuto = am.hasAutoChosenAttendance(forYear: year)
             let totalCount = am.countAllAttendance(forYear: year)
             DispatchQueue.main.async {
-                self.hasAutoChosenDataForSelectedYear = hasAuto
                 self.clearAllCount = totalCount
-                completion?(hasAuto)
+                completion?()
             }
         }
     }
     
     /// Presents the Auto Choose Attendance wizard (triggered from preferences).
-    /// If the selected year already has auto-chosen attendance (or has run AI before, e.g. data restored from iCloud without source), shows a confirmation that those will be removed first.
+    /// If the selected year already has attendance or a prior AI run, shows a confirmation before opening the wizard.
     func triggerAutoChooseAttendanceWizard() {
         guard FestivalConfig.current.aiSchedule else { return }
-        refreshAutoChosenDataState { [weak self] hasAuto in
+        refreshAutoChosenDataState { [weak self] in
             guard let self = self else { return }
-            let hasRunAIForYear = AIScheduleStorage.hasRunAI(for: self.selectedYearAsInt)
-            if hasAuto || hasRunAIForYear {
+            let year = self.selectedYearAsInt
+            let hasRunAIForYear = AIScheduleStorage.hasRunAI(for: year)
+            if self.clearAllCount > 0 || hasRunAIForYear {
                 self.showReplaceAutoChoicesConfirmation = true
             } else {
                 self.showAutoChooseAttendanceWizard = true
@@ -437,15 +433,13 @@ class PreferencesViewModel: ObservableObject {
         }
     }
     
-    /// User confirmed replacing existing auto choices. Clear auto-only attendance for the selected year, then open the wizard.
+    /// User confirmed replacing an existing AI/attendance run. The wizard clears attendance when building; open it directly.
     func confirmReplaceAutoChoicesAndStartWizard() {
         showReplaceAutoChoicesConfirmation = false
         guard FestivalConfig.current.aiSchedule else { return }
-        AttendanceManager().clearAutoChosenAttendance(forYear: selectedYearAsInt) { [weak self] in
-            self?.refreshAutoChosenDataState()
-            NotificationCenter.default.post(name: Notification.Name("RefreshLandscapeSchedule"), object: nil)
-            self?.showAutoChooseAttendanceWizard = true
-        }
+        refreshAutoChosenDataState()
+        NotificationCenter.default.post(name: Notification.Name("RefreshLandscapeSchedule"), object: nil)
+        showAutoChooseAttendanceWizard = true
     }
     
     /// Prepares and shows confirmation to clear all attendance for the year (shows count).

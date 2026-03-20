@@ -65,6 +65,8 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
     private List<EventData> existingAttended = new ArrayList<>();
     private AIScheduleBuilder builder;
     private AIScheduleBuilder.BuildStep currentBuildStep;
+    /** After attendance is cleared for a new build, finishing the activity restores from backup (unless completed). */
+    private boolean pendingRestoreAttendanceOnCancel = false;
 
     private View stepIntroView;
     private View stepUnknownBandsView;
@@ -225,7 +227,7 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
             String uo = staticVariables.unofficalEvent != null ? staticVariables.unofficalEvent : "";
             String uoOld = staticVariables.unofficalEventOld != null ? staticVariables.unofficalEventOld : "";
             String et = e.eventType != null ? e.eventType : "";
-            if ((uo.equals(et) || uoOld.equals(et)) && rankStore.getPriorityForBand(e.bandName) == 1) {
+            if (uo.equals(et) || uoOld.equals(et)) {
                 hasUnofficialEvents = true;
             }
             if (hasSpecialEvents && hasUnofficialEvents) break;
@@ -311,7 +313,6 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
         for (EventData e : events) {
             String et = e.eventType != null ? e.eventType : "";
             if (!uo.equals(et) && !uoOld.equals(et)) continue;
-            if (rankStore.getPriorityForBand(e.bandName) != 1) continue;
             String id = eventId(e);
             String label = (e.notes != null && !e.notes.isEmpty()) ? e.notes : (e.bandName != null ? e.bandName : "");
             String sub = (e.location != null ? e.location : "") + " · " + (e.day != null ? e.day : "") + " · " + (e.startTime != null ? e.startTime : "");
@@ -337,25 +338,6 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
             row.addView(cb);
             row.setOnClickListener(v -> cb.setChecked(!cb.isChecked()));
             container.addView(row);
-        }
-        Button allBtn = findViewById(R.id.wizard_unofficial_all);
-        if (allBtn != null) {
-            allBtn.setOnClickListener(v -> {
-                for (int i = 0; i < container.getChildCount(); i++) {
-                    View child = container.getChildAt(i);
-                    if (child instanceof LinearLayout) {
-                        for (int j = 0; j < ((LinearLayout) child).getChildCount(); j++) {
-                            View inner = ((LinearLayout) child).getChildAt(j);
-                            if (inner instanceof CheckBox) {
-                                String id = (String) ((LinearLayout) child).getTag();
-                                ((CheckBox) inner).setChecked(true);
-                                selectedUnofficialEventIds.add(id);
-                                break;
-                            }
-                        }
-                    }
-                }
-            });
         }
     }
 
@@ -600,9 +582,10 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
             staticVariables.attendedHandler = new showsAttended();
         }
         showsAttended attendedHandle = staticVariables.attendedHandler;
-        AIScheduleStorage.saveBackup(attendedHandle.getShowsAttended(), eventYear);
+        AIScheduleStorage.saveWizardRollbackBackup(attendedHandle.getShowsAttended(), eventYear);
         attendedHandle.clearAttendanceForYear(eventYear);
         existingAttended.clear();
+        pendingRestoreAttendanceOnCancel = true;
 
         List<EventData> selectedMeetAndGreetList = new ArrayList<>();
         List<EventData> selectedUnofficialList = new ArrayList<>();
@@ -755,6 +738,7 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
     }
 
     private void writeAndFinish(List<EventData> toMark) {
+        pendingRestoreAttendanceOnCancel = false;
         if (toMark == null) toMark = new ArrayList<>();
         if (staticVariables.attendedHandler == null) {
             staticVariables.attendedHandler = new showsAttended();
@@ -773,6 +757,7 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
             android.util.Log.d("AIWizard", "WRITE index=" + index);
             attendedHandle.addShowsAttendedWithStatus(event.bandName, event.location, event.startTime, et, yearStr, staticVariables.sawAllStatus, events);
         }
+        AIScheduleStorage.clearBackup(eventYear);
         AIScheduleStorage.setHasRunAI(eventYear, true);
         // Count how many will-attend entries we actually have for this year (may be < toMark.size() due to overlap clearing)
         int actualCount = 0;
@@ -803,6 +788,40 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
                 .create();
         doneDialog.show();
         AutoScheduleWizardManager.applyDarkDialogStyle(doneDialog, this);
+    }
+
+    @Override
+    public void finish() {
+        restoreWizardAttendanceIfPendingCancel();
+        super.finish();
+    }
+
+    /**
+     * If the user leaves after we cleared attendance for a rebuild, put back the pre-wizard snapshot.
+     * Does not call {@link AIScheduleStorage#restore(showsAttended, int)} (that clears hasRunAI).
+     */
+    private void restoreWizardAttendanceIfPendingCancel() {
+        if (!pendingRestoreAttendanceOnCancel) {
+            return;
+        }
+        pendingRestoreAttendanceOnCancel = false;
+        if (staticVariables.attendedHandler == null) {
+            staticVariables.attendedHandler = new showsAttended();
+        }
+        Map<String, String> backup = AIScheduleStorage.loadBackup(eventYear);
+        if (backup != null) {
+            staticVariables.attendedHandler.restoreFromBackup(eventYear, backup);
+        }
+        AIScheduleStorage.clearBackup(eventYear);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (step == STEP_BUILDING) {
+            finish();
+            return;
+        }
+        super.onBackPressed();
     }
 
     private void goToPreviousStep() {

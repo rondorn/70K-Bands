@@ -2,4 +2,6 @@
     <!-- Default screen margins, per the Android Design guidelines. -->
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
+    <!-- Auto schedule wizard: unofficial / pre-party checklist scroll area (nested inside outer wizard scroll). -->
+    <dimen name="wizard_unofficial_list_height">400dp</dimen>
 </resources>

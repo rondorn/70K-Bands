@@ -100,11 +100,13 @@ class SQLiteiCloudSync {
     
     /// Writes all local priorities to iCloud
     /// Thread-safe - can be called from any thread
-    func syncPrioritiesToiCloud() {
+    /// - Parameter completion: Called on the main queue when the async push finishes (or immediately when skipped).
+    func syncPrioritiesToiCloud(completion: (() -> Void)? = nil) {
         // CRITICAL: Block iCloud operations during database migration
         let isMigrating = UserDefaults.standard.bool(forKey: "PriorityUniqueConstraintMigration_Started")
         guard !isMigrating else {
             print("🚫 [ICLOUD_BLOCK] Database migration in progress - BLOCKING iCloud priority sync")
+            DispatchQueue.main.async { completion?() }
             return
         }
         
@@ -112,6 +114,7 @@ class SQLiteiCloudSync {
         let isSwitching = UserDefaults.standard.bool(forKey: "ProfileSwitchInProgress")
         guard !isSwitching else {
             print("🚫 [ICLOUD_BLOCK] Profile switch in progress - BLOCKING iCloud priority sync")
+            DispatchQueue.main.async { completion?() }
             return
         }
         
@@ -119,6 +122,7 @@ class SQLiteiCloudSync {
         let activeProfile = SharedPreferencesManager.shared.getActivePreferenceSource()
         guard activeProfile == "Default" else {
             print("☁️ [ICLOUD_SKIP] Active profile is '\(activeProfile)' (not Default) - skipping iCloud sync")
+            DispatchQueue.main.async { completion?() }
             return
         }
         
@@ -126,19 +130,24 @@ class SQLiteiCloudSync {
         let iCloudHandler = iCloudDataHandler()
         guard iCloudHandler.checkForIcloud() else {
             print("☁️ iCloud disabled - skipping priority sync to iCloud")
+            DispatchQueue.main.async { completion?() }
             return
         }
         
         print("☁️ Starting priority sync to iCloud (Default only)...")
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let self = self else { return }
+            guard let self = self else {
+                DispatchQueue.main.async { completion?() }
+                return
+            }
             
             // Only sync "Default" profile to iCloud
             let allPriorities = self.priorityManager.getAllPriorities(profileName: "Default")
             
             guard !allPriorities.isEmpty else {
                 print("📝 No priorities to sync to iCloud (Default)")
+                DispatchQueue.main.async { completion?() }
                 return
             }
             
@@ -158,6 +167,7 @@ class SQLiteiCloudSync {
             
             print("☁️ Priority sync to iCloud completed")
             print("📊 Written: \(writeCount), Skipped: \(skipCount)")
+            DispatchQueue.main.async { completion?() }
         }
     }
     
@@ -429,6 +439,11 @@ class SQLiteiCloudSync {
     
     /// Writes all local attendance data to iCloud and removes keys no longer in SQLite.
     /// Thread-safe - can be called from any thread.
+    ///
+    /// **Ordering:** Call only after `syncAttendanceFromiCloud` has finished merging remote rows into SQLite
+    /// (e.g. on a fresh install). Otherwise the prune step deletes every `eventName:` key absent from the
+    /// still-empty/sparse local DB and wipes iCloud attendance.
+    ///
     /// - Parameter completion: Optional; called on main queue when done. Use after Clear All so UI refresh happens only after iCloud is updated (avoids syncFromiCloud restoring cleared data).
     func syncAttendanceToiCloud(completion: (() -> Void)? = nil) {
         // CRITICAL: Block iCloud operations during database migration
@@ -486,12 +501,8 @@ class SQLiteiCloudSync {
                 // Get current device UID
                 guard let currentUid = UIDevice.current.identifierForVendor?.uuidString else { continue }
                 
-                // Include attendanceSource so restore preserves Auto vs Manual (backward compatible: old clients ignore 4th component)
-                let source = (data["attendanceSource"] as? String).flatMap { $0 == "Auto" ? "Auto" : "Manual" } ?? "Manual"
-                
-                // Create iCloud key and value (format: status:uid:timestamp or status:uid:timestamp:source)
                 let iCloudKey = "eventName:\(index)"
-                let iCloudValue = "\(status):\(currentUid):\(String(format: "%.0f", lastModified)):\(source)"
+                let iCloudValue = "\(status):\(currentUid):\(String(format: "%.0f", lastModified))"
                 
                 iCloudStore.set(iCloudValue, forKey: iCloudKey)
                 writtenCount += 1
@@ -547,16 +558,13 @@ class SQLiteiCloudSync {
         let attendanceIndex = "\(bandName):\(location):\(startTime):\(eventType):\(eventYearString)"
         print("☁️ Created attendance index: \(attendanceIndex)")
         
-        // Parse the value (format: status:uid:timestamp or status:uid:timestamp:source for Auto/Manual)
+        // Value: status:uid:timestamp (legacy builds may have a 4th field; ignored)
         let valueComponents = value.components(separatedBy: ":")
         guard valueComponents.count >= 3,
               let timestamp = Double(valueComponents[2]) else {
             print("❌ Invalid iCloud attendance value format: \(value)")
             return false
         }
-        
-        // Optional 4th component: attendance source (Auto or Manual). If missing, treat as Manual for backward compatibility.
-        let sourceFromiCloud: String? = valueComponents.count >= 4 ? (valueComponents[3] == "Auto" ? "Auto" : "Manual") : nil
         
         // Convert status string to numeric value
         let statusString = valueComponents[0]
@@ -605,14 +613,12 @@ class SQLiteiCloudSync {
             print("🔍 [CLEAR_DEBUG] Restoring from iCloud -> SQLite index=\(attendanceIndex) year=\(eventYearString)")
         }
         
-        // Update the attendance record (only "Default" profile), preserving source (Auto/Manual) when present
-        print("☁️ Updating attendance record (Default): \(attendanceIndex) -> \(status) source=\(sourceFromiCloud ?? "nil→Manual")")
+        print("☁️ Updating attendance record (Default): \(attendanceIndex) -> \(status)")
         attendanceManager.setAttendanceStatusByIndex(
             index: attendanceIndex,
             status: status,
             timestamp: timestamp,
-            profileName: nil,
-            attendanceSource: sourceFromiCloud
+            profileName: nil
         )
         
         print("✅ Updated attendance from iCloud: \(attendanceIndex) -> \(status)")

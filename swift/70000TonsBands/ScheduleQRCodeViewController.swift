@@ -32,6 +32,8 @@ final class ScheduleQRCodeViewController: UIViewController {
 
     private let payloads: [Data]
     private let closeBlock: (() -> Void)?
+    /// Used so multi-line instructions get correct intrinsic height inside the scroll view.
+    private var instructionsLabelForLayout: UILabel?
 
     /// Single QR (legacy or small schedule).
     init(payloadData: Data, onClose: (() -> Void)? = nil) {
@@ -67,6 +69,7 @@ final class ScheduleQRCodeViewController: UIViewController {
         label.font = .systemFont(ofSize: 18, weight: .medium)
         label.textAlignment = .center
         label.numberOfLines = 0
+        label.setContentCompressionResistancePriority(.required, for: .vertical)
         view.addSubview(label)
 
         let instructionsLabel = UILabel()
@@ -77,7 +80,9 @@ final class ScheduleQRCodeViewController: UIViewController {
         instructionsLabel.textAlignment = .natural
         instructionsLabel.numberOfLines = 0
         instructionsLabel.lineBreakMode = .byWordWrapping
-        view.addSubview(instructionsLabel)
+        instructionsLabel.setContentCompressionResistancePriority(.required, for: .vertical)
+        instructionsLabel.setContentHuggingPriority(.required, for: .vertical)
+        instructionsLabelForLayout = instructionsLabel
 
         let doneButton = UIButton(type: .system)
         doneButton.translatesAutoresizingMaskIntoConstraints = false
@@ -121,56 +126,47 @@ final class ScheduleQRCodeViewController: UIViewController {
                 stack.addArrangedSubview(iv)
             }
         } else if let first = payloads.first {
-            // Single QR: add image view; size will be set by constraint to fill width (see below)
             stack.addArrangedSubview(qrImageView(for: first, size: nil))
         }
 
-        let stackContainer = UIView()
-        stackContainer.translatesAutoresizingMaskIntoConstraints = false
-        view.insertSubview(stackContainer, at: 0)
-        if payloads.count == 24 {
-            let scrollView = UIScrollView()
-            scrollView.translatesAutoresizingMaskIntoConstraints = false
-            scrollView.showsVerticalScrollIndicator = true
-            scrollView.alwaysBounceVertical = true
-            stackContainer.addSubview(scrollView)
-            scrollView.addSubview(stack)
-            NSLayoutConstraint.activate([
-                scrollView.topAnchor.constraint(equalTo: stackContainer.topAnchor),
-                scrollView.leadingAnchor.constraint(equalTo: stackContainer.leadingAnchor),
-                scrollView.trailingAnchor.constraint(equalTo: stackContainer.trailingAnchor),
-                scrollView.bottomAnchor.constraint(equalTo: stackContainer.bottomAnchor),
-                stack.topAnchor.constraint(equalTo: scrollView.topAnchor),
-                stack.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
-                stack.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
-                stack.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
-                stack.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
-            ])
-        } else {
-            stackContainer.addSubview(stack)
-        }
+        // Scroll between title and Done so help text is never squeezed out on form sheet (iPad):
+        // a full-width square QR plus multi-line instructions exceeds default sheet height.
+        let mainScroll = UIScrollView()
+        mainScroll.translatesAutoresizingMaskIntoConstraints = false
+        mainScroll.alwaysBounceVertical = true
+        mainScroll.showsVerticalScrollIndicator = true
+        view.insertSubview(mainScroll, at: 0)
+
+        let qrContainer = UIView()
+        qrContainer.translatesAutoresizingMaskIntoConstraints = false
+        qrContainer.addSubview(stack)
+
+        let scrollStack = UIStackView(arrangedSubviews: [instructionsLabel, qrContainer])
+        scrollStack.translatesAutoresizingMaskIntoConstraints = false
+        scrollStack.axis = .vertical
+        scrollStack.spacing = 12
+        scrollStack.alignment = .fill
+        mainScroll.addSubview(scrollStack)
 
         var constraints: [NSLayoutConstraint] = [
             label.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
             label.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
             label.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
-            instructionsLabel.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 8),
-            instructionsLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
-            instructionsLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
+
             doneButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -24),
             doneButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            stackContainer.topAnchor.constraint(equalTo: instructionsLabel.bottomAnchor, constant: 12),
-            stackContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            stackContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            stackContainer.bottomAnchor.constraint(equalTo: doneButton.topAnchor, constant: -16),
+
+            mainScroll.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 8),
+            mainScroll.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            mainScroll.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            mainScroll.bottomAnchor.constraint(equalTo: doneButton.topAnchor, constant: -16),
+
+            scrollStack.topAnchor.constraint(equalTo: mainScroll.contentLayoutGuide.topAnchor),
+            scrollStack.leadingAnchor.constraint(equalTo: mainScroll.frameLayoutGuide.leadingAnchor, constant: 24),
+            scrollStack.trailingAnchor.constraint(equalTo: mainScroll.frameLayoutGuide.trailingAnchor, constant: -24),
+            scrollStack.bottomAnchor.constraint(equalTo: mainScroll.contentLayoutGuide.bottomAnchor, constant: -8),
         ]
-        if payloads.count != 24 {
-            constraints += [
-                stack.topAnchor.constraint(equalTo: stackContainer.topAnchor),
-                stack.bottomAnchor.constraint(equalTo: stackContainer.bottomAnchor),
-                stack.centerXAnchor.constraint(equalTo: stackContainer.centerXAnchor),
-            ]
-        }
+
         if payloads.count == 2 || payloads.count == 3 {
             for sub in stack.arrangedSubviews {
                 guard let iv = sub as? UIImageView else { continue }
@@ -179,24 +175,62 @@ final class ScheduleQRCodeViewController: UIViewController {
                 iv.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
             }
         }
-        if payloads.count != 8 && payloads.count != 16 && payloads.count != 24 {
-            constraints += [
-                stack.leadingAnchor.constraint(equalTo: stackContainer.leadingAnchor),
-                stack.trailingAnchor.constraint(equalTo: stackContainer.trailingAnchor),
-            ]
-        }
-        // Single QR: make QR fill container width (minus margin) so Android can scan more easily
-        if payloads.count == 1, let qrView = stack.arrangedSubviews.first {
-            constraints += [
-                qrView.widthAnchor.constraint(equalTo: stackContainer.widthAnchor, constant: -32),
-                qrView.heightAnchor.constraint(equalTo: qrView.widthAnchor),
-            ]
-        }
-        NSLayoutConstraint.activate(constraints)
 
         if payloads.count == 8 || payloads.count == 16 || payloads.count == 24 {
             stack.widthAnchor.constraint(equalToConstant: scheduleQRGridWidth).isActive = true
+            constraints += [
+                stack.topAnchor.constraint(equalTo: qrContainer.topAnchor),
+                stack.bottomAnchor.constraint(equalTo: qrContainer.bottomAnchor),
+                stack.centerXAnchor.constraint(equalTo: qrContainer.centerXAnchor),
+            ]
+        } else {
+            constraints += [
+                stack.topAnchor.constraint(equalTo: qrContainer.topAnchor),
+                stack.bottomAnchor.constraint(equalTo: qrContainer.bottomAnchor),
+                stack.leadingAnchor.constraint(equalTo: qrContainer.leadingAnchor),
+                stack.trailingAnchor.constraint(equalTo: qrContainer.trailingAnchor),
+            ]
         }
+
+        if payloads.count == 1, let qrView = stack.arrangedSubviews.first {
+            constraints += [
+                qrView.widthAnchor.constraint(equalTo: qrContainer.widthAnchor, constant: -32),
+                qrView.heightAnchor.constraint(equalTo: qrView.widthAnchor),
+            ]
+        }
+
+        NSLayoutConstraint.activate(constraints)
+
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        applyPreferredContentSizeForFormSheet()
+    }
+
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        applyPreferredContentSizeForFormSheet()
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        guard let il = instructionsLabelForLayout, il.bounds.width > 1 else { return }
+        if abs(il.preferredMaxLayoutWidth - il.bounds.width) > 0.5 {
+            il.preferredMaxLayoutWidth = il.bounds.width
+            il.invalidateIntrinsicContentSize()
+        }
+    }
+
+    /// iPad form sheets default to a height that cannot fit help text + a large square QR; prefer a taller sheet.
+    private func applyPreferredContentSizeForFormSheet() {
+        guard DeviceSizeManager.isLargeDisplay() else { return }
+        let screen = view.window?.windowScene?.screen ?? UIScreen.main
+        let bounds = screen.bounds
+        preferredContentSize = CGSize(
+            width: min(540, bounds.width * 0.55),
+            height: min(880, bounds.height * 0.92)
+        )
     }
 
     /// One row of N square QR image views for the schedule grid.

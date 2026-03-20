@@ -34,6 +34,69 @@
                 android:gravity="center" />
         </LinearLayout>
 
+        <!-- QR Code Import (70K only; visibility in preferenceLayout) -->
+        <LinearLayout
+            android:id="@+id/schedule_qr_import_section"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="35dp"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/qr_code_import_section"
+                android:textSize="13sp"
+                android:textColor="#8E8E93"
+                android:textStyle="normal"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:paddingBottom="8dp"
+                android:textAllCaps="true" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#2C2C2E"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:elevation="1dp">
+
+                <LinearLayout
+                    android:id="@+id/schedule_qr_scan_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp"
+                    android:gravity="center_vertical"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?android:attr/selectableItemBackground">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/schedule_qr_scan_preference"
+                        android:textSize="17sp"
+                        android:textColor="#FFFFFF" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="&gt;"
+                        android:textSize="17sp"
+                        android:textColor="#8E8E93"
+                        android:paddingLeft="8dp" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
         <!-- ALERT PREFERENCES Section -->
         <LinearLayout
             android:layout_width="match_parent"
@@ -928,44 +991,6 @@
                         android:inputType="textUri|textNoSuggestions" />
                 </LinearLayout>
 
-                <!-- Divider -->
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="0.5dp"
-                    android:background="#3A3A3C"
-                    android:layout_marginLeft="16dp" />
-
-                <!-- Scan QR Code Schedule -->
-                <LinearLayout
-                    android:id="@+id/schedule_qr_scan_row"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:paddingLeft="16dp"
-                    android:paddingRight="16dp"
-                    android:paddingTop="12dp"
-                    android:paddingBottom="12dp"
-                    android:gravity="center_vertical"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:background="?android:attr/selectableItemBackground">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/schedule_qr_scan_preference"
-                        android:textSize="17sp"
-                        android:textColor="#FFFFFF" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="&gt;"
-                        android:textSize="17sp"
-                        android:textColor="#8E8E93"
-                        android:paddingLeft="8dp" />
-                </LinearLayout>
             </LinearLayout>
         </LinearLayout>
 

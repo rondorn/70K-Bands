@@ -17,7 +17,8 @@ struct CommonFilterSheetView: View {
     @Environment(\.dismiss) private var environmentDismiss
     @State private var showFlaggedOnly: Bool = getShowOnlyWillAttened()
     @State private var sortRefreshTrigger: Int = 0  // Force view refresh when sort changes
-    @State private var filterChangeTrigger: Int = 0  // Force view refresh when filters change
+    @State private var filterChangeTrigger: Int = 0  // Force List refresh when section structure changes (e.g. Hide Expired)
+    @State private var clearButtonActive: Bool = false  // Clear button enabled state; updated by toggles without rebuilding List (preserves scroll)
     @State private var scrollPosition: CGFloat? = nil  // Track scroll position to preserve it
     @State private var savedScrollPosition: CGFloat? = nil  // Saved position before refresh
     
@@ -193,9 +194,8 @@ struct CommonFilterSheetView: View {
                         RoundedRectangle(cornerRadius: 6)
                             .stroke(Color.white.opacity(0.5), lineWidth: 1)
                     )
-                    .disabled(!hasAnyFiltersSet())
-                    .opacity(hasAnyFiltersSet() ? 1.0 : 0.5)
-                    .id(filterChangeTrigger)  // Force refresh when filters change
+                    .disabled(!clearButtonActive)
+                    .opacity(clearButtonActive ? 1.0 : 0.5)
                     
                     Spacer()
                     
@@ -231,6 +231,7 @@ struct CommonFilterSheetView: View {
                             UITableView.appearance().sectionHeaderHeight = 0
                             UITableView.appearance().estimatedSectionHeaderHeight = 0
                         }
+                        clearButtonActive = hasAnyFiltersSet()
                     }
                 .onChange(of: filterChangeTrigger) { newValue in
                     // Restore scroll position after List rebuilds
@@ -375,7 +376,7 @@ struct CommonFilterSheetView: View {
                         showFlaggedOnly = newValue
                         setShowOnlyWillAttened(newValue)
                         writeFiltersFile()
-                        filterChangeTrigger += 1
+                        clearButtonActive = hasAnyFiltersSet()
                         NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
                     }
                 ))
@@ -423,6 +424,7 @@ struct CommonFilterSheetView: View {
                     set: { newValue in
                         setMustSeeOn(newValue)
                         writeFiltersFile()
+                        clearButtonActive = hasAnyFiltersSet()
                         NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
                     }
                 )
@@ -435,6 +437,7 @@ struct CommonFilterSheetView: View {
                     set: { newValue in
                         setMightSeeOn(newValue)
                         writeFiltersFile()
+                        clearButtonActive = hasAnyFiltersSet()
                         NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
                     }
                 )
@@ -447,6 +450,7 @@ struct CommonFilterSheetView: View {
                     set: { newValue in
                         setWontSeeOn(newValue)
                         writeFiltersFile()
+                        clearButtonActive = hasAnyFiltersSet()
                         NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
                     }
                 )
@@ -459,6 +463,7 @@ struct CommonFilterSheetView: View {
                     set: { newValue in
                         setUnknownSeeOn(newValue)
                         writeFiltersFile()
+                        clearButtonActive = hasAnyFiltersSet()
                         NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
                     }
                 )
@@ -526,6 +531,7 @@ struct CommonFilterSheetView: View {
                             set: { newValue in
                                 setShowMeetAndGreetEvents(newValue)
                                 writeFiltersFile()
+                                clearButtonActive = hasAnyFiltersSet()
                                 NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
                             }
                         )
@@ -540,6 +546,7 @@ struct CommonFilterSheetView: View {
                             set: { newValue in
                                 setShowSpecialEvents(newValue)
                                 writeFiltersFile()
+                                clearButtonActive = hasAnyFiltersSet()
                                 NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
                             }
                         )
@@ -554,6 +561,7 @@ struct CommonFilterSheetView: View {
                             set: { newValue in
                                 setShowUnofficalEvents(newValue)
                                 writeFiltersFile()
+                                clearButtonActive = hasAnyFiltersSet()
                                 NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
                             }
                         )
@@ -609,6 +617,7 @@ struct CommonFilterSheetView: View {
                 set: { newValue in
                     setShowVenueEvents(venueName: venueName, show: newValue)
                     writeFiltersFile()
+                    clearButtonActive = hasAnyFiltersSet()
                     NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
                 }
             ))
@@ -637,6 +646,7 @@ struct CommonFilterSheetView: View {
         // setHideExpireScheduleData(false) - intentionally not cleared
         writeFiltersFile()
         
+        clearButtonActive = false
         // Trigger view refresh - force menu to redraw with updated filter states
         filterChangeTrigger += 1
         

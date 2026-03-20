@@ -76,32 +76,12 @@ class AttendanceManager {
         }
     }
     
-    /// Sets attendance status with a source (e.g. "Auto" for Auto Choose Attendance wizard).
-    func setAttendanceStatusByIndex(index: String, status: Int, timestamp: Double, attendanceSource source: String?) {
-        sqliteManager.setAttendanceStatusByIndex(index: index, status: status, timestamp: timestamp, profileName: nil, attendanceSource: source)
-    }
-    
-    /// Returns true if the given year has any attendance records with source "Auto".
-    func hasAutoChosenAttendance(forYear year: Int) -> Bool {
-        return sqliteManager.hasAutoChosenAttendance(forYear: year)
-    }
-    
-    /// Returns the number of attendance records for the year with source "Auto".
-    func countAutoChosenAttendance(forYear year: Int) -> Int {
-        return sqliteManager.countAutoChosenAttendance(forYear: year)
-    }
-    
     /// Returns the total number of attendance records for the year (any source).
     func countAllAttendance(forYear year: Int) -> Int {
         return sqliteManager.countAllAttendance(forYear: year)
     }
     
-    /// Removes all attendance records for the year that have source "Auto". Used by Clear in preferences.
-    func clearAutoChosenAttendance(forYear year: Int, completion: (() -> Void)? = nil) {
-        sqliteManager.clearAutoChosenAttendance(forYear: year, completion: completion)
-    }
-    
-    /// Removes all attendance records for the year (auto and manual).
+    /// Removes all attendance records for the year (sets Not Attended).
     func clearAllAttendance(forYear year: Int, completion: (() -> Void)? = nil) {
         sqliteManager.clearAllAttendance(forYear: year, completion: completion)
     }

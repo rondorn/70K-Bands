@@ -383,7 +383,7 @@ open class ShowsAttended {
         }
         
         // Update using SQLite (all profiles are now editable); explicitly mark as Manual
-        attendanceManager.setAttendanceStatusByIndex(index: index, status: newStatus, timestamp: Date().timeIntervalSince1970, attendanceSource: "Manual")
+        attendanceManager.setAttendanceStatusByIndex(index: index, status: newStatus, timestamp: Date().timeIntervalSince1970)
         
         // Convert to string status for return value
         var value = ""
@@ -424,7 +424,7 @@ open class ShowsAttended {
         }
         
         // Use SQLite AttendanceManager; explicitly mark as Manual for user-initiated changes
-        attendanceManager.setAttendanceStatusByIndex(index: index, status: numericStatus, timestamp: Date().timeIntervalSince1970, attendanceSource: "Manual")
+        attendanceManager.setAttendanceStatusByIndex(index: index, status: numericStatus, timestamp: Date().timeIntervalSince1970)
         
         // Keep old system for backward compatibility (legacy cache)
         mutateShowsAttendedArray { arr in arr[index] = status }
@@ -466,7 +466,7 @@ open class ShowsAttended {
         default:
             numericStatus = 0
         }
-        attendanceManager.setAttendanceStatusByIndex(index: index, status: numericStatus, timestamp: Date().timeIntervalSince1970, attendanceSource: "Manual")
+        attendanceManager.setAttendanceStatusByIndex(index: index, status: numericStatus, timestamp: Date().timeIntervalSince1970)
         mutateShowsAttendedArray { arr in arr[index] = status }
         let firebaseEventWrite = firebaseEventDataWrite();
         firebaseEventWrite.writeEvent(index: index, status: status)

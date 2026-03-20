@@ -28,21 +28,15 @@ class SQLiteAttendanceManager {
     private let lastModified = Expression<Double?>("lastModified")
     private let attendanceIndex = Expression<String?>("attendanceIndex")
     private let profileName = Expression<String>("profileName")
-    private let attendanceSource = Expression<String?>("attendanceSource")  // "Auto", "Manual", or nil/empty (treated as Manual)
-    
-    /// Source values for attendance. Empty and Manual are equivalent in logic.
-    enum AttendanceSource: String {
-        case auto = "Auto"
-        case manual = "Manual"
-        case empty = "Empty"
-    }
+    /// Legacy column; no longer used for app logic (always written NULL on new/updated rows).
+    private let attendanceSource = Expression<String?>("attendanceSource")
     
     /// Status values: 1 = sawSome, 2 = sawAll, 3 = sawNone (Not Attended). Used when "clearing" sets to Not Attended instead of deleting.
     private static let statusSawNone = 3
     
     private init() {
         // CRITICAL: Run setup on our serial queue so it never runs on the main thread.
-        // Migrations (attendanceSource column, UPDATE all rows, unique-constraint migration) can take
+        // Migrations (attendanceSource column, unique-constraint migration) can take
         // seconds and would freeze the UI if run on main (e.g. from loadICloudData() or PreferencesView).
         serialQueue.async { [weak self] in
             self?.setupDatabase()
@@ -195,7 +189,7 @@ class SQLiteAttendanceManager {
                 }
             }
             
-            // Create table if needed (with profileName and attendanceSource)
+            // Create table if needed (with profileName and legacy attendanceSource)
             try db?.run(attendanceTable.create(ifNotExists: true) { t in
                 t.column(id, primaryKey: .autoincrement)
                 t.column(bandName)
@@ -242,7 +236,7 @@ class SQLiteAttendanceManager {
                                 self.lastModified <- record["lastModified"] as? Double,
                                 self.attendanceIndex <- record["attendanceIndex"] as? String,
                                 self.profileName <- profileNameStr,
-                                self.attendanceSource <- (record["attendanceSource"] as? String) ?? AttendanceSource.manual.rawValue
+                                self.attendanceSource <- nil
                             )
                             
                             try db?.run(insert)
@@ -325,7 +319,7 @@ class SQLiteAttendanceManager {
                     self.lastModified <- ts,
                     self.attendanceIndex <- index,
                     self.profileName <- currentProfile,
-                    self.attendanceSource <- AttendanceSource.manual.rawValue
+                    self.attendanceSource <- nil
                 )
                 
                 try db.run(insert)
@@ -366,11 +360,9 @@ class SQLiteAttendanceManager {
         return result
     }
     
-    /// Sets attendance status by index (with explicit timestamp and optional source).
+    /// Sets attendance status by index (with explicit timestamp).
     /// Thread-safe - can be called from any thread.
-    /// attendanceSource: "Auto" for wizard-assigned; nil/"Manual"/"Empty" for user or default (same logic).
-    func setAttendanceStatusByIndex(index: String, status statusValue: Int, timestamp: Double, profileName profile: String? = nil, attendanceSource source: String? = nil) {
-        let sourceValue = source ?? AttendanceSource.manual.rawValue
+    func setAttendanceStatusByIndex(index: String, status statusValue: Int, timestamp: Double, profileName profile: String? = nil) {
         serialQueue.async { [weak self] in
             guard let self = self, let db = self.db else { return }
             
@@ -401,11 +393,11 @@ class SQLiteAttendanceManager {
                     self.lastModified <- timestamp,
                     self.attendanceIndex <- index,
                     self.profileName <- currentProfile,
-                    self.attendanceSource <- sourceValue
+                    self.attendanceSource <- nil
                 )
                 
                 try db.run(insert)
-                print("✅ SQLiteAttendanceManager: Set attendance by index (\(currentProfile)): \(index) = \(statusValue) source=\(sourceValue)")
+                print("✅ SQLiteAttendanceManager: Set attendance by index (\(currentProfile)): \(index) = \(statusValue)")
             } catch {
                 print("❌ SQLiteAttendanceManager: Failed to set attendance by index: \(error)")
             }
@@ -417,32 +409,7 @@ class SQLiteAttendanceManager {
     func setAttendanceStatusByIndex(index: String, status statusValue: Int) {
         // Get active profile from SharedPreferencesManager
         let activeProfile = SharedPreferencesManager.shared.getActivePreferenceSource()
-        self.setAttendanceStatusByIndex(index: index, status: statusValue, timestamp: Date().timeIntervalSince1970, profileName: activeProfile, attendanceSource: nil)
-    }
-    
-    /// Returns true if any attendance record for the year has source "Auto".
-    func hasAutoChosenAttendance(forYear year: Int, profileName profile: String? = nil) -> Bool {
-        return countAutoChosenAttendance(forYear: year, profileName: profile) > 0
-    }
-    
-    /// Returns the number of attendance records for the year with source "Auto" and status != Not Attended (used for Clear Auto button; grey out when 0).
-    func countAutoChosenAttendance(forYear year: Int, profileName profile: String? = nil) -> Int {
-        var result = 0
-        let semaphore = DispatchSemaphore(value: 0)
-        serialQueue.async { [weak self] in
-            defer { semaphore.signal() }
-            guard let self = self, let db = self.db else { return }
-            let currentProfile = profile ?? self.getCurrentProfileName()
-            do {
-                let filter = self.attendanceTable.filter(self.eventYearColumn == year && self.profileName == currentProfile && self.attendanceSource == AttendanceSource.auto.rawValue && self.status != Self.statusSawNone)
-                let count = try db.scalar(filter.count)
-                result = Int(count ?? 0)
-            } catch {
-                print("❌ SQLiteAttendanceManager: countAutoChosenAttendance failed: \(error)")
-            }
-        }
-        semaphore.wait()
-        return result
+        self.setAttendanceStatusByIndex(index: index, status: statusValue, timestamp: Date().timeIntervalSince1970, profileName: activeProfile)
     }
     
     /// Returns the number of attendance records for the year that are attended (status != Not Attended). Used for Clear All button; grey out when 0.
@@ -463,26 +430,6 @@ class SQLiteAttendanceManager {
         }
         semaphore.wait()
         return result
-    }
-    
-    /// Sets all attendance records for the year with source "Auto" to Not Attended (keeps records; avoids sync restoring data).
-    /// Calls completion on main queue when done so UI can refresh.
-    func clearAutoChosenAttendance(forYear year: Int, profileName profile: String? = nil, completion: (() -> Void)? = nil) {
-        serialQueue.async { [weak self] in
-            guard let self = self, let db = self.db else {
-                DispatchQueue.main.async { completion?() }
-                return
-            }
-            let currentProfile = profile ?? self.getCurrentProfileName()
-            do {
-                let toUpdate = self.attendanceTable.filter(self.eventYearColumn == year && self.profileName == currentProfile && self.attendanceSource == AttendanceSource.auto.rawValue && self.status != Self.statusSawNone)
-                let updated = try db.run(toUpdate.update(self.status <- Self.statusSawNone))
-                print("✅ SQLiteAttendanceManager: Set \(updated) auto-chosen attendance records to Not Attended for year \(year)")
-            } catch {
-                print("❌ SQLiteAttendanceManager: clearAutoChosenAttendance failed: \(error)")
-            }
-            DispatchQueue.main.async { completion?() }
-        }
     }
     
     /// Sets all attendance records for the year to Not Attended (keeps records; avoids sync restoring data).
@@ -527,8 +474,7 @@ class SQLiteAttendanceManager {
                     if let index = row[self.attendanceIndex] {
                         result[index] = [
                             "status": row[self.status],
-                            "lastModified": row[self.lastModified] ?? Date().timeIntervalSince1970,
-                            "attendanceSource": (row[self.attendanceSource]).map { $0 } ?? AttendanceSource.manual.rawValue
+                            "lastModified": row[self.lastModified] ?? Date().timeIntervalSince1970
                         ]
                     }
                 }
@@ -701,7 +647,7 @@ class SQLiteAttendanceManager {
                             self.lastModified <- ts,
                             self.attendanceIndex <- index,
                             self.profileName <- self.getCurrentProfileName(),
-                            self.attendanceSource <- AttendanceSource.manual.rawValue
+                            self.attendanceSource <- nil
                         )
                         
                         try db.run(insert)
@@ -781,7 +727,7 @@ class SQLiteAttendanceManager {
                             self.lastModified <- ts,
                             self.attendanceIndex <- index,
                             self.profileName <- profileNameStr,
-                            self.attendanceSource <- (attendance["attendanceSource"] as? String) ?? AttendanceSource.manual.rawValue
+                            self.attendanceSource <- nil
                         )
                         
                         try db.run(insert)
