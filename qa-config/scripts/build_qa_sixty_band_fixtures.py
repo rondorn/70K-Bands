@@ -154,7 +154,7 @@ ARTIST_FIELDS = [
 QR_PLACEHOLDER_LINEUP: list[dict[str, str]] = [
     {
         "bandName": "QA Alpha Band",
-        "officalSite": "https://example.com/alpha",
+        "officalSite": "example.com/alpha",
         "imageUrl": "",
         "youtube": "",
         "metalArchives": "",
@@ -166,7 +166,7 @@ QR_PLACEHOLDER_LINEUP: list[dict[str, str]] = [
     },
     {
         "bandName": "QA Beta Band",
-        "officalSite": "https://example.com/beta",
+        "officalSite": "example.com/beta",
         "imageUrl": "",
         "youtube": "",
         "metalArchives": "",
@@ -178,7 +178,7 @@ QR_PLACEHOLDER_LINEUP: list[dict[str, str]] = [
     },
     {
         "bandName": "QA Gamma Band",
-        "officalSite": "https://example.com/gamma",
+        "officalSite": "example.com/gamma",
         "imageUrl": "",
         "youtube": "",
         "metalArchives": "",
@@ -224,22 +224,17 @@ def parse_csv(text: str) -> tuple[list[str], list[dict[str, str]]]:
     return fieldnames, rows
 
 
-def normalize_site(url: str) -> str:
-    u = url.strip()
+def strip_scheme_for_band_csv_field(value: str) -> str:
+    """Band CSVs must not include http(s):// for officalSite or imageUrl; apps prepend schemes."""
+    u = value.strip()
     if not u:
         return ""
-    if u.startswith(("http://", "https://")):
-        return u
-    return f"https://{u.lstrip('/')}"
-
-
-def normalize_image_url(url: str) -> str:
-    u = url.strip()
-    if not u:
-        return ""
-    if u.startswith(("http://", "https://")):
-        return u
-    return f"https://{u.lstrip('/')}"
+    lower = u.lower()
+    if lower.startswith("https://"):
+        return u[8:]
+    if lower.startswith("http://"):
+        return u[7:]
+    return u
 
 
 _DAY_RE = re.compile(r"day\s*(\d+)", re.I)
@@ -366,8 +361,10 @@ def main() -> int:
             lineup_rows.append(
                 {
                     "bandName": r.get("bandName", "").strip(),
-                    "officalSite": normalize_site(r.get("officalSite", "")),
-                    "imageUrl": normalize_image_url(r.get("imageUrl", "")),
+                    "officalSite": strip_scheme_for_band_csv_field(
+                        r.get("officalSite", "")
+                    ),
+                    "imageUrl": strip_scheme_for_band_csv_field(r.get("imageUrl", "")),
                     "youtube": r.get("youtube", "").strip(),
                     "metalArchives": r.get("metalArchives", "").strip(),
                     "wikipedia": r.get("wikipedia", "").strip(),
