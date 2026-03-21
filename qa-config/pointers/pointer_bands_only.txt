@@ -1,11 +1,35 @@
 Default::artistUrl::https://raw.githubusercontent.com/rondorn/70K-Bands/master/qa-config/fixtures/qa_lineup_three_bands.csv
 Default::scheduleUrl::https://raw.githubusercontent.com/rondorn/70K-Bands/master/qa-config/fixtures/qa_schedule_header_only.csv
 Default::eventYear::2026
+Default::iosMinimum::20260120004
+Default::androidMinimum::302601193-70k
+Default::AutoScheduleFlag::No
+Default::AutoScheduleFlagRepeat::No
+Default::AutoScheduleName::Show Schedule
 Default::descriptionMap::https://raw.githubusercontent.com/rondorn/70K-Bands/master/qa-config/fixtures/qa_description_map_empty.csv
-Default::reportUrl::https://raw.githubusercontent.com/rondorn/70K-Bands/master/dataFiles/report_dashboard.html
+Default::reportUrl::https://raw.githubusercontent.com/rondorn/70K-Bands/master/qa-config/fixtures/reports/report_dashboard.html
+Default::reportUrl-da::https://raw.githubusercontent.com/rondorn/70K-Bands/master/qa-config/fixtures/reports/report_dashboard-da.html
+Default::reportUrl-de::https://raw.githubusercontent.com/rondorn/70K-Bands/master/qa-config/fixtures/reports/report_dashboard-de.html
+Default::reportUrl-en::https://raw.githubusercontent.com/rondorn/70K-Bands/master/qa-config/fixtures/reports/report_dashboard-en.html
+Default::reportUrl-es::https://raw.githubusercontent.com/rondorn/70K-Bands/master/qa-config/fixtures/reports/report_dashboard-es.html
+Default::reportUrl-fi::https://raw.githubusercontent.com/rondorn/70K-Bands/master/qa-config/fixtures/reports/report_dashboard-fi.html
+Default::reportUrl-fr::https://raw.githubusercontent.com/rondorn/70K-Bands/master/qa-config/fixtures/reports/report_dashboard-fr.html
+Default::reportUrl-pt::https://raw.githubusercontent.com/rondorn/70K-Bands/master/qa-config/fixtures/reports/report_dashboard-pt.html
 
 Current::artistUrl::https://raw.githubusercontent.com/rondorn/70K-Bands/master/qa-config/fixtures/qa_lineup_three_bands.csv
 Current::scheduleUrl::https://raw.githubusercontent.com/rondorn/70K-Bands/master/qa-config/fixtures/qa_schedule_header_only.csv
 Current::eventYear::2026
+Current::iosMinimum::20260120004
+Current::androidMinimum::302601193-70k
+Current::AutoScheduleFlag::No
+Current::AutoScheduleFlagRepeat::No
+Current::AutoScheduleName::Show Schedule
 Current::descriptionMap::https://raw.githubusercontent.com/rondorn/70K-Bands/master/qa-config/fixtures/qa_description_map_empty.csv
-Current::reportUrl::https://raw.githubusercontent.com/rondorn/70K-Bands/master/dataFiles/report_dashboard.html
+Current::reportUrl::https://raw.githubusercontent.com/rondorn/70K-Bands/master/qa-config/fixtures/reports/report_dashboard.html
+Current::reportUrl-da::https://raw.githubusercontent.com/rondorn/70K-Bands/master/qa-config/fixtures/reports/report_dashboard-da.html
+Current::reportUrl-de::https://raw.githubusercontent.com/rondorn/70K-Bands/master/qa-config/fixtures/reports/report_dashboard-de.html
+Current::reportUrl-en::https://raw.githubusercontent.com/rondorn/70K-Bands/master/qa-config/fixtures/reports/report_dashboard-en.html
+Current::reportUrl-es::https://raw.githubusercontent.com/rondorn/70K-Bands/master/qa-config/fixtures/reports/report_dashboard-es.html
+Current::reportUrl-fi::https://raw.githubusercontent.com/rondorn/70K-Bands/master/qa-config/fixtures/reports/report_dashboard-fi.html
+Current::reportUrl-fr::https://raw.githubusercontent.com/rondorn/70K-Bands/master/qa-config/fixtures/reports/report_dashboard-fr.html
+Current::reportUrl-pt::https://raw.githubusercontent.com/rondorn/70K-Bands/master/qa-config/fixtures/reports/report_dashboard-pt.html
