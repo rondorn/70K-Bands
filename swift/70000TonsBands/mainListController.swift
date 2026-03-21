@@ -56,6 +56,8 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
     print("🔒 [THREAD_SAFETY] getFilteredScheduleData called on thread: \(Thread.current), isMain: \(Thread.isMainThread)")
     
     // SQLite is thread-safe - can be called from any thread
+    /// Schedule event types that may use a placeholder band row; exclude those from "band-only" list by event type only (never band-name matching).
+    let unofficialSyntheticScheduleEventTypes: Set<String> = ["Unofficial Event", "Cruiser Organized"]
     
     // SQLite filtering - no NSPredicate needed, filter in Swift
     
@@ -401,37 +403,12 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
     
     print("🔍 [ATTENDING_COUNT_FIX] Final attendingCount = \(attendingCount)")
     
-    // Convert events to string format: "timeIndex:bandName" OR "timeIndex:eventName" for standalone events  
+    // Convert events to string format: "timeIndex:bandName" OR "timeIndex:identifier" when band field is empty
     let eventStrings = finalEvents.compactMap { event -> String? in
-        // Get the band name from the event
         let bandName = event.bandName
         
         if !bandName.isEmpty {
-            // Check if this "band" name is actually a standalone event
-            // These patterns indicate it's an event name, not a real band name
-            let standaloneEventPatterns = [
-                "Metal Madness", "Thank You", "Karaoke", "Special Event", 
-                "Meet and Greet", "Clinic", "Listening Party", 
-                "Cruiser Organized", "Unofficial Event",
-                // Day-specific events
-                "Mon-", "Tue-", "Wed-", "Thu-", "Fri-", "Sat-", "Sun-",
-                // Time-specific events  
-                "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday",
-                // Common event identifiers
-                "Event", "Activity", "Party", "Session"
-            ]
-            
-            let isStandaloneEvent = standaloneEventPatterns.contains { pattern in
-                bandName.localizedCaseInsensitiveContains(pattern)
-            } || event.eventType?.localizedCaseInsensitiveContains("Unofficial") == true ||
-               event.eventType?.localizedCaseInsensitiveContains("Special") == true
-            
-            if isStandaloneEvent {
-                return "\(event.timeIndex):\(bandName)"
-            } else {
-                // Regular band-associated event: "timeIndex:bandName"
-                return "\(event.timeIndex):\(bandName)"
-            }
+            return "\(event.timeIndex):\(bandName)"
         } else {
             // True standalone event with no band association (shouldn't happen with current import logic)
             var eventIdentifier: String
@@ -489,55 +466,20 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
     let fetchedBands = DataManager.shared.fetchBands(forYear: eventYear)
     print("🔍 DEBUG: Fetched \(fetchedBands.count) bands from SQLite")
     
-    // Only show bands that have NO visible events (band-only entries) and pass priority filters
-    // These should be actual bands, not fake bands created from standalone events
+    // Only show bands that have NO visible events (band-only entries) and pass priority filters.
+    // Exclude SQLite "bands" that exist only to carry unofficial/cruiser events (event type based — never band-name heuristics).
     let bandOnlyStrings = fetchedBands.compactMap { band -> String? in
         let bandName = band.bandName
         guard !bandName.isEmpty else { return nil }
         
-        // Only include band if it has no visible events
         if !bandsWithVisibleEvents.contains(bandName) {
-            
-            // ROBUST FAKE BAND DETECTION: Check if band is associated ONLY with unofficial/special events
-            // If so, it's a fake band created for those events and should not appear when those events are hidden
             let allEventsForBand = DataManager.shared.fetchEventsForBand(bandName, forYear: eventYear)
-            let fakeEventTypes = ["Unofficial Event", "Cruiser Organized", "Special Event", "Meet and Greet", "Clinic", "Listening Party"]
-            
-            // Check if ALL events for this band are fake event types
-            let isAllFakeEvents = !allEventsForBand.isEmpty && allEventsForBand.allSatisfy { event in
-                let eventType = event.eventType ?? ""
-                return fakeEventTypes.contains(eventType)
+            let isOnlyUnofficialScheduleTypes = !allEventsForBand.isEmpty && allEventsForBand.allSatisfy { event in
+                unofficialSyntheticScheduleEventTypes.contains(event.eventType ?? "")
             }
             
-            if isAllFakeEvents {
-                print("🎭 [FAKE_BAND_DEBUG] Filtering out fake band: '\(bandName)' (only has fake event types)")
-                for event in allEventsForBand.prefix(3) {
-                    let eventType = event.eventType ?? "unknown"
-                    let isVisible = filteredEvents.contains(event)
-                    print("🎭 [FAKE_BAND_DEBUG] - Event: '\(eventType)' at '\(event.location)' - Visible: \(isVisible)")
-                }
-                return nil
-            }
-            
-            // FALLBACK: Pattern matching for edge cases (legacy support)
-            let standaloneEventPatterns = [
-                "Metal Madness", "Thank You", "Karaoke", "Special Event", 
-                "Meet and Greet", "Clinic", "Listening Party", 
-                "Cruiser Organized", "Unofficial Event", "Show",
-                // Day-specific events
-                "Mon-", "Tue-", "Wed-", "Thu-", "Fri-", "Sat-", "Sun-",
-                // Time-specific events  
-                "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday",
-                // Common event identifiers
-                "Event", "Activity", "Party", "Session"
-            ]
-            
-            let isFakeBandByPattern = standaloneEventPatterns.contains { pattern in
-                bandName.localizedCaseInsensitiveContains(pattern)
-            }
-            
-            if isFakeBandByPattern {
-                print("🎭 [FAKE_BAND_DEBUG] Filtering out fake band by pattern: '\(bandName)'")
+            if isOnlyUnofficialScheduleTypes {
+                print("🎭 [SCHEDULE_ONLY_UNOFFICIAL] Omitting band-only row for '\(bandName)' — schedule rows are only Unofficial Event / Cruiser Organized")
                 return nil
             }
             
@@ -558,22 +500,6 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
     print("🔍 [FILTER] After band priority filtering: \(bandOnlyStrings.count) band-only entries")
     
     print("📊 Results: \(finalEventStrings.count) events, \(bandOnlyStrings.count) band-only entries")
-    
-    // Quick check for standalone events in final output (reduced logging)
-    let standaloneCount = finalEventStrings.filter { eventString in
-        let components = eventString.components(separatedBy: ":")
-        if components.count == 2 {
-            let identifier = components[1]
-            return identifier.contains("Metal Madness") || identifier.contains("Thank You") || 
-                   identifier.contains("Special Event") || identifier.contains("Unofficial Event") ||
-                   identifier.contains("Karaoke")
-        }
-        return false
-    }.count
-    
-    if standaloneCount > 0 {
-        print("🔍 DEBUG: Found \(standaloneCount) standalone events in final output")
-    }
     
     // Combine events and band-only entries (never both for the same band)
     var combinedResults = finalEventStrings + bandOnlyStrings
@@ -641,45 +567,16 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
         
         var allBandNames: [String] = []
         
-        // Apply priority and fake band filtering (same as Schedule View logic)
         for band in bands {
                 let bandName = band.bandName
                 guard !bandName.isEmpty else { continue }
                 
-                // BANDS ONLY FIX: Filter out fake bands created from standalone events
-                // Check if band is associated ONLY with unofficial/special events
                 let allEventsForBand = DataManager.shared.fetchEventsForBand(bandName, forYear: eventYear)
-                let fakeEventTypes = ["Unofficial Event", "Cruiser Organized", "Special Event", "Meet and Greet", "Clinic", "Listening Party"]
-                
-                // Check if ALL events for this band are fake event types
-                let isAllFakeEvents = !allEventsForBand.isEmpty && allEventsForBand.allSatisfy { event in
-                    let eventType = event.eventType ?? ""
-                    return fakeEventTypes.contains(eventType)
+                let isOnlyUnofficialScheduleTypes = !allEventsForBand.isEmpty && allEventsForBand.allSatisfy { event in
+                    unofficialSyntheticScheduleEventTypes.contains(event.eventType ?? "")
                 }
-                
-                if isAllFakeEvents {
-                    print("🎭 [BANDS_ONLY_DEBUG] Filtering out fake band: '\(bandName)' (only has fake event types)")
-                    continue
-                }
-                
-                // BANDS ONLY FIX: Pattern matching for non-band events (like "Mon-Monday Metal Madness")
-                let standaloneEventPatterns = [
-                    "Meet and Greet", "Clinic", "Listening Party", 
-                    "Cruiser Organized", "Unofficial Event", "Show",
-                    // Day-specific events
-                    "Mon-", "Tue-", "Wed-", "Thu-", "Fri-", "Sat-", "Sun-",
-                    // Time-specific events  
-                    "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday",
-                    // Common event identifiers
-                    "Event", "Activity", "Party", "Session"
-                ]
-                
-                let isFakeBandByPattern = standaloneEventPatterns.contains { pattern in
-                    bandName.localizedCaseInsensitiveContains(pattern)
-                }
-                
-                if isFakeBandByPattern {
-                    print("🎭 [BANDS_ONLY_DEBUG] Filtering out fake band by pattern: '\(bandName)'")
+                if isOnlyUnofficialScheduleTypes {
+                    print("🎭 [BANDS_ONLY_DEBUG] Skipping '\(bandName)' — schedule rows are only Unofficial Event / Cruiser Organized")
                     continue
                 }
                 

@@ -7,7 +7,7 @@ Overwrites the canonical fixture files (same URLs the pointers have always used)
   - qa_lineup_three_bands.csv
   - qa_schedule_shows_only.csv
   - qa_schedule_march_2026_current_window.csv
-  - qa_schedule_with_preparties.csv
+  - qa_schedule_with_preparties.csv (Unofficial Event + Cruiser Organized only; no Show rows)
   - qa_description_map_empty.csv
   - qa_description_map_with_notes.csv
 """
@@ -119,6 +119,32 @@ PREPARTY_FIXTURE_ROWS: list[dict[str, str]] = [
         "Notes": "",
         "ImageURL": "https://www.dropbox.com/scl/fi/b1wcrjoc9xm1dy4kr0yyc/partyBus.png?rlkey=7shhq54xoiuo02jjccck4hpja&raw=1",
         "ImageDate": "12-7/2025",
+    },
+    {
+        "Band": "Fri-Cruiser Welcome Social",
+        "Location": "Clevelander",
+        "Date": "03/19/2026",
+        "Day": "1/19",
+        "Start Time": "19:00",
+        "End Time": "21:00",
+        "Type": "Cruiser Organized",
+        "Description URL": "",
+        "Notes": "",
+        "ImageURL": "",
+        "ImageDate": "",
+    },
+    {
+        "Band": "Sat-Group Shore Walk",
+        "Location": "South Beach",
+        "Date": "03/20/2026",
+        "Day": "Day 1",
+        "Start Time": "08:00",
+        "End Time": "10:00",
+        "Type": "Cruiser Organized",
+        "Description URL": "",
+        "Notes": "",
+        "ImageURL": "",
+        "ImageDate": "",
     },
 ]
 
@@ -428,7 +454,7 @@ def main() -> int:
     with pre_path.open("w", encoding="utf-8", newline="") as f:
         w = csv.DictWriter(f, fieldnames=SCHEDULE_OUT_FIELDS, lineterminator="\n")
         w.writeheader()
-        w.writerows(PREPARTY_FIXTURE_ROWS + schedule_out)
+        w.writerows(PREPARTY_FIXTURE_ROWS)
 
     desc_fields = ["Band", "URL", "Date"]
     desc_empty = list(desc_out)
@@ -456,7 +482,7 @@ def main() -> int:
         f"{len(QR_PLACEHOLDER_LINEUP)} QR placeholders)\n"
         f"      {sched_shows_path} ({len(schedule_out)} show rows)\n"
         f"      {sched_window_path} (same shows, march 2026 window)\n"
-        f"      {pre_path} ({len(PREPARTY_FIXTURE_ROWS) + len(schedule_out)} rows)\n"
+        f"      {pre_path} ({len(PREPARTY_FIXTURE_ROWS)} unofficial/cruiser rows)\n"
         f"      {desc_path_empty.name} ({len(desc_empty)} rows), "
         f"{desc_path_notes.name} ({len(desc_with_notes)} rows)\n"
         f"Bands missing description text URL: "
