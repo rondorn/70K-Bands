@@ -93,17 +93,15 @@ class EventCSVImporter {
                     continue
                 }
                 
-                // CRITICAL FIX: Skip special event types that shouldn't create band entries
-                // These are events without actual bands (like "All Star Jam", "Meet & Greet", etc.)
+                // Skip rows whose CSV Type indicates a non-show special row (never match on band name — real bands must not be dropped by substring).
                 let specialEventTypes = [
                     "All Star Jam", "Meet & Greet", "Meet and Greet", "Q&A", "Q & A",
                     "Panel Discussion", "Workshop", "Seminar", "Awards", "Award Ceremony",
-                    "Closing Ceremony", "Opening Ceremony", "Festival", "Event", "Special Event"
+                    "Closing Ceremony", "Opening Ceremony", "Festival", "Special Event"
                 ]
                 
                 let eventTypeFromCSV = lineData["Type"] ?? ""
                 let isSpecialEvent = specialEventTypes.contains { specialType in
-                    bandName.localizedCaseInsensitiveContains(specialType) || 
                     eventTypeFromCSV.localizedCaseInsensitiveContains(specialType)
                 }
                 
