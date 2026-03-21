@@ -1,0 +1,6 @@
+Band,Location,Date,Day,Start Time,End Time,Type,Description URL,Notes,ImageURL
+QA Alpha Band,Theater,03/18/2026,Day 1,18:00,18:45,Show,,QR donor Day 1,
+QA Beta Band,Rink,03/18/2026,Day 1,19:00,19:45,Show,,QR donor Day 1,
+QA Alpha Band,Pool,03/19/2026,Day 2,10:00,10:45,Show,,Must match partial Day 2,
+QA Beta Band,Lounge,03/19/2026,Day 2,11:00,11:45,Show,,Must match partial Day 2,
+QA Gamma Band,Theater,03/19/2026,Day 2,12:00,12:45,Show,,Extra row on donor only,
