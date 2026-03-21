@@ -1,0 +1,11 @@
+Default::artistUrl::https://raw.githubusercontent.com/rondorn/70K-Bands/master/qa-config/fixtures/qa_lineup_three_bands.csv
+Default::scheduleUrl::https://raw.githubusercontent.com/rondorn/70K-Bands/master/qa-config/fixtures/qa_schedule_full_for_qr_share.csv
+Default::eventYear::2026
+Default::descriptionMap::https://raw.githubusercontent.com/rondorn/70K-Bands/master/qa-config/fixtures/qa_description_map_empty.csv
+Default::reportUrl::https://raw.githubusercontent.com/rondorn/70K-Bands/master/dataFiles/report_dashboard.html
+
+Current::artistUrl::https://raw.githubusercontent.com/rondorn/70K-Bands/master/qa-config/fixtures/qa_lineup_three_bands.csv
+Current::scheduleUrl::https://raw.githubusercontent.com/rondorn/70K-Bands/master/qa-config/fixtures/qa_schedule_full_for_qr_share.csv
+Current::eventYear::2026
+Current::descriptionMap::https://raw.githubusercontent.com/rondorn/70K-Bands/master/qa-config/fixtures/qa_description_map_empty.csv
+Current::reportUrl::https://raw.githubusercontent.com/rondorn/70K-Bands/master/dataFiles/report_dashboard.html
