@@ -12,6 +12,8 @@ import Foundation
 public struct BandData: Codable, Equatable, Hashable {
     let bandName: String
     let eventYear: Int
+    /// Set only from the artist lineup CSV import; `nil` means schedule/event import stub (not a festival lineup band).
+    let lineIndex: Int?
     let officialSite: String?
     let imageUrl: String?
     let youtube: String?
@@ -22,11 +24,23 @@ public struct BandData: Codable, Equatable, Hashable {
     let noteworthy: String?
     let priorYears: String?
     
-    public init(bandName: String, eventYear: Int, officialSite: String? = nil, imageUrl: String? = nil, 
-         youtube: String? = nil, metalArchives: String? = nil, wikipedia: String? = nil,
-         country: String? = nil, genre: String? = nil, noteworthy: String? = nil, priorYears: String? = nil) {
+    public init(
+        bandName: String,
+        eventYear: Int,
+        lineIndex: Int? = nil,
+        officialSite: String? = nil,
+        imageUrl: String? = nil,
+        youtube: String? = nil,
+        metalArchives: String? = nil,
+        wikipedia: String? = nil,
+        country: String? = nil,
+        genre: String? = nil,
+        noteworthy: String? = nil,
+        priorYears: String? = nil
+    ) {
         self.bandName = bandName
         self.eventYear = eventYear
+        self.lineIndex = lineIndex
         self.officialSite = officialSite
         self.imageUrl = imageUrl
         self.youtube = youtube

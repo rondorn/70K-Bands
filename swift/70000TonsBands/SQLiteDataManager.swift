@@ -291,6 +291,7 @@ class SQLiteDataManager: DataManagerProtocol {
                 let band = BandData(
                     bandName: row[bandName],
                     eventYear: year,
+                    lineIndex: row[lineIndex],
                     officialSite: row[officialSite],
                     imageUrl: row[imageUrl],
                     youtube: row[youtube],
@@ -319,6 +320,7 @@ class SQLiteDataManager: DataManagerProtocol {
                 let band = BandData(
                     bandName: row[bandName],
                     eventYear: row[eventYear],
+                    lineIndex: row[lineIndex],
                     officialSite: row[officialSite],
                     imageUrl: row[imageUrl],
                     youtube: row[youtube],
@@ -348,6 +350,7 @@ class SQLiteDataManager: DataManagerProtocol {
                 let band = BandData(
                     bandName: row[bandName],
                     eventYear: year,
+                    lineIndex: row[lineIndex],
                     officialSite: row[officialSite],
                     imageUrl: row[imageUrl],
                     youtube: row[youtube],
@@ -456,6 +459,7 @@ class SQLiteDataManager: DataManagerProtocol {
         return BandData(
             bandName: name,
             eventYear: year,
+            lineIndex: lineIndexParam,
             officialSite: officialSite,
             imageUrl: finalImageUrl,
             youtube: youtube,

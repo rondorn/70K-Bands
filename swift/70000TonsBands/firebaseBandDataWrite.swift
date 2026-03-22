@@ -290,8 +290,8 @@ class firebaseBandDataWrite {
         // CRITICAL FIX: Use SQLite instead of Core Data (SQLite is the primary storage)
         // Core Data is read-only for migration purposes only
         let sqliteDataManager = SQLiteDataManager.shared
-        let bandsForCurrentYear = sqliteDataManager.fetchBands(forYear: currentYear)
-        print("🔥 [FIREBASE_BAND] buildBandRankArray: Found \(bandsForCurrentYear.count) bands in SQLite for year \(currentYear)")
+        let bandsForCurrentYear = sqliteDataManager.fetchBands(forYear: currentYear).filter { $0.lineIndex != nil }
+        print("🔥 [FIREBASE_BAND] buildBandRankArray: Found \(bandsForCurrentYear.count) lineup bands in SQLite for year \(currentYear)")
         
         if bandsForCurrentYear.isEmpty {
             print("⚠️ [FIREBASE_BAND] buildBandRankArray: WARNING - No bands found in SQLite for year \(currentYear)")

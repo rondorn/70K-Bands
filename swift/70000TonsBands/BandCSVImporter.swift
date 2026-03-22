@@ -86,11 +86,11 @@ class BandCSVImporter {
             return
         }
         
-        // Only download if forced or if we have no bands for current year in database
-        let existingBandCount = dataManager.fetchBands(forYear: eventYear).count
+        // Only download if forced or if we have no lineup bands for current year (ignore schedule-import stubs)
+        let existingBandCount = dataManager.fetchBands(forYear: eventYear).filter { $0.lineIndex != nil }.count
         
         if !forceDownload && existingBandCount > 0 {
-            print("📚 Bands already in database (\(existingBandCount) bands), skipping download")
+            print("📚 Lineup bands already in database (\(existingBandCount) bands), skipping download")
             completion(true)
             return
         }
@@ -160,8 +160,8 @@ extension BandCSVImporter {
     
     /// Get all band names as an array for current year (replacement for bandNamesHandler.bandNamesArray)
     func getBandNamesArray() -> [String] {
-        let bands = DataManager.shared.fetchBands(forYear: eventYear)
-        return bands.compactMap { $0.bandName }.sorted()
+        let bands = DataManager.shared.fetchBands(forYear: eventYear).filter { $0.lineIndex != nil }
+        return bands.map { $0.bandName }.sorted()
     }
     
     /// Get band data as dictionary (replacement for bandNamesHandler.bandNames)
@@ -187,7 +187,7 @@ extension BandCSVImporter {
     
     /// Get all bands data as dictionary for current year (replacement for bandNamesHandler.bandNames)
     func getAllBandsData() -> [String: [String: String]] {
-        let bands = DataManager.shared.fetchBands(forYear: eventYear)
+        let bands = DataManager.shared.fetchBands(forYear: eventYear).filter { $0.lineIndex != nil }
         var result: [String: [String: String]] = [:]
         
         for band in bands {

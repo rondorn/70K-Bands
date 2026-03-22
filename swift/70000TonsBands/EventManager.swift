@@ -288,8 +288,8 @@ class EventManager {
             }
         }
         
-        // 7. Get bands without events (replaces band-only logic)
-        let allBands = dataManager.fetchBands(forYear: year)
+        // 7. Get bands without events (replaces band-only logic) — lineup only; schedule stubs are not plain band rows
+        let allBands = dataManager.fetchBands(forYear: year).filter { $0.lineIndex != nil }
         var allBandNames = allBands.map { $0.bandName }
         
         // Find bands without events and apply same priority filtering

@@ -60,6 +60,73 @@ public class BandInfo {
         return false;
     }
 
+    /**
+     * True when the schedule has at least one event and every event is Cruiser Organized or Unofficial Event.
+     * Used to simplify the filter menu (hide venues, sort, flagged-only, and non-unofficial event toggles).
+     */
+    public static boolean scheduleHasOnlyUnofficialEventTypes() {
+        if (scheduleRecords == null || scheduleRecords.isEmpty()) {
+            return false;
+        }
+        boolean sawAnyEvent = false;
+        for (scheduleTimeTracker tracker : scheduleRecords.values()) {
+            if (tracker == null || tracker.scheduleByTime == null) {
+                continue;
+            }
+            for (scheduleHandler sh : tracker.scheduleByTime.values()) {
+                if (sh == null) {
+                    continue;
+                }
+                String type = sh.getShowType();
+                if (type == null || type.isEmpty()) {
+                    return false;
+                }
+                sawAnyEvent = true;
+                if (!staticVariables.unofficalEvent.equals(type) && !staticVariables.unofficalEventOld.equals(type)) {
+                    return false;
+                }
+            }
+        }
+        return sawAnyEvent;
+    }
+
+    /**
+     * True if a main-list index string is a time-keyed schedule row (show / unofficial / etc.),
+     * as opposed to a band-with-no-visible-events row (e.g. {@code "BandName:"} or plain {@code "BandName"}).
+     * Matches iOS list row shape for filter-badge math.
+     */
+    public static boolean isScheduleEventRowListIndex(String item) {
+        if (item == null || item.isEmpty()) {
+            return false;
+        }
+        String[] parts = item.split(":", -1);
+        if (parts.length < 2) {
+            return false;
+        }
+        try {
+            long t = Long.parseLong(parts[0].trim());
+            if (t > 0) {
+                return true;
+            }
+        } catch (NumberFormatException ignored) {
+        }
+        try {
+            long t = Long.parseLong(parts[1].trim());
+            if (t > 0) {
+                return true;
+            }
+        } catch (NumberFormatException ignored) {
+        }
+        return false;
+    }
+
+    /** Schedule view + only unofficial/cruiser types in imported data → band-centric counts (matches iOS). */
+    public static boolean filterCountsUseBandSlotsForScheduleView() {
+        return staticVariables.preferences != null
+                && staticVariables.preferences.getShowScheduleView()
+                && scheduleHasOnlyUnofficialEventTypes();
+    }
+
     public Map<String,String> downloadUrls = new HashMap<String, String>();
 
     /**
