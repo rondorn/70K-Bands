@@ -44,9 +44,22 @@ func getBands() -> [String]{
     return bands
 }
 
+/// Imported schedule is non-empty and every event is Unofficial or Cruiser Organized (matches Android `BandInfo.scheduleHasOnlyUnofficialEventTypes`).
+func scheduleCompositionIsUnofficialOnly(forYear year: Int) -> Bool {
+    let allEvents = DataManager.shared.fetchEvents(forYear: year)
+    guard !allEvents.isEmpty else { return false }
+    let allowed: Set<String> = [unofficalEventType, unofficalEventTypeOld]
+    for event in allEvents {
+        let t = event.eventType ?? ""
+        if t.isEmpty { return false }
+        if !allowed.contains(t) { return false }
+    }
+    return true
+}
+
 /// NEW: High-performance query-based filtering that replaces loop-based determineBandOrScheduleList
 /// - Parameters:
-///   - sortedBy: Sort preference ("name" or "time")  
+///   - sortedBy: Sort preference ("name" or "time")
 ///   - priorityManager: Priority manager for band rankings
 ///   - attendedHandle: Attendance tracking handler
 /// - Returns: Filtered events and bands for UI display
@@ -58,6 +71,10 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
     // SQLite is thread-safe - can be called from any thread
     /// Schedule event types that may use a placeholder band row; exclude those from "band-only" list by event type only (never band-name matching).
     let unofficialSyntheticScheduleEventTypes: Set<String> = ["Unofficial Event", "Cruiser Organized"]
+    /// True for rows from the artist lineup CSV (`lineIndex` set). Schedule import stubs have `lineIndex == nil` and must not appear as plain band names—only as schedule event rows.
+    func isLineupBandForListPurposes(_ band: BandData) -> Bool {
+        band.lineIndex != nil
+    }
     
     // SQLite filtering - no NSPredicate needed, filter in Swift
     
@@ -148,22 +165,34 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
     let fetchedBandsForUnfiltered = DataManager.shared.fetchBands(forYear: eventYear)
     let unfilteredBandOnlyCount = fetchedBandsForUnfiltered.filter { band in
         let name = band.bandName
-        guard !name.isEmpty else { return false }
+        guard !name.isEmpty, isLineupBandForListPurposes(band) else { return false }
         return !bandsWithUnfilteredEvents.contains(name)
     }.count
+    let lineupBands = fetchedBandsForUnfiltered.filter(isLineupBandForListPurposes)
+    let onlyUnofficialComposition = scheduleCompositionIsUnofficialOnly(forYear: eventYear)
     if getShowScheduleView() {
-        unfilteredBandCount = unfilteredEventsForCount.count + unfilteredBandOnlyCount
-    } else {
-        // Bands-only: unfiltered = all bands (with expiration applied)
-        if getHideExpireScheduleData() {
-            let currentTime = Date().timeIntervalSinceReferenceDate
-            unfilteredBandCount = fetchedBandsForUnfiltered.filter { band in
-                let events = DataManager.shared.fetchEventsForBand(band.bandName, forYear: eventYear)
-                return events.isEmpty || events.contains(where: { $0.timeIndex > currentTime })
-            }.count
+        if onlyUnofficialComposition {
+            // Band-centric badge/totals: lineup bands only (same baseline as bands-only list)
+            if getHideExpireScheduleData() {
+                let currentTime = Date().timeIntervalSinceReferenceDate
+                unfilteredBandCount = lineupBands.filter { band in
+                    let events = DataManager.shared.fetchEventsForBand(band.bandName, forYear: eventYear)
+                    return events.isEmpty || events.contains(where: { $0.timeIndex > currentTime })
+                }.count
+            } else {
+                unfilteredBandCount = lineupBands.count
+            }
         } else {
-            unfilteredBandCount = fetchedBandsForUnfiltered.count
+            unfilteredBandCount = unfilteredEventsForCount.count + unfilteredBandOnlyCount
         }
+    } else if getHideExpireScheduleData() {
+        let currentTime = Date().timeIntervalSinceReferenceDate
+        unfilteredBandCount = lineupBands.filter { band in
+            let events = DataManager.shared.fetchEventsForBand(band.bandName, forYear: eventYear)
+            return events.isEmpty || events.contains(where: { $0.timeIndex > currentTime })
+        }.count
+    } else {
+        unfilteredBandCount = lineupBands.count
     }
     
     // Apply filters directly on structs
@@ -471,6 +500,9 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
     let bandOnlyStrings = fetchedBands.compactMap { band -> String? in
         let bandName = band.bandName
         guard !bandName.isEmpty else { return nil }
+        guard isLineupBandForListPurposes(band) else {
+            return nil
+        }
         
         if !bandsWithVisibleEvents.contains(bandName) {
             let allEventsForBand = DataManager.shared.fetchEventsForBand(bandName, forYear: eventYear)
@@ -570,6 +602,7 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
         for band in bands {
                 let bandName = band.bandName
                 guard !bandName.isEmpty else { continue }
+                guard isLineupBandForListPurposes(band) else { continue }
                 
                 let allEventsForBand = DataManager.shared.fetchEventsForBand(bandName, forYear: eventYear)
                 let isOnlyUnofficialScheduleTypes = !allEventsForBand.isEmpty && allEventsForBand.allSatisfy { event in
@@ -835,6 +868,8 @@ func getFilteredBands(
         if (filteredBandCount == 0){
             print ("🕐 [\(String(format: "%.3f", CFAbsoluteTimeGetCurrent()))] mainListDebug: handleEmptryList: Why is this being called 1")
             filteredBands = handleEmptryList(bandNameHandle: bandNameHandle, areFiltersActive: areFiltersActive);
+            // Placeholder message occupies a table row but is not a band — keep counters at zero for header/badge logic.
+            bandCounter = 0
         } else {
             bandCounter = filteredBands.count
             listCount = filteredBands.count

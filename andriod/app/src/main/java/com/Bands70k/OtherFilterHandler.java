@@ -211,24 +211,15 @@ public class OtherFilterHandler {
         if (shouldShowScheduleFilters){
             // SCHEDULE MODE: Show schedule-related filters
             
-            // Check if we have ONLY unofficial events (special case)
-            // This includes both:
-            // 1. When unofficial events are visible and no regular events exist
-            // 2. When no events are visible but unofficial events might exist (hidden)
-            boolean hasOnlyUnofficalEvents = staticVariables.showUnofficalEventButtons && !staticVariables.showEventButtons;
-            boolean mightHaveOnlyUnofficalEventsHidden = !staticVariables.showEventButtons && 
-                                                         !staticVariables.showUnofficalEventButtons && 
-                                                         staticVariables.preferences.getUnofficalEventsEnabled();
-            boolean treatAsOnlyUnofficalEvents = hasOnlyUnofficalEvents || mightHaveOnlyUnofficalEventsHidden;
+            // Schedule-driven: every event is Cruiser Organized / Unofficial (matches CommonFilterMenuBuilder)
+            boolean treatAsOnlyUnofficalEvents = BandInfo.scheduleHasOnlyUnofficialEventTypes();
             
             // Check if any event type filters should be shown (based on festival config)
             boolean showAnyEventTypeFilters = staticVariables.preferences.getMeetAndGreetsEnabled() ||
                                              staticVariables.preferences.getSpecialEventsEnabled() ||
                                              staticVariables.preferences.getUnofficalEventsEnabled();
             
-            Log.d("UNOFFICIAL_DEBUG", "🔧 hasOnlyUnofficalEvents=" + hasOnlyUnofficalEvents + 
-                  ", mightHaveOnlyUnofficalEventsHidden=" + mightHaveOnlyUnofficalEventsHidden + 
-                  ", treatAsOnlyUnofficalEvents=" + treatAsOnlyUnofficalEvents + 
+            Log.d("UNOFFICIAL_DEBUG", "🔧 treatAsOnlyUnofficalEvents=" + treatAsOnlyUnofficalEvents +
                   ", showAnyEventTypeFilters=" + showAnyEventTypeFilters);
             
             if (showAnyEventTypeFilters) {

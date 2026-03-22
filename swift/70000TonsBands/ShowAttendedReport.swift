@@ -357,7 +357,7 @@ class showAttendenceReport {
         // FALLBACK: If still empty, get bands directly from SQLite for the resolved year
         if bands.isEmpty {
             print("🔍 [MUST_MIGHT_REPORT] Still empty, trying SQLite fallback for year \(resolvedYear)...")
-            let sqliteBands = SQLiteDataManager.shared.fetchBands(forYear: resolvedYear)
+            let sqliteBands = SQLiteDataManager.shared.fetchBands(forYear: resolvedYear).filter { $0.lineIndex != nil }
             bands = sqliteBands.map { $0.bandName }.sorted()
             print("🔍 [MUST_MIGHT_REPORT] SQLite fallback returned \(bands.count) bands for year \(resolvedYear)")
         }

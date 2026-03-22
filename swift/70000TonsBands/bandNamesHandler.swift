@@ -208,8 +208,8 @@ open class bandNamesHandler {
         
         // CRITICAL FIX: Filter bands by the current event year
         print("🔍 [LOAD_CACHE_DEBUG] About to call fetchBands(forYear: \(eventYear))")
-        let bands = self.dataManager.fetchBands(forYear: eventYear)
-        print("🔍 [LOAD_CACHE_DEBUG] fetchBands returned \(bands.count) bands for year \(eventYear)")
+        let bands = self.dataManager.fetchBands(forYear: eventYear).filter { $0.lineIndex != nil }
+        print("🔍 [LOAD_CACHE_DEBUG] fetchBands returned \(bands.count) lineup bands (lineIndex set) for year \(eventYear)")
         
         // CRITICAL: All dictionary modifications must be synchronized
         staticBandName.sync {
@@ -517,9 +517,9 @@ open class bandNamesHandler {
                 }
                 
                 // Smart import detection: Force import if we have large CSV but few bands for current year
-                let currentBandCount = DataManager.shared.fetchBands(forYear: eventYear).count
+                let currentBandCount = DataManager.shared.fetchBands(forYear: eventYear).filter { $0.lineIndex != nil }.count
                 if httpData.count > 10000 && currentBandCount < 20 {
-                    print("DEBUG_MARKER: Smart import triggered - Downloaded \(httpData.count) chars but only \(currentBandCount) bands in SQLite")
+                    print("DEBUG_MARKER: Smart import triggered - Downloaded \(httpData.count) chars but only \(currentBandCount) lineup bands in SQLite")
                     clearStoredChecksum()
                     storedChecksum = getStoredChecksum() // Refresh after clearing
                 }
@@ -553,11 +553,11 @@ open class bandNamesHandler {
                     
                     // Even if data hasn't changed, we should run cleanup to remove invalid bands
                     // This handles cases where test data or old bands exist in SQLite
-                    let currentBandCount = DataManager.shared.fetchBands(forYear: eventYear).count
+                    let currentBandCount = DataManager.shared.fetchBands(forYear: eventYear).filter { $0.lineIndex != nil }.count
                     let csvLineCount = httpData.components(separatedBy: .newlines).count - 1 // Subtract header
                     
                     if currentBandCount != csvLineCount {
-                        print("DEBUG_MARKER: Band count mismatch - SQLite: \(currentBandCount), CSV: \(csvLineCount)")
+                        print("DEBUG_MARKER: Lineup band count mismatch - SQLite: \(currentBandCount), CSV: \(csvLineCount)")
                         print("DEBUG_MARKER: Running cleanup to sync SQLite with CSV")
                         
                         let cleanupSuccess = csvImporter.importBandsFromCSVString(httpData)

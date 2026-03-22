@@ -3559,6 +3559,36 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     /// Filter button to use for positioning (IB outlet or programmatic fallback)
     private var effectiveFilterButton: UIButton? { filterMenuButton ?? fallbackFilterButton }
     
+    /// Placeholder rows when the list has no real bands/events (must stay in sync with `handleEmptryList` in mainListController).
+    private static func isBandListPlaceholderEntry(_ entry: String) -> Bool {
+        entry == NSLocalizedString("data_filter_issue", comment: "")
+            || entry == NSLocalizedString("waiting_for_data", comment: "")
+            || entry == NSLocalizedString("year_change_loading", comment: "")
+    }
+
+    /// Matches Android `BandInfo.isScheduleEventRowListIndex` / main-list `time:name` vs band-slot rows.
+    private static func isScheduleEventRowListEntry(_ entry: String) -> Bool {
+        let parts = entry.split(separator: ":", omittingEmptySubsequences: false).map { String($0) }
+        guard parts.count >= 2 else { return false }
+        if let t = Double(parts[0]), t > 0 { return true }
+        if let t = Double(parts[1]), t > 0 { return true }
+        return false
+    }
+    
+    /// Rows that represent actual bands or schedule entries (excludes empty-state message strings).
+    private func displayedNonPlaceholderRowCount(in bands: [String]) -> Int {
+        bands.filter { !MasterViewController.isBandListPlaceholderEntry($0) }.count
+    }
+
+    /// For filter badge: in unofficial-only imported schedules, unofficial/cruiser rows do not count as "displayed" toward the band-centric total.
+    private func displayedRowsForFilterBadge(in bands: [String]) -> Int {
+        let real = bands.filter { !MasterViewController.isBandListPlaceholderEntry($0) }
+        if getShowScheduleView() && scheduleCompositionIsUnofficialOnly(forYear: eventYear) {
+            return real.filter { !MasterViewController.isScheduleEventRowListEntry($0) }.count
+        }
+        return real.count
+    }
+    
     /// Updates the filter button badge to show hidden records count
     private func updateFilterButtonBadge() {
         ensureFilterCounterAndShareLayout()
@@ -3566,7 +3596,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     /// Updates filter badge in its dedicated container (so it isn't clipped by the narrow Filters button)
     private func ensureFilterCounterAndShareLayout() {
-        let hiddenCount = max(0, unfilteredBandCount - bands.count)
+        let displayedRealRows = displayedRowsForFilterBadge(in: bands)
+        let hiddenCount = max(0, unfilteredBandCount - displayedRealRows)
         let hasHiddenRecords = hiddenCount > 0 && filterTextNeeded
         
         // Clear old badge from button (legacy) in case we're transitioning
@@ -3801,115 +3832,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         return unofficialCount
     }
-    
-    private func areAllVisibleEventsUnofficialOrCruiserOrganized() -> Bool {
-        // If there are no visible events, return false (default to Bands per rule 1)
-        guard eventCount > 0 else { return false }
-        
-        // Get all events for the current year and apply the same filters that are used for display
-        let allEvents = DataManager.shared.fetchEvents(forYear: eventYear)
-        
-        // Apply the same filtering logic as getFilteredScheduleData
-        // 1. Event type filtering
-        var excludedEventTypes: [String] = []
-        if !getShowUnofficalEvents() {
-            excludedEventTypes.append(contentsOf: ["Unofficial Event", "Cruiser Organized"])
-        }
-        if !getShowMeetAndGreetEvents() {
-            excludedEventTypes.append("Meet and Greet")
-        }
-        if !getShowSpecialEvents() {
-            excludedEventTypes.append("Special Event")
-        }
-        
-        var filteredEvents = allEvents.filter { event in
-            let eventType = event.eventType ?? ""
-            return !excludedEventTypes.contains(eventType)
-        }
-        
-        // 2. Venue filtering (per-venue state: configured prefix match or discovered = full location; same persistence as list/calendar)
-        let filterVenues = FestivalConfig.current.getAllVenueNames()
-        filteredEvents = filteredEvents.filter { event in
-            let location = event.location
-            var venueNameToCheck: String?
-            for venueName in filterVenues {
-                if location.lowercased().hasPrefix(venueName.lowercased()) {
-                    venueNameToCheck = venueName
-                    break
-                }
-            }
-            if venueNameToCheck == nil {
-                venueNameToCheck = location
-            }
-            guard let name = venueNameToCheck else { return false }
-            return getShowVenueEvents(venueName: name)
-        }
-        
-        // 3. Expiration filtering
-        if getHideExpireScheduleData() {
-            let currentTime = Date().timeIntervalSinceReferenceDate
-            filteredEvents = filteredEvents.filter { event in
-                var endTimeIndex = event.endTimeIndex
-                // FIX: Detect midnight crossing (matches Android logic)
-                if event.timeIndex > endTimeIndex {
-                    endTimeIndex += 86400 // Add 24 hours
-                }
-                // Add 10-minute buffer (600 seconds) before expiration
-                return endTimeIndex + 600 > currentTime
-            }
-        }
-        
-        // 4. Priority filtering
-        let priorityFilteredEvents = filteredEvents.filter { event in
-            let bandName = event.bandName
-            guard !bandName.isEmpty else { return true }
-            
-            let priority = priorityManager.getPriority(for: bandName)
-            
-            if priority == 1 && !getMustSeeOn() { return false }
-            if priority == 2 && !getMightSeeOn() { return false }
-            if priority == 3 && !getWontSeeOn() { return false }
-            if priority == 0 && !getUnknownSeeOn() { return false }
-            
-            return true
-        }
-        
-        // 5. Attendance filtering (if enabled)
-        let finalEvents: [EventData]
-        if getShowOnlyWillAttened() {
-            finalEvents = priorityFilteredEvents.filter { event in
-                let bandName = event.bandName
-                let location = event.location
-                let eventType = event.eventType ?? ""
-                let startTime = event.startTime ?? ""
-                
-                guard !startTime.isEmpty else { return false }
-                
-                let eventYearString = String(eventYear)
-                let attendedStatus = attendedHandle.getShowAttendedStatus(
-                    band: bandName,
-                    location: location,
-                    startTime: startTime,
-                    eventType: eventType,
-                    eventYearString: eventYearString
-                )
-                
-                return attendedStatus != sawNoneStatus
-            }
-        } else {
-            finalEvents = priorityFilteredEvents
-        }
-        
-        // Now check if all visible events are unofficial or cruiser organized
-        guard !finalEvents.isEmpty else { return false }
-        
-        let allAreUnofficialOrCruiser = finalEvents.allSatisfy { event in
-            let eventType = event.eventType ?? ""
-            return eventType == unofficalEventType || eventType == unofficalEventTypeOld
-        }
-        
-        return allAreUnofficialOrCruiser
-    }
   
     /// Updates the count label at the top of the list showing "{x} Events" or "{x} Bands"
     /// 
@@ -3971,36 +3893,25 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             print("📊 [ASYNC_COUNT] Count completed: \(count) unofficial events out of \(allEvents.count) total")
 
             // Heavy work on background thread (was blocking main ~230ms)
-            let displayedCount = bandsSnapshot.count
+            let displayedCount = bandsSnapshot.filter { !MasterViewController.isBandListPlaceholderEntry($0) }.count
             let effectiveDisplayedCount = (displayedCount == 0 && listCount > 0) ? listCount : displayedCount
             let showUnofficalEvents = getShowUnofficalEvents()
             let displayedUnofficialCount = showUnofficalEvents ? self.countUnofficialEventsInDisplayedBands(bands: bandsSnapshot) : 0
             let unofficialCountToSubtract = showUnofficalEvents ? displayedUnofficialCount : 0
-            let hasEvents = eventCount > 0
-            let hasBands = effectiveDisplayedCount > unofficialCountToSubtract
-            let allEventsAreUnofficial = self.areAllVisibleEventsUnofficialOrCruiserOrganized()
-            let hasNonUnofficalEvents = eventCount > 0 && !allEventsAreUnofficial
             let showScheduleView = getShowScheduleView()
+            let compositionUnofficialOnly = scheduleCompositionIsUnofficialOnly(forYear: currentYear)
+            let bandSlotsDisplayed = self.displayedRowsForFilterBadge(in: bandsSnapshot)
 
             let (labeleCounter, lableCounterString): (Int, String)
             if !showScheduleView {
                 labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
                 lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnTextSnapshot
-            } else if !hasEvents && hasBands {
-                labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
+            } else if compositionUnofficialOnly {
+                labeleCounter = max(bandSlotsDisplayed, 0)
                 lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnTextSnapshot
-            } else if hasEvents && !hasBands {
-                labeleCounter = max(eventCount, 0)
-                lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + filtersOnTextSnapshot
-            } else if hasEvents && hasBands && allEventsAreUnofficial {
-                labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
-                lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnTextSnapshot
-            } else if hasNonUnofficalEvents {
-                labeleCounter = max(eventCount, 0)
-                lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + filtersOnTextSnapshot
             } else {
-                labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
-                lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnTextSnapshot
+                labeleCounter = max(eventCount, 0)
+                lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + filtersOnTextSnapshot
             }
 
             let currentYearSetting = getScheduleUrl()
@@ -4036,35 +3947,24 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let capturedFiltersOnText = filtersOnText
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
-            let displayedCount = bandsSnapshotSync.count
+            let displayedCount = bandsSnapshotSync.filter { !MasterViewController.isBandListPlaceholderEntry($0) }.count
             let effectiveDisplayedCount = (displayedCount == 0 && capturedListCount > 0) ? capturedListCount : displayedCount
             let showUnofficalEvents = getShowUnofficalEvents()
             let displayedUnofficialCount = showUnofficalEvents ? self.countUnofficialEventsInDisplayedBands(bands: bandsSnapshotSync) : 0
             let unofficialCountToSubtract = showUnofficalEvents ? displayedUnofficialCount : 0
-            let hasEvents = capturedEventCount > 0
-            let hasBands = effectiveDisplayedCount > unofficialCountToSubtract
-            let allEventsAreUnofficial = self.areAllVisibleEventsUnofficialOrCruiserOrganized()
-            let hasNonUnofficalEvents = capturedEventCount > 0 && !allEventsAreUnofficial
             let showScheduleView = getShowScheduleView()
+            let compositionUnofficialOnly = scheduleCompositionIsUnofficialOnly(forYear: eventYear)
+            let bandSlotsDisplayed = self.displayedRowsForFilterBadge(in: bandsSnapshotSync)
             let (labeleCounter, lableCounterString): (Int, String)
             if !showScheduleView {
                 labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
                 lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + capturedFiltersOnText
-            } else if !hasEvents && hasBands {
-                labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
+            } else if compositionUnofficialOnly {
+                labeleCounter = max(bandSlotsDisplayed, 0)
                 lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + capturedFiltersOnText
-            } else if hasEvents && !hasBands {
-                labeleCounter = max(capturedEventCount, 0)
-                lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + capturedFiltersOnText
-            } else if hasEvents && hasBands && allEventsAreUnofficial {
-                labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
-                lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + capturedFiltersOnText
-            } else if hasNonUnofficalEvents {
-                labeleCounter = max(capturedEventCount, 0)
-                lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + capturedFiltersOnText
             } else {
-                labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
-                lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + capturedFiltersOnText
+                labeleCounter = max(capturedEventCount, 0)
+                lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + capturedFiltersOnText
             }
             let currentYearSetting = getScheduleUrl()
             let titleText: String

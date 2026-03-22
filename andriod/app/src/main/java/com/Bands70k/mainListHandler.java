@@ -393,6 +393,27 @@ public class mainListHandler {
     }
 
     /**
+     * Visible "band slot" rows on the list (excludes time-keyed schedule rows). Used when the imported
+     * schedule is unofficial-only so counts match iOS (unofficial rows do not affect band totals).
+     */
+    public static int countVisibleBandSlotRowsInSortableList(List<String> sortableBandNames) {
+        if (sortableBandNames == null || sortableBandNames.isEmpty()) {
+            return 0;
+        }
+        int n = 0;
+        for (String item : sortableBandNames) {
+            if (item == null || item.isEmpty()) {
+                continue;
+            }
+            if (BandInfo.isScheduleEventRowListIndex(item)) {
+                continue;
+            }
+            n++;
+        }
+        return n;
+    }
+
+    /**
      * Applies all filters to a band at a given time index.
      * @param bandName The band name.
      * @param timeIndex The time index.
@@ -794,6 +815,16 @@ public class mainListHandler {
 
         if (String.valueOf(staticVariables.preferences.getEventYearToLoad()).equals("Current") == false){
             yearDisplay = "(" + String.valueOf(staticVariables.preferences.getEventYearToLoad()) + ")";
+        }
+
+        // Unofficial-only imported schedule: header is always band-centric (ignore unofficial event rows in the number).
+        if (BandInfo.filterCountsUseBandSlotsForScheduleView() && sortableBandNames != null) {
+            int visibleBandSlots = countVisibleBandSlotRowsInSortableList(sortableBandNames);
+            staticVariables.showEventButtons = false;
+            staticVariables.showUnofficalEventButtons = (numberOfUnofficalEvents > 0);
+            displayText = yearDisplay + " " + visibleBandSlots + " " + staticVariables.context.getString(R.string.Bands) + filteringText;
+            staticVariables.staticBandCount = visibleBandSlots;
+            return displayText;
         }
         
         // FIX: If numberOfBands is 0 but we have bands in sortableBandNames and no events, use sortableBandNames.size()

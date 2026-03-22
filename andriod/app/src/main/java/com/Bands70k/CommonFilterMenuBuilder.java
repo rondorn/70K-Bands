@@ -113,13 +113,18 @@ public class CommonFilterMenuBuilder {
         // When Hide Expired Events is ON and no unexpired events: hide event-related sections (Locations, Event Type, Sort By, Show Flagged)
         // Event sections containers are refreshed when Hide Expired toggle changes
         final View[] eventSectionsContainerRef = new View[2];
+        final View[] unofficialOnlySectionRef = new View[1];
+        final boolean onlyUnofficialSchedule = BandInfo.scheduleHasOnlyUnofficialEventTypes();
         boolean showEventSections = shouldShowEventRelatedSections(context);
+        boolean showRichEventSections = showEventSections && !onlyUnofficialSchedule;
+        boolean showUnofficialOnlyEventSection = showEventSections && onlyUnofficialSchedule;
         if (menuType == MenuType.PORTRAIT) {
             // Portrait order: Hide Expired -> Sort By Name -> Show Flagged -> Band Rankings -> Event Types -> Locations
-            buildShowExpiredEventsSection(context, filterList, allFilterSwitches, expiredSwitchRef, isFlaggedFilterEnabled, wrapperCallbacks, eventSectionsContainerRef);
+            // When every event is Cruiser Organized / Unofficial: only Hide Expired (if any past), band rankings, and unofficial toggle.
+            buildShowExpiredEventsSection(context, filterList, allFilterSwitches, expiredSwitchRef, isFlaggedFilterEnabled, wrapperCallbacks, eventSectionsContainerRef, unofficialOnlySectionRef, onlyUnofficialSchedule);
             LinearLayout eventSectionsContainer = new LinearLayout(context);
             eventSectionsContainer.setOrientation(LinearLayout.VERTICAL);
-            eventSectionsContainer.setVisibility(showEventSections ? View.VISIBLE : View.GONE);
+            eventSectionsContainer.setVisibility(showRichEventSections ? View.VISIBLE : View.GONE);
             buildSortByTimeSection(context, eventSectionsContainer, wrapperCallbacks);
             buildShowFlaggedEventsSection(context, eventSectionsContainer, flaggedSwitchRef, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
             filterList.addView(eventSectionsContainer);
@@ -127,22 +132,36 @@ public class CommonFilterMenuBuilder {
             buildBandRankingSection(context, filterList, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
             LinearLayout eventSectionsContainer2 = new LinearLayout(context);
             eventSectionsContainer2.setOrientation(LinearLayout.VERTICAL);
-            eventSectionsContainer2.setVisibility(showEventSections ? View.VISIBLE : View.GONE);
+            eventSectionsContainer2.setVisibility(showRichEventSections ? View.VISIBLE : View.GONE);
             buildEventTypeSection(context, eventSectionsContainer2, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
             buildLocationSection(context, eventSectionsContainer2, allVenueNames, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
             filterList.addView(eventSectionsContainer2);
             eventSectionsContainerRef[1] = eventSectionsContainer2;
+            LinearLayout unofficialOnlyWrap = new LinearLayout(context);
+            unofficialOnlyWrap.setOrientation(LinearLayout.VERTICAL);
+            if (staticVariables.preferences.getUnofficalEventsEnabled() && BandInfo.hasUnofficialEventsInSchedule()) {
+                buildUnofficialOnlyScheduleSection(context, unofficialOnlyWrap, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
+            }
+            boolean portraitShowUnofficialBlock = showUnofficialOnlyEventSection && unofficialOnlyWrap.getChildCount() > 0;
+            unofficialOnlyWrap.setVisibility(portraitShowUnofficialBlock ? View.VISIBLE : View.GONE);
+            filterList.addView(unofficialOnlyWrap);
+            unofficialOnlySectionRef[0] = unofficialOnlyWrap;
         } else {
-            // Calendar: same as List but hidden = Hide Expired, Sort Alphabetically. First entry = Show Flagged Events Only.
-            if (showEventSections) {
+            // Calendar: no Hide Expired row. When only unofficial events: flagged, full event-type, and venue sections are hidden.
+            if (showRichEventSections) {
                 buildShowFlaggedEventsSection(context, filterList, flaggedSwitchRef, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
             }
             if (hasRankedBands(context)) {
                 buildBandRankingSection(context, filterList, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
             }
-            if (showEventSections) {
+            if (showRichEventSections) {
                 buildEventTypeSection(context, filterList, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
                 buildLocationSection(context, filterList, allVenueNames, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
+            }
+            if (showUnofficialOnlyEventSection
+                    && staticVariables.preferences.getUnofficalEventsEnabled()
+                    && BandInfo.hasUnofficialEventsInSchedule()) {
+                buildUnofficialOnlyScheduleSection(context, filterList, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
             }
         }
         
@@ -218,7 +237,8 @@ public class CommonFilterMenuBuilder {
     
     private static void buildShowExpiredEventsSection(Context context, LinearLayout parent, List<Switch> allSwitches,
                                                      Switch[] expiredSwitchRef, boolean isFlaggedEnabled, FilterMenuCallbacks callbacks,
-                                                     View[] eventSectionsContainerRef) {
+                                                     View[] eventSectionsContainerRef, View[] unofficialOnlySectionRef,
+                                                     boolean onlyUnofficialSchedule) {
         // Check if we have expired events
         if (!hasExpiredEvents(context)) {
             return;
@@ -265,14 +285,22 @@ public class CommonFilterMenuBuilder {
             public void onCheckedChanged(android.widget.CompoundButton buttonView, boolean isChecked) {
                 staticVariables.preferences.setHideExpiredEvents(isChecked);
                 staticVariables.preferences.saveData();
-                // Refresh menu to show/hide event-related sections
-                boolean show = shouldShowEventRelatedSections(context);
+                // Refresh menu to show/hide event-related sections (rich vs unofficial-only layout)
+                boolean base = shouldShowEventRelatedSections(context);
+                boolean rich = base && !onlyUnofficialSchedule;
+                boolean showUnofficialBlock = base && onlyUnofficialSchedule;
                 if (eventSectionsContainerRef != null) {
-                    for (View container : eventSectionsContainerRef) {
-                        if (container != null) {
-                            container.setVisibility(show ? View.VISIBLE : View.GONE);
-                        }
+                    if (eventSectionsContainerRef.length > 0 && eventSectionsContainerRef[0] != null) {
+                        eventSectionsContainerRef[0].setVisibility(rich ? View.VISIBLE : View.GONE);
                     }
+                    if (eventSectionsContainerRef.length > 1 && eventSectionsContainerRef[1] != null) {
+                        eventSectionsContainerRef[1].setVisibility(rich ? View.VISIBLE : View.GONE);
+                    }
+                }
+                if (unofficialOnlySectionRef != null && unofficialOnlySectionRef.length > 0 && unofficialOnlySectionRef[0] != null) {
+                    View uo = unofficialOnlySectionRef[0];
+                    boolean hasUnofficialRows = (uo instanceof ViewGroup) && ((ViewGroup) uo).getChildCount() > 0;
+                    uo.setVisibility(showUnofficialBlock && hasUnofficialRows ? View.VISIBLE : View.GONE);
                 }
                 callbacks.onFilterChanged();
             }
@@ -530,21 +558,45 @@ public class CommonFilterMenuBuilder {
         
         // Unofficial Events - only show if schedule contains Unofficial or Cruiser Organized events
         if (staticVariables.preferences.getUnofficalEventsEnabled() && BandInfo.hasUnofficialEventsInSchedule()) {
-            createFilterRow(context, parent,
-                R.drawable.icon_unoffical_event, R.drawable.icon_unoffical_event_alt,
-                R.string.hide_unofficial_events, R.string.show_unofficial_events,
-                staticVariables.preferences.getShowUnofficalEvents(),
-                new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        boolean newValue = !staticVariables.preferences.getShowUnofficalEvents();
-                        staticVariables.preferences.setShowUnofficalEvents(newValue);
-                        staticVariables.preferences.saveData();
-                        callbacks.onFilterChanged();
-                    }
-                },
-                allSwitches, isFlaggedEnabled);
+            buildUnofficialEventsToggleRow(context, parent, allSwitches, isFlaggedEnabled, callbacks);
         }
+    }
+
+    /**
+     * Section header + unofficial toggle for schedules that contain only Cruiser Organized / Unofficial events.
+     */
+    private static void buildUnofficialOnlyScheduleSection(Context context, LinearLayout parent, List<Switch> allSwitches,
+                                                           boolean isFlaggedEnabled, FilterMenuCallbacks callbacks) {
+        if (!staticVariables.preferences.getUnofficalEventsEnabled() || !BandInfo.hasUnofficialEventsInSchedule()) {
+            return;
+        }
+        int horizontalPadding = dpToPx(context, 16);
+        TextView header = new TextView(context);
+        header.setText(context.getString(R.string.event_type_filters));
+        header.setTextSize(13);
+        header.setTypeface(null, android.graphics.Typeface.BOLD);
+        header.setTextColor(Color.parseColor("#FF8E8E93"));
+        header.setPadding(horizontalPadding, dpToPx(context, 16), horizontalPadding, dpToPx(context, 8));
+        parent.addView(header);
+        buildUnofficialEventsToggleRow(context, parent, allSwitches, isFlaggedEnabled, callbacks);
+    }
+
+    private static void buildUnofficialEventsToggleRow(Context context, LinearLayout parent, List<Switch> allSwitches,
+                                                       boolean isFlaggedEnabled, FilterMenuCallbacks callbacks) {
+        createFilterRow(context, parent,
+            R.drawable.icon_unoffical_event, R.drawable.icon_unoffical_event_alt,
+            R.string.hide_unofficial_events, R.string.show_unofficial_events,
+            staticVariables.preferences.getShowUnofficalEvents(),
+            new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    boolean newValue = !staticVariables.preferences.getShowUnofficalEvents();
+                    staticVariables.preferences.setShowUnofficalEvents(newValue);
+                    staticVariables.preferences.saveData();
+                    callbacks.onFilterChanged();
+                }
+            },
+            allSwitches, isFlaggedEnabled);
     }
     
     private static void buildLocationSection(Context context, LinearLayout parent, List<String> venueNames,

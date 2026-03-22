@@ -2787,27 +2787,88 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     /**
      * Updates the filter badge (hidden records count) to match iOS.
      * Shows in both list and schedule view when filters are hiding records.
-     * Works when schedule is absent: uses unfilteredBandCount for list view.
+     * Uses {@link BandInfo#filterCountsUseBandSlotsForScheduleView()} so unofficial-only schedules
+     * count lineup bands only; official schedules use event-based totals.
      */
     public void updateFilterBadge() {
         TextView badge = (TextView) findViewById(R.id.filterCountBadge);
         if (badge == null) return;
-        int hiddenCount;
-        if (listHandler != null && listHandler.allUpcomingEvents > 0) {
-            // Schedule view with event data: use event-based count
-            hiddenCount = listHandler.getHiddenRecordsCount();
-        } else {
-            // List view or no schedule: hidden = total bands - displayed (unfilteredBandCount set by getBandNames)
-            int displayed = (adapter != null) ? adapter.getCount() : 0;
-            int total = Math.max(0, staticVariables.unfilteredBandCount);
-            hiddenCount = Math.max(0, total - displayed);
-        }
+        int hiddenCount = computeFilterBadgeHiddenCount();
         if (hiddenCount > 0) {
             badge.setText(String.valueOf(hiddenCount));
             badge.setVisibility(View.VISIBLE);
         } else {
             badge.setVisibility(View.GONE);
         }
+    }
+
+    private boolean isFilterBadgePlaceholderBandName(String bandName) {
+        if (bandName == null) {
+            return true;
+        }
+        return bandName.equals(getString(R.string.data_filter_issue))
+                || bandName.equals(getString(R.string.waiting_for_data));
+    }
+
+    /** Non-placeholder rows currently shown in the list. */
+    private int filterBadgeDisplayedRealRowCount() {
+        if (adapter == null) {
+            return 0;
+        }
+        int n = 0;
+        for (int i = 0; i < adapter.getCount(); i++) {
+            bandListItem item = adapter.getItem(i);
+            if (item == null) {
+                continue;
+            }
+            String raw = item.getBandName();
+            if (isFilterBadgePlaceholderBandName(raw)) {
+                continue;
+            }
+            n++;
+        }
+        return n;
+    }
+
+    /**
+     * In unofficial-only schedule mode, only band-slot rows (not time-keyed unofficial rows) count toward "displayed"
+     * for the badge, so hidden = lineup total − visible band rows.
+     */
+    private int filterBadgeDisplayedBandSlotCount() {
+        if (adapter == null) {
+            return 0;
+        }
+        int n = 0;
+        for (int i = 0; i < adapter.getCount(); i++) {
+            bandListItem item = adapter.getItem(i);
+            if (item == null) {
+                continue;
+            }
+            String raw = item.getBandName();
+            if (isFilterBadgePlaceholderBandName(raw)) {
+                continue;
+            }
+            if (BandInfo.isScheduleEventRowListIndex(raw)) {
+                continue;
+            }
+            n++;
+        }
+        return n;
+    }
+
+    private int computeFilterBadgeHiddenCount() {
+        boolean scheduleView = staticVariables.preferences.getShowScheduleView();
+        int displayedReal = filterBadgeDisplayedRealRowCount();
+        if (listHandler != null && listHandler.allUpcomingEvents > 0 && scheduleView) {
+            if (BandInfo.filterCountsUseBandSlotsForScheduleView()) {
+                int bandDisplayed = filterBadgeDisplayedBandSlotCount();
+                int total = Math.max(0, staticVariables.unfilteredBandCount);
+                return Math.max(0, total - bandDisplayed);
+            }
+            return Math.max(0, listHandler.allUpcomingEvents - displayedReal);
+        }
+        int total = Math.max(0, staticVariables.unfilteredBandCount);
+        return Math.max(0, total - displayedReal);
     }
 
     private void displayBandData() {
@@ -2911,9 +2972,21 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             // Sort bands alphabetically for bands-only view
             Collections.sort(bandNames);
             Log.d("VIEW_MODE_DEBUG", "🎵 displayBandDataWithoutSchedule: Processing " + bandNames.size() + " bands");
-            
+
+            // Bands-only path does not use populateBandInfo(); apply the same search filter here so the
+            // list matches staticVariables.searchCriteria (kept in sync from SearchView).
+            String searchQuery = (searchCriteria != null) ? searchCriteria.trim() : "";
+            boolean filterBySearch = !searchQuery.isEmpty();
+            if (filterBySearch) {
+                Log.d("searchCriteria", "Bands-only view filtering with: " + searchQuery);
+            }
+
             Integer counter = 0;
             for (String bandName : bandNames) {
+                if (filterBySearch
+                        && !bandName.toUpperCase(Locale.US).contains(searchQuery.toUpperCase(Locale.US))) {
+                    continue;
+                }
                 bandListItem bandItem = new bandListItem(bandName);
                 bandItem.setRankImg(rankStore.getRankImageForBand(bandName));
                 newItems.add(bandItem);
@@ -2922,7 +2995,14 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 newScheduleSortedBandNames.add(bandName);
                 counter++;
             }
-            
+
+            if (counter == 0 && filterBySearch && !bandNames.isEmpty()) {
+                String filterIssueMessage = getResources().getString(R.string.data_filter_issue);
+                bandListItem bandItem = new bandListItem(filterIssueMessage);
+                newItems.add(bandItem);
+                Log.d("searchCriteria", "Bands-only search: no matches, showing filter issue message");
+            }
+
             Log.d("VIEW_MODE_DEBUG", "🎵 displayBandDataWithoutSchedule: Built " + counter + " items in new list");
         }
         
@@ -4957,6 +5037,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
      * only when opening the calendar would be useful.
      */
     private boolean isRotationViewOffered() {
+        if (!staticVariables.preferences.getShowScheduleView()) {
+            return false;
+        }
         if (BandInfo.scheduleRecords == null || BandInfo.scheduleRecords.isEmpty()) {
             return false;
         }
@@ -5064,39 +5147,28 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         // Use either check
         isLandscape = isLandscape || isLandscapeBySize;
         
-        // Check if bands array contains event entries (format: "timeIndex:bandName")
-        // When all events are expired, bands array contains only band names (no timeIndex prefix)
-        boolean hasEventEntries = false;
-        if (bandNames != null && !bandNames.isEmpty()) {
-            Log.d("LANDSCAPE_SCHEDULE", "Checking " + bandNames.size() + " band entries for event format...");
-            for (String item : bandNames) {
-                if (item != null && item.contains(":")) {
-                    String[] parts = item.split(":");
-                    if (parts.length >= 2) {
-                        try {
-                            double timeIndex = Double.parseDouble(parts[0]);
-                            // Valid timeIndex found
-                            hasEventEntries = true;
-                            Log.d("LANDSCAPE_SCHEDULE", "Found event entry: " + item + " (timeIndex: " + timeIndex + ")");
-                            break;
-                        } catch (NumberFormatException e) {
-                            // Not a timeIndex, continue checking
-                        }
-                    }
+        // Calendar needs real schedule rows (positive time index). Bands-only mode or "only lineup rows"
+        // (bandName: or band with no upcoming events) must stay on the list in landscape — not an empty calendar.
+        boolean hasRenderableScheduleEvents = false;
+        if (listHandler != null && listHandler.numberOfEvents > 0) {
+            hasRenderableScheduleEvents = true;
+        } else if (scheduleSortedBandNames != null && !scheduleSortedBandNames.isEmpty()) {
+            for (String item : scheduleSortedBandNames) {
+                Long t = getTimeIndexFromIndex(item);
+                if (t != null && t > 0) {
+                    hasRenderableScheduleEvents = true;
+                    break;
                 }
             }
-            if (!hasEventEntries) {
-                Log.d("LANDSCAPE_SCHEDULE", "No event entries found - all entries are band names only");
-            }
-        } else {
-            Log.d("LANDSCAPE_SCHEDULE", "bandNames is null or empty");
         }
         
         boolean hideExpired = staticVariables.preferences.getHideExpiredEvents();
-        // Show calendar in landscape when: schedule view is on, OR Hide Expired is off (so toggling Hide Expired off switches to calendar without rotating)
-        boolean showCalendarInLandscape = isLandscape && (isScheduleView || !hideExpired);
+        // Phone landscape: open calendar only in schedule view when there is at least one event row.
+        // Do not use (isScheduleView || !hideExpired): that opened the calendar in bands-only mode whenever
+        // Hide Expired was off, showing an empty grid instead of the band list.
+        boolean showCalendarInLandscape = isLandscape && isScheduleView && hasRenderableScheduleEvents;
         
-        Log.d("LANDSCAPE_SCHEDULE", "Check orientation - Landscape: " + isLandscape + ", Schedule View: " + isScheduleView + ", HideExpired: " + hideExpired + ", Has Event Entries: " + hasEventEntries + ", Bands Count: " + (bandNames != null ? bandNames.size() : 0));
+        Log.d("LANDSCAPE_SCHEDULE", "Check orientation - Landscape: " + isLandscape + ", Schedule View: " + isScheduleView + ", HideExpired: " + hideExpired + ", HasRenderableScheduleEvents: " + hasRenderableScheduleEvents + ", listHandler.numberOfEvents: " + (listHandler != null ? listHandler.numberOfEvents : "null") + ", Bands Count: " + (bandNames != null ? bandNames.size() : 0));
         
         // Debug: Log first few band entries to see format
         if (bandNames != null && !bandNames.isEmpty()) {
@@ -5108,7 +5180,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         
         // Show landscape calendar when in landscape and (schedule view enabled OR Hide Expired off)
         if (showCalendarInLandscape) {
-            Log.d("LANDSCAPE_SCHEDULE", "✅ Conditions met - launching landscape schedule view (Landscape: " + isLandscape + ", ScheduleView: " + isScheduleView + ", HideExpired: " + hideExpired + ")");
+            Log.d("LANDSCAPE_SCHEDULE", "✅ Conditions met - launching landscape schedule view (Landscape: " + isLandscape + ", ScheduleView: " + isScheduleView + ", HideExpired: " + hideExpired + ", hasEvents: " + hasRenderableScheduleEvents + ")");
             // Always update current viewing day from topmost visible cell when launching landscape view
             // This ensures landscape view starts on the same day as the topmost entry in portrait list
             updateCurrentViewingDayFromVisibleCells();
@@ -5116,7 +5188,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             // Show landscape schedule view (pass fromFilterChange so we skip focus check when toggling Hide Expired)
             presentLandscapeScheduleView(fromFilterChange);
         } else {
-            Log.d("LANDSCAPE_SCHEDULE", "❌ Conditions NOT met - Landscape: " + isLandscape + ", ScheduleView: " + isScheduleView + ", HideExpired: " + hideExpired + ", HasEvents: " + hasEventEntries);
+            Log.d("LANDSCAPE_SCHEDULE", "❌ Conditions NOT met - Landscape: " + isLandscape + ", ScheduleView: " + isScheduleView + ", HideExpired: " + hideExpired + ", HasRenderableScheduleEvents: " + hasRenderableScheduleEvents);
             // Hide landscape schedule view if showing
             // (No need to dismiss as it's a separate activity)
             isShowingLandscapeSchedule = false;
