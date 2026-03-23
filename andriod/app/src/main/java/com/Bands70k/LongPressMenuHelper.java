@@ -24,6 +24,12 @@ public class LongPressMenuHelper {
     public static void show(Activity activity, String bandName, String currentAttendedStatus,
                             String location, String rawStartTime, String eventType, Runnable onRefresh,
                             Runnable onDismiss) {
+        show(activity, bandName, currentAttendedStatus, location, rawStartTime, eventType, null, onRefresh, onDismiss);
+    }
+
+    public static void show(Activity activity, String bandName, String currentAttendedStatus,
+                            String location, String rawStartTime, String eventType, String scheduleDayFromDatabase,
+                            Runnable onRefresh, Runnable onDismiss) {
         boolean isEvent = location != null && rawStartTime != null && eventType != null && currentAttendedStatus != null;
         String currentRank = rankStore.getRankForBand(bandName);
         boolean isMust = staticVariables.mustSeeIcon.equals(currentRank);
@@ -93,6 +99,7 @@ public class LongPressMenuHelper {
             final String loc = location;
             final String raw = rawStartTime;
             final String evType = eventType;
+            final String schedDay = scheduleDayFromDatabase;
             if (isLandscape) {
                 LinearLayout attendedSection = new LinearLayout(activity);
                 attendedSection.setOrientation(LinearLayout.VERTICAL);
@@ -101,19 +108,19 @@ public class LongPressMenuHelper {
                 attendedSection.addView(addSectionHeader(activity, activity.getString(R.string.event_attendance), density));
                 View.OnClickListener allClick = wrapDismiss(dialogHolder, new View.OnClickListener() {
                     @Override public void onClick(View v) {
-                        setAttended(activity, bandName, loc, raw, evType, staticVariables.sawAllStatus);
+                        setAttended(activity, bandName, loc, raw, evType, schedDay, staticVariables.sawAllStatus);
                         if (onRefresh != null) onRefresh.run();
                     }
                 });
                 View.OnClickListener partClick = wrapDismiss(dialogHolder, new View.OnClickListener() {
                     @Override public void onClick(View v) {
-                        setAttended(activity, bandName, loc, raw, evType, staticVariables.sawSomeStatus);
+                        setAttended(activity, bandName, loc, raw, evType, schedDay, staticVariables.sawSomeStatus);
                         if (onRefresh != null) onRefresh.run();
                     }
                 });
                 View.OnClickListener noneClick = wrapDismiss(dialogHolder, new View.OnClickListener() {
                     @Override public void onClick(View v) {
-                        setAttended(activity, bandName, loc, raw, evType, staticVariables.sawNoneStatus);
+                        setAttended(activity, bandName, loc, raw, evType, schedDay, staticVariables.sawNoneStatus);
                         if (onRefresh != null) onRefresh.run();
                     }
                 });
@@ -124,19 +131,19 @@ public class LongPressMenuHelper {
                 root.addView(addSectionHeader(activity, activity.getString(R.string.event_attendance), density));
                 View.OnClickListener allClick = wrapDismiss(dialogHolder, new View.OnClickListener() {
                     @Override public void onClick(View v) {
-                        setAttended(activity, bandName, loc, raw, evType, staticVariables.sawAllStatus);
+                        setAttended(activity, bandName, loc, raw, evType, schedDay, staticVariables.sawAllStatus);
                         if (onRefresh != null) onRefresh.run();
                     }
                 });
                 View.OnClickListener partClick = wrapDismiss(dialogHolder, new View.OnClickListener() {
                     @Override public void onClick(View v) {
-                        setAttended(activity, bandName, loc, raw, evType, staticVariables.sawSomeStatus);
+                        setAttended(activity, bandName, loc, raw, evType, schedDay, staticVariables.sawSomeStatus);
                         if (onRefresh != null) onRefresh.run();
                     }
                 });
                 View.OnClickListener noneClick = wrapDismiss(dialogHolder, new View.OnClickListener() {
                     @Override public void onClick(View v) {
-                        setAttended(activity, bandName, loc, raw, evType, staticVariables.sawNoneStatus);
+                        setAttended(activity, bandName, loc, raw, evType, schedDay, staticVariables.sawNoneStatus);
                         if (onRefresh != null) onRefresh.run();
                     }
                 });
@@ -163,11 +170,21 @@ public class LongPressMenuHelper {
         dialog.show();
     }
 
-    private static void setAttended(Activity activity, String bandName, String location, String rawStartTime, String eventType, String desiredStatus) {
+    private static void setAttended(Activity activity, String bandName, String location, String rawStartTime, String eventType,
+                                    String scheduleDayFromDatabase, String desiredStatus) {
         if (staticVariables.attendedHandler == null) {
             staticVariables.attendedHandler = new showsAttended();
         }
-        staticVariables.attendedHandler.addShowsAttended(bandName, location, rawStartTime, eventType, desiredStatus);
+        if (staticVariables.eventYear == 0) {
+            staticVariables.ensureEventYearIsSet();
+        }
+        String year = String.valueOf(staticVariables.eventYear);
+        String et = eventType;
+        if (staticVariables.unofficalEventOld.equals(et)) {
+            et = staticVariables.unofficalEvent;
+        }
+        String idx = staticVariables.attendedHandler.buildAttendanceStorageKey(bandName, location, rawStartTime, et, year, scheduleDayFromDatabase);
+        staticVariables.attendedHandler.addShowsAttended(idx, desiredStatus);
         staticVariables.attendedHandler.setShowsAttendedStatus(desiredStatus);
     }
 

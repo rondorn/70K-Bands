@@ -89,7 +89,8 @@ func hasFlaggedEvents(forDay dayLabel: String) -> Bool {
             location: location,
             startTime: startTime,
             eventType: eventType,
-            eventYearString: eventYearString
+            eventYearString: eventYearString,
+            scheduleDay: event.day
         )
         
         return attendedStatus != sawNoneStatus
@@ -449,7 +450,7 @@ struct LandscapeScheduleView: View {
                     onBandTapped: onBandTapped,
                     onLongPress: onLongPress,
                     priorityManager: priorityManager,
-                    onAttendanceUpdate: { bandName, location, startTime, eventType, status in
+                    onAttendanceUpdate: { bandName, location, startTime, eventType, status, scheduleDay in
                         // Normalize event type for database operations
                         // Event data contains "Unofficial Event" but database keys use "Cruiser Organized"
                         let normalizedEventType = (eventType == "Unofficial Event") ? "Cruiser Organized" : eventType
@@ -464,11 +465,12 @@ struct LandscapeScheduleView: View {
                             eventType: normalizedEventType,
                             eventYearString: String(eventYear),
                             status: status,
+                            scheduleDay: scheduleDay.isEmpty ? nil : scheduleDay,
                             allEventsForYear: viewModel.allEventsForYear
                         )
                         
                         // Update the view model's data in place (use original eventType for matching)
-                        viewModel.updateAttendanceForEvent(bandName: bandName, location: location, startTime: startTime, eventType: eventType)
+                        viewModel.updateAttendanceForEvent(bandName: bandName, location: location, startTime: startTime, eventType: eventType, scheduleDay: scheduleDay)
                         
                         print("✅ [LANDSCAPE_SCHEDULE] Attendance updated for \(bandName) (\(eventType))")
                     },
@@ -673,7 +675,7 @@ struct LandscapeScheduleView: View {
         let onBandTapped: (String, String?) -> Void
         let onLongPress: ((String, String, String, String, String) -> Void)?
         let priorityManager: SQLitePriorityManager
-        let onAttendanceUpdate: (String, String, String, String, String) -> Void
+        let onAttendanceUpdate: (String, String, String, String, String, String) -> Void
         let attendedHandle: ShowsAttended
         @State private var scrollOffset: CGPoint = .zero
         
@@ -886,7 +888,7 @@ struct LandscapeScheduleView: View {
             return eventType
         }
         
-        private func eventBlockView(event: ScheduleBlock, dayData: DayScheduleData, columnWidth: CGFloat, priorityManager: SQLitePriorityManager, onAttendanceUpdate: @escaping (String, String, String, String, String) -> Void, onLongPress: ((String, String, String, String, String) -> Void)?, attendedHandle: ShowsAttended) -> some View {
+        private func eventBlockView(event: ScheduleBlock, dayData: DayScheduleData, columnWidth: CGFloat, priorityManager: SQLitePriorityManager, onAttendanceUpdate: @escaping (String, String, String, String, String, String) -> Void, onLongPress: ((String, String, String, String, String) -> Void)?, attendedHandle: ShowsAttended) -> some View {
             let yOffset = calculateYOffset(for: event, in: dayData)
             let blockHeight = calculateBlockHeight(for: event)
             let onBandTapped = self.onBandTapped
@@ -962,14 +964,16 @@ struct LandscapeScheduleView: View {
                             location: event.location,
                             startTime: event.startTimeString,
                             eventType: event.eventType,
-                            eventYearString: String(eventYear)
+                            eventYearString: String(eventYear),
+                            scheduleDay: event.day
                         )
                         let attended2 = attendedHandle.getShowAttendedStatus(
                             band: band2,
                             location: event.location,
                             startTime: event.startTimeString,
                             eventType: event.eventType,
-                            eventYearString: String(eventYear)
+                            eventYearString: String(eventYear),
+                            scheduleDay: event.day
                         )
                         
                         // Check if values are populated
@@ -1135,9 +1139,9 @@ struct LandscapeScheduleView: View {
                 )
                 .contentShape(Rectangle()) // Make entire area tappable
                 .onLongPressGesture(minimumDuration: 0.5) {
-                    // Long press - show priority/attendance menu
+                    // Long press - show priority/attendance menu (fifth segment = database day for attendance keys)
                     if let onLongPress = onLongPress {
-                        onLongPress(event.bandName, event.location, event.startTimeString, event.eventType, currentDay)
+                        onLongPress(event.bandName, event.location, event.startTimeString, event.eventType, event.day)
                     }
                 }
                 .onTapGesture {

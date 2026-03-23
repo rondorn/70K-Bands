@@ -147,7 +147,8 @@ class LandscapeScheduleViewModel: ObservableObject {
                     location: location,
                     startTime: startTime,
                     eventType: eventType,
-                    eventYearString: eventYearString
+                    eventYearString: eventYearString,
+                    scheduleDay: event.day
                 )
                 
                 return attendedStatus != sawNoneStatus
@@ -243,7 +244,8 @@ class LandscapeScheduleViewModel: ObservableObject {
                     location: location,
                     startTime: startTime,
                     eventType: eventType,
-                    eventYearString: eventYearString
+                    eventYearString: eventYearString,
+                    scheduleDay: event.day
                 )
                 
                 return attendedStatus != sawNoneStatus
@@ -424,8 +426,8 @@ class LandscapeScheduleViewModel: ObservableObject {
         currentDayIndex += 1
     }
     
-    func updateAttendanceForEvent(bandName: String, location: String, startTime: String, eventType: String) {
-        print("🔄 [LANDSCAPE_SCHEDULE] Updating attendance for \(bandName) (\(eventType)) at \(location) \(startTime)")
+    func updateAttendanceForEvent(bandName: String, location: String, startTime: String, eventType: String, scheduleDay: String) {
+        print("🔄 [LANDSCAPE_SCHEDULE] Updating attendance for \(bandName) (\(eventType)) at \(location) \(startTime) day=\(scheduleDay)")
         
         // Normalize event type for database query
         // Event data contains "Unofficial Event" but database keys use "Cruiser Organized"
@@ -439,7 +441,8 @@ class LandscapeScheduleViewModel: ObservableObject {
             location: location,
             startTime: startTime,
             eventType: normalizedEventType,
-            eventYearString: String(eventYear)
+            eventYearString: String(eventYear),
+            scheduleDay: scheduleDay.isEmpty ? nil : scheduleDay
         )
         
         // Update the days array in place
@@ -450,7 +453,7 @@ class LandscapeScheduleViewModel: ObservableObject {
                 var updatedEvents: [ScheduleBlock] = []
                 
                 for event in venue.events {
-                    if event.bandName == bandName && event.location == location && event.startTimeString == startTime && event.eventType == eventType {
+                    if event.bandName == bandName && event.location == location && event.startTimeString == startTime && event.eventType == eventType && event.day == scheduleDay {
                         // Create updated event with new attendance status
                         let updatedEvent = ScheduleBlock(
                             bandName: event.bandName,
@@ -514,7 +517,8 @@ class LandscapeScheduleViewModel: ObservableObject {
                             location: event.location,
                             startTime: event.startTimeString,
                             eventType: normalizedEventType,
-                            eventYearString: String(eventYear)
+                            eventYearString: String(eventYear),
+                            scheduleDay: event.day
                         )
                         
                         // Create updated event with fresh data
@@ -732,7 +736,8 @@ class LandscapeScheduleViewModel: ObservableObject {
                 location: event.location,
                 startTime: startTimeStr,
                 eventType: event.eventType ?? "Performance",
-                eventYearString: String(event.eventYear)
+                eventYearString: String(event.eventYear),
+                scheduleDay: day
             )
             
             // Mark events as expired when hideExpiredEvents is enabled (for dimming)

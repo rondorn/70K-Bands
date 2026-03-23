@@ -342,7 +342,8 @@ public class CommonFilterMenuBuilder {
         icon.setLayoutParams(iconParams);
         
         TextView text = new TextView(context);
-        text.setText(isFlaggedEnabled ? context.getString(R.string.show_all_events) : context.getString(R.string.show_flaged_events_only));
+        // Same fixed label as legacy filter menu row; switch ON = Show Flagged Events Only (getShowWillAttend true).
+        text.setText(context.getString(R.string.show_flaged_events_only));
         text.setTextSize(17);
         text.setTextColor(Color.WHITE);
         text.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
@@ -357,7 +358,6 @@ public class CommonFilterMenuBuilder {
                 staticVariables.preferences.saveData();
                 icon.setImageDrawable(AppCompatResources.getDrawable(context, 
                     isChecked ? R.drawable.icon_seen : R.drawable.icon_seen_alt));
-                text.setText(isChecked ? context.getString(R.string.show_all_events) : context.getString(R.string.show_flaged_events_only));
                 // Enable/disable other filters
                 boolean shouldDisable = isChecked;
                 for (Switch s : allSwitches) {
@@ -601,6 +601,9 @@ public class CommonFilterMenuBuilder {
     
     private static void buildLocationSection(Context context, LinearLayout parent, List<String> venueNames,
                                            List<Switch> allSwitches, boolean isFlaggedEnabled, FilterMenuCallbacks callbacks) {
+        if (venueNames == null || venueNames.isEmpty()) {
+            return;
+        }
         int horizontalPadding = dpToPx(context, 16);
         
         TextView header = new TextView(context);
@@ -782,12 +785,30 @@ public class CommonFilterMenuBuilder {
     }
     
     /**
-     * When Hide Expired Events is ON, event-related filters (Locations, Event Type, Sort By, Show Flagged)
-     * are only relevant if there are unexpired events to display.
+     * True when parsed schedule has at least one timed row (not bands-only / empty schedule).
+     */
+    private static boolean hasScheduledEvents(Context context) {
+        if (BandInfo.scheduleRecords == null || BandInfo.scheduleRecords.isEmpty()) {
+            return false;
+        }
+        for (scheduleTimeTracker tracker : BandInfo.scheduleRecords.values()) {
+            if (tracker != null && tracker.scheduleByTime != null && !tracker.scheduleByTime.isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * When there is no schedule data, hide Sort / Show Flagged / event-type / venue sections (bands-only mode).
+     * When Hide Expired Events is ON, those sections only apply if there is at least one unexpired event.
      */
     private static boolean shouldShowEventRelatedSections(Context context) {
+        if (!hasScheduledEvents(context)) {
+            return false;
+        }
         if (!staticVariables.preferences.getHideExpiredEvents()) {
-            return true; // Showing all events; filters are always relevant
+            return true;
         }
         return hasUnexpiredEvents(context);
     }

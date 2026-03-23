@@ -94,14 +94,10 @@ public class FirebaseEventDataWrite {
             int filteredOutCount = 0;
             
             for (String index : showsAttendedArray.keySet()) {
-                String[] indexArray = index.split(":");
-                if (indexArray.length == 6) {
-                    String eventYear = indexArray[5];
-                    if (eventYear.equals(currentYear)) {
-                        currentYearEvents.put(index, showsAttendedArray.get(index));
-                    } else {
-                        filteredOutCount++;
-                    }
+                if (showsAttended.attendanceIndexMatchesYear(index, currentYear)) {
+                    currentYearEvents.put(index, showsAttendedArray.get(index));
+                } else {
+                    filteredOutCount++;
                 }
             }
             
@@ -151,20 +147,13 @@ public class FirebaseEventDataWrite {
                 for (String index : knownEventsOnly.keySet()) {
                     HashMap<String, Object> eventData = new HashMap<>();
 
-                    String[] indexArray = index.split(":");
-
-                    String bandName = indexArray[0];
-                    String location = indexArray[1];
-                    String startTimeHour = indexArray[2];
-                    String startTimeMin = indexArray[3];
-                    String eventType = indexArray[4];
-                    String eventYear = "";
-
-                    if (indexArray.length == 6) {
-                        eventYear = indexArray[5];
-                    } else {
+                    showsAttended.ParsedAttendanceKey k = showsAttended.parseAttendanceStorageKey(index);
+                    if (k == null) {
                         continue;
                     }
+                    String[] startParts = k.startTime.split(":", 2);
+                    String startTimeHour = startParts.length > 0 ? startParts[0] : "";
+                    String startTimeMin = startParts.length > 1 ? startParts[1] : "";
 
                     // Sanitize index for Firebase path (contains band name which may have invalid characters)
                     String sanitizedIndex = sanitizeForFirebase(index);
@@ -174,11 +163,15 @@ public class FirebaseEventDataWrite {
                     // Store both original and sanitized data for reference
                     eventData.put("originalIdentifier", index); // Original identifier for reference
                     eventData.put("sanitizedKey", sanitizedIndex); // Sanitized key for debugging
-                    eventData.put("bandName", bandName);
-                    eventData.put("location", location);
+                    eventData.put("bandName", k.band);
+                    eventData.put("location", k.location);
                     eventData.put("startTimeHour", startTimeHour);
                     eventData.put("startTimeMin", startTimeMin);
-                    eventData.put("eventType", eventType);
+                    eventData.put("eventType", k.eventType);
+                    eventData.put("eventYear", k.yearPlain);
+                    if (k.scheduleDaySuffix != null && !k.scheduleDaySuffix.isEmpty()) {
+                        eventData.put("scheduleDay", k.scheduleDaySuffix);
+                    }
                     eventData.put("status", attendedStatus);
 
                     // Add to batch update map
@@ -283,10 +276,15 @@ public class FirebaseEventDataWrite {
                     String location = scheduleItem.getShowLocation();
                     String startTime = scheduleItem.getStartTimeString();
                     String eventType = scheduleItem.getShowType();
-                    
-                    // Build event identifier matching showsAttended format
-                    // Format: "bandName:location:startTime:eventType:year"
-                    String eventIdentifier = bandName + ":" + location + ":" + startTime + ":" + eventType + ":" + currentYear;
+                    String scheduleDay = scheduleItem.getShowDay();
+
+                    String eventIdentifier;
+                    if (staticVariables.attendedHandler != null) {
+                        eventIdentifier = staticVariables.attendedHandler.buildAttendanceStorageKey(
+                                bandName, location, startTime, eventType, currentYear, scheduleDay);
+                    } else {
+                        eventIdentifier = bandName + ":" + location + ":" + startTime + ":" + eventType + ":" + currentYear;
+                    }
                     knownEvents.add(eventIdentifier);
                 }
             }

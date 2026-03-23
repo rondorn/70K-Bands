@@ -283,7 +283,8 @@ public class scheduleAlertHandler {
                 scheduleDetails.getShowLocation(),
                 scheduleDetails.getStartTimeString(),
                 scheduleDetails.getShowType(),
-                String.valueOf(staticVariables.eventYear));
+                String.valueOf(staticVariables.eventYear),
+                scheduleDetails.getShowDay());
 
         if (staticVariables.preferences.getAlertOnlyForShowWillAttend() == true){
             if (attendStatus != staticVariables.sawNoneStatus){

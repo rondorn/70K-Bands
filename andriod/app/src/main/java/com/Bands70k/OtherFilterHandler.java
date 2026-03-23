@@ -356,7 +356,7 @@ public class OtherFilterHandler {
         Drawable onlyShowAttendedNo = AppCompatResources.getDrawable(context, R.drawable.icon_seen_alt);
 
         if (staticVariables.preferences.getShowWillAttend() == false && staticVariables.showEventButtons == true) {
-            onlyShowAttendedIcon.setImageDrawable(onlyShowAttendedYes);
+            onlyShowAttendedIcon.setImageDrawable(onlyShowAttendedNo);
             onlyShowAttendedText.setText(R.string.show_flaged_events_only);
 
             FilterButtonHandler.enableMenuSection(R.id.mustSeeFilterAll, "LinearLayout", popupWindow);
@@ -379,8 +379,8 @@ public class OtherFilterHandler {
             FilterButtonHandler.enableMenuSection(R.id.dynamicVenueFiltersContainer, "LinearLayout", popupWindow);
 
         } else if (staticVariables.showEventButtons == true){
-            onlyShowAttendedIcon.setImageDrawable(onlyShowAttendedNo);
-            onlyShowAttendedText.setText(R.string.show_all_events);
+            onlyShowAttendedIcon.setImageDrawable(onlyShowAttendedYes);
+            onlyShowAttendedText.setText(R.string.show_flaged_events_only);
 
             FilterButtonHandler.disableMenuSection(R.id.mustSeeFilterAll, "LinearLayout", popupWindow);
             FilterButtonHandler.disableMenuSection(R.id.mightSeeFilterAll, "LinearLayout", popupWindow);

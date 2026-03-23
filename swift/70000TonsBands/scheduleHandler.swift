@@ -435,6 +435,7 @@ open class scheduleHandler {
             print("🔧 [UNOFFICIAL_DEBUG] ✅ Final cache contains \(unofficialBandNames.count) unofficial 'bands': \(unofficialBandNames)")
             
             self.cacheLoaded = true
+            ShowsAttended.invalidateAttendanceCollisionCache()
         }
         
         print("✅ Loaded \(events.count) events from SQLite into cache")

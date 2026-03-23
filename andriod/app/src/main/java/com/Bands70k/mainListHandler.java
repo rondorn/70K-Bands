@@ -95,6 +95,16 @@ public class mainListHandler {
      */
     public List<String> populateBandInfo(BandInfo bandInfo, ArrayList<String> bandList){
 
+        Log.d("FILTER_TRACE", "populateBandInfo START inBands=" + bandList.size()
+                + " sortByTime=" + staticVariables.preferences.getSortByTime()
+                + " must=" + staticVariables.preferences.getShowMust()
+                + " might=" + staticVariables.preferences.getShowMight()
+                + " wont=" + staticVariables.preferences.getShowWont()
+                + " unknown=" + staticVariables.preferences.getShowUnknown()
+                + " unofficial=" + staticVariables.preferences.getShowUnofficalEvents()
+                + " hideExpired=" + staticVariables.preferences.getHideExpiredEvents()
+                + " scheduleUnofficialOnly=" + BandInfo.scheduleHasOnlyUnofficialEventTypes()
+                + " filterCountsBandSlots=" + BandInfo.filterCountsUseBandSlotsForScheduleView());
         Log.d("FILTER_DEBUG", "🏁 populateBandInfo() called with " + bandList.size() + " bands");
         Log.d("FILTER_DEBUG", "🏁 ENTRY STATE: getShowWillAttend = " + staticVariables.preferences.getShowWillAttend());
         Log.d("loadingpopulateBandInfo", "From live data");
@@ -406,6 +416,7 @@ public class mainListHandler {
         Log.d("FILTER_DEBUG", "🏁 populateBandInfo() COMPLETE: " + sortableBandNames.size() + " bands passed all filters");
         Log.d("FILTER_DEBUG", "🏁 EXIT STATE: getShowWillAttend = " + staticVariables.preferences.getShowWillAttend());
         Log.d("FILTER_DEBUG", "🏁 Input bands: " + bandList.size() + ", Output bands: " + sortableBandNames.size());
+        Log.d("FILTER_TRACE", "populateBandInfo DONE outRows=" + sortableBandNames.size() + " inBands=" + bandList.size());
 
         //FileHandler70k.writeObject(this, FileHandler70k.bandListCache);
         Log.d("CRITICAL_DEBUG", "🎯 POPULATE_RETURN: populateBandInfo() returning " + sortableBandNames.size() + " items");
@@ -528,7 +539,8 @@ public class mainListHandler {
     private boolean applyFilters(String bandName, Long timeIndex) {
 
         boolean status = true;
-        
+        String filterTraceDropReason = null;
+
         Log.d("FILTER_DEBUG", "🔍 applyFilters() called for band: " + bandName + ", timeIndex: " + (timeIndex != null ? timeIndex.toString() : "null"));
         Log.d("FILTER_DEBUG", "🔍 getShowWillAttend: " + staticVariables.preferences.getShowWillAttend());
 
@@ -538,6 +550,9 @@ public class mainListHandler {
 
         if (staticVariables.preferences.getShowWillAttend() == true) {
             status = filterByWillAttend(bandName, timeIndex);
+            if (!status) {
+                filterTraceDropReason = "willAttend";
+            }
             Log.d("FILTER_DEBUG", "🔍 Will Attend filtering: " + status);
 
         } else if (timeIndex == null){
@@ -547,12 +562,13 @@ public class mainListHandler {
                 status = true;
             } else {
                 status = false;
+                filterTraceDropReason = "rank_band_only";
             }
             Log.d("FILTER_DEBUG", "🔍 NO EVENT path - Band: " + bandName + ", ranking result: " + rankingResult + ", final status: " + status);
         } else {
 
             status = false;
-            
+
             boolean rankingResult = checkFiltering(bandName);
             Log.d("FILTER_DEBUG", "🔍 HAS EVENT path - Band: " + bandName + ", ranking result: " + rankingResult);
 
@@ -560,17 +576,31 @@ public class mainListHandler {
                 String eventType = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType();
                 boolean eventTypeResult = filterByEventType(eventType);
                 Log.d("FILTER_DEBUG", "🔍 Event type: '" + eventType + "', event type result: " + eventTypeResult);
-                
+
                 if (eventTypeResult == true) {
                     String venue = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowLocation();
                     boolean venueResult = filterByVenue(venue);
                     Log.d("FILTER_DEBUG", "🔍 Venue: '" + venue + "', venue result: " + venueResult);
-                    
+
                     if (venueResult == true) {
                         status = true;
+                    } else {
+                        filterTraceDropReason = "venue location=" + venue;
                     }
+                } else {
+                    filterTraceDropReason = "eventType=" + eventType + " showUnofficial=" + staticVariables.preferences.getShowUnofficalEvents();
                 }
+            } else {
+                filterTraceDropReason = "rank_with_event";
             }
+        }
+        if (!status && filterTraceDropReason != null) {
+            String raw = rankStore.getBandRankings().get(bandName);
+            String rawDesc = raw == null ? "null" : ("len=" + raw.length() + " hash=" + raw.hashCode());
+            Log.d("FILTER_TRACE", "applyFilters DROP band=" + bandName + " timeIndex=" + timeIndex
+                    + " reason=" + filterTraceDropReason
+                    + " rawRankMap=" + rawDesc
+                    + " normRankIconLen=" + rankStore.getRankForBand(bandName).length());
         }
         Log.d("FILTER_DEBUG", "🔍 FINAL RESULT for " + bandName + ": " + status);
         Log.d("applyFilter", "bandName = " + bandName + " timeIndex = " + (timeIndex != null ? timeIndex.toString() : "null") + " status = " + status);
@@ -588,7 +618,8 @@ public class mainListHandler {
             String showType = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType();
             String location = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowLocation();
             String startTime = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getStartTimeString();
-            String attendedStatus = staticVariables.attendedHandler.getShowAttendedStatus(bandName, location, startTime, showType, eventYear);
+            String scheduleDay = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowDay();
+            String attendedStatus = staticVariables.attendedHandler.getShowAttendedStatus(bandName, location, startTime, showType, eventYear, scheduleDay);
 
             if (attendedStatus.equals(staticVariables.sawNoneStatus)) {
                 status = false;
@@ -1030,8 +1061,9 @@ public class mainListHandler {
                 String location = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowLocation();
                 String startTime = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getStartTimeString();
                 String eventType = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType();
+                String scheduleDay = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowDay();
                 showsAttended handler = staticVariables.attendedHandler != null ? staticVariables.attendedHandler : attendedHandler;
-                String attendedIcon = handler.getShowAttendedIcon(bandName, location, startTime, eventType, eventYear);
+                String attendedIcon = handler.getShowAttendedIcon(bandName, location, startTime, eventType, eventYear, scheduleDay);
 
                 line = attendedIcon + " " + rankIcon;
                 if (!rankStore.getRankForBand(bandName).equals("")) {

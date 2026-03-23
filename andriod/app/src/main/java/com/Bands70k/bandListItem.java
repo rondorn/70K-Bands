@@ -18,6 +18,9 @@ public class bandListItem {
 
     private String eventNote;
 
+    /** Schedule map key ({@code scheduleByTime}) when this row is a concrete event slot; null for band-only rows. */
+    private Long scheduleSlotTimeIndex;
+
     /**
      * Constructs a bandListItem with the given band name.
      * @param bandName The name of the band.
@@ -70,6 +73,17 @@ public class bandListItem {
      */
     public void setEventNote(String eventNote) {
         this.eventNote = eventNote;
+    }
+
+    /**
+     * Epoch key for this row in {@code BandInfo.scheduleRecords.get(band).scheduleByTime}, or null if not a schedule slot row.
+     */
+    public Long getScheduleSlotTimeIndex() {
+        return scheduleSlotTimeIndex;
+    }
+
+    public void setScheduleSlotTimeIndex(Long scheduleSlotTimeIndex) {
+        this.scheduleSlotTimeIndex = scheduleSlotTimeIndex;
     }
 
     /**

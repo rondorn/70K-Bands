@@ -97,29 +97,28 @@ public class showsAttendedReport {
         for (String index : showsAttendedArray.keySet()) {
             processedCount++;
 
-            String[] indexArray = index.split(":");
-
-            // Skip old format entries (5 parts without year)
-            if (indexArray.length == 5){
-                Log.d("ShareMessage", "Skipping old format entry: " + index);
-                continue;
-            }
-            
-            // Skip entries with incorrect format
-            if (indexArray.length < 6) {
+            showsAttended.ParsedAttendanceKey k = showsAttended.parseAttendanceStorageKey(index);
+            if (k == null) {
                 Log.d("ShareMessage", "Skipping malformed entry: " + index);
                 continue;
             }
-            
-            String bandName = indexArray[0];
-            String eventType = indexArray[4];
-            Integer eventYear = Integer.valueOf(indexArray[5]);
-            
+
+            int eventYear;
+            try {
+                eventYear = Integer.parseInt(k.yearPlain);
+            } catch (NumberFormatException e) {
+                Log.d("ShareMessage", "Skipping entry with bad year: " + index);
+                continue;
+            }
+
+            String bandName = k.band;
+            String eventType = k.eventType;
+
             Log.d("ShareMessage", "📋 Processing [" + processedCount + "]: " + index);
             Log.d("ShareMessage", "   Band: " + bandName + ", Type: " + eventType + ", Year: " + eventYear);
 
             // CRITICAL: Filter by current event year
-            if (eventYear.intValue() != staticVariables.eventYear) {
+            if (eventYear != staticVariables.eventYear) {
                 Log.d("ShareMessage", "Skipping - wrong year: " + eventYear + " != " + staticVariables.eventYear);
                 continue;
             }
@@ -133,12 +132,12 @@ public class showsAttendedReport {
             
             // CRITICAL: Validate that this SPECIFIC EVENT actually exists in the current year's schedule
             // Check the band + location + eventType combination against the actual schedule
-            String location = indexArray[1];
-            String startTime = indexArray[2] + ":" + indexArray[3];
+            String location = k.location;
+            String startTime = k.startTime;
             
             Log.d("ShareMessage", "🔍 Validating: " + bandName + " | " + location + " | " + startTime + " | " + eventType + " | Year:" + eventYear);
             
-            if (!validateEventExistsInSchedule(bandName, location, startTime, eventType)) {
+            if (!validateEventExistsInSchedule(bandName, location, startTime, eventType, k.scheduleDaySuffix)) {
                 Log.d("ShareMessage", "❌ REJECTED - event doesn't exist in current schedule: " + bandName + " at " + location + " (" + eventType + ")");
                 continue;
             }
@@ -152,7 +151,9 @@ public class showsAttendedReport {
             Log.d("ShareMessage", "status is " + attendedStatus);
 
             // Only count events that were actually attended (not "sawNone")
-            if (!staticVariables.sawNoneStatus.equals(attendedStatus)) {
+            String statusPart = attendedStatus != null && attendedStatus.contains(":")
+                    ? attendedStatus.split(":", 2)[0] : attendedStatus;
+            if (!staticVariables.sawNoneStatus.equals(statusPart)) {
                 getEventTypeCounts(eventType, attendedStatus);
                 getBandCounts(eventType, bandName, attendedStatus);
                 
@@ -227,7 +228,15 @@ public class showsAttendedReport {
      * @param eventType The type of event (Show, Meet and Greet, etc.)
      * @return true if this exact event exists in the current schedule, false otherwise
      */
-    private boolean validateEventExistsInSchedule(String bandName, String location, String startTime, String eventType) {
+    private static boolean scheduleEventTypeMatchesKey(String scheduledType, String typeFromAttendanceKey) {
+        if (scheduledType == null || typeFromAttendanceKey == null) return false;
+        if (scheduledType.equals(typeFromAttendanceKey)) return true;
+        return (staticVariables.unofficalEventOld.equals(scheduledType) && staticVariables.unofficalEvent.equals(typeFromAttendanceKey))
+                || (staticVariables.unofficalEvent.equals(scheduledType) && staticVariables.unofficalEventOld.equals(typeFromAttendanceKey));
+    }
+
+    private boolean validateEventExistsInSchedule(String bandName, String location, String startTime, String eventType,
+                                                  String scheduleDayFromAttendanceKey) {
         try {
             // Check if schedule data is available
             if (BandInfo.scheduleRecords == null || BandInfo.scheduleRecords.isEmpty()) {
@@ -281,12 +290,19 @@ public class showsAttendedReport {
                 // Compare the attended event details with the scheduled event
                 boolean locationMatches = (scheduledLocation != null && scheduledLocation.equals(location)) ||
                                          (scheduledLocation == null && (location == null || location.isEmpty()));
-                boolean eventTypeMatches = scheduledEventType != null && scheduledEventType.equals(eventType);
+                boolean eventTypeMatches = scheduleEventTypeMatchesKey(scheduledEventType, eventType);
                 
                 // CRITICAL: Also check start time to distinguish between multiple events at same venue
-                boolean timeMatches = scheduledTime != null && scheduledTime.equals(startTime);
+                boolean timeMatches = scheduledTime != null && startTime != null
+                        && showsAttended.normalizeTimeForIndex(scheduledTime).equals(showsAttended.normalizeTimeForIndex(startTime));
                 
                 if (locationMatches && eventTypeMatches && timeMatches) {
+                    if (scheduleDayFromAttendanceKey != null && !scheduleDayFromAttendanceKey.isEmpty()) {
+                        String day = scheduleEntry.getShowDay();
+                        if (day == null || !day.equals(scheduleDayFromAttendanceKey)) {
+                            continue;
+                        }
+                    }
                     matchCount++;
                     if (firstMatchTimeIndex == null) {
                         firstMatchTimeIndex = timeIndex;
@@ -330,24 +346,24 @@ public class showsAttendedReport {
         // Get venue info from the index
         String venue = getVenueFromIndex(fullIndex, bandName, eventType);
         
-        // Parse the time from fullIndex
-        String[] parts = fullIndex.split(":");
-        String time = parts.length >= 4 ? (parts[2] + ":" + parts[3]) : "";
+        showsAttended.ParsedAttendanceKey newKey = showsAttended.parseAttendanceStorageKey(fullIndex);
+        String time = newKey != null ? newKey.startTime : "";
         
-        // CRITICAL: Check for duplicates by band+venue+time combination
-        // If same band plays same venue at same time, it's the same event
+        // CRITICAL: Check for duplicates by band+venue+time+scheduleDay (when disambiguated)
         List<EventEntry> existingEvents = individualEvents.get(eventType);
         for (EventEntry existing : existingEvents) {
-            // Check if same band + venue + time (parse time from existing fullIndex)
-            String[] existingParts = existing.fullIndex.split(":");
-            String existingTime = existingParts.length >= 4 ? (existingParts[2] + ":" + existingParts[3]) : "";
+            showsAttended.ParsedAttendanceKey oldKey = showsAttended.parseAttendanceStorageKey(existing.fullIndex);
+            String existingTime = oldKey != null ? oldKey.startTime : "";
             
             boolean sameBand = existing.bandName.equals(bandName);
             boolean sameVenue = (existing.venue != null && existing.venue.equals(venue)) ||
                                (existing.venue == null && (venue == null || venue.isEmpty()));
             boolean sameTime = existingTime.equals(time);
+            boolean sameDay = java.util.Objects.equals(
+                    newKey != null ? newKey.scheduleDaySuffix : null,
+                    oldKey != null ? oldKey.scheduleDaySuffix : null);
             
-            if (sameBand && sameVenue && sameTime) {
+            if (sameBand && sameVenue && sameTime && sameDay) {
                 Log.w("trackIndividualEvent", "🚫 DUPLICATE EVENT DETECTED:");
                 Log.w("trackIndividualEvent", "   Band: " + bandName + " | Venue: " + venue + " | Time: " + time);
                 Log.w("trackIndividualEvent", "   Existing fullIndex: " + existing.fullIndex);
@@ -373,13 +389,9 @@ public class showsAttendedReport {
      */
     private String getVenueFromIndex(String fullIndex, String bandName, String eventType) {
         try {
-            String[] parts = fullIndex.split(":");
-            if (parts.length >= 2) {
-                // The location is the second part of the index
-                String location = parts[1];
-                if (location != null && !location.isEmpty() && !location.equals("null")) {
-                    return location;
-                }
+            showsAttended.ParsedAttendanceKey k = showsAttended.parseAttendanceStorageKey(fullIndex);
+            if (k != null && k.location != null && !k.location.isEmpty() && !k.location.equals("null")) {
+                return k.location;
             }
         } catch (Exception e) {
             Log.e("getVenueFromIndex", "Error parsing index: " + e.getMessage());
