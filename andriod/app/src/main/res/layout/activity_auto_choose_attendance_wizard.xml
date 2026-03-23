@@ -145,13 +145,41 @@
                     android:text="@string/latest_show_cutoff_hint"
                     android:textColor="#B0B0B0"
                     android:textSize="14sp"
-                    android:paddingBottom="12dp" />
-                <Spinner
-                    android:id="@+id/wizard_latest_show_spinner"
+                    android:paddingBottom="8dp" />
+                <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:minHeight="48dp"
-                    android:popupBackground="@drawable/spinner_popup_background_dark" />
+                    android:text="@string/latest_show_cutoff_field_label"
+                    android:textColor="#AEAEB2"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:paddingBottom="8dp" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/wizard_dropdown_field_background"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="10dp"
+                    android:paddingTop="6dp"
+                    android:paddingBottom="6dp"
+                    android:minHeight="56dp">
+                    <Spinner
+                        android:id="@+id/wizard_latest_show_spinner"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:minHeight="48dp"
+                        android:background="@android:color/transparent"
+                        android:popupBackground="@drawable/spinner_popup_background_dark" />
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@drawable/ic_wizard_expand_more"
+                        android:contentDescription="@null"
+                        android:importantForAccessibility="no" />
+                </LinearLayout>
             </LinearLayout>
 
             <!-- Step: Unofficial / Cruiser Organized (all entries, e.g. pre-party + cruiser events) -->

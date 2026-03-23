@@ -238,6 +238,7 @@ public class scheduleInfo {
 
         Log.d("ParseScheduleCSV", "ParseScheduleCSV - 7");
         Log.d("ScheduleInfo", "Parsed schedule CSV: " + bandSchedule.size() + " bands");
+        showsAttended.invalidateAttendanceCollisionCache();
         return bandSchedule;
     }
 

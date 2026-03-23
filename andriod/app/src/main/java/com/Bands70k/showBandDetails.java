@@ -2787,7 +2787,13 @@ public class showBandDetails extends Activity {
                     String eventType = scheduleItem.getShowType();
                     String eventNote = scheduleItem.getShowNotes();
                     
-                    String attendIndex = bandName + ":" + location + ":" + rawStartTime + ":" + eventType + ":" + String.valueOf(staticVariables.eventYear);
+                    String dbDay = scheduleItem.getShowDay();
+                    if (staticVariables.attendedHandler == null) {
+                        staticVariables.attendedHandler = new showsAttended();
+                    }
+                    String attendIndex = staticVariables.attendedHandler.buildAttendanceStorageKey(
+                            bandName, location, rawStartTime, eventType,
+                            String.valueOf(staticVariables.eventYear), dbDay);
                     String eventTypeImage = showBandDetails.getEventTypeImage(eventType, bandName);
                     String attendedImage = showBandDetails.getAttendedImage(attendIndex);
                     

@@ -1281,20 +1281,36 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                         return false;
                     }
                     String bandName = getBandNameFromIndex(bandIndex);
-                    Long timeIndex = getTimeIndexFromIndex(bandIndex);
+                    Long timeIndex = null;
+                    if (adapter != null && position >= 0 && position < adapter.getCount()) {
+                        bandListItem rowItem = adapter.getItem(position);
+                        if (rowItem != null && rowItem.getScheduleSlotTimeIndex() != null
+                                && rowItem.getScheduleSlotTimeIndex() > 0) {
+                            timeIndex = rowItem.getScheduleSlotTimeIndex();
+                            String rowBand = rowItem.getBandName();
+                            if (rowBand != null && !rowBand.isEmpty()) {
+                                bandName = rowBand;
+                            }
+                        }
+                    }
+                    if (timeIndex == null || timeIndex == 0) {
+                        timeIndex = getTimeIndexFromIndex(bandIndex);
+                    }
                     String location = null;
                     String rawStartTime = null;
                     String eventType = null;
+                    String scheduleDay = null;
                     if (timeIndex != null && timeIndex != 0 && BandInfo.scheduleRecords != null && BandInfo.scheduleRecords.get(bandName) != null) {
                         scheduleHandler evt = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex);
                         if (evt != null) {
                             rawStartTime = evt.getStartTimeString();
                             location = listHandler.getLocation(bandName, timeIndex);
                             eventType = listHandler.getEventType(bandName, timeIndex);
+                            scheduleDay = evt.getShowDay();
                         }
                     }
                     lastLongPressTime = System.currentTimeMillis();
-                    showLongPressMenu(bandName, position, location, rawStartTime, eventType);
+                    showLongPressMenu(bandName, position, location, rawStartTime, eventType, scheduleDay);
                     return true;
                 }
             });
@@ -1508,11 +1524,13 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
                         if (timeIndex != 0) {
                             String location = listHandler.getLocation(bandName, timeIndex);
-                            String rawStartTime = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getStartTimeString();
+                            scheduleHandler swipeEvt = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex);
+                            String rawStartTime = swipeEvt.getStartTimeString();
                             String eventType = listHandler.getEventType(bandName, timeIndex);
+                            String scheduleDay = swipeEvt.getShowDay();
 
                             if (staticVariables.attendedHandler == null) staticVariables.attendedHandler = new showsAttended();
-                            String status = staticVariables.attendedHandler.addShowsAttended(bandName, location, rawStartTime, eventType);
+                            String status = staticVariables.attendedHandler.addShowsAttended(bandName, location, rawStartTime, eventType, scheduleDay);
                             message = staticVariables.attendedHandler.setShowsAttendedStatus(status);
                         } else {
                             message = "No Show Is Associated With This Entry";
@@ -2478,21 +2496,17 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             int currentYearEvents = 0;
             int attendedEvents = 0;
             
-            // Check if user has indicated attendance for any event in current year
+            String ys = String.valueOf(staticVariables.eventYear);
             for (String index : showsAttendedArray.keySet()) {
-                String[] indexArray = index.split(":");
-                if (indexArray.length >= 6) {
-                    Integer eventYear = Integer.valueOf(indexArray[5]);
-                    String attendanceStatus = showsAttendedArray.get(index);
-                    
-                    if (eventYear.equals(staticVariables.eventYear)) {
-                        currentYearEvents++;
-                        
-                        if (attendanceStatus.equals(staticVariables.sawAllStatus) || 
-                            attendanceStatus.equals(staticVariables.sawSomeStatus)) {
-                            attendedEvents++;
-                        }
-                    }
+                if (!showsAttended.attendanceIndexMatchesYear(index, ys)) {
+                    continue;
+                }
+                String attendanceStatus = showsAttendedArray.get(index);
+                currentYearEvents++;
+                String statusPart = attendanceStatus != null && attendanceStatus.contains(":")
+                        ? attendanceStatus.split(":", 2)[0] : attendanceStatus;
+                if (staticVariables.sawAllStatus.equals(statusPart) || staticVariables.sawSomeStatus.equals(statusPart)) {
+                    attendedEvents++;
                 }
             }
             
@@ -3273,9 +3287,14 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         // This prevents the adapter from going to 0 items, which causes flashing
         Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Step 1: Getting band names");
         BandInfo bandInfoNames = new BandInfo();
-        bandNames = bandInfoNames.getBandNames();
-        Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - bandNames=" + 
-              (bandNames == null ? "NULL" : "List with " + bandNames.size() + " items"));
+        ArrayList<String> lineupFromCsv = bandInfoNames.getBandNames();
+        if (lineupFromCsv == null) {
+            lineupFromCsv = new ArrayList<>();
+        }
+        // Only CSV lineup names here — never union schedule keys. Schedule-only rows (trade show, karaoke, etc.)
+        // must appear only as timed events from scheduleRecords, not as "band with zero events" rows.
+        bandNames = lineupFromCsv;
+        Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - bandNames (lineup only)=" + bandNames.size() + " items");
 
         // OFFLINE/STARTUP ROBUSTNESS:
         // If the schedule cache exists but scheduleRecords hasn't been populated yet (common on cold start),
@@ -3349,8 +3368,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             return;
         }
 
-        if (bandNames == null || bandNames.isEmpty()) {
-            Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - No bands after preference filter; delegating to bands-only empty row");
+        // Allow empty lineup when schedule has rows (e.g. rank filters hide every CSV band); populateBandInfo
+        // still iterates scheduleRecords for events. Only bail when there is nothing to show at all.
+        if (bandNames.isEmpty() && scheduleRecordsEmpty) {
+            Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Empty lineup and empty schedule; delegating to bands-only empty row");
             refreshCounter = Math.max(0, refreshCounter - 1);
             isRefreshing = (refreshCounter > 0);
             displayBandDataWithoutSchedule();
@@ -3418,8 +3439,12 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 7");
                 //Log.d("DisplayListData", "starting file download ");
                 //bandInfoNames.DownloadBandFile();
-                bandNames = bandInfoNames.getBandNames();
-                Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Refreshed bandNames, now has " + bandNames.size() + " items");
+                ArrayList<String> refreshedLineup = bandInfoNames.getBandNames();
+                if (refreshedLineup == null) {
+                    refreshedLineup = new ArrayList<>();
+                }
+                bandNames = refreshedLineup;
+                Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Refreshed bandNames (lineup only), size=" + bandNames.size());
                 Log.d("DisplayListData", "starting file download, done ");
             }
         }
@@ -3437,6 +3462,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 8");
         
         Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Step 8: Starting iteration over scheduleSortedBandNames");
+        Log.d("FILTER_TRACE", "render START rowsFromPopulate=" + scheduleSortedBandNames.size());
         Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: About to iterate over scheduleSortedBandNames");
         Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: scheduleSortedBandNames.size() = " + scheduleSortedBandNames.size());
         Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: scheduleSortedBandNames = " + (scheduleSortedBandNames != null ? "NOT NULL" : "NULL"));
@@ -3478,6 +3504,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
                         // Never abort the entire render because of a single bad/missing record.
                         if (bandName == null || timeIndex == null || BandInfo.scheduleRecords == null) {
+                            Log.d("FILTER_TRACE", "render SKIP index=" + bandIndex + " reason=null_band_or_time_or_records bn=" + bandName + " t=" + timeIndex);
                             continue;
                         }
                         if (BandInfo.scheduleRecords.containsKey(bandName) == false) {
@@ -3488,9 +3515,11 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                             }
                         }
                         if (BandInfo.scheduleRecords.get(bandName) == null){
+                            Log.d("FILTER_TRACE", "render SKIP index=" + bandIndex + " band=" + bandName + " t=" + timeIndex + " reason=no_schedule_record");
                             continue;
                         }
                         if (BandInfo.scheduleRecords.get(bandName).scheduleByTime.containsKey(timeIndex) == false) {
+                            Log.d("FILTER_TRACE", "render SKIP index=" + bandIndex + " band=" + bandName + " t=" + timeIndex + " reason=missing_timeKey keysSample=" + BandInfo.scheduleRecords.get(bandName).scheduleByTime.keySet().toString());
                             continue;
                         }
 
@@ -3509,7 +3538,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                             bandItem.setRawDay(day);
                             Log.d("LANDSCAPE_SCHEDULE", "Stored raw day in bandListItem: '" + day + "' for " + bandName);
 
-                            String attendedIcon = attendedHandler.getShowAttendedIcon(bandName, location, startTime, eventType, eventYear);
+                            String attendedIcon = attendedHandler.getShowAttendedIcon(bandName, location, startTime, eventType, eventYear, day);
                             if (day.contains("Day")) {
                                 day = " " + day.replaceAll("Day", "");
                             }
@@ -3545,6 +3574,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                             bandItem.setAttendedImage(iconResolve.getAttendedIcon(attendedIcon));
 
                             Log.d("settingEvent", " for " + bandName + " eventType of " + eventType + "returned image " + eventImage);
+                            bandItem.setScheduleSlotTimeIndex(timeIndex);
                         }
                     }
 
@@ -3570,6 +3600,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         }
         
         Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Loop complete, processed " + counter + " items");
+        Log.d("FILTER_TRACE", "render DONE bandListItemsBuilt=" + counter);
         
         // Handle empty data case
         if (counter == 0) {
@@ -4728,19 +4759,24 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
      * @param listPosition list position for refresh; use -1 when called from landscape.
      */
     public void showLongPressMenu(final String bandName, final int listPosition,
-                                  final String location, final String rawStartTime, final String eventType) {
+                                  final String location, final String rawStartTime, final String eventType,
+                                  final String scheduleDayFromDatabase) {
         String currentAttended = null;
         if (location != null && rawStartTime != null && eventType != null && listHandler != null && listPosition >= 0) {
             String rowIndex = getBandIndexAtListPosition(listPosition);
             if (rowIndex != null) {
-                String startTime = listHandler.getStartTime(bandName, getTimeIndexFromIndex(rowIndex));
+                // Prefer raw CSV start (matches list/attendance indexing) when long-press already resolved the slot.
+                String startTime = rawStartTime;
+                if (startTime == null || startTime.isEmpty()) {
+                    startTime = listHandler.getStartTime(bandName, getTimeIndexFromIndex(rowIndex));
+                }
                 showsAttended handler = staticVariables.attendedHandler != null ? staticVariables.attendedHandler : new showsAttended();
-                currentAttended = handler.getShowAttendedStatus(bandName, location, startTime, eventType, String.valueOf(eventYear));
+                currentAttended = handler.getShowAttendedStatus(bandName, location, startTime, eventType, String.valueOf(eventYear), scheduleDayFromDatabase);
             }
         }
         final Runnable onRefresh = listPosition >= 0 ? new Runnable() { @Override public void run() { saveScrollPosition(); refreshData(); } } : null;
         ignoreNextListClickUntilMenuDismissed = true;
-        LongPressMenuHelper.show(this, bandName, currentAttended, location, rawStartTime, eventType, onRefresh, new Runnable() {
+        LongPressMenuHelper.show(this, bandName, currentAttended, location, rawStartTime, eventType, scheduleDayFromDatabase, onRefresh, new Runnable() {
             @Override public void run() { ignoreNextListClickUntilMenuDismissed = false; }
         });
     }
@@ -4753,7 +4789,12 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                                             AlertDialog dialog) {
 
         if (staticVariables.attendedHandler == null) staticVariables.attendedHandler = new showsAttended();
-        String status = staticVariables.attendedHandler.addShowsAttended(selectedBand, location, startTime, eventType, desiredStatus);
+        if (staticVariables.eventYear == 0) staticVariables.ensureEventYearIsSet();
+        String et = eventType;
+        if (staticVariables.unofficalEventOld.equals(et)) et = staticVariables.unofficalEvent;
+        String idx = staticVariables.attendedHandler.buildAttendanceStorageKey(selectedBand, location, startTime, et,
+                String.valueOf(staticVariables.eventYear), null);
+        String status = staticVariables.attendedHandler.addShowsAttended(idx, desiredStatus);
         String message = staticVariables.attendedHandler.setShowsAttendedStatus(status);
 
         dialog.dismiss();

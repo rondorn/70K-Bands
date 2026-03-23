@@ -193,6 +193,7 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
                 adapter.setDropDownViewResource(R.layout.spinner_dropdown_item_dark);
                 spinner.setAdapter(adapter);
                 spinner.setSelection(Math.min(latestShowHalfHours, 11));
+                spinner.setContentDescription(getString(R.string.latest_show_cutoff_content_description));
             }
         }
         if (step == STEP_MEET_GREET) {
@@ -768,18 +769,18 @@ public class AutoChooseAttendanceWizardActivity extends AppCompatActivity {
             if (staticVariables.unofficalEventOld.equals(et)) et = staticVariables.unofficalEvent;
             String index = event.bandName + ":" + event.location + ":" + event.startTime + ":" + et + ":" + yearStr;
             android.util.Log.d("AIWizard", "WRITE index=" + index);
-            attendedHandle.addShowsAttendedWithStatus(event.bandName, event.location, event.startTime, et, yearStr, staticVariables.sawAllStatus, events);
+            attendedHandle.addShowsAttendedWithStatus(event.bandName, event.location, event.startTime, et, yearStr,
+                    staticVariables.sawAllStatus, event.day, events);
         }
         AIScheduleStorage.clearBackup(eventYear);
         AIScheduleStorage.setHasRunAI(eventYear, true);
         // Count how many will-attend entries we actually have for this year (may be < toMark.size() due to overlap clearing)
         int actualCount = 0;
-        String yearSuffix = ":" + yearStr;
         String sawAll = staticVariables.sawAllStatus;
         String sawSome = staticVariables.sawSomeStatus;
         Map<String, String> afterWrite = attendedHandle.getShowsAttended();
         for (Map.Entry<String, String> e : afterWrite.entrySet()) {
-            if (e.getKey() != null && e.getKey().endsWith(yearSuffix) && e.getValue() != null) {
+            if (e.getKey() != null && showsAttended.attendanceIndexMatchesYear(e.getKey(), yearStr) && e.getValue() != null) {
                 String status = e.getValue().contains(":") ? e.getValue().split(":")[0] : e.getValue();
                 if (sawAll.equals(status) || sawSome.equals(status)) actualCount++;
             }

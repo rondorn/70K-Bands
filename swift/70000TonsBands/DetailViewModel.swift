@@ -56,6 +56,8 @@ struct ScheduleEvent: Identifiable {
     let rawStartTime: String
     let originalEventType: String  // Original eventType for attendance tracking
     let rawLocation: String  // Original location without venue suffix for attendance tracking
+    /// SQLite schedule `day` (e.g. "Day 1") for attendance keys when the same slot repeats on multiple days.
+    let scheduleDayRaw: String
     let imageUrl: String  // Image URL for this event (from schedule)
     let imageDate: String  // Image date for cache invalidation (from schedule)
 }
@@ -552,7 +554,8 @@ class DetailViewModel: ObservableObject {
             location: locationForAttendance,
             startTime: event.rawStartTime,
             eventType: event.originalEventType,
-            eventYearString: String(eventYear)
+            eventYearString: String(eventYear),
+            scheduleDay: event.scheduleDayRaw.isEmpty ? nil : event.scheduleDayRaw
         )
         print("DEBUG: Current status before change: \(currentStatus)")
         
@@ -566,7 +569,8 @@ class DetailViewModel: ObservableObject {
             location: locationForAttendance,
             startTime: event.rawStartTime,
             eventType: event.originalEventType,  // Use original eventType to avoid empty strings
-            eventYearString: String(eventYear)
+            eventYearString: String(eventYear),
+            scheduleDay: event.scheduleDayRaw.isEmpty ? nil : event.scheduleDayRaw
         )
         print("DEBUG: New status after toggle: \(newStatus)")
         
@@ -577,7 +581,8 @@ class DetailViewModel: ObservableObject {
                 location: locationForAttendance,
                 startTime: event.rawStartTime,
                 eventType: event.originalEventType,
-                eventYearString: String(eventYear)
+                eventYearString: String(eventYear),
+                scheduleDay: event.scheduleDayRaw.isEmpty ? nil : event.scheduleDayRaw
             )
             print("DEBUG: Verified status after save (delayed): \(verifyStatus)")
             
@@ -1423,7 +1428,8 @@ class DetailViewModel: ObservableObject {
                 // Use cached data directly to avoid any lazy loading
                 let eventData = bandSchedule[timeIndex] ?? [:]
                 let location = eventData[locationField] ?? ""
-                let day = monthDateRegionalFormatting(dateValue: eventData[dayField] ?? "")
+                let scheduleDayRaw = eventData[dayField] ?? ""
+                let day = monthDateRegionalFormatting(dateValue: scheduleDayRaw)
                 let startTime = eventData[startTimeField] ?? ""
                 let endTime = eventData[endTimeField] ?? ""
                 let eventType = eventData[typeField] ?? ""
@@ -1442,7 +1448,8 @@ class DetailViewModel: ObservableObject {
                     location: location,  // Use raw location here (before venue suffix is added)
                     startTime: startTime,
                     eventType: eventType,
-                    eventYearString: String(eventYear)
+                    eventYearString: String(eventYear),
+                    scheduleDay: scheduleDayRaw.isEmpty ? nil : scheduleDayRaw
                 )
                 let attendedIcon: UIImage = {
                     switch attendedStatus {
@@ -1481,6 +1488,7 @@ class DetailViewModel: ObservableObject {
                     rawStartTime: startTime,
                     originalEventType: eventType,  // Keep original eventType for attendance tracking
                     rawLocation: location,  // Keep original location without venue suffix for attendance tracking
+                    scheduleDayRaw: scheduleDayRaw,
                     imageUrl: imageUrl,
                     imageDate: imageDate
                 )

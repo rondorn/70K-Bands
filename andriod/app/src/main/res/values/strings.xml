@@ -20,6 +20,8 @@
     <string name="latest_show_title">Latest show</string>
     <string name="latest_show_cutoff">The latest show you want to see.</string>
     <string name="latest_show_cutoff_hint">Shows that begin after this specified time will be excluded. For instance, if you set this time to 2 am, a show scheduled for 2 am will be included, but a show scheduled for 2:30 am or later will be excluded.</string>
+    <string name="latest_show_cutoff_field_label">Cutoff time — tap the field to choose</string>
+    <string name="latest_show_cutoff_content_description">Cutoff time dropdown. Tap to open the list of times.</string>
     <string name="aischedule_meet_greet_header">Meet and Greets</string>
     <string name="aischedule_meet_greet_question">What Meet and Greet events do you want to attend?</string>
     <string name="aischedule_meet_greet_checklist_hint">Check each you want to attend. Must bands only.</string>
@@ -207,7 +209,7 @@
     <!-- menu choice -->
     <string name="show_all_events">Show All Events</string>
     <!-- menu choice -->
-    <string name="show_flaged_events_only">Show Flaged Events Only</string>
+    <string name="show_flaged_events_only">Show Flagged Events Only</string>
     <!-- menu choice -->
     <!-- venue filters -->
     <!-- menu choice -->

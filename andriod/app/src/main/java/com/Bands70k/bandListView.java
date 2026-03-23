@@ -297,6 +297,10 @@ public class bandListView extends ArrayAdapter<bandListItem> {
         String locColor1 = item1.getLocationColor();
         String locColor2 = item2.getLocationColor();
         if (locColor1 == null ? locColor2 != null : !locColor1.equals(locColor2)) return false;
+
+        Long slot1 = item1.getScheduleSlotTimeIndex();
+        Long slot2 = item2.getScheduleSlotTimeIndex();
+        if (slot1 == null ? slot2 != null : !slot1.equals(slot2)) return false;
         
         // All fields match - items are equal
         return true;

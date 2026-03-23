@@ -51,7 +51,8 @@ final class CreateAIScheduleSheetViewModel: ObservableObject {
                 location: event.location,
                 startTime: startTime,
                 eventType: eventType,
-                eventYearString: yearString
+                eventYearString: yearString,
+                scheduleDay: event.day
             )
             return status != sawNoneStatus
         }
@@ -76,7 +77,8 @@ final class CreateAIScheduleSheetViewModel: ObservableObject {
                 location: event.location,
                 startTime: startTime,
                 eventType: eventType,
-                eventYearString: yearString
+                eventYearString: yearString,
+                scheduleDay: event.day
             )
             return status != sawNoneStatus
         }

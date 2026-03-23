@@ -7,7 +7,128 @@
 import Foundation
 import UIKit
 
+// MARK: - Attendance index (same band/location/start/type on different days)
+
+/// Builds SQLite / file attendance keys. When multiple events share the same base tuple for a year,
+/// keys append `__` + the **database** `day` string (e.g. `__Day 1`). Non-colliding keys stay unchanged for backward compatibility.
+enum AttendanceIndexKeys {
+    static func normalizedEventTypeForKey(_ eventType: String) -> String {
+        if eventType == unofficalEventTypeOld { return unofficalEventType }
+        return eventType
+    }
+
+    static func baseKey(band: String, location: String, startTime: String, eventType: String, eventYearString: String) -> String {
+        let t = normalizedEventTypeForKey(eventType)
+        return "\(band):\(location):\(startTime):\(t):\(eventYearString)"
+    }
+
+    /// Base keys that occur more than once for this year (band + location + startTime + normalized type).
+    static func collidingBaseKeys(forYear year: Int) -> Set<String> {
+        let events = DataManager.shared.fetchEvents(forYear: year)
+        var counts: [String: Int] = [:]
+        for e in events {
+            let st = e.startTime ?? ""
+            guard !st.isEmpty else { continue }
+            let base = baseKey(
+                band: e.bandName,
+                location: e.location,
+                startTime: st,
+                eventType: e.eventType ?? "",
+                eventYearString: String(year)
+            )
+            counts[base, default: 0] += 1
+        }
+        return Set(counts.filter { $0.value > 1 }.map(\.key))
+    }
+
+    /// When the base tuple collides and `scheduleDayFromDatabase` is non-empty, returns `base__DayLabel`.
+    static func storageKey(
+        band: String,
+        location: String,
+        startTime: String,
+        eventType: String,
+        eventYearString: String,
+        scheduleDayFromDatabase: String?,
+        collidingBases: Set<String>
+    ) -> String {
+        let base = baseKey(band: band, location: location, startTime: startTime, eventType: eventType, eventYearString: eventYearString)
+        guard let d = scheduleDayFromDatabase?.trimmingCharacters(in: .whitespacesAndNewlines), !d.isEmpty else {
+            return base
+        }
+        guard collidingBases.contains(base) else {
+            return base
+        }
+        return base + "__" + d
+    }
+}
+
 open class ShowsAttended {
+
+    private static let collisionLock = NSLock()
+    private static var collisionCacheYear: Int?
+    private static var collisionCacheBases: Set<String>?
+
+    /// Call after schedule data is reloaded from SQLite so collision detection matches the new schedule.
+    static func invalidateAttendanceCollisionCache() {
+        collisionLock.lock()
+        collisionCacheYear = nil
+        collisionCacheBases = nil
+        collisionLock.unlock()
+    }
+
+    private func collidingBases(forYearString yearStr: String) -> Set<String> {
+        guard let y = Int(yearStr) else { return [] }
+        Self.collisionLock.lock()
+        defer { Self.collisionLock.unlock() }
+        if Self.collisionCacheYear == y, let s = Self.collisionCacheBases {
+            return s
+        }
+        let s = AttendanceIndexKeys.collidingBaseKeys(forYear: y)
+        Self.collisionCacheYear = y
+        Self.collisionCacheBases = s
+        return s
+    }
+
+    private func resolveAttendanceStorageIndex(
+        band: String,
+        location: String,
+        startTime: String,
+        eventType: String,
+        eventYearString: String,
+        scheduleDay: String?
+    ) -> String {
+        let bases = collidingBases(forYearString: eventYearString)
+        return AttendanceIndexKeys.storageKey(
+            band: band,
+            location: location,
+            startTime: startTime,
+            eventType: eventType,
+            eventYearString: eventYearString,
+            scheduleDayFromDatabase: scheduleDay,
+            collidingBases: bases
+        )
+    }
+
+    private func attendanceIndexMatchesYear(_ index: String, eventYearString: String) -> Bool {
+        let parts = index.components(separatedBy: ":")
+        guard let rawYear = parts.last else { return false }
+        let yearOnly: String
+        if let r = rawYear.range(of: "__") {
+            yearOnly = String(rawYear[..<r.lowerBound])
+        } else {
+            yearOnly = rawYear
+        }
+        return yearOnly == eventYearString
+    }
+
+    private func mapAttendanceCode(_ code: Int) -> String {
+        switch code {
+        case 2: return sawAllStatus
+        case 1: return sawSomeStatus
+        case 3: return sawNoneStatus
+        default: return sawNoneStatus
+        }
+    }
 
     let iCloudHandle = iCloudDataHandler()
     // Use SQLite AttendanceManager for all operations
@@ -231,9 +352,19 @@ open class ShowsAttended {
     private static let shortOverlapThresholdSeconds: Double = 900 // 15 minutes
 
     /// When marking a Show as attended, clear any other Show already attended that overlaps in time (same calendar day) by more than 15 min. Meet and Greets are not cleared. Overlap <= 15 min is allowed (both can be marked).
-    private func clearOverlappingShowAttendance(band: String, location: String, startTime: String, eventType: String, eventYearString: String, currentIndex: String, allEvents: [EventData]) {
+    private func clearOverlappingShowAttendance(
+        band: String,
+        location: String,
+        startTime: String,
+        eventType: String,
+        eventYearString: String,
+        scheduleDay: String?,
+        currentIndex: String,
+        allEvents: [EventData]
+    ) {
         guard let thisEvent = allEvents.first(where: { e in
             e.bandName == band && e.location == location && (e.startTime ?? "") == startTime && eventTypeMatches(e.eventType, stored: eventType)
+                && (scheduleDay == nil || e.day == scheduleDay)
         }) else { return }
         let thisDay = normalizedCalendarDay(from: thisEvent.date)
         var thisEnd = thisEvent.endTimeIndex
@@ -242,7 +373,7 @@ open class ShowsAttended {
         let sawNone = sawNoneStatus + ":" + String(format: "%.0f", Date().timeIntervalSince1970)
         for (index, value) in attended {
             guard index != currentIndex else { continue }
-            guard index.hasSuffix(":" + eventYearString) else { continue }
+            guard attendanceIndexMatchesYear(index, eventYearString: eventYearString) else { continue }
             let statusPart = value.components(separatedBy: ":").first ?? value
             guard statusPart == sawAllStatus || statusPart == sawSomeStatus else { continue }
             guard let (otherBand, otherLocation, otherStart, otherEventType) = parseAttendanceIndex(index) else { continue }
@@ -272,11 +403,10 @@ open class ShowsAttended {
         return false
     }
     
-    /// Parse "band:location:startTime:eventType:year" allowing band/location to contain ":".
+    /// Parse "band:location:startTime:eventType:year" or `...:year__DayLabel` allowing band/location to contain ":".
     private func parseAttendanceIndex(_ index: String) -> (band: String, location: String, startTime: String, eventType: String)? {
         let parts = index.components(separatedBy: ":")
         guard parts.count >= 5 else { return nil }
-        let year = parts.last!
         let eventType = parts[parts.count - 2]
         let startTime = parts[parts.count - 3]
         let location = parts[parts.count - 4]
@@ -310,19 +440,46 @@ open class ShowsAttended {
         - eventYearString: The event year as a string.
         - status: The attendance status to set.
         - newTime: The timestamp to use (Double, seconds since epoch).
+        - scheduleDay: SQLite `day` label when the base attendance tuple collides on multiple days (optional).
         - allEventsForYear: If provided, enforces "no overlapping shows attended": when marking a Show (not Meet and Greet) as attended, any other Show already marked attended that overlaps in time will be cleared first. Meet and Greets are allowed to overlap.
      */
-    func addShowsAttendedWithStatusAndTime(band: String, location: String, startTime: String, eventType: String, eventYearString: String, status: String, newTime: Double, allEventsForYear: [EventData]? = nil) {
+    func addShowsAttendedWithStatusAndTime(
+        band: String,
+        location: String,
+        startTime: String,
+        eventType: String,
+        eventYearString: String,
+        status: String,
+        newTime: Double,
+        scheduleDay: String? = nil,
+        allEventsForYear: [EventData]? = nil
+    ) {
         // Normalize event type: "Unofficial Event" -> "Cruiser Organized" (for consistency with getShowAttendedStatus)
         var eventTypeValue = eventType
         if eventType == unofficalEventTypeOld {
             eventTypeValue = unofficalEventType
         }
-        let index = band + ":" + location + ":" + startTime + ":" + eventTypeValue + ":" + eventYearString
-        
+        let index = resolveAttendanceStorageIndex(
+            band: band,
+            location: location,
+            startTime: startTime,
+            eventType: eventTypeValue,
+            eventYearString: eventYearString,
+            scheduleDay: scheduleDay
+        )
+
         // For shows only: clear any other overlapping show attendance (user can't see two shows at once). Meet and Greets may overlap.
         if let events = allEventsForYear, eventTypeValue == showType, status == sawAllStatus || status == sawSomeStatus {
-            clearOverlappingShowAttendance(band: band, location: location, startTime: startTime, eventType: eventTypeValue, eventYearString: eventYearString, currentIndex: index, allEvents: events)
+            clearOverlappingShowAttendance(
+                band: band,
+                location: location,
+                startTime: startTime,
+                eventType: eventTypeValue,
+                eventYearString: eventYearString,
+                scheduleDay: scheduleDay,
+                currentIndex: index,
+                allEvents: events
+            )
         }
         
         let timestamp = String(format: "%.0f", newTime)
@@ -340,11 +497,31 @@ open class ShowsAttended {
         - eventType: The type of event.
         - eventYearString: The event year as a string.
         - status: The attendance status to set.
+        - scheduleDay: SQLite day label when multiple events share the same base tuple (optional).
         - allEventsForYear: If provided, enforces "no overlapping shows attended" when marking a Show as attended (see addShowsAttendedWithStatusAndTime).
      */
-    func addShowsAttendedWithStatus (band: String, location: String, startTime: String, eventType: String, eventYearString: String, status: String, allEventsForYear: [EventData]? = nil){
+    func addShowsAttendedWithStatus(
+        band: String,
+        location: String,
+        startTime: String,
+        eventType: String,
+        eventYearString: String,
+        status: String,
+        scheduleDay: String? = nil,
+        allEventsForYear: [EventData]? = nil
+    ) {
         let now = Date().timeIntervalSince1970
-        addShowsAttendedWithStatusAndTime(band: band, location: location, startTime: startTime, eventType: eventType, eventYearString: eventYearString, status: status, newTime: now, allEventsForYear: allEventsForYear)
+        addShowsAttendedWithStatusAndTime(
+            band: band,
+            location: location,
+            startTime: startTime,
+            eventType: eventType,
+            eventYearString: eventYearString,
+            status: status,
+            newTime: now,
+            scheduleDay: scheduleDay,
+            allEventsForYear: allEventsForYear
+        )
     }
     
     /**
@@ -357,13 +534,27 @@ open class ShowsAttended {
         - eventYearString: The event year as a string.
      - Returns: The new attendance status as a string.
      */
-    func addShowsAttended (band: String, location: String, startTime: String, eventType: String, eventYearString: String)->String{
+    func addShowsAttended(
+        band: String,
+        location: String,
+        startTime: String,
+        eventType: String,
+        eventYearString: String,
+        scheduleDay: String? = nil
+    ) -> String {
         var eventTypeValue = eventType;
         if (eventType == unofficalEventTypeOld){
             eventTypeValue = unofficalEventType;
         }
-        let index = band + ":" + location + ":" + startTime + ":" + eventTypeValue + ":" + eventYearString
-        
+        let index = resolveAttendanceStorageIndex(
+            band: band,
+            location: location,
+            startTime: startTime,
+            eventType: eventTypeValue,
+            eventYearString: eventYearString,
+            scheduleDay: scheduleDay
+        )
+
         // Use SQLite AttendanceManager instead of old system
         let currentStatus = attendanceManager.getAttendanceStatusByIndex(index: index)
         
@@ -498,21 +689,33 @@ open class ShowsAttended {
         - eventYearString: The event year as a string.
      - Returns: The corresponding UIImage for the attendance status.
      */
-    func getShowAttendedIcon  (band: String, location: String, startTime: String, eventType: String,eventYearString: String)->UIImage{
-        
+    func getShowAttendedIcon(
+        band: String,
+        location: String,
+        startTime: String,
+        eventType: String,
+        eventYearString: String,
+        scheduleDay: String? = nil
+    ) -> UIImage {
+
         var iconName = String()
         var icon = UIImage()
-        
+
         var eventTypeValue = eventType;
         if (eventType == unofficalEventTypeOld){
             eventTypeValue = unofficalEventType;
         }
-        
-        let value = getShowAttendedStatus(band: band,location: location,startTime: startTime,eventType: eventTypeValue,eventYearString: eventYearString);
+
+        let value = getShowAttendedStatus(
+            band: band,
+            location: location,
+            startTime: startTime,
+            eventType: eventTypeValue,
+            eventYearString: eventYearString,
+            scheduleDay: scheduleDay
+        )
         // Reduced logging for performance
-        
-        let index = band + ":" + location + ":" + startTime + ":" + eventTypeValue + ":" + eventYearString
-        
+
         // Reduced logging for performance
         if (value == sawAllStatus){
             iconName = "icon-seen"
@@ -529,16 +732,30 @@ open class ShowsAttended {
         return icon
     }
 
-    func getShowAttendedColor  (band: String, location: String, startTime: String, eventType: String,eventYearString: String)->UIColor{
-        
+    func getShowAttendedColor(
+        band: String,
+        location: String,
+        startTime: String,
+        eventType: String,
+        eventYearString: String,
+        scheduleDay: String? = nil
+    ) -> UIColor {
+
         var eventTypeValue = eventType;
         if (eventType == unofficalEventTypeOld){
             eventTypeValue = unofficalEventType;
         }
-        
+
         var color : UIColor = UIColor()
-        
-        let value = getShowAttendedStatus(band: band,location: location,startTime: startTime,eventType: eventTypeValue, eventYearString: eventYearString);
+
+        let value = getShowAttendedStatus(
+            band: band,
+            location: location,
+            startTime: startTime,
+            eventType: eventTypeValue,
+            eventYearString: eventYearString,
+            scheduleDay: scheduleDay
+        )
         
         if (value == sawAllStatus){
             color = sawAllColor
@@ -553,34 +770,62 @@ open class ShowsAttended {
         return color
     }
     
-    func getShowAttendedStatus (band: String, location: String, startTime: String, eventType: String,eventYearString: String)->String{
+    func getShowAttendedStatus(
+        band: String,
+        location: String,
+        startTime: String,
+        eventType: String,
+        eventYearString: String,
+        scheduleDay: String? = nil
+    ) -> String {
         var eventTypeVariable = eventType;
         if (eventType == unofficalEventTypeOld){
             eventTypeVariable = unofficalEventType;
         }
-        
-        // Use SQLite AttendanceManager instead of old system
-        let index = band + ":" + location + ":" + startTime + ":" + eventTypeVariable + ":" + eventYearString
-        let status = attendanceManager.getAttendanceStatusByIndex(index: index)
-        
-        // Convert numeric status to string status
-        var value = ""
-        switch status {
-        case 2: // Attended
-            value = sawAllStatus
-        case 1: // Will Attend Some
-            value = sawSomeStatus
-        case 3: // Won't Attend
-            value = sawNoneStatus
-        default: // 0 or unknown
-            value = sawNoneStatus
+
+        let extendedIndex = resolveAttendanceStorageIndex(
+            band: band,
+            location: location,
+            startTime: startTime,
+            eventType: eventTypeVariable,
+            eventYearString: eventYearString,
+            scheduleDay: scheduleDay
+        )
+        let baseIndex = AttendanceIndexKeys.baseKey(
+            band: band,
+            location: location,
+            startTime: startTime,
+            eventType: eventTypeVariable,
+            eventYearString: eventYearString
+        )
+
+        if extendedIndex != baseIndex {
+            let extCode = attendanceManager.getAttendanceStatusByIndex(index: extendedIndex)
+            if extCode != 0 {
+                return mapAttendanceCode(extCode)
+            }
         }
-        
-        return value
+
+        let baseCode = attendanceManager.getAttendanceStatusByIndex(index: baseIndex)
+        return mapAttendanceCode(baseCode)
     }
     
-    func getShowAttendedStatusUserFriendly (band: String, location: String, startTime: String, eventType: String,eventYearString: String)->String{
-        var status = getShowAttendedStatus(band: band, location: location, startTime: startTime, eventType: eventType, eventYearString: eventYearString)
+    func getShowAttendedStatusUserFriendly(
+        band: String,
+        location: String,
+        startTime: String,
+        eventType: String,
+        eventYearString: String,
+        scheduleDay: String? = nil
+    ) -> String {
+        var status = getShowAttendedStatus(
+            band: band,
+            location: location,
+            startTime: startTime,
+            eventType: eventType,
+            eventYearString: eventYearString,
+            scheduleDay: scheduleDay
+        )
         
         var userFriendlyStatus = "";
         
@@ -680,13 +925,38 @@ open class ShowsAttended {
     }
     
     // Returns the last change timestamp for a show, given its parameters
-    func getShowAttendedStatusLastChange(band: String, location: String, startTime: String, eventType: String, eventYearString: String) -> Double {
+    func getShowAttendedStatusLastChange(
+        band: String,
+        location: String,
+        startTime: String,
+        eventType: String,
+        eventYearString: String,
+        scheduleDay: String? = nil
+    ) -> Double {
         var eventTypeValue = eventType
         if eventType == unofficalEventTypeOld {
             eventTypeValue = unofficalEventType
         }
-        let index = band + ":" + location + ":" + startTime + ":" + eventTypeValue + ":" + eventYearString
-        return getShowAttendedLastChange(index: index)
+        let extendedIndex = resolveAttendanceStorageIndex(
+            band: band,
+            location: location,
+            startTime: startTime,
+            eventType: eventTypeValue,
+            eventYearString: eventYearString,
+            scheduleDay: scheduleDay
+        )
+        let baseIndex = AttendanceIndexKeys.baseKey(
+            band: band,
+            location: location,
+            startTime: startTime,
+            eventType: eventTypeValue,
+            eventYearString: eventYearString
+        )
+        if extendedIndex != baseIndex {
+            let extTs = getShowAttendedLastChange(index: extendedIndex)
+            if extTs > 0 { return extTs }
+        }
+        return getShowAttendedLastChange(index: baseIndex)
     }
     
     // DEBUG: List all attendance keys for debugging

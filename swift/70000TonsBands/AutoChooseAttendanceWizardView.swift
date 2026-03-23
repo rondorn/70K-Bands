@@ -113,8 +113,12 @@ struct AutoChooseAttendanceWizardView: View {
         events.contains { ($0.eventType ?? "") == specialEventType }
     }
     
+    /// Stable per-row id for wizard toggles. Must differ across schedule rows that share band/location/time/type (e.g. Karaoke on Day 1 vs Day 2).
     private func eventId(_ event: EventData) -> String {
-        "\(event.bandName):\(event.location):\(event.startTime ?? ""):\(event.eventType ?? "")"
+        let st = event.startTime ?? ""
+        let et = event.eventType ?? ""
+        let day = (event.day ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        return "\(event.bandName):\(event.location):\(st):\(et):\(day):\(event.timeIndex)"
     }
     
     /// Respects OS time format (12h AM/PM vs 24h). Used for Latest show picker labels only; internal logic always uses half-hour indices (0–11).
@@ -1006,13 +1010,22 @@ struct AutoChooseAttendanceWizardView: View {
         attendanceClearedForActiveWizardRun = false
         // toMark already includes resolved shows, M&G, and any selected clinics/specials that survived conflict resolution
         let yearString = String(eventYear)
+        let collidingBases = AttendanceIndexKeys.collidingBaseKeys(forYear: eventYear)
         let am = AttendanceManager()
         let ts = Date().timeIntervalSince1970
         for event in toMark {
             guard let startTime = event.startTime, !startTime.isEmpty else { continue }
             var et = event.eventType ?? showType
             if et == unofficalEventTypeOld { et = unofficalEventType }
-            let index = "\(event.bandName):\(event.location):\(startTime):\(et):\(yearString)"
+            let index = AttendanceIndexKeys.storageKey(
+                band: event.bandName,
+                location: event.location,
+                startTime: startTime,
+                eventType: et,
+                eventYearString: yearString,
+                scheduleDayFromDatabase: event.day,
+                collidingBases: collidingBases
+            )
             am.setAttendanceStatusByIndex(index: index, status: 2, timestamp: ts)
         }
         completedCount = toMark.count

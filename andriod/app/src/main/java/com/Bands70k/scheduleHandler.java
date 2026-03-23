@@ -77,7 +77,7 @@ public class scheduleHandler {
      * @param value The show location string.
      */
     public void setShowLocation(String value){
-        showLocation = value;
+        showLocation = value != null ? value.trim() : null;
     }
     /**
      * Gets the show location.
@@ -123,7 +123,10 @@ public class scheduleHandler {
      */
     public void setShowType(String value){
         Log.d("setShowType", "showType is  " + value);
-        if (value.equals(staticVariables.unofficalEventOld)){
+        if (value != null) {
+            value = value.trim();
+        }
+        if (value != null && value.equals(staticVariables.unofficalEventOld)){
             Log.d("setShowType", "changing showType to  " + staticVariables.unofficalEvent);
             value = staticVariables.unofficalEvent;
         }

@@ -34,6 +34,8 @@ struct CellDataModel {
     let eventType: String
     let notes: String
     let day: String
+    /// SQLite schedule day label (e.g. "Day 1") for attendance keys; not localized.
+    let scheduleDayRaw: String
     
     // Display state
     let hasSchedule: Bool
@@ -232,6 +234,7 @@ class CellDataCache {
                             eventType: oldData.eventType,
                             notes: oldData.notes,
                             day: oldData.day,
+                            scheduleDayRaw: oldData.scheduleDayRaw,
                             hasSchedule: oldData.hasSchedule,
                             isPartialInfo: oldData.isPartialInfo,
                             scheduleButton: oldData.scheduleButton,
@@ -292,7 +295,8 @@ class CellDataCache {
                             location: oldData.location,
                             startTime: oldData.startTime,
                             eventType: oldData.eventType,
-                            eventYearString: String(eventYear)
+                            eventYearString: String(eventYear),
+                            scheduleDay: oldData.scheduleDayRaw.isEmpty ? nil : oldData.scheduleDayRaw
                         )
                         
                         // Create updated cell data
@@ -312,6 +316,7 @@ class CellDataCache {
                             eventType: oldData.eventType,
                             notes: oldData.notes,
                             day: oldData.day,
+                            scheduleDayRaw: oldData.scheduleDayRaw,
                             hasSchedule: oldData.hasSchedule,
                             isPartialInfo: oldData.isPartialInfo,
                             scheduleButton: oldData.scheduleButton,
@@ -384,6 +389,7 @@ class CellDataCache {
         
         // Pre-calculate all display properties
         var location = ""
+        var scheduleDayRaw = ""
         var day = ""
         var startTime = ""
         var endTime = ""
@@ -398,7 +404,8 @@ class CellDataCache {
             
             // Try legacy schedule first, then fallback to SQLite
             location = schedule.getData(bandName, index: timeIndex, variable: locationField)
-            day = monthDateRegionalFormatting(dateValue: schedule.getData(bandName, index: timeIndex, variable: dayField))
+            scheduleDayRaw = schedule.getData(bandName, index: timeIndex, variable: dayField)
+            day = monthDateRegionalFormatting(dateValue: scheduleDayRaw)
             startTime = schedule.getData(bandName, index: timeIndex, variable: startTimeField)
             endTime = schedule.getData(bandName, index: timeIndex, variable: endTimeField)
             event = schedule.getData(bandName, index: timeIndex, variable: typeField)
@@ -413,7 +420,9 @@ class CellDataCache {
                     endTime = sqliteEvent.endTime ?? ""
                     event = sqliteEvent.eventType ?? ""
                     notes = sqliteEvent.notes ?? ""
-                    
+                    if let d = sqliteEvent.day, !d.isEmpty {
+                        scheduleDayRaw = d
+                    }
                     // Format day from timeIndex if not available
                     if day.isEmpty {
                         let dateFormatter = DateFormatter()
@@ -437,7 +446,14 @@ class CellDataCache {
         }
         
         let displayText = hasSchedule ? "\(bandName):\(startTimeText):\(locationText)" : bandName
-        let indexText = hasSchedule ? "\(bandName);\(location);\(event);\(startTime)" : bandName
+        let indexText: String = {
+            guard hasSchedule else { return bandName }
+            var s = "\(bandName);\(location);\(event);\(startTime)"
+            if !scheduleDayRaw.isEmpty {
+                s += ";\(scheduleDayRaw)"
+            }
+            return s
+        }()
         
         // Pre-calculate day text
         var dayText = ""
@@ -457,7 +473,8 @@ class CellDataCache {
             location: location,
             startTime: startTime,
             eventType: event,
-            eventYearString: String(eventYear)
+            eventYearString: String(eventYear),
+            scheduleDay: scheduleDayRaw.isEmpty ? nil : scheduleDayRaw
         )
         
         // Pre-calculate colors
@@ -497,6 +514,7 @@ class CellDataCache {
             eventType: event,
             notes: notes,
             day: day,
+            scheduleDayRaw: scheduleDayRaw,
             hasSchedule: hasSchedule,
             isPartialInfo: isPartialInfo,
             scheduleButton: !hasSchedule,

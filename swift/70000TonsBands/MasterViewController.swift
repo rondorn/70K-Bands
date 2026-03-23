@@ -3065,7 +3065,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 }
                 
                 // Single event: show long-press menu directly
-                let cellDataText = "\(bandName);\(location);\(eventType);\(startTime)"
+                var cellDataText = "\(bandName);\(location);\(eventType);\(startTime)"
+                if !day.isEmpty {
+                    cellDataText += ";\(day)"
+                }
                 let presentingViewController = self.landscapeScheduleViewController ?? self
                 self.showLongPressMenu(bandName: bandName, cellDataText: cellDataText, indexPath: IndexPath(row: 0, section: 0), presentingFrom: presentingViewController)
             }
@@ -3818,7 +3821,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     location: location,
                     startTime: startTime,
                     eventType: eventType,
-                    eventYearString: eventYearString
+                    eventYearString: eventYearString,
+                    scheduleDay: event.day
                 )
                 
                 return attendedStatus != sawNoneStatus
@@ -4255,8 +4259,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 let cellLocation = data[1]
                 let cellEventType  = data[2]
                 let cellStartTime = data[3]
+                let cellScheduleDay: String? = data.count >= 5 ? String(data[4]) : nil
 
-                let status = attendedHandle.addShowsAttended(band: String(cellBandName), location: String(cellLocation), startTime: String(cellStartTime), eventType: String(cellEventType),eventYearString: String(eventYear));
+                let status = attendedHandle.addShowsAttended(
+                    band: String(cellBandName),
+                    location: String(cellLocation),
+                    startTime: String(cellStartTime),
+                    eventType: String(cellEventType),
+                    eventYearString: String(eventYear),
+                    scheduleDay: cellScheduleDay
+                )
                 
                 let empty : UITextField = UITextField();
                 let message = attendedHandle.setShowsAttendedStatus(empty, status: status)
@@ -4473,7 +4485,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
 
     /// Prompts user to select which band to apply priority/attendance to when long-pressing a combined event in landscape
-    func promptForBandSelectionLandscapeForLongPress(combinedBandName: String, bands: [String], location: String, startTime: String, eventType: String, day: String?) {
+    func promptForBandSelectionLandscapeForLongPress(combinedBandName: String, bands: [String], location: String, startTime: String, eventType: String, day: String) {
         guard bands.count == 2 else {
             print("ERROR: Expected exactly 2 bands for combined event, got \(bands.count)")
             return
@@ -4488,7 +4500,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             band2: band2,
             onSelect: { [weak self] selectedBand in
                 guard let self = self else { return }
-                let cellDataText = "\(selectedBand);\(location);\(eventType);\(startTime)"
+                var cellDataText = "\(selectedBand);\(location);\(eventType);\(startTime)"
+                if !day.isEmpty {
+                    cellDataText += ";\(day)"
+                }
                 self.showLongPressMenu(bandName: selectedBand, cellDataText: cellDataText, indexPath: IndexPath(row: 0, section: 0), presentingFrom: presentingViewController)
             },
             onCancel: { }
@@ -4945,19 +4960,21 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         if let cellData = cellDataText, !cellData.isEmpty {
             let cellDataArray = cellData.split(separator: ";")
-            if cellDataArray.count == 4 {
+            if cellDataArray.count == 4 || cellDataArray.count == 5 {
                 isScheduledEvent = true
                 cellBandName = String(cellDataArray[0])
                 cellLocation = String(cellDataArray[1])
                 cellEventType = String(cellDataArray[2])
                 cellStartTime = String(cellDataArray[3])
-                
+                let cellScheduleDay: String? = cellDataArray.count == 5 ? String(cellDataArray[4]) : nil
+
                 currentAttendedStatus = attendedHandle.getShowAttendedStatus(
                     band: cellBandName,
                     location: cellLocation,
                     startTime: cellStartTime,
                     eventType: cellEventType,
-                    eventYearString: String(eventYear)
+                    eventYearString: String(eventYear),
+                    scheduleDay: cellScheduleDay
                 )
             }
         }
@@ -5097,16 +5114,26 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     func markAttendingStatus (cellDataText :String, status: String, correctBandName: String? = nil){
         
         var cellData = cellDataText.split(separator: ";")
-        if (cellData.count == 4){
+        if cellData.count == 4 || cellData.count == 5 {
             print ("Cell data is we have data for \(cellData[3])");
             
             let cellBandName = String(cellData[0])
             let cellLocation = String(cellData[1])
             let cellEventType  = String(cellData[2])
             let cellStartTime = String(cellData[3])
+            let cellScheduleDay: String? = cellData.count == 5 ? String(cellData[4]) : nil
             
             let allEvents = DataManager.shared.fetchEvents(forYear: eventYear)
-            attendedHandle.addShowsAttendedWithStatus(band: cellBandName, location: cellLocation, startTime: cellStartTime, eventType: cellEventType, eventYearString: String(eventYear), status: status, allEventsForYear: allEvents);
+            attendedHandle.addShowsAttendedWithStatus(
+                band: cellBandName,
+                location: cellLocation,
+                startTime: cellStartTime,
+                eventType: cellEventType,
+                eventYearString: String(eventYear),
+                status: status,
+                scheduleDay: cellScheduleDay,
+                allEventsForYear: allEvents
+            )
             
             let empty : UITextField = UITextField();
             let message = attendedHandle.setShowsAttendedStatus(empty, status: status)

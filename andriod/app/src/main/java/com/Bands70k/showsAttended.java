@@ -12,6 +12,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -22,6 +24,100 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class showsAttended {
 
     private static final String TAG = "showsAttended";
+
+    /** Cache collision sets per event year; invalidate when schedule data is rebuilt. */
+    private static final ConcurrentHashMap<Integer, Set<String>> COLLIDING_BASE_KEYS_BY_YEAR = new ConcurrentHashMap<>();
+
+    public static void invalidateAttendanceCollisionCache() {
+        COLLIDING_BASE_KEYS_BY_YEAR.clear();
+    }
+
+    private Set<String> collidingBasesForYear(int year) {
+        return COLLIDING_BASE_KEYS_BY_YEAR.computeIfAbsent(year, AttendanceIndexKeys::collidingBaseKeys);
+    }
+
+    /**
+     * True if this attendance key belongs to {@code eventYearString} (handles {@code year__Day N} tail segment).
+     */
+    public static boolean attendanceIndexMatchesYear(String index, String eventYearString) {
+        ParsedAttendanceKey k = parseAttendanceStorageKey(index);
+        return k != null && eventYearString != null && eventYearString.equals(k.yearPlain);
+    }
+
+    private String resolveStorageIndex(String band, String location, String startTimeRawOrNorm, String eventType,
+                                       String eventYearString, String scheduleDay) {
+        String normalizedTime = normalizeTimeForIndex(startTimeRawOrNorm);
+        String et = eventType;
+        if (staticVariables.unofficalEventOld.equals(et)) {
+            et = staticVariables.unofficalEvent;
+        }
+        int y;
+        try {
+            y = Integer.parseInt(eventYearString);
+        } catch (NumberFormatException e) {
+            return AttendanceIndexKeys.baseKey(band, location, normalizedTime, et, eventYearString);
+        }
+        Set<String> colliding = collidingBasesForYear(y);
+        return AttendanceIndexKeys.storageKey(band, location, normalizedTime, et, eventYearString, scheduleDay, colliding);
+    }
+
+    /**
+     * Public storage key for UI (details, Firebase known-set, etc.). Uses schedule DB day when collisions exist.
+     */
+    public String buildAttendanceStorageKey(String band, String location, String rawStartTime, String eventType,
+                                            String eventYearString, String scheduleDayFromDatabase) {
+        String et = eventType;
+        if (staticVariables.unofficalEventOld.equals(et)) {
+            et = staticVariables.unofficalEvent;
+        }
+        return resolveStorageIndex(band, location, rawStartTime, et, eventYearString, scheduleDayFromDatabase);
+    }
+
+    /** Parsed attendance index: band may contain {@code ':'}; last segment may be {@code year} or {@code year__day}. */
+    public static final class ParsedAttendanceKey {
+        public final String band;
+        public final String location;
+        public final String startTime;
+        public final String eventType;
+        public final String yearPlain;
+        /** Database schedule day suffix when key is disambiguated; null for legacy base keys. */
+        public final String scheduleDaySuffix;
+
+        ParsedAttendanceKey(String band, String location, String startTime, String eventType, String yearPlain,
+                            String scheduleDaySuffix) {
+            this.band = band;
+            this.location = location;
+            this.startTime = startTime;
+            this.eventType = eventType;
+            this.yearPlain = yearPlain;
+            this.scheduleDaySuffix = scheduleDaySuffix;
+        }
+    }
+
+    public static ParsedAttendanceKey parseAttendanceStorageKey(String index) {
+        if (index == null) return null;
+        String[] parts = index.split(":", -1);
+        if (parts.length < 6) return null;
+        String last = parts[parts.length - 1];
+        String yearPlain;
+        String scheduleDaySuffix;
+        int u = last.indexOf("__");
+        if (u >= 0) {
+            yearPlain = last.substring(0, u);
+            scheduleDaySuffix = last.substring(u + 2);
+        } else {
+            yearPlain = last;
+            scheduleDaySuffix = null;
+        }
+        String eventType = parts[parts.length - 2];
+        String startTime = parts[parts.length - 4] + ":" + parts[parts.length - 3];
+        String location = parts[parts.length - 5];
+        StringBuilder band = new StringBuilder(parts[0]);
+        for (int i = 1; i < parts.length - 5; i++) {
+            band.append(":").append(parts[i]);
+        }
+        return new ParsedAttendanceKey(band.toString(), location, startTime, eventType, yearPlain, scheduleDaySuffix);
+    }
 
     private volatile Map<String,String> showsAttendedHash = new HashMap<String,String>();
     private volatile String currentLoadedProfile = null;  // Track which profile is currently loaded
@@ -68,6 +164,7 @@ public class showsAttended {
      * Called when user switches profiles
      */
     public void reloadForActiveProfile() {
+        invalidateAttendanceCollisionCache();
         String activeProfile = SharedPreferencesManager.getInstance().getActivePreferenceSource();
         
         // Clear current data
@@ -92,10 +189,10 @@ public class showsAttended {
 
     /** Number of attendance keys for the given year (any status). Used to decide if "Replace auto schedule" should be shown. */
     public int countAttendanceForYear(int year) {
-        String suffix = ":" + year;
+        String ys = String.valueOf(year);
         int count = 0;
         for (String key : getShowsAttended().keySet()) {
-            if (key != null && key.endsWith(suffix)) count++;
+            if (key != null && attendanceIndexMatchesYear(key, ys)) count++;
         }
         return count;
     }
@@ -119,11 +216,11 @@ public class showsAttended {
      * Used when starting "Build my schedule automatically". Persists synchronously.
      */
     public void clearAttendanceForYear(int year) {
-        String suffix = ":" + year;
+        String ys = String.valueOf(year);
         String sawNoneValue = staticVariables.sawNoneStatus + ":" + String.format("%.0f", System.currentTimeMillis() / 1000.0);
         Map<String, String> current = new HashMap<>(getShowsAttended());
         for (String key : new ArrayList<>(current.keySet())) {
-            if (key != null && key.endsWith(suffix)) {
+            if (key != null && attendanceIndexMatchesYear(key, ys)) {
                 current.put(key, sawNoneValue);
             }
         }
@@ -451,25 +548,38 @@ public class showsAttended {
     }
     */
 
-    public String addShowsAttended (String index, String attendedStatus) {
-        // Do not strip periods from band names (e.g. T.H.E.M); store and lookup must use the same key.
-        String value = "";
+    private static String canonicalStatusFromStored(String stored) {
+        if (stored == null) return staticVariables.sawNoneStatus;
+        String part = stored.contains(":") ? stored.split(":", 2)[0] : stored;
+        if (staticVariables.sawAllStatus.equals(part)) return staticVariables.sawAllStatus;
+        if (staticVariables.sawSomeStatus.equals(part)) return staticVariables.sawSomeStatus;
+        return staticVariables.sawNoneStatus;
+    }
 
-        String[] valueTypes = index.split(":");
-        String eventType = valueTypes[4];
+    public String addShowsAttended(String index, String attendedStatus) {
+        // Do not strip periods from band names (e.g. T.H.E.M); store and lookup must use the same key.
+        String value;
+        ParsedAttendanceKey pk = parseAttendanceStorageKey(index);
+        String eventType = pk != null ? pk.eventType : "";
+        if (pk == null && index != null) {
+            String[] valueTypes = index.split(":", -1);
+            eventType = valueTypes.length > 1 ? valueTypes[valueTypes.length - 2] : "";
+        }
 
         Log.d("showAttended", "adding show data" + index + "-" + eventType);
         Log.d("showAttended", showsAttendedHash.toString());
 
-        if (attendedStatus.isEmpty() == true) {
-            if (showsAttendedHash.containsKey(index) == false || showsAttendedHash.get(index).equals(staticVariables.sawNoneStatus)) {
-
+        if (attendedStatus.isEmpty()) {
+            String current = showsAttendedHash.containsKey(index)
+                    ? canonicalStatusFromStored(showsAttendedHash.get(index))
+                    : staticVariables.sawNoneStatus;
+            if (!showsAttendedHash.containsKey(index) || staticVariables.sawNoneStatus.equals(current)) {
                 value = staticVariables.sawAllStatus;
                 Log.d("showAttended", "Setting value to all for index " + index);
-            } else if (showsAttendedHash.get(index).equals(staticVariables.sawAllStatus) && eventType.equals(staticVariables.show)) {
+            } else if (staticVariables.sawAllStatus.equals(current) && staticVariables.show.equals(eventType)) {
                 value = staticVariables.sawSomeStatus;
                 Log.d("showAttended", "Setting value to some for index " + index);
-            } else if (showsAttendedHash.get(index).equals(staticVariables.sawSomeStatus)) {
+            } else if (staticVariables.sawSomeStatus.equals(current)) {
                 value = staticVariables.sawNoneStatus;
                 Log.d("showAttended", "Setting value to none 1 for index " + index);
             } else {
@@ -479,39 +589,27 @@ public class showsAttended {
         } else {
             value = attendedStatus;
         }
-        this.showsAttendedHash.put(index,value);
+        this.showsAttendedHash.put(index, value);
 
         this.saveShowsAttended(showsAttendedHash);
 
         return value;
     }
 
-    public String addShowsAttended (String band, String location, String startTime, String eventType) {
-
-        // Ensure eventYear is set before using it
-        if (staticVariables.eventYear == 0) {
-            staticVariables.ensureEventYearIsSet();
-        }
-        String eventYear = String.valueOf(staticVariables.eventYear);
-
-        String index = band + ":" + location + ":" + startTime + ":" + eventType + ":" + eventYear;
-        String value = addShowsAttended(index, "");
-
-        return value;
+    public String addShowsAttended(String band, String location, String startTime, String eventType) {
+        return addShowsAttended(band, location, startTime, eventType, null);
     }
 
-    public String addShowsAttended (String band, String location, String startTime, String eventType, String attendedStatus) {
-
-        // Ensure eventYear is set before using it
+    public String addShowsAttended(String band, String location, String startTime, String eventType, String scheduleDay) {
         if (staticVariables.eventYear == 0) {
             staticVariables.ensureEventYearIsSet();
         }
         String eventYear = String.valueOf(staticVariables.eventYear);
-
-        String index = band + ":" + location + ":" + startTime + ":" + eventType + ":" + eventYear;
-        String value = addShowsAttended(index, attendedStatus);
-
-        return value;
+        if (staticVariables.unofficalEventOld.equals(eventType)) {
+            eventType = staticVariables.unofficalEvent;
+        }
+        String idx = resolveStorageIndex(band, location, startTime, eventType, eventYear, scheduleDay);
+        return addShowsAttended(idx, "");
     }
 
     /** Overlap of 15 min or less is ignored (both shows can stay marked). Only clear when overlap > this. */
@@ -521,19 +619,31 @@ public class showsAttended {
      * When marking a Show as attended, clear any other Show already attended that overlaps by more than 15 min (same day).
      */
     private void clearOverlappingShowAttendance(String band, String location, String startTime, String eventType,
-                                                String eventYearString, String currentIndex, java.util.List<EventData> allEvents) {
+                                                String eventYearString, String scheduleDayFromDatabase,
+                                                String currentIndex, java.util.List<EventData> allEvents) {
         if (allEvents == null) return;
         String normStart = normalizeTimeForIndex(startTime);
-        EventData thisEvent = null;
+        java.util.List<EventData> matches = new ArrayList<>();
         for (EventData e : allEvents) {
             if (e.bandName != null && e.bandName.equals(band) && e.location != null && e.location.equals(location)
-                    && e.startTime != null && normalizeTimeForIndex(e.startTime).equals(normStart) && eventTypeMatches(e.eventType, eventType)
+                    && e.startTime != null && normalizeTimeForIndex(e.startTime).equals(normStart) && eventTypeMatchesStatic(e.eventType, eventType)
                     && String.valueOf(e.eventYear).equals(eventYearString)) {
-                thisEvent = e;
-                break;
+                matches.add(e);
             }
         }
-        if (thisEvent == null) return;
+        if (matches.isEmpty()) return;
+        EventData thisEvent = null;
+        if (scheduleDayFromDatabase != null && !scheduleDayFromDatabase.trim().isEmpty()) {
+            for (EventData e : matches) {
+                if (scheduleDayFromDatabase.equals(e.day)) {
+                    thisEvent = e;
+                    break;
+                }
+            }
+        }
+        if (thisEvent == null) {
+            thisEvent = matches.get(0);
+        }
 
         String thisDay = normalizedCalendarDay(thisEvent.date);
         double thisEnd = thisEvent.endTimeIndex;
@@ -544,22 +654,19 @@ public class showsAttended {
 
         for (Map.Entry<String, String> entry : attended.entrySet()) {
             String index = entry.getKey();
-            if (index == null || index.equals(currentIndex) || !index.endsWith(":" + eventYearString)) continue;
+            if (index == null || index.equals(currentIndex) || !attendanceIndexMatchesYear(index, eventYearString)) {
+                continue;
+            }
             String statusPart = entry.getValue();
             if (statusPart != null && statusPart.contains(":")) statusPart = statusPart.split(":")[0];
-            if (!staticVariables.sawAllStatus.equals(statusPart) && !staticVariables.sawSomeStatus.equals(statusPart)) continue;
+            if (!staticVariables.sawAllStatus.equals(statusPart) && !staticVariables.sawSomeStatus.equals(statusPart)) {
+                continue;
+            }
 
-            ParsedIndex other = parseAttendanceIndex(index);
+            ParsedAttendanceKey other = parseAttendanceStorageKey(index);
             if (other == null || !staticVariables.show.equals(other.eventType)) continue;
 
-            EventData otherEvent = null;
-            for (EventData e : allEvents) {
-                if (e.bandName != null && e.bandName.equals(other.band) && e.location != null && e.location.equals(other.location)
-                        && e.startTime != null && normalizeTimeForIndex(e.startTime).equals(normalizeTimeForIndex(other.startTime)) && eventTypeMatches(e.eventType, other.eventType)) {
-                    otherEvent = e;
-                    break;
-                }
-            }
+            EventData otherEvent = findMatchingEventData(allEvents, other);
             if (otherEvent == null) continue;
             if (!thisDay.equals(normalizedCalendarDay(otherEvent.date))) continue;
 
@@ -577,41 +684,33 @@ public class showsAttended {
         }
     }
 
-    private static class ParsedIndex {
-        String band, location, startTime, eventType, year;
-    }
-
-    private ParsedIndex parseAttendanceIndex(String index) {
-        if (index == null) return null;
-        String[] parts = index.split(":", -1);
-        if (parts.length < 5) return null;
-        ParsedIndex p = new ParsedIndex();
-        if (parts.length >= 6) {
-            p.year = parts[parts.length - 1];
-            p.eventType = parts[parts.length - 2];
-            p.startTime = parts[parts.length - 4] + ":" + parts[parts.length - 3];
-            p.location = parts[parts.length - 5];
-            StringBuilder band = new StringBuilder(parts[0]);
-            for (int i = 1; i < parts.length - 5; i++) band.append(":").append(parts[i]);
-            p.band = band.toString();
-        } else {
-            p.year = parts[parts.length - 1];
-            p.eventType = parts[parts.length - 2];
-            p.startTime = parts[parts.length - 3];
-            p.location = parts[parts.length - 4];
-            StringBuilder band = new StringBuilder(parts[0]);
-            for (int i = 1; i < parts.length - 4; i++) band.append(":").append(parts[i]);
-            p.band = band.toString();
+    private static EventData findMatchingEventData(java.util.List<EventData> allEvents, ParsedAttendanceKey other) {
+        java.util.List<EventData> cands = new ArrayList<>();
+        for (EventData e : allEvents) {
+            if (e.bandName != null && e.bandName.equals(other.band) && e.location != null && e.location.equals(other.location)
+                    && e.startTime != null
+                    && normalizeTimeForIndex(e.startTime).equals(normalizeTimeForIndex(other.startTime))
+                    && eventTypeMatchesStatic(e.eventType, other.eventType)
+                    && String.valueOf(e.eventYear).equals(other.yearPlain)) {
+                cands.add(e);
+            }
         }
-        return p;
+        if (cands.isEmpty()) return null;
+        if (other.scheduleDaySuffix != null && !other.scheduleDaySuffix.isEmpty()) {
+            for (EventData e : cands) {
+                if (other.scheduleDaySuffix.equals(e.day)) {
+                    return e;
+                }
+            }
+        }
+        return cands.get(0);
     }
 
-    private boolean eventTypeMatches(String eventType, String stored) {
+    private static boolean eventTypeMatchesStatic(String eventType, String stored) {
         if (eventType == null) eventType = "";
         if (stored == null) stored = "";
         if (eventType.equals(stored)) return true;
-        if (staticVariables.unofficalEventOld.equals(eventType) && staticVariables.unofficalEvent.equals(stored)) return true;
-        return false;
+        return staticVariables.unofficalEventOld.equals(eventType) && staticVariables.unofficalEvent.equals(stored);
     }
 
     private String normalizedCalendarDay(String dateString) {
@@ -642,13 +741,13 @@ public class showsAttended {
      */
     public void restoreFromBackup(int year, Map<String, String> backup) {
         if (backup == null) return;
-        String suffix = ":" + year;
+        String ys = String.valueOf(year);
         Map<String, String> current = new HashMap<>(getShowsAttended());
         for (Map.Entry<String, String> e : backup.entrySet()) {
             current.put(e.getKey(), e.getValue());
         }
         for (String index : new ArrayList<>(current.keySet())) {
-            if (index != null && index.endsWith(suffix) && !backup.containsKey(index)) {
+            if (index != null && attendanceIndexMatchesYear(index, ys) && !backup.containsKey(index)) {
                 current.put(index, staticVariables.sawNoneStatus + ":" + String.format("%.0f", System.currentTimeMillis() / 1000.0));
             }
         }
@@ -663,51 +762,50 @@ public class showsAttended {
     public String addShowsAttendedWithStatus(String band, String location, String startTime, String eventType,
                                              String eventYearString, String status,
                                              java.util.List<EventData> allEventsForYear) {
+        return addShowsAttendedWithStatus(band, location, startTime, eventType, eventYearString, status, null, allEventsForYear);
+    }
+
+    public String addShowsAttendedWithStatus(String band, String location, String startTime, String eventType,
+                                             String eventYearString, String status, String scheduleDayFromDatabase,
+                                             java.util.List<EventData> allEventsForYear) {
         if (staticVariables.unofficalEventOld.equals(eventType)) eventType = staticVariables.unofficalEvent;
-        String normalizedTime = normalizeTimeForIndex(startTime);
-        String index = band + ":" + location + ":" + normalizedTime + ":" + eventType + ":" + eventYearString;
+        String index = resolveStorageIndex(band, location, startTime, eventType, eventYearString, scheduleDayFromDatabase);
         if (allEventsForYear != null && staticVariables.show.equals(eventType)
                 && (staticVariables.sawAllStatus.equals(status) || staticVariables.sawSomeStatus.equals(status))) {
-            clearOverlappingShowAttendance(band, location, startTime, eventType, eventYearString, index, allEventsForYear);
+            clearOverlappingShowAttendance(band, location, startTime, eventType, eventYearString, scheduleDayFromDatabase,
+                    index, allEventsForYear);
         }
         return addShowsAttended(index, status);
     }
 
-    public String getShowAttendedIcon(String index){
-
+    public String getShowAttendedIcon(String index) {
         Log.d("showAttended", "getting icon for index " + index);
-
-        String[] valueTypes = index.split(":", -1);
-        if (valueTypes.length != 6) {
-            Log.w(TAG, "ATTENDANCE_INDEX_PARSE index=" + index + " parts=" + valueTypes.length + " (expected 6)");
+        ParsedAttendanceKey k = parseAttendanceStorageKey(index);
+        if (k != null) {
+            return getShowAttendedIcon(k.band, k.location, k.startTime, k.eventType, k.yearPlain, k.scheduleDaySuffix);
         }
-
-        String bandName = valueTypes.length > 0 ? valueTypes[0] : "";
-        String location = valueTypes.length > 1 ? valueTypes[1] : "";
-        String startTime = valueTypes.length > 3 ? (valueTypes[2] + ":" + valueTypes[3]) : "";
-        String eventType = valueTypes.length > 4 ? valueTypes[4] : "";
-        String eventyear = valueTypes.length > 5 ? valueTypes[5] : "";
-
-        return getShowAttendedIcon(bandName,location,startTime,eventType, eventyear);
+        Log.w(TAG, "ATTENDANCE_INDEX_PARSE index=" + index + " (could not parse)");
+        return getShowAttendedIcon("", "", "", "", "", null);
     }
 
-    public String getShowAttendedColor(String index){
-
-        String[] valueTypes = index.split(":");
-
-        String bandName = valueTypes[0];
-        String location = valueTypes[1];
-        String startTime = valueTypes[2] + ":" + valueTypes[3];
-        String eventType = valueTypes[4];
-        String eventYear = valueTypes[5];
-
-        return getShowAttendedColor(bandName, location, startTime, eventType, eventYear);
+    public String getShowAttendedColor(String index) {
+        ParsedAttendanceKey k = parseAttendanceStorageKey(index);
+        if (k != null) {
+            return getShowAttendedColor(k.band, k.location, k.startTime, k.eventType, k.yearPlain, k.scheduleDaySuffix);
+        }
+        return getShowAttendedColor("", "", "", "", "", null);
     }
+
     public String getShowAttendedColor(String band, String location, String startTime, String eventType, String eventYear) {
+        return getShowAttendedColor(band, location, startTime, eventType, eventYear, null);
+    }
+
+    public String getShowAttendedColor(String band, String location, String startTime, String eventType, String eventYear,
+                                       String scheduleDay) {
 
         String color = "";
 
-        String value = getShowAttendedStatus(band, location, startTime, eventType, eventYear);
+        String value = getShowAttendedStatus(band, location, startTime, eventType, eventYear, scheduleDay);
 
         if (value.equals(staticVariables.sawAllStatus)){
             color = staticVariables.sawNoneColor;
@@ -726,11 +824,16 @@ public class showsAttended {
 
 
     public String getShowAttendedIcon(String band, String location, String startTime, String eventType, String eventYear) {
+        return getShowAttendedIcon(band, location, startTime, eventType, eventYear, null);
+    }
+
+    public String getShowAttendedIcon(String band, String location, String startTime, String eventType, String eventYear,
+                                      String scheduleDay) {
 
         Log.d("showAttended", "getting icon for index " + band + "-" + location + "-" + startTime + "-" + eventYear);
         String icon = "";
 
-        String value = getShowAttendedStatus(band,location,startTime,eventType, eventYear);
+        String value = getShowAttendedStatus(band, location, startTime, eventType, eventYear, scheduleDay);
 
         if (value.equals(staticVariables.sawAllStatus)){
             icon = staticVariables.sawAllIcon;
@@ -748,31 +851,17 @@ public class showsAttended {
     }
 
     public String getShowAttendedStatus(String index) {
-
-        String value = "";
-
-        if (showsAttendedHash.containsKey(index) == false) {
-            value = staticVariables.sawNoneStatus;
-
-        } else if (showsAttendedHash.get(index).equals(staticVariables.sawAllStatus)){
-            value = staticVariables.sawAllStatus;
-
-        } else if (showsAttendedHash.get(index).equals(staticVariables.sawSomeStatus)){
-            value = staticVariables.sawSomeStatus;
-
-        } else {
-            value = staticVariables.sawNoneStatus;
-
+        if (index == null || !showsAttendedHash.containsKey(index)) {
+            return staticVariables.sawNoneStatus;
         }
-
-        return value;
+        return canonicalStatusFromStored(showsAttendedHash.get(index));
     }
 
     /**
      * Canonicalize time string for attendance index so "4:15" and "04:15" match.
      * Returns "HH:mm" (hour zero-padded to 2 digits) or original if not parseable.
      */
-    private static String normalizeTimeForIndex(String startTime) {
+    public static String normalizeTimeForIndex(String startTime) {
         if (startTime == null || startTime.isEmpty()) return startTime;
         String t = startTime.trim();
         int colon = t.indexOf(':');
@@ -790,15 +879,29 @@ public class showsAttended {
     }
 
     public String getShowAttendedStatus(String band, String location, String startTime, String eventType, String eventYear) {
+        return getShowAttendedStatus(band, location, startTime, eventType, eventYear, null);
+    }
 
-        String normalizedTime = normalizeTimeForIndex(startTime);
-        String index = band + ":" + location + ":" + normalizedTime + ":" + eventType + ":" + eventYear;
-        String value = getShowAttendedStatus(index);
-        if (staticVariables.sawNoneStatus.equals(value) && band != null && band.contains("T.H.E.M")) {
-            Log.d(TAG, "ATTENDANCE_MISS lookup index=" + index + " (not in map)");
+    public String getShowAttendedStatus(String band, String location, String startTime, String eventType, String eventYear,
+                                        String scheduleDayFromDatabase) {
+        if (staticVariables.unofficalEventOld.equals(eventType)) {
+            eventType = staticVariables.unofficalEvent;
         }
-        return value;
-
+        String nt = normalizeTimeForIndex(startTime);
+        String base = AttendanceIndexKeys.baseKey(band, location, nt, eventType, eventYear);
+        if (scheduleDayFromDatabase != null && !scheduleDayFromDatabase.trim().isEmpty()) {
+            String ext = resolveStorageIndex(band, location, nt, eventType, eventYear, scheduleDayFromDatabase.trim());
+            if (showsAttendedHash.containsKey(ext)) {
+                return canonicalStatusFromStored(showsAttendedHash.get(ext));
+            }
+        }
+        if (showsAttendedHash.containsKey(base)) {
+            return canonicalStatusFromStored(showsAttendedHash.get(base));
+        }
+        if (band != null && band.contains("T.H.E.M")) {
+            Log.d(TAG, "ATTENDANCE_MISS lookup base=" + base + " (not in map)");
+        }
+        return staticVariables.sawNoneStatus;
     }
 
     public String setShowsAttendedStatus(String status){

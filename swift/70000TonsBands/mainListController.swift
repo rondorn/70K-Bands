@@ -387,7 +387,8 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
                 location: location,
                 startTime: startTime,
                 eventType: eventType,
-                eventYearString: eventYearString
+                eventYearString: eventYearString,
+                scheduleDay: event.day
             )
             
             let key = "\(bandName):\(location):\(startTime):\(eventType):\(eventYearString)"
@@ -434,7 +435,8 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
                 location: location,
                 startTime: startTime,
                 eventType: eventType,
-                eventYearString: eventYearString
+                eventYearString: eventYearString,
+                scheduleDay: event.day
             )
             
             // Count any event with an attendance flag (not "sawNone")
@@ -1023,6 +1025,8 @@ func willAttenedFilters(bandName: String, timeIndex:TimeInterval, schedule: sche
         print("🔍 [WILL_ATTEND_DEBUG] ❌ Missing data for band: \(bandName), timeIndex: \(timeIndex)")
         return false
     }
+
+    let scheduleDayRaw = timeData[dayField] ?? ""
     
     print("🔍 [WILL_ATTEND_DEBUG] Checking band '\(bandName)' at '\(location)' startTime '\(startTimeValue)'")
     if timeIndex.isZero {
@@ -1034,7 +1038,8 @@ func willAttenedFilters(bandName: String, timeIndex:TimeInterval, schedule: sche
             location: location,
             startTime: startTimeValue,
             eventType: eventType,
-            eventYearString: String(eventYear)
+            eventYearString: String(eventYear),
+            scheduleDay: scheduleDayRaw.isEmpty ? nil : scheduleDayRaw
         )
         print("🔍 [WILL_ATTEND_DEBUG] Status for '\(bandName)': '\(status)' (sawNoneStatus = '\(sawNoneStatus)')")
         let attendedEndTime = CFAbsoluteTimeGetCurrent()
@@ -1220,7 +1225,8 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         // Try legacy schedule first, then fallback to SQLite for standalone events
         // Use dataFetchBandName for data fetching (first band if combined)
         var location = schedule.getData(dataFetchBandName, index:timeIndex, variable: locationField)
-        var day = monthDateRegionalFormatting(dateValue: schedule.getData(dataFetchBandName, index: timeIndex, variable: dayField))
+        var scheduleDayRaw = schedule.getData(dataFetchBandName, index: timeIndex, variable: dayField)
+        var day = monthDateRegionalFormatting(dateValue: scheduleDayRaw)
         var startTime = schedule.getData(dataFetchBandName, index: timeIndex, variable: startTimeField)
         var endTime = schedule.getData(dataFetchBandName, index: timeIndex, variable: endTimeField)
         var event = schedule.getData(dataFetchBandName, index: timeIndex, variable: typeField)
@@ -1236,6 +1242,9 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
                 endTime = sqliteEvent.endTime ?? ""
                 event = sqliteEvent.eventType ?? ""
                 notes = sqliteEvent.notes ?? ""
+                if let d = sqliteEvent.day, !d.isEmpty {
+                    scheduleDayRaw = d
+                }
                 // Format day from timeIndex if not available
                 if day.isEmpty {
                     let dateFormatter = DateFormatter()
@@ -1248,6 +1257,9 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
         let eventIcon = getEventTypeIcon(eventType: event, eventName: bandName)
                 
         indexText += ";" + location + ";" + event + ";" + startTime
+        if !scheduleDayRaw.isEmpty {
+            indexText += ";" + scheduleDayRaw
+        }
                 
         startTimeText = formatTimeValue(timeValue: startTime)
         endTimeText = formatTimeValue(timeValue: endTime)
@@ -1265,7 +1277,14 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
     
         // For combined events, use the combined band name for display but first band for attendance tracking
         // This ensures the icon shows correctly (both bands would have same attendance status for same event)
-        let icon = attendedHandle.getShowAttendedIcon(band: dataFetchBandName,location: location,startTime: startTime,eventType: event,eventYearString: String(eventYear));
+        let icon = attendedHandle.getShowAttendedIcon(
+            band: dataFetchBandName,
+            location: location,
+            startTime: startTime,
+            eventType: event,
+            eventYearString: String(eventYear),
+            scheduleDay: scheduleDayRaw.isEmpty ? nil : scheduleDayRaw
+        )
         
         // COUNT FLAGGED EVENTS: If GUI shows an icon, increment the count
         if !icon.isEqual(UIImage()) {

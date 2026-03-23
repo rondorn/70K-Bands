@@ -1108,7 +1108,8 @@ public class LandscapeScheduleView extends LinearLayout {
                     event.location,
                     event.startTimeString,
                     event.eventType != null ? event.eventType : "Performance",
-                    eventYear
+                    eventYear,
+                    event.day
                 );
                 event.attendedStatus = updatedStatus;
             }
@@ -1591,12 +1592,14 @@ public class LandscapeScheduleView extends LinearLayout {
                 String attended1 = attendedHandle.getShowAttendedStatus(
                     band1, event.location, event.startTimeString,
                     event.eventType != null ? event.eventType : "Performance",
-                    String.valueOf(staticVariables.eventYear)
+                    String.valueOf(staticVariables.eventYear),
+                    event.day
                 );
                 String attended2 = attendedHandle.getShowAttendedStatus(
                     band2, event.location, event.startTimeString,
                     event.eventType != null ? event.eventType : "Performance",
-                    String.valueOf(staticVariables.eventYear)
+                    String.valueOf(staticVariables.eventYear),
+                    event.day
                 );
                 
                 boolean hasPriority1 = priority1 > 0;
@@ -1900,11 +1903,11 @@ public class LandscapeScheduleView extends LinearLayout {
         }
         String currentAttended = event.attendedStatus != null ? event.attendedStatus : "";
         if (!bandName.equals(event.bandName)) {
-            currentAttended = attendedHandle.getShowAttendedStatus(bandName, event.location, event.startTimeString, normalizedEventType, String.valueOf(staticVariables.eventYear));
+            currentAttended = attendedHandle.getShowAttendedStatus(bandName, event.location, event.startTimeString, normalizedEventType, String.valueOf(staticVariables.eventYear), event.day);
         }
         if (!(context instanceof android.app.Activity)) return;
         final Runnable onRefresh = new Runnable() { @Override public void run() { updateDisplay(); } };
-        LongPressMenuHelper.show((android.app.Activity) context, bandName, currentAttended, event.location, event.startTimeString, normalizedEventType, onRefresh, null);
+        LongPressMenuHelper.show((android.app.Activity) context, bandName, currentAttended, event.location, event.startTimeString, normalizedEventType, event.day, onRefresh, null);
     }
 
     private void showAttendanceMenu(View anchor, ScheduleBlock event, DayScheduleData dayData) {
@@ -2010,7 +2013,8 @@ public class LandscapeScheduleView extends LinearLayout {
                 event.location,
                 event.startTimeString,
                 event.eventType != null ? event.eventType : "Performance",
-                String.valueOf(staticVariables.eventYear)
+                String.valueOf(staticVariables.eventYear),
+                event.day
             );
         }
         
@@ -2052,6 +2056,7 @@ public class LandscapeScheduleView extends LinearLayout {
         final ScheduleBlock finalEvent = event;
         final String finalNormalizedEventType = normalizedEventType;
         final String finalBandName = bandName;
+        final String finalScheduleDay = event.day;
         
         // Set click listener
         popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
@@ -2084,13 +2089,17 @@ public class LandscapeScheduleView extends LinearLayout {
                           ", eventYear=" + eventYear + 
                           ", status=" + selectedStatus);
                     
-                    attendedHandle.addShowsAttended(
-                        finalBandName,
-                        finalEvent.location,
-                        finalEvent.startTimeString,
-                        finalNormalizedEventType,
-                        selectedStatus
-                    );
+                    if (staticVariables.eventYear == 0) {
+                        staticVariables.ensureEventYearIsSet();
+                    }
+                    String idx = attendedHandle.buildAttendanceStorageKey(
+                            finalBandName,
+                            finalEvent.location,
+                            finalEvent.startTimeString,
+                            finalNormalizedEventType,
+                            String.valueOf(staticVariables.eventYear),
+                            finalScheduleDay);
+                    attendedHandle.addShowsAttended(idx, selectedStatus);
                     
                     // Refresh the display
                     if (currentDayIndex >= 0 && currentDayIndex < days.size()) {
@@ -3075,7 +3084,8 @@ public class LandscapeScheduleView extends LinearLayout {
             String attendedStatus = attendedHandle.getShowAttendedStatus(
                 bandName, location, startTimeStr, 
                 eventType != null ? eventType : "Performance",
-                String.valueOf(eventYear)
+                String.valueOf(eventYear),
+                day
             );
             
             // Always check if event is expired for styling purposes (darker colors)
