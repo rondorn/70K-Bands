@@ -128,6 +128,9 @@
 "Location Filters" = "Filter nach Veranstaltungsort"; //menu header (portrait + calendar: venues in use)
 "All venues hidden" = "Alle Orte ausgeblendet";
 "TapFilterToShowVenues" = "Tippe oben auf das Filter-Symbol, um Orte wieder anzuzeigen.";
+"NoScheduleAdjustFilters" = "Deine Filter können möglicherweise alle Termine ausblenden. Tippe auf Filter, um sie anzupassen.";
+"No Schedule Data Available" = "Keine Programmdaten verfügbar";
+"Schedule information is not currently loaded" = "Programminformationen sind derzeit nicht geladen";
 
 "Clear All Filters" = "Alle Filter löschen"; //menu choice
 "Show Flagged Events Only" = "Nur markierte Veranstaltungen anzeigen"; //menu choice

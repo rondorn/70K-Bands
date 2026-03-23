@@ -393,18 +393,47 @@ struct LandscapeScheduleView: View {
     
     private var noDataView: some View {
         ZStack {
-            VStack(spacing: 16) {
+            VStack(spacing: 20) {
                 Image(systemName: "calendar.badge.exclamationmark")
                     .font(.system(size: 48))
                     .foregroundColor(.gray)
                 
-                Text("No Schedule Data Available")
+                Text(NSLocalizedString("No Schedule Data Available", comment: "Empty calendar title"))
                     .font(.system(size: 18, weight: .medium))
                     .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
                 
-                Text("Schedule information is not currently loaded")
-                    .font(.system(size: 14))
-                    .foregroundColor(.gray)
+                if viewModel.totalUnfilteredEventCount > 0 {
+                    Text(NSLocalizedString("NoScheduleAdjustFilters", comment: "Hint when filters hide all events"))
+                        .font(.system(size: 14))
+                        .foregroundColor(.gray)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
+                } else {
+                    Text(NSLocalizedString("Schedule information is not currently loaded", comment: "Empty calendar subtitle"))
+                        .font(.system(size: 14))
+                        .foregroundColor(.gray)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
+                }
+                
+                // Filters live in the grid header; when there is no day data that header is hidden — offer the same sheet here.
+                Button(action: {
+                    showVenueFilterSheet = true
+                }) {
+                    HStack(spacing: 10) {
+                        Image(systemName: "line.3.horizontal.decrease")
+                            .font(.system(size: 20, weight: .semibold))
+                        Text(NSLocalizedString("Filters", comment: ""))
+                            .font(.system(size: 20, weight: .semibold))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 28)
+                    .padding(.vertical, 14)
+                    .background(Color.blue.opacity(0.88))
+                    .cornerRadius(10)
+                }
+                .padding(.top, 4)
             }
             
             // iPad: Add return to list view button

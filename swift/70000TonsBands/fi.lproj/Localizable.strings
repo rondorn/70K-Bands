@@ -101,6 +101,9 @@
 "Location Filters" = "Tapahtumapaikkasuodattimet"; //menu header (portrait + calendar: venues in use)
 "All venues hidden" = "Kaikki paikat piilotettu";
 "TapFilterToShowVenues" = "Napauta yllä olevaa suodatin-kuvaketta nähdäksesi paikat uudelleen.";
+"NoScheduleAdjustFilters" = "Suodattimesi saattavat piilottaa kaikki tapahtumat. Napauta Suodattimet säätääksesi niitä.";
+"No Schedule Data Available" = "Ei ohjelmatietoja saatavilla";
+"Schedule information is not currently loaded" = "Ohjelmatietoja ei ole juuri nyt ladattu";
 
 "Clear All Filters" = "Tyhjennä kaikki suodattimet";  //menu choice
 "Show Flagged Events Only" = "Näytä vain merkityt tapahtumat"; //menu choice

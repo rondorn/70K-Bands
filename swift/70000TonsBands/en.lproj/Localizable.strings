@@ -194,6 +194,9 @@
 "Location Filters" = "Location Filters"; //menu header
 "All venues hidden" = "All venues hidden";
 "TapFilterToShowVenues" = "Tap the filter icon above to show venues again.";
+"NoScheduleAdjustFilters" = "Your filters may be hiding all events. Tap Filters to adjust them.";
+"No Schedule Data Available" = "No Schedule Data Available";
+"Schedule information is not currently loaded" = "Schedule information is not currently loaded";
 
 "Clear All Filters" = "Clear All Filters"; //menu choice
 "Show Flagged Events Only" = "Show Flagged Events Only"; //menu choice

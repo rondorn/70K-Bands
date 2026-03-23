@@ -94,6 +94,9 @@
 "Location Filters" = "Lokale filtre"; //menu header (portrait + calendar: venues in use)
 "All venues hidden" = "Alle spillesteder skjult";
 "TapFilterToShowVenues" = "Tryk på filterikonet ovenfor for at vise spillesteder igen.";
+"NoScheduleAdjustFilters" = "Dine filtre kan skjule alle begivenheder. Tryk på Filtre for at justere dem.";
+"No Schedule Data Available" = "Ingen programdata tilgængelig";
+"Schedule information is not currently loaded" = "Programoplysninger er ikke indlæst i øjeblikket";
 
 "Clear All Filters" = "Ryd alle filtre";  //menu choice
 "Show Flagged Events Only" = "Vis kun markerede begivenheder";  //menu choice
