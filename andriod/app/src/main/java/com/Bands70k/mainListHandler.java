@@ -1,5 +1,6 @@
 package com.Bands70k;
 
+import android.content.Context;
 import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
@@ -37,6 +38,13 @@ public class mainListHandler {
     public Integer numberOfBands = 0; // Made public to allow setting from displayBandDataWithoutSchedule()
 
     public Integer allUpcomingEvents = 0;
+
+    /**
+     * Schedule-only: rows that would exist with only hide-expired applied — every upcoming time slot plus one row per
+     * lineup band with no upcoming slot (matches iOS {@code unfilteredEventsForCount + unfilteredBandOnlyCount}).
+     * Used for filter badge / "(Filtering)" so band-only rows are not compared against event-slot-only totals.
+     */
+    public int scheduleUnfilteredRowBaseline = 0;
 
     /**
      * Default constructor for mainListHandler.
@@ -98,6 +106,7 @@ public class mainListHandler {
         numberOfUnofficalEvents = 0;
         altNumberOfBands = 0;
         allUpcomingEvents = 0;
+        scheduleUnfilteredRowBaseline = 0;
         sortableBandNames.clear();
 
         List<String> bandPresent = new ArrayList<String>();
@@ -106,6 +115,7 @@ public class mainListHandler {
         Set<String> allBands = new ArraySet<>();
 
         if (BandInfo.scheduleRecords != null && !BandInfo.scheduleRecords.isEmpty()) {
+            Set<String> bandsWithAtLeastOneUpcomingSlot = new ArraySet<>();
             Log.d("FILTER_DEBUG", "🔍 BandInfo.scheduleRecords has " + bandInfo.scheduleRecords.keySet().size() + " bands");
             for (String bandName : bandInfo.scheduleRecords.keySet()) {
                 Log.d("FILTER_DEBUG", "🔍 Processing band: " + bandName);
@@ -136,6 +146,7 @@ public class mainListHandler {
                         boolean timeCondition = bufferEndTime > System.currentTimeMillis() || staticVariables.preferences.getHideExpiredEvents() == false;
                         Log.d("FILTER_DEBUG", "⏰ TIME CONDITION for " + bandName + ": " + timeCondition + " (buffer end time: " + bufferEndTime + ")");
                         if (timeCondition){
+                            bandsWithAtLeastOneUpcomingSlot.add(bandName);
                             allUpcomingEvents++;
                             Log.d("FILTER_DEBUG", "📞 SORTBYTIME: Calling applyFilters for band: " + bandName + ", timeIndex: " + timeIndex);
                             if (applyFilters(bandName, timeIndex) == true) {
@@ -163,6 +174,7 @@ public class mainListHandler {
                         boolean timeCondition = bufferEndTime > System.currentTimeMillis() || staticVariables.preferences.getHideExpiredEvents() == false;
                         Log.d("FILTER_DEBUG", "⏰ ALPHA TIME CONDITION for " + bandName + ": " + timeCondition + " (buffer end time: " + bufferEndTime + ")");
                         if (timeCondition) {
+                            bandsWithAtLeastOneUpcomingSlot.add(bandName);
                             allUpcomingEvents++;
                             Log.d("FILTER_DEBUG", "📞 SORTALPHA: Calling applyFilters for band: " + bandName + ", timeIndex: " + timeIndex);
                             if (applyFilters(bandName, timeIndex) == true) {
@@ -179,6 +191,21 @@ public class mainListHandler {
                     }
                 }
             }
+            int bandOnlyUnfilteredRows = 0;
+            for (String bandName : bandList) {
+                if (staticVariables.searchCriteria.isEmpty() == false) {
+                    if (bandName.toUpperCase().contains(staticVariables.searchCriteria.toUpperCase()) == false) {
+                        continue;
+                    }
+                }
+                if (!bandsWithAtLeastOneUpcomingSlot.contains(bandName)) {
+                    bandOnlyUnfilteredRows++;
+                }
+            }
+            scheduleUnfilteredRowBaseline = allUpcomingEvents + bandOnlyUnfilteredRows;
+            Log.d("FILTER_DEBUG", "📊 scheduleUnfilteredRowBaseline=" + scheduleUnfilteredRowBaseline
+                    + " (slots=" + allUpcomingEvents + " + bandOnly=" + bandOnlyUnfilteredRows + ")");
+
             // Separate events and bands for proper mixed display
             List<String> eventsList = new ArrayList<String>();
             List<String> bandsList = new ArrayList<String>();
@@ -368,7 +395,10 @@ public class mainListHandler {
         Log.d("showsIwillAttend", "staticVariables.showsIwillAttend is " + staticVariables.showsIwillAttend);
 
         if (sortableBandNames.size() == 0){
-            String emptyDataMessage = staticVariables.context.getResources().getString(R.string.data_filter_issue);
+            int ufc = staticVariables.unfilteredBandCount != null ? staticVariables.unfilteredBandCount : 0;
+            String emptyDataMessage = ufc > 0
+                    ? staticVariables.context.getString(R.string.data_filter_issue)
+                    : staticVariables.context.getString(R.string.waiting_for_data);
             sortableBandNames.add(emptyDataMessage);
             Log.d("FILTER_DEBUG", "🚨 NO BANDS passed filtering! Adding empty data message: " + emptyDataMessage);
         }
@@ -388,21 +418,97 @@ public class mainListHandler {
      */
     public int getHiddenRecordsCount() {
         int displayed = (arrayAdapter != null) ? arrayAdapter.getCount() : 0;
-        int hidden = Math.max(0, allUpcomingEvents - displayed);
-        return hidden;
+        if (BandInfo.scheduleRecords != null && !BandInfo.scheduleRecords.isEmpty()
+                && staticVariables.preferences.getShowScheduleView()) {
+            if (BandInfo.filterCountsUseBandSlotsForScheduleView()) {
+                int bandDisplayed = countUniqueLineupBandsRepresentedInSortableList(sortableBandNames);
+                return Math.max(0, Math.max(0, staticVariables.unfilteredBandCount) - bandDisplayed);
+            }
+            if (scheduleUnfilteredRowBaseline > 0) {
+                int lineupShown = countUniqueLineupBandsRepresentedInSortableList(sortableBandNames);
+                return Math.max(0, Math.max(0, staticVariables.unfilteredBandCount) - lineupShown);
+            }
+        }
+        int total = Math.max(0, staticVariables.unfilteredBandCount);
+        return Math.max(0, total - displayed);
     }
 
     /**
-     * Visible "band slot" rows on the list (excludes time-keyed schedule rows). Used when the imported
-     * schedule is unofficial-only so counts match iOS (unofficial rows do not affect band totals).
+     * Distinct <em>lineup</em> bands on the list (names present in {@link BandInfo#getLineupBandNameSet()}), from any
+     * row shape. Excludes schedule-only keys like preparty titles so hidden count matches {@code unfilteredBandCount}.
      */
-    public static int countVisibleBandSlotRowsInSortableList(List<String> sortableBandNames) {
+    public int countUniqueLineupBandsRepresentedInSortableList(List<String> sortableBandNames) {
+        Set<String> lineup = BandInfo.getLineupBandNameSet();
+        if (lineup.isEmpty()) {
+            return countUniqueBandsRepresentedInSortableList(sortableBandNames);
+        }
+        if (sortableBandNames == null || sortableBandNames.isEmpty()) {
+            return 0;
+        }
+        Set<String> bands = new ArraySet<>();
+        for (String item : sortableBandNames) {
+            if (item == null || item.isEmpty() || isPlaceholderMainListEntry(item)) {
+                continue;
+            }
+            String name = getBandNameFromIndex(item);
+            if (name != null && !name.isEmpty() && !isPlaceholderMainListEntry(name) && lineup.contains(name)) {
+                bands.add(name);
+            }
+        }
+        return bands.size();
+    }
+
+    /**
+     * Distinct band names on the list from any row shape (includes schedule-only keys — prefer
+     * {@link #countUniqueLineupBandsRepresentedInSortableList(List)} for filter badge vs {@code unfilteredBandCount}).
+     */
+    public int countUniqueBandsRepresentedInSortableList(List<String> sortableBandNames) {
+        if (sortableBandNames == null || sortableBandNames.isEmpty()) {
+            return 0;
+        }
+        Set<String> bands = new ArraySet<>();
+        for (String item : sortableBandNames) {
+            if (item == null || item.isEmpty() || isPlaceholderMainListEntry(item)) {
+                continue;
+            }
+            String name = getBandNameFromIndex(item);
+            if (name != null && !name.isEmpty() && !isPlaceholderMainListEntry(name)) {
+                bands.add(name);
+            }
+        }
+        return bands.size();
+    }
+
+    private boolean isPlaceholderMainListEntry(String item) {
+        if (item == null || item.isEmpty()) {
+            return false;
+        }
+        Context ctx = showBands != null ? showBands : staticVariables.context;
+        if (ctx == null) {
+            return false;
+        }
+        return item.equals(ctx.getString(R.string.data_filter_issue))
+                || item.equals(ctx.getString(R.string.waiting_for_data));
+    }
+
+    /**
+     * Plain band rows on the list (excludes time-keyed schedule rows). Used for unofficial-only header
+     * "{@code N Bands}"; unofficial/cruiser event lines are not included in {@code N}.
+     */
+    /**
+     * Band-name rows in {@code sortableBandNames} for unofficial-only header counts.
+     * Excludes time-keyed schedule lines and empty-state placeholders (filter / waiting messages).
+     */
+    public int countVisibleBandSlotRowsInSortableList(List<String> sortableBandNames) {
         if (sortableBandNames == null || sortableBandNames.isEmpty()) {
             return 0;
         }
         int n = 0;
         for (String item : sortableBandNames) {
             if (item == null || item.isEmpty()) {
+                continue;
+            }
+            if (isPlaceholderMainListEntry(item)) {
                 continue;
             }
             if (BandInfo.isScheduleEventRowListIndex(item)) {
@@ -797,29 +903,30 @@ public class mainListHandler {
 
     public String getSizeDisplay() {
 
-        staticVariables.filteringInPlace = false;
+        staticVariables.filteringInPlace = isAnyFilterActive();
         String displayText = "";
         String yearDisplay = "";
 
         String filteringText = "";
 
-        // Only show (Filtering) if a real filter is active
-        if (isAnyFilterActive()) {
+        // "(Filtering)" only when something is actually hidden (same basis as the orange badge), not merely
+        // because a toggle differs from default with zero effect on the list.
+        int hiddenForTitle = resolveHiddenCountForFilteringLabel();
+        if (hiddenForTitle > 0) {
             filteringText = " (" + staticVariables.context.getResources().getString(R.string.Filtering) + ")";
-            staticVariables.filteringInPlace = true;
-        } else {
-            staticVariables.filteringInPlace = false;
         }
 
-        Log.d("Setup header Text Bands", "Filtering in place set to " + String.valueOf(staticVariables.filteringInPlace));
+        Log.d("Setup header Text Bands", "Filtering in place set to " + String.valueOf(staticVariables.filteringInPlace) + ", hiddenForTitle=" + hiddenForTitle);
 
         if (String.valueOf(staticVariables.preferences.getEventYearToLoad()).equals("Current") == false){
             yearDisplay = "(" + String.valueOf(staticVariables.preferences.getEventYearToLoad()) + ")";
         }
 
-        // Unofficial-only imported schedule: header is always band-centric (ignore unofficial event rows in the number).
+        // Unofficial-only schedule: header "Bands" counts plain band rows only — time-keyed unofficial/cruiser lines
+        // are not part of the band total. Filter badge uses lineup-only unique count via
+        // countUniqueLineupBandsRepresentedInSortableList (excludes preparty/synthetic schedule keys).
         if (BandInfo.filterCountsUseBandSlotsForScheduleView() && sortableBandNames != null) {
-            int visibleBandSlots = countVisibleBandSlotRowsInSortableList(sortableBandNames);
+            int visibleBandSlots = this.countVisibleBandSlotRowsInSortableList(sortableBandNames);
             staticVariables.showEventButtons = false;
             staticVariables.showUnofficalEventButtons = (numberOfUnofficalEvents > 0);
             displayText = yearDisplay + " " + visibleBandSlots + " " + staticVariables.context.getString(R.string.Bands) + filteringText;
@@ -827,11 +934,19 @@ public class mainListHandler {
             return displayText;
         }
         
-        // FIX: If numberOfBands is 0 but we have bands in sortableBandNames and no events, use sortableBandNames.size()
-        // This handles the case where schedule is empty but bands are displayed
+        // FIX: If numberOfBands is 0 but we have real (non-placeholder) rows and no events, use that count.
+        // Do not treat data_filter_issue / waiting_for_data as a band.
         if (numberOfBands == 0 && numberOfEvents == 0 && sortableBandNames != null && !sortableBandNames.isEmpty()) {
-            numberOfBands = sortableBandNames.size();
-            Log.d("HeaderText", "🔧 FIX: numberOfBands was 0 but sortableBandNames has " + numberOfBands + " items, using that count");
+            int nonPlaceholderRows = 0;
+            for (String item : sortableBandNames) {
+                if (item != null && !item.isEmpty() && !isPlaceholderMainListEntry(item)) {
+                    nonPlaceholderRows++;
+                }
+            }
+            if (nonPlaceholderRows > 0) {
+                numberOfBands = nonPlaceholderRows;
+                Log.d("HeaderText", "🔧 FIX: numberOfBands was 0 but sortableBandNames has " + nonPlaceholderRows + " non-placeholder items, using that count");
+            }
         }
         
         if (numberOfBands != 0) {
@@ -868,6 +983,17 @@ public class mainListHandler {
         }
 
         return displayText;
+    }
+
+    /**
+     * Hidden record count for the title suffix; matches {@link showBands#getFilterBadgeHiddenCount()} when
+     * the activity is available (current list adapter). Falls back to {@link #getHiddenRecordsCount()} otherwise.
+     */
+    private int resolveHiddenCountForFilteringLabel() {
+        if (showBands != null) {
+            return showBands.getFilterBadgeHiddenCount();
+        }
+        return getHiddenRecordsCount();
     }
 
     public String getStartTime(String bandName, Long timeIndex){

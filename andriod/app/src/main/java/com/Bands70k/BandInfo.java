@@ -21,8 +21,10 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static android.app.ActivityManager.isRunningInTestHarness;
 import static com.Bands70k.staticVariables.staticVariablesInitialize;
@@ -61,33 +63,48 @@ public class BandInfo {
     }
 
     /**
-     * True when the schedule has at least one event and every event is Cruiser Organized or Unofficial Event.
-     * Used to simplify the filter menu (hide venues, sort, flagged-only, and non-unofficial event toggles).
+     * True when the schedule has at least one <em>current</em> event (non-expired when hide-expired is on)
+     * and every such event is Cruiser Organized or Unofficial Event. When hide-expired is on and all
+     * slots are expired, returns false so counts/menus match a bands-only list (parity with iOS).
      */
     public static boolean scheduleHasOnlyUnofficialEventTypes() {
         if (scheduleRecords == null || scheduleRecords.isEmpty()) {
             return false;
         }
-        boolean sawAnyEvent = false;
+        boolean hideExpired = staticVariables.preferences != null && staticVariables.preferences.getHideExpiredEvents();
+        long now = System.currentTimeMillis();
+        boolean sawAnyCurrentEvent = false;
         for (scheduleTimeTracker tracker : scheduleRecords.values()) {
             if (tracker == null || tracker.scheduleByTime == null) {
                 continue;
             }
-            for (scheduleHandler sh : tracker.scheduleByTime.values()) {
-                if (sh == null) {
+            for (Map.Entry<Long, scheduleHandler> entry : tracker.scheduleByTime.entrySet()) {
+                Long timeIndex = entry.getKey();
+                scheduleHandler sh = entry.getValue();
+                if (sh == null || timeIndex == null) {
                     continue;
+                }
+                if (hideExpired) {
+                    long endTime = sh.getEpochEnd();
+                    if (timeIndex > endTime) {
+                        endTime = endTime + (3600000L * 24);
+                    }
+                    long bufferEndTime = endTime + 600000L;
+                    if (bufferEndTime <= now) {
+                        continue;
+                    }
                 }
                 String type = sh.getShowType();
                 if (type == null || type.isEmpty()) {
                     return false;
                 }
-                sawAnyEvent = true;
+                sawAnyCurrentEvent = true;
                 if (!staticVariables.unofficalEvent.equals(type) && !staticVariables.unofficalEventOld.equals(type)) {
                     return false;
                 }
             }
         }
-        return sawAnyEvent;
+        return sawAnyCurrentEvent;
     }
 
     /**
@@ -125,6 +142,25 @@ public class BandInfo {
         return staticVariables.preferences != null
                 && staticVariables.preferences.getShowScheduleView()
                 && scheduleHasOnlyUnofficialEventTypes();
+    }
+
+    /**
+     * Names from the festival lineup CSV ({@link #bandData} keys). Schedule import rows that use synthetic keys
+     * (e.g. preparty titles) are not in this set — required so filter-badge math uses the same 60-band baseline as
+     * {@code unfilteredBandCount}, not “row count” inflated by those keys.
+     */
+    public static Set<String> getLineupBandNameSet() {
+        HashSet<String> set = new HashSet<>();
+        if (bandData != null && !bandData.isEmpty()) {
+            set.addAll(bandData.keySet());
+            return set;
+        }
+        BandInfo bi = new BandInfo();
+        ArrayList<String> parsed = bi.ParseBandCSV();
+        if (parsed != null) {
+            set.addAll(parsed);
+        }
+        return set;
     }
 
     public Map<String,String> downloadUrls = new HashMap<String, String>();

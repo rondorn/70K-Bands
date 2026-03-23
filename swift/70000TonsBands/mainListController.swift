@@ -44,12 +44,30 @@ func getBands() -> [String]{
     return bands
 }
 
-/// Imported schedule is non-empty and every event is Unofficial or Cruiser Organized (matches Android `BandInfo.scheduleHasOnlyUnofficialEventTypes`).
-func scheduleCompositionIsUnofficialOnly(forYear year: Int) -> Bool {
+/// Events that matter for composition, titles, and filter UX: when hide-expired is on, only not-yet-expired rows (10‑min buffer); otherwise all imported events.
+func currentEventsForScheduleRules(forYear year: Int) -> [EventData] {
     let allEvents = DataManager.shared.fetchEvents(forYear: year)
-    guard !allEvents.isEmpty else { return false }
+    guard getHideExpireScheduleData() else { return allEvents }
+    let currentTime = Date().timeIntervalSinceReferenceDate
+    return allEvents.filter { event in
+        var endTimeIndex = event.endTimeIndex
+        if event.timeIndex > endTimeIndex { endTimeIndex += 86400 }
+        return endTimeIndex + 600 > currentTime
+    }
+}
+
+/// True when there is at least one event that counts under `currentEventsForScheduleRules` (matches list when hide-expired hides everything).
+/// Navigation title **Bands vs Events** uses this with `scheduleCompositionIsUnofficialOnly` in `MasterViewController.headerTitleCountAndBandVsEventsLabel`.
+func scheduleHasCurrentEventsForRules(forYear year: Int) -> Bool {
+    !currentEventsForScheduleRules(forYear: year).isEmpty
+}
+
+/// Non-empty current-event set and every such event is Unofficial or Cruiser Organized (matches Android `BandInfo.scheduleHasOnlyUnofficialEventTypes` with hide-expired parity).
+func scheduleCompositionIsUnofficialOnly(forYear year: Int) -> Bool {
+    let events = currentEventsForScheduleRules(forYear: year)
+    guard !events.isEmpty else { return false }
     let allowed: Set<String> = [unofficalEventType, unofficalEventTypeOld]
-    for event in allEvents {
+    for event in events {
         let t = event.eventType ?? ""
         if t.isEmpty { return false }
         if !allowed.contains(t) { return false }

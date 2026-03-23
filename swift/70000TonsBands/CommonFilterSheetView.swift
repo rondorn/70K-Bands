@@ -143,8 +143,16 @@ struct CommonFilterSheetView: View {
         getShowScheduleView()
     }
     
-    private var showScheduleFilters: Bool {
-        hasScheduledEvents && showScheduleView
+    /// True when the year's schedule is **bands + unofficial-only** (no official cruise events yet).
+    /// In this mode the filter sheet must stay narrow (rankings + unofficial toggle only), even when
+    /// "Show Unofficial" is on — otherwise `hasScheduledEvents` flips and exposes sort / M&G / venues.
+    private var scheduleIsUnofficialOnlyComposition: Bool {
+        showScheduleView && scheduleCompositionIsUnofficialOnly(forYear: eventYear)
+    }
+    
+    /// Full schedule filter UI (sort, flagged, meet & greet, special, locations). Not used for unofficial-only composition.
+    private var showRichScheduleFilterSections: Bool {
+        hasScheduledEvents && showScheduleView && !scheduleIsUnofficialOnlyComposition
     }
     
     private var isFlaggedFilterEnabled: Bool {
@@ -287,12 +295,12 @@ struct CommonFilterSheetView: View {
         }
         
         // 2. Sort By Name (portrait/list only)
-        if menuOrder == .portrait, showScheduleFilters {
+        if menuOrder == .portrait, showRichScheduleFilterSections {
             sortBySection
         }
         
         // 3. Show Flagged Events Only
-        if menuOrder == .portrait ? (showScheduleFilters && attendingCount > 0) : hasFlaggedEvents(forDay: dayLabel) {
+        if menuOrder == .portrait ? (showRichScheduleFilterSections && attendingCount > 0) : hasFlaggedEvents(forDay: dayLabel) {
             flaggedEventsSection
         }
         
@@ -307,7 +315,8 @@ struct CommonFilterSheetView: View {
         }
         
         // 6. Location Filters
-        if (menuOrder == .portrait && showScheduleFilters && !venues.isEmpty) || (menuOrder == .calendar && !venues.isEmpty) {
+        if !scheduleIsUnofficialOnlyComposition,
+           (menuOrder == .portrait && showRichScheduleFilterSections && !venues.isEmpty) || (menuOrder == .calendar && !venues.isEmpty) {
             locationSection
         }
     }
@@ -516,13 +525,13 @@ struct CommonFilterSheetView: View {
     
     @ViewBuilder
     private var eventTypeSection: some View {
-        let showScheduledEventTypeFilters = showScheduleFilters && (getMeetAndGreetsEnabled() || getSpecialEventsEnabled())
+        let showScheduledEventTypeFilters = showRichScheduleFilterSections && (getMeetAndGreetsEnabled() || getSpecialEventsEnabled())
         // Show Unofficial option only when schedule actually contains Unofficial or Cruiser Organized events
         let showUnofficalEventFilter = getUnofficalEventsEnabled() && showScheduleView && eventCounterUnoffical > 0
         
         if showScheduledEventTypeFilters || showUnofficalEventFilter {
             Section(header: sectionHeader(NSLocalizedString("Event Type Filters", comment: ""))) {
-                if getMeetAndGreetsEnabled() && showScheduleFilters {
+                if getMeetAndGreetsEnabled() && showRichScheduleFilterSections {
                     eventTypeRow(
                         icon: getShowMeetAndGreetEvents() ? meetAndGreetIcon : meetAndGreetIconAlt,
                         title: NSLocalizedString("Show Meet & Greet", comment: ""),
@@ -537,7 +546,7 @@ struct CommonFilterSheetView: View {
                         )
                     )
                 }
-                if getSpecialEventsEnabled() && showScheduleFilters {
+                if getSpecialEventsEnabled() && showRichScheduleFilterSections {
                     eventTypeRow(
                         icon: getShowSpecialEvents() ? specialEventTypeIcon : specialEventTypeIconAlt,
                         title: NSLocalizedString("Show Special/Other", comment: ""),

@@ -455,12 +455,14 @@ class MasterViewUIManager {
     ///   - searchText: The current search text
     ///   - filterTextNeeded: Reference to filterTextNeeded variable to update
     ///   - filtersOnText: Reference to filtersOnText variable to update
+    ///   - hiddenRecordsCount: Rows hidden vs lineup/event total (same basis as orange badge); "(Filtering)" only when > 0
     func setFilterTitleText(
         bands: [String],
         listCount: Int,
         searchText: String?,
         filterTextNeeded: inout Bool,
-        filtersOnText: inout String
+        filtersOnText: inout String,
+        hiddenRecordsCount: Int
     ) {
         print("🔧 [INIT_DEBUG] setFilterTitleText() ENTERED")
         
@@ -500,14 +502,14 @@ class MasterViewUIManager {
         
         print("🔍 [FILTER_STATUS] Final filterTextNeeded: \(filterTextNeeded)")
         
-        // Set the filter text based on whether any filters are active
-        if (filterTextNeeded == true){
+        // Title "(Filtering)" only when something is actually hidden (matches orange badge), not merely non-default toggles.
+        if hiddenRecordsCount > 0 {
             filtersOnText = "(" + NSLocalizedString("Filtering", comment: "") + ")"
         } else {
             filtersOnText = ""
         }
         
-        print("🔍 [FILTER_STATUS] filtersOnText set to: '\(filtersOnText)'")
+        print("🔍 [FILTER_STATUS] filtersOnText set to: '\(filtersOnText)' (hiddenRecordsCount=\(hiddenRecordsCount))")
     }
     
     // MARK: - Icon Helpers
