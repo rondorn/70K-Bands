@@ -130,6 +130,9 @@
 "Location Filters" = "Filtres de sites"; //menu header (portrait + calendar: venues in use)
 "All venues hidden" = "Tous les lieux masqués";
 "TapFilterToShowVenues" = "Appuyez sur l’icône de filtre ci-dessus pour afficher à nouveau les lieux.";
+"NoScheduleAdjustFilters" = "Vos filtres peuvent masquer tous les événements. Appuyez sur Filtres pour les ajuster.";
+"No Schedule Data Available" = "Aucune donnée de programme disponible";
+"Schedule information is not currently loaded" = "Les informations du programme ne sont pas chargées pour le moment";
 
 "Clear All Filters" = "Effacer tous les filtres"; //menu choice
 
