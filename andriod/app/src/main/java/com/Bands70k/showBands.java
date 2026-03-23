@@ -5721,7 +5721,6 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         }
         
         long currentTimeMillis = System.currentTimeMillis();
-        double currentTimeSeconds = currentTimeMillis / 1000.0;
         
         boolean foundAnyNonExpired = false;
         int totalEvents = 0;
@@ -5743,32 +5742,28 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 
                 totalEvents++;
                 
-                // Calculate if this event is expired
-                // CRITICAL: timeIndex is stored in MILLISECONDS, convert to seconds for comparison
-                double timeIndexSeconds = timeIndex.doubleValue() / 1000.0;
-                double endTimeIndex = timeIndexSeconds;
-                
-                // Get duration from schedule handler
+                // Effective end instant (ms): same-row overnight shows parse end before start on the calendar date — align with mainListHandler.
                 java.util.Date startDate = scheduleHandle.getStartTime();
                 java.util.Date endDate = scheduleHandle.getEndTime();
-                
+                long endMs;
                 if (startDate != null && endDate != null) {
-                    long durationSeconds = (endDate.getTime() - startDate.getTime()) / 1000;
-                    endTimeIndex = timeIndexSeconds + durationSeconds;
+                    endMs = endDate.getTime();
+                    long startMs = startDate.getTime();
+                    if (startMs > endMs) {
+                        endMs += 86400000L;
+                    }
                 } else {
-                    // Default to 1 hour if we can't determine duration
-                    endTimeIndex = timeIndexSeconds + 3600;
+                    endMs = timeIndex.longValue() + 3600000L;
                 }
-                
-                // Event is expired if its end time has passed
-                boolean isExpired = endTimeIndex <= currentTimeSeconds;
+                // Portrait uses 10-minute buffer after end before treating as expired
+                boolean isExpired = (endMs + 600000L) <= currentTimeMillis;
                 
                 if (isExpired) {
                     expiredEvents++;
                 } else {
                     foundAnyNonExpired = true;
                     Log.d("LANDSCAPE_SCHEDULE", "Found non-expired event: " + bandEntry.getKey() + 
-                          " (endTimeIndex=" + endTimeIndex + ", currentTime=" + currentTimeSeconds + ")");
+                          " (endMs=" + endMs + ", currentTime=" + currentTimeMillis + ")");
                     // Early exit if we find any non-expired event
                     break;
                 }

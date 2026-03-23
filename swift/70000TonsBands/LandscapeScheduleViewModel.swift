@@ -740,14 +740,19 @@ class LandscapeScheduleViewModel: ObservableObject {
                 scheduleDay: day
             )
             
-            // Mark events as expired when hideExpiredEvents is enabled (for dimming)
-            // Use the same logic as portrait view: endTimeIndex > currentTime (using reference date)
+            // Mark events as expired when hideExpiredEvents is enabled (for dimming).
+            // Match portrait / mainListController: if stored end is earlier than start (overnight row), end is next calendar day; then apply 10-minute buffer.
             let isExpired: Bool
             if self.hideExpiredEvents {
                 let currentTime = Date().timeIntervalSinceReferenceDate
-                isExpired = event.endTimeIndex <= currentTime
+                var effectiveEnd = event.endTimeIndex
+                if event.timeIndex > effectiveEnd {
+                    effectiveEnd += 86400
+                }
+                let bufferEnd = effectiveEnd + 600
+                isExpired = bufferEnd <= currentTime
                 if isExpired {
-                    print("🔍 [EXPIRED_CHECK] \(event.bandName): endTimeIndex=\(event.endTimeIndex), current=\(currentTime) - EXPIRED")
+                    print("🔍 [EXPIRED_CHECK] \(event.bandName): effectiveEnd=\(effectiveEnd) bufferEnd=\(bufferEnd) current=\(currentTime) - EXPIRED")
                 }
             } else {
                 isExpired = false
