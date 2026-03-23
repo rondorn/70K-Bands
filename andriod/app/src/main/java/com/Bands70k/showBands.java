@@ -1205,6 +1205,24 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     }
 
     /**
+     * Raw index string for the visible row at {@code position} (time:band, band:time, or plain name).
+     * Must come from {@link mainListHandler#bandNamesIndex}, which is filled in lockstep with the
+     * adapter in {@code displayBandDataWithSchedule} / {@code displayBandDataWithoutSchedule}.
+     * Do not use {@link #scheduleSortedBandNames}{@code .get(position)} alone — populateBandInfo can
+     * list slots that are skipped when building rows ({@code continue}), which desyncs positions.
+     */
+    private String getBandIndexAtListPosition(int position) {
+        if (listHandler != null && listHandler.bandNamesIndex != null
+                && position >= 0 && position < listHandler.bandNamesIndex.size()) {
+            return listHandler.bandNamesIndex.get(position);
+        }
+        if (scheduleSortedBandNames != null && position >= 0 && position < scheduleSortedBandNames.size()) {
+            return scheduleSortedBandNames.get(position);
+        }
+        return null;
+    }
+
+    /**
      * CLICK LISTENER FIX: Centralized method to ensure click listener is always set
      * This must be called after bandNamesList is initialized and whenever the list is refreshed
      */
@@ -1255,10 +1273,13 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             bandNamesList.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
                 @Override
                 public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                    if (listHandler == null || scheduleSortedBandNames == null || position >= scheduleSortedBandNames.size()) {
+                    if (listHandler == null) {
                         return false;
                     }
-                    String bandIndex = scheduleSortedBandNames.get(position);
+                    String bandIndex = getBandIndexAtListPosition(position);
+                    if (bandIndex == null) {
+                        return false;
+                    }
                     String bandName = getBandNameFromIndex(bandIndex);
                     Long timeIndex = getTimeIndexFromIndex(bandIndex);
                     String location = null;
@@ -1451,7 +1472,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             @Override
             public boolean onMenuItemClick(int position, SwipeMenu menu, int index) {
 
-                String bandIndex = scheduleSortedBandNames.get(position);
+                String bandIndex = getBandIndexAtListPosition(position);
+                if (bandIndex == null) {
+                    return false;
+                }
 
                 String bandName = getBandNameFromIndex(bandIndex);
                 Long timeIndex = getTimeIndexFromIndex(bandIndex);
@@ -2788,7 +2812,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
      * Updates the filter badge (hidden records count) to match iOS.
      * Shows in both list and schedule view when filters are hiding records.
      * Uses {@link BandInfo#filterCountsUseBandSlotsForScheduleView()} so unofficial-only schedules
-     * count lineup bands only; official schedules use event-based totals.
+     * count lineup bands only; rich schedules use {@link mainListHandler#scheduleUnfilteredRowBaseline}
+     * (upcoming slots + lineup bands with no upcoming slot), matching iOS {@code unfilteredBandCount}.
      */
     public void updateFilterBadge() {
         TextView badge = (TextView) findViewById(R.id.filterCountBadge);
@@ -2831,41 +2856,29 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     }
 
     /**
-     * In unofficial-only schedule mode, only band-slot rows (not time-keyed unofficial rows) count toward "displayed"
-     * for the badge, so hidden = lineup total − visible band rows.
+     * Hidden rows vs lineup/event total (same as filter badge). Used for the "(Filtering)" header suffix.
      */
-    private int filterBadgeDisplayedBandSlotCount() {
-        if (adapter == null) {
-            return 0;
-        }
-        int n = 0;
-        for (int i = 0; i < adapter.getCount(); i++) {
-            bandListItem item = adapter.getItem(i);
-            if (item == null) {
-                continue;
-            }
-            String raw = item.getBandName();
-            if (isFilterBadgePlaceholderBandName(raw)) {
-                continue;
-            }
-            if (BandInfo.isScheduleEventRowListIndex(raw)) {
-                continue;
-            }
-            n++;
-        }
-        return n;
+    int getFilterBadgeHiddenCount() {
+        return computeFilterBadgeHiddenCount();
     }
 
     private int computeFilterBadgeHiddenCount() {
         boolean scheduleView = staticVariables.preferences.getShowScheduleView();
         int displayedReal = filterBadgeDisplayedRealRowCount();
-        if (listHandler != null && listHandler.allUpcomingEvents > 0 && scheduleView) {
+        if (listHandler != null && scheduleView
+                && BandInfo.scheduleRecords != null && !BandInfo.scheduleRecords.isEmpty()) {
             if (BandInfo.filterCountsUseBandSlotsForScheduleView()) {
-                int bandDisplayed = filterBadgeDisplayedBandSlotCount();
+                // sortableBandNames from populateBandInfo (not the adapter). Count only CSV lineup names so preparty
+                // schedule keys do not inflate "displayed" vs unfilteredBandCount (see logs: 66 rows, 60 lineup).
+                int bandDisplayed = listHandler.countUniqueLineupBandsRepresentedInSortableList(listHandler.sortableBandNames);
                 int total = Math.max(0, staticVariables.unfilteredBandCount);
                 return Math.max(0, total - bandDisplayed);
             }
-            return Math.max(0, listHandler.allUpcomingEvents - displayedReal);
+            if (listHandler.scheduleUnfilteredRowBaseline > 0) {
+                int lineupShown = listHandler.countUniqueLineupBandsRepresentedInSortableList(listHandler.sortableBandNames);
+                int total = Math.max(0, staticVariables.unfilteredBandCount);
+                return Math.max(0, total - lineupShown);
+            }
         }
         int total = Math.max(0, staticVariables.unfilteredBandCount);
         return Math.max(0, total - displayedReal);
@@ -2921,6 +2934,22 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         Log.d("MDF_DEBUG", "🎨 displayBandData() END");
     }
 
+    /**
+     * When the visible band list is empty, choose the correct copy:
+     * <ul>
+     *   <li>{@link R.string#data_filter_issue} — lineup/CSV had at least one band row, but none pass current filters.</li>
+     *   <li>{@link R.string#waiting_for_data} — no band rows to show yet (missing/empty lineup, not loaded, etc.).</li>
+     * </ul>
+     * Relies on {@link BandInfo#getBandNames()} having set {@code staticVariables.unfilteredBandCount} for the same pass.
+     */
+    private String emptyBandListPlaceholderMessage() {
+        int ufc = staticVariables.unfilteredBandCount != null ? staticVariables.unfilteredBandCount : 0;
+        if (ufc > 0) {
+            return getString(R.string.data_filter_issue);
+        }
+        return getString(R.string.waiting_for_data);
+    }
+
     private void displayBandDataWithoutSchedule() {
         
         // CLICK FIX: Mark refresh as in progress to prevent clicks during adapter updates
@@ -2965,9 +2994,11 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         List<String> newScheduleSortedBandNames = new ArrayList<>();
         
         if (bandNames.size() == 0) {
-            String emptyDataMessage = getResources().getString(R.string.waiting_for_data);
+            String emptyDataMessage = emptyBandListPlaceholderMessage();
             bandListItem bandItem = new bandListItem(emptyDataMessage);
             newItems.add(bandItem);
+            newBandNamesIndex.add(emptyDataMessage);
+            newScheduleSortedBandNames.add(emptyDataMessage);
         } else {
             // Sort bands alphabetically for bands-only view
             Collections.sort(bandNames);
@@ -3000,6 +3031,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 String filterIssueMessage = getResources().getString(R.string.data_filter_issue);
                 bandListItem bandItem = new bandListItem(filterIssueMessage);
                 newItems.add(bandItem);
+                newBandNamesIndex.add(filterIssueMessage);
+                newScheduleSortedBandNames.add(filterIssueMessage);
                 Log.d("searchCriteria", "Bands-only search: no matches, showing filter issue message");
             }
 
@@ -3316,18 +3349,12 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             return;
         }
 
-        Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Step 2: Checking bandNames size");
-        if (bandNames.size() == 0) {
-            Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - WARNING: bandNames is empty");
-            String emptyDataMessage = "";
-            if (unfilteredBandCount > 1) {
-                Log.d("populateBandInfo", "BandList has issues 1");
-                //emptyDataMessage = getResources().getString(R.string.data_filter_issue);
-            } else {
-                emptyDataMessage = getResources().getString(R.string.waiting_for_data);
-                bandNames.add(emptyDataMessage);
-            }
-
+        if (bandNames == null || bandNames.isEmpty()) {
+            Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - No bands after preference filter; delegating to bands-only empty row");
+            refreshCounter = Math.max(0, refreshCounter - 1);
+            isRefreshing = (refreshCounter > 0);
+            displayBandDataWithoutSchedule();
+            return;
         }
 
         Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - Step 3: Getting ranked band names");
@@ -3547,15 +3574,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         // Handle empty data case
         if (counter == 0) {
             Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() - No items processed, adding empty data message");
-            String emptyDataMessage = "";
-            if (unfilteredBandCount > 1) {
-                Log.d("populateBandInfo", "BandList has issues 2");
-                emptyDataMessage = getResources().getString(R.string.data_filter_issue);
-            } else {
-                emptyDataMessage = getResources().getString(R.string.waiting_for_data);
-            }
+            String emptyDataMessage = emptyBandListPlaceholderMessage();
             bandListItem bandItem = new bandListItem(emptyDataMessage);
             newItems.add(bandItem);
+            newBandNamesIndex.add(emptyDataMessage);
         }
         
         // FLASHING FIX: Now replace adapter data atomically (adapter never goes to 0 items)
@@ -3572,7 +3594,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             // Update the index list atomically
             listHandler.bandNamesIndex.clear();
             listHandler.bandNamesIndex.addAll(newBandNamesIndex);
-            
+            scheduleSortedBandNames.clear();
+            scheduleSortedBandNames.addAll(newBandNamesIndex);
+
             Log.d("CRITICAL_DEBUG", "🎯 SHOWBANDS: Replaced adapter with " + adapter.getCount() + " items");
             
             // TRANSPARENT REFRESH: Immediately notify adapter of change to minimize flash
@@ -3692,8 +3716,19 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
         //Log.d("displayBandDataWithSchedule", "displayBandDataWithSchedule - 9");
         TextView bandCount = (TextView) this.findViewById(R.id.headerBandCount);
-        String headerText = String.valueOf(bandCount.getText());
-        Log.d("DisplayListData", "finished display " + String.valueOf(counter) + '-' + headerText);
+        if (bandCount != null && listHandler != null) {
+            String headerText = listHandler.getSizeDisplay();
+            bandCount.setText(headerText);
+            SharedPreferencesManager sharingManager = SharedPreferencesManager.getInstance();
+            String activeProfile = sharingManager.getActivePreferenceSource();
+            int profileColor = ProfileColorManager.getInstance().getColorInt(activeProfile);
+            bandCount.setTextColor(profileColor);
+            Log.d("DisplayListData", "finished display " + counter + " — header: " + headerText);
+        } else if (bandCount != null) {
+            Log.d("DisplayListData", "finished display " + counter + " — header (unchanged): " + bandCount.getText());
+        } else {
+            Log.d("DisplayListData", "finished display " + counter + " — headerBandCount null");
+        }
         
         // CLICK FIX: Mark refresh as complete after a short delay to allow UI to settle
         final long refreshStartTime = lastRefreshStartTime;
@@ -4666,13 +4701,22 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             Log.e("CLICK_DEBUG", "listHandler or bandNamesIndex is null!");
             return;
         }
-        if (scheduleSortedBandNames == null || position >= scheduleSortedBandNames.size()) {
-            Log.e("CLICK_DEBUG", "scheduleSortedBandNames issue at position: " + position);
+        if (position < 0 || position >= listHandler.bandNamesIndex.size()) {
+            Log.e("CLICK_DEBUG", "List position out of range: " + position);
             return;
         }
         // In schedule view bandNamesIndex holds raw indices (e.g. "1769540400000:Tue-Everglades Tour");
         // details screen needs the band name, so resolve from schedule index.
-        String bandIndex = scheduleSortedBandNames.get(position);
+        String bandIndex = getBandIndexAtListPosition(position);
+        if (bandIndex == null) {
+            Log.e("CLICK_DEBUG", "No band index for list position: " + position);
+            return;
+        }
+        String filterIssue = getString(R.string.data_filter_issue);
+        String waiting = getString(R.string.waiting_for_data);
+        if (filterIssue.equals(bandIndex) || waiting.equals(bandIndex)) {
+            return;
+        }
         final String selectedBand = getBandNameFromIndex(bandIndex);
         currentListForDetails = listHandler.bandNamesIndex;
         currentListPosition = position;
@@ -4686,10 +4730,13 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     public void showLongPressMenu(final String bandName, final int listPosition,
                                   final String location, final String rawStartTime, final String eventType) {
         String currentAttended = null;
-        if (location != null && rawStartTime != null && eventType != null && listHandler != null && listPosition >= 0 && scheduleSortedBandNames != null && listPosition < scheduleSortedBandNames.size()) {
-            String startTime = listHandler.getStartTime(bandName, getTimeIndexFromIndex(scheduleSortedBandNames.get(listPosition)));
-            showsAttended handler = staticVariables.attendedHandler != null ? staticVariables.attendedHandler : new showsAttended();
-            currentAttended = handler.getShowAttendedStatus(bandName, location, startTime, eventType, String.valueOf(eventYear));
+        if (location != null && rawStartTime != null && eventType != null && listHandler != null && listPosition >= 0) {
+            String rowIndex = getBandIndexAtListPosition(listPosition);
+            if (rowIndex != null) {
+                String startTime = listHandler.getStartTime(bandName, getTimeIndexFromIndex(rowIndex));
+                showsAttended handler = staticVariables.attendedHandler != null ? staticVariables.attendedHandler : new showsAttended();
+                currentAttended = handler.getShowAttendedStatus(bandName, location, startTime, eventType, String.valueOf(eventYear));
+            }
         }
         final Runnable onRefresh = listPosition >= 0 ? new Runnable() { @Override public void run() { saveScrollPosition(); refreshData(); } } : null;
         ignoreNextListClickUntilMenuDismissed = true;

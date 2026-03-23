@@ -3531,13 +3531,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     func setFilterTitleText(){
+        let displayedRealRows = displayedRowsForFilterBadge(in: bands)
+        let hiddenRecordsCount = max(0, unfilteredBandCount - displayedRealRows)
         // Delegate to UIManager (safe when called before view load)
         uiManager.setFilterTitleText(
             bands: bands,
             listCount: listCount,
             searchText: effectiveSearchBar?.text,
             filterTextNeeded: &filterTextNeeded,
-            filtersOnText: &filtersOnText
+            filtersOnText: &filtersOnText,
+            hiddenRecordsCount: hiddenRecordsCount
         )
         updateFilterButtonBadge()
     }
@@ -3598,7 +3601,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     private func ensureFilterCounterAndShareLayout() {
         let displayedRealRows = displayedRowsForFilterBadge(in: bands)
         let hiddenCount = max(0, unfilteredBandCount - displayedRealRows)
-        let hasHiddenRecords = hiddenCount > 0 && filterTextNeeded
+        let hasHiddenRecords = hiddenCount > 0
         
         // Clear old badge from button (legacy) in case we're transitioning
         effectiveFilterButton?.subviews.filter { $0.tag == 70000 }.forEach { $0.removeFromSuperview() }
@@ -3832,6 +3835,41 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         return unofficialCount
     }
+
+    /// Picks **Bands** vs **Events** for the navigation title count (must match list composition and Android header rules).
+    ///
+    /// Schedule view:
+    /// 1. **No imported rows under `currentEventsForScheduleRules`** (empty DB, header-only CSV, or hide-expired removed all rows) → **Bands** (visible band-slot / lineup count).
+    /// 2. **Unofficial-only** current schedule → **Bands** (band-centric; unofficial rows are not “show events” in the title).
+    /// 3. **At least one current event** and not unofficial-only → **Events** (`eventCount`), including “all expired but hide-expired is off” (user still sees event rows).
+    ///
+    /// Bands list mode (`!showScheduleView`) → **Bands**.
+    ///
+    /// `scheduleHasCurrentEventsForRules` / `scheduleCompositionIsUnofficialOnly` use `mainListController.currentEventsForScheduleRules` (hide-expired aware).
+    private func headerTitleCountAndBandVsEventsLabel(
+        showScheduleView: Bool,
+        year: Int,
+        bandsSnapshot: [String],
+        effectiveDisplayedBandRows: Int,
+        unofficialCountToSubtract: Int,
+        eventCount: Int,
+        filtersOnText: String
+    ) -> (count: Int, unitAndFiltersLabel: String) {
+        let bandSlotsDisplayed = displayedRowsForFilterBadge(in: bandsSnapshot)
+        let filtersSuffix = " " + filtersOnText
+
+        if !showScheduleView {
+            let c = max(effectiveDisplayedBandRows - unofficialCountToSubtract, 0)
+            return (c, " " + NSLocalizedString("Bands", comment: "") + filtersSuffix)
+        }
+        if scheduleCompositionIsUnofficialOnly(forYear: year) {
+            return (max(bandSlotsDisplayed, 0), " " + NSLocalizedString("Bands", comment: "") + filtersSuffix)
+        }
+        if !scheduleHasCurrentEventsForRules(forYear: year) {
+            return (max(bandSlotsDisplayed, 0), " " + NSLocalizedString("Bands", comment: "") + filtersSuffix)
+        }
+        return (max(eventCount, 0), " " + NSLocalizedString("Events", comment: "") + filtersSuffix)
+    }
   
     /// Updates the count label at the top of the list showing "{x} Events" or "{x} Bands"
     /// 
@@ -3899,20 +3937,17 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             let displayedUnofficialCount = showUnofficalEvents ? self.countUnofficialEventsInDisplayedBands(bands: bandsSnapshot) : 0
             let unofficialCountToSubtract = showUnofficalEvents ? displayedUnofficialCount : 0
             let showScheduleView = getShowScheduleView()
-            let compositionUnofficialOnly = scheduleCompositionIsUnofficialOnly(forYear: currentYear)
-            let bandSlotsDisplayed = self.displayedRowsForFilterBadge(in: bandsSnapshot)
-
-            let (labeleCounter, lableCounterString): (Int, String)
-            if !showScheduleView {
-                labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
-                lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnTextSnapshot
-            } else if compositionUnofficialOnly {
-                labeleCounter = max(bandSlotsDisplayed, 0)
-                lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + filtersOnTextSnapshot
-            } else {
-                labeleCounter = max(eventCount, 0)
-                lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + filtersOnTextSnapshot
-            }
+            let titleParts = self.headerTitleCountAndBandVsEventsLabel(
+                showScheduleView: showScheduleView,
+                year: currentYear,
+                bandsSnapshot: bandsSnapshot,
+                effectiveDisplayedBandRows: effectiveDisplayedCount,
+                unofficialCountToSubtract: unofficialCountToSubtract,
+                eventCount: eventCount,
+                filtersOnText: filtersOnTextSnapshot
+            )
+            let labeleCounter = titleParts.count
+            let lableCounterString = titleParts.unitAndFiltersLabel
 
             let currentYearSetting = getScheduleUrl()
             let titleText: String
@@ -3953,19 +3988,17 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             let displayedUnofficialCount = showUnofficalEvents ? self.countUnofficialEventsInDisplayedBands(bands: bandsSnapshotSync) : 0
             let unofficialCountToSubtract = showUnofficalEvents ? displayedUnofficialCount : 0
             let showScheduleView = getShowScheduleView()
-            let compositionUnofficialOnly = scheduleCompositionIsUnofficialOnly(forYear: eventYear)
-            let bandSlotsDisplayed = self.displayedRowsForFilterBadge(in: bandsSnapshotSync)
-            let (labeleCounter, lableCounterString): (Int, String)
-            if !showScheduleView {
-                labeleCounter = max(effectiveDisplayedCount - unofficialCountToSubtract, 0)
-                lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + capturedFiltersOnText
-            } else if compositionUnofficialOnly {
-                labeleCounter = max(bandSlotsDisplayed, 0)
-                lableCounterString = " " + NSLocalizedString("Bands", comment: "") + " " + capturedFiltersOnText
-            } else {
-                labeleCounter = max(capturedEventCount, 0)
-                lableCounterString = " " + NSLocalizedString("Events", comment: "") + " " + capturedFiltersOnText
-            }
+            let titleParts = self.headerTitleCountAndBandVsEventsLabel(
+                showScheduleView: showScheduleView,
+                year: eventYear,
+                bandsSnapshot: bandsSnapshotSync,
+                effectiveDisplayedBandRows: effectiveDisplayedCount,
+                unofficialCountToSubtract: unofficialCountToSubtract,
+                eventCount: capturedEventCount,
+                filtersOnText: capturedFiltersOnText
+            )
+            let labeleCounter = titleParts.count
+            let lableCounterString = titleParts.unitAndFiltersLabel
             let currentYearSetting = getScheduleUrl()
             let titleText: String
             if currentYearSetting != "Current" && currentYearSetting != "Default" {
