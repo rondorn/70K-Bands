@@ -425,6 +425,7 @@ def encode_qr_payload_image(payload: bytes) -> Image.Image:
 def draw_poster_pdf(
     out_path: Path,
     qr_images: Sequence[Image.Image],
+    schedule_change_title: str,
     print_dpi: int = 300,
 ) -> None:
     """
@@ -459,9 +460,18 @@ def draw_poster_pdf(
     c.drawCentredString(w_pt / 2, y, "70K Band Schedule QR Code")
     y -= gap_after_title
 
+    if schedule_change_title.strip():
+        c.setFont("Helvetica-Bold", body_pt)
+        c.drawCentredString(
+            w_pt / 2,
+            y,
+            f"Schedule update: {schedule_change_title.strip()}",
+        )
+        y -= body_leading
+
     c.setFont("Helvetica", body_pt)
     intro = (
-        "If your phone needs the latest version of the schedule, and you do not have "
+        "If your phone needs this latest schedule update and you do not have "
         "internet access, do the following:"
     )
     for line in _wrap_text(intro, max_intro_chars):
@@ -594,7 +604,24 @@ def main() -> int:
     parser.add_argument("--schedule-csv", type=Path, help="Local schedule CSV (skip download)")
     parser.add_argument("--event-year", type=int, default=2026, help="Event year (logging only)")
     parser.add_argument("--print-dpi", type=int, default=300, help="Assumed print DPI for QR sizing")
+    parser.add_argument(
+        "--schedule-change-title",
+        type=str,
+        default=None,
+        help="Short title describing what changed (e.g., Meet and Greet, Clinic, Storm Schedule)",
+    )
     args = parser.parse_args()
+
+    schedule_change_title = args.schedule_change_title
+    if schedule_change_title is None:
+        try:
+            schedule_change_title = input(
+                "Enter schedule change title (e.g., Meet and Greet, Clinic, Storm Schedule): "
+            ).strip()
+        except EOFError:
+            schedule_change_title = ""
+    if not schedule_change_title:
+        schedule_change_title = "Schedule Update"
 
     artist_url = FALLBACK_ARTIST_URL
     schedule_url = FALLBACK_SCHEDULE_URL
@@ -632,7 +659,12 @@ def main() -> int:
     )
 
     qr_images = [encode_qr_payload_image(p) for p in payloads]
-    draw_poster_pdf(args.output, qr_images, print_dpi=args.print_dpi)
+    draw_poster_pdf(
+        args.output,
+        qr_images,
+        schedule_change_title=schedule_change_title,
+        print_dpi=args.print_dpi,
+    )
     print(f"Wrote {args.output.resolve()}", file=sys.stderr)
     return 0
 
