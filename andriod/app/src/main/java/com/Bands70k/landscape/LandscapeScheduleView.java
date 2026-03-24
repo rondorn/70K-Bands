@@ -718,18 +718,20 @@ public class LandscapeScheduleView extends LinearLayout {
                                     boolean eventIsExpired = false;
                                     
                                     if (event.timeIndex > 0) {
-                                        // Match portrait / createScheduleBlockFromHandler: overnight rows → end next day; then 10-minute buffer.
-                                        long endMs;
+                                        // Calculate endTimeIndex: timeIndex (start in seconds) + duration
+                                        double endTimeIndex = event.timeIndex;
                                         if (event.startTime != null && event.endTime != null) {
-                                            endMs = event.endTime.getTime();
-                                            long startMs = event.startTime.getTime();
-                                            if (startMs > endMs) {
-                                                endMs += 86400000L;
-                                            }
+                                            // Calculate duration in seconds
+                                            long durationSeconds = (event.endTime.getTime() - event.startTime.getTime()) / 1000;
+                                            endTimeIndex = event.timeIndex + durationSeconds;
                                         } else {
-                                            endMs = (long) (event.timeIndex * 1000.0) + 3600000L;
+                                            // Default to 1 hour if we can't determine duration
+                                            endTimeIndex = event.timeIndex + 3600;
                                         }
-                                        eventIsExpired = (endMs + 600000L) <= currentTimeMillis;
+                                        
+                                        // Compare endTimeIndex (in seconds) with current time (in seconds)
+                                        double currentTimeSeconds = currentTimeMillis / 1000.0;
+                                        eventIsExpired = endTimeIndex <= currentTimeSeconds;
                                     } else {
                                         // If we can't determine expiration, assume it's not expired to be safe
                                         eventIsExpired = false;
@@ -3069,13 +3071,11 @@ public class LandscapeScheduleView extends LinearLayout {
                 }
             }
             
-            // Parsed start/end from CSV use the same row date; overnight shows have end clock before start (e.g. 22:00–01:00).
-            // Align with mainListHandler: treat end as the following calendar day (matches portrait hide-expired).
-            if (startDate != null && endDate != null && endDate.before(startDate)) {
-                Calendar cal = Calendar.getInstance();
-                cal.setTime(endDate);
-                cal.add(Calendar.HOUR_OF_DAY, 24);
-                endDate = cal.getTime();
+            // Calculate endTimeIndex for expiration checking (timeIndexDouble is now in seconds)
+            double endTimeIndex = timeIndexDouble;
+            if (startDate != null && endDate != null) {
+                long durationSeconds = (endDate.getTime() - startDate.getTime()) / 1000;
+                endTimeIndex = timeIndexDouble + durationSeconds;
             }
             
             String rankIcon = rankStore.getRankForBand(bandName);
@@ -3088,14 +3088,9 @@ public class LandscapeScheduleView extends LinearLayout {
                 day
             );
             
-            // Expiration for dimming: same as portrait list (end + 10-minute buffer vs now).
-            long endMsForExpire = 0L;
-            if (startDate != null && endDate != null) {
-                endMsForExpire = endDate.getTime();
-            } else {
-                endMsForExpire = (timeIndex != null ? timeIndex.longValue() : 0L) + 3600000L;
-            }
-            boolean isExpired = (endMsForExpire + 600000L) <= System.currentTimeMillis();
+            // Always check if event is expired for styling purposes (darker colors)
+            // hideExpiredEvents only controls filtering, not styling
+            boolean isExpired = endTimeIndex <= (System.currentTimeMillis() / 1000.0);
             
             String venueColorHex = FestivalConfig.getInstance().getVenueColor(location);
             int venueColor = parseColorFromHex(venueColorHex);
