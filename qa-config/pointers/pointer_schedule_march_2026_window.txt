@@ -1,5 +1,5 @@
 Current::artistUrl::https://raw.githubusercontent.com/rondorn/70K-Bands/master/qa-config/fixtures/qa_lineup_three_bands.csv
-Current::scheduleUrl::https://raw.githubusercontent.com/rondorn/70K-Bands/master/qa-config/fixtures/qa_schedule_march_2026_current_window.csv
+Current::scheduleUrl::https://raw.githubusercontent.com/rondorn/70K-Bands/refs/heads/master/qa-config/fixtures/qa_schedule_march_2026_current_window.csv
 Current::eventYear::2026
 Current::iosMinimum::20260120004
 Current::androidMinimum::302601193-70k
