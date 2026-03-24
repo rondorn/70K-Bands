@@ -2343,8 +2343,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     } else {
                         // If both are events, sort by time. If both are bands, sort alphabetically (since bands have no time)
                         if isEvent1 && isEvent2 {
-                            // Both are events - sort by time
-                        return getTimeFromSortable(item1, sortBy: sortedBy) < getTimeFromSortable(item2, sortBy: sortedBy)
+                            // Both are events - sort by time, then alphabetically for deterministic ties
+                            let time1 = getTimeFromSortable(item1, sortBy: sortedBy)
+                            let time2 = getTimeFromSortable(item2, sortBy: sortedBy)
+                            if time1 == time2 {
+                                return getNameFromSortable(item1, sortedBy: "name").localizedCaseInsensitiveCompare(getNameFromSortable(item2, sortedBy: "name")) == .orderedAscending
+                            }
+                            return time1 < time2
                         } else {
                             // Both are band names - sort alphabetically even when sortBy is "time"
                             return getNameFromSortable(item1, sortedBy: "name").localizedCaseInsensitiveCompare(getNameFromSortable(item2, sortedBy: "name")) == .orderedAscending
@@ -7495,8 +7500,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                         } else {
                             // If both are events, sort by time. If both are bands, sort alphabetically (since bands have no time)
                             if isEvent1 && isEvent2 {
-                                // Both are events - sort by time
-                                return getTimeFromSortable(item1, sortBy: sortedBy) < getTimeFromSortable(item2, sortBy: sortedBy)
+                                // Both are events - sort by time, then alphabetically for deterministic ties
+                                let time1 = getTimeFromSortable(item1, sortBy: sortedBy)
+                                let time2 = getTimeFromSortable(item2, sortBy: sortedBy)
+                                if time1 == time2 {
+                                    return getNameFromSortable(item1, sortedBy: "name").localizedCaseInsensitiveCompare(getNameFromSortable(item2, sortedBy: "name")) == .orderedAscending
+                                }
+                                return time1 < time2
                             } else {
                                 // Both are band names - sort alphabetically even when sortBy is "time"
                                 return getNameFromSortable(item1, sortedBy: "name").localizedCaseInsensitiveCompare(getNameFromSortable(item2, sortedBy: "name")) == .orderedAscending
