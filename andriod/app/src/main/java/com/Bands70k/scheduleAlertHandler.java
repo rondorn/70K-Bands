@@ -121,6 +121,12 @@ public class scheduleAlertHandler {
                             if (alertTime > 0 && showAlerts == true) {
 
                                 String alertMessage = bandName + " has a " + scheduleDetails.getShowType() + " in " + staticVariables.preferences.getMinBeforeToAlert() + " min at the " + scheduleDetails.getShowLocation();
+                                // Stable per-event key avoids collisions for same band/location across different days/times.
+                                String alertKey = bandName
+                                        + "|" + scheduleDetails.getShowDay()
+                                        + "|" + scheduleDetails.getShowType()
+                                        + "|" + scheduleDetails.getShowLocation()
+                                        + "|" + scheduleDetails.getEpochStart();
 
                                 SimpleDateFormat alertDateTime = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
                                 alertDateTime.setTimeZone(TimeZone.getTimeZone("PST8PDT"));
@@ -139,10 +145,22 @@ public class scheduleAlertHandler {
 
                                     Log.d("SchedNotications", bandName + " Alerttime of Epoch is " + String.valueOf(alertTime) + " - " + currentEpoch + " delay is " + delay);
 
-                                    if (delay > 1 && delay < 604800) {
+                                    // If we're slightly late (<= 5 min), fire immediately; otherwise drop stale alert.
+                                    if (delay <= 0) {
+                                        int latenessSeconds = -delay;
+                                        if (latenessSeconds <= 300) {
+                                            Log.d("SchedNotications", "Late-window alert (" + latenessSeconds + "s late) for " + bandName + " - scheduling immediate fire");
+                                            delay = 1;
+                                        } else {
+                                            Log.d("SchedNotications", bandName + " alert skipped - stale by " + latenessSeconds + "s (>300s)");
+                                            delay = -1;
+                                        }
+                                    }
+
+                                    if (delay > 0 && delay < 604800) {
                                         Log.d("SchedNotications", "!Timing1 " + String.valueOf(delay) + " - " + bandName + " perferences returned " + showAlerts + ":" + alertDateTimeText);
 
-                                        sendLocalAlert(alertMessage, delay);
+                                        sendLocalAlert(alertMessage, delay, alertKey);
 
                                     } else {
                                         Log.d("SchedNotications", bandName + " delay is too long or short " + String.valueOf(delay));
@@ -168,19 +186,20 @@ public class scheduleAlertHandler {
      * @param alertMessage The message to display.
      * @param delay The delay in seconds before the alert is shown.
      */
-    public void sendLocalAlert(String alertMessage, int delay){
+    public void sendLocalAlert(String alertMessage, int delay, String alertKey){
 
-        if (staticVariables.alertMessages.contains(alertMessage) == false) {
+        // De-duplicate by unique event key, not user-facing message text.
+        if (staticVariables.alertMessages.contains(alertKey) == false) {
 
             //delay = delay + 60;
-            staticVariables.alertMessages.add(alertMessage);
+            staticVariables.alertMessages.add(alertKey);
             staticVariables.alertTracker = staticVariables.alertTracker + 1;
             int delayInMilliSeconds = delay * 1000;
 
-            Log.e("SendLocalAlert", "alertMessage = " + alertMessage + " delay = " + delay + " alertTracker = " + staticVariables.alertTracker);
+            Log.e("SendLocalAlert", "alertMessage = " + alertMessage + " delay = " + delay + " alertTracker = " + staticVariables.alertTracker + " alertKey=" + alertKey);
 
             Notification notifyMessage = this.getNotification(alertMessage);
-            this.scheduleNotification(notifyMessage, delayInMilliSeconds, staticVariables.alertTracker, alertMessage);
+            this.scheduleNotification(notifyMessage, delayInMilliSeconds, staticVariables.alertTracker, alertMessage, alertKey);
         }
     }
 
@@ -191,14 +210,14 @@ public class scheduleAlertHandler {
      * @param unuiqueID The unique ID for the notification.
      * @param content The content/message for the notification.
      */
-    public void scheduleNotification(Notification notification, int delay, int unuiqueID, String content) {
+    public void scheduleNotification(Notification notification, int delay, int unuiqueID, String content, String alertKey) {
 
         try {
             Intent notificationIntent = new Intent(context, NotificationPublisher.class);
             notificationIntent.putExtra(String.valueOf(delay), 1);
             notificationIntent.putExtra(NotificationPublisher.NOTIFICATION, notification);
             notificationIntent.putExtra("messageText", content);
-            notificationIntent.setAction(content);
+            notificationIntent.setAction(alertKey);
 
 
             PendingIntent pendingIntent = PendingIntent.getBroadcast(context, unuiqueID, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
@@ -227,7 +246,7 @@ public class scheduleAlertHandler {
                 alarmManager.set(ALARM_TYPE, futureInMillis, pendingIntent);
             }
 
-            alarmStorageStringHash.put(unuiqueID, content);
+            alarmStorageStringHash.put(unuiqueID, alertKey);
 
         } catch (Exception error){
             Log.d("NotifLogs", "Encountered issue scheduling alert " + error.getMessage());
@@ -378,14 +397,13 @@ public class scheduleAlertHandler {
 
             for (Integer id : alarmStorageStringHash.keySet()) {
 
-                String messageContent = alarmStorageStringHash.get(id);
-
-                Notification tempNotification = getNotification(messageContent);
+                String alertKey = alarmStorageStringHash.get(id);
+                Notification tempNotification = getNotification(context.getString(R.string.app_name));
 
                 Intent notificationIntent = new Intent(context, NotificationPublisher.class);
                 notificationIntent.putExtra(NotificationPublisher.NOTIFICATION, tempNotification);
-                notificationIntent.putExtra("messageText", messageContent);
-                notificationIntent.setAction(messageContent);
+                notificationIntent.putExtra("messageText", context.getString(R.string.app_name));
+                notificationIntent.setAction(alertKey);
 
                 PendingIntent pendingIntent = PendingIntent.getBroadcast(context, id, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
 
