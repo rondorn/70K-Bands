@@ -3088,9 +3088,18 @@ public class LandscapeScheduleView extends LinearLayout {
                 day
             );
             
-            // Always check if event is expired for styling purposes (darker colors)
-            // hideExpiredEvents only controls filtering, not styling
-            boolean isExpired = endTimeIndex <= (System.currentTimeMillis() / 1000.0);
+            // Always check if event is expired for styling purposes (darker colors).
+            // Keep display start/end untouched; only the expiration instant rolls overnight rows to next day.
+            long effectiveEndMs;
+            if (startDate != null && endDate != null) {
+                effectiveEndMs = endDate.getTime();
+                if (startDate.getTime() > effectiveEndMs) {
+                    effectiveEndMs += 86400000L;
+                }
+            } else {
+                effectiveEndMs = (long) (endTimeIndex * 1000.0);
+            }
+            boolean isExpired = effectiveEndMs <= System.currentTimeMillis();
             
             String venueColorHex = FestivalConfig.getInstance().getVenueColor(location);
             int venueColor = parseColorFromHex(venueColorHex);
