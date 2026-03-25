@@ -295,8 +295,16 @@ class SQLiteiCloudSync {
         let iCloudKey = "eventName:" + eventIndex
         let iCloudValue = "\(statusString):\(currentUid):\(String(format: "%.0f", timestamp))"
         
-        print("☁️ Writing attendance to iCloud: \(eventIndex) = \(iCloudValue)")
         let iCloudStore = NSUbiquitousKeyValueStore.default
+        if let existingValue = iCloudStore.string(forKey: iCloudKey), !existingValue.isEmpty {
+            let parts = existingValue.split(separator: ":")
+            if parts.count >= 3, let iCloudTimestamp = Double(parts[2]), timestamp <= iCloudTimestamp {
+                print("☁️ Skipping attendance write for \(eventIndex) - local timestamp not newer")
+                return false
+            }
+        }
+        
+        print("☁️ Writing attendance to iCloud: \(eventIndex) = \(iCloudValue)")
         iCloudStore.set(iCloudValue, forKey: iCloudKey)
         iCloudStore.synchronize()
         
@@ -492,6 +500,7 @@ class SQLiteiCloudSync {
             let iCloudStore = NSUbiquitousKeyValueStore.default
             
             var writtenCount = 0
+            var skippedCount = 0
             
             let currentIndices = Set(allAttendance.keys)
             for (index, data) in allAttendance {
@@ -503,6 +512,14 @@ class SQLiteiCloudSync {
                 
                 let iCloudKey = "eventName:\(index)"
                 let iCloudValue = "\(status):\(currentUid):\(String(format: "%.0f", lastModified))"
+                
+                if let existingValue = iCloudStore.string(forKey: iCloudKey), !existingValue.isEmpty {
+                    let parts = existingValue.split(separator: ":")
+                    if parts.count >= 3, let iCloudTimestamp = Double(parts[2]), lastModified <= iCloudTimestamp {
+                        skippedCount += 1
+                        continue
+                    }
+                }
                 
                 iCloudStore.set(iCloudValue, forKey: iCloudKey)
                 writtenCount += 1
@@ -529,7 +546,7 @@ class SQLiteiCloudSync {
             iCloudStore.synchronize()
             
             print("☁️ Attendance sync to iCloud completed")
-            print("📊 Written: \(writtenCount) records")
+            print("📊 Written: \(writtenCount) records, Skipped (not newer): \(skippedCount)")
             DispatchQueue.main.async { completion?() }
         }
     }
@@ -587,27 +604,16 @@ class SQLiteiCloudSync {
         
         print("☁️ Converted status: \(statusString) -> \(status)")
         
-        let uidValue = valueComponents[1]
-        let currentUid = UIDevice.current.identifierForVendor?.uuidString ?? ""
-        
-        print("☁️ Device UID: \(currentUid), iCloud UID: \(uidValue)")
-        
-        // RULE 1: Only skip if UID matches current device AND local data exists
         let localStatus = attendanceManager.getAttendanceStatusByIndex(index: attendanceIndex)
-        print("☁️ Local status for index \(attendanceIndex): \(localStatus)")
+        let localTimestamp = localAttendanceLastModified(for: attendanceIndex)
+        print("☁️ Local attendance state for \(attendanceIndex): status=\(localStatus), timestamp=\(localTimestamp)")
         
-        if uidValue == currentUid && localStatus != 0 {
-            print("☁️ Skipping - same device UID and local data exists")
+        // Last-write-wins: apply iCloud only when iCloud is strictly newer.
+        if localStatus != 0 && timestamp <= localTimestamp {
+            print("☁️ Skipping attendance update for \(attendanceIndex) - iCloud not newer")
             return false
         }
         
-        // RULE 2: If local data exists from different device, check timestamps
-        if localStatus != 0 && uidValue != currentUid {
-            print("☁️ Skipping - local data exists from different device")
-            return false
-        }
-        
-        // RULE 3: If no local data exists, use iCloud data regardless of UID
         if localStatus == 0 {
             print("☁️ No local data exists, using iCloud data")
             print("🔍 [CLEAR_DEBUG] Restoring from iCloud -> SQLite index=\(attendanceIndex) year=\(eventYearString)")
@@ -623,6 +629,12 @@ class SQLiteiCloudSync {
         
         print("✅ Updated attendance from iCloud: \(attendanceIndex) -> \(status)")
         return true
+    }
+    
+    /// Gets local lastModified timestamp for one attendance index in Default profile.
+    private func localAttendanceLastModified(for index: String) -> Double {
+        let allAttendance = attendanceManager.getAllAttendanceDataByIndex(profileName: "Default")
+        return allAttendance[index]?["lastModified"] as? Double ?? 0
     }
     
     /// Processes a single iCloud priority record and updates SQLite if needed

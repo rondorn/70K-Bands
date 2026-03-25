@@ -507,8 +507,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                     // Use new Core Data iCloud sync system
                     let sqliteiCloudSync = SQLiteiCloudSync()
                     
-                    // Pull before push — attendance push prunes KV keys missing from SQLite; pushing first on a
-                    // sparse DB deletes most iCloud attendance (see SQLiteiCloudSync.syncAttendanceToiCloud).
+                    // Launch policy: read from iCloud only.
                     let pullGroup = DispatchGroup()
                     pullGroup.enter()
                     sqliteiCloudSync.syncPrioritiesFromiCloud {
@@ -520,20 +519,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                         print("iCloud: Attendance pull completed")
                         pullGroup.leave()
                     }
-                    pullGroup.notify(queue: .global(qos: .background)) {
-                        let pushGroup = DispatchGroup()
-                        pushGroup.enter()
-                        sqliteiCloudSync.syncPrioritiesToiCloud {
-                            pushGroup.leave()
-                        }
-                        pushGroup.enter()
-                        sqliteiCloudSync.syncAttendanceToiCloud {
-                            pushGroup.leave()
-                        }
-                        pushGroup.notify(queue: .main) {
-                            print("iCloud: Launch sync completed, refreshing display...")
-                            NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
-                        }
+                    pullGroup.notify(queue: .main) {
+                        print("iCloud: Launch read sync completed, refreshing display...")
+                        NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
                     }
                 } else {
                     print("iCloud: Schedule still loading, deferring iCloud sync to proper sequence")
