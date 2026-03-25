@@ -6708,7 +6708,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     /// Load iCloud data after SQLite data is available
-    private func loadICloudData(completion: (() -> Void)? = nil) {
+    private func loadICloudData(pushAfterPull: Bool = true, completion: (() -> Void)? = nil) {
         // CRITICAL: Skip iCloud operations during profile switches
         let isProfileSwitching = UserDefaults.standard.bool(forKey: "ProfileSwitchInProgress")
         if isProfileSwitching {
@@ -6735,6 +6735,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
         
         pullGroup.notify(queue: .main) {
+            guard pushAfterPull else {
+                print("✅ iCloud read-only loading completed (push skipped)")
+                completion?()
+                return
+            }
+            
             let pushGroup = DispatchGroup()
             pushGroup.enter()
             sqliteiCloudSync.syncPrioritiesToiCloud {
@@ -6974,7 +6980,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 }
                 
                 print("🔄 [UNIFIED_REFRESH] Thread 3 - Downloading iCloud data")
-                self.loadICloudData {
+                let isLaunchReason = reason.lowercased().contains("launch")
+                self.loadICloudData(pushAfterPull: !isLaunchReason) {
                     print("✅ [UNIFIED_REFRESH] Thread 3 - iCloud data complete")
                     refreshGroup.leave()
                 }

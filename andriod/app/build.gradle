@@ -13,8 +13,9 @@ android {
         // applicationId will be set by product flavors
         minSdkVersion 26
         targetSdkVersion 35
-        versionCode 302603201
-        versionName "302603201"
+        // Android versionCode 2026032401must fit in signed 32-bit int.
+        versionCode 2026032401
+        versionName "2026032401"
         android.compileOptions.incremental = false
         multiDexEnabled false
     }
@@ -60,7 +61,8 @@ android {
     testOptions {
         unitTests.returnDefaultValues = true
     }
-    compileSdk 35
+    // Use legacy DSL name for compatibility with older AGP invocations.
+    compileSdkVersion 35
     namespace 'com.Bands70k'
 }
 
