@@ -184,12 +184,15 @@ public class FirebaseEventDataWrite {
                     showDataRef.updateChildren(batchUpdate, (error, ref) -> {
                         if (error != null) {
                             Log.e("FirebaseEventDataWrite", "Batch write failed: " + error.getMessage());
+                            FirebaseWriteMonitor.recordWriteFailure("event_batch");
                         } else {
                             Log.d("FirebaseEventDataWrite", "Batch write successful for " + batchUpdate.size() + " events");
+                            FirebaseWriteMonitor.recordWriteSuccess("event_batch");
                         }
                     });
                 } catch (Exception error){
                     Log.e("FirebaseEventDataWrite", "Batch write exception: " + error.toString());
+                    FirebaseWriteMonitor.recordWriteFailure("event_batch_exception");
                 }
                 //FirebaseDatabase.getInstance().goOffline();
             }

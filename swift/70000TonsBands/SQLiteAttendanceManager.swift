@@ -398,6 +398,10 @@ class SQLiteAttendanceManager {
                 
                 try db.run(insert)
                 print("✅ SQLiteAttendanceManager: Set attendance by index (\(currentProfile)): \(index) = \(statusValue)")
+                
+                if currentProfile == "Default" {
+                    FirebaseWriteMonitor.shared.markLocalChangePendingSync(context: "attendance:\(index)")
+                }
             } catch {
                 print("❌ SQLiteAttendanceManager: Failed to set attendance by index: \(error)")
             }
@@ -444,6 +448,9 @@ class SQLiteAttendanceManager {
                 let toUpdate = self.attendanceTable.filter(self.eventYearColumn == year && self.profileName == currentProfile && self.status != Self.statusSawNone)
                 let updated = try db.run(toUpdate.update(self.status <- Self.statusSawNone))
                 print("✅ SQLiteAttendanceManager: Set \(updated) attendance records to Not Attended for year \(year)")
+                if currentProfile == "Default" && updated > 0 {
+                    FirebaseWriteMonitor.shared.markLocalChangePendingSync(context: "attendance_clear_all:\(year)")
+                }
             } catch {
                 print("❌ SQLiteAttendanceManager: clearAllAttendance failed: \(error)")
             }
