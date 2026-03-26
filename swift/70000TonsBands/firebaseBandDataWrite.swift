@@ -108,6 +108,7 @@ class firebaseBandDataWrite {
             // Check if Firebase reference is initialized
             guard let firebaseRef = self.ref else {
                 print("❌ [FIREBASE_BAND] writeSingleRecord: BLOCKED - Firebase reference not initialized for '\(bandName)'")
+                FirebaseWriteMonitor.shared.recordWriteFailure(context: "band_ref_nil:\(bandName)")
                 return
             }
             
@@ -145,9 +146,11 @@ class firebaseBandDataWrite {
                     if let error = error {
                         print("❌ [FIREBASE_BAND] writeSingleRecord: ERROR - Writing firebase band data failed for '\(bandName)': \(error.localizedDescription)")
                         print("❌ [FIREBASE_BAND] writeSingleRecord: Error details - \(error)")
+                        FirebaseWriteMonitor.shared.recordWriteFailure(context: "band:\(bandName)")
                     } else {
                         print("✅ [FIREBASE_BAND] writeSingleRecord: SUCCESS - Writing firebase band data saved successfully for '\(bandName)' with ranking '\(ranking)'!")
                         print("✅ [FIREBASE_BAND] writeSingleRecord: Firebase path written: \(ref.url)")
+                        FirebaseWriteMonitor.shared.recordWriteSuccess(context: "band:\(bandName)")
                         
                         self.firebaseBandAttendedArray[bandName] = ranking
                         print("🔥 [FIREBASE_BAND] writeSingleRecord: Updating local cache for '\(bandName)' to '\(ranking)'")
@@ -287,26 +290,25 @@ class firebaseBandDataWrite {
             return
         }
         
-        // CRITICAL FIX: Use SQLite instead of Core Data (SQLite is the primary storage)
-        // Core Data is read-only for migration purposes only
-        let sqliteDataManager = SQLiteDataManager.shared
-        let bandsForCurrentYear = sqliteDataManager.fetchBands(forYear: currentYear).filter { $0.lineIndex != nil }
-        print("🔥 [FIREBASE_BAND] buildBandRankArray: Found \(bandsForCurrentYear.count) lineup bands in SQLite for year \(currentYear)")
+        // Upload ALL priorities for the year (lineup + unofficial/special entries),
+        // not only lineup bands. This keeps Firebase stats aligned with user choices.
+        let allPriorities = SQLitePriorityManager.shared.getAllPriorities(
+            eventYear: currentYear,
+            profileName: firebaseProfileName
+        )
+        print("🔥 [FIREBASE_BAND] buildBandRankArray: Found \(allPriorities.count) priority records in SQLite for year \(currentYear) (all entries)")
         
-        if bandsForCurrentYear.isEmpty {
-            print("⚠️ [FIREBASE_BAND] buildBandRankArray: WARNING - No bands found in SQLite for year \(currentYear)")
+        if allPriorities.isEmpty {
+            print("⚠️ [FIREBASE_BAND] buildBandRankArray: WARNING - No priorities found in SQLite for year \(currentYear)")
             print("🔥 [FIREBASE_BAND] buildBandRankArray: ========== EXIT (EMPTY) ==========")
             return
         }
         
-        let priorityManager = SQLitePriorityManager.shared
         var bandsProcessed = 0
         var bandsSkipped = 0
         var priorityCounts: [String: Int] = ["Must": 0, "Might": 0, "Wont": 0, "Unknown": 0]
         
-        for band in bandsForCurrentYear {
-            // BandData.bandName is not optional, but we'll keep the guard for safety
-            let bandName = band.bandName
+        for (bandName, priorityInteger) in allPriorities {
             if bandName.isEmpty {
                 bandsSkipped += 1
                 print("⚠️ [FIREBASE_BAND] buildBandRankArray: Skipping band with empty bandName")
@@ -314,8 +316,6 @@ class firebaseBandDataWrite {
             }
             
             bandsProcessed += 1
-            // CRITICAL: Explicitly use "Default" profile for Firebase reporting
-            let priorityInteger = priorityManager.getPriority(for: bandName, eventYear: currentYear, profileName: firebaseProfileName)
             let rankingNumber = String(priorityInteger)
             let rankingString = resolvePriorityNumber(priority: rankingNumber)
             
@@ -339,13 +339,8 @@ class firebaseBandDataWrite {
             print("✅ [FIREBASE_BAND] buildBandRankArray: 'Ad Infinitum' found in bandRank with ranking: '\(adInfinitumRanking)'")
         } else {
             print("❌ [FIREBASE_BAND] buildBandRankArray: 'Ad Infinitum' NOT found in bandRank array!")
-            print("🔥 [FIREBASE_BAND] buildBandRankArray: Checking if band exists in SQLite...")
-            let adInfinitumBands = bandsForCurrentYear.filter { $0.bandName.lowercased() == "ad infinitum" }
-            if adInfinitumBands.isEmpty {
-                print("❌ [FIREBASE_BAND] buildBandRankArray: 'Ad Infinitum' NOT in SQLite for year \(currentYear)")
-            } else {
-                print("⚠️ [FIREBASE_BAND] buildBandRankArray: 'Ad Infinitum' IS in SQLite but was skipped (check bandName field)")
-            }
+            let hasRawPriority = allPriorities.keys.contains { $0.lowercased() == "ad infinitum" }
+            print("🔥 [FIREBASE_BAND] buildBandRankArray: Raw priority entry exists for 'Ad Infinitum': \(hasRawPriority)")
         }
         
         print("🔥 [FIREBASE_BAND] buildBandRankArray: ========== EXIT ==========")
