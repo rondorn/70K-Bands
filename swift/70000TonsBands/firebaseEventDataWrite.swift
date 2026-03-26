@@ -112,6 +112,7 @@ class firebaseEventDataWrite {
             // Check if Firebase reference is initialized
             guard let firebaseRef = self.ref else {
                 print("⚠️ [FIREBASE_EVENT] Cannot write event data: Firebase reference not initialized, skipping analytics")
+                FirebaseWriteMonitor.shared.recordWriteFailure(context: "event_ref_nil:\(index)")
                 return
             }
             
@@ -138,8 +139,10 @@ class firebaseEventDataWrite {
                     (error:Error?, ref:DatabaseReference) in
                     if let error = error {
                         print("🔥 firebase EVENT_WRITE: ❌ Writing firebase event data could not be saved: \(error)")
+                        FirebaseWriteMonitor.shared.recordWriteFailure(context: "event:\(index)")
                     } else {
                         print("🔥 firebase EVENT_WRITE: ✅ Writing firebase event data saved successfully for \(bandName)!")
+                        FirebaseWriteMonitor.shared.recordWriteSuccess(context: "event:\(index)")
                         self.firebaseShowsAttendedArray[index] = status
                         self.variableStoreHandle.storeDataToDisk(data: self.firebaseShowsAttendedArray, fileName: self.eventCompareFile)
                     }

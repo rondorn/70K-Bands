@@ -253,7 +253,13 @@ public class ImageDownloadService extends Service {
                 downloadNotes();
                 
                 // PHASE 3: Firebase Reporting
-                performFirebaseReporting();
+                if (FirebaseWriteMonitor.hasPendingFailures()) {
+                    Log.d(TAG, "Firebase failures detected - running full Firebase reporting sync");
+                    performFirebaseReporting();
+                } else {
+                    Log.d(TAG, "No Firebase failures detected - skipping full Firebase reporting sync");
+                    tasksCompleted.incrementAndGet();
+                }
                 
                 Log.d(TAG, "All download tasks completed");
                 
@@ -612,6 +618,8 @@ public class ImageDownloadService extends Service {
                 // Perform Firebase writes
                 FireBaseAsyncBandEventWrite firebaseTask = new FireBaseAsyncBandEventWrite();
                 firebaseTask.execute();
+                // Clear pending-failure state only after a full sync pass was triggered.
+                FirebaseWriteMonitor.clearPendingFailuresAfterFullSyncTriggered();
                 
                 // Wait a bit for Firebase operations to complete
                 Thread.sleep(3000);

@@ -48,6 +48,7 @@ class firebaseUserWrite {
                 // Guard against Firebase not being configured
                 guard let firebaseRef = self.ref else {
                     print("⚠️ Firebase User Data reference not initialized, skipping write")
+                    FirebaseWriteMonitor.shared.recordWriteFailure(context: "user_ref_nil")
                     return
                 }
                 
@@ -77,8 +78,10 @@ class firebaseUserWrite {
                         (error:Error?, ref:DatabaseReference) in
                         if let error = error {
                             print("Writing Firebase data could not be saved: \(error).")
+                            FirebaseWriteMonitor.shared.recordWriteFailure(context: "user:\(userDataHandle.uid)")
                         } else {
                             print("Writing Firebase data saved successfully!")
+                            FirebaseWriteMonitor.shared.recordWriteSuccess(context: "user:\(userDataHandle.uid)")
                         }
                     }
                 }

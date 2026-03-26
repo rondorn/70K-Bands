@@ -106,12 +106,15 @@ public class FireBaseBandDataWrite {
                     bandDataRef.updateChildren(batchUpdate, (error, ref) -> {
                         if (error != null) {
                             Log.e("FireBaseBandDataWrite", "Batch write failed: " + error.getMessage());
+                            FirebaseWriteMonitor.recordWriteFailure("band_batch");
                         } else {
                             Log.d("FireBaseBandDataWrite", "Batch write successful for " + batchUpdate.size() + " bands");
+                            FirebaseWriteMonitor.recordWriteSuccess("band_batch");
                         }
                     });
                 } catch (Exception error){
                     Log.e("FireBaseBandDataWrite", "Batch write exception: " + error.toString());
+                    FirebaseWriteMonitor.recordWriteFailure("band_batch_exception");
                 }
                 //FirebaseDatabase.getInstance().goOffline();
             }
