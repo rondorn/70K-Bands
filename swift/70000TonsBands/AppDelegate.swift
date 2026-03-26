@@ -541,8 +541,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         // This prevents deadlock during launch by deferring the notification setup
         DispatchQueue.global(qos: .background).asyncAfter(deadline: .now() + 2.0) {
             print("🔔 [NOTIFICATION_DEFER] Setting up deferred notifications after app launch")
-            let localNotification = localNoticationHandler()
-            localNotification.addNotifications()
+            LocalNotificationRebuildCoordinator.shared.requestRebuild(reason: "app-launch-deferred", debounceSeconds: 1.0)
             print("🔔 [NOTIFICATION_DEFER] Deferred notification setup completed")
         }
 
@@ -790,8 +789,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             
             // Set up notifications when app becomes active (in case they weren't set up during launch)
             print("🔔 [NOTIFICATION_DEFER] Setting up notifications on app become active")
-            let localNotification = localNoticationHandler()
-            localNotification.addNotifications()
+            LocalNotificationRebuildCoordinator.shared.requestRebuild(reason: "applicationDidBecomeActive", debounceSeconds: 1.0)
             
             // Post refresh notification on main thread after background operations complete
             DispatchQueue.main.async {
@@ -892,9 +890,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
         // Move notification processing to background to avoid blocking main thread
         DispatchQueue.global(qos: .utility).async {
-            let localNotication = localNoticationHandler()
-            localNotication.clearNotifications()
-            localNotication.addNotifications()
+            LocalNotificationRebuildCoordinator.shared.requestRebuild(reason: "applicationDidEnterBackground", debounceSeconds: 0.5)
             print("📱 Local notifications processing completed")
         }
         

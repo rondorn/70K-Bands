@@ -47,10 +47,7 @@ class PreferencesViewModel: ObservableObject {
         didSet { 
             setOnlyAlertForAttendedValue(alertOnlyForWillAttend)
             writeFiltersFile()  // Immediately persist to prevent reversion
-            // Reset notifications when this changes
-            let localNotification = localNoticationHandler()
-            localNotification.clearNotifications()
-            localNotification.addNotifications()
+            LocalNotificationRebuildCoordinator.shared.requestRebuild(reason: "pref-alertOnlyForWillAttend", debounceSeconds: 0.8)
         }
     }
     @Published var minutesBeforeAlert: Int = 10 {
@@ -68,10 +65,7 @@ class PreferencesViewModel: ObservableObject {
                 print("🎯 Minutes before alert changed: \(previousValue) -> \(minutesBeforeAlert)")
                 setMinBeforeAlertValue(minutesBeforeAlert)
                 writeFiltersFile()  // Immediately persist to prevent reversion
-                // Reset notifications when minutes change
-                let localNotification = localNoticationHandler()
-                localNotification.clearNotifications()
-                localNotification.addNotifications()
+                LocalNotificationRebuildCoordinator.shared.requestRebuild(reason: "pref-minutesBeforeAlert", debounceSeconds: 0.8)
             } else {
                 // Revert to previous valid value
                 print("🚫 Invalid minutes value: \(minutesBeforeAlert), reverting to: \(previousValue)")
@@ -360,10 +354,8 @@ class PreferencesViewModel: ObservableObject {
         // Rule: Only foreground, pull-to-refresh, and explicit year-change should download data.
         // This method now only refreshes notifications and updates UI from cache.
         
-        // Final cleanup - reset notifications
-        let localNotification = localNoticationHandler()
-        localNotification.clearNotifications()
-        localNotification.addNotifications()
+        // Final cleanup - request a coalesced full notification rebuild
+        LocalNotificationRebuildCoordinator.shared.requestRebuild(reason: "preferences-closed", debounceSeconds: 0.8)
         
         // Cache-only UI refresh (no network)
         DispatchQueue.main.async {

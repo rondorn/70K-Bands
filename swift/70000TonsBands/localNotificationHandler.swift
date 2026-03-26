@@ -10,6 +10,57 @@ import Foundation
 import UIKit
 import UserNotifications
 
+final class LocalNotificationRebuildCoordinator {
+    static let shared = LocalNotificationRebuildCoordinator()
+
+    private let coordinatorQueue = DispatchQueue(label: "com.70kbands.notification.rebuild")
+    private var pendingWorkItem: DispatchWorkItem?
+    private var rebuildInProgress = false
+    private var rerunRequested = false
+
+    private init() {}
+
+    func requestRebuild(reason: String, debounceSeconds: TimeInterval = 1.5) {
+        coordinatorQueue.async {
+            self.pendingWorkItem?.cancel()
+            let workItem = DispatchWorkItem { [weak self] in
+                self?.performRebuild(reason: reason)
+            }
+            self.pendingWorkItem = workItem
+            self.coordinatorQueue.asyncAfter(deadline: .now() + debounceSeconds, execute: workItem)
+            print("🔔 [ALERT_REBUILD] queued reason='\(reason)' debounce=\(String(format: "%.1f", debounceSeconds))s")
+        }
+    }
+
+    private func performRebuild(reason: String) {
+        if rebuildInProgress {
+            rerunRequested = true
+            print("🔔 [ALERT_REBUILD] rebuild already in progress; rerun requested reason='\(reason)'")
+            return
+        }
+
+        rebuildInProgress = true
+        print("🔔 [ALERT_REBUILD] starting reason='\(reason)'")
+
+        DispatchQueue.global(qos: .utility).async {
+            let localNotification = localNoticationHandler()
+            localNotification.clearNotifications()
+            localNotification.addNotifications()
+
+            self.coordinatorQueue.async {
+                self.rebuildInProgress = false
+                print("🔔 [ALERT_REBUILD] completed reason='\(reason)'")
+
+                if self.rerunRequested {
+                    self.rerunRequested = false
+                    print("🔔 [ALERT_REBUILD] running queued rerun")
+                    self.requestRebuild(reason: "coalesced-rerun", debounceSeconds: 0.8)
+                }
+            }
+        }
+    }
+}
+
 class localNoticationHandler {
     
     var schedule = scheduleHandler.shared
@@ -28,13 +79,10 @@ class localNoticationHandler {
      Refreshes alerts by asynchronously adding notifications, depending on iOS version.
      */
     func refreshAlerts(){
-        DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
-            if #available(iOS 10.0, *) {
-                let localNotication = localNoticationHandler()
-                localNotication.addNotifications()
-            } else {
-                // Fallback on earlier versions
-            }
+        if #available(iOS 10.0, *) {
+            LocalNotificationRebuildCoordinator.shared.requestRebuild(reason: "localNotificationHandler.refreshAlerts")
+        } else {
+            // Fallback on earlier versions
         }
     }
     
