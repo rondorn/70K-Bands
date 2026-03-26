@@ -434,10 +434,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         refreshDisplayAfterWake();
     
-        NotificationCenter.default.addObserver(self,
-                                               selector: #selector(MasterViewController.showReceivedMessage(_:)),
-                                               name: UserDefaults.didChangeNotification, object: nil)
-        
         setNeedsStatusBarAppearanceUpdate()
         
         setToolbar();
@@ -1897,8 +1893,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 let title = NSLocalizedString("Message received", comment: "Alert title when a push notification message is received")
                 showAlert(title, message: aps["alert"]!)
             }
-        } else {
-            print("Software failure. Guru meditation.")
         }
     }
     
@@ -2201,13 +2195,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             return
         }
 
-        DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
-            print ("FCM alert")
-                let localNotication = localNoticationHandler()
-                localNotication.addNotifications()
-                
-            //}
-        }
+        print("FCM alert")
+        LocalNotificationRebuildCoordinator.shared.requestRebuild(reason: "masterView.refreshAlerts", debounceSeconds: 1.0)
     
     }
     

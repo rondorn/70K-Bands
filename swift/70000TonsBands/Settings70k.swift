@@ -667,11 +667,9 @@ private func readFiltersFileInternal(){
     
     if (tempCurrentTimeZone != localTimeZoneAbbreviation){
         alertTracker = [String]()
-        let localNotification = localNoticationHandler()
-        localNotification.clearNotifications()
-        // DEFERRED NOTIFICATION SETUP: Don't call addNotifications() during app launch
-        // This prevents deadlock during launch. Notifications will be set up after app is ready.
-        print("🔔 [NOTIFICATION_DEFER] Deferring notification setup to prevent launch deadlock")
+        // Use centralized coordinator to avoid overlapping clear+rebuild storms.
+        print("🔔 [NOTIFICATION_DEFER] Queueing notification rebuild after timezone change")
+        LocalNotificationRebuildCoordinator.shared.requestRebuild(reason: "timezone-change", debounceSeconds: 1.2)
     }
 }
 
