@@ -103,8 +103,10 @@ public class FirebaseUserWrite {
                         mDatabase.child("userData/").updateChildren(batchUpdate, (error, ref) -> {
                             if (error != null) {
                                 Log.e("FirebaseUserWrite", "Batch write failed: " + error.getMessage());
+                                FirebaseWriteMonitor.recordWriteFailure("user_batch");
                             } else {
                                 Log.d("FirebaseUserWrite", "Batch write successful for user data");
+                                FirebaseWriteMonitor.recordWriteSuccess("user_batch");
                             }
                         });
                     });

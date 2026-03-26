@@ -798,6 +798,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                 print("iCloud: Background sync complete, posting refresh notification")
                 NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
             }
+            
+            // If local Firebase data is pending sync, try a gated full sync when app becomes active.
+            // This handles offline -> online recovery even when background path was skipped.
+            if FirebaseWriteMonitor.shared.shouldRunFullSync() {
+                print("📱 [TIMING] Pending Firebase sync state on app active - requesting gated full sync")
+                self.performBulkOperationsWithNetworkGating()
+            }
         }
     }
     // [END connect_on_active]
@@ -937,7 +944,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                 print("🌐 NETWORK GATING: ✅ Network is good - proceeding with bulk operations")
                 self.performBulkImageDownload()
                 self.performBulkDescriptionDownload()
-                self.performFirebaseReporting()
+                if FirebaseWriteMonitor.shared.shouldRunFullSync() {
+                    print("🌐 NETWORK GATING: Pending Firebase sync state detected (dirty/failure) - running full Firebase resync")
+                    self.performFirebaseReporting()
+                } else {
+                    print("🌐 NETWORK GATING: No pending Firebase sync state - skipping full Firebase resync")
+                }
             } else {
                 print("🌐 NETWORK GATING: ❌ Network is poor/down - skipping ALL bulk operations")
                 print("🌐 NETWORK GATING: This should prevent bulk operations in 100% packet loss scenarios")
@@ -1089,8 +1101,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
         DispatchQueue.global(qos: .utility).async {
             print("🔥 Firebase reporting background queue started")
+            FirebaseWriteMonitor.shared.beginFullSyncAttempt()
             // Since network was already verified, we can proceed directly
             self.reportData()
+            // Firebase writes are async. Finalize after a short settling window.
+            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 8.0) {
+                _ = FirebaseWriteMonitor.shared.finalizeFullSyncAttempt()
+            }
             print("🔥 Firebase reporting completed")
         }
     }
