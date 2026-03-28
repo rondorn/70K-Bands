@@ -12,7 +12,6 @@ import android.os.Parcelable;
 import android.provider.Settings;
 import androidx.core.app.ActivityCompat;
 import android.util.Log;
-import android.view.View;
 
 
 import java.io.BufferedReader;
@@ -43,8 +42,6 @@ public class staticVariables {
 
 
 
-
-    public static Boolean initializedSortButtons = false;
     public final static String mustSeeIcon = "\uD83C\uDF7A";
     public final static String mightSeeIcon = "\u2714"; //2705 //2611 //2714
     public final static String wontSeeIcon = "\uD83D\uDEAB";
@@ -101,8 +98,6 @@ public class staticVariables {
     // Flag to track if background URL lookup is in progress (prevents duplicate calls)
     private static volatile boolean backgroundLookupInProgress = false;
 
-    public final static String sawAllColor = "#67C10C";
-    public final static String sawSomeColor = "#F0D905";
     public final static String sawNoneColor = "#C0C0C0";
     public final static String sawAllStatus = "sawAll";
     public final static String sawSomeStatus = "sawSome";
@@ -134,12 +129,6 @@ public class staticVariables {
     public final static String unofficalEventOld = "Unofficial Event";
     public final static String karaoekeEvent = "Karaoke";
 
-    public final static String poolVenueColor = "#5888db";
-    public final static String theaterVenueColor = "#C4AC00";
-    public final static String loungeVenueColor = "#5BA50A";
-    public final static String rinkVenueColor = "#FF0000";
-    public final static String unknownVenueColor = "#A9A9A9";
-
     public static String eventYearIndex = "Current";
     //schedule file header rows
     public final static String schedBandRow = "Band";
@@ -168,13 +157,10 @@ public class staticVariables {
         return FestivalConfig.getInstance().defaultStorageUrlTest;
     }
 
-    public final static String logo70kUrl = "http://70000tons.com/wp-content/uploads/2016/11/70k_logo_sm.png";
-    public final static String networkTestingUrl = "https://www.dropbox.com";
     public static String artistURL;
     public static String scheduleURL;
 
     public static String descriptionMap;
-    public static Boolean checkingInternet = false;
     public static String internetCheckCache = "false";
     public static Long internetCheckCacheDate = 0L;
 
@@ -185,9 +171,6 @@ public class staticVariables {
     public static Boolean schedulePresent = false;
     public static Boolean notesLoaded = false;
 
-    public static final String blueColor = "#5DADE2";
-    public static final String lightGrey = "#797D7F";
-
     public static Boolean fileDownloaded = false;
 
     //public static Boolean sortBySchedule = true;
@@ -196,7 +179,6 @@ public class staticVariables {
     public static String SENT_TOKEN_TO_SERVER = "sentTokenToServer";
     public static String REGISTRATION_COMPLETE = "registrationComplete";
 
-    public static Integer alarmCount = 1;
     public static Integer showsIwillAttend = 0;
 
     public static Boolean refreshActivated = false;
@@ -215,7 +197,6 @@ public class staticVariables {
     public static Context context;
 
     public static Boolean loadingBands = false;
-    public static Boolean loadingSchedule = false;
     public static Boolean loadingNotes = false;
 
     /** True on app process start; set false after first schedule download. Used to force schedule reload on initial launch (bypass hash check). */
@@ -263,18 +244,13 @@ public class staticVariables {
     }
     public static Integer graphicAttended = R.drawable.icon_seen;
     public static Integer graphicAttendedSmall = R.drawable.icon_seen_small;
-    public static Integer graphicAttendedAlt = R.drawable.icon_seen_alt;
     public static Integer graphicPartiallyAttended = R.drawable.icon_partially_seen;
-    public static Integer graphicAlphaSort = R.drawable.icon_sort_az;
-    public static Integer graphicTimeSort = R.drawable.icon_sort_time;
     public static Integer graphicSpecialEvent = R.drawable.icon_all_star_jam;
     public static Integer graphicClinicEvent = R.drawable.icon_clinic;
     public static Integer graphicMeetAndGreetEvent = R.drawable.icon_meet_and_greet;
     public static Integer graphicKaraokeEvent = R.drawable.icon_karaoke;
     public static Integer graphicUnofficalEvent = R.drawable.icon_unspecified_event;
     public static Integer graphicGeneralEvent = R.drawable.icon_ship_event;
-
-    public static View snackBarView;
 
     public static Integer lastRefreshEpicTime = 0;
     public static Integer  lastRefreshCount = 0;
@@ -290,29 +266,7 @@ public class staticVariables {
 
     public static Boolean isTestingEnv = false;
 
-    public static bandListView adapterCache;
-
-    public static mainListHandler listHandlerCache;
-
     public static String searchCriteria = "";
-
-    /**
-     * Updates the cached mainListHandler instance.
-     * @param listHandler The mainListHandler to cache.
-     */
-    public static synchronized void updatelistHandlerCache(mainListHandler listHandler) {
-        Log.d("listHandlerCache", "updating cache");
-        staticVariables.listHandlerCache = listHandler;
-        Log.d("listHandlerCache", "done updating cache");
-    }
-
-    /**
-     * Gets the cached mainListHandler instance.
-     * @return The cached mainListHandler.
-     */
-    public static synchronized mainListHandler getlistHandlerCache() {
-        return staticVariables.listHandlerCache;
-    }
 
     /**
      * Venues that appear in the list (have at least one event this year). Includes configured venues in use
