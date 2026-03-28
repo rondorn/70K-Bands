@@ -172,6 +172,12 @@
 		116C9D9E2F415D3700367440 /* MasterViewUIManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D832F415D3700367440 /* MasterViewUIManager.swift */; };
 		116C9D9F2F415D3700367440 /* MasterViewUIManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D832F415D3700367440 /* MasterViewUIManager.swift */; };
 		116C9DA02F415D3700367440 /* MasterViewUIManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D832F415D3700367440 /* MasterViewUIManager.swift */; };
+		116C9DA52F415D3700367442 /* MasterViewYearChangeCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9DA42F415D3700367442 /* MasterViewYearChangeCoordinator.swift */; };
+		116C9DA62F415D3700367442 /* MasterViewYearChangeCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9DA42F415D3700367442 /* MasterViewYearChangeCoordinator.swift */; };
+		116C9DA72F415D3700367442 /* MasterViewYearChangeCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9DA42F415D3700367442 /* MasterViewYearChangeCoordinator.swift */; };
+		116C9DB62F415D3700367447 /* MasterViewLandscapeScheduleCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9DB52F415D3700367447 /* MasterViewLandscapeScheduleCoordinator.swift */; };
+		116C9DB72F415D3700367447 /* MasterViewLandscapeScheduleCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9DB52F415D3700367447 /* MasterViewLandscapeScheduleCoordinator.swift */; };
+		116C9DB82F415D3700367447 /* MasterViewLandscapeScheduleCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9DB52F415D3700367447 /* MasterViewLandscapeScheduleCoordinator.swift */; };
 		1172A2391B5AC7DC00C28AB3 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1172A2251B5AADC900C28AB3 /* Localizable.strings */; };
 		1172EDF82E5A1C4D006E3596 /* UtilityHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ED61801A9103C100D29A5B /* UtilityHandler.swift */; };
 		1172EDF92E5A1C4D006E3596 /* ToastMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1187BE1120D6AFC8002F070F /* ToastMessages.swift */; };
@@ -514,6 +520,8 @@
 		116C9D812F415D370036743E /* MasterViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MasterViewModel.swift; sourceTree = "<group>"; };
 		116C9D822F415D370036743F /* MasterViewCacheManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MasterViewCacheManager.swift; sourceTree = "<group>"; };
 		116C9D832F415D3700367440 /* MasterViewUIManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MasterViewUIManager.swift; sourceTree = "<group>"; };
+		116C9DA42F415D3700367442 /* MasterViewYearChangeCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MasterViewYearChangeCoordinator.swift; sourceTree = "<group>"; };
+		116C9DB52F415D3700367447 /* MasterViewLandscapeScheduleCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MasterViewLandscapeScheduleCoordinator.swift; sourceTree = "<group>"; };
 		1172A2241B5AADC900C28AB3 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		1172A2291B5AAEC400C28AB3 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
 		1172A22D1B5AB04B00C28AB3 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -792,6 +800,8 @@
 				11DCE9B31A856EE600A25FB8 /* mainListController.swift */,
 				116C9D822F415D370036743F /* MasterViewCacheManager.swift */,
 				1154F6101A575893003F4764 /* MasterViewController.swift */,
+				116C9DA42F415D3700367442 /* MasterViewYearChangeCoordinator.swift */,
+				116C9DB52F415D3700367447 /* MasterViewLandscapeScheduleCoordinator.swift */,
 				116C9D812F415D370036743E /* MasterViewModel.swift */,
 				116C9D832F415D3700367440 /* MasterViewUIManager.swift */,
 				B0B1C2D3E4F5061728394A5B /* MinimumVersionWarningManager.swift */,
@@ -1413,6 +1423,8 @@
 				116C9D982F415D370036743E /* MasterViewModel.swift in Sources */,
 				116C9D9B2F415D370036743F /* MasterViewCacheManager.swift in Sources */,
 				116C9D9E2F415D3700367440 /* MasterViewUIManager.swift in Sources */,
+				116C9DA52F415D3700367442 /* MasterViewYearChangeCoordinator.swift in Sources */,
+				116C9DB62F415D3700367447 /* MasterViewLandscapeScheduleCoordinator.swift in Sources */,
 				116C9D8B2F415D370036743C /* iCloudConstants.swift in Sources */,
 				116C9D8C2F415D370036743C /* UIConstants.swift in Sources */,
 				116C9D8D2F415D370036743C /* AppState.swift in Sources */,
@@ -1529,6 +1541,8 @@
 				116C9D992F415D370036743E /* MasterViewModel.swift in Sources */,
 				116C9D9C2F415D370036743F /* MasterViewCacheManager.swift in Sources */,
 				116C9D9F2F415D3700367440 /* MasterViewUIManager.swift in Sources */,
+				116C9DA62F415D3700367442 /* MasterViewYearChangeCoordinator.swift in Sources */,
+				116C9DB72F415D3700367447 /* MasterViewLandscapeScheduleCoordinator.swift in Sources */,
 				116C9D942F415D370036743C /* AppState.swift in Sources */,
 				11CC7FB92F3FD2CD005DF9CC /* CompactActionSheetViewController.swift in Sources */,
 				11CC7FBE2F3FD2CD005DF9CC /* BandSelectionViewController.swift in Sources */,
@@ -1642,6 +1656,8 @@
 				116C9D9A2F415D370036743E /* MasterViewModel.swift in Sources */,
 				116C9D9D2F415D370036743F /* MasterViewCacheManager.swift in Sources */,
 				116C9DA02F415D3700367440 /* MasterViewUIManager.swift in Sources */,
+				116C9DA72F415D3700367442 /* MasterViewYearChangeCoordinator.swift in Sources */,
+				116C9DB82F415D3700367447 /* MasterViewLandscapeScheduleCoordinator.swift in Sources */,
 				116C9D862F415D370036743C /* AppState.swift in Sources */,
 				11CC7FBA2F3FD2CD005DF9CC /* CompactActionSheetViewController.swift in Sources */,
 				11CC7FBF2F3FD2CD005DF9CC /* BandSelectionViewController.swift in Sources */,
@@ -1930,7 +1946,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260326001;
+				CURRENT_PROJECT_VERSION = 20260328001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1958,7 +1974,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260326001;
+				MARKETING_VERSION = 20260328001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -2014,7 +2030,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260326001;
+				CURRENT_PROJECT_VERSION = 20260328001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -2039,7 +2055,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260326001;
+				MARKETING_VERSION = 20260328001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -2236,7 +2252,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260326001;
+				CURRENT_PROJECT_VERSION = 20260328001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -2257,7 +2273,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260326001;
+				MARKETING_VERSION = 20260328001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -2313,7 +2329,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260326001;
+				CURRENT_PROJECT_VERSION = 20260328001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -2338,7 +2354,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260326001;
+				MARKETING_VERSION = 20260328001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
