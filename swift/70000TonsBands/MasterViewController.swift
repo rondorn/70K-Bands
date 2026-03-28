@@ -12,22 +12,8 @@ import AVKit
 import SwiftUI
 
 class MasterViewController: UITableViewController, UISplitViewControllerDelegate, UISearchBarDelegate, UIGestureRecognizerDelegate {
-    
-    // MARK: - Year Change Thread Management
-    private static var currentDataRefreshOperationId: UUID = UUID()
-    static var isYearChangeInProgress: Bool = false
-    static var isCsvDownloadInProgress: Bool = false
-    static var isRefreshingAlerts: Bool = false
-    static let backgroundRefreshLock = NSLock()
-    
-    // MARK: - Year Change Data Readiness (Race Condition Fix)
-    private static var yearChangeDataReady: Bool = false
-    private static var yearChangeDataReadyLock = NSLock()
-    private static var pendingYearChangeCompletion: Bool = false
-    
-    // MARK: - Deadlock Prevention
-    private static var yearChangeStartTime: Date?
-    private static var deadlockDetectionTimer: Timer?
+
+    /// Serial queue for background work; year-change / refresh IDs live in `MasterViewYearChangeCoordinator`.
     private var backgroundOperationQueue: OperationQueue = {
         let queue = OperationQueue()
         queue.maxConcurrentOperationCount = 3
@@ -35,99 +21,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         queue.name = "MasterViewController.backgroundOperations"
         return queue
     }()
-    
-    // MARK: - Year Change Coordination Methods
-    static func notifyYearChangeStarting() {
-        print("🚨 [YEAR_CHANGE_DEADLOCK_FIX] Year change starting - cancelling ALL background operations")
-        isYearChangeInProgress = true
-        currentDataRefreshOperationId = UUID()
-        yearChangeStartTime = Date()
-        
-        // Reset data readiness flag
-        yearChangeDataReadyLock.lock()
-        yearChangeDataReady = false
-        pendingYearChangeCompletion = false
-        yearChangeDataReadyLock.unlock()
-        
-        // ADD DEADLOCK DETECTION TIMER
-        deadlockDetectionTimer?.invalidate()
-        deadlockDetectionTimer = Timer.scheduledTimer(withTimeInterval: 45.0, repeats: false) { _ in
-            print("🚨 DEADLOCK DETECTED: Year change has been running for 45+ seconds")
-            print("🚨 EMERGENCY RECOVERY: Forcing year change completion")
-            
-            notifyYearChangeCompleted()
-            
-            // Post emergency notification
-            DispatchQueue.main.async {
-                NotificationCenter.default.post(
-                    name: Notification.Name("EmergencyYearChangeRecovery"), 
-                    object: nil
-                )
-            }
-        }
-    }
-    
-    /// Marks year change data as ready - called after initial data load completes
-    static func markYearChangeDataReady() {
-        yearChangeDataReadyLock.lock()
-        yearChangeDataReady = true
-        let shouldComplete = pendingYearChangeCompletion
-        yearChangeDataReadyLock.unlock()
-        
-        // If completion was pending, do it now
-        if shouldComplete {
-            notifyYearChangeCompleted()
-        }
-    }
-    
-    static func notifyYearChangeCompleted() {
-        yearChangeDataReadyLock.lock()
-        let dataReady = yearChangeDataReady
-        if !dataReady {
-            // Data not ready yet - defer completion
-            pendingYearChangeCompletion = true
-            yearChangeDataReadyLock.unlock()
-            return
-        }
-        pendingYearChangeCompletion = false
-        yearChangeDataReadyLock.unlock()
-        
-        print("✅ [YEAR_CHANGE_DEADLOCK_FIX] Year change completed - background operations can resume")
-        isYearChangeInProgress = false
-        
-        // Cancel deadlock detection
-        deadlockDetectionTimer?.invalidate()
-        deadlockDetectionTimer = nil
-        
-        if let startTime = yearChangeStartTime {
-            let duration = Date().timeIntervalSince(startTime)
-            print("📊 Year change took \(String(format: "%.2f", duration)) seconds")
-            yearChangeStartTime = nil
-        }
-        
-        // Post notification to trigger deferred operations
-        DispatchQueue.main.async {
-            NotificationCenter.default.post(
-                name: NSNotification.Name("YearChangeCompleted"),
-                object: nil
-            )
-        }
-    }
-    
-    /// Checks if year change data is ready (for race condition prevention)
-    static func isYearChangeDataReady() -> Bool {
-        yearChangeDataReadyLock.lock()
-        defer { yearChangeDataReadyLock.unlock() }
-        return yearChangeDataReady
-    }
-    
+
     private func cancelAllBackgroundOperations() {
         print("🚨 [YEAR_CHANGE_DEADLOCK_FIX] Cancelling \(backgroundOperationQueue.operationCount) operations")
         backgroundOperationQueue.cancelAllOperations()
-        // Also cancel any existing dispatch group operations by incrementing operation ID
         MasterViewController.currentDataRefreshOperationId = UUID()
     }
-    
+
     @IBOutlet var mainTableView: UITableView!
     
     // MARK: - Preference Synchronization
@@ -148,18 +48,21 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     @IBOutlet weak var settingsButton: UIButton!
     @IBOutlet weak var blankScreenActivityIndicator: UIActivityIndicatorView!
     
-    // MARK: - Landscape Schedule View
-    private var landscapeScheduleViewController: UIViewController?
-    private var isShowingLandscapeSchedule: Bool = false
-    private var isDismissingLandscapeSchedule: Bool = false
-    private var lastPortraitDismissCheckTime: CFTimeInterval = 0
-    private var currentViewingDay: String? = nil  // Track which day user is viewing
-    private var savedScrollPosition: CGPoint? = nil  // Save scroll position when navigating away
-    private var lastProgrammaticScrollTime: Date? = nil  // Track when we last scrolled programmatically
-    
-    // iPad-specific calendar toggle
-    private var viewToggleButton: UIBarButtonItem?
-    private var isManualCalendarView: Bool = false  // For iPad: true = calendar view, false = list view
+    // MARK: - Landscape Schedule View (logic in `MasterViewLandscapeScheduleCoordinator`)
+    private lazy var landscapeScheduleCoordinator: MasterViewLandscapeScheduleCoordinator = {
+        MasterViewLandscapeScheduleCoordinator(host: self)
+    }()
+
+    /// Track which day user is viewing (list + calendar); internal for landscape coordinator.
+    var currentViewingDay: String? = nil
+    /// Save scroll position when navigating away; internal for landscape coordinator.
+    var savedScrollPosition: CGPoint? = nil
+    /// Track programmatic scroll so calendar open uses the scrolled day; internal for landscape coordinator.
+    var lastProgrammaticScrollTime: Date? = nil
+
+    /// iPad: calendar vs list toggle; internal for landscape coordinator.
+    var viewToggleButton: UIBarButtonItem?
+    var isManualCalendarView: Bool = false  // true = calendar view, false = list view
     
     /// When non-nil, user opened band list from Auto Choose Attendance wizard; show "Back to wizard" and re-present wizard when tapped.
     private var autoChooseWizardResumeYear: Int?
@@ -232,7 +135,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     private var titleCountLabel: UILabel?
     
     var dataHandle = dataHandler()
-    private let priorityManager = SQLitePriorityManager.shared
+    let priorityManager = SQLitePriorityManager.shared
     
     var videoURL = URL("")
     var player = AVPlayer()
@@ -1462,7 +1365,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // Ensure UI elements are visible when view appears (especially after rotation)
         print("🔄 [VIEW_LIFECYCLE] viewWillAppear called")
-        print("🔄 [VIEW_LIFECYCLE] isShowingLandscapeSchedule: \(isShowingLandscapeSchedule)")
+        print("🔄 [VIEW_LIFECYCLE] landscapeScheduleCoordinator.isShowingLandscapeSchedule: \(landscapeScheduleCoordinator.isShowingLandscapeSchedule)")
         print("🔄 [VIEW_LIFECYCLE] presentedViewController: \(presentedViewController != nil ? String(describing: type(of: presentedViewController!)) : "nil")")
         print("🔄 [VIEW_LIFECYCLE] view.window: \(view.window != nil ? "exists" : "nil")")
         print("🔄 [VIEW_LIFECYCLE] filterMenuButton.isHidden: \(filterMenuButton?.isHidden ?? true)")
@@ -1568,8 +1471,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             // CRITICAL FIX: When returning from detail screen, check if detail screen was dismissed
             // from landscape view. If so, check orientation and show appropriate view.
             // This handles the case where user rotates in detail screen, then exits detail screen.
-            if self.isShowingLandscapeSchedule,
-               let landscapeVC = self.landscapeScheduleViewController,
+            if self.landscapeScheduleCoordinator.isShowingLandscapeSchedule,
+               let landscapeVC = self.landscapeScheduleCoordinator.landscapeScheduleViewController,
                landscapeVC.presentedViewController == nil {
                 // Detail screen was dismissed, check orientation to show appropriate view
                 print("🔄 [LANDSCAPE_SCHEDULE] Detail screen dismissed, checking orientation for appropriate view")
@@ -1582,18 +1485,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                         guard let self = self else { return }
                         if self.isManualCalendarView {
                             // User was in calendar mode - restore calendar view
-                            if !self.isShowingLandscapeSchedule {
+                            if !self.landscapeScheduleCoordinator.isShowingLandscapeSchedule {
                                 print("📱 [IPAD_TOGGLE] Restoring calendar view after detail dismissal in viewWillAppear (was in calendar mode)")
                                 self.updateCurrentViewingDayFromVisibleCells()
-                                self.presentLandscapeScheduleView()
+                                self.landscapeScheduleCoordinator.presentLandscapeScheduleView()
                             } else {
                                 print("📱 [IPAD_TOGGLE] Calendar view already showing after detail dismissal in viewWillAppear")
                             }
                         } else {
                             // User was in list mode - ensure list view is showing
-                            if self.isShowingLandscapeSchedule {
+                            if self.landscapeScheduleCoordinator.isShowingLandscapeSchedule {
                                 print("📱 [IPAD_TOGGLE] Dismissing calendar view after detail dismissal in viewWillAppear (was in list mode)")
-                                self.dismissLandscapeScheduleView()
+                                self.landscapeScheduleCoordinator.dismissLandscapeScheduleView()
                             } else {
                                 print("📱 [IPAD_TOGGLE] List view already showing after detail dismissal in viewWillAppear")
                             }
@@ -1637,15 +1540,15 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     
                     if !isLandscape {
                         print("🚫 [LANDSCAPE_SCHEDULE] iPhone in portrait after detail dismissal in viewWillAppear - immediately dismissing calendar")
-                        self.dismissLandscapeScheduleView()
+                        self.landscapeScheduleCoordinator.dismissLandscapeScheduleView()
                         return // Skip orientation check - we've already dismissed
                     }
                     
-                    self.checkOrientationAndShowLandscapeIfNeeded()
+                    self.landscapeScheduleCoordinator.checkOrientationAndShowLandscapeIfNeeded()
                 }
             } else {
                 // Normal case: Check orientation and show landscape view if needed
-                self.checkOrientationAndShowLandscapeIfNeeded()
+                self.landscapeScheduleCoordinator.checkOrientationAndShowLandscapeIfNeeded()
             }
         }
         
@@ -1658,7 +1561,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // Ensure UI elements are visible when view appears (especially after rotation)
         print("🔄 [VIEW_LIFECYCLE] viewDidAppear called")
-        print("🔄 [VIEW_LIFECYCLE] isShowingLandscapeSchedule: \(isShowingLandscapeSchedule)")
+        print("🔄 [VIEW_LIFECYCLE] landscapeScheduleCoordinator.isShowingLandscapeSchedule: \(landscapeScheduleCoordinator.isShowingLandscapeSchedule)")
         print("🔄 [VIEW_LIFECYCLE] presentedViewController: \(presentedViewController != nil ? String(describing: type(of: presentedViewController!)) : "nil")")
         print("🔄 [VIEW_LIFECYCLE] view.window: \(view.window != nil ? "exists" : "nil")")
         print("🔄 [VIEW_LIFECYCLE] filterMenuButton.isHidden: \(filterMenuButton?.isHidden ?? true)")
@@ -1689,7 +1592,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // Run orientation check after view has laid out (fixes launch in landscape showing portrait)
         if !isSplitViewCapable() {
-            checkOrientationAndShowLandscapeIfNeeded()
+            landscapeScheduleCoordinator.checkOrientationAndShowLandscapeIfNeeded()
         }
     }
     
@@ -1700,15 +1603,15 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // This catches cases where orientation changes but the notification hasn't fired yet
         // BUT: Don't dismiss if a detail screen is currently presented - let it handle its own orientation
         // PERF: Skip if already dismissing (prevents cascade) or if we checked recently (debounce)
-        if !isSplitViewCapable() && isShowingLandscapeSchedule && !isDismissingLandscapeSchedule {
+        if !isSplitViewCapable() && landscapeScheduleCoordinator.isShowingLandscapeSchedule && !landscapeScheduleCoordinator.isDismissingLandscapeSchedule {
             let now = CFAbsoluteTimeGetCurrent()
-            if now - lastPortraitDismissCheckTime < 0.25 {
+            if now - landscapeScheduleCoordinator.lastPortraitDismissCheckTime < 0.25 {
                 return
             }
-            lastPortraitDismissCheckTime = now
+            landscapeScheduleCoordinator.lastPortraitDismissCheckTime = now
             
             // CRITICAL: If a detail screen is currently presented, don't dismiss on orientation change
-            if let landscapeVC = landscapeScheduleViewController,
+            if let landscapeVC = landscapeScheduleCoordinator.landscapeScheduleViewController,
                landscapeVC.presentedViewController != nil {
                 return
             }
@@ -1732,7 +1635,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
             
             if !isLandscape {
-                dismissLandscapeScheduleView()
+                landscapeScheduleCoordinator.dismissLandscapeScheduleView()
             }
         }
     }
@@ -1741,7 +1644,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         super.viewWillTransition(to: size, with: coordinator)
         
         print("🔄 [ROTATION] viewWillTransition called - size: \(size)")
-        print("🔄 [ROTATION] isShowingLandscapeSchedule: \(isShowingLandscapeSchedule)")
+        print("🔄 [ROTATION] landscapeScheduleCoordinator.isShowingLandscapeSchedule: \(landscapeScheduleCoordinator.isShowingLandscapeSchedule)")
         print("🔄 [ROTATION] presentedViewController: \(presentedViewController != nil ? String(describing: type(of: presentedViewController!)) : "nil")")
         print("🔄 [ROTATION] filterMenuButton.isHidden: \(filterMenuButton?.isHidden ?? true)")
         print("🔄 [ROTATION] bandSearch.isHidden: \(bandSearch?.isHidden ?? true)")
@@ -1749,7 +1652,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // If transitioning from landscape to portrait, dismiss any open landscape filter menu
         // This must happen synchronously before rotation to prevent blocking the transition
-        if isShowingLandscapeSchedule, let landscapeVC = landscapeScheduleViewController {
+        if landscapeScheduleCoordinator.isShowingLandscapeSchedule, let landscapeVC = landscapeScheduleCoordinator.landscapeScheduleViewController {
             // Check for presented sheet (SwiftUI sheet presentation)
             if let presentedSheet = landscapeVC.presentedViewController {
                 print("🔄 [ROTATION] Found presented sheet on landscape VC: \(type(of: presentedSheet))")
@@ -1774,15 +1677,15 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let isTransitioningToPortrait = size.width < size.height
         
         // If transitioning to portrait and landscape view is showing, ensure it's fully dismissed
-        if isTransitioningToPortrait && isShowingLandscapeSchedule {
+        if isTransitioningToPortrait && landscapeScheduleCoordinator.isShowingLandscapeSchedule {
             print("🔄 [ROTATION] Transitioning to portrait - ensuring landscape view is dismissed")
             // Use coordinator to ensure dismissal happens before rotation completes
             coordinator.animate(alongsideTransition: nil) { [weak self] _ in
                 guard let self = self else { return }
                 // Double-check that landscape view is dismissed
-                if self.isShowingLandscapeSchedule {
+                if self.landscapeScheduleCoordinator.isShowingLandscapeSchedule {
                     print("🔄 [ROTATION] Landscape view still showing after rotation - forcing dismissal")
-                    self.dismissLandscapeScheduleView()
+                    self.landscapeScheduleCoordinator.dismissLandscapeScheduleView()
                 }
             }
         }
@@ -1914,7 +1817,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     @IBAction func filterMenuButtonPress(_ sender: Any) {
         print("🔘 [FILTER_MENU] filterMenuButtonPress called")
         print("🔘 [FILTER_MENU] Current view controller: \(type(of: self))")
-        print("🔘 [FILTER_MENU] isShowingLandscapeSchedule: \(isShowingLandscapeSchedule)")
+        print("🔘 [FILTER_MENU] landscapeScheduleCoordinator.isShowingLandscapeSchedule: \(landscapeScheduleCoordinator.isShowingLandscapeSchedule)")
         print("🔘 [FILTER_MENU] presentedViewController: \(presentedViewController != nil ? String(describing: type(of: presentedViewController!)) : "nil")")
         print("🔘 [FILTER_MENU] filterMenuButton.isHidden: \(filterMenuButton?.isHidden ?? true)")
         print("🔘 [FILTER_MENU] filterMenuButton.alpha: \(filterMenuButton?.alpha ?? 0)")
@@ -2517,7 +2420,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
         
         // Also check if detail view is presented from landscape view controller
-        if let landscapeVC = landscapeScheduleViewController,
+        if let landscapeVC = landscapeScheduleCoordinator.landscapeScheduleViewController,
            landscapeVC.presentedViewController != nil {
             print("🔄 [ORIENTATION] Detail view is presented from landscape view - skipping orientation handling")
             return
@@ -2525,195 +2428,30 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // CRITICAL FIX: For iPhone, check orientation multiple times with increasing delays
         // This ensures we catch the portrait rotation even if view bounds haven't updated yet
-        if !isSplitViewCapable() && isShowingLandscapeSchedule {
+        if !isSplitViewCapable() && landscapeScheduleCoordinator.isShowingLandscapeSchedule {
             // Check immediately
-            checkAndDismissIfPortrait(attempt: 1, maxAttempts: 3)
+            landscapeScheduleCoordinator.checkAndDismissIfPortrait(attempt: 1, maxAttempts: 3)
         }
         
         // Check if we should show landscape schedule view
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
             guard let self = self else { return }
-            self.checkOrientationAndShowLandscapeIfNeeded()
+            self.landscapeScheduleCoordinator.checkOrientationAndShowLandscapeIfNeeded()
             
             // Refresh band list if not showing landscape
-            if !self.isShowingLandscapeSchedule {
+            if !self.landscapeScheduleCoordinator.isShowingLandscapeSchedule {
                 print("Calling refreshBandList from OnOrientationChange with reason: Orientation change")
                 self.refreshBandList(reason: "Orientation change")
             }
         }
     }
     
-    /// Helper method to check if iPhone is in portrait and dismiss calendar view
-    /// Uses multiple attempts with increasing delays to catch orientation changes
-    private func checkAndDismissIfPortrait(attempt: Int, maxAttempts: Int) {
-        guard !isSplitViewCapable() && isShowingLandscapeSchedule else {
-            return
-        }
-        
-        // CRITICAL FIX: If a detail screen is currently presented, don't dismiss on orientation change
-        // Let the detail screen handle its own orientation changes
-        if let landscapeVC = landscapeScheduleViewController,
-           landscapeVC.presentedViewController != nil {
-            print("🔄 [ORIENTATION] Detail screen is presented - skipping portrait dismissal check")
-            return
-        }
-        
-        // CRITICAL FIX: When landscape view controller is showing, view.window might be the landscape view's window
-        // Use the main window (UIApplication.shared.windows or scene) instead, or prioritize device/statusBar orientation
-        let mainWindow = UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .flatMap { $0.windows }
-            .first { $0.isKeyWindow } ?? view.window
-        
-        let windowBounds = mainWindow?.bounds ?? view.bounds
-        let windowBoundsLandscape = windowBounds.width > windowBounds.height
-        let viewBoundsLandscape = view.bounds.width > view.bounds.height
-        let statusBarLandscape = UIApplication.shared.statusBarOrientation.isLandscape
-        let deviceOrientationLandscape = UIDevice.current.orientation.isLandscape
-        
-        // CRITICAL: Prioritize device orientation and status bar over window bounds when they disagree
-        // If device/statusBar say portrait but window says landscape, trust device/statusBar (more reliable)
-        let isLandscape: Bool
-        if !statusBarLandscape && !deviceOrientationLandscape {
-            // Both device and statusBar say portrait - trust them, ignore window bounds
-            isLandscape = false
-        } else if statusBarLandscape || deviceOrientationLandscape {
-            // Device or statusBar say landscape - trust them
-            isLandscape = true
-        } else {
-            // Fallback to window bounds if device/statusBar are unknown
-            isLandscape = windowBoundsLandscape || viewBoundsLandscape
-        }
-        
-        print("🚫 [ORIENTATION] Portrait check attempt \(attempt)/\(maxAttempts) - windowBounds: \(windowBoundsLandscape) (w:\(windowBounds.width) h:\(windowBounds.height)), viewBounds: \(viewBoundsLandscape), statusBar: \(statusBarLandscape), device: \(deviceOrientationLandscape), isLandscape: \(isLandscape)")
-        
-        if !isLandscape {
-            print("🚫 [ORIENTATION] iPhone detected in portrait - dismissing calendar view immediately")
-            dismissLandscapeScheduleView()
-            return
-        }
-        
-        // If still showing as landscape but we haven't exhausted attempts, check again with delay
-        if attempt < maxAttempts {
-            let delay = Double(attempt) * 0.2 // 0.2s, 0.4s, 0.6s
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-                self?.checkAndDismissIfPortrait(attempt: attempt + 1, maxAttempts: maxAttempts)
-            }
-        }
-    }
-    
     /// Call after a filter change (e.g. Hide Expired Events) so list vs calendar is re-evaluated in landscape.
     func recheckLandscapeScheduleAfterFilterChange() {
-        checkOrientationAndShowLandscapeIfNeeded()
+        landscapeScheduleCoordinator.recheckLandscapeScheduleAfterFilterChange()
     }
     
-    private func checkOrientationAndShowLandscapeIfNeeded() {
-        print("🔄 [ORIENTATION_CHECK] checkOrientationAndShowLandscapeIfNeeded called")
-        print("🔄 [ORIENTATION_CHECK] filterMenuButton.isHidden: \(filterMenuButton?.isHidden ?? true)")
-        print("🔄 [ORIENTATION_CHECK] bandSearch.isHidden: \(bandSearch?.isHidden ?? true)")
-        print("🔄 [ORIENTATION_CHECK] view.window: \(view.window != nil ? "exists" : "nil")")
-        print("🔄 [ORIENTATION_CHECK] isShowingLandscapeSchedule: \(isShowingLandscapeSchedule)")
-        
-        // CRITICAL FIX: Check orientation FIRST before any other logic
-        // Phone: Use orientation-based switching
-        // Get main window (not landscape view controller's window)
-        let mainWindow = UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .flatMap { $0.windows }
-            .first { $0.isKeyWindow } ?? view.window
-        
-        let windowBounds = mainWindow?.bounds ?? view.bounds
-        let windowBoundsLandscape = windowBounds.width > windowBounds.height
-        let viewBoundsLandscape = view.bounds.width > view.bounds.height
-        let statusBarLandscape = UIApplication.shared.statusBarOrientation.isLandscape
-        let deviceOrientationLandscape = UIDevice.current.orientation.isLandscape
-        
-        // CRITICAL: Prioritize device orientation and status bar over window bounds when they disagree
-        // If device/statusBar say portrait but window says landscape, trust device/statusBar (more reliable)
-        let isLandscape: Bool
-        if !statusBarLandscape && !deviceOrientationLandscape {
-            // Both device and statusBar say portrait - trust them, ignore window bounds
-            isLandscape = false
-        } else if statusBarLandscape || deviceOrientationLandscape {
-            // Device or statusBar say landscape - trust them
-            isLandscape = true
-        } else {
-            // Fallback to window bounds if device/statusBar are unknown
-            isLandscape = windowBoundsLandscape || viewBoundsLandscape
-        }
-        
-        // CRITICAL FIX: If a detail screen is currently presented from the landscape view,
-        // don't dismiss the landscape view on orientation change. Let the detail screen
-        // handle its own orientation changes. The landscape view will be dismissed when
-        // the user exits the detail screen (handled in detail screen dismissal).
-        // This check MUST happen FIRST, before portrait dismissal check, to prevent dismissing detail view
-        if let landscapeVC = landscapeScheduleViewController,
-           landscapeVC.presentedViewController != nil {
-            print("🔄 [LANDSCAPE_SCHEDULE] Detail screen is presented - skipping orientation change handling")
-            print("🔄 [LANDSCAPE_SCHEDULE] Detail screen will handle its own orientation, landscape view stays")
-            return
-        }
-        
-        // CRITICAL FIX: iPhone in portrait mode should NEVER show calendar mode
-        // This check happens AFTER detail view check, so detail views aren't dismissed on orientation change
-        if !isSplitViewCapable() {
-            // Log detailed orientation info for debugging
-            print("🚫 [LANDSCAPE_SCHEDULE] Orientation check - windowBounds: \(windowBoundsLandscape) (w:\(windowBounds.width) h:\(windowBounds.height)), viewBounds: \(viewBoundsLandscape) (w:\(view.bounds.width) h:\(view.bounds.height)), statusBar: \(statusBarLandscape), device: \(deviceOrientationLandscape), isLandscape: \(isLandscape), isShowingCalendar: \(isShowingLandscapeSchedule)")
-            
-            if !isLandscape {
-                // iPhone is in portrait - MUST dismiss calendar view immediately
-                // BUT only if no detail view is presented (checked above)
-                if isShowingLandscapeSchedule {
-                    print("🚫 [LANDSCAPE_SCHEDULE] iPhone rotated to portrait - immediately dismissing calendar view (portrait never shows calendar)")
-                    print("🚫 [ORIENTATION_CHECK] Before dismissLandscapeScheduleView - filterMenuButton.isHidden: \(filterMenuButton?.isHidden ?? true)")
-                    print("🚫 [ORIENTATION_CHECK] Before dismissLandscapeScheduleView - bandSearch.isHidden: \(bandSearch?.isHidden ?? true)")
-                    dismissLandscapeScheduleView()
-                    print("🚫 [ORIENTATION_CHECK] After dismissLandscapeScheduleView - filterMenuButton.isHidden: \(filterMenuButton?.isHidden ?? true)")
-                    print("🚫 [ORIENTATION_CHECK] After dismissLandscapeScheduleView - bandSearch.isHidden: \(bandSearch?.isHidden ?? true)")
-                }
-                return // Exit early - portrait mode never shows calendar on iPhone
-            }
-        }
-        
-        let isScheduleView = getShowScheduleView()
-        
-        // iPad: Use manual toggle instead of orientation
-        if isSplitViewCapable() {
-            print("📱 [IPAD_TOGGLE] Schedule View: \(isScheduleView), Manual Calendar View: \(isManualCalendarView)")
-            // iPad behavior is controlled by the manual toggle button, not orientation
-            // Do nothing here - the toggle button handles presentation
-            return
-        }
-        
-        // CRITICAL FIX: If detail view is presented from main navigation controller,
-        // don't handle orientation changes - detail view should stay visible
-        if let topVC = navigationController?.topViewController, topVC is DetailHostingController {
-            print("🔄 [ORIENTATION] Detail view is showing in navigation stack - skipping orientation handling")
-            return
-        }
-        
-        // Check if bands array contains event entries (format: "timeIndex:bandName")
-        // When all events are expired, bands array contains only band names (no timeIndex prefix)
-        let hasEventEntries = self.bands.contains { item in
-            item.contains(":") && item.components(separatedBy: ":").first?.doubleValue != nil
-        }
-        
-        print("🔄 [LANDSCAPE_SCHEDULE] Check orientation - Landscape: \(isLandscape), Schedule View: \(isScheduleView), Has Event Entries: \(hasEventEntries), Bands Count: \(self.bands.count)")
-        
-        if isLandscape && isScheduleView && hasEventEntries {
-            // Always update current viewing day from topmost visible cell before showing calendar
-            // This ensures calendar shows the same day as the first visible entry in the list
-            updateCurrentViewingDayFromVisibleCells()
-            
-            // Show landscape schedule view
-            presentLandscapeScheduleView()
-        } else {
-            // Hide landscape schedule view if showing
-            dismissLandscapeScheduleView()
-        }
-    }
-    
-    private func updateCurrentViewingDayFromVisibleCells() {
+    func updateCurrentViewingDayFromVisibleCells() {
         // Delegate to UIManager
         uiManager.updateCurrentViewingDayFromVisibleCells(
             tableView: tableView,
@@ -2724,7 +2462,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     /// Scrolls the list view to the first row of the given day (e.g. "Day 3").
     /// Called when switching from calendar to list so the list shows the same day the user was viewing.
-    private func scrollListToDayIfNeeded(day: String?) {
+    func scrollListToDayIfNeeded(day: String?) {
         guard let day = day, !bands.isEmpty else { return }
         guard let row = uiManager.firstRowIndex(forDay: day, bands: bands) else {
             print("🔄 [LANDSCAPE_SCHEDULE] No list row found for day: \(day)")
@@ -2762,7 +2500,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     // MARK: - iPad Split View Detection
     
-    private func isSplitViewCapable() -> Bool {
+    func isSplitViewCapable() -> Bool {
         // Use centralized DeviceSizeManager for consistent device size classification
         // This recalculates on orientation changes and device folds
         return DeviceSizeManager.isLargeDisplay()
@@ -2816,7 +2554,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
         
         // Create or update toggle button: show icon for the *other* view (based on what's on screen)
-        let iconName = isShowingLandscapeSchedule ? "list.bullet" : "calendar"
+        let iconName = landscapeScheduleCoordinator.isShowingLandscapeSchedule ? "list.bullet" : "calendar"
         
         if let existingButton = viewToggleButton {
             // Update existing button icon
@@ -2844,12 +2582,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         if isManualCalendarView {
             // Switch to calendar view
             updateCurrentViewingDayFromVisibleCells()
-            presentLandscapeScheduleView()
+            landscapeScheduleCoordinator.presentLandscapeScheduleView()
             // Update button to list icon
             viewToggleButton?.image = UIImage(systemName: "list.bullet")
         } else {
             // Switch to list view (scroll to current day happens in dismissLandscapeViewController)
-            dismissLandscapeScheduleView()
+            landscapeScheduleCoordinator.dismissLandscapeScheduleView()
             // Update button to calendar icon
             viewToggleButton?.image = UIImage(systemName: "calendar")
         }
@@ -2873,354 +2611,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
         
         navigationItem.rightBarButtonItems = rightButtons
-    }
-    
-    // MARK: - Landscape Schedule View Management
-    
-    private func presentLandscapeScheduleView() {
-        // Don't present if already showing
-        guard !isShowingLandscapeSchedule else {
-            print("🔄 [LANDSCAPE_SCHEDULE] Already showing landscape schedule view")
-            return
-        }
-        
-        // CRITICAL FIX: iPhone in portrait mode should NEVER show calendar mode
-        // Only allow calendar mode on iPhone when in landscape, or on iPad (master/detail)
-        if !isSplitViewCapable() {
-            // iPhone: Check orientation - must be landscape to show calendar
-            // Get main window (not landscape view controller's window)
-            let mainWindow = UIApplication.shared.connectedScenes
-                .compactMap { $0 as? UIWindowScene }
-                .flatMap { $0.windows }
-                .first { $0.isKeyWindow } ?? view.window
-            
-            let windowBounds = mainWindow?.bounds ?? view.bounds
-            let windowBoundsLandscape = windowBounds.width > windowBounds.height
-            let viewBoundsLandscape = view.bounds.width > view.bounds.height
-            let statusBarLandscape = UIApplication.shared.statusBarOrientation.isLandscape
-            let deviceOrientationLandscape = UIDevice.current.orientation.isLandscape
-            
-            // CRITICAL: Prioritize device orientation and status bar over window bounds
-            let isLandscape: Bool
-            if !statusBarLandscape && !deviceOrientationLandscape {
-                // Both device and statusBar say portrait - trust them
-                isLandscape = false
-            } else if statusBarLandscape || deviceOrientationLandscape {
-                // Device or statusBar say landscape - trust them
-                isLandscape = true
-            } else {
-                // Fallback to window bounds
-                isLandscape = windowBoundsLandscape || viewBoundsLandscape
-            }
-            
-            if !isLandscape {
-                print("🚫 [LANDSCAPE_SCHEDULE] iPhone in portrait mode - calendar mode is not allowed")
-                return
-            }
-        }
-        
-        print("🔄 [LANDSCAPE_SCHEDULE] Presenting landscape schedule view")
-        
-        // Check if hiding expired events
-        let hideExpiredEvents = getHideExpireScheduleData()
-        print("🔄 [LANDSCAPE_SCHEDULE] hideExpiredEvents: \(hideExpiredEvents)")
-        
-        // If hiding expired events and NO bands are visible in portrait, don't show landscape
-        // Use the existing bands array which is already filtered
-        if hideExpiredEvents && self.bands.isEmpty {
-            print("⚠️ [LANDSCAPE_SCHEDULE] No bands in portrait view - staying in portrait view")
-            return
-        }
-        
-        // CRITICAL: Update current viewing day from topmost visible cell before presenting calendar
-        // BUT: If we just scrolled programmatically (within last 0.5 seconds), trust the day we scrolled to
-        // instead of re-checking visible cells (which may not have updated yet due to scroll animation)
-        let timeSinceScroll = lastProgrammaticScrollTime.map { Date().timeIntervalSince($0) } ?? 1.0
-        
-        if timeSinceScroll < 0.5, let scrolledDay = currentViewingDay {
-            // We just scrolled programmatically - trust the day we scrolled to
-            print("🔄 [LANDSCAPE_SCHEDULE] Recent programmatic scroll detected (\(String(format: "%.2f", timeSinceScroll))s ago), using scrolled day: '\(scrolledDay)'")
-        } else {
-            // No recent scroll, or currentViewingDay is nil - update from visible cells
-            if currentViewingDay == nil {
-                print("🔄 [LANDSCAPE_SCHEDULE] currentViewingDay is nil, updating from visible cells")
-            } else {
-                print("🔄 [LANDSCAPE_SCHEDULE] No recent scroll, updating from visible cells (current: '\(currentViewingDay!)')")
-            }
-            updateCurrentViewingDayFromVisibleCells()
-        }
-        
-        // Use the tracked current viewing day
-        let initialDay = currentViewingDay
-        if let day = initialDay {
-            print("🔄 [LANDSCAPE_SCHEDULE] Starting on tracked day: '\(day)'")
-        } else {
-            print("🔄 [LANDSCAPE_SCHEDULE] No tracked day found, will start on first day")
-        }
-        
-        // Pass the same dependencies used by the main view for filtering
-        let landscapeView = LandscapeScheduleView(
-            priorityManager: priorityManager,
-            attendedHandle: attendedHandle,
-            initialDay: initialDay,
-            hideExpiredEvents: hideExpiredEvents,
-            isSplitViewCapable: isSplitViewCapable(),
-            onDismissRequested: { [weak self] currentDay in
-                // iPad: User wants to return to list view; use calendar's current day so list shows same day
-                if let day = currentDay {
-                    self?.currentViewingDay = day
-                    print("🔄 [LANDSCAPE_SCHEDULE] Calendar → list: will show day \(day)")
-                }
-                self?.isManualCalendarView = false
-                self?.dismissLandscapeScheduleView()
-            },
-            onCurrentDayChanged: { [weak self] day in
-                // Keep currentViewingDay in sync when user changes day in calendar (swipe/buttons)
-                self?.currentViewingDay = day
-            },
-            onShowMessage: { [weak self] message in
-                self?.showToastOnTopmostVC(message: message)
-            },
-            onBandTapped: { [weak self] bandName, currentDay in
-                // Handle band tap - present detail directly from landscape view
-                guard let self = self else { return }
-                
-                print("🔄 [LANDSCAPE_SCHEDULE] Band tapped: \(bandName) on day: \(currentDay ?? "unknown")")
-                
-                // Check if this is a combined event (internal delimiter, not "/")
-                if isCombinedEventBandName(bandName) {
-                    if let individualBands = combinedEventsMap[bandName], individualBands.count == 2 {
-                        // Prompt user to choose which band
-                        self.promptForBandSelectionLandscape(combinedBandName: bandName, bands: individualBands, currentDay: currentDay)
-                        return
-                    }
-                }
-                
-                // Save the current day for when we return
-                if let day = currentDay {
-                    self.currentViewingDay = day
-                    print("🔄 [LANDSCAPE_SCHEDULE] Saved current viewing day: \(day)")
-                }
-                
-                // Save scroll position
-                self.savedScrollPosition = self.tableView.contentOffset
-                print("🔄 [LANDSCAPE_SCHEDULE] Saved scroll position: \(self.savedScrollPosition!)")
-                
-                // Find the band index
-                let bandIndex: Int
-                if let index = self.bands.firstIndex(where: { band in
-                    getNameFromSortable(band, sortedBy: getSortedBy()) == bandName
-                }) {
-                    bandIndex = index
-                } else {
-                    print("⚠️ [LANDSCAPE_SCHEDULE] Band not in filtered list, using index 0")
-                    bandIndex = 0
-                }
-                
-                // Set up for detail navigation (using globals from Constants.swift)
-                bandSelected = bandName
-                bandListIndexCache = bandIndex
-                currentBandList = self.bands
-                
-                // Create and present detail view from the stored landscape controller with custom back button
-                let detailController = DetailHostingController(bandName: bandName, showCustomBackButton: true)
-                
-                // CRITICAL FIX: For large display (master/detail), make the detail popup larger to accommodate band name and logo
-                if isSplitViewCapable() {
-                    // Use formSheet for a larger modal that doesn't cover the entire screen
-                    detailController.modalPresentationStyle = .formSheet
-                    // Set larger preferred content size to accommodate band name and logo
-                    detailController.preferredContentSize = CGSize(width: 800, height: 900)
-                }
-                
-                // Present from the stored landscape view controller
-                self.landscapeScheduleViewController?.present(detailController, animated: true) {
-                    print("✅ [LANDSCAPE_SCHEDULE] Detail view presented")
-                }
-            },
-            onLongPress: { [weak self] bandName, location, startTime, eventType, day in
-                // Handle long press - show priority/attendance menu
-                guard let self = self else { return }
-                
-                // Combined event: show band choice first, then long-press menu for selected band
-                if isCombinedEventBandName(bandName) {
-                    let individualBands = combinedEventsMap[bandName] ?? combinedEventBandParts(bandName)
-                    if let bands = individualBands, bands.count == 2 {
-                        self.promptForBandSelectionLandscapeForLongPress(
-                            combinedBandName: bandName,
-                            bands: bands,
-                            location: location,
-                            startTime: startTime,
-                            eventType: eventType,
-                            day: day
-                        )
-                        return
-                    }
-                }
-                
-                // Single event: show long-press menu directly
-                var cellDataText = "\(bandName);\(location);\(eventType);\(startTime)"
-                if !day.isEmpty {
-                    cellDataText += ";\(day)"
-                }
-                let presentingViewController = self.landscapeScheduleViewController ?? self
-                self.showLongPressMenu(bandName: bandName, cellDataText: cellDataText, indexPath: IndexPath(row: 0, section: 0), presentingFrom: presentingViewController)
-            }
-        )
-        
-        let hostingController = UIHostingController(rootView: landscapeView)
-        hostingController.modalPresentationStyle = .fullScreen
-        
-        landscapeScheduleViewController = hostingController
-        isShowingLandscapeSchedule = true
-        
-        present(hostingController, animated: true) {
-            print("✅ [LANDSCAPE_SCHEDULE] Landscape schedule view presented")
-        }
-    }
-    
-    private func refreshLandscapeScheduleViewIfNeeded(for bandName: String? = nil) {
-        // Refresh landscape schedule view if it's currently showing
-        guard isShowingLandscapeSchedule else {
-            return
-        }
-        
-        print("🔄 [LANDSCAPE_SCHEDULE] Posting refresh notification for band: \(bandName ?? "all")")
-        
-        // Use NotificationCenter to trigger refresh in the SwiftUI view
-        var userInfo: [String: Any] = [:]
-        if let bandName = bandName {
-            userInfo["bandName"] = bandName
-        }
-        NotificationCenter.default.post(
-            name: Notification.Name("RefreshLandscapeSchedule"),
-            object: nil,
-            userInfo: userInfo.isEmpty ? nil : userInfo
-        )
-    }
-    
-    private func dismissLandscapeScheduleView(completion: (() -> Void)? = nil) {
-        guard isShowingLandscapeSchedule, let viewController = landscapeScheduleViewController else {
-            completion?()
-            return
-        }
-        guard !isDismissingLandscapeSchedule else { return }
-        isDismissingLandscapeSchedule = true
-        let wrappedCompletion: () -> Void = { [weak self] in
-            self?.isDismissingLandscapeSchedule = false
-            completion?()
-        }
-        
-        // CRITICAL: If a SwiftUI sheet (filter menu) is presented from the landscape view,
-        // dismiss it first before dismissing the landscape view controller
-        // This prevents the sheet from interfering with the portrait view
-        if let presentedVC = viewController.presentedViewController {
-            presentedVC.dismiss(animated: false) { [weak self] in
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-                    self?.dismissLandscapeViewControllerWithUIRestore(viewController: viewController, completion: wrappedCompletion)
-                }
-            }
-        } else {
-            dismissLandscapeViewControllerWithUIRestore(viewController: viewController, completion: wrappedCompletion)
-        }
-    }
-    
-    private func dismissLandscapeViewControllerWithUIRestore(viewController: UIViewController, completion: (() -> Void)?) {
-        dismissLandscapeViewController(viewController: viewController) { [weak self] in
-            guard let self = self else { return }
-            
-            // Small delay to ensure landscape view is fully dismissed before restoring UI
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
-                guard let self = self else { return }
-                
-                // CRITICAL: Restore UI elements BEFORE checking orientation
-                // This ensures elements are visible even if orientation check triggers something
-                self.filterMenuButton?.isHidden = false
-                self.bandSearch?.isHidden = false
-                self.filterMenuButton?.alpha = 1.0
-                self.bandSearch?.alpha = 1.0
-                self.mainToolBar?.isHidden = false
-                self.mainToolBar?.alpha = 1.0
-                self.view.isHidden = false
-                self.view.alpha = 1.0
-                
-                // Ensure parent views are visible
-                if let filterSuperview = self.filterMenuButton?.superview {
-                    filterSuperview.isHidden = false
-                    filterSuperview.alpha = 1.0
-                }
-                if let searchSuperview = self.bandSearch?.superview {
-                    searchSuperview.isHidden = false
-                    searchSuperview.alpha = 1.0
-                }
-                
-                // Force view hierarchy update
-                self.view.setNeedsLayout()
-                self.view.layoutIfNeeded()
-                
-                // CRITICAL: Force table view header to refresh to ensure toolbar is visible
-                // This ensures the header (which contains the toolbar with buttons) is recreated
-                DispatchQueue.main.async {
-                    self.tableView.reloadSections(IndexSet(integer: 0), with: .none)
-                    
-                    // KISS: After table reload, ensure titleView is still visible
-                    // Table reload shouldn't affect navigation bar, but be safe
-                    self.navigationItem.title = nil
-                    self.updateCountLable()
-                }
-                
-                // After landscape view is dismissed, check orientation and show appropriate view
-                self.checkOrientationAndShowLandscapeIfNeeded()
-                completion?()
-            }
-        }
-    }
-    
-    private func dismissLandscapeViewController(viewController: UIViewController, completion: (() -> Void)?) {
-        let dayToShow = currentViewingDay  // Capture before dismiss so list can scroll to same day
-        viewController.dismiss(animated: true) { [weak self] in
-            self?.landscapeScheduleViewController = nil
-            self?.isShowingLandscapeSchedule = false
-            
-            // Reset iPad manual toggle state and button icon
-            if self?.isSplitViewCapable() == true {
-                self?.isManualCalendarView = false
-                self?.viewToggleButton?.image = UIImage(systemName: "calendar")
-            }
-            
-            // Calendar → list: show the day the user was viewing in the calendar
-            // Scroll to first entry of that day after a brief delay to ensure table view is ready
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-                guard let self = self else { return }
-                self.scrollListToDayIfNeeded(day: dayToShow)
-                
-                self.filterMenuButton?.isHidden = false
-                self.bandSearch?.isHidden = false
-                self.filterMenuButton?.alpha = 1.0
-                self.bandSearch?.alpha = 1.0
-                self.mainToolBar?.isHidden = false
-                self.mainToolBar?.alpha = 1.0
-                
-                // Ensure parent views are also visible
-                if let filterBar = self.filterMenuButton?.superview {
-                    filterBar.isHidden = false
-                    filterBar.alpha = 1.0
-                }
-                if let searchBar = self.bandSearch?.superview {
-                    searchBar.isHidden = false
-                    searchBar.alpha = 1.0
-                }
-                
-                // Ensure the view itself is visible
-                self.view.isHidden = false
-                self.view.alpha = 1.0
-                
-                // Force view to update layout
-                self.view.setNeedsLayout()
-                self.view.layoutIfNeeded()
-            }
-            completion?()
-        }
     }
     
     /// Centralized method that performs the same logic as pull-to-refresh
@@ -4463,7 +3853,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
         let band1 = bands[0]
         let band2 = bands[1]
-        let presenter = landscapeScheduleViewController ?? self
+        let presenter = landscapeScheduleCoordinator.landscapeScheduleViewController ?? self
         let vc = BandSelectionViewController(
             title: NSLocalizedString("Select Band", comment: "Title for band selection dialog"),
             message: NSLocalizedString("Multiple bands share this event. Which band would you like to view?", comment: "Message for band selection dialog"),
@@ -4486,7 +3876,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
         let band1 = bands[0]
         let band2 = bands[1]
-        let presentingViewController = landscapeScheduleViewController ?? self
+        let presentingViewController = landscapeScheduleCoordinator.landscapeScheduleViewController ?? self
         let vc = BandSelectionViewController(
             title: NSLocalizedString("Select Band", comment: "Title for band selection dialog"),
             message: NSLocalizedString("Which band do you want to set priority or attendance for?", comment: "Long-press combined event: which band to act on"),
@@ -4544,7 +3934,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
         
         // Present from the stored landscape view controller
-        self.landscapeScheduleViewController?.present(detailController, animated: true) {
+        self.landscapeScheduleCoordinator.landscapeScheduleViewController?.present(detailController, animated: true) {
             print("✅ [LANDSCAPE_SCHEDULE] Detail view presented")
         }
     }
@@ -4985,7 +4375,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 self?.priorityManager.setPriority(for: bandName, priority: 1)
                 self?.refreshBandListOnly(reason: "Priority changed to Must See")
                 self?.refreshIPadDetailViewIfNeeded(for: bandName)
-                self?.refreshLandscapeScheduleViewIfNeeded(for: bandName)
+                self?.landscapeScheduleCoordinator.refreshLandscapeScheduleViewIfNeeded(for: bandName)
             }
         ))
         
@@ -4998,7 +4388,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 self?.priorityManager.setPriority(for: bandName, priority: 2)
                 self?.refreshBandListOnly(reason: "Priority changed to Might See")
                 self?.refreshIPadDetailViewIfNeeded(for: bandName)
-                self?.refreshLandscapeScheduleViewIfNeeded(for: bandName)
+                self?.landscapeScheduleCoordinator.refreshLandscapeScheduleViewIfNeeded(for: bandName)
             }
         ))
         
@@ -5011,7 +4401,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 self?.priorityManager.setPriority(for: bandName, priority: 3)
                 self?.refreshBandListOnly(reason: "Priority changed to Won't See")
                 self?.refreshIPadDetailViewIfNeeded(for: bandName)
-                self?.refreshLandscapeScheduleViewIfNeeded(for: bandName)
+                self?.landscapeScheduleCoordinator.refreshLandscapeScheduleViewIfNeeded(for: bandName)
             }
         ))
         
@@ -5024,7 +4414,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 self?.priorityManager.setPriority(for: bandName, priority: 0)
                 self?.refreshBandListOnly(reason: "Priority changed to Unknown")
                 self?.refreshIPadDetailViewIfNeeded(for: bandName)
-                self?.refreshLandscapeScheduleViewIfNeeded(for: bandName)
+                self?.landscapeScheduleCoordinator.refreshLandscapeScheduleViewIfNeeded(for: bandName)
             }
         ))
         
@@ -5059,7 +4449,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             action: { [weak self] in
                 guard let self = self else { return }
                 self.markAttendingStatus(cellDataText: capturedCellDataText, status: sawAllStatusValue, correctBandName: bandName)
-                self.refreshLandscapeScheduleViewIfNeeded(for: bandName)
+                self.landscapeScheduleCoordinator.refreshLandscapeScheduleViewIfNeeded(for: bandName)
             }
             ))
             
@@ -5071,7 +4461,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 action: { [weak self] in
                     guard let self = self else { return }
                     self.markAttendingStatus(cellDataText: capturedCellDataText, status: sawSomeStatusValue, correctBandName: bandName)
-                    self.refreshLandscapeScheduleViewIfNeeded(for: bandName)
+                    self.landscapeScheduleCoordinator.refreshLandscapeScheduleViewIfNeeded(for: bandName)
                 }
             ))
             
@@ -5083,7 +4473,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 action: { [weak self] in
                     guard let self = self else { return }
                     self.markAttendingStatus(cellDataText: capturedCellDataText, status: sawNoneStatusValue, correctBandName: bandName)
-                    self.refreshLandscapeScheduleViewIfNeeded(for: bandName)
+                    self.landscapeScheduleCoordinator.refreshLandscapeScheduleViewIfNeeded(for: bandName)
                 }
             ))
             
@@ -5838,7 +5228,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     private func checkAndDismissLandscapeIfPortrait() {
-        guard !isSplitViewCapable() && isShowingLandscapeSchedule else {
+        guard !isSplitViewCapable() && landscapeScheduleCoordinator.isShowingLandscapeSchedule else {
             return
         }
         
@@ -5866,7 +5256,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         if !isLandscape {
             print("🚫 [LANDSCAPE_SCHEDULE] iPhone in portrait after detail dismissal (immediate check) - dismissing calendar view")
-            dismissLandscapeScheduleView()
+            landscapeScheduleCoordinator.dismissLandscapeScheduleView()
         }
     }
     
@@ -5877,18 +5267,18 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 // iPad: Restore the view state based on manual toggle, not orientation
                 if self.isManualCalendarView {
                     // User was in calendar mode - restore calendar view
-                    if !self.isShowingLandscapeSchedule {
+                    if !self.landscapeScheduleCoordinator.isShowingLandscapeSchedule {
                         print("📱 [IPAD_TOGGLE] Restoring calendar view after detail dismissal (was in calendar mode)")
                         self.updateCurrentViewingDayFromVisibleCells()
-                        self.presentLandscapeScheduleView()
+                        self.landscapeScheduleCoordinator.presentLandscapeScheduleView()
                     } else {
                         print("📱 [IPAD_TOGGLE] Calendar view already showing after detail dismissal")
                     }
                 } else {
                     // User was in list mode - ensure list view is showing
-                    if self.isShowingLandscapeSchedule {
+                    if self.landscapeScheduleCoordinator.isShowingLandscapeSchedule {
                         print("📱 [IPAD_TOGGLE] Dismissing calendar view after detail dismissal (was in list mode)")
-                        self.dismissLandscapeScheduleView()
+                        self.landscapeScheduleCoordinator.dismissLandscapeScheduleView()
                     } else {
                         print("📱 [IPAD_TOGGLE] List view already showing after detail dismissal")
                     }
@@ -5927,13 +5317,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print("🔄 [LANDSCAPE_SCHEDULE] Detail dismissal orientation check (delayed) - windowBounds: \(windowBoundsLandscape) (w:\(windowBounds.width) h:\(windowBounds.height)), viewBounds: \(viewBoundsLandscape), statusBar: \(statusBarLandscape), device: \(deviceOrientationLandscape), isLandscape: \(isLandscape)")
         
         // Check if landscape view is still showing (it should be, since detail was presented from it)
-        if self.isShowingLandscapeSchedule {
+        if self.landscapeScheduleCoordinator.isShowingLandscapeSchedule {
             // CRITICAL FIX: iPhone in portrait mode should NEVER show calendar mode
             // If we're on iPhone (not iPad) and in portrait, always dismiss calendar view
             if !isLandscape {
                 // iPhone in portrait - MUST dismiss calendar view
                 print("🚫 [LANDSCAPE_SCHEDULE] iPhone in portrait after detail dismissal (delayed check) - dismissing calendar view (portrait mode never shows calendar)")
-                self.dismissLandscapeScheduleView()
+                self.landscapeScheduleCoordinator.dismissLandscapeScheduleView()
             } else {
                 // Still in landscape - keep calendar view
                 print("🔄 [LANDSCAPE_SCHEDULE] Still in landscape after detail dismissal (delayed check) - keeping calendar view")
