@@ -31,9 +31,6 @@ enum NetworkTimeoutPolicy {
     }
 }
 
-// MARK: - UI Menu
-var filterMenu: UIMenu = UIMenu()
-
 // MARK: - Firebase Cloud Messaging
 var FCMnumber = ""
 
@@ -91,14 +88,6 @@ var localTimeZoneAbbreviation: String = TimeZone.current.abbreviation()!
 
 // MARK: - Version Information
 var versionInformation = Bundle.main.infoDictionary?["CFBundleVersion"] as! String
-
-// MARK: - Link Containers
-var wikipediaLink = [String: String]()
-var youtubeLinks = [String: String]()
-var metalArchiveLinks = [String: String]()
-var bandCountry = [String: String]()
-var bandGenre = [String: String]()
-var bandNoteWorthy = [String: String]()
 
 // MARK: - Legacy Event Type Accessors (for backward compatibility)
 // TODO: Update all references to use EventTypes directly
@@ -180,8 +169,6 @@ var eventYear:Int {
 //defaults preferences
 // artistUrlDefault and scheduleUrlDefault are now defined in preferenceDefault.swift using FestivalConfig
 
-let defaultPrefsValue = "Default";
-
 let testingSetting = "Testing"
 
 // MARK: - Storage URLs
@@ -197,9 +184,6 @@ var statsUrl: String {
 var internetAvailble = isInternetAvailable();
 
 var masterView: MasterViewController!
-
-var googleCloudID = "Nothing";
-var currentPointerKey = ""
 
 /// Resolves a priority string (e.g., "1", "2", "3") to a human-readable label ("Must", "Might", "Wont", or "Unknown").
 /// - Parameter priority: The priority value as a string.
@@ -570,34 +554,6 @@ func getDefaultPointerValue(for keyValue: String) -> String {
     }
 }
 
-/// Triggers a background update of pointer data without blocking current operation
-/// This ensures next app launch will have fresh data available
-func triggerBackgroundPointerUpdate() {
-    print("🚀 LAUNCH OPTIMIZATION: Triggering background pointer update for next launch")
-    
-    DispatchQueue.global(qos: .background).async {
-        // Only proceed if we have internet and this won't interfere with user activity
-        guard isInternetAvailable() else {
-            print("🚀 LAUNCH OPTIMIZATION: No internet for background pointer update")
-            return
-        }
-        
-        print("🚀 LAUNCH OPTIMIZATION: Starting background pointer data download")
-        let httpData = getUrlData(urlString: defaultStorageUrl)
-        
-        if !httpData.isEmpty {
-            // Cache the new data for next launch
-            let cachedPointerFile = FilePaths.cachedPointerFile
-            do {
-                try httpData.write(toFile: cachedPointerFile, atomically: true, encoding: .utf8)
-                print("🚀 LAUNCH OPTIMIZATION: Background pointer update completed and cached")
-            } catch {
-                print("🚀 LAUNCH OPTIMIZATION: Failed to cache background pointer update: \(error)")
-            }
-        }
-    }
-}
-
 /// Gets the language-specific key for reportUrl based on user's language preference.
 /// - Parameter keyValue: The original key value (should be "reportUrl").
 /// - Returns: The language-specific key (e.g., "reportUrl-en", "reportUrl-es").
@@ -620,52 +576,6 @@ func getLanguageSpecificKey(keyValue: String) -> String {
     print("getLanguageSpecificKey: Language-specific key: \(languageSpecificKey)")
     
     return languageSpecificKey
-}
-
-/// Parses a pointer data record and updates the pointer values dictionary and cache as needed.
-/// - Parameters:
-///   - pointData: The raw pointer data string (delimited by ::).
-///   - pointerValues: The current dictionary of pointer values.
-///   - pointerIndex: The index to match for updating values.
-/// - Returns: The updated pointer values dictionary.
-func readPointData(pointData:String, pointerValues: [String:[String:String]], pointerIndex: String)->[String:[String:String]]{
-    
-    var newPointValues = pointerValues
-    
-    var valueArray = pointData.components(separatedBy: "::")
-    
-    if (valueArray.isEmpty == false && valueArray.count >= 3){
-        let currentIndex = valueArray[0]
-        
-        if (currentIndex != "Default" && currentIndex != "lastYear"){
-            // THREAD-SAFETY FIX: Synchronize access to prevent crashes from concurrent modification
-            eventYearArrayLock.sync {
-                if (eventYearArray.contains(currentIndex) == false){
-                    eventYearArray.append(currentIndex)
-                    // Only log when we actually add a new year, don't save to disk yet
-                    print("eventYearsInfoFile: Added new year to array: \(currentIndex)")
-                }
-            }
-        }
-        
-        if (currentIndex == pointerIndex){
-            let currentKey = valueArray[1]
-            let currentValue = valueArray[2]
-            var tempHash = [String:String]()
-            tempHash[currentKey] = currentValue
-            print ("getPointerUrlData: Using in loop \(currentIndex) - \(currentKey) - getting \(currentValue)")
-            newPointValues[currentIndex] = tempHash
-            storePointerLock.async(flags: .barrier) {
-                do {
-                    try cacheVariables.storePointerData[currentKey] = currentValue;
-                } catch let error as NSError {
-                    print ("getPointerUrlData: looks like we don't have internet yet")
-                }
-            }
-        }
-    }
-    
-    return newPointValues
 }
 
 /// Optimized version of readPointData that processes only necessary data for the selected year
@@ -811,7 +721,6 @@ struct cacheVariables {
     private static var _bandPriorityStorageCache = [String:Int]()
     private static var _scheduleStaticCache = [String : [TimeInterval : [String : String]]]()
     private static var _scheduleTimeStaticCache = [TimeInterval : [[String : String]]]()
-    private static var _bandNamedStaticCache = [String :[String : String]]()
     private static var _attendedStaticCache = [String : String]()
     private static var _bandNamesStaticCache =  [String :[String : String]]()
     private static var _bandNamesArrayStaticCache = [String]()
@@ -835,11 +744,6 @@ struct cacheVariables {
     static var scheduleTimeStaticCache: [TimeInterval : [[String : String]]] {
         get { return cacheVariablesQueue.sync { _scheduleTimeStaticCache } }
         set { cacheVariablesQueue.async(flags: .barrier) { _scheduleTimeStaticCache = newValue } }
-    }
-    
-    static var bandNamedStaticCache: [String :[String : String]] {
-        get { return cacheVariablesQueue.sync { _bandNamedStaticCache } }
-        set { cacheVariablesQueue.async(flags: .barrier) { _bandNamedStaticCache = newValue } }
     }
     
     static var attendedStaticCache: [String : String] {
