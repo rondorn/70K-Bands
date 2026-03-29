@@ -4121,7 +4121,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             bandNamesList.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    if (adapter != null && staticVariables.savedScrollPosition < adapter.getCount()) {
+                    if (adapter != null && staticVariables.savedScrollPosition >= 0
+                            && staticVariables.savedScrollPosition < adapter.getCount()) {
                         bandNamesList.setSelectionFromTop(staticVariables.savedScrollPosition, staticVariables.savedScrollOffset);
                         Log.d("ScrollPosition", "Restored scroll position: " + staticVariables.savedScrollPosition + ", offset: " + staticVariables.savedScrollOffset);
                         
