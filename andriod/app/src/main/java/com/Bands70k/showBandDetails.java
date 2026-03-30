@@ -137,6 +137,13 @@ public class showBandDetails extends Activity {
     // Swipe gesture detection
     private GestureDetector swipeGestureDetector;
 
+    /**
+     * onCreate() starts {@link #loadAllContentProgressively()}; Android then calls onResume().
+     * Without this flag, both would start a background thread (duplicate network/UI work).
+     * After the first onResume, we clear the flag so returning from background still refreshes.
+     */
+    private boolean suppressProgressiveLoadOnNextResume = false;
+
     public void onCreate(Bundle savedInstanceState) {
 
         setTheme(R.style.AppTheme);
@@ -196,6 +203,7 @@ public class showBandDetails extends Activity {
             
             // PROGRESSIVE LOADING: Load all data in background and update UI as ready
             loadAllContentProgressively();
+            suppressProgressiveLoadOnNextResume = true;
             } else {
             onBackPressed();
         }
@@ -3344,8 +3352,14 @@ public class showBandDetails extends Activity {
         // Refresh UI elements based on current online status
         refreshUIForOnlineStatus();
         
-        // PROGRESSIVE LOADING: Load content in background (likely cached by now)
-        loadAllContentProgressively();
+        // PROGRESSIVE LOADING: Same as onCreate would do — but onCreate already started a load.
+        // Skip once right after onCreate to avoid two threads; later onResume (e.g. back from home) still loads.
+        if (suppressProgressiveLoadOnNextResume) {
+            suppressProgressiveLoadOnNextResume = false;
+            Log.d("ProgressiveLoading", "Skipping duplicate loadAllContentProgressively from onResume (already started in onCreate)");
+        } else {
+            loadAllContentProgressively();
+        }
         inLink = false;
         
         // Background loading is managed by main activity lifecycle only
