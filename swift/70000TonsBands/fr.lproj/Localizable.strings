@@ -347,6 +347,7 @@
 "AutoChooseAttendanceIntro" = "Voulez-vous que %@ vous aide à choisir les événements auxquels assister ?\n\nNous utiliserons vos choix Must, Might et Wont ainsi que quelques questions rapides pour une première proposition. Vous pourrez modifier tout événement par la suite.";
 "AutoChooseAttendanceNoMeetAndGreets" = "Aucun Meet and Greet dans le programme.";
 "AutoChooseAttendanceMeetAndGreetQuestion" = "À quels Meet and Greet souhaitez-vous assister ?";
+"AutoChooseAttendanceMeetAndGreetChecklistHint" = "Cochez chaque événement auquel vous souhaitez assister.";
 "AIScheduleUnofficialEventsHeader" = "Non officiel / Cruiser Organized";
 "AutoChooseAttendanceNoUnofficialEvents" = "Aucun événement non officiel / Cruiser Organized dans le programme.";
 "AutoChooseAttendanceUnofficialQuestion" = "À quels événements non officiels / Cruiser Organized souhaitez-vous assister ?";

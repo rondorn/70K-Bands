@@ -3256,7 +3256,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         if !scheduleHasCurrentEventsForRules(forYear: year) {
             return (max(bandSlotsDisplayed, 0), " " + NSLocalizedString("Bands", comment: "") + filtersSuffix)
         }
-        return (max(eventCount, 0), " " + NSLocalizedString("Events", comment: "") + filtersSuffix)
+        // In schedule/event mode, header count must reflect what's currently visible after search/filters.
+        // Using total eventCount here shows unfiltered totals (e.g. 211) while list shows filtered rows (e.g. 3).
+        return (max(effectiveDisplayedBandRows, 0), " " + NSLocalizedString("Events", comment: "") + filtersSuffix)
     }
   
     /// Updates the count label at the top of the list showing "{x} Events" or "{x} Bands"

@@ -20,11 +20,14 @@
     <string name="latest_show_cutoff_hint">Shows que começam após este horário serão excluídos. Por exemplo, se você definir 2h, um show às 2h será incluído, mas um show às 2h30 ou mais tarde será excluído.</string>
     <string name="aischedule_meet_greet_header">Meet and Greets</string>
     <string name="aischedule_meet_greet_question">Em quais Meet and Greet você quer participar?</string>
-    <string name="aischedule_meet_greet_checklist_hint">Marque os que deseja. Apenas bandas Must.</string>
+    <string name="aischedule_meet_greet_must_only_hint">Mostrando Meet and Greets apenas para bandas Must.</string>
+    <string name="aischedule_meet_greet_checklist_hint">Marque cada evento ao qual você quer participar.</string>
     <string name="aischedule_unofficial_header">Não oficial / Cruiser Organized</string>
     <string name="aischedule_unofficial_question">Em quais eventos não oficiais / Cruiser Organized você quer participar?</string>
     <string name="aischedule_unofficial_checklist_hint">Marque os que deseja. Apenas bandas Must.</string>
     <string name="aischedule_checklist_all">Todos</string>
+    <string name="aischedule_checklist_add_all">Adicionar todos</string>
+    <string name="aischedule_checklist_remove_all">Remover todos</string>
     <string name="aischedule_clinics_header">Clinics</string>
     <string name="clinics_choice">Em quais clínicas você quer participar?</string>
     <string name="aischedule_clinics_checklist_hint">Marque as que deseja. Notas do programa (ex.: clínica de composição, clínica de baixo).</string>

@@ -1,7 +1,4 @@
 PODS:
-  - AWSCore (2.3.6)
-  - AWSSNS (2.3.6):
-    - AWSCore (= 2.3.6)
   - Bolts (1.9.1):
     - Bolts/AppLinks (= 1.9.1)
     - Bolts/Tasks (= 1.9.1)
@@ -123,12 +120,11 @@ PODS:
   - nanopb/decode (2.30910.0)
   - nanopb/encode (2.30910.0)
   - PromisesObjC (2.4.0)
-  - SQLite.swift (0.15.4):
-    - SQLite.swift/standard (= 0.15.4)
-  - SQLite.swift/standard (0.15.4)
+  - SQLite.swift (0.15.5):
+    - SQLite.swift/standard (= 0.15.5)
+  - SQLite.swift/standard (0.15.5)
 
 DEPENDENCIES:
-  - AWSSNS (~> 2.3.0)
   - Bolts
   - Firebase/Core (~> 10.22.0)
   - Firebase/Database (~> 10.22.0)
@@ -137,8 +133,6 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
-    - AWSCore
-    - AWSSNS
     - Bolts
     - Firebase
     - FirebaseAnalytics
@@ -158,8 +152,6 @@ SPEC REPOS:
     - SQLite.swift
 
 SPEC CHECKSUMS:
-  AWSCore: 917d84b32974136194a905b98c0ae25c9f3350b8
-  AWSSNS: 37c7f4c80657a621fbabccf7d0f352e3c018fbd0
   Bolts: 8c1e8aab2f603387b8b9924f57d1d64f43d3ffdc
   Firebase: 797fd7297b7e1be954432743a0b3f90038e45a71
   FirebaseAnalytics: 8d0ff929c63b7f72260f332b86ccf569776b75d3
@@ -176,8 +168,8 @@ SPEC CHECKSUMS:
   leveldb-library: cc8b8f8e013647a295ad3f8cd2ddf49a6f19be19
   nanopb: 438bc412db1928dac798aa6fd75726007be04262
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
-  SQLite.swift: a107c734115fea616a4ad31371d39f1637e8de56
+  SQLite.swift: c38c92f61436f1a4053029550edb1ef7caa2a2cd
 
-PODFILE CHECKSUM: 6e5cf465ad6ffeff4c333fe79cb08fc21268acbd
+PODFILE CHECKSUM: 1dba79ae8843c0c93a2406aa98ad724bd8d14f37
 
 COCOAPODS: 1.16.2

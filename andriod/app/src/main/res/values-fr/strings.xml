@@ -20,11 +20,14 @@
     <string name="latest_show_cutoff_hint">Les spectacles qui commencent après l\'heure indiquée seront exclus. Par exemple, si vous réglez 2 h, un spectacle à 2 h sera inclus, mais un spectacle à 2 h 30 ou plus tard sera exclu.</string>
     <string name="aischedule_meet_greet_header">Meet and Greets</string>
     <string name="aischedule_meet_greet_question">À quels Meet and Greet souhaitez-vous assister ?</string>
-    <string name="aischedule_meet_greet_checklist_hint">Cochez ceux auxquels vous voulez assister. Bandes Must uniquement.</string>
+    <string name="aischedule_meet_greet_must_only_hint">Meet and Greets affichés uniquement pour les groupes Must.</string>
+    <string name="aischedule_meet_greet_checklist_hint">Cochez chaque événement auquel vous souhaitez assister.</string>
     <string name="aischedule_unofficial_header">Non officiel / Cruiser Organized</string>
     <string name="aischedule_unofficial_question">À quels événements non officiels / Cruiser Organized souhaitez-vous assister ?</string>
     <string name="aischedule_unofficial_checklist_hint">Cochez ceux auxquels vous voulez assister. Bandes Must uniquement.</string>
     <string name="aischedule_checklist_all">Tous</string>
+    <string name="aischedule_checklist_add_all">Tout ajouter</string>
+    <string name="aischedule_checklist_remove_all">Tout retirer</string>
     <string name="aischedule_clinics_header">Clinics</string>
     <string name="clinics_choice">À quels ateliers souhaitez-vous assister ?</string>
     <string name="aischedule_clinics_checklist_hint">Cochez ceux auxquels vous voulez assister. Notes du programme (ex. atelier d\'écriture, atelier basse).</string>

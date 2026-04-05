@@ -3,13 +3,11 @@ platform :ios, '12.0'
 
 target '70K Bands' do
 	use_frameworks!
-	pod 'AWSSNS', '~> 2.3.0'
 	pod 'Bolts'
 	pod 'SQLite.swift', '~> 0.15.3'
 end
 
 target '70K BandsTests' do
 	use_frameworks!
-	pod 'AWSSNS', '~> 2.3.0'
 	pod 'SQLite.swift', '~> 0.15.3'
 end

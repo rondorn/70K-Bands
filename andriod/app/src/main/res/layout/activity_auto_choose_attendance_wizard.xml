@@ -155,6 +155,7 @@
                     android:textStyle="bold"
                     android:paddingBottom="8dp" />
                 <LinearLayout
+                    android:id="@+id/wizard_latest_show_field"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
@@ -174,6 +175,7 @@
                         android:background="@android:color/transparent"
                         android:popupBackground="@drawable/spinner_popup_background_dark" />
                     <ImageView
+                        android:id="@+id/wizard_latest_show_chevron"
                         android:layout_width="32dp"
                         android:layout_height="32dp"
                         android:src="@drawable/ic_wizard_expand_more"
@@ -234,6 +236,14 @@
                     android:textColor="#FFFFFF"
                     android:paddingBottom="4dp" />
                 <TextView
+                    android:id="@+id/wizard_meet_greet_must_only"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/aischedule_meet_greet_must_only_hint"
+                    android:textColor="#B0B0B0"
+                    android:textSize="14sp"
+                    android:paddingBottom="4dp" />
+                <TextView
                     android:id="@+id/wizard_meet_greet_hint"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -241,14 +251,27 @@
                     android:textColor="#B0B0B0"
                     android:textSize="14sp"
                     android:paddingBottom="8dp" />
-                <Button
-                    android:id="@+id/wizard_meet_greet_all"
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/aischedule_checklist_all"
-                    android:textColor="#FFFFFF"
-                    android:backgroundTint="#007AFF"
-                    android:layout_marginBottom="8dp" />
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+                    <Button
+                        android:id="@+id/wizard_meet_greet_all"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/aischedule_checklist_add_all"
+                        android:textColor="#FFFFFF"
+                        android:backgroundTint="#007AFF" />
+                    <Button
+                        android:id="@+id/wizard_meet_greet_none"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="@string/aischedule_checklist_remove_all"
+                        android:textColor="#FFFFFF"
+                        android:backgroundTint="#555555" />
+                </LinearLayout>
                 <ScrollView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

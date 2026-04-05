@@ -20,11 +20,14 @@
     <string name="latest_show_cutoff_hint">Shows, der begynder efter denne valgte tid, udelukkes. F.eks.: hvis du vælger kl. 2, inkluderes et show kl. 2, men et show kl. 2:30 eller senere udelukkes.</string>
     <string name="aischedule_meet_greet_header">Meet and Greets</string>
     <string name="aischedule_meet_greet_question">Hvilke Meet and Greet vil du deltage i?</string>
-    <string name="aischedule_meet_greet_checklist_hint">Vælg dem, du vil deltage i. Kun Must-bands.</string>
+    <string name="aischedule_meet_greet_must_only_hint">Viser kun Meet and Greets for Must-bands.</string>
+    <string name="aischedule_meet_greet_checklist_hint">Vælg hver begivenhed, du vil deltage i.</string>
     <string name="aischedule_unofficial_header">Uofficiel / Cruiser Organized</string>
     <string name="aischedule_unofficial_question">Hvilke uofficielle / Cruiser Organized begivenheder vil du deltage i?</string>
     <string name="aischedule_unofficial_checklist_hint">Vælg dem, du vil deltage i. Kun Must-bands.</string>
     <string name="aischedule_checklist_all">Alle</string>
+    <string name="aischedule_checklist_add_all">Tilføj alle</string>
+    <string name="aischedule_checklist_remove_all">Fjern alle</string>
     <string name="aischedule_clinics_header">Clinics</string>
     <string name="clinics_choice">Hvilke klinikker vil du deltage i?</string>
     <string name="aischedule_clinics_checklist_hint">Vælg dem, du vil deltage i. Noter fra programmet (f.eks. sangskrivningsklinik, basunklinik).</string>

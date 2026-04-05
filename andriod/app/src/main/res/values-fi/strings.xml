@@ -21,11 +21,14 @@
     <string name="latest_show_cutoff_hint">Keikat, jotka alkavat tämän valitun ajan jälkeen, suljetaan pois. Esimerkiksi jos valitset klo 2, klo 2 alkava keikka sisällytetään, mutta klo 2:30 tai myöhemmin alkava keikka suljetaan pois.</string>
     <string name="aischedule_meet_greet_header">Meet and Greets</string>
     <string name="aischedule_meet_greet_question">Mihin Meet and Greet -tapaamisiin haluat osallistua?</string>
-    <string name="aischedule_meet_greet_checklist_hint">Valitse ne, joihin haluat osallistua. Vain Must-bändit.</string>
+    <string name="aischedule_meet_greet_must_only_hint">Näytetään vain Must-bändien Meet and Greetit.</string>
+    <string name="aischedule_meet_greet_checklist_hint">Valitse jokainen tapahtuma, johon haluat osallistua.</string>
     <string name="aischedule_unofficial_header">Epävirallinen / Cruiser Organized</string>
     <string name="aischedule_unofficial_question">Mihin epävirallisiin / Cruiser Organized -tapahtumiin haluat osallistua?</string>
     <string name="aischedule_unofficial_checklist_hint">Valitse ne, joihin haluat osallistua. Vain Must-bändit.</string>
     <string name="aischedule_checklist_all">Kaikki</string>
+    <string name="aischedule_checklist_add_all">Lisää kaikki</string>
+    <string name="aischedule_checklist_remove_all">Poista kaikki</string>
     <string name="aischedule_clinics_header">Clinics</string>
     <string name="clinics_choice">Mihin klinikoihin haluat osallistua?</string>
     <string name="aischedule_clinics_checklist_hint">Valitse ne, joihin haluat osallistua. Ohjelman huomautukset (esim. laulunkirjoitusklinikka, bassoklinikka).</string>

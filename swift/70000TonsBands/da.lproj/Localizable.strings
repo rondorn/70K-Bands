@@ -154,6 +154,7 @@
 "AutoChooseAttendanceIntro" = "Vil du have %@ til at hjælpe dig med at vælge, hvilke begivenheder du vil deltage i?\n\nVi bruger dine Must-, Might- og Wont-valg plus et par korte spørgsmål til et første udkast. Du kan ændre enhver begivenhed bagefter.";
 "AutoChooseAttendanceNoMeetAndGreets" = "Ingen Meet and Greet i programmet.";
 "AutoChooseAttendanceMeetAndGreetQuestion" = "Hvilke Meet and Greet-begivenheder vil du deltage i?";
+"AutoChooseAttendanceMeetAndGreetChecklistHint" = "Vælg hver begivenhed, du vil deltage i.";
 "AIScheduleUnofficialEventsHeader" = "Uofficiel / Cruiser Organized";
 "AutoChooseAttendanceNoUnofficialEvents" = "Ingen uofficielle / Cruiser Organized begivenheder i programmet.";
 "AutoChooseAttendanceUnofficialQuestion" = "Hvilke uofficielle / Cruiser Organized begivenheder vil du deltage i?";

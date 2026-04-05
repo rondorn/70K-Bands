@@ -146,6 +146,7 @@
 "AutoChooseAttendanceUnofficialQuestion" = "What Unofficial / Cruiser Organized events do you want to attend?";
 "AutoChooseAttendanceNoMeetAndGreets" = "No Meet and Greet events in the schedule.";
 "AutoChooseAttendanceMeetAndGreetQuestion" = "What Meet and Greet Events do you want to attend?";
+"AutoChooseAttendanceMeetAndGreetChecklistHint" = "Check each event you want to attend.";
 "AutoChooseAttendanceMGSelectAll" = "All";
 "AutoChooseAttendanceNoClinics" = "No clinic events in the schedule.";
 "AutoChooseAttendanceClinicsQuestion" = "Which clinics do you want to attend?";

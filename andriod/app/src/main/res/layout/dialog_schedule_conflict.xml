@@ -46,6 +46,14 @@
             android:textSize="16sp"
             android:textStyle="bold" />
         <TextView
+            android:id="@+id/conflict_option_a_event_type"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#AAAAAA"
+            android:textSize="14sp"
+            android:paddingTop="2dp"
+            android:visibility="gone" />
+        <TextView
             android:id="@+id/conflict_option_a_time"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -59,6 +67,14 @@
             android:textColor="#AAAAAA"
             android:textSize="13sp"
             android:paddingTop="2dp" />
+        <TextView
+            android:id="@+id/conflict_option_a_genre"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#AAAAAA"
+            android:textSize="13sp"
+            android:paddingTop="2dp"
+            android:visibility="gone" />
         <TextView
             android:id="@+id/conflict_option_a_seeing_them"
             android:layout_width="match_parent"
@@ -88,6 +104,14 @@
             android:textSize="16sp"
             android:textStyle="bold" />
         <TextView
+            android:id="@+id/conflict_option_b_event_type"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#AAAAAA"
+            android:textSize="14sp"
+            android:paddingTop="2dp"
+            android:visibility="gone" />
+        <TextView
             android:id="@+id/conflict_option_b_time"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -101,6 +125,14 @@
             android:textColor="#AAAAAA"
             android:textSize="13sp"
             android:paddingTop="2dp" />
+        <TextView
+            android:id="@+id/conflict_option_b_genre"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#AAAAAA"
+            android:textSize="13sp"
+            android:paddingTop="2dp"
+            android:visibility="gone" />
         <TextView
             android:id="@+id/conflict_option_b_seeing_them"
             android:layout_width="match_parent"
