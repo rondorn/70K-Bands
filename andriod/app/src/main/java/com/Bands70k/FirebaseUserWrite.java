@@ -122,7 +122,8 @@ public class FirebaseUserWrite {
     private String getCurrentDateString(){
 
         Date date = new Date();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        // Force locale-stable ASCII output regardless of user region/language settings.
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
         dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 
         String currentUTCDate = dateFormat.format(date);

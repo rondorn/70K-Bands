@@ -345,7 +345,7 @@ public class AIScheduleBuilder {
         int[] hm = parseHourAndMinutesFromStartTime(startTime);
         if (hm == null) return false;
         int hour = hm[0], minutes = hm[1];
-        if (hour < 0 || hour > 5) return false; // late night 0-5
+        if (hour < 0 || hour > 5) return false; // late night only (matches iOS)
         int cutoffHour = cutoffHalfHours / 2;
         int cutoffMinutes = (cutoffHalfHours % 2) * 30;
         if (hour > cutoffHour) return true;

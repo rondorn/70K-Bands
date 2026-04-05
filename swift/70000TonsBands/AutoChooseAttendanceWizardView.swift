@@ -425,18 +425,33 @@ struct AutoChooseAttendanceWizardView: View {
             } else {
                 Text(NSLocalizedString("AutoChooseAttendanceMeetAndGreetQuestion", comment: ""))
                     .foregroundColor(.white)
-                Text(NSLocalizedString("AutoChooseAttendanceClinicsChecklistHint", comment: "Check each you want to attend. Notes from schedule (e.g. Song writing clinic)."))
+                Text("Showing Meet & Greets for Must bands only.")
                     .font(.caption)
                     .foregroundColor(.gray)
-                Button(NSLocalizedString("AutoChooseAttendanceMGSelectAll", comment: "All")) {
-                    selectedMeetAndGreetIds = Set(meetAndGreetEventsForMustBands.map { eventId($0) })
+                Text(NSLocalizedString("AutoChooseAttendanceMeetAndGreetChecklistHint", comment: "Check each event you want to attend."))
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                HStack(spacing: 10) {
+                    Button("Add All") {
+                        selectedMeetAndGreetIds = Set(meetAndGreetEventsForMustBands.map { eventId($0) })
+                    }
+                    .font(.subheadline)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .background(Color.gray.opacity(0.6))
+                    .cornerRadius(10)
+
+                    Button("Remove All") {
+                        selectedMeetAndGreetIds.removeAll()
+                    }
+                    .font(.subheadline)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .background(Color.gray.opacity(0.6))
+                    .cornerRadius(10)
                 }
-                .font(.subheadline)
-                .foregroundColor(.white)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 12)
-                .background(Color.gray.opacity(0.6))
-                .cornerRadius(10)
                 ScrollView {
                     VStack(alignment: .leading, spacing: 12) {
                         ForEach(meetAndGreetEventsForMustBands, id: \.self, content: meetAndGreetChecklistRow)
@@ -716,12 +731,22 @@ struct AutoChooseAttendanceWizardView: View {
         let dayLabel = (event.day ?? "").trimmingCharacters(in: .whitespaces)
         let timeStr = formatTimeStringForDisplay(event.startTime ?? "")
         let dayAndTime = dayLabel.isEmpty ? timeStr : "\(dayLabel) - \(timeStr)"
+        let eventType = event.eventType ?? showType
+        let isShowEvent = eventType == showType
+        let genre = (DataManager.shared.fetchBand(byName: event.bandName, eventYear: eventYear)?.genre ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
         return Button(action: action) {
             VStack(alignment: .leading, spacing: 6) {
                 Text(event.bandName)
                     .font(.headline)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                if !isShowEvent {
+                    Text(convertEventTypeToLocalLanguage(eventType: eventType))
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
                 Text(dayAndTime)
                     .font(.subheadline)
                     .foregroundColor(.gray)
@@ -730,10 +755,18 @@ struct AutoChooseAttendanceWizardView: View {
                     .font(.subheadline)
                     .foregroundColor(.gray)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                Text(seeingThemElsewhere(for: event))
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                if !genre.isEmpty {
+                    Text("\(NSLocalizedString("genre", comment: "Genre")): \(genre)")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                if isShowEvent {
+                    Text(seeingThemElsewhere(for: event))
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
             }
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -901,11 +934,20 @@ struct AutoChooseAttendanceWizardView: View {
         switch step {
         case .intro: break
         case .unknownBands: step = .intro
-        case .sleepHours: step = .unknownBands
+        case .sleepHours: step = unknownBandNames.isEmpty ? .intro : .unknownBands
         case .unofficialEvents: step = .sleepHours
         case .meetAndGreet: step = hasUnofficialEvents ? .unofficialEvents : .sleepHours
         case .clinics: step = hasMeetAndGreets ? .meetAndGreet : (hasUnofficialEvents ? .unofficialEvents : .sleepHours)
-        case .specialEvents: step = .clinics
+        case .specialEvents:
+            if hasClinics {
+                step = .clinics
+            } else if hasMeetAndGreets {
+                step = .meetAndGreet
+            } else if hasUnofficialEvents {
+                step = .unofficialEvents
+            } else {
+                step = .sleepHours
+            }
         case .building, .done: break
         }
     }

@@ -24,11 +24,14 @@
     <string name="latest_show_cutoff_content_description">Cutoff time dropdown. Tap to open the list of times.</string>
     <string name="aischedule_meet_greet_header">Meet and Greets</string>
     <string name="aischedule_meet_greet_question">What Meet and Greet events do you want to attend?</string>
-    <string name="aischedule_meet_greet_checklist_hint">Check each you want to attend. Must bands only.</string>
+    <string name="aischedule_meet_greet_must_only_hint">Showing Meet and Greets for Must bands only.</string>
+    <string name="aischedule_meet_greet_checklist_hint">Check each event you want to attend.</string>
     <string name="aischedule_unofficial_header">Unofficial / Cruiser Organized</string>
     <string name="aischedule_unofficial_question">What Unofficial / Cruiser Organized events do you want to attend?</string>
     <string name="aischedule_unofficial_checklist_hint">Check each you want to attend. Must bands only.</string>
     <string name="aischedule_checklist_all">All</string>
+    <string name="aischedule_checklist_add_all">Add All</string>
+    <string name="aischedule_checklist_remove_all">Remove All</string>
     <string name="aischedule_clinics_header">Clinics</string>
     <string name="clinics_choice">Which clinics do you want to attend?</string>
     <string name="aischedule_clinics_checklist_hint">Check each you want to attend. Notes from schedule (e.g. Song writing clinic, Bass Clinic).</string>

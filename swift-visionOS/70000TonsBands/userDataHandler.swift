@@ -60,6 +60,7 @@ class userDataHandler: NSObject {
         
         let now = Date()
         let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.timeZone = TimeZone.init(abbreviation: "UTC")
         formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
         let dateString = formatter.string(from: now)

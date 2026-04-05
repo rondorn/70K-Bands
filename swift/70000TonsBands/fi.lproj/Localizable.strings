@@ -124,6 +124,7 @@
 "AutoChooseAttendanceIntro" = "Haluatko, että %@ auttaa sinua valitsemaan, mitä tapahtumiin osallistut?\n\nKäytämme Must-, Might- ja Wont-valintojasi sekä muutaman pikakysymyksen ensimmäiseen luonnokseen. Voit muuttaa mitä tahansa tapahtumaa myöhemmin.";
 "AutoChooseAttendanceNoMeetAndGreets" = "Ei artistitapaamisia aikataulussa.";
 "AutoChooseAttendanceMeetAndGreetQuestion" = "Mihin Meet and Greet -tapaamisiin haluat osallistua?";
+"AutoChooseAttendanceMeetAndGreetChecklistHint" = "Valitse jokainen tapahtuma, johon haluat osallistua.";
 "AIScheduleUnofficialEventsHeader" = "Epävirallinen / Cruiser Organized";
 "AutoChooseAttendanceNoUnofficialEvents" = "Ei epävirallisia / Cruiser Organized -tapahtumia aikataulussa.";
 "AutoChooseAttendanceUnofficialQuestion" = "Mihin epävirallisiin / Cruiser Organized -tapahtumiin haluat osallistua?";
