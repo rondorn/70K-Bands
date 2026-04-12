@@ -10,6 +10,8 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.Bands70k.UiTestMarkers;
+
 /**
  * 
  * @author baoyz
@@ -56,9 +58,16 @@ public class SwipeMenuView extends LinearLayout implements OnClickListener {
 		addView(parent);
 
 		if (item.getIcon() != null) {
-			parent.addView(createIcon(item));
+			ImageView iv = createIcon(item);
+			parent.addView(iv);
+			// Route icon taps to the same handler as the row button (parent is the click target for menu index).
+			iv.setClickable(true);
+			iv.setOnClickListener(v -> SwipeMenuView.this.onClick(parent));
 		}
-		if (!TextUtils.isEmpty(item.getTitle())) {
+		String title = item.getTitle();
+		if (!TextUtils.isEmpty(title) && UiTestMarkers.isEnabled() && title.startsWith("qa")) {
+			parent.setContentDescription(title);
+		} else if (!TextUtils.isEmpty(title)) {
 			parent.addView(createTitle(item));
 		}
 

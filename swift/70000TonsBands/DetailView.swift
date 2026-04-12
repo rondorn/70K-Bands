@@ -777,6 +777,7 @@ struct DetailView: View {
                 Text(NSLocalizedString("Wont", comment: "A Wont See Band")).tag(3)
             }
             .pickerStyle(SegmentedPickerStyle())
+            .accessibilityIdentifier("bandDetailPriorityPicker")
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
@@ -993,6 +994,16 @@ struct LinkIconButton: View {
     let iconType: LinkIconType
     let url: String
     let viewModel: DetailViewModel
+
+    /// Stable IDs for UI tests (QA walkthrough: four detail links).
+    private var accessibilityIdentifierForUITest: String {
+        switch iconType {
+        case .globe: return "bandDetailLinkOfficial"
+        case .metalArchives: return "bandDetailLinkMetalArchives"
+        case .wikipedia: return "bandDetailLinkWikipedia"
+        case .youtube: return "bandDetailLinkYouTube"
+        }
+    }
     
     var body: some View {
         Button(action: {
@@ -1001,6 +1012,7 @@ struct LinkIconButton: View {
             iconView
                 .frame(width: 30, height: 30)
         }
+        .accessibilityIdentifier(accessibilityIdentifierForUITest)
     }
     
     @ViewBuilder

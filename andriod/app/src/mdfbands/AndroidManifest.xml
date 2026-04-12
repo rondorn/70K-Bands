@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <application>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <application
+        android:icon="@mipmap/logo_mdf_bands"
+        android:roundIcon="@mipmap/logo_mdf_bands_round"
+        tools:replace="android:icon,android:roundIcon">
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/mdf_bands_icon"
+            tools:replace="android:resource" />
         <activity android:name=".showBands">
             <!-- Handle shared preference files (.mdfshare ONLY) -->
             <!-- Intent filter for .mdfshare files using file:// scheme -->

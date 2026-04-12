@@ -514,6 +514,15 @@ public class bandListView extends ArrayAdapter<bandListItem> {
 
         }
 
+        if (UiTestMarkers.isEnabled()) {
+            String p = UiTestMarkers.priorityEnglishLabel(currentBandName);
+            if (bandData.getLocation() == null) {
+                viewHolder.rankingIconInDayArea.setContentDescription(p);
+            } else if (viewHolder.rankImage.getVisibility() == View.VISIBLE) {
+                viewHolder.rankImage.setContentDescription(p);
+            }
+        }
+
         return row;
     }
 

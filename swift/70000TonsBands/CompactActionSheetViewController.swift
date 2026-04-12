@@ -458,6 +458,19 @@ class CompactActionSheetViewController: UIViewController, UIGestureRecognizerDel
         itemActions.append((sectionIndex: sectionIndex, itemIndex: itemIndex, action: item.action))
         button.tag = actionIndex
         button.addTarget(self, action: #selector(itemTapped(_:)), for: .touchUpInside)
+        if sectionIndex == 0 {
+            let mustT = NSLocalizedString("Must", comment: "Must see priority")
+            let mightT = NSLocalizedString("Might", comment: "Might see priority")
+            let wontT = NSLocalizedString("Wont", comment: "Won't see priority")
+            let unknownT = NSLocalizedString("Unknown", comment: "Unknown priority")
+            switch item.title {
+            case mustT: button.accessibilityIdentifier = "qaLongPressMust"
+            case mightT: button.accessibilityIdentifier = "qaLongPressMight"
+            case wontT: button.accessibilityIdentifier = "qaLongPressWont"
+            case unknownT: button.accessibilityIdentifier = "qaLongPressUnknown"
+            default: break
+            }
+        }
         
         // Create horizontal stack for icon, text, and checkmark (checkmark on the right)
         let stackView = UIStackView()

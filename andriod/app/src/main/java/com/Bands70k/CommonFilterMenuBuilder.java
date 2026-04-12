@@ -61,6 +61,9 @@ public class CommonFilterMenuBuilder {
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(Color.parseColor("#FF1C1C1E"));
         root.setPadding(0, 0, dpToPx(context, 24), 0);
+        if (UiTestMarkers.isEnabled()) {
+            root.setContentDescription("qaCommonFilterSheetRoot");
+        }
         
         // Track switches for disabling when Show Flagged Events Only is enabled
         final List<Switch> allFilterSwitches = new ArrayList<>();
@@ -103,6 +106,9 @@ public class CommonFilterMenuBuilder {
         
         // ScrollView for filter sections
         ScrollView scroll = new ScrollView(context);
+        if (UiTestMarkers.isEnabled()) {
+            scroll.setContentDescription("qaFilterSheetList");
+        }
         scroll.setPadding(horizontalPadding, 0, horizontalPadding, 0);
         LinearLayout filterList = new LinearLayout(context);
         filterList.setOrientation(LinearLayout.VERTICAL);
@@ -230,6 +236,9 @@ public class CommonFilterMenuBuilder {
                 callbacks.onDismiss();
             }
         });
+        if (UiTestMarkers.isEnabled()) {
+            done.setContentDescription("qaFilterSheetDone");
+        }
         toolbarRow.addView(done, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
         
         return toolbarRow;
@@ -450,7 +459,7 @@ public class CommonFilterMenuBuilder {
                     callbacks.onFilterChanged();
                 }
             },
-            allSwitches, isFlaggedEnabled);
+            allSwitches, isFlaggedEnabled, "qaFilterToggleMustSee");
         
         // Might See
         createFilterRow(context, parent,
@@ -467,7 +476,7 @@ public class CommonFilterMenuBuilder {
                     callbacks.onFilterChanged();
                 }
             },
-            allSwitches, isFlaggedEnabled);
+            allSwitches, isFlaggedEnabled, "qaFilterToggleMightSee");
         
         // Wont See
         createFilterRow(context, parent,
@@ -484,7 +493,7 @@ public class CommonFilterMenuBuilder {
                     callbacks.onFilterChanged();
                 }
             },
-            allSwitches, isFlaggedEnabled);
+            allSwitches, isFlaggedEnabled, "qaFilterToggleWontSee");
         
         // Unknown
         createFilterRow(context, parent,
@@ -501,7 +510,7 @@ public class CommonFilterMenuBuilder {
                     callbacks.onFilterChanged();
                 }
             },
-            allSwitches, isFlaggedEnabled);
+            allSwitches, isFlaggedEnabled, "qaFilterToggleUnknownSee");
     }
     
     private static void buildEventTypeSection(Context context, LinearLayout parent, List<Switch> allSwitches,
@@ -667,6 +676,18 @@ public class CommonFilterMenuBuilder {
                                                View.OnClickListener clickListener,
                                                List<Switch> allSwitches,
                                                boolean disabled) {
+        return createFilterRow(context, parent, iconResId, iconAltResId, textOnResId, textOffResId,
+                isChecked, clickListener, allSwitches, disabled, null);
+    }
+
+    private static LinearLayout createFilterRow(Context context, LinearLayout parent,
+                                               int iconResId, int iconAltResId,
+                                               int textOnResId, int textOffResId,
+                                               boolean isChecked,
+                                               View.OnClickListener clickListener,
+                                               List<Switch> allSwitches,
+                                               boolean disabled,
+                                               String uiTestSwitchId) {
         LinearLayout row = new LinearLayout(context);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
@@ -688,6 +709,9 @@ public class CommonFilterMenuBuilder {
         Switch sw = new Switch(context);
         sw.setChecked(isChecked);
         sw.setEnabled(!disabled);
+        if (uiTestSwitchId != null && UiTestMarkers.isEnabled()) {
+            sw.setContentDescription(uiTestSwitchId);
+        }
         allSwitches.add(sw);
         sw.setOnCheckedChangeListener(new android.widget.CompoundButton.OnCheckedChangeListener() {
             @Override

@@ -213,11 +213,11 @@ public class FestivalConfig {
             // MDF venues: Real venue names with Market Street addresses
             this.venues = Arrays.asList(
                 new Venue("Rams Head", "EA580C", "icon_theater", "icon_theater_alt", "20 Market"),      // Orange
-                new Venue("Market", "047857", "icon_theater", "icon_theater_alt", "121 Market"),        // Emerald
+                new Venue("Market Place", "047857", "icon_theater", "icon_theater_alt", "121 Market"),        // Emerald
                 new Venue("Power Plant", "1D4ED8", "icon_theater", "icon_theater_alt", "34 Market"),    // Blue
                 new Venue("Nevermore", "0891B2", "icon_theater", "icon_theater_alt", "20 Market"),      // Cyan
                 new Venue("Soundstage", "991B1B", "icon_theater", "icon_theater_alt", "124 Market"),    // Dark red
-                new Venue("Angels Rock", "A16207", "icon_theater", "icon_theater_alt", "10 Market")     // Yellow (dark)
+                new Venue("Angels Rock Bar", "A16207", "icon_theater", "icon_theater_alt", "10 Market")     // Yellow (dark)
             );
             
             // MDF: Hide all event type filters by default

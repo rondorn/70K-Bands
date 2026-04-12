@@ -238,6 +238,41 @@ class MasterViewUIManager {
             bandNameNoSchedule.isHidden = false
             indexForCell.isHidden = true
         }
+
+        bandNameView.accessibilityIdentifier = nil
+        bandNameNoSchedule.accessibilityIdentifier = nil
+        if ProcessInfo.processInfo.environment["UITESTING"] == "1" {
+            if cachedData.hasSchedule {
+                bandNameView.accessibilityIdentifier = "qaMasterCellBandName"
+            } else {
+                bandNameNoSchedule.accessibilityIdentifier = "qaMasterCellBandName"
+            }
+        }
+
+        // UITest: rank is visible on the row — tests can assert Must/Might/Wont without opening Filters.
+        if ProcessInfo.processInfo.environment["UITESTING"] == "1" {
+            let priorityAX: String = {
+                switch cachedData.priorityValue {
+                case 1: return NSLocalizedString("Must", comment: "A Must See Band")
+                case 2: return NSLocalizedString("Might", comment: "A Might See Band")
+                case 3: return NSLocalizedString("Wont", comment: "A Wont See Band")
+                default: return NSLocalizedString("Unknown", comment: "Unknown priority")
+                }
+            }()
+            rankImageView.accessibilityIdentifier = "qaMasterCellPriorityIcon"
+            rankImageView.accessibilityLabel = priorityAX
+            rankImageView.isAccessibilityElement = !rankImageView.isHidden
+            rankImageViewNoSchedule.accessibilityIdentifier = "qaMasterCellPriorityIcon"
+            rankImageViewNoSchedule.accessibilityLabel = priorityAX
+            rankImageViewNoSchedule.isAccessibilityElement = !rankImageViewNoSchedule.isHidden
+        } else {
+            rankImageView.accessibilityIdentifier = nil
+            rankImageView.accessibilityLabel = nil
+            rankImageView.isAccessibilityElement = false
+            rankImageViewNoSchedule.accessibilityIdentifier = nil
+            rankImageViewNoSchedule.accessibilityLabel = nil
+            rankImageViewNoSchedule.isAccessibilityElement = false
+        }
         
         // Configure separator visibility from cached data
         if cachedData.shouldHideSeparator {

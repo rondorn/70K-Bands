@@ -248,11 +248,11 @@ struct FestivalConfig {
         self.statsIcon = Defaults.statsIcon
         self.venues = [
             Venue(name: "Rams Head", color: "EA580C", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "20 Market"),
-            Venue(name: "Market", color: "047857", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "121 Market"),
+            Venue(name: "Market Place", color: "047857", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "121 Market"),
             Venue(name: "Power Plant", color: "1D4ED8", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "34 Market"),
             Venue(name: "Nevermore", color: "0891B2", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "20 Market"),
             Venue(name: "Soundstage", color: "991B1B", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "124 Market"),
-            Venue(name: "Angels Rock", color: "A16207", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "10 Market")
+            Venue(name: "Angels Rock Bar", color: "A16207", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "10 Market")
         ]
         self.meetAndGreetsEnabledDefault = false
         self.specialEventsEnabledDefault = false

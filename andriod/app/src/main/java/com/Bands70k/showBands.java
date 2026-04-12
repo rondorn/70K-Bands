@@ -224,6 +224,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             staticVariables.preferences.loadData();
             Log.d("ShowWont", "Show Wont = " + staticVariables.preferences.getShowWont());
         }
+        UiTestMarkers.applyFromInstrumentation(staticVariables.preferences);
 
         setContentView(R.layout.activity_show_bands);
         StartupTracker.markStep(getApplicationContext(), "showBands:onCreate:setContentView");
@@ -315,7 +316,16 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         Log.d("prefsData", "Show Unknown 1  = " + staticVariables.preferences.getShowUnknown());
 
         TextView jumpToTop = (TextView) findViewById(R.id.headerBandCount);
-        
+        if (UiTestMarkers.isEnabled() && jumpToTop != null) {
+            jumpToTop.setContentDescription("qaMasterListCountTitle");
+        }
+        if (UiTestMarkers.isEnabled()) {
+            View filterHeader = findViewById(R.id.filterMenuContainer);
+            if (filterHeader != null) {
+                filterHeader.setContentDescription("qaMasterListFiltersHeader");
+            }
+        }
+
         // Long click jumps to top (original behavior)
         jumpToTop.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
@@ -1370,15 +1380,17 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 if (listHandler == null) {
                     listHandler = new mainListHandler(showBands.this);
                 }
+                SwipeMenuItem item4 = null;
+                SwipeMenuItem item5 = null;
                 if (listHandler.allUpcomingEvents >= 1) {
 
-                    SwipeMenuItem item4 = new SwipeMenuItem(
+                    item4 = new SwipeMenuItem(
                             getApplicationContext());
                     item4.setWidth(0);
                     item4.setTitleColor(Color.LTGRAY);
                     menu.addMenuItem(item4);
 
-                    SwipeMenuItem item5 = new SwipeMenuItem(
+                    item5 = new SwipeMenuItem(
                             getApplicationContext());
                     item5.setBackground(new ColorDrawable(Color.BLACK));
                     item5.setWidth(menuWidth);
@@ -1388,7 +1400,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                     menu.addMenuItem(item5);
 
                 } else {
-                    SwipeMenuItem item4 = new SwipeMenuItem(
+                    item4 = new SwipeMenuItem(
                             getApplicationContext());
                     item4.setBackground(new ColorDrawable(Color.BLACK));
                     item4.setWidth(menuWidth);
@@ -1398,6 +1410,20 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                     menu.addMenuItem(item4);
                 }
 
+                if (UiTestMarkers.isEnabled()) {
+                    item1.setTitle("qaSwipeMust");
+                    item2.setTitle("qaSwipeMight");
+                    item3.setTitle("qaSwipeWont");
+                    if (listHandler.allUpcomingEvents >= 1) {
+                        if (item5 != null) {
+                            item5.setTitle("qaSwipeAttended");
+                        }
+                    } else {
+                        if (item4 != null) {
+                            item4.setTitle("qaSwipeUnknown");
+                        }
+                    }
+                }
 
             }
         };

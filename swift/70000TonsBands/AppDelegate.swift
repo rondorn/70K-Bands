@@ -62,6 +62,21 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
      - Cleans up temporary files on failure
      - Uses atomic file operations to prevent corruption
      */
+    /// When launched under XCTest UI tests, apply `CustomPointerUrl` from the test runner (see `70K BandsUITests`).
+    /// Only runs if `UITESTING=1` is set in the environment so production builds are unaffected.
+    private func applyUITestLaunchConfigurationIfNeeded() {
+        let env = ProcessInfo.processInfo.environment
+        guard env["UITESTING"] == "1" else { return }
+        if let raw = env["UITEST_CUSTOM_POINTER_URL"] {
+            let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmed.isEmpty {
+                UserDefaults.standard.set(trimmed, forKey: "CustomPointerUrl")
+                UserDefaults.standard.synchronize()
+                print("🧪 [UITEST] CustomPointerUrl set from UITEST_CUSTOM_POINTER_URL")
+            }
+        }
+    }
+    
     private func resolvePointerUrlForCurrentPreference() -> String {
         // Ensure we pick up any Settings.bundle changes
         UserDefaults.standard.synchronize()
@@ -316,6 +331,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
         [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
+        applyUITestLaunchConfigurationIfNeeded()
         
         let launchTime = Date()
         print("🚀 [TIMING] didFinishLaunchingWithOptions CALLED at \(launchTime.timeIntervalSince1970)")
@@ -477,10 +493,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
 
         // Set up notification permissions immediately (doesn't require network)
         UNUserNotificationCenter.current().delegate = self
-        let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
-        UNUserNotificationCenter.current().requestAuthorization(
-            options: authOptions,
-            completionHandler: {_, _ in })
+        // UI tests: skip system "Allow Notifications" — it blocks automation and is unrelated to ranking/filter flows.
+        if ProcessInfo.processInfo.environment["UITESTING"] != "1" {
+            let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
+            UNUserNotificationCenter.current().requestAuthorization(
+                options: authOptions,
+                completionHandler: { _, _ in })
+        } else {
+            print("🧪 [UITEST] Skipping UNUserNotificationCenter.requestAuthorization (no notification permission sheet)")
+        }
         
         // Defer iCloud sync until after bands and schedule data are loaded
         // This ensures iCloud priority/attendance data is applied to already-loaded band/schedule data
@@ -498,10 +519,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             
             // Check if we actually have band data before proceeding
             if !bandNamesHandler.shared.getBandNames().isEmpty && !isLoadingBandData {
-                print("iCloud: Core data is ready, proceeding with iCloud sync...")
-                
                 // Wait for schedule data to be ready (not loading - empty schedule with headers only is valid)
                 if !isLoadingSchedule {
+                    // Simulator uninstall clears local DB only; iCloud KVS still restores priorities/attendance.
+                    // UI tests need a deterministic baseline (e.g. ranking walkthrough after fresh install).
+                    if ProcessInfo.processInfo.environment["UITESTING"] == "1" {
+                        print("🧪 [UITEST] Skipping iCloud priority/attendance pull on launch (use local state only)")
+                    } else {
+                    print("iCloud: Core data is ready, proceeding with iCloud sync...")
                     print("iCloud: Bands and schedule loaded, now syncing iCloud data...")
                     
                     // Use new Core Data iCloud sync system
@@ -522,6 +547,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                     pullGroup.notify(queue: .main) {
                         print("iCloud: Launch read sync completed, refreshing display...")
                         NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
+                    }
                     }
                 } else {
                     print("iCloud: Schedule still loading, deferring iCloud sync to proper sequence")
@@ -896,6 +922,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
         // iCloud data sync (using SQLiteiCloudSync - Default profile only)
         DispatchQueue.global(qos: .userInitiated).async {
+            if ProcessInfo.processInfo.environment["UITESTING"] == "1" {
+                print("🧪 [UITEST] Skipping iCloud push on background (UI test session)")
+                return
+            }
             let sqliteiCloudSync = SQLiteiCloudSync()
             sqliteiCloudSync.syncPrioritiesToiCloud()
             sqliteiCloudSync.syncAttendanceToiCloud()
@@ -1172,6 +1202,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
         // Move external iCloud change processing to background to avoid blocking main thread
         DispatchQueue.global(qos: .utility).async {
+            if ProcessInfo.processInfo.environment["UITESTING"] == "1" {
+                print("🧪 [UITEST] Skipping iCloud external-change priority/attendance pull")
+                return
+            }
             if iCloudDataisLoading || iCloudScheduleDataisLoading {
                 print("iCloud: Skipping iCloud data sync because a read operation is already in progress.")
                 return

@@ -13,12 +13,13 @@ android {
         // applicationId will be set by product flavors
         minSdkVersion 26
         targetSdkVersion 35
-        // Android versionCode 2026033001must fit in signed 32-bit int.
+        // Android versionCode 2026040401must fit in signed 32-bit int.
         //noinspection HighAppVersionCode
-        versionCode 2026033001
-        versionName "2026033001"
+        versionCode 2026040401
+        versionName "2026040401"
         android.compileOptions.incremental = false
         multiDexEnabled false
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     // Product flavors for different festivals
@@ -30,8 +31,6 @@ android {
             versionNameSuffix "-70k"
             buildConfigField "String", "FESTIVAL_TYPE", '"70K"'
             resValue "string", "app_name", "70K Bands"
-            resValue "string", "app_icon", "@mipmap/logo_70k_bands"
-            resValue "string", "notification_icon", "@drawable/new_bands_70k_icon"
             resValue "string", "authorities", "com.Bands70k"
             resValue "string", "notification_publisher", "com.Bands70k.NotificationPublisher"
             resValue "string", "default_description", "Comment text is not available yet. Please wait for Aaron to add his description. You can add your own if you choose, but when his becomes available it will not overwrite your data, and will not display."
@@ -43,8 +42,6 @@ android {
             versionNameSuffix "-mdf"
             buildConfigField "String", "FESTIVAL_TYPE", '"MDF"'
             resValue "string", "app_name", "MDF Bands"
-            resValue "string", "app_icon", "@mipmap/logo_mdf_bands"
-            resValue "string", "notification_icon", "@drawable/mdf_bands_icon"
             resValue "string", "authorities", "com.rdorn.mdfbands"
             resValue "string", "notification_publisher", "com.rdorn.mdfbands.NotificationPublisher"
             resValue "string", "default_description", "No notes are available, right now, feel free to add your own."
@@ -119,6 +116,13 @@ dependencies {
     implementation 'androidx.camera:camera-camera2:1.4.1'
     implementation 'androidx.camera:camera-lifecycle:1.4.1'
     implementation 'androidx.camera:camera-view:1.4.1'
+
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    androidTestImplementation 'androidx.test:runner:1.6.1'
+    androidTestImplementation 'androidx.test:rules:1.6.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-contrib:3.6.1'
+    androidTestImplementation 'androidx.test.uiautomator:uiautomator:2.3.0'
 }
 
 // Apply Google Services plugin after android configuration

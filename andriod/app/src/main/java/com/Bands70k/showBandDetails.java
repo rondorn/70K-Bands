@@ -1664,7 +1664,8 @@ public class showBandDetails extends Activity {
         webViewCloseButton.setBackgroundColor(Color.parseColor("#404040")); // Dark gray background
         webViewCloseButton.setGravity(android.view.Gravity.CENTER); // Center the text
         webViewCloseButton.setTextColor(Color.WHITE); // White text
-        webViewCloseButton.setContentDescription("Close browser and return to details");
+        webViewCloseButton.setContentDescription(
+                UiTestMarkers.isEnabled() ? "bandDetailWebSheetDone" : "Close browser and return to details");
         webViewCloseButton.setClickable(true);
         webViewCloseButton.setFocusable(true);
         
@@ -2947,7 +2948,21 @@ public class showBandDetails extends Activity {
         if (BandInfo.getMetalArchivesWebLink(bandName).contains("metal") && showLinks) {
             linksLabel.setText("Links:");
             linksSection.setVisibility(View.VISIBLE);
-            
+            if (UiTestMarkers.isEnabled()) {
+                if (websiteLink != null) {
+                    websiteLink.setContentDescription("bandDetailLinkOfficial");
+                }
+                if (metalArchivesLink != null) {
+                    metalArchivesLink.setContentDescription("bandDetailLinkMetalArchives");
+                }
+                if (wikipediaLink != null) {
+                    wikipediaLink.setContentDescription("bandDetailLinkWikipedia");
+                }
+                if (youtubeLink != null) {
+                    youtubeLink.setContentDescription("bandDetailLinkYouTube");
+                }
+            }
+
             // Set up dynamic spacing for link icons
             setupDynamicLinkSpacing();
         } else {

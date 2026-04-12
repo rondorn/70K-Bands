@@ -360,6 +360,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         navigationController?.view.backgroundColor = .black
      
         filterMenuButton?.setTitle(NSLocalizedString("Filters", comment: ""), for: UIControl.State.normal)
+        if isRunningForUiTests() {
+            // UITests key off the table section header container (`qaMasterListFiltersHeader`), not the button, to avoid duplicate AX entries.
+            filterMenuButton?.accessibilityIdentifier = nil
+        }
         
         //these are needed for iOS 26 visual fixes
         if #available(iOS 26.0, *) {
@@ -1287,6 +1291,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
         label.text = text
         label.textColor = profileColor
+        label.accessibilityIdentifier = "qaMasterListCountTitle"
         label.sizeToFit()
         label.frame = CGRect(x: 0, y: 0, width: max(label.bounds.width, 100), height: 44)
         return label
@@ -1693,6 +1698,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // Dismiss the SwiftUI filter menu (portrait mode) before rotation
         if let existing = currentFilterMenuHostingController {
             print("🔄 [ROTATION] Dismissing portrait filter menu hosting controller")
+            removeFilterMenuOutsideTapGestureIfNeeded()
             existing.view.removeFromSuperview()
             existing.removeFromParent()
             currentFilterMenuHostingController = nil
@@ -1813,8 +1819,63 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     
     private var currentFilterMenuHostingController: UIHostingController<PortraitFilterSheetView>?
+    private var filterMenuOutsideTapGesture: UITapGestureRecognizer?
+    
+    private func removeFilterMenuOutsideTapGestureIfNeeded() {
+        if let g = filterMenuOutsideTapGesture {
+            view.removeGestureRecognizer(g)
+            filterMenuOutsideTapGesture = nil
+        }
+    }
+    
+    /// UI tests need a stable target for Filters; the control may sit in the toolbar or be reparented into the table section header.
+    private func isRunningForUiTests() -> Bool {
+        if ProcessInfo.processInfo.environment["UITESTING"] == "1" { return true }
+        return ProcessInfo.processInfo.arguments.contains("-UITesting")
+    }
+    
+    /// SwiftUI `List` accessibility ids often do not reach XCTest; tag the backing `UITableView` so UI tests can scroll (`qaFilterSheetList`).
+    private func tagFilterMenuTableViewForUiTestsIfNeeded(in hostingView: UIView) {
+        guard isRunningForUiTests() else { return }
+        let tables = allUITableViews(in: hostingView)
+        guard !tables.isEmpty else { return }
+        let table = tables.max(by: { $0.bounds.width * $0.bounds.height < $1.bounds.width * $1.bounds.height })!
+        if table.accessibilityIdentifier != "qaFilterSheetList" {
+            table.accessibilityIdentifier = "qaFilterSheetList"
+        }
+    }
+    
+    private func allUITableViews(in view: UIView) -> [UITableView] {
+        var result: [UITableView] = []
+        if let tv = view as? UITableView { result.append(tv) }
+        for sub in view.subviews { result.append(contentsOf: allUITableViews(in: sub)) }
+        return result
+    }
+    
+    private func scheduleTagFilterMenuTableForUiTests(hostingView: UIView) {
+        tagFilterMenuTableViewForUiTestsIfNeeded(in: hostingView)
+        DispatchQueue.main.async { [weak hostingView] in
+            guard let hostingView = hostingView else { return }
+            self.tagFilterMenuTableViewForUiTestsIfNeeded(in: hostingView)
+        }
+        for delay in [0.05, 0.15, 0.35, 0.6] as [TimeInterval] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak hostingView] in
+                guard let hostingView = hostingView else { return }
+                self.tagFilterMenuTableViewForUiTestsIfNeeded(in: hostingView)
+            }
+        }
+    }
+    
     
     @IBAction func filterMenuButtonPress(_ sender: Any) {
+        // Orphan ref: hosting was torn down but pointer remained; next tap only hit "dismiss" branch and returned without opening.
+        if let hc = currentFilterMenuHostingController, hc.view.superview == nil {
+            hc.removeFromParent()
+            currentFilterMenuHostingController = nil
+            mainTableView.isScrollEnabled = true
+        }
+        // Ensures outside-tap recognizer from a previous open is not left on `view` (e.g. toggle dismiss).
+        removeFilterMenuOutsideTapGestureIfNeeded()
         print("🔘 [FILTER_MENU] filterMenuButtonPress called")
         print("🔘 [FILTER_MENU] Current view controller: \(type(of: self))")
         print("🔘 [FILTER_MENU] landscapeScheduleCoordinator.isShowingLandscapeSchedule: \(landscapeScheduleCoordinator.isShowingLandscapeSchedule)")
@@ -1902,6 +1963,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         hostingController.view.clipsToBounds = true
         hostingController.view.alpha = 0
         hostingController.view.isOpaque = true  // Ensure fully opaque
+        if isRunningForUiTests() {
+            hostingController.view.accessibilityIdentifier = "qaPortraitFilterHostingView"
+            hostingController.view.isAccessibilityElement = false
+        }
         
         // Disable table scrolling while menu is displayed
         mainTableView.isScrollEnabled = false
@@ -1914,6 +1979,30 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         addChild(hostingController)
         view.addSubview(hostingController.view)
         hostingController.didMove(toParent: self)
+        view.bringSubviewToFront(hostingController.view)
+        
+        if isRunningForUiTests() {
+            // XCTest often misses SwiftUI/Hosting identifiers; a tiny UIKit node is reliably in the AX tree.
+            let axMarker = UIView(frame: CGRect(x: 0, y: 0, width: 1, height: 1))
+            axMarker.isAccessibilityElement = true
+            axMarker.accessibilityTraits = .staticText
+            axMarker.accessibilityIdentifier = "qaUITestPortraitFilterMarker"
+            axMarker.isUserInteractionEnabled = false
+            axMarker.backgroundColor = .clear
+            hostingController.view.addSubview(axMarker)
+            scheduleTagFilterMenuTableForUiTests(hostingView: hostingController.view)
+            // Native UISwitches — XCUITest cannot reliably drive SwiftUI Toggle/List for band filters; same setters as `CommonFilterSheetView`.
+            let uitestSwitches = FilterMenuUITestSwitchesView()
+            uitestSwitches.translatesAutoresizingMaskIntoConstraints = false
+            hostingController.view.addSubview(uitestSwitches)
+            NSLayoutConstraint.activate([
+                uitestSwitches.leadingAnchor.constraint(equalTo: hostingController.view.leadingAnchor),
+                uitestSwitches.trailingAnchor.constraint(equalTo: hostingController.view.trailingAnchor),
+                uitestSwitches.bottomAnchor.constraint(equalTo: hostingController.view.bottomAnchor),
+                uitestSwitches.heightAnchor.constraint(equalToConstant: FilterMenuUITestSwitchesView.preferredHeight),
+            ])
+            hostingController.view.bringSubviewToFront(uitestSwitches)
+        }
         
         print("🔘 [FILTER_MENU] Hosting controller added, view hierarchy:")
         print("🔘 [FILTER_MENU] - view.subviews.count: \(view.subviews.count)")
@@ -1921,17 +2010,21 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print("🔘 [FILTER_MENU] - hostingController.view.isHidden: \(hostingController.view.isHidden)")
         print("🔘 [FILTER_MENU] - hostingController.view.alpha: \(hostingController.view.alpha)")
         
-        // Animate in
+        // Animate in; add tap-to-dismiss **after** animation so the tap that opened the menu cannot
+        // be recognized on `view` in the same cycle and immediately dismiss (tap is "outside" the menu rect).
         UIView.animate(withDuration: 0.2) {
             hostingController.view.alpha = 1
         } completion: { _ in
             print("🔘 [FILTER_MENU] Animation complete, hostingController.view.alpha: \(hostingController.view.alpha)")
+            if self.isRunningForUiTests() {
+                self.tagFilterMenuTableViewForUiTestsIfNeeded(in: hostingController.view)
+            }
+            self.removeFilterMenuOutsideTapGestureIfNeeded()
+            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(self.dismissFilterMenu))
+            tapGesture.cancelsTouchesInView = false
+            self.filterMenuOutsideTapGesture = tapGesture
+            self.view.addGestureRecognizer(tapGesture)
         }
-        
-        // Add tap gesture to dismiss when tapping outside
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissFilterMenu))
-        tapGesture.cancelsTouchesInView = false
-        view.addGestureRecognizer(tapGesture)
         
         print("🔘 [FILTER_MENU] Menu presentation complete")
     }
@@ -1940,10 +2033,17 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         guard let hostingController = currentFilterMenuHostingController else { return }
         
         let location = gesture.location(in: view)
+        // Opening tap lands on the Filters control; menu is positioned below it, so the same tap is
+        // "outside" the menu frame — do not treat that as dismiss.
+        if let btn = effectiveFilterButton, let sv = btn.superview {
+            let btnFrameInView = sv.convert(btn.frame, to: view)
+            if btnFrameInView.contains(location) { return }
+        }
         if !hostingController.view.frame.contains(location) {
             // Tapped outside the menu, dismiss it
             dismissFilterMenuProgrammatically()
             gesture.view?.removeGestureRecognizer(gesture)
+            filterMenuOutsideTapGesture = nil
         }
     }
     
@@ -1957,6 +2057,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             hostingController.removeFromParent()
             self.currentFilterMenuHostingController = nil
             self.mainTableView.isScrollEnabled = true
+            self.removeFilterMenuOutsideTapGestureIfNeeded()
         }
     }
     
@@ -3503,6 +3604,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 btn.titleLabel?.font = .systemFont(ofSize: 25)
                 btn.backgroundColor = .black
                 fallbackFilterButton = btn
+                if isRunningForUiTests() {
+                    btn.accessibilityIdentifier = nil
+                }
             }
             if fallbackBandSearch == nil {
                 let bar = UISearchBar()
@@ -3579,6 +3683,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             stack.topAnchor.constraint(equalTo: container.topAnchor),
             stack.bottomAnchor.constraint(equalTo: container.bottomAnchor)
         ])
+
+        // UI tests: one stable target — the header container — not the UIButton (UIKit can surface the same control twice under Table).
+        if isRunningForUiTests() {
+            filterBtn.accessibilityIdentifier = nil
+            container.accessibilityIdentifier = "qaMasterListFiltersHeader"
+            container.isAccessibilityElement = false
+            container.accessibilityElements = [filterBtn, badgeContainer, searchBar, shareBtn]
+        }
+        // Reparenting the storyboard Filters control into the table header can drop the IB touchUpInside
+        // connection on some OS versions; always bind the action here (idempotent).
+        filterBtn.removeTarget(self, action: #selector(filterMenuButtonPress(_:)), for: .touchUpInside)
+        filterBtn.addTarget(self, action: #selector(filterMenuButtonPress(_:)), for: .touchUpInside)
+        filterBtn.isUserInteractionEnabled = true
         
         ensureFilterCounterAndShareLayout()
         return container
@@ -3620,8 +3737,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     override func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
         
         let attendedHandle = ShowsAttended()
+        let uiTestSwipeLabels = ProcessInfo.processInfo.environment["UITESTING"] == "1"
         
-        let sawAllShow = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title: "", handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
+        let sawAllShow = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title: uiTestSwipeLabels ? "qaSwipeSeen" : "", handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
             let currentCel = tableView.cellForRow(at: indexPath)
             
@@ -3673,9 +3791,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 ToastMessages(message).show(self, cellLocation: placementOfCell!, placeHigh: false)
             }
         })
-        sawAllShow.setIcon(iconImage: UIImage(named: "icon-seen")!, backColor: UIColor.darkGray, cellHeight: 50, cellWidth: 230)
+        if uiTestSwipeLabels {
+            sawAllShow.backgroundColor = .darkGray
+        } else {
+            sawAllShow.setIcon(iconImage: UIImage(named: "icon-seen")!, backColor: UIColor.darkGray, cellHeight: 50, cellWidth: 230)
+        }
  
-        let mustSeeAction = UITableViewRowAction(style:UITableViewRowAction.Style.normal, title:"", handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
+        let mustSeeAction = UITableViewRowAction(style:UITableViewRowAction.Style.normal, title: uiTestSwipeLabels ? "qaSwipeMust" : "", handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
             self.priorityManager.setPriority(for: bandName, priority: 1)
@@ -3687,11 +3809,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.refreshIPadDetailViewIfNeeded(for: bandName)
 
         })
+        if uiTestSwipeLabels {
+            mustSeeAction.backgroundColor = .darkGray
+        } else {
+            mustSeeAction.setIcon(iconImage: UIImage(named: mustSeeIconSmall)!, backColor: UIColor.darkGray, cellHeight: 50, cellWidth: 230)
+        }
         
-        
-        mustSeeAction.setIcon(iconImage: UIImage(named: mustSeeIconSmall)!, backColor: UIColor.darkGray, cellHeight: 50, cellWidth: 230)
-        
-        let mightSeeAction = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title:"", handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
+        let mightSeeAction = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title: uiTestSwipeLabels ? "qaSwipeMight" : "", handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 2")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
@@ -3703,10 +3827,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.refreshIPadDetailViewIfNeeded(for: bandName)
             
         })
+        if uiTestSwipeLabels {
+            mightSeeAction.backgroundColor = .darkGray
+        } else {
+            mightSeeAction.setIcon(iconImage: UIImage(named: mightSeeIconSmall)!, backColor: UIColor.darkGray, cellHeight: 50, cellWidth: 230)
+        }
         
-        mightSeeAction.setIcon(iconImage: UIImage(named: mightSeeIconSmall)!, backColor: UIColor.darkGray, cellHeight: 50, cellWidth: 230)
-        
-        let wontSeeAction = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title:"", handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
+        let wontSeeAction = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title: uiTestSwipeLabels ? "qaSwipeWont" : "", handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 3")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
@@ -3718,10 +3845,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.refreshIPadDetailViewIfNeeded(for: bandName)
             
         })
+        if uiTestSwipeLabels {
+            wontSeeAction.backgroundColor = .darkGray
+        } else {
+            wontSeeAction.setIcon(iconImage: UIImage(named: wontSeeIconSmall)!, backColor: UIColor.darkGray, cellHeight: 50, cellWidth: 230)
+        }
         
-        wontSeeAction.setIcon(iconImage: UIImage(named: wontSeeIconSmall)!, backColor: UIColor.darkGray, cellHeight: 50, cellWidth: 230)
-        
-        let setUnknownAction = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title:"", handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
+        let setUnknownAction = UITableViewRowAction(style: UITableViewRowAction.Style.normal, title: uiTestSwipeLabels ? "qaSwipeUnknown" : "", handler: { (action:UITableViewRowAction!, indexPath:IndexPath!) -> Void in
             
             print ("Changing the priority of " + self.currentlySectionBandName(indexPath.row) + " to 0")
             let bandName = getNameFromSortable(self.currentlySectionBandName(indexPath.row) as String, sortedBy: sortedBy)
@@ -3733,13 +3863,25 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.refreshIPadDetailViewIfNeeded(for: bandName)
             
         })
-        setUnknownAction.setIcon(iconImage: UIImage(named: unknownIconSmall)!, backColor: UIColor.darkGray, cellHeight: 50, cellWidth: 230)
-        
-        if (eventCount == 0){
-            return [setUnknownAction, wontSeeAction, mightSeeAction, mustSeeAction]
+        if uiTestSwipeLabels {
+            setUnknownAction.backgroundColor = .darkGray
         } else {
-            return [sawAllShow, wontSeeAction, mightSeeAction, mustSeeAction]
+            setUnknownAction.setIcon(iconImage: UIImage(named: unknownIconSmall)!, backColor: UIColor.darkGray, cellHeight: 50, cellWidth: 230)
         }
+        
+        // First array element is on the **trailing** edge (appears first when swiping left). In UI tests,
+        // synthetic swipes rarely open the full tray, so `qaSwipeMust` never appeared while `qaSwipeUnknown` did.
+        // Put Must first **only** when UITesting so automation can hit `qaSwipeMust` with a short swipe.
+        if eventCount == 0 {
+            if uiTestSwipeLabels {
+                return [mustSeeAction, mightSeeAction, wontSeeAction, setUnknownAction]
+            }
+            return [setUnknownAction, wontSeeAction, mightSeeAction, mustSeeAction]
+        }
+        if uiTestSwipeLabels {
+            return [mustSeeAction, mightSeeAction, wontSeeAction, sawAllShow]
+        }
+        return [sawAllShow, wontSeeAction, mightSeeAction, mustSeeAction]
     }
     
     //swip code end

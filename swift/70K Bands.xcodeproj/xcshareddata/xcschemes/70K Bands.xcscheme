@@ -47,6 +47,16 @@
                ReferencedContainer = "container:70K Bands.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "A7B8C9D02E9F00010070B00C"
+               BuildableName = "70K BandsUITests.xctest"
+               BlueprintName = "70K BandsUITests"
+               ReferencedContainer = "container:70K Bands.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

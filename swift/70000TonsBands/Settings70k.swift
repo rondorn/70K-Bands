@@ -671,6 +671,12 @@ private func readFiltersFileInternal(){
         print("🔔 [NOTIFICATION_DEFER] Queueing notification rebuild after timezone change")
         LocalNotificationRebuildCoordinator.shared.requestRebuild(reason: "timezone-change", debounceSeconds: 1.2)
     }
+
+    // XCTest UI runs: `readFiltersFile()` restores openYouTubeApp from disk (default true), which opens YouTube externally — no in-app Done button. Force in-app sheets for detail link tests.
+    if ProcessInfo.processInfo.environment["UITESTING"] == "1" {
+        setOpenYouTubeAppValue(false)
+        setAllLinksOpenInExternalBrowserValue(false)
+    }
 }
 
 func establishDefaults(){

@@ -23,7 +23,7 @@ class bandNameTests: XCTestCase {
         
         var bands = [String]()
         
-        let bandNameHandle = bandNamesHandler()
+        let bandNameHandle = bandNamesHandler.shared
         bandNameHandle.gatherData()
         bands = bandNameHandle.getBandNames()
         
@@ -35,7 +35,7 @@ class bandNameTests: XCTestCase {
     
     func loadBandsOffline(){
         
-        let bandNameHandle = bandNamesHandler()
+        let bandNameHandle = bandNamesHandler.shared
         var bands = [String]()
         bandNameHandle.readBandFile()
         bands = bandNameHandle.getBandNames()

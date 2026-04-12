@@ -210,6 +210,7 @@ struct CommonFilterSheetView: View {
                     Button(NSLocalizedString("Done", comment: "")) {
                         dismiss()
                     }
+                    .accessibilityIdentifier("qaFilterSheetDone")
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white)
                 }
@@ -224,6 +225,7 @@ struct CommonFilterSheetView: View {
                     List {
                         unifiedFilterSections
                     }
+                    .accessibilityIdentifier("qaFilterSheetList")
                     .id(filterChangeTrigger)  // Force refresh when filters change (e.g., Hide Expired Events)
                     .listStyle(.plain)
                     .modifier(DarkListBackgroundModifier())
@@ -278,6 +280,10 @@ struct CommonFilterSheetView: View {
             )
             .preferredColorScheme(.dark)
         }
+        // XCTest reads the SwiftUI accessibility tree, not UIKit identifiers on UIHostingController.view.
+        // This root id lets UI tests find the sheet while children (.contain) still expose Done / toggles.
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("qaCommonFilterSheetRoot")
     }
     
     // MARK: - Unified Filter Sections (exact same order for portrait and landscape)
@@ -428,6 +434,7 @@ struct CommonFilterSheetView: View {
             bandRankingRow(
                 icon: getMustSeeOn() ? mustSeeIcon : mustSeeIconAlt,
                 title: NSLocalizedString("Show Must See", comment: ""),
+                toggleAccessibilityId: "qaFilterToggleMustSee",
                 isOn: Binding(
                     get: { getMustSeeOn() },
                     set: { newValue in
@@ -441,6 +448,7 @@ struct CommonFilterSheetView: View {
             bandRankingRow(
                 icon: getMightSeeOn() ? mightSeeIcon : mightSeeIconAlt,
                 title: NSLocalizedString("Show Might See", comment: ""),
+                toggleAccessibilityId: "qaFilterToggleMightSee",
                 isOn: Binding(
                     get: { getMightSeeOn() },
                     set: { newValue in
@@ -454,6 +462,7 @@ struct CommonFilterSheetView: View {
             bandRankingRow(
                 icon: getWontSeeOn() ? wontSeeIcon : wontSeeIconAlt,
                 title: NSLocalizedString("Show Wont See", comment: ""),
+                toggleAccessibilityId: "qaFilterToggleWontSee",
                 isOn: Binding(
                     get: { getWontSeeOn() },
                     set: { newValue in
@@ -467,6 +476,7 @@ struct CommonFilterSheetView: View {
             bandRankingRow(
                 icon: getUnknownSeeOn() ? unknownIcon : unknownIconAlt,
                 title: NSLocalizedString("Show Unknown", comment: ""),
+                toggleAccessibilityId: "qaFilterToggleUnknownSee",
                 isOn: Binding(
                     get: { getUnknownSeeOn() },
                     set: { newValue in
@@ -481,13 +491,14 @@ struct CommonFilterSheetView: View {
     }
     
     @ViewBuilder
-    private func bandRankingRow(icon: String, title: String, isOn: Binding<Bool>) -> some View {
+    private func bandRankingRow(icon: String, title: String, toggleAccessibilityId: String, isOn: Binding<Bool>) -> some View {
         HStack(spacing: 12) {
             Image(uiImage: UIImage(named: icon) ?? UIImage())
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 24, height: 24)
             Toggle(title, isOn: isOn)
+                .accessibilityIdentifier(toggleAccessibilityId)
                 .disabled(isFlaggedFilterEnabled)
                 .id("\(filterChangeTrigger)-\(isFlaggedFilterEnabled)")  // Force refresh when disabled state changes
         }

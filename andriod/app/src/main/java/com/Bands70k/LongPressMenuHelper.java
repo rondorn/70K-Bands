@@ -90,10 +90,10 @@ public class LongPressMenuHelper {
                 if (onRefresh != null) onRefresh.run();
             }
         });
-        prioritySection.addView(addRow(activity, staticVariables.graphicMustSee != null ? staticVariables.graphicMustSee : 0, activity.getString(R.string.must), isMust, mustClick, density, rowHeight, textSizeSp));
-        prioritySection.addView(addRow(activity, staticVariables.graphicMightSee != null ? staticVariables.graphicMightSee : 0, activity.getString(R.string.might), isMight, mightClick, density, rowHeight, textSizeSp));
-        prioritySection.addView(addRow(activity, staticVariables.graphicWontSee != null ? staticVariables.graphicWontSee : 0, activity.getString(R.string.wont), isWont, wontClick, density, rowHeight, textSizeSp));
-        prioritySection.addView(addRow(activity, staticVariables.graphicUnknownSee != null ? staticVariables.graphicUnknownSee : R.drawable.icon_unknown, activity.getString(R.string.unknown), isUnknown, unknownClick, density, rowHeight, textSizeSp));
+        prioritySection.addView(addRow(activity, staticVariables.graphicMustSee != null ? staticVariables.graphicMustSee : 0, activity.getString(R.string.must), isMust, mustClick, density, rowHeight, textSizeSp, "qaLongPressMust"));
+        prioritySection.addView(addRow(activity, staticVariables.graphicMightSee != null ? staticVariables.graphicMightSee : 0, activity.getString(R.string.might), isMight, mightClick, density, rowHeight, textSizeSp, "qaLongPressMight"));
+        prioritySection.addView(addRow(activity, staticVariables.graphicWontSee != null ? staticVariables.graphicWontSee : 0, activity.getString(R.string.wont), isWont, wontClick, density, rowHeight, textSizeSp, "qaLongPressWont"));
+        prioritySection.addView(addRow(activity, staticVariables.graphicUnknownSee != null ? staticVariables.graphicUnknownSee : R.drawable.icon_unknown, activity.getString(R.string.unknown), isUnknown, unknownClick, density, rowHeight, textSizeSp, "qaLongPressUnknown"));
 
         if (isEvent && currentAttendedFinal != null) {
             final String loc = location;
@@ -208,6 +208,10 @@ public class LongPressMenuHelper {
     }
 
     private static LinearLayout addRow(Activity act, int iconRes, String label, boolean selected, View.OnClickListener click, float density, int rowHeight, int textSizeSp) {
+        return addRow(act, iconRes, label, selected, click, density, rowHeight, textSizeSp, null);
+    }
+
+    private static LinearLayout addRow(Activity act, int iconRes, String label, boolean selected, View.OnClickListener click, float density, int rowHeight, int textSizeSp, String qaAccessibilityId) {
         LinearLayout row = new LinearLayout(act);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
@@ -215,6 +219,9 @@ public class LongPressMenuHelper {
         row.setPadding(0, (int)(4 * density), 0, (int)(4 * density));
         row.setOnClickListener(click);
         row.setBackgroundResource(android.R.drawable.list_selector_background);
+        if (qaAccessibilityId != null && UiTestMarkers.isEnabled()) {
+            row.setContentDescription(qaAccessibilityId);
+        }
         if (iconRes != 0) {
             ImageView iv = new ImageView(act);
             iv.setImageResource(iconRes);

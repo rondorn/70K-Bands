@@ -2315,6 +2315,7 @@ struct SwiftUIWebView: View {
                     Button("Done") {
                         presentationMode.wrappedValue.dismiss()
                     }
+                    .accessibilityIdentifier("bandDetailWebSheetDone")
                     .foregroundColor(.white)
                     .font(.system(size: 17, weight: .semibold))
                     .background(Color.clear)

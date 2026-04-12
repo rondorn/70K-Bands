@@ -1,0 +1,2 @@
+pyzbar>=0.1.9
+Pillow>=9.0
