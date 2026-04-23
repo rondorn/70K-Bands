@@ -86,8 +86,11 @@ class ScheduleCSVImporter {
                 print("🔍 [CSV_ROW_DEBUG] Row \(rowIndex + 1): bandName: '\(bandName)', location: '\(location)', eventType: '\(eventType)'")
             }
             
-            let startTimeIndex = calculateTimeIndex(date: date, time: startTime)
-            let endTimeIndex = calculateTimeIndex(date: date, time: endTime)
+            let dateForIndex = date
+            let normalizedStoredDate = ScheduleDateNormalization.canonicalStorageCalendarDate(from: date) ?? date
+
+            let startTimeIndex = calculateTimeIndex(date: dateForIndex, time: startTime)
+            let endTimeIndex = calculateTimeIndex(date: dateForIndex, time: endTime)
             if startTimeIndex == -1 || endTimeIndex == -1 || startTimeIndex <= 0 {
                 if isUnofficialEvent { skippedUnofficialCount += 1 }
                 continue
@@ -99,7 +102,7 @@ class ScheduleCSVImporter {
                 timeIndex: startTimeIndex,
                 endTimeIndex: endTimeIndex,
                 location: location,
-                date: date,
+                date: normalizedStoredDate,
                 day: day,
                 startTime: startTime,
                 endTime: endTime,
@@ -140,8 +143,12 @@ class ScheduleCSVImporter {
         print("🔍 [DATE_PARSE_DEBUG] - Date component: '\(date)'")
         print("🔍 [DATE_PARSE_DEBUG] - Time component: '\(time)'")
         
-        // Try multiple date formats to handle different CSV formats
+        // Try multiple date formats to handle different CSV formats and canonical yyyy-MM-dd storage
         let formats = [
+            "yyyy-MM-dd HH:mm",
+            "yyyy-MM-dd H:mm",
+            "yyyy-MM-dd h:mm a",
+            "yyyy-M-d HH:mm",
             "M/d/yyyy HH:mm",      // Single digit month/day + 24-hour (e.g., "1/26/2026 15:00")
             "MM/dd/yyyy HH:mm",    // Padded + 24-hour (e.g., "01/26/2026 15:00")
             "M/d/yyyy H:mm",       // Single digit month/day/hour (e.g., "1/30/2025 17:15")

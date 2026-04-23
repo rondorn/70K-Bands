@@ -129,8 +129,10 @@ class EventCSVImporter {
                 // Ensure band exists in SQLite (create if needed). Does not set lineIndex; band list is never changed by schedule import.
                 _ = dataManager.createBandIfNotExists(name: bandName, eventYear: eventYear)
                 
-                // Create unique identifier for this event
-                let timeIndex = getDateIndex(date, timeString: startTime, band: bandName)
+                let normalizedStoredDate = ScheduleDateNormalization.canonicalStorageCalendarDate(from: date) ?? date
+                
+                // Create unique identifier for this event (use same string family as SQLite `date` column)
+                let timeIndex = getDateIndex(normalizedStoredDate, timeString: startTime, band: bandName)
                 
                 if rowIndex <= 3 {
                     print("🕐 [MDF_DEBUG] Row \(rowIndex) Time Index: \(timeIndex)")
@@ -140,7 +142,7 @@ class EventCSVImporter {
                 
                 // Calculate end time index (CRITICAL for proper event filtering)
                 let endTime = lineData["End Time"] ?? ""
-                let endTimeIndex = getDateIndex(date, timeString: endTime, band: bandName)
+                let endTimeIndex = getDateIndex(normalizedStoredDate, timeString: endTime, band: bandName)
                 
                 if rowIndex <= 3 {
                     print("🕐 [MDF_DEBUG] Row \(rowIndex) End Time Index: \(endTimeIndex)")
@@ -189,7 +191,7 @@ class EventCSVImporter {
                     timeIndex: timeIndex,
                     endTimeIndex: endTimeIndex,
                     location: location,
-                    date: date,
+                    date: normalizedStoredDate,
                     day: lineData["Day"],
                     startTime: startTime,
                     endTime: endTime,
@@ -411,14 +413,30 @@ class EventCSVImporter {
         print("   band: '\(band)'")
         
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-M-d HH:mm"
         dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+        dateFormatter.timeZone = TimeZone.current
         
         let fullDateString = "\(dateString) \(timeString)"
         print("   fullDateString: '\(fullDateString)'")
-        print("   dateFormat: '\(dateFormatter.dateFormat ?? "nil")'")
         
-        if let date = dateFormatter.date(from: fullDateString) {
+        let primaryFormats = [
+            "yyyy-MM-dd HH:mm",
+            "yyyy-MM-dd H:mm",
+            "yyyy-M-d HH:mm",
+            "M/d/yyyy HH:mm",
+            "MM/dd/yyyy HH:mm",
+        ]
+        var parsedPrimary: Date?
+        for fmt in primaryFormats {
+            dateFormatter.dateFormat = fmt
+            if let date = dateFormatter.date(from: fullDateString) {
+                parsedPrimary = date
+                print("   primary format matched: \(fmt)")
+                break
+            }
+        }
+        
+        if let date = parsedPrimary {
             print("✅ [MDF_DEBUG] Date parsed successfully: \(date)")
             var timeIndex = date.timeIntervalSinceReferenceDate // FIX: Match ScheduleCSVImporter reference
             
@@ -435,6 +453,10 @@ class EventCSVImporter {
             
             // Try the scheduleHandler formats
             let alternativeFormats = [
+                "yyyy-MM-dd HH:mm",
+                "yyyy-MM-dd H:mm",
+                "yyyy-MM-dd h:mm a",
+                "yyyy-M-d HH:mm",
                 "M/d/yyyy HH:mm",         // Single digit month/day + 24-hour (MOST LIKELY)
                 "MM/dd/yyyy HH:mm",       // Double digit + 24-hour
                 "M/d/yyyy H:mm",          // Single digit + single hour
