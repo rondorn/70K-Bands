@@ -1673,16 +1673,17 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
         }
         
-        // Determine if we're transitioning from landscape to portrait
+        // Determine if we're transitioning from landscape to portrait (geometry of the *new* size).
         let isTransitioningToPortrait = size.width < size.height
         
-        // If transitioning to portrait and landscape view is showing, ensure it's fully dismissed
-        if isTransitioningToPortrait && landscapeScheduleCoordinator.isShowingLandscapeSchedule {
-            print("🔄 [ROTATION] Transitioning to portrait - ensuring landscape view is dismissed")
-            // Use coordinator to ensure dismissal happens before rotation completes
+        // Phone-only: in portrait, the schedule calendar is not offered, so dismiss it on rotation.
+        // iPad and other large displays: calendar vs list is explicit (toggle); rotation must not dismiss.
+        if !isSplitViewCapable(),
+           isTransitioningToPortrait,
+           landscapeScheduleCoordinator.isShowingLandscapeSchedule {
+            print("🔄 [ROTATION] Transitioning to portrait (phone) - ensuring landscape view is dismissed")
             coordinator.animate(alongsideTransition: nil) { [weak self] _ in
                 guard let self = self else { return }
-                // Double-check that landscape view is dismissed
                 if self.landscapeScheduleCoordinator.isShowingLandscapeSchedule {
                     print("🔄 [ROTATION] Landscape view still showing after rotation - forcing dismissal")
                     self.landscapeScheduleCoordinator.dismissLandscapeScheduleView()
