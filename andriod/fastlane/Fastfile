@@ -1,0 +1,201 @@
+# Fastfile for Android Release Automation
+
+require "json"
+
+default_platform(:android)
+
+platform :android do
+
+  # Paths anchored to …/andriod (parent of fastlane/). Do not Dir.chdir here — fastlane uses its
+  # own chdir; a second chdir causes "conflicting chdir" and breaks relative GOOGLE_PLAY_SERVICE_ACCOUNT_JSON.
+  before_all do
+    @android_project_root = File.expand_path("..", __dir__)
+
+    config_path = File.join(@android_project_root, "apps_config.json")
+    UI.user_error!("apps_config.json not found at #{config_path}") unless File.exist?(config_path)
+
+    @config = JSON.parse(File.read(config_path))
+    @apps = @config["apps"].select { |app| app["enabled"] }
+
+    raw_key = ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_JSON"].to_s.strip
+    UI.user_error!("Set GOOGLE_PLAY_SERVICE_ACCOUNT_JSON in .env (path to Play service account JSON)") if raw_key.empty?
+
+    @play_json_key = File.expand_path(raw_key, @android_project_root)
+    unless File.exist?(@play_json_key)
+      UI.user_error!("Service account JSON not found: #{@play_json_key}\n(.env path is relative to #{@android_project_root})")
+    end
+  end
+
+  # Shared by release_all_apps and upload_to_play_only (expects AABs already built)
+  private_lane :upload_enabled_apps_to_play do |options|
+    version_code = options[:version_code]
+    release_notes = options[:release_notes]
+    track = options[:track] || "production"
+    rollout = (options[:rollout] || "1.0").to_s
+
+    @apps.each do |app|
+      puts "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      puts "📱 Uploading: #{app['name']}"
+      puts "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+      flavor = app["flavor"]
+      package_name = app["package_name"]
+      aab_path = File.join(
+        @android_project_root,
+        "app/build/outputs/bundle/#{flavor}Release/app-#{flavor}-release.aab"
+      )
+
+      unless File.exist?(aab_path)
+        UI.user_error!(
+          "AAB not found: #{aab_path}\n" \
+          "Build from #{@android_project_root}:\n" \
+          "  ./gradlew bundleBands70kRelease bundleMdfbandsRelease\n" \
+          "Or run ./release_full_automation.sh (build + upload)."
+        )
+      end
+
+      metadata_params = {
+        package_name: package_name,
+        track: track,
+        rollout: rollout,
+        aab: aab_path,
+        skip_upload_metadata: false,
+        skip_upload_images: true,
+        skip_upload_screenshots: true,
+        json_key: @play_json_key
+      }
+
+      prepare_changelogs(
+        package_name: package_name,
+        release_notes: release_notes,
+        version_code: version_code
+      )
+
+      upload_to_play_store(metadata_params)
+
+      puts "✓ #{app['name']} → #{track}"
+    end
+
+    puts "\n✅ All apps uploaded successfully!"
+  end
+
+  desc "Release all enabled apps to Google Play (build AABs first via release_full_automation.sh / Gradle)"
+  lane :release_all_apps do |options|
+    release_notes = JSON.parse(options[:release_notes_json])
+
+    upload_enabled_apps_to_play(
+      version_code: options[:version_code],
+      release_notes: release_notes,
+      track: options[:track] || "production",
+      rollout: (options[:rollout] || "1.0").to_s
+    )
+  end
+
+  desc "Upload existing release AABs only (no Gradle). Use to debug Play API / service account permissions."
+  lane :upload_to_play_only do |options|
+    release_notes = JSON.parse(options[:release_notes_json])
+
+    upload_enabled_apps_to_play(
+      version_code: options[:version_code],
+      release_notes: release_notes,
+      track: options[:track] || "internal",
+      rollout: (options[:rollout] || "1.0").to_s
+    )
+  end
+  
+  # Helper to prepare changelogs
+  private_lane :prepare_changelogs do |options|
+    package_name = options[:package_name]
+    release_notes = options[:release_notes]
+    version_code = options[:version_code]
+    
+    # Google Play language code mapping
+    language_mapping = {
+      "en-US" => "en-US",
+      "da" => "da-DK",
+      "fi" => "fi-FI",
+      "fr-FR" => "fr-FR",
+      "de-DE" => "de-DE",
+      "pt-BR" => "pt-BR",
+      "es-MX" => "es-419",  # Latin American Spanish
+      "es-ES" => "es-ES"
+    }
+    
+    metadata_dir = File.join(@android_project_root, "fastlane/metadata/android")
+    
+    release_notes.each do |lang_code, text|
+      play_store_lang = language_mapping[lang_code] || lang_code
+      
+      # Create directory for this language
+      changelog_dir = "#{metadata_dir}/#{play_store_lang}/changelogs"
+      FileUtils.mkdir_p(changelog_dir)
+      
+      # Write changelog file
+      changelog_file = "#{changelog_dir}/#{version_code}.txt"
+      File.write(changelog_file, text)
+    end
+  end
+  
+  desc "Build release AABs for all apps"
+  lane :build_all_apps do
+    gradle(
+      task: "clean"
+    )
+    
+    @apps.each do |app|
+      flavor = app["flavor"]
+      puts "Building #{app['name']}..."
+      
+      gradle(
+        task: "bundle",
+        flavor: flavor,
+        build_type: "Release",
+        properties: {
+          "android.injected.signing.store.file" => ENV["ANDROID_KEYSTORE_PATH"],
+          "android.injected.signing.store.password" => ENV["ANDROID_STORE_PASSWORD"],
+          "android.injected.signing.key.alias" => ENV["ANDROID_KEY_ALIAS"],
+          "android.injected.signing.key.password" => ENV["ANDROID_KEY_PASSWORD"]
+        }
+      )
+      
+      puts "✓ #{app['name']} built"
+    end
+  end
+  
+  desc "Download metadata from Google Play Console"
+  lane :download_metadata do
+    @apps.each do |app|
+      supply(
+        package_name: app["package_name"],
+        json_key: @play_json_key,
+        skip_upload_apk: true,
+        skip_upload_aab: true,
+        skip_upload_metadata: true,
+        skip_upload_changelogs: true,
+        skip_upload_images: true,
+        skip_upload_screenshots: true
+      )
+    end
+  end
+  
+  desc "Validate AAB files"
+  lane :validate_aabs do
+    @apps.each do |app|
+      flavor = app["flavor"]
+      aab_path = File.join(
+        @android_project_root,
+        "app/build/outputs/bundle/#{flavor}Release/app-#{flavor}-release.aab"
+      )
+      
+      if File.exist?(aab_path)
+        puts "✓ #{app['name']}: AAB exists at #{aab_path}"
+        
+        # Validate AAB signature
+        sh("jarsigner -verify -verbose -certs #{aab_path}")
+      else
+        UI.user_error!("AAB not found for #{app['name']} at #{aab_path}")
+      end
+    end
+  end
+  
+end
