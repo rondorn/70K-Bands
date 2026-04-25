@@ -1,0 +1,29 @@
+{
+  "apps": [
+    {
+      "name": "70K Bands",
+      "flavor": "bands70k",
+      "package_name": "com.Bands70k",
+      "play_store_track": "production",
+      "enabled": true
+    },
+    {
+      "name": "MDF Bands",
+      "flavor": "mdfbands",
+      "package_name": "com.rdorn.mdfbands",
+      "play_store_track": "production",
+      "enabled": true
+    }
+  ],
+  "supported_languages": [
+    "en-US",
+    "da",
+    "fi",
+    "fr-FR",
+    "de-DE",
+    "pt-BR",
+    "es-MX",
+    "es-ES"
+  ],
+  "default_language": "en-US"
+}
