@@ -687,8 +687,15 @@ private func calculateTimeIndexForFiltering(date: String, time: String) -> Doubl
     
     let dateTimeString = "\(date) \(time)"
     
-    // Try multiple date formats to handle different CSV formats
+    // Try multiple date formats to handle different CSV formats.
+    // Include canonical SQLite `date` (`ScheduleDateNormalization` → yyyy-MM-dd); otherwise parsing fails,
+    // we return greatestFiniteMagnitude, and hide-expired never treats the event as ended.
     let formats = [
+        "yyyy-MM-dd HH:mm",
+        "yyyy-MM-dd H:mm",
+        "yyyy-MM-dd h:mm a",
+        "yyyy-M-d HH:mm",
+        "yyyy-M-d H:mm",
         "M/d/yyyy HH:mm",      // Single digit month/day + 24-hour (e.g., "1/26/2026 15:00")
         "MM/dd/yyyy HH:mm",    // Padded + 24-hour (e.g., "01/26/2026 15:00")
         "M/d/yyyy H:mm",       // Single digit month/day/hour (e.g., "1/30/2025 17:15")
@@ -1312,7 +1319,8 @@ func getCellValue (_ indexRow: Int, schedule: scheduleHandler, sortBy: String, c
             dayText = day
         }
         
-        dayView.text = dayText
+        // Red-circle Day column: `UILabel` tag 10 — `dayText` only; optional `d/m` swap from that string + region (cache-miss path).
+        dayView.text = dayListLabelTextForRegion(dayText)
         dayLabelView.text = NSLocalizedString("Day", comment: "")
         
         if (indexRow == 0){

@@ -198,7 +198,8 @@ class MasterViewUIManager {
         
         startTimeView.text = cachedData.startTimeText
         endTimeView.text = cachedData.endTimeText
-        dayView.text = cachedData.dayText
+        // Red-circle Day column: `UILabel` tag 10 — value is `cachedData.dayText` only; optional `d/m` swap from that text + region.
+        dayView.text = dayListLabelTextForRegion(cachedData.dayText)
         dayLabelView.text = NSLocalizedString("Day", comment: "Day label in list")
         bandNameNoSchedule.text = cachedData.bandName
         

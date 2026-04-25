@@ -158,3 +158,80 @@ enum ScheduleDateNormalization {
 func monthDateRegionalFormatting(dateValue: String) -> String {
     ScheduleDateNormalization.displayLocalizedScheduleField(dateValue)
 }
+
+// MARK: - Main list Day label (tag 10) — text only
+
+/// Console filter tag: **`[DAY_LABEL_SWAP]`** (region probe once + every `d/d` label pass).
+private enum DayLabelSwapLog {
+    static var didLogRegionProbe = false
+}
+
+/// Strips ICU `'`…`'` literal spans from a date pattern so `d`/`m` positions are reliable.
+private func stripICUQuotedFragmentsFromDatePattern(_ s: String) -> String {
+    var out = ""
+    var i = s.startIndex
+    while i < s.endIndex {
+        if s[i] == "'" {
+            let after = s.index(after: i)
+            if after < s.endIndex, s[after] == "'" {
+                out.append("'")
+                i = s.index(after: after)
+                continue
+            }
+            var j = after
+            while j < s.endIndex, s[j] != "'" { j = s.index(after: j) }
+            i = (j < s.endIndex) ? s.index(after: j) : j
+            continue
+        }
+        out.append(s[i])
+        i = s.index(after: i)
+    }
+    return out
+}
+
+/// Region wants **day/month** ordering for short month+day (from localized `Md` pattern only).
+private func regionUsesDayBeforeMonthForListDayLabel() -> Bool {
+    let rawOpt = DateFormatter.dateFormat(fromTemplate: "Md", options: 0, locale: .current)
+    let rawDisplay = rawOpt ?? "(nil)"
+    let strippedLower: String
+    let dayBeforeMonth: Bool
+    if let raw = rawOpt {
+        let p = stripICUQuotedFragmentsFromDatePattern(raw).lowercased()
+        strippedLower = p
+        if let dPos = p.firstIndex(where: { $0 == "d" || $0 == "j" }),
+           let mPos = p.firstIndex(where: { $0 == "m" || $0 == "l" }) {
+            dayBeforeMonth = dPos < mPos
+        } else {
+            dayBeforeMonth = false
+        }
+    } else {
+        strippedLower = ""
+        dayBeforeMonth = false
+    }
+
+    if !DayLabelSwapLog.didLogRegionProbe {
+        DayLabelSwapLog.didLogRegionProbe = true
+        print("[DAY_LABEL_SWAP] REGION_PROBE locale=\(Locale.current.identifier) calendar=\(Calendar.current.identifier) MdRaw=\(rawDisplay) MdStrippedLower=\(strippedLower) dayBeforeMonth=\(dayBeforeMonth)")
+    }
+
+    return dayBeforeMonth
+}
+
+/// Text for schedule **Day** label: **main list** `dayView` (tag 10) and **band detail** schedule row day cell. **Input is only that label string** (e.g. `1/26`; `Day 1` → stripped to `1` by callers). If it matches `digit(s)/digit(s)` and the region’s `Md` order is day-first, returns `day/month`; otherwise returns the same string unchanged. No other fields are read.
+func dayListLabelTextForRegion(_ displayedDayText: String) -> String {
+    let t = displayedDayText.trimmingCharacters(in: .whitespacesAndNewlines)
+    let slashMatched = (t.range(of: #"^\d{1,2}/\d{1,2}$"#, options: .regularExpression) != nil)
+    guard slashMatched else { return displayedDayText }
+
+    let dayFirst = regionUsesDayBeforeMonthForListDayLabel()
+    let parts = t.split(separator: "/", omittingEmptySubsequences: false)
+    let out: String
+    if dayFirst, parts.count == 2 {
+        out = "\(parts[1])/\(parts[0])"
+    } else {
+        out = displayedDayText
+    }
+
+    print("[DAY_LABEL_SWAP] LABEL in='\(displayedDayText)' trimmed='\(t)' slashMatched=true regionDayFirst=\(dayFirst) out='\(out)'")
+    return out
+}

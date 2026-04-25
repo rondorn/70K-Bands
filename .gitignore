@@ -17,3 +17,12 @@ swift/release_with_xcode.sh
 swift/release_with_xcode_upload.sh
 swift/translate_libre.py
 swift/translate_release_notes.py
+
+# Swift — Firebase client configs (contain API keys; download from Firebase console per machine)
+swift/GoogleService-Info-70K.plist
+swift/GoogleService-Info-MDF.plist
+
+# Android — local SDK paths & build artifacts (must not be committed)
+andriod/local.properties
+andriod/app/local.properties
+andriod/app/app-release.apk

@@ -967,7 +967,7 @@ struct ScheduleEventView: View {
                         .foregroundColor(.white)
                         .frame(height: 25)
                     
-                    Text(event.day)
+                    Text(dayListLabelTextForRegion(event.day))
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.white)
                         .frame(height: 25)
