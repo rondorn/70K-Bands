@@ -463,8 +463,12 @@ class localNoticationHandler {
         
         let dateTimeString = "\(date) \(time)"
         
-        // Try multiple date formats to handle different CSV formats
+        // Must match ScheduleCSVImporter.calculateTimeIndex: SQLite stores canonical yyyy-MM-dd.
         let formats = [
+            "yyyy-MM-dd HH:mm",
+            "yyyy-MM-dd H:mm",
+            "yyyy-MM-dd h:mm a",
+            "yyyy-M-d HH:mm",
             "M/d/yyyy HH:mm",      // Single digit month/day + 24-hour (e.g., "1/26/2026 15:00")
             "MM/dd/yyyy HH:mm",    // Padded + 24-hour (e.g., "01/26/2026 15:00")
             "M/d/yyyy H:mm",       // Single digit month/day/hour (e.g., "1/30/2025 17:15")
