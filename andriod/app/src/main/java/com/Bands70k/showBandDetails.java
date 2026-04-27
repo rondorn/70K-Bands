@@ -2868,9 +2868,9 @@ public class showBandDetails extends Activity {
         startTimeText.setText(startTime);
         endTimeText.setText(endTime);
         
-        // Set day number
+        // Set day number (same regional M/d vs d/M swap as main list via bandListItem.setDay)
         TextView dayNumberText = scheduleItemView.findViewById(R.id.day_number_text);
-        dayNumberText.setText(dayNumber);
+        dayNumberText.setText(Utilities.monthDateRegionalFormatting(dayNumber));
         
         // Set event type and notes
         TextView eventTypeText = scheduleItemView.findViewById(R.id.event_type_text);

@@ -38,7 +38,8 @@ struct UIConstants {
     
     static var alertTracker: [String] {
         get { alertTrackerQueue.sync { _alertTracker } }
-        set { alertTrackerQueue.async(flags: .barrier) { _alertTracker = newValue } }
+        // Synchronous writes so clear-then-rebuild (local notifications) cannot race with stale tracker state.
+        set { alertTrackerQueue.sync { _alertTracker = newValue } }
     }
     
     static func addToAlertTracker(_ value: String) {
