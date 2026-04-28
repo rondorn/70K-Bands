@@ -13,10 +13,10 @@ android {
         // applicationId will be set by product flavors
         minSdkVersion 26
         targetSdkVersion 35
-        // Android versionCode 2026042501must fit in signed 32-bit int.
+        // Android versionCode 2026042801must fit in signed 32-bit int.
         //noinspection HighAppVersionCode
-        versionCode 2026042501
-        versionName "2026042501"
+        versionCode 2026042801
+        versionName "2026042801"
         android.compileOptions.incremental = false
         multiDexEnabled false
     }
