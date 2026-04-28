@@ -15,10 +15,10 @@ public class iconResolve {
             imageId = 0;
         } else {
 
-            if (eventType.equals(staticVariables.unofficalEvent)) {
+            if (EventTypeConfig.isUnofficial(eventType)) {
                 imageId = staticVariables.graphicUnofficalEvent;
 
-            } else if (eventType.equals(staticVariables.specialEvent)) {
+            } else if (EventTypeConfig.isSpecial(eventType)) {
                 if (eventName.equals("All Star Jam")){
                     imageId = staticVariables.graphicSpecialEvent;
 
@@ -29,10 +29,10 @@ public class iconResolve {
                     imageId = staticVariables.graphicGeneralEvent;
                 }
 
-            } else if (eventType.equals(staticVariables.clinic)) {
+            } else if (EventTypeConfig.isClinic(eventType)) {
                 imageId = staticVariables.graphicClinicEvent;
 
-            } else if (eventType.equals(staticVariables.meetAndGreet)) {
+            } else if (EventTypeConfig.isMeetAndGreet(eventType)) {
                 imageId = staticVariables.graphicMeetAndGreetEvent;
 
             } else if (eventType.equals(staticVariables.karaoekeEvent)) {

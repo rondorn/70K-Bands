@@ -2806,7 +2806,7 @@ public class showBandDetails extends Activity {
                     String attendedImage = showBandDetails.getAttendedImage(attendIndex);
                     
                     // Don't display "show" as event type since it's default
-                    if (eventType.equals(staticVariables.show)) {
+                    if (EventTypeConfig.isShow(eventType)) {
                         eventType = "";
                     }
                     
@@ -3531,13 +3531,13 @@ public class showBandDetails extends Activity {
 
         String image = "";
 
-        if (eventType.equals(staticVariables.clinic)){
+        if (EventTypeConfig.isClinic(eventType)){
             image = "file:///android_res/drawable/icon_clinic.png";
 
-        } else if (eventType.equals(staticVariables.meetAndGreet)){
+        } else if (EventTypeConfig.isMeetAndGreet(eventType)){
             image = "file:///android_res/drawable/icon_meet_and_greet.png";
 
-        } else if (eventType.equals(staticVariables.specialEvent)){
+        } else if (EventTypeConfig.isSpecial(eventType)){
             if (eventName.equals("All Star Jam")){
                 image = "file:///android_res/drawable/icon_all_star_jam.png";
 
@@ -3548,7 +3548,7 @@ public class showBandDetails extends Activity {
                 image = "file:///android_res/drawable/icon_ship_event.png";
             }
 
-        } else if (eventType.equals(staticVariables.unofficalEvent)){
+        } else if (EventTypeConfig.isUnofficial(eventType)){
             image = "file:///android_res/drawable/icon_unspecified_event.png";
         }
 

@@ -525,50 +525,20 @@ struct CommonFilterSheetView: View {
     
     @ViewBuilder
     private var eventTypeSection: some View {
-        let showScheduledEventTypeFilters = showRichScheduleFilterSections && (getMeetAndGreetsEnabled() || getSpecialEventsEnabled())
-        // Show Unofficial option only when schedule actually contains Unofficial or Cruiser Organized events
-        let showUnofficalEventFilter = getUnofficalEventsEnabled() && showScheduleView && eventCounterUnoffical > 0
-        
-        if showScheduledEventTypeFilters || showUnofficalEventFilter {
+        let dayLabel = dayData?.dayLabel
+        let filteredTypes = EventTypes.eventTypesInScheduleExcludingShow(forDay: dayLabel)
+
+        if !filteredTypes.isEmpty && (showScheduleView || menuOrder == .calendar) {
             Section(header: sectionHeader(NSLocalizedString("Event Type Filters", comment: ""))) {
-                if getMeetAndGreetsEnabled() && showRichScheduleFilterSections {
+                ForEach(filteredTypes, id: \.self) { eventType in
+                    let icons = EventTypes.iconNames(for: eventType)
                     eventTypeRow(
-                        icon: getShowMeetAndGreetEvents() ? meetAndGreetIcon : meetAndGreetIconAlt,
-                        title: NSLocalizedString("Show Meet & Greet", comment: ""),
+                        icon: EventTypes.isVisibleByPreference(eventType) ? icons.on : icons.off,
+                        title: EventTypes.filterRowText(eventType),
                         isOn: Binding(
-                            get: { getShowMeetAndGreetEvents() },
+                            get: { EventTypes.isVisibleByPreference(eventType) },
                             set: { newValue in
-                                setShowMeetAndGreetEvents(newValue)
-                                writeFiltersFile()
-                                clearButtonActive = hasAnyFiltersSet()
-                                NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
-                            }
-                        )
-                    )
-                }
-                if getSpecialEventsEnabled() && showRichScheduleFilterSections {
-                    eventTypeRow(
-                        icon: getShowSpecialEvents() ? specialEventTypeIcon : specialEventTypeIconAlt,
-                        title: NSLocalizedString("Show Special/Other", comment: ""),
-                        isOn: Binding(
-                            get: { getShowSpecialEvents() },
-                            set: { newValue in
-                                setShowSpecialEvents(newValue)
-                                writeFiltersFile()
-                                clearButtonActive = hasAnyFiltersSet()
-                                NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
-                            }
-                        )
-                    )
-                }
-                if showUnofficalEventFilter {
-                    eventTypeRow(
-                        icon: getShowUnofficalEvents() ? unofficalEventTypeIcon : unofficalEventTypeIconAlt,
-                        title: NSLocalizedString("Show Unofficial", comment: ""),
-                        isOn: Binding(
-                            get: { getShowUnofficalEvents() },
-                            set: { newValue in
-                                setShowUnofficalEvents(newValue)
+                                EventTypes.setVisibleByPreference(eventType, newValue)
                                 writeFiltersFile()
                                 clearButtonActive = hasAnyFiltersSet()
                                 NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
@@ -646,6 +616,7 @@ struct CommonFilterSheetView: View {
         showFlaggedOnly = false
         setShowMeetAndGreetEvents(true)
         setShowSpecialEvents(true)
+        setShowClinicEvents(true)
         setShowUnofficalEvents(true)
         setMustSeeOn(true)
         setMightSeeOn(true)
@@ -675,7 +646,7 @@ struct CommonFilterSheetView: View {
     private func hasAnyFiltersSet() -> Bool {
         if getShowOnlyWillAttened() { return true }
         if !getMustSeeOn() || !getMightSeeOn() || !getWontSeeOn() || !getUnknownSeeOn() { return true }
-        if !getShowMeetAndGreetEvents() || !getShowSpecialEvents() || !getShowUnofficalEvents() { return true }
+        if !getShowMeetAndGreetEvents() || !getShowSpecialEvents() || !getShowClinicEvents() || !getShowUnofficalEvents() { return true }
         // Note: Hide Expired Events is exempt from filter clearing, so don't count it here
         // if getHideExpireScheduleData() { return true }
         if let viewModel = viewModel {

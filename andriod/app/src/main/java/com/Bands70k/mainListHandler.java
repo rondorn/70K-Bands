@@ -656,15 +656,15 @@ public class mainListHandler {
         Boolean showEvent = false;
         Log.d("EventFilter", "EventType is " + eventType);
 
-        if ((eventType.equals(staticVariables.specialEvent) || eventType.equals(staticVariables.karaoekeEvent)) && staticVariables.preferences.getShowSpecialEvents() == true){
+        if (EventTypeConfig.isSpecial(eventType) && staticVariables.preferences.getShowSpecialEvents() == true){
             Log.d("EventFilter", "preferences.getHideSpecialEvents() is true");
             showEvent = true;
 
-        } else if (eventType.equals(staticVariables.meetAndGreet) && staticVariables.preferences.getShowMeetAndGreet() == true){
+        } else if (EventTypeConfig.isMeetAndGreet(eventType) && staticVariables.preferences.getShowMeetAndGreet() == true){
             Log.d("EventFilter", "preferences.getHideMeetAndGreet() is true");
             showEvent = true;
 
-        } else if (eventType.equals(staticVariables.clinic) && staticVariables.preferences.getShowClinicEvents() == true){
+        } else if (EventTypeConfig.isClinic(eventType) && staticVariables.preferences.getShowClinicEvents() == true){
             Log.d("EventFilter", "preferences.getHideClinicEvents() is true");
             showEvent = true;
 
@@ -672,11 +672,11 @@ public class mainListHandler {
             Log.d("EventFilter", "preferences.getHideAlbumListen() is true");
             showEvent = true;
 
-        } else if ((eventType.equals(staticVariables.unofficalEvent) || eventType.equals(staticVariables.unofficalEventOld))&& staticVariables.preferences.getShowUnofficalEvents() == true){
+        } else if (EventTypeConfig.isUnofficial(eventType) && staticVariables.preferences.getShowUnofficalEvents() == true){
             Log.d("EventFilter", "preferences.getShowUnofficalEvents() is true");
             showEvent = true;
 
-        } else if (eventType.equals("Show")) {
+        } else if (EventTypeConfig.isShow(eventType)) {
             showEvent = true;
 
         } else {

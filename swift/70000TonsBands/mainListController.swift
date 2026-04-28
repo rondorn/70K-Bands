@@ -66,9 +66,9 @@ func scheduleHasCurrentEventsForRules(forYear year: Int) -> Bool {
 func scheduleCompositionIsUnofficialOnly(forYear year: Int) -> Bool {
     let events = currentEventsForScheduleRules(forYear: year)
     guard !events.isEmpty else { return false }
-    let allowed: Set<String> = [unofficalEventType, unofficalEventTypeOld]
+    let allowed: Set<String> = [EventTypes.canonicalUnofficialEvent]
     for event in events {
-        let t = event.eventType ?? ""
+        let t = EventTypes.normalize(event.eventType)
         if t.isEmpty { return false }
         if !allowed.contains(t) { return false }
     }
@@ -113,10 +113,17 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
     } else {
         print("🔍 [FILTER] ✅ Including Meet and Greet Events")
     }
+
+    if !getShowClinicEvents() {
+        excludedEventTypes.append("Clinic")
+        print("🔍 [FILTER] ❌ EXCLUDING Clinic Events")
+    } else {
+        print("🔍 [FILTER] ✅ Including Clinic Events")
+    }
     
     print("🔧 [UNOFFICIAL_DEBUG] In mainListController filtering - about to check getShowUnofficalEvents()")
-    if !getShowUnofficalEvents() { 
-        excludedEventTypes.append(contentsOf: ["Unofficial Event", "Cruiser Organized"])
+    if !getShowUnofficalEvents() {
+        excludedEventTypes.append("Unofficial Event")
         print("🔍 [FILTER] ❌ EXCLUDING Unofficial Events: ['Unofficial Event', 'Cruiser Organized']")
         print("🔧 [UNOFFICIAL_DEBUG] ❌ UNOFFICIAL EVENTS EXCLUDED in mainListController")
     } else {
@@ -230,10 +237,11 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
         }
         
         let eventType = event.eventType ?? ""
+        let canonicalEventType = EventTypes.normalize(eventType)
         let location = event.location
         
         // 1. Event type exclusions
-        if excludedEventTypes.contains(eventType) {
+        if excludedEventTypes.contains(canonicalEventType) {
             return false
         }
         
@@ -1081,7 +1089,7 @@ func eventTypeFiltering(_ eventType: String) -> Bool{
     print("🔍 [EVENT_TYPE_DEBUG] Filtering eventType: '\(eventType)' (EXCLUSIVE approach)")
     
     // Check if this type should be excluded
-    if (eventType == specialEventType && !getShowSpecialEvents()){
+    if (EventTypes.isSpecial(eventType) && !getShowSpecialEvents()){
         print("🔍 [EVENT_TYPE_DEBUG] ❌ EXCLUDING SPECIAL event: '\(eventType)'")
         numberOfFilteredRecords = numberOfFilteredRecords + 1
         return false
@@ -1091,12 +1099,12 @@ func eventTypeFiltering(_ eventType: String) -> Bool{
         numberOfFilteredRecords = numberOfFilteredRecords + 1
         return false
             
-    } else if (eventType == meetAndGreetype && !getShowMeetAndGreetEvents()){
+    } else if (EventTypes.isMeetAndGreet(eventType) && !getShowMeetAndGreetEvents()){
         print("🔍 [EVENT_TYPE_DEBUG] ❌ EXCLUDING MEET & GREET event: '\(eventType)'")
         numberOfFilteredRecords = numberOfFilteredRecords + 1
         return false
     
-    } else if (eventType == clinicType && !getShowMeetAndGreetEvents()){
+    } else if (EventTypes.isClinic(eventType) && !getShowClinicEvents()){
         print("🔍 [EVENT_TYPE_DEBUG] ❌ EXCLUDING CLINIC event: '\(eventType)'")
         numberOfFilteredRecords = numberOfFilteredRecords + 1
         return false
@@ -1106,7 +1114,7 @@ func eventTypeFiltering(_ eventType: String) -> Bool{
         numberOfFilteredRecords = numberOfFilteredRecords + 1
         return false
         
-    } else if ((eventType == unofficalEventType || eventType == unofficalEventTypeOld) && !getShowUnofficalEvents()){
+    } else if (EventTypes.isUnofficial(eventType) && !getShowUnofficalEvents()){
         print("🔍 [EVENT_TYPE_DEBUG] ❌ EXCLUDING UNOFFICIAL event: '\(eventType)'")
         numberOfFilteredRecords = numberOfFilteredRecords + 1
         return false

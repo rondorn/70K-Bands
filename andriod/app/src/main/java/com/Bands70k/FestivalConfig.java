@@ -5,6 +5,9 @@ import android.util.Log;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * =============================================================================
@@ -125,6 +128,8 @@ public class FestivalConfig {
     public final boolean meetAndGreetsEnabledDefault;
     public final boolean specialEventsEnabledDefault;
     public final boolean unofficalEventsEnabledDefault;
+    public final Map<String, Map<String, String>> eventTypeDisplayNames;
+    public final Map<String, Map<String, String>> eventTypeFilterDisplayNames;
     
     // Comments not available message configuration
     public final int commentsNotAvailableStringResourceId;
@@ -226,6 +231,8 @@ public class FestivalConfig {
             this.meetAndGreetsEnabledDefault = false;
             this.specialEventsEnabledDefault = false;
             this.unofficalEventsEnabledDefault = false;
+            this.eventTypeDisplayNames = buildEventTypeDisplayNamesForMdf();
+            this.eventTypeFilterDisplayNames = buildEventTypeFilterDisplayNamesForMdf();
             
             // MDF comments not available message
             this.commentsNotAvailableStringResourceId = R.string.DefaultDescriptionMDF;
@@ -300,6 +307,8 @@ public class FestivalConfig {
             this.meetAndGreetsEnabledDefault = true;
             this.specialEventsEnabledDefault = true;
             this.unofficalEventsEnabledDefault = true;
+            this.eventTypeDisplayNames = buildEventTypeDisplayNamesFor70k();
+            this.eventTypeFilterDisplayNames = buildEventTypeFilterDisplayNamesFor70k();
             
             // 70K comments not available message
             this.commentsNotAvailableStringResourceId = R.string.DefaultDescription70K;
@@ -430,6 +439,208 @@ public class FestivalConfig {
     public int getPreferencesIconResId(Context context) { return getDrawableResourceId(context, preferencesIcon); }
     public int getShareIconResId(Context context) { return getDrawableResourceId(context, shareIcon); }
     public int getStatsIconResId(Context context) { return getDrawableResourceId(context, statsIcon); }
+
+    private static Map<String, Map<String, String>> buildEventTypeDisplayNamesFor70k() {
+        Map<String, Map<String, String>> labels = buildDefaultEventTypeDisplayNames();
+        setLabelForSupportedLanguages(
+                labels,
+                EventTypeConfig.UNOFFICIAL_EVENT,
+                "Cruiser Organized Event",
+                "Von Kreuzfahrern organisiertes Event",
+                "Evento Organizado por Cruceristas",
+                "Evenement Organise par les Croisieristes",
+                "Evento Organizado por Cruzeiristas",
+                "Cruiser-organiseret Event",
+                "Risteilijoiden jarjestama tapahtuma"
+        );
+        return labels;
+    }
+
+    private static Map<String, Map<String, String>> buildEventTypeFilterDisplayNamesFor70k() {
+        Map<String, Map<String, String>> labels = new HashMap<>();
+        setLabelForSupportedLanguages(
+                labels, EventTypeConfig.SHOW,
+                "Show Shows", "Zeige Shows", "Mostrar Shows", "Afficher Shows", "Mostrar Shows", "Vis Shows", "Nayta Show't"
+        );
+        setLabelForSupportedLanguages(
+                labels, EventTypeConfig.SPECIAL_EVENT,
+                "Show Special Events", "Zeige Spezialevents", "Mostrar Eventos Especiales", "Afficher Evenements Speciaux", "Mostrar Eventos Especiais", "Vis Sarlige Begivenheder", "Nayta Erikoistapahtumat"
+        );
+        setLabelForSupportedLanguages(
+                labels, EventTypeConfig.MEET_AND_GREET,
+                "Show Meet and Greets", "Zeige Meet and Greets", "Mostrar Meet and Greets", "Afficher Meet and Greets", "Mostrar Meet and Greets", "Vis Meet and Greets", "Nayta Meet and Greets"
+        );
+        setLabelForSupportedLanguages(
+                labels, EventTypeConfig.CLINIC,
+                "Show Clinics", "Zeige Kliniken", "Mostrar Clinicas", "Afficher Cliniques", "Mostrar Clinicas", "Vis Klinikker", "Nayta Klinikat"
+        );
+        setLabelForSupportedLanguages(
+                labels, EventTypeConfig.UNOFFICIAL_EVENT,
+                "Show Cruiser Organized Events", "Zeige von Kreuzfahrern organisierte Events", "Mostrar Eventos Organizados por Cruceristas", "Afficher Evenements Organises par les Croisieristes", "Mostrar Eventos Organizados por Cruzeiristas", "Vis Cruiser-organiserede Events", "Nayta Risteilijoiden jarjestamat tapahtumat"
+        );
+        return labels;
+    }
+
+    private static Map<String, Map<String, String>> buildEventTypeDisplayNamesForMdf() {
+        Map<String, Map<String, String>> labels = buildDefaultEventTypeDisplayNames();
+        setLabelForSupportedLanguages(
+                labels,
+                EventTypeConfig.UNOFFICIAL_EVENT,
+                "Attendee Organized Event",
+                "Von Teilnehmenden organisiertes Event",
+                "Evento Organizado por Asistentes",
+                "Evenement Organise par les Participants",
+                "Evento Organizado por Participantes",
+                "Deltagerorganiseret Event",
+                "Osallistujien jarjestama tapahtuma"
+        );
+        setLabelForSupportedLanguages(
+                labels,
+                EventTypeConfig.MEET_AND_GREET,
+                "Signing Session",
+                "Autogrammstunde",
+                "Sesion de Firmas",
+                "Session de Dedicaces",
+                "Sessao de Autografos",
+                "Autografsession",
+                "Nimmarointitilaisuus"
+        );
+        return labels;
+    }
+
+    private static Map<String, Map<String, String>> buildEventTypeFilterDisplayNamesForMdf() {
+        Map<String, Map<String, String>> labels = new HashMap<>();
+        setLabelForSupportedLanguages(
+                labels, EventTypeConfig.SHOW,
+                "Show Shows", "Zeige Shows", "Mostrar Shows", "Afficher Shows", "Mostrar Shows", "Vis Shows", "Nayta Show't"
+        );
+        setLabelForSupportedLanguages(
+                labels, EventTypeConfig.SPECIAL_EVENT,
+                "Show Special Events", "Zeige Spezialevents", "Mostrar Eventos Especiales", "Afficher Evenements Speciaux", "Mostrar Eventos Especiais", "Vis Sarlige Begivenheder", "Nayta Erikoistapahtumat"
+        );
+        setLabelForSupportedLanguages(
+                labels, EventTypeConfig.MEET_AND_GREET,
+                "Show Signing Sessions", "Zeige Autogrammstunden", "Mostrar Sesiones de Firmas", "Afficher Sessions de Dedicaces", "Mostrar Sessoes de Autografos", "Vis Autografsessioner", "Nayta Nimmarointitilaisuudet"
+        );
+        setLabelForSupportedLanguages(
+                labels, EventTypeConfig.CLINIC,
+                "Show Clinics", "Zeige Kliniken", "Mostrar Clinicas", "Afficher Cliniques", "Mostrar Clinicas", "Vis Klinikker", "Nayta Klinikat"
+        );
+        setLabelForSupportedLanguages(
+                labels, EventTypeConfig.UNOFFICIAL_EVENT,
+                "Show Attendee Organized Events", "Zeige von Teilnehmenden organisierte Events", "Mostrar Eventos Organizados por Asistentes", "Afficher Evenements Organises par les Participants", "Mostrar Eventos Organizados por Participantes", "Vis Deltagerorganiserede Events", "Nayta Osallistujien jarjestamat tapahtumat"
+        );
+        return labels;
+    }
+
+    private static Map<String, Map<String, String>> buildDefaultEventTypeDisplayNames() {
+        Map<String, Map<String, String>> labels = new HashMap<>();
+        setLabelForSupportedLanguages(
+                labels,
+                EventTypeConfig.SHOW,
+                "Show", "Show", "Show", "Show", "Show", "Show", "Show"
+        );
+        setLabelForSupportedLanguages(
+                labels,
+                EventTypeConfig.UNOFFICIAL_EVENT,
+                "Unofficial Event",
+                "Inoffizielles Event",
+                "Evento No Oficial",
+                "Evenement Non Officiel",
+                "Evento Nao Oficial",
+                "Uofficiel Begivenhed",
+                "Epavirallinen tapahtuma"
+        );
+        setLabelForSupportedLanguages(
+                labels,
+                EventTypeConfig.SPECIAL_EVENT,
+                "Special Event",
+                "Spezialevent",
+                "Evento Especial",
+                "Evenement Special",
+                "Evento Especial",
+                "Sarlig Begivenhed",
+                "Erikoistapahtuma"
+        );
+        setLabelForSupportedLanguages(
+                labels,
+                EventTypeConfig.MEET_AND_GREET,
+                "Meet and Greet",
+                "Meet and Greet",
+                "Meet and Greet",
+                "Meet and Greet",
+                "Meet and Greet",
+                "Meet and Greet",
+                "Meet and Greet"
+        );
+        setLabelForSupportedLanguages(
+                labels,
+                EventTypeConfig.CLINIC,
+                "Clinic",
+                "Klinik",
+                "Clinica",
+                "Clinique",
+                "Clinica",
+                "Klinik",
+                "Klinikka"
+        );
+        return labels;
+    }
+
+    private static void setLabelForSupportedLanguages(
+            Map<String, Map<String, String>> labels,
+            String eventType,
+            String en,
+            String de,
+            String es,
+            String fr,
+            String pt,
+            String da,
+            String fi
+    ) {
+        setLabel(labels, eventType, "en", en);
+        setLabel(labels, eventType, "de", de);
+        setLabel(labels, eventType, "es", es);
+        setLabel(labels, eventType, "fr", fr);
+        setLabel(labels, eventType, "pt", pt);
+        setLabel(labels, eventType, "da", da);
+        setLabel(labels, eventType, "fi", fi);
+    }
+
+    private static void setLabel(Map<String, Map<String, String>> labels, String eventType, String language, String text) {
+        Map<String, String> perLanguage = labels.get(eventType);
+        if (perLanguage == null) {
+            perLanguage = new HashMap<>();
+            labels.put(eventType, perLanguage);
+        }
+        perLanguage.put(language.toLowerCase(Locale.ROOT), text);
+    }
+
+    public String getEventTypeDisplayName(String canonicalEventType, String languageCode) {
+        String normalizedType = EventTypeConfig.normalize(canonicalEventType);
+        String normalizedLanguage = languageCode == null ? "en" : languageCode.toLowerCase(Locale.ROOT);
+        Map<String, String> byLanguage = eventTypeDisplayNames.get(normalizedType);
+        if (byLanguage == null) {
+            return normalizedType;
+        }
+        String localized = byLanguage.get(normalizedLanguage);
+        if (localized != null && !localized.isEmpty()) {
+            return localized;
+        }
+        localized = byLanguage.get("en");
+        return (localized != null && !localized.isEmpty()) ? localized : normalizedType;
+    }
+
+    public String getEventTypeFilterDisplayName(String canonicalEventType, String languageCode) {
+        String normalizedType = EventTypeConfig.normalize(canonicalEventType);
+        String normalizedLanguage = languageCode == null ? "en" : languageCode.toLowerCase(Locale.ROOT);
+        Map<String, String> byLanguage = eventTypeFilterDisplayNames.get(normalizedType);
+        if (byLanguage == null) return "Show " + getEventTypeDisplayName(normalizedType, normalizedLanguage);
+        String localized = byLanguage.get(normalizedLanguage);
+        if (localized != null && !localized.isEmpty()) return localized;
+        localized = byLanguage.get("en");
+        return (localized != null && !localized.isEmpty()) ? localized : "Show " + getEventTypeDisplayName(normalizedType, "en");
+    }
     
     // MARK: - Venue Helper Methods
     

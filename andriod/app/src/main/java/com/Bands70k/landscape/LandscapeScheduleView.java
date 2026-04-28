@@ -21,6 +21,7 @@ import android.widget.Switch;
 import android.widget.TextView;
 import com.Bands70k.BandInfo;
 import com.Bands70k.CommonFilterMenuBuilder;
+import com.Bands70k.EventTypeConfig;
 import com.Bands70k.FestivalConfig;
 import com.Bands70k.FilterButtonHandler;
 import com.Bands70k.R;
@@ -1662,7 +1663,7 @@ public class LandscapeScheduleView extends LinearLayout {
                 }
                 
                 // Line 6: Event type (localized) + drawable icon after - only for non-Show types
-                if (event.eventType != null && !event.eventType.isEmpty() && !event.eventType.equals(staticVariables.show)) {
+                if (event.eventType != null && !event.eventType.isEmpty() && !EventTypeConfig.isShow(event.eventType)) {
                     LinearLayout eventTypeRow = new LinearLayout(context);
                     eventTypeRow.setOrientation(LinearLayout.HORIZONTAL);
                     eventTypeRow.setBaselineAligned(false);
@@ -1692,7 +1693,7 @@ public class LandscapeScheduleView extends LinearLayout {
             addNormalIconRow(eventBlock, event, shouldDim);
             
             // Line 5: Event type (localized) + drawable icon after - only for non-Show types
-            if (event.eventType != null && !event.eventType.isEmpty() && !event.eventType.equals(staticVariables.show)) {
+            if (event.eventType != null && !event.eventType.isEmpty() && !EventTypeConfig.isShow(event.eventType)) {
                 LinearLayout eventTypeRow = new LinearLayout(context);
                 eventTypeRow.setOrientation(LinearLayout.HORIZONTAL);
                 eventTypeRow.setBaselineAligned(false);
@@ -1897,10 +1898,7 @@ public class LandscapeScheduleView extends LinearLayout {
     }
 
     private void openLongPressMenuForBand(ScheduleBlock event, String bandName) {
-        String normalizedEventType = event.eventType != null ? event.eventType : "Performance";
-        if ("Unofficial Event".equals(event.eventType)) {
-            normalizedEventType = "Cruiser Organized";
-        }
+        String normalizedEventType = EventTypeConfig.normalize(event.eventType);
         String currentAttended = event.attendedStatus != null ? event.attendedStatus : "";
         if (!bandName.equals(event.bandName)) {
             currentAttended = attendedHandle.getShowAttendedStatus(bandName, event.location, event.startTimeString, normalizedEventType, String.valueOf(staticVariables.eventYear), event.day);
@@ -2019,10 +2017,7 @@ public class LandscapeScheduleView extends LinearLayout {
         }
         
         // Normalize event type for database operations (like iOS does)
-        String normalizedEventType = event.eventType;
-        if ("Unofficial Event".equals(event.eventType)) {
-            normalizedEventType = "Cruiser Organized";
-        }
+        String normalizedEventType = EventTypeConfig.normalize(event.eventType);
         
         Log.d(TAG, "Showing attendance menu for " + bandName + 
               ", currentStatus=" + currentStatus + 
@@ -2405,11 +2400,7 @@ public class LandscapeScheduleView extends LinearLayout {
             for (scheduleHandler scheduleHandle : tracker.scheduleByTime.values()) {
                 if (scheduleHandle == null) continue;
                 String eventType = scheduleHandle.getShowType();
-                if (eventType != null && 
-                    (eventType.equals("Meet and Greet") || 
-                     eventType.equals("Special Event") || 
-                     eventType.equals(staticVariables.unofficalEvent) || 
-                     eventType.equals(staticVariables.unofficalEventOld))) {
+                if (EventTypeConfig.isFilterableNonShow(eventType)) {
                     return true;
                 }
             }
@@ -2432,15 +2423,16 @@ public class LandscapeScheduleView extends LinearLayout {
         
         // Event type filters
         String eventType = block.eventType != null ? block.eventType : "Performance";
-        if (eventType.equals("Meet and Greet") && !staticVariables.preferences.getShowMeetAndGreet()) {
+        if (EventTypeConfig.isMeetAndGreet(eventType) && !staticVariables.preferences.getShowMeetAndGreet()) {
             return false;
         }
-        if (eventType.equals("Special Event") && !staticVariables.preferences.getShowSpecialEvents()) {
+        if (EventTypeConfig.isSpecial(eventType) && !staticVariables.preferences.getShowSpecialEvents()) {
             return false;
         }
-        // Cruiser Organized and Unofficial Event are the same filter — treat both consistently
-        if ((eventType.equals(staticVariables.unofficalEvent) || eventType.equals(staticVariables.unofficalEventOld)) 
-                && !staticVariables.preferences.getShowUnofficalEvents()) {
+        if (EventTypeConfig.isClinic(eventType) && !staticVariables.preferences.getShowClinicEvents()) {
+            return false;
+        }
+        if (EventTypeConfig.isUnofficial(eventType) && !staticVariables.preferences.getShowUnofficalEvents()) {
             return false;
         }
         

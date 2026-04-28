@@ -25,10 +25,10 @@ let allLinksOpenInExternalBrowserDefault = "NO"
 
 func setDefaults(){
     
-    // Set festival-specific defaults for event type filter visibility from FestivalConfig
-    let meetAndGreetsEnabledDefault = FestivalConfig.current.meetAndGreetsEnabledDefault ? "YES" : "NO"
-    let specialEventsEnabledDefault = FestivalConfig.current.specialEventsEnabledDefault ? "YES" : "NO"
-    let unofficalEventsEnabledDefault = FestivalConfig.current.unofficalEventsEnabledDefault ? "YES" : "NO"
+    // Event type filter availability is schedule-driven.
+    let meetAndGreetsEnabledDefault = "YES"
+    let specialEventsEnabledDefault = "YES"
+    let unofficalEventsEnabledDefault = "YES"
     
     let defaults = ["artistUrl": artistUrlDefault,
                     "scheduleUrl": scheduleUrlDefault,

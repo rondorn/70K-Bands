@@ -123,23 +123,14 @@ public class scheduleHandler {
      */
     public void setShowType(String value){
         Log.d("setShowType", "showType is  " + value);
-        if (value != null) {
-            value = value.trim();
-        }
-        if (value != null && value.equals(staticVariables.unofficalEventOld)){
-            Log.d("setShowType", "changing showType to  " + staticVariables.unofficalEvent);
-            value = staticVariables.unofficalEvent;
-        }
-
-        showType = value;
+        showType = EventTypeConfig.normalize(value);
     }
     /**
      * Gets the show type.
      * @return The show type string.
      */
     public String getShowType() {
-
-        return showType;
+        return EventTypeConfig.normalize(showType);
     }
 
     /**

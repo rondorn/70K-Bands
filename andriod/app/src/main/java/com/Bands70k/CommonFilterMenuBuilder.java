@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Common filter menu builder for both portrait and calendar views.
@@ -520,45 +521,9 @@ public class CommonFilterMenuBuilder {
         header.setPadding(horizontalPadding, dpToPx(context, 16), horizontalPadding, dpToPx(context, 8));
         parent.addView(header);
         
-        // Meet and Greet
-        if (staticVariables.preferences.getMeetAndGreetsEnabled()) {
-            createFilterRow(context, parent,
-                R.drawable.icon_meet_and_greet, R.drawable.icon_meet_and_greet_alt,
-                R.string.hide_meet_and_greet_events, R.string.show_meet_and_greet_events,
-                staticVariables.preferences.getShowMeetAndGreet(),
-                new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        boolean newValue = !staticVariables.preferences.getShowMeetAndGreet();
-                        staticVariables.preferences.setShowMeetAndGreet(newValue);
-                        staticVariables.preferences.saveData();
-                        callbacks.onFilterChanged();
-                    }
-                },
-                allSwitches, isFlaggedEnabled);
-        }
-        
-        // Special Events
-        if (staticVariables.preferences.getSpecialEventsEnabled()) {
-            createFilterRow(context, parent,
-                R.drawable.icon_all_star_jam, R.drawable.icon_all_star_jam_alt,
-                R.string.hide_special_other_events, R.string.show_special_other_events,
-                staticVariables.preferences.getShowSpecialEvents(),
-                new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        boolean newValue = !staticVariables.preferences.getShowSpecialEvents();
-                        staticVariables.preferences.setShowSpecialEvents(newValue);
-                        staticVariables.preferences.saveData();
-                        callbacks.onFilterChanged();
-                    }
-                },
-                allSwitches, isFlaggedEnabled);
-        }
-        
-        // Unofficial Events - only show if schedule contains Unofficial or Cruiser Organized events
-        if (staticVariables.preferences.getUnofficalEventsEnabled() && BandInfo.hasUnofficialEventsInSchedule()) {
-            buildUnofficialEventsToggleRow(context, parent, allSwitches, isFlaggedEnabled, callbacks);
+        Set<String> inSchedule = EventTypeConfig.getEventTypesInScheduleExcludingShow();
+        for (String canonicalEventType : inSchedule) {
+            createEventTypeFilterRow(context, parent, canonicalEventType, allSwitches, isFlaggedEnabled, callbacks);
         }
     }
 
@@ -567,7 +532,7 @@ public class CommonFilterMenuBuilder {
      */
     private static void buildUnofficialOnlyScheduleSection(Context context, LinearLayout parent, List<Switch> allSwitches,
                                                            boolean isFlaggedEnabled, FilterMenuCallbacks callbacks) {
-        if (!staticVariables.preferences.getUnofficalEventsEnabled() || !BandInfo.hasUnofficialEventsInSchedule()) {
+        if (!BandInfo.hasUnofficialEventsInSchedule()) {
             return;
         }
         int horizontalPadding = dpToPx(context, 16);
@@ -583,20 +548,52 @@ public class CommonFilterMenuBuilder {
 
     private static void buildUnofficialEventsToggleRow(Context context, LinearLayout parent, List<Switch> allSwitches,
                                                        boolean isFlaggedEnabled, FilterMenuCallbacks callbacks) {
-        createFilterRow(context, parent,
-            R.drawable.icon_unoffical_event, R.drawable.icon_unoffical_event_alt,
-            R.string.hide_unofficial_events, R.string.show_unofficial_events,
-            staticVariables.preferences.getShowUnofficalEvents(),
-            new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    boolean newValue = !staticVariables.preferences.getShowUnofficalEvents();
-                    staticVariables.preferences.setShowUnofficalEvents(newValue);
-                    staticVariables.preferences.saveData();
-                    callbacks.onFilterChanged();
-                }
-            },
-            allSwitches, isFlaggedEnabled);
+        createEventTypeFilterRow(context, parent, EventTypeConfig.UNOFFICIAL_EVENT, allSwitches, isFlaggedEnabled, callbacks);
+    }
+
+    private static void createEventTypeFilterRow(Context context, LinearLayout parent, String canonicalEventType,
+                                                 List<Switch> allSwitches, boolean isFlaggedEnabled, FilterMenuCallbacks callbacks) {
+        int iconOn = EventTypeConfig.getIconEnabledRes(canonicalEventType, "");
+        int iconOff = EventTypeConfig.getIconDisabledRes(canonicalEventType, "");
+        boolean isEnabled = EventTypeConfig.isEventTypeVisibleByPreference(canonicalEventType);
+
+        LinearLayout row = new LinearLayout(context);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(dpToPx(context, 16), dpToPx(context, 12), dpToPx(context, 16), dpToPx(context, 12));
+        row.setBackgroundColor(Color.TRANSPARENT);
+
+        ImageView icon = new ImageView(context);
+        if (iconOn != 0) {
+            icon.setImageDrawable(AppCompatResources.getDrawable(context, isEnabled ? iconOn : iconOff));
+        }
+        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dpToPx(context, 24), dpToPx(context, 24));
+        iconParams.setMargins(0, 0, dpToPx(context, 12), 0);
+        icon.setLayoutParams(iconParams);
+
+        TextView text = new TextView(context);
+        text.setText(EventTypeConfig.getFilterRowText(canonicalEventType));
+        text.setTextSize(17);
+        text.setTextColor(Color.WHITE);
+        text.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+
+        Switch sw = new Switch(context);
+        sw.setChecked(isEnabled);
+        sw.setEnabled(!isFlaggedEnabled);
+        allSwitches.add(sw);
+        sw.setOnCheckedChangeListener((buttonView, checked) -> {
+            EventTypeConfig.setEventTypeVisibleByPreference(canonicalEventType, checked);
+            staticVariables.preferences.saveData();
+            if (iconOn != 0) {
+                icon.setImageDrawable(AppCompatResources.getDrawable(context, checked ? iconOn : iconOff));
+            }
+            callbacks.onFilterChanged();
+        });
+
+        row.addView(icon);
+        row.addView(text);
+        row.addView(sw);
+        parent.addView(row);
     }
     
     private static void buildLocationSection(Context context, LinearLayout parent, List<String> venueNames,
@@ -864,11 +861,7 @@ public class CommonFilterMenuBuilder {
             for (scheduleHandler scheduleHandle : tracker.scheduleByTime.values()) {
                 if (scheduleHandle == null) continue;
                 String eventType = scheduleHandle.getShowType();
-                if (eventType != null &&
-                    (eventType.equals("Meet and Greet") ||
-                     eventType.equals("Special Event") ||
-                     eventType.equals(staticVariables.unofficalEvent) ||
-                     eventType.equals(staticVariables.unofficalEventOld))) {
+                if (EventTypeConfig.isFilterableNonShow(eventType)) {
                     return true;
                 }
             }

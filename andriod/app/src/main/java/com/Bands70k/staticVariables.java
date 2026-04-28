@@ -456,25 +456,22 @@ public class staticVariables {
 
         String icon;
 
-        if (eventType.equals(staticVariables.show)) {
+        if (EventTypeConfig.isShow(eventType)) {
             icon = showTypeIcon;
 
-        } else if (eventType.equals(staticVariables.meetAndGreet)) {
+        } else if (EventTypeConfig.isMeetAndGreet(eventType)) {
             icon = mAndmEventTypeIcon;
 
-        } else if (eventType.equals(staticVariables.specialEvent)) {
+        } else if (EventTypeConfig.isSpecial(eventType)) {
             icon = specialEventTypeIcon;
 
-        } else if (eventType.equals(staticVariables.clinic)) {
+        } else if (EventTypeConfig.isClinic(eventType)) {
             icon = clinicEventTypeIcon;
 
         } else if (eventType.equals(staticVariables.listeningEvent)) {
             icon = listeningEventTypeIcon;
 
-        } else if (eventType.equals(staticVariables.unofficalEvent)) {
-            icon = unofficalEventTypeIcon;
-
-        } else if (eventType.equals(staticVariables.unofficalEventOld)) {
+        } else if (EventTypeConfig.isUnofficial(eventType)) {
             icon = unofficalEventTypeIcon;
 
         } else {

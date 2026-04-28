@@ -94,6 +94,7 @@ var showOtherShows = true
 var showUnofficalEvents = true
 var showSpecialEvents = true
 var showMeetAndGreetEvents = true
+var showClinicEvents = true
 var showScheduleView = true // true = Schedule (mixed), false = Bands Only
 
 // New settings to control visibility of event type filters per festival
@@ -317,6 +318,13 @@ func getShowMeetAndGreetEvents() -> Bool{
     return showMeetAndGreetEvents
 }
 
+func setShowClinicEvents(_ value: Bool){
+    showClinicEvents = value
+}
+func getShowClinicEvents() -> Bool{
+    return showClinicEvents
+}
+
 func setShowScheduleView(_ value: Bool){
     showScheduleView = value
 }
@@ -462,6 +470,7 @@ func writeFiltersFile(){
         prefsString += "showUnofficalEvents:" + boolToString(getShowUnofficalEvents()) + ";"
         prefsString += "showSpecialEvents:" + boolToString(getShowSpecialEvents()) + ";"
         prefsString += "showMeetAndGreetEvents:" + boolToString(getShowMeetAndGreetEvents()) + ";"
+        prefsString += "showClinicEvents:" + boolToString(getShowClinicEvents()) + ";"
         prefsString += "showScheduleView:" + boolToString(getShowScheduleView()) + ";"
         
         // Event type filter visibility settings
@@ -577,6 +586,8 @@ private func readFiltersFileInternal(){
             
             case "showMeetAndGreetEvents":
                 setShowMeetAndGreetEvents(stringToBool(valueArray[1]))
+            case "showClinicEvents":
+                setShowClinicEvents(stringToBool(valueArray[1]))
             case "showScheduleView":
                 setShowScheduleView(stringToBool(valueArray[1]))
             
@@ -650,17 +661,6 @@ private func readFiltersFileInternal(){
                     }
             }
         }
-        // CRITICAL FIX: Force festival-specific event type filter defaults 
-        // This prevents saved preferences from overriding festival-specific settings
-        if getMeetAndGreetsEnabled() != FestivalConfig.current.meetAndGreetsEnabledDefault ||
-           getSpecialEventsEnabled() != FestivalConfig.current.specialEventsEnabledDefault ||
-           getUnofficalEventsEnabled() != FestivalConfig.current.unofficalEventsEnabledDefault {
-            setMeetAndGreetsEnabled(FestivalConfig.current.meetAndGreetsEnabledDefault)
-            setSpecialEventsEnabled(FestivalConfig.current.specialEventsEnabledDefault)
-            setUnofficalEventsEnabled(FestivalConfig.current.unofficalEventsEnabledDefault)
-            writeFiltersFile() // Save corrected values
-        }
-        
         print ("Loading setScheduleUrl = \(getScheduleUrl())")
         print ("Loading mustSeeOn = \(getMustSeeOn())")
     }
@@ -692,12 +692,13 @@ func establishDefaults(){
     setShowUnofficalEvents(true)
     setShowSpecialEvents(true)
     setShowMeetAndGreetEvents(true)
+    setShowClinicEvents(true)
     setShowScheduleView(true)
     
-    // Set festival-specific defaults for event type filter visibility from FestivalConfig
-    setMeetAndGreetsEnabled(FestivalConfig.current.meetAndGreetsEnabledDefault)
-    setSpecialEventsEnabled(FestivalConfig.current.specialEventsEnabledDefault)
-    setUnofficalEventsEnabled(FestivalConfig.current.unofficalEventsEnabledDefault)
+    // Event type filter availability is schedule-driven; leave all sections enabled.
+    setMeetAndGreetsEnabled(true)
+    setSpecialEventsEnabled(true)
+    setUnofficalEventsEnabled(true)
     setMustSeeAlertValue(true)
     setMightSeeAlertValue(true)
     setOnlyAlertForAttendedValue(false)

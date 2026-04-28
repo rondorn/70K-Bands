@@ -50,15 +50,7 @@ func hasFilterableEventTypes(forDay dayLabel: String) -> Bool {
         event.day == dayLabel
     }
     
-    let eventTypes = Set(eventsForDay.compactMap { $0.eventType })
-    
-    // Check if we have any of the filterable event types
-    let filterableTypes = ["Meet and Greet", "Special Event", "Unofficial Event", "Cruiser Organized"]
-    return eventTypes.contains { type in
-        filterableTypes.contains { filterableType in
-            type.localizedCaseInsensitiveContains(filterableType)
-        }
-    }
+    return eventsForDay.contains { EventTypes.isFilterableNonShow($0.eventType) }
 }
 
 // Helper function to check if any events are flagged for a specific day
@@ -480,9 +472,9 @@ struct LandscapeScheduleView: View {
                     onLongPress: onLongPress,
                     priorityManager: priorityManager,
                     onAttendanceUpdate: { bandName, location, startTime, eventType, status, scheduleDay in
-                        // Normalize event type for database operations
-                        // Event data contains "Unofficial Event" but database keys use "Cruiser Organized"
-                        let normalizedEventType = (eventType == "Unofficial Event") ? "Cruiser Organized" : eventType
+                        // Normalize event type for database operations.
+                        // Attendance layer still stores unofficial events in legacy "Cruiser Organized" form.
+                        let normalizedEventType = EventTypes.isUnofficial(eventType) ? EventTypes.unofficialEvent : eventType
                         
                         print("🔍 [LANDSCAPE_SCHEDULE] Event type for attendance: \(eventType) -> \(normalizedEventType)")
                         
@@ -586,7 +578,7 @@ struct LandscapeScheduleView: View {
         // Check if any filters are active
         let hasActiveFilters = !viewModel.hiddenVenueNames.isEmpty || 
                               !getMustSeeOn() || !getMightSeeOn() || !getWontSeeOn() || !getUnknownSeeOn() ||
-                              !getShowMeetAndGreetEvents() || !getShowSpecialEvents() || !getShowUnofficalEvents() ||
+                              !getShowMeetAndGreetEvents() || !getShowSpecialEvents() || !getShowClinicEvents() || !getShowUnofficalEvents() ||
                               getShowOnlyWillAttened()
         
         let hasHiddenRecordsOnThisDay = hiddenRecordsCount > 0 && hasActiveFilters
@@ -910,11 +902,7 @@ struct LandscapeScheduleView: View {
         }
         
         private func localizeEventType(_ eventType: String) -> String {
-            // Map database event type to display name via localization
-            if eventType == "Unofficial Event" {
-                return NSLocalizedString("Unofficial Events", comment: "")
-            }
-            return eventType
+            return EventTypes.convertToLocalLanguage(eventType: eventType)
         }
         
         private func eventBlockView(event: ScheduleBlock, dayData: DayScheduleData, columnWidth: CGFloat, priorityManager: SQLitePriorityManager, onAttendanceUpdate: @escaping (String, String, String, String, String, String) -> Void, onLongPress: ((String, String, String, String, String) -> Void)?, attendedHandle: ShowsAttended) -> some View {

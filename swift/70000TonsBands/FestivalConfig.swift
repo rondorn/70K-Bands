@@ -172,6 +172,8 @@ struct FestivalConfig {
     let meetAndGreetsEnabledDefault: Bool
     let specialEventsEnabledDefault: Bool
     let unofficalEventsEnabledDefault: Bool
+    let eventTypeDisplayNames: [String: [String: String]]
+    let eventTypeFilterDisplayNames: [String: [String: String]]
     
     /// When true, the "Create AI schedule" feature is available (schedule present + this flag).
     /// 70K Bands: true. MDF Bands: false (for now).
@@ -257,9 +259,11 @@ struct FestivalConfig {
             Venue(name: "Angels Rock", color: "A16207", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "10 Market"),
             Venue(name: "Angels Rock Bar", color: "A16207", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "10 Market")
         ]
-        self.meetAndGreetsEnabledDefault = false
-        self.specialEventsEnabledDefault = false
-        self.unofficalEventsEnabledDefault = false
+        self.meetAndGreetsEnabledDefault = true
+        self.specialEventsEnabledDefault = true
+        self.unofficalEventsEnabledDefault = true
+        self.eventTypeDisplayNames = FestivalConfig.buildEventTypeDisplayNamesForMDF()
+        self.eventTypeFilterDisplayNames = FestivalConfig.buildEventTypeFilterDisplayNamesForMDF()
         self.commentsNotAvailableTranslationKey = "DefaultDescriptionMDF"
         self.aiSchedule = true
         self.scheduleQRShareEnabled = false
@@ -317,6 +321,8 @@ struct FestivalConfig {
         self.meetAndGreetsEnabledDefault = true
         self.specialEventsEnabledDefault = true
         self.unofficalEventsEnabledDefault = true
+        self.eventTypeDisplayNames = FestivalConfig.buildEventTypeDisplayNamesFor70K()
+        self.eventTypeFilterDisplayNames = FestivalConfig.buildEventTypeFilterDisplayNamesFor70K()
         self.commentsNotAvailableTranslationKey = "DefaultDescription70K"
         self.aiSchedule = true
         self.scheduleQRShareEnabled = true
@@ -344,6 +350,26 @@ struct FestivalConfig {
     
     func is70K() -> Bool {
         return festivalShortName == "70K"
+    }
+
+    func getEventTypeDisplayName(canonicalEventType: String, languageCode: String) -> String {
+        let normalizedType = EventTypes.normalize(canonicalEventType)
+        let normalizedLanguage = languageCode.lowercased()
+        if let byLanguage = eventTypeDisplayNames[normalizedType] {
+            if let localized = byLanguage[normalizedLanguage], !localized.isEmpty { return localized }
+            if let english = byLanguage["en"], !english.isEmpty { return english }
+        }
+        return normalizedType
+    }
+
+    func getEventTypeFilterDisplayName(canonicalEventType: String, languageCode: String) -> String {
+        let normalizedType = EventTypes.normalize(canonicalEventType)
+        let normalizedLanguage = languageCode.lowercased()
+        if let byLanguage = eventTypeFilterDisplayNames[normalizedType] {
+            if let localized = byLanguage[normalizedLanguage], !localized.isEmpty { return localized }
+            if let english = byLanguage["en"], !english.isEmpty { return english }
+        }
+        return "Show \(getEventTypeDisplayName(canonicalEventType: normalizedType, languageCode: "en"))"
     }
     
     /// Returns the localized default description text for the current festival
@@ -416,5 +442,95 @@ struct FestivalConfig {
     /// Get venue location for a given venue name - EXACT match only
     func getVenueLocation(for venueName: String) -> String {
         return getVenue(named: venueName)?.location ?? ""
+    }
+
+    // MARK: - Event Type Label Helpers
+    private static func buildEventTypeDisplayNamesFor70K() -> [String: [String: String]] {
+        var labels = buildDefaultEventTypeDisplayNames()
+        setLabelForSupportedLanguages(
+            labels: &labels,
+            eventType: EventTypes.canonicalUnofficialEvent,
+            en: "Cruiser Organized Event",
+            de: "Von Kreuzfahrern organisiertes Event",
+            es: "Evento Organizado por Cruceristas",
+            fr: "Evenement Organise par les Croisieristes",
+            pt: "Evento Organizado por Cruzeiristas",
+            da: "Cruiser-organiseret Event",
+            fi: "Risteilijoiden jarjestama tapahtuma"
+        )
+        return labels
+    }
+
+    private static func buildEventTypeFilterDisplayNamesFor70K() -> [String: [String: String]] {
+        var labels: [String: [String: String]] = [:]
+        setLabelForSupportedLanguages(labels: &labels, eventType: EventTypes.canonicalShow, en: "Show Shows", de: "Zeige Shows", es: "Mostrar Shows", fr: "Afficher Shows", pt: "Mostrar Shows", da: "Vis Shows", fi: "Nayta Show't")
+        setLabelForSupportedLanguages(labels: &labels, eventType: EventTypes.canonicalSpecialEvent, en: "Show Special Events", de: "Zeige Spezialevents", es: "Mostrar Eventos Especiales", fr: "Afficher Evenements Speciaux", pt: "Mostrar Eventos Especiais", da: "Vis Sarlige Begivenheder", fi: "Nayta Erikoistapahtumat")
+        setLabelForSupportedLanguages(labels: &labels, eventType: EventTypes.canonicalMeetAndGreet, en: "Show Meet and Greets", de: "Zeige Meet and Greets", es: "Mostrar Meet and Greets", fr: "Afficher Meet and Greets", pt: "Mostrar Meet and Greets", da: "Vis Meet and Greets", fi: "Nayta Meet and Greets")
+        setLabelForSupportedLanguages(labels: &labels, eventType: EventTypes.canonicalClinic, en: "Show Clinics", de: "Zeige Kliniken", es: "Mostrar Clinicas", fr: "Afficher Cliniques", pt: "Mostrar Clinicas", da: "Vis Klinikker", fi: "Nayta Klinikat")
+        setLabelForSupportedLanguages(labels: &labels, eventType: EventTypes.canonicalUnofficialEvent, en: "Show Cruiser Organized Events", de: "Zeige von Kreuzfahrern organisierte Events", es: "Mostrar Eventos Organizados por Cruceristas", fr: "Afficher Evenements Organises par les Croisieristes", pt: "Mostrar Eventos Organizados por Cruzeiristas", da: "Vis Cruiser-organiserede Events", fi: "Nayta Risteilijoiden jarjestamat tapahtumat")
+        return labels
+    }
+
+    private static func buildEventTypeDisplayNamesForMDF() -> [String: [String: String]] {
+        var labels = buildDefaultEventTypeDisplayNames()
+        setLabelForSupportedLanguages(
+            labels: &labels,
+            eventType: EventTypes.canonicalUnofficialEvent,
+            en: "Attendee Organized Event",
+            de: "Von Teilnehmenden organisiertes Event",
+            es: "Evento Organizado por Asistentes",
+            fr: "Evenement Organise par les Participants",
+            pt: "Evento Organizado por Participantes",
+            da: "Deltagerorganiseret Event",
+            fi: "Osallistujien jarjestama tapahtuma"
+        )
+        setLabelForSupportedLanguages(
+            labels: &labels,
+            eventType: EventTypes.canonicalMeetAndGreet,
+            en: "Signing Session",
+            de: "Autogrammstunde",
+            es: "Sesion de Firmas",
+            fr: "Session de Dedicaces",
+            pt: "Sessao de Autografos",
+            da: "Autografsession",
+            fi: "Nimmarointitilaisuus"
+        )
+        return labels
+    }
+
+    private static func buildEventTypeFilterDisplayNamesForMDF() -> [String: [String: String]] {
+        var labels: [String: [String: String]] = [:]
+        setLabelForSupportedLanguages(labels: &labels, eventType: EventTypes.canonicalShow, en: "Show Shows", de: "Zeige Shows", es: "Mostrar Shows", fr: "Afficher Shows", pt: "Mostrar Shows", da: "Vis Shows", fi: "Nayta Show't")
+        setLabelForSupportedLanguages(labels: &labels, eventType: EventTypes.canonicalSpecialEvent, en: "Show Special Events", de: "Zeige Spezialevents", es: "Mostrar Eventos Especiales", fr: "Afficher Evenements Speciaux", pt: "Mostrar Eventos Especiais", da: "Vis Sarlige Begivenheder", fi: "Nayta Erikoistapahtumat")
+        setLabelForSupportedLanguages(labels: &labels, eventType: EventTypes.canonicalMeetAndGreet, en: "Show Signing Sessions", de: "Zeige Autogrammstunden", es: "Mostrar Sesiones de Firmas", fr: "Afficher Sessions de Dedicaces", pt: "Mostrar Sessoes de Autografos", da: "Vis Autografsessioner", fi: "Nayta Nimmarointitilaisuudet")
+        setLabelForSupportedLanguages(labels: &labels, eventType: EventTypes.canonicalClinic, en: "Show Clinics", de: "Zeige Kliniken", es: "Mostrar Clinicas", fr: "Afficher Cliniques", pt: "Mostrar Clinicas", da: "Vis Klinikker", fi: "Nayta Klinikat")
+        setLabelForSupportedLanguages(labels: &labels, eventType: EventTypes.canonicalUnofficialEvent, en: "Show Attendee Organized Events", de: "Zeige von Teilnehmenden organisierte Events", es: "Mostrar Eventos Organizados por Asistentes", fr: "Afficher Evenements Organises par les Participants", pt: "Mostrar Eventos Organizados por Participantes", da: "Vis Deltagerorganiserede Events", fi: "Nayta Osallistujien jarjestamat tapahtumat")
+        return labels
+    }
+
+    private static func buildDefaultEventTypeDisplayNames() -> [String: [String: String]] {
+        var labels: [String: [String: String]] = [:]
+        setLabelForSupportedLanguages(labels: &labels, eventType: EventTypes.canonicalShow, en: "Show", de: "Show", es: "Show", fr: "Show", pt: "Show", da: "Show", fi: "Show")
+        setLabelForSupportedLanguages(labels: &labels, eventType: EventTypes.canonicalUnofficialEvent, en: "Unofficial Event", de: "Inoffizielles Event", es: "Evento No Oficial", fr: "Evenement Non Officiel", pt: "Evento Nao Oficial", da: "Uofficiel Begivenhed", fi: "Epavirallinen tapahtuma")
+        setLabelForSupportedLanguages(labels: &labels, eventType: EventTypes.canonicalSpecialEvent, en: "Special Event", de: "Spezialevent", es: "Evento Especial", fr: "Evenement Special", pt: "Evento Especial", da: "Sarlig Begivenhed", fi: "Erikoistapahtuma")
+        setLabelForSupportedLanguages(labels: &labels, eventType: EventTypes.canonicalMeetAndGreet, en: "Meet and Greet", de: "Meet and Greet", es: "Meet and Greet", fr: "Meet and Greet", pt: "Meet and Greet", da: "Meet and Greet", fi: "Meet and Greet")
+        setLabelForSupportedLanguages(labels: &labels, eventType: EventTypes.canonicalClinic, en: "Clinic", de: "Klinik", es: "Clinica", fr: "Clinique", pt: "Clinica", da: "Klinik", fi: "Klinikka")
+        return labels
+    }
+
+    private static func setLabelForSupportedLanguages(
+        labels: inout [String: [String: String]],
+        eventType: String,
+        en: String, de: String, es: String, fr: String, pt: String, da: String, fi: String
+    ) {
+        labels[eventType] = [
+            "en": en,
+            "de": de,
+            "es": es,
+            "fr": fr,
+            "pt": pt,
+            "da": da,
+            "fi": fi
+        ]
     }
 }
