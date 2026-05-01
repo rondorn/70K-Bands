@@ -145,7 +145,7 @@ public class FestivalConfig {
      *  the same for 70K and MDF (and likely future festivals). */
     private static final class Defaults {
         static final String SUBSCRIPTION_TOPIC = "global";
-        static final String SUBSCRIPTION_TOPIC_TEST = "Testing20251016";
+        static final String SUBSCRIPTION_TOPIC_TEST = "Testing2026042802";
         static final String SUBSCRIPTION_UNOFFICAL_TOPIC = "unofficalEvents";
         static final String ARTIST_URL_DEFAULT = "";
         static final String SCHEDULE_URL_DEFAULT = "";
@@ -215,16 +215,18 @@ public class FestivalConfig {
             this.preferencesIcon = Defaults.PREFERENCES_ICON;
             this.shareIcon = Defaults.SHARE_ICON;
             this.statsIcon = Defaults.STATS_ICON;
-            // MDF venues: Real venue names with Market Street addresses
+            // MDF venues: Real venue names with Market Street addresses (order matches iOS FestivalConfig.swift)
             this.venues = Arrays.asList(
-                new Venue("Rams Head", "EA580C", "icon_theater", "icon_theater_alt", "20 Market"),      // Orange
-                new Venue("Market", "047857", "icon_theater", "icon_theater_alt", "121 Market"),        // Emerald
                 new Venue("Market Place", "047857", "icon_theater", "icon_theater_alt", "121 Market"),        // Emerald
                 new Venue("Power Plant", "1D4ED8", "icon_theater", "icon_theater_alt", "34 Market"),    // Blue
+                new Venue("Rams Head", "EA580C", "icon_theater", "icon_theater_alt", "20 Market"),      // Orange
+                new Venue("Market", "047857", "icon_theater", "icon_theater_alt", "121 Market"),        // Emerald
                 new Venue("Nevermore", "0891B2", "icon_theater", "icon_theater_alt", "20 Market"),      // Cyan
                 new Venue("Nevermore Hall", "0891B2", "icon_theater", "icon_theater_alt", "20 Market"),      // Cyan
                 new Venue("Soundstage", "991B1B", "icon_theater", "icon_theater_alt", "124 Market"),    // Dark red
-                new Venue("Angels Rock Bar", "A16207", "icon_theater", "icon_theater_alt", "10 Market")     // Yellow (dark)
+                new Venue("Angels Rock", "A16207", "icon_theater", "icon_theater_alt", "10 Market"),     // Yellow (dark)
+                new Venue("Angels Rock Bar", "A16207", "icon_theater", "icon_theater_alt", "10 Market"),     // Yellow (dark)
+                new Venue("Mosaic Nightclub", "5E4FA8", "icon_theater", "icon_theater_alt", "34 Market Pl") // Blue-violet
             );
             
             // MDF: Hide all event type filters by default

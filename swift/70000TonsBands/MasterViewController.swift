@@ -3230,7 +3230,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     /// Schedule view:
     /// 1. **No imported rows under `currentEventsForScheduleRules`** (empty DB, header-only CSV, or hide-expired removed all rows) → **Bands** (visible band-slot / lineup count).
     /// 2. **Unofficial-only** current schedule → **Bands** (band-centric; unofficial rows are not “show events” in the title).
-    /// 3. **At least one current event** and not unofficial-only → **Events** (`eventCount`), including “all expired but hide-expired is off” (user still sees event rows).
+    /// 3. **At least one current event** and not unofficial-only → **Events**: count of time-keyed schedule rows only (matches Android `numberOfEvents`). Band-only rows at the bottom are not included.
     ///
     /// Bands list mode (`!showScheduleView`) → **Bands**.
     ///
@@ -3257,9 +3257,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         if !scheduleHasCurrentEventsForRules(forYear: year) {
             return (max(bandSlotsDisplayed, 0), " " + NSLocalizedString("Bands", comment: "") + filtersSuffix)
         }
-        // In schedule/event mode, header count must reflect what's currently visible after search/filters.
-        // Using total eventCount here shows unfiltered totals (e.g. 211) while list shows filtered rows (e.g. 3).
-        return (max(effectiveDisplayedBandRows, 0), " " + NSLocalizedString("Events", comment: "") + filtersSuffix)
+        // Event-mode header must match Android: `numberOfEvents` counts time-keyed slots only, not band-name rows
+        // (e.g. lineup entries at the bottom after all shows expired with hide-expired on).
+        let displayedNonPlaceholder = bandsSnapshot.filter { !MasterViewController.isBandListPlaceholderEntry($0) }.count
+        let scheduleEventRowsDisplayed = bandsSnapshot.filter {
+            !MasterViewController.isBandListPlaceholderEntry($0) && MasterViewController.isScheduleEventRowListEntry($0)
+        }.count
+        let eventsTitleCount: Int
+        if displayedNonPlaceholder == 0 && listCount > 0 {
+            eventsTitleCount = max(eventCount, 0)
+        } else {
+            eventsTitleCount = max(scheduleEventRowsDisplayed, 0)
+        }
+        return (eventsTitleCount, " " + NSLocalizedString("Events", comment: "") + filtersSuffix)
     }
   
     /// Updates the count label at the top of the list showing "{x} Events" or "{x} Bands"
