@@ -800,8 +800,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             // If local Firebase data is pending sync, try a gated full sync when app becomes active.
             // This handles offline -> online recovery even when background path was skipped.
             if FirebaseWriteMonitor.shared.shouldRunFullSync() {
-                print("📱 [TIMING] Pending Firebase sync state on app active - requesting gated full sync")
-                self.performBulkOperationsWithNetworkGating()
+                print("📱 [TIMING] Pending Firebase sync state on app active - requesting gated full sync (no description bulk — that runs on background)")
+                self.performBulkOperationsWithNetworkGating(includeDescriptionBulkDownload: false)
             }
         }
     }
@@ -924,8 +924,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     /// Performs network test first, then executes bulk operations (images, notes, Firebase) only if network is good
     /// This prevents heavy operations from running in poor network conditions and consuming resources
-    private func performBulkOperationsWithNetworkGating() {
-        print("🌐 NETWORK GATING: Starting REAL network test before bulk operations")
+    /// - Parameter includeDescriptionBulkDownload: When false, skips per-band note prefetch (e.g. on app become active). Description bodies still load lazily in the details screen; batch prefetch runs on `applicationDidEnterBackground`.
+    private func performBulkOperationsWithNetworkGating(includeDescriptionBulkDownload: Bool = true) {
+        print("🌐 NETWORK GATING: Starting REAL network test before bulk operations (description bulk: \(includeDescriptionBulkDownload))")
         
         // Run network test on background queue to never block
         DispatchQueue.global(qos: .utility).async {
@@ -939,7 +940,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             if isNetworkGood {
                 print("🌐 NETWORK GATING: ✅ Network is good - proceeding with bulk operations")
                 self.performBulkImageDownload()
-                self.performBulkDescriptionDownload()
+                if includeDescriptionBulkDownload {
+                    self.performBulkDescriptionDownload()
+                } else {
+                    print("🌐 NETWORK GATING: Skipping bulk description download (not requested for this entry point)")
+                }
                 if FirebaseWriteMonitor.shared.shouldRunFullSync() {
                     print("🌐 NETWORK GATING: Pending Firebase sync state detected (dirty/failure) - running full Firebase resync")
                     self.performFirebaseReporting()

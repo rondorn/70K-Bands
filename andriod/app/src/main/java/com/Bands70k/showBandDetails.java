@@ -1021,6 +1021,18 @@ public class showBandDetails extends Activity {
               ", current position: " + staticVariables.currentListPosition + 
               ", list size: " + staticVariables.currentListForDetails.size());
 
+        int listSize = staticVariables.currentListForDetails.size();
+        if (listSize == 0) {
+            Log.w("SwipeNavigation", "nextRecord: empty list, ignoring swipe");
+            HelpMessageHandler.showMessage(getResources().getString(R.string.EndofList));
+            return;
+        }
+        if (staticVariables.currentListPosition < 0) {
+            staticVariables.currentListPosition = 0;
+        } else if (staticVariables.currentListPosition >= listSize) {
+            staticVariables.currentListPosition = listSize - 1;
+        }
+
         String directionMessage = "";
         String currentBand = "";
         String oldBandValue = staticVariables.currentListForDetails.get(staticVariables.currentListPosition);

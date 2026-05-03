@@ -73,6 +73,131 @@ class CombinedImageListHandler {
         return trimmed
     }
     
+    /// Rejects scheme-only or malformed URLs (e.g. bare `https://`) that produce useless requests.
+    private func isUsableNormalizedImageURL(_ normalized: String) -> Bool {
+        guard let url = URL(string: normalized), let host = url.host, !host.isEmpty else {
+            return false
+        }
+        return true
+    }
+    
+    /// All bands rows for the year (not limited to `lineIndex` / in-memory lineup cache).
+    private func mergeBandsTableImageURLs(into list: inout [String: ImageInfo], forYear year: Int) -> Int {
+        let bands = DataManager.shared.fetchBands(forYear: year)
+        var added = 0
+        for band in bands {
+            guard let raw = band.imageUrl?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else { continue }
+            let withScheme = raw.hasPrefix("http") ? raw : "http://\(raw)"
+            let normalized = normalizeImageURL(withScheme)
+            guard isUsableNormalizedImageURL(normalized) else { continue }
+            list[band.bandName] = ImageInfo(url: normalized, date: nil)
+            added += 1
+        }
+        print("📋 [IMAGE_PIPELINE] SQLite bands table: \(added) usable image URLs from \(bands.count) band rows (year \(year))")
+        return added
+    }
+    
+    /// Single source of truth: bands table first, in-memory handler fills gaps, then schedule / SQLite events (only usable URLs).
+    private func buildCombinedImageListDictionary(
+        bandNameHandle: bandNamesHandler,
+        scheduleHandle: scheduleHandler
+    ) -> [String: ImageInfo] {
+        var newCombinedList: [String: ImageInfo] = [:]
+        
+        let sqliteArtistURLs = mergeBandsTableImageURLs(into: &newCombinedList, forYear: eventYear)
+        
+        let bandNames = bandNameHandle.getBandNames()
+        print("🧩 [IMAGE_PIPELINE] inputs | sqliteBandImageEntries=\(sqliteArtistURLs) inMemoryArtistNames=\(bandNames.count) scheduleBands=\(scheduleHandle.schedulingData.count)")
+        print("📋 Collecting supplemental artist URLs from in-memory cache (no downloads)")
+        
+        for bandName in bandNames {
+            guard newCombinedList[bandName] == nil else { continue }
+            let imageUrl = bandNameHandle.getBandImageUrl(bandName)
+            guard !imageUrl.isEmpty else { continue }
+            let normalizedUrl = normalizeImageURL(imageUrl)
+            guard isUsableNormalizedImageURL(normalizedUrl) else { continue }
+            newCombinedList[bandName] = ImageInfo(url: normalizedUrl, date: nil)
+            print("📋 Added in-memory artist image URL for \(bandName): \(normalizedUrl)")
+        }
+        
+        let scheduleData = scheduleHandle.schedulingData
+        print("📋 Collecting image URLs from \(scheduleData.count) schedule events (no downloads)")
+        
+        if scheduleData.isEmpty {
+            print("Schedule data is empty - valid for headers-only or future year. Artist URLs came from DB / cache.")
+        }
+        
+        for (bandName, events) in scheduleData {
+            for (_, eventData) in events {
+                if let imageUrl = eventData[imageUrlField], !imageUrl.isEmpty {
+                    if newCombinedList[bandName] == nil {
+                        let imageDate = eventData[imageUrlDateField] as? String
+                        let normalizedUrl = normalizeImageURL(imageUrl)
+                        guard isUsableNormalizedImageURL(normalizedUrl) else {
+                            print("📋 Skipped unusable schedule ImageURL for \(bandName)")
+                            continue
+                        }
+                        newCombinedList[bandName] = ImageInfo(url: normalizedUrl, date: imageDate)
+                        if let date = imageDate, !date.isEmpty {
+                            print("📋 Added event image URL for \(bandName) with date \(date): \(normalizedUrl)")
+                        } else {
+                            print("📋 Added event image URL for \(bandName) (no date): \(normalizedUrl)")
+                        }
+                    } else {
+                        print("📋 Skipped event image URL for \(bandName) (artist already has URL): \(imageUrl)")
+                    }
+                } else if let descriptionUrl = eventData[descriptionUrlField], !descriptionUrl.isEmpty {
+                    if newCombinedList[bandName] == nil {
+                        let normalizedUrl = normalizeImageURL(descriptionUrl)
+                        guard isUsableNormalizedImageURL(normalizedUrl) else {
+                            print("📋 Skipped unusable schedule description URL for \(bandName)")
+                            continue
+                        }
+                        newCombinedList[bandName] = ImageInfo(url: normalizedUrl, date: nil)
+                        print("Added event description URL for \(bandName): \(normalizedUrl)")
+                    } else {
+                        print("📋 Skipped event description URL for \(bandName) (artist already has URL): \(descriptionUrl)")
+                    }
+                } else {
+                    print("No image URL found for event: \(bandName)")
+                }
+            }
+        }
+        
+        print("📋 Fetching events from SQLite (including those without bands)...")
+        let sqliteEvents = SQLiteDataManager.shared.fetchEvents(forYear: eventYear)
+        print("🧩 [IMAGE_PIPELINE] inputs | sqliteEvents=\(sqliteEvents.count)")
+        print("📋 Found \(sqliteEvents.count) events in SQLite for year \(eventYear)")
+        
+        var processedEventNames = Set<String>()
+        for event in sqliteEvents {
+            let eventName = event.bandName
+            guard !processedEventNames.contains(eventName) else { continue }
+            processedEventNames.insert(eventName)
+            guard newCombinedList[eventName] == nil else { continue }
+            
+            if let eventImageUrl = event.eventImageUrl, !eventImageUrl.isEmpty {
+                let normalizedUrl = normalizeImageURL(eventImageUrl)
+                guard isUsableNormalizedImageURL(normalizedUrl) else {
+                    print("📋 Skipped unusable SQLite event image URL for '\(eventName)'")
+                    continue
+                }
+                newCombinedList[eventName] = ImageInfo(url: normalizedUrl, date: nil)
+                print("📋 Added SQLite event image URL for '\(eventName)': \(normalizedUrl)")
+            } else if let descriptionUrl = event.descriptionUrl, !descriptionUrl.isEmpty {
+                let normalizedUrl = normalizeImageURL(descriptionUrl)
+                guard isUsableNormalizedImageURL(normalizedUrl) else {
+                    print("📋 Skipped unusable SQLite event description URL for '\(eventName)'")
+                    continue
+                }
+                newCombinedList[eventName] = ImageInfo(url: normalizedUrl, date: nil)
+                print("📋 Added SQLite event description URL for '\(eventName)': \(normalizedUrl)")
+            }
+        }
+        
+        return newCombinedList
+    }
+    
     /// Generates the combined image list from artist and event data
     /// - Parameters:
     ///   - bandNameHandle: Handler for band/artist data
@@ -93,101 +218,10 @@ class CombinedImageListHandler {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             
-            var newCombinedList: [String: ImageInfo] = [:]
-            
-            // Get all band names and their image URLs (URL lookup only, no downloads)
-            let bandNames = bandNameHandle.getBandNames()
-            print("🧩 [IMAGE_PIPELINE] inputs | artistBands=\(bandNames.count) scheduleBands=\(scheduleHandle.schedulingData.count)")
-            print("📋 Collecting image URLs for \(bandNames.count) artists (no downloads)")
-            for bandName in bandNames {
-                let imageUrl = bandNameHandle.getBandImageUrl(bandName)
-                if !imageUrl.isEmpty {
-                    // Artist images don't have dates - use nil
-                    // Note: getBandImageUrl() already normalizes URLs, but we'll ensure it's normalized here too
-                    let normalizedUrl = self.normalizeImageURL(imageUrl)
-                    newCombinedList[bandName] = ImageInfo(url: normalizedUrl, date: nil)
-                    print("📋 Added artist image URL for \(bandName): \(normalizedUrl)")
-                }
-            }
-            
-            // Get all event names and their image URLs from schedule data
-            let scheduleData = scheduleHandle.schedulingData
-            print("📋 Collecting image URLs from \(scheduleData.count) schedule events (no downloads)")
-            
-            if scheduleData.isEmpty {
-                print("Schedule data is empty - this is valid (headers only or future year). Proceeding with artist images only.")
-            }
-            
-            for (bandName, events) in scheduleData {
-                for (_, eventData) in events {
-                    // Check for ImageURL first (higher priority), then Description URL
-                    if let imageUrl = eventData[imageUrlField], !imageUrl.isEmpty {
-                        // Only add if not already present (artist takes priority)
-                        if newCombinedList[bandName] == nil {
-                            // Get ImageDate if available for schedule images
-                            let imageDate = eventData[imageUrlDateField] as? String
-                            // Normalize URL to ensure it has protocol prefix
-                            let normalizedUrl = self.normalizeImageURL(imageUrl)
-                            newCombinedList[bandName] = ImageInfo(url: normalizedUrl, date: imageDate)
-                            if let date = imageDate, !date.isEmpty {
-                                print("📋 Added event image URL for \(bandName) with date \(date): \(normalizedUrl)")
-                            } else {
-                                print("📋 Added event image URL for \(bandName) (no date): \(normalizedUrl)")
-                            }
-                        } else {
-                            print("📋 Skipped event image URL for \(bandName) (artist already has URL): \(imageUrl)")
-                        }
-                    } else if let descriptionUrl = eventData[descriptionUrlField], !descriptionUrl.isEmpty {
-                        // Only add if not already present (artist takes priority)
-                        if newCombinedList[bandName] == nil {
-                            // Description URLs don't have dates
-                            // Normalize URL to ensure it has protocol prefix
-                            let normalizedUrl = self.normalizeImageURL(descriptionUrl)
-                            newCombinedList[bandName] = ImageInfo(url: normalizedUrl, date: nil)
-                            print("Added event description URL for \(bandName): \(normalizedUrl)")
-                        } else {
-                            print("📋 Skipped event description URL for \(bandName) (artist already has URL): \(descriptionUrl)")
-                        }
-                    } else {
-                        print("No image URL found for event: \(bandName)")
-                    }
-                }
-            }
-            
-            // Fetch all events from SQLite (including "orphan" events like "All Star Jam" that don't have Band entities)
-            // SQLite stores events independently by eventBandName, so all events are accessible
-            print("📋 Fetching events from SQLite (including those without bands)...")
-            let sqliteEvents = SQLiteDataManager.shared.fetchEvents(forYear: eventYear)
-            print("🧩 [IMAGE_PIPELINE] inputs | sqliteEvents=\(sqliteEvents.count)")
-            print("📋 Found \(sqliteEvents.count) events in SQLite for year \(eventYear)")
-            
-            // Process SQLite events to extract unique band/event names and their image URLs
-            var processedEventNames = Set<String>()
-            for event in sqliteEvents {
-                let eventName = event.bandName
-                
-                // Skip if we already processed this event name (avoid duplicates)
-                guard !processedEventNames.contains(eventName) else { continue }
-                processedEventNames.insert(eventName)
-                
-                // Only add if not already present (artist takes priority)
-                guard newCombinedList[eventName] == nil else { continue }
-                
-                // Check for eventImageUrl first (higher priority), then descriptionUrl
-                if let eventImageUrl = event.eventImageUrl, !eventImageUrl.isEmpty {
-                    // SQLite doesn't store eventImageDate, so use nil
-                    // Normalize URL to ensure it has protocol prefix
-                    let normalizedUrl = self.normalizeImageURL(eventImageUrl)
-                    newCombinedList[eventName] = ImageInfo(url: normalizedUrl, date: nil)
-                    print("📋 Added SQLite event image URL for '\(eventName)': \(normalizedUrl)")
-                } else if let descriptionUrl = event.descriptionUrl, !descriptionUrl.isEmpty {
-                    // Description URLs don't have dates
-                    // Normalize URL to ensure it has protocol prefix
-                    let normalizedUrl = self.normalizeImageURL(descriptionUrl)
-                    newCombinedList[eventName] = ImageInfo(url: normalizedUrl, date: nil)
-                    print("📋 Added SQLite event description URL for '\(eventName)': \(normalizedUrl)")
-                }
-            }
+            let newCombinedList = self.buildCombinedImageListDictionary(
+                bandNameHandle: bandNameHandle,
+                scheduleHandle: scheduleHandle
+            )
             
             // Update the combined list
             print("📋 [IMAGE_DEBUG] Updating combinedImageList with \(newCombinedList.count) entries")
@@ -283,96 +317,24 @@ class CombinedImageListHandler {
             let bandNameHandle = bandNamesHandler.shared
             let scheduleHandle = scheduleHandler.shared
             
-            print("🔍 [IMAGE_DEBUG] Getting band names from bandNamesHandler...")
-            // Check if we have data to work with
             let bandNames = bandNameHandle.getBandNames()
-            print("🔍 [IMAGE_DEBUG] bandNamesHandler returned \(bandNames.count) bands")
+            let scheduleCount = scheduleHandle.schedulingData.count
+            let sqliteBandRows = DataManager.shared.fetchBands(forYear: eventYear).count
+            print("🔍 [IMAGE_DEBUG] Async generation inputs: inMemoryBands=\(bandNames.count) scheduleBands=\(scheduleCount) sqliteBandRows=\(sqliteBandRows)")
             
-            guard !bandNames.isEmpty else {
-                print("❌ [IMAGE_DEBUG] No artist data available for async generation - handlers not ready")
-                self.isGenerating = false
-                // Don't stall callers/observers. Schedule a retry when data is ready.
-                self.checkAndRefreshWhenReady()
+            if bandNames.isEmpty && scheduleCount == 0 && sqliteBandRows == 0 {
+                print("❌ [IMAGE_DEBUG] No band or schedule source data yet - scheduling retry")
+                DispatchQueue.main.async {
+                    self.isGenerating = false
+                    self.checkAndRefreshWhenReady()
+                }
                 return
             }
             
-            print("✅ [IMAGE_DEBUG] Found \(bandNames.count) artists, generating list asynchronously")
-            if bandNames.count > 0 {
-                print("📋 [IMAGE_DEBUG] First 5 bands: \(bandNames.prefix(5))")
-            }
-            
-            // Generate the combined list
-            var newCombinedList: [String: ImageInfo] = [:]
-            
-            // Process band names
-            for bandName in bandNames {
-                let imageUrl = bandNameHandle.getBandImageUrl(bandName)
-                if !imageUrl.isEmpty {
-                    // Artist images don't have dates
-                    // Normalize URL (band URLs may not have protocol prefix)
-                    let normalizedUrl = self.normalizeImageURL(imageUrl)
-                    newCombinedList[bandName] = ImageInfo(url: normalizedUrl, date: nil)
-                }
-            }
-            
-            // Process schedule data
-            let scheduleData = scheduleHandle.schedulingData
-            for (bandName, events) in scheduleData {
-                for (_, eventData) in events {
-                    // Check for ImageURL first (higher priority), then Description URL
-                    if let imageUrl = eventData[imageUrlField], !imageUrl.isEmpty {
-                        // Only add if not already present (artist takes priority)
-                        if newCombinedList[bandName] == nil {
-                            // Get ImageDate if available
-                            let imageDate = eventData[imageUrlDateField] as? String
-                            // Normalize URL (schedule URLs may already have https://, but ensure consistency)
-                            let normalizedUrl = self.normalizeImageURL(imageUrl)
-                            newCombinedList[bandName] = ImageInfo(url: normalizedUrl, date: imageDate)
-                        }
-                    } else if let descriptionUrl = eventData[descriptionUrlField], !descriptionUrl.isEmpty {
-                        // Only add if not already present (artist takes priority)
-                        if newCombinedList[bandName] == nil {
-                            // Description URLs don't have dates
-                            // Normalize URL to ensure it has protocol prefix
-                            let normalizedUrl = self.normalizeImageURL(descriptionUrl)
-                            newCombinedList[bandName] = ImageInfo(url: normalizedUrl, date: nil)
-                        }
-                    }
-                }
-            }
-            
-            // Fetch all events from SQLite (including "orphan" events like "All Star Jam")
-            print("📋 [ASYNC] Fetching events from SQLite (including those without bands)...")
-            let sqliteEvents = SQLiteDataManager.shared.fetchEvents(forYear: eventYear)
-            print("📋 [ASYNC] Found \(sqliteEvents.count) events in SQLite for year \(eventYear)")
-            
-            // Process SQLite events to extract unique band/event names and their image URLs
-            var processedEventNames = Set<String>()
-            for event in sqliteEvents {
-                let eventName = event.bandName
-                
-                // Skip if we already processed this event name (avoid duplicates)
-                guard !processedEventNames.contains(eventName) else { continue }
-                processedEventNames.insert(eventName)
-                
-                // Only add if not already present (artist takes priority)
-                guard newCombinedList[eventName] == nil else { continue }
-                
-                // Check for eventImageUrl first (higher priority), then descriptionUrl
-                if let eventImageUrl = event.eventImageUrl, !eventImageUrl.isEmpty {
-                    // SQLite doesn't store eventImageDate, so use nil
-                    // Normalize URL (schedule URLs may already have https://, but ensure consistency)
-                    let normalizedUrl = self.normalizeImageURL(eventImageUrl)
-                    newCombinedList[eventName] = ImageInfo(url: normalizedUrl, date: nil)
-                    print("📋 [ASYNC] Added SQLite event image URL for '\(eventName)': \(normalizedUrl)")
-                } else if let descriptionUrl = event.descriptionUrl, !descriptionUrl.isEmpty {
-                    // Description URLs don't have dates
-                    // Normalize URL to ensure it has protocol prefix
-                    let normalizedUrl = self.normalizeImageURL(descriptionUrl)
-                    newCombinedList[eventName] = ImageInfo(url: normalizedUrl, date: nil)
-                    print("📋 [ASYNC] Added SQLite event description URL for '\(eventName)': \(normalizedUrl)")
-                }
-            }
+            let newCombinedList = self.buildCombinedImageListDictionary(
+                bandNameHandle: bandNameHandle,
+                scheduleHandle: scheduleHandle
+            )
             
             // Update the list and save it (on main queue for thread safety)
             DispatchQueue.main.async {
@@ -417,124 +379,37 @@ class CombinedImageListHandler {
     func needsRegeneration(bandNameHandle: bandNamesHandler, scheduleHandle: scheduleHandler) -> Bool {
         let currentList = combinedImageList
         
-        // If the combined list is empty, we need to generate it (first launch case)
         if currentList.isEmpty {
             print("📋 Combined image list is empty, regeneration needed for first launch")
             return true
         }
         
-        // Build what the new list should look like and compare
-        var expectedList: [String: ImageInfo] = [:]
-        var hasChanges = false
+        let expectedList = buildCombinedImageListDictionary(
+            bandNameHandle: bandNameHandle,
+            scheduleHandle: scheduleHandle
+        )
         
-        // Get all band names and their image URLs
-        let bandNames = bandNameHandle.getBandNames()
-        print("📋 Checking \(bandNames.count) artists for image URL changes...")
-        
-        for bandName in bandNames {
-            let imageUrl = bandNameHandle.getBandImageUrl(bandName)
-            if !imageUrl.isEmpty {
-                let expectedInfo = ImageInfo(url: imageUrl, date: nil)
-                expectedList[bandName] = expectedInfo
-                // Check if this is different from current list (compare URL only for artists)
-                if currentList[bandName]?.url != imageUrl {
-                    print("📋 Artist image URL changed for \(bandName): '\(currentList[bandName]?.url ?? "nil")' -> '\(imageUrl)'")
-                    hasChanges = true
-                }
-            }
-        }
-        
-        // Get all event names and their image URLs from schedule data
-        let scheduleData = scheduleHandle.schedulingData
-        print("📋 Checking \(scheduleData.count) schedule events for image URL changes...")
-        
-        for (bandName, events) in scheduleData {
-            for (_, eventData) in events {
-                // Check for ImageURL first (higher priority), then Description URL
-                if let imageUrl = eventData[imageUrlField], !imageUrl.isEmpty {
-                    // Only add if not already present (artist takes priority)
-                    if expectedList[bandName] == nil {
-                        // Get ImageDate if available
-                        let imageDate = eventData[imageUrlDateField] as? String
-                        let expectedInfo = ImageInfo(url: imageUrl, date: imageDate)
-                        expectedList[bandName] = expectedInfo
-                        // Check if URL or date changed
-                        if currentList[bandName]?.url != imageUrl || currentList[bandName]?.date != imageDate {
-                            print("📋 Event image changed for \(bandName): '\(currentList[bandName]?.url ?? "nil")' (date: '\(currentList[bandName]?.date ?? "nil")') -> '\(imageUrl)' (date: '\(imageDate ?? "nil")')")
-                            hasChanges = true
-                        }
-                    }
-                } else if let descriptionUrl = eventData[descriptionUrlField], !descriptionUrl.isEmpty {
-                    // Only add if not already present (artist takes priority)
-                    if expectedList[bandName] == nil {
-                        let expectedInfo = ImageInfo(url: descriptionUrl, date: nil)
-                        expectedList[bandName] = expectedInfo
-                        if currentList[bandName]?.url != descriptionUrl {
-                            print("📋 Event description URL changed for \(bandName): '\(currentList[bandName]?.url ?? "nil")' -> '\(descriptionUrl)'")
-                            hasChanges = true
-                        }
-                    }
-                }
-            }
-        }
-        
-        // Check events from SQLite (including "orphan" events like "All Star Jam")
-        print("📋 Checking SQLite events (including those without bands) for image URL changes...")
-        let sqliteEvents = SQLiteDataManager.shared.fetchEvents(forYear: eventYear)
-        print("📋 Checking \(sqliteEvents.count) SQLite events for year \(eventYear)")
-        
-        var processedEventNames = Set<String>()
-        for event in sqliteEvents {
-            let eventName = event.bandName
-            
-            // Skip if we already processed this event name (avoid duplicates)
-            guard !processedEventNames.contains(eventName) else { continue }
-            processedEventNames.insert(eventName)
-            
-            // Only check if not already present (artist takes priority)
-            guard expectedList[eventName] == nil else { continue }
-            
-            // Check for eventImageUrl first (higher priority), then descriptionUrl
-            if let eventImageUrl = event.eventImageUrl, !eventImageUrl.isEmpty {
-                // SQLite doesn't store eventImageDate, so use nil
-                let expectedInfo = ImageInfo(url: eventImageUrl, date: nil)
-                expectedList[eventName] = expectedInfo
-                // Check if URL changed (date is always nil for SQLite events)
-                if currentList[eventName]?.url != eventImageUrl {
-                    print("📋 SQLite event image changed for '\(eventName)': '\(currentList[eventName]?.url ?? "nil")' -> '\(eventImageUrl)'")
-                    hasChanges = true
-                }
-            } else if let descriptionUrl = event.descriptionUrl, !descriptionUrl.isEmpty {
-                let expectedInfo = ImageInfo(url: descriptionUrl, date: nil)
-                expectedList[eventName] = expectedInfo
-                if currentList[eventName]?.url != descriptionUrl {
-                    print("📋 SQLite event description URL changed for '\(eventName)': '\(currentList[eventName]?.url ?? "nil")' -> '\(descriptionUrl)'")
-                    hasChanges = true
-                }
-            }
-        }
-        
-        // Check if any entries were removed (bands/events no longer exist)
-        for (bandName, _) in currentList {
-            if expectedList[bandName] == nil {
-                print("📋 Entry removed: \(bandName) no longer has image URL")
-                hasChanges = true
-            }
-        }
-        
-        // Check if the counts are different (quick sanity check)
         if currentList.count != expectedList.count {
             print("📋 Image list count changed: \(currentList.count) -> \(expectedList.count)")
-            hasChanges = true
+            return true
         }
         
-        if hasChanges {
-            print("📋 Combined image list needs regeneration due to detected changes")
-        } else {
-            print("📋 Combined image list is up to date, no regeneration needed")
+        for (name, info) in expectedList {
+            if currentList[name]?.url != info.url || currentList[name]?.date != info.date {
+                print("📋 Image list entry changed for '\(name)': '\(currentList[name]?.url ?? "nil")' -> '\(info.url)'")
+                return true
+            }
         }
         
-        return hasChanges
+        for (name, _) in currentList {
+            if expectedList[name] == nil {
+                print("📋 Entry removed: '\(name)' no longer in expected list")
+                return true
+            }
+        }
+        
+        print("📋 Combined image list is up to date, no regeneration needed")
+        return false
     }
     
     /// Saves the combined image list to disk
@@ -635,10 +510,11 @@ class CombinedImageListHandler {
             let bandNameHandle = bandNamesHandler.shared
             let scheduleHandle = scheduleHandler.shared
             
-            // Check if both handlers have data loaded before proceeding
             let bandNames = bandNameHandle.getBandNames()
-            if bandNames.isEmpty {
-                print("CombinedImageListHandler: Band data not ready yet, skipping launch refresh")
+            let scheduleCount = scheduleHandle.schedulingData.count
+            let sqliteBandRows = DataManager.shared.fetchBands(forYear: eventYear).count
+            if bandNames.isEmpty && scheduleCount == 0 && sqliteBandRows == 0 {
+                print("CombinedImageListHandler: No band/schedule/SQLite source yet, skipping launch refresh")
                 return
             }
             
@@ -684,13 +560,13 @@ class CombinedImageListHandler {
         let year = eventYear
         let bandCount = bandNameHandle.getBandNames().count
         let scheduleBandCount = scheduleHandle.schedulingData.count
+        let sqliteBandRows = DataManager.shared.fetchBands(forYear: year).count
         let currentCombinedCount = combinedImageList.count
         
-        print("🧩 [IMAGE_PIPELINE] triggerRefreshPostDataLoad | \(context) | year=\(year) bands=\(bandCount) scheduleBands=\(scheduleBandCount) combinedImageList=\(currentCombinedCount)")
+        print("🧩 [IMAGE_PIPELINE] triggerRefreshPostDataLoad | \(context) | year=\(year) bands=\(bandCount) scheduleBands=\(scheduleBandCount) sqliteBandRows=\(sqliteBandRows) combinedImageList=\(currentCombinedCount)")
         
-        // If band cache isn't ready, do not stall. Schedule a retry.
-        if bandCount == 0 {
-            print("🧩 [IMAGE_PIPELINE] triggerRefreshPostDataLoad: bands=0, skipping generation and scheduling retry")
+        if bandCount == 0 && scheduleBandCount == 0 && sqliteBandRows == 0 {
+            print("🧩 [IMAGE_PIPELINE] triggerRefreshPostDataLoad: no source data yet, scheduling retry")
             checkAndRefreshWhenReady()
             return
         }
@@ -750,10 +626,9 @@ class CombinedImageListHandler {
         let bandNameHandle = bandNamesHandler.shared
         let scheduleHandle = scheduleHandler.shared
         
-        // Check if we have source data
         let bandNames = bandNameHandle.getBandNames()
-        if bandNames.isEmpty {
-            print("❌ FORCE REFRESH FAILED: No band data available (handlers not ready)")
+        if bandNames.isEmpty && scheduleHandle.schedulingData.isEmpty && DataManager.shared.fetchBands(forYear: eventYear).isEmpty {
+            print("❌ FORCE REFRESH FAILED: No band or schedule source data")
             return false
         }
         
@@ -768,69 +643,10 @@ class CombinedImageListHandler {
                 return
             }
             
-            var newCombinedList: [String: ImageInfo] = [:]
-            
-            // Process band names
-            for bandName in bandNames {
-                let imageUrl = bandNameHandle.getBandImageUrl(bandName)
-                if !imageUrl.isEmpty {
-                    // Normalize URL (band URLs may not have protocol prefix)
-                    let normalizedUrl = self.normalizeImageURL(imageUrl)
-                    newCombinedList[bandName] = ImageInfo(url: normalizedUrl, date: nil)
-                }
-            }
-            
-            // Process schedule data
-            let scheduleData = scheduleHandle.schedulingData
-            for (bandName, events) in scheduleData {
-                for (_, eventData) in events {
-                    if let imageUrl = eventData[imageUrlField], !imageUrl.isEmpty {
-                        if newCombinedList[bandName] == nil {
-                            let imageDate = eventData[imageUrlDateField] as? String
-                            // Normalize URL (schedule URLs may already have https://, but ensure consistency)
-                            let normalizedUrl = self.normalizeImageURL(imageUrl)
-                            newCombinedList[bandName] = ImageInfo(url: normalizedUrl, date: imageDate)
-                        }
-                    } else if let descriptionUrl = eventData[descriptionUrlField], !descriptionUrl.isEmpty {
-                        if newCombinedList[bandName] == nil {
-                            // Normalize URL to ensure it has protocol prefix
-                            let normalizedUrl = self.normalizeImageURL(descriptionUrl)
-                            newCombinedList[bandName] = ImageInfo(url: normalizedUrl, date: nil)
-                        }
-                    }
-                }
-            }
-            
-            // Fetch events from SQLite (including "orphan" events like "All Star Jam")
-            print("📋 [FORCE_REFRESH] Fetching events from SQLite...")
-            let sqliteEvents = SQLiteDataManager.shared.fetchEvents(forYear: eventYear)
-            print("📋 [FORCE_REFRESH] Found \(sqliteEvents.count) events in SQLite for year \(eventYear)")
-            
-            // Process SQLite events to extract unique band/event names and their image URLs
-            var processedEventNames = Set<String>()
-            for event in sqliteEvents {
-                let eventName = event.bandName
-                
-                // Skip if we already processed this event name (avoid duplicates)
-                guard !processedEventNames.contains(eventName) else { continue }
-                processedEventNames.insert(eventName)
-                
-                // Only add if not already present (artist takes priority)
-                guard newCombinedList[eventName] == nil else { continue }
-                
-                // Check for eventImageUrl first (higher priority), then descriptionUrl
-                if let eventImageUrl = event.eventImageUrl, !eventImageUrl.isEmpty {
-                    // SQLite doesn't store eventImageDate, so use nil
-                    // Normalize URL (schedule URLs may already have https://, but ensure consistency)
-                    let normalizedUrl = self.normalizeImageURL(eventImageUrl)
-                    newCombinedList[eventName] = ImageInfo(url: normalizedUrl, date: nil)
-                } else if let descriptionUrl = event.descriptionUrl, !descriptionUrl.isEmpty {
-                    // Description URLs don't have dates
-                    // Normalize URL to ensure it has protocol prefix
-                    let normalizedUrl = self.normalizeImageURL(descriptionUrl)
-                    newCombinedList[eventName] = ImageInfo(url: normalizedUrl, date: nil)
-                }
-            }
+            let newCombinedList = self.buildCombinedImageListDictionary(
+                bandNameHandle: bandNameHandle,
+                scheduleHandle: scheduleHandle
+            )
             
             // Update the list
             self.combinedImageList = newCombinedList
