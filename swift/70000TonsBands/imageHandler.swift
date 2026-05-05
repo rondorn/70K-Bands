@@ -87,6 +87,36 @@ open class imageHandler {
         }
         return trimmed
     }
+
+    /// Sidecar path `{image}.png.url` — same convention as Android `ImageHandler` for cross-platform parity.
+    private func urlSidecarURL(forImagePNG pngFile: URL) -> URL {
+        URL(fileURLWithPath: pngFile.path + ".url")
+    }
+
+    private func readStoredImageUrlFromSidecar(imagePngURL: URL) -> String? {
+        let sidecar = urlSidecarURL(forImagePNG: imagePngURL)
+        guard let data = try? Data(contentsOf: sidecar),
+              var line = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !line.isEmpty else { return nil }
+        if line.contains("|") {
+            let parts = line.split(separator: "|", maxSplits: 1, omittingEmptySubsequences: false)
+            if parts.count > 1 {
+                line = String(parts[1]).trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+        }
+        return normalizeImageURL(line)
+    }
+
+    private func writeStoredImageUrlSidecar(imagePngURL: URL, normalizedUrl: String) {
+        let sidecar = urlSidecarURL(forImagePNG: imagePngURL)
+        let hashPart = String(normalizedUrl.hashValue)
+        let payload = hashPart + "|" + normalizedUrl
+        do {
+            try payload.write(to: sidecar, atomically: true, encoding: .utf8)
+        } catch {
+            print("❌ Failed to write image URL sidecar at \(sidecar.path): \(error)")
+        }
+    }
     
     /// Downloads an image from URL and caches it with proper inversion analysis
     /// - Parameters:
@@ -180,6 +210,7 @@ open class imageHandler {
             do {
                 let imageData = processedImage.pngData()
                 try imageData?.write(to: imageStoreFile, options: [.atomic])
+                strongSelf.writeStoredImageUrlSidecar(imagePngURL: imageStoreFile, normalizedUrl: normalizedUrlString)
                 print("✅ Successfully cached processed image for \(bandName) as \(filename)")
             } catch {
                 print("❌ Error caching image for \(bandName): \(error)")
@@ -256,10 +287,18 @@ open class imageHandler {
             
             let oldImageStoreFile = directoryPath.appendingPathComponent(oldImageStoreName)
             let newImageStoreFile = directoryPath.appendingPathComponent(newImageStoreName)
-            
-            // Check if we already have the cache
-            if FileManager.default.fileExists(atPath: newImageStoreFile.path) {
-                print("⏭️ Skipping \(bandName) - already have cache at \(newImageStoreName)")
+
+            let normalizedExpected = normalizeImageURL(imageURL)
+            let cacheFileExists = FileManager.default.fileExists(atPath: newImageStoreFile.path)
+            let storedUrl = cacheFileExists ? readStoredImageUrlFromSidecar(imagePngURL: newImageStoreFile) : nil
+
+            // Pre–URL-compare caches had no .url sidecar: do not trust PNG bytes; download once, then sidecar matches skip.
+            let cacheMatchesDataUrl = cacheFileExists
+                && storedUrl != nil
+                && storedUrl == normalizedExpected
+
+            if cacheMatchesDataUrl {
+                print("⏭️ Skipping \(bandName) - PNG cache matches data URL (\(newImageStoreName))")
             } else {
                 // Check if we have old cache that should be upgraded
                 if FileManager.default.fileExists(atPath: oldImageStoreFile.path) {

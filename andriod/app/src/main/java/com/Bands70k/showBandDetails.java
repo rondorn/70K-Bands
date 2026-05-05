@@ -137,6 +137,10 @@ public class showBandDetails extends Activity {
     // Swipe gesture detection
     private GestureDetector swipeGestureDetector;
 
+    /** List row index from {@link showBands#showDetailsScreen} intent; applied once on first swipe navigation. */
+    private int detailsListAnchorFromIntent = -1;
+    private boolean detailsNavigationAnchorConsumed = false;
+
     /**
      * onCreate() starts {@link #loadAllContentProgressively()}; Android then calls onResume().
      * Without this flag, both would start a background thread (duplicate network/UI work).
@@ -156,6 +160,13 @@ public class showBandDetails extends Activity {
         // Check if we should show custom back button (launched from landscape schedule)
         Intent intent = getIntent();
         if (intent != null) {
+            if (intent.hasExtra("detailsListPosition")) {
+                detailsListAnchorFromIntent = intent.getIntExtra("detailsListPosition", -1);
+                staticVariables.currentListPosition = detailsListAnchorFromIntent;
+            } else {
+                detailsListAnchorFromIntent = -1;
+            }
+            detailsNavigationAnchorConsumed = false;
             showCustomBackButton = intent.getBooleanExtra("showCustomBackButton", false);
             showAllDetailsInDetails = intent.getBooleanExtra("showAllDetailsInDetails", false);
             alwaysShowFullDetails = intent.getBooleanExtra("alwaysShowFullDetails", false) || showAllDetailsInDetails;
@@ -938,10 +949,16 @@ public class showBandDetails extends Activity {
     }
 
     private void changeBand(String currentBand, String direction){
-        BandInfo.setSelectedBand(currentBand);
+        mainListHandler resolver = new mainListHandler();
+        String resolvedBand = resolver.getBandNameFromIndex(currentBand);
+        if (resolvedBand == null || resolvedBand.isEmpty()) {
+            resolvedBand = currentBand;
+        }
+
+        BandInfo.setSelectedBand(resolvedBand);
         
         // Update the band name and refresh content with slide animation
-        bandName = currentBand;
+        bandName = resolvedBand;
         
         // CRITICAL FIX: Recreate bandHandler with new band name so descriptions update properly
         bandHandler = new BandNotes(bandName);
@@ -1027,15 +1044,53 @@ public class showBandDetails extends Activity {
             HelpMessageHandler.showMessage(getResources().getString(R.string.EndofList));
             return;
         }
-        if (staticVariables.currentListPosition < 0) {
-            staticVariables.currentListPosition = 0;
-        } else if (staticVariables.currentListPosition >= listSize) {
-            staticVariables.currentListPosition = listSize - 1;
+
+        mainListHandler indexResolver = new mainListHandler();
+
+        // On the first swipe after opening from the main list, trust the row index we launched with
+        // (intent) if it still matches the band on screen. Avoids wrong "already at start" when static
+        // position or closest-index realign disagrees with the actual tapped row (filters, duplicates).
+        if (!detailsNavigationAnchorConsumed) {
+            detailsNavigationAnchorConsumed = true;
+            String anchorBand = BandInfo.getSelectedBand();
+            if (detailsListAnchorFromIntent >= 0 && detailsListAnchorFromIntent < listSize
+                    && anchorBand != null && !anchorBand.isEmpty()
+                    && navigationRowMatchesBand(detailsListAnchorFromIntent, anchorBand, indexResolver, listSize)) {
+                staticVariables.currentListPosition = detailsListAnchorFromIntent;
+                Log.d("SwipeNavigation", "First navigation: anchored to intent list index " + detailsListAnchorFromIntent);
+            }
+        }
+
+        // currentListForDetails shares bandNamesIndex; it can change when filters refresh. Do not use
+        // indexOf(selectedBand): the same band can appear on multiple rows (slots), so the first match
+        // would wrongly snap navigation to index 0. Only realign when the current index does not match
+        // the band on screen; then pick the matching row closest to the current index.
+        String selectedBand = BandInfo.getSelectedBand();
+        if (selectedBand != null && !selectedBand.isEmpty()) {
+            int pos = staticVariables.currentListPosition;
+            if (!navigationRowMatchesBand(pos, selectedBand, indexResolver, listSize)) {
+                int best = findNavigationIndexClosestToBand(selectedBand, pos, listSize, indexResolver);
+                if (best >= 0) {
+                    staticVariables.currentListPosition = best;
+                } else {
+                    Log.w("SwipeNavigation", "nextRecord: selected band not in current list (filters may have changed)");
+                    HelpMessageHandler.showMessage(getResources().getString(R.string.EndofList));
+                    return;
+                }
+            }
+        } else {
+            if (staticVariables.currentListPosition < 0) {
+                staticVariables.currentListPosition = 0;
+            } else if (staticVariables.currentListPosition >= listSize) {
+                staticVariables.currentListPosition = listSize - 1;
+            }
         }
 
         String directionMessage = "";
         String currentBand = "";
         String oldBandValue = staticVariables.currentListForDetails.get(staticVariables.currentListPosition);
+        final int positionBeforeSwipe = staticVariables.currentListPosition;
+        final String anchorDisplayName = navigationDisplayNameForRawRow(oldBandValue, indexResolver);
 
         if (staticVariables.currentListPosition == 0 && direction.equals("Previous")){
             Log.d("SwipeNavigation", "Already at start of list");
@@ -1050,31 +1105,97 @@ public class showBandDetails extends Activity {
 
         } else if (direction.equals("Next")){
             staticVariables.currentListPosition = staticVariables.currentListPosition + 1;
+            // Skip additional list rows that are the same band (multiple events); one swipe → next distinct band.
+            while (staticVariables.currentListPosition < listSize - 1
+                    && anchorDisplayName.equals(navigationDisplayNameForRawRow(
+                            staticVariables.currentListForDetails.get(staticVariables.currentListPosition), indexResolver))) {
+                staticVariables.currentListPosition++;
+            }
             directionMessage = getResources().getString(R.string.Next);
+            String atNext = staticVariables.currentListForDetails.get(staticVariables.currentListPosition);
+            if (anchorDisplayName.equals(navigationDisplayNameForRawRow(atNext, indexResolver))) {
+                staticVariables.currentListPosition = positionBeforeSwipe;
+                Log.d("SwipeNavigation", "Next: no distinct band ahead (same display through end of list)");
+                HelpMessageHandler.showMessage(getResources().getString(R.string.EndofList));
+                return;
+            }
 
         } else {
             staticVariables.currentListPosition = staticVariables.currentListPosition - 1;
+            while (staticVariables.currentListPosition > 0
+                    && anchorDisplayName.equals(navigationDisplayNameForRawRow(
+                            staticVariables.currentListForDetails.get(staticVariables.currentListPosition), indexResolver))) {
+                staticVariables.currentListPosition--;
+            }
             directionMessage = getResources().getString(R.string.Previous);
+            String atPrev = staticVariables.currentListForDetails.get(staticVariables.currentListPosition);
+            if (anchorDisplayName.equals(navigationDisplayNameForRawRow(atPrev, indexResolver))) {
+                staticVariables.currentListPosition = positionBeforeSwipe;
+                Log.d("SwipeNavigation", "Previous: no distinct band behind (same display through start of list)");
+                HelpMessageHandler.showMessage(getResources().getString(R.string.AlreadyAtStart));
+                return;
+            }
         }
 
         //sometime the list is not as long as is advertised
         try {
             currentBand = staticVariables.currentListForDetails.get(staticVariables.currentListPosition);
             Log.d("NextRecord", "Old Record is " + oldBandValue + " new record is " + currentBand);
-            if (oldBandValue.equals(currentBand)){
-                nextRecord(direction);
-                return;
-            }
         } catch (Exception error){
-            staticVariables.currentListPosition = staticVariables.currentListPosition - 1;
+            staticVariables.currentListPosition = positionBeforeSwipe;
             HelpMessageHandler.showMessage(getResources().getString(R.string.EndofList));
             return;
         }
 
-        Log.d("SwipeNavigation", "Navigation successful to: " + currentBand + " at position: " + staticVariables.currentListPosition);
-        HelpMessageHandler.showMessage(directionMessage + " " + currentBand);
+        String navLabel = indexResolver.getBandNameFromIndex(currentBand);
+        if (navLabel == null || navLabel.isEmpty()) {
+            navLabel = currentBand;
+        }
+        Log.d("SwipeNavigation", "Navigation successful to: " + navLabel + " at position: " + staticVariables.currentListPosition);
+        HelpMessageHandler.showMessage(directionMessage + " " + navLabel);
         changeBand(currentBand, direction);
 
+    }
+
+    /**
+     * Display band name for a raw list row (matches toast / {@link #navigationRowMatchesBand} resolution).
+     */
+    private String navigationDisplayNameForRawRow(String raw, mainListHandler resolver) {
+        if (raw == null) {
+            return "";
+        }
+        String name = resolver.getBandNameFromIndex(raw);
+        if (name == null || name.isEmpty()) {
+            return raw;
+        }
+        return name;
+    }
+
+    private boolean navigationRowMatchesBand(int index, String selectedBand, mainListHandler resolver, int listSize) {
+        if (index < 0 || index >= listSize || selectedBand == null || selectedBand.isEmpty()) {
+            return false;
+        }
+        String raw = staticVariables.currentListForDetails.get(index);
+        return selectedBand.equals(raw) || selectedBand.equals(resolver.getBandNameFromIndex(raw));
+    }
+
+    /**
+     * When several rows resolve to the same band (multiple slots), prefer the row nearest {@code preferredIndex}.
+     */
+    private int findNavigationIndexClosestToBand(String selectedBand, int preferredIndex, int listSize, mainListHandler resolver) {
+        int best = -1;
+        int bestDist = Integer.MAX_VALUE;
+        for (int i = 0; i < listSize; i++) {
+            if (!navigationRowMatchesBand(i, selectedBand, resolver, listSize)) {
+                continue;
+            }
+            int d = Math.abs(i - preferredIndex);
+            if (d < bestDist) {
+                bestDist = d;
+                best = i;
+            }
+        }
+        return best;
     }
     
     /**

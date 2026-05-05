@@ -184,6 +184,60 @@ public class ImageHandler {
         String hashFilePath = imageFile.getAbsolutePath() + ".url";
         return new File(hashFilePath);
     }
+
+    /** Trims URL strings so comparisons match what we persist after download. */
+    private static String normalizeImageUrlForCache(String url) {
+        if (url == null) {
+            return "";
+        }
+        return url.trim();
+    }
+
+    /**
+     * Current image URL for a band (combined list first, then BandInfo), normalized for comparison.
+     */
+    private static String resolveCurrentImageUrl(String bandName) {
+        if (bandName == null || bandName.isEmpty()) {
+            return "";
+        }
+        CombinedImageListHandler combinedHandler = CombinedImageListHandler.getInstance();
+        String imageUrl = combinedHandler.getImageUrl(bandName);
+        if (imageUrl == null || imageUrl.trim().isEmpty()) {
+            imageUrl = BandInfo.getImageUrl(bandName);
+        }
+        return normalizeImageUrlForCache(imageUrl);
+    }
+
+    /**
+     * Reads the URL stored next to a cached image (same format as {@link #saveUrlHash}).
+     * @return stored URL or null if missing / unreadable
+     */
+    private String readStoredUrlFromSidecar(File imageFile) {
+        File urlHashFile = getUrlHashFile(imageFile);
+        if (!urlHashFile.exists()) {
+            return null;
+        }
+        try {
+            java.io.FileReader reader = new java.io.FileReader(urlHashFile);
+            java.io.BufferedReader bufferedReader = new java.io.BufferedReader(reader);
+            String line = bufferedReader.readLine();
+            bufferedReader.close();
+            reader.close();
+            if (line == null || line.trim().isEmpty()) {
+                return null;
+            }
+            if (line.contains("|")) {
+                String[] parts = line.split("\\|", 2);
+                if (parts.length > 1) {
+                    return normalizeImageUrlForCache(parts[1]);
+                }
+            }
+            return normalizeImageUrlForCache(line);
+        } catch (Exception e) {
+            Log.e("ImageFile", "Error reading stored image URL: " + e.getMessage());
+            return null;
+        }
+    }
     
     /**
      * Checks if the cached image exists (for display purposes).
@@ -215,8 +269,9 @@ public class ImageHandler {
      * 
      * BACKGROUND LOADING STRATEGY:
      * - If file doesn't exist, needs update
-     * - If file exists but URL changed, needs update (only for schedule images)
-     * - If file exists and URL matches, no update needed
+     * - If file exists but there is no {@code .url} sidecar, needs update (one-time after URL-compare upgrade)
+     * - If stored URL differs from current data URL, needs update
+     * - If stored URL matches and file exists, no update needed
      * 
      * @param bandName The name of the band
      * @param imageFile The cached image file
@@ -227,97 +282,50 @@ public class ImageHandler {
             Log.d("ImageFile", "No cached image for " + bandName + " - needs download");
             return true;
         }
-        
-        // Check if this is a schedule image (has ImageDate)
-        CombinedImageListHandler combinedHandler = CombinedImageListHandler.getInstance();
-        String imageDate = combinedHandler.getImageDate(bandName);
-        
-        // Artist images (no ImageDate) never need updating once downloaded
-        if (imageDate == null || imageDate.trim().isEmpty()) {
-            Log.d("ImageFile", "Artist image exists for " + bandName + " - no update needed");
+
+        String currentUrl = resolveCurrentImageUrl(bandName);
+        if (currentUrl.isEmpty() || currentUrl.equals(" ")) {
+            Log.d("ImageFile", "No image URL in data for " + bandName + " - cannot refresh");
             return false;
         }
-        
-        // Schedule image - check if URL changed
-        String currentUrl = combinedHandler.getImageUrl(bandName);
-        if (currentUrl == null || currentUrl.trim().isEmpty()) {
-            currentUrl = BandInfo.getImageUrl(bandName);
-        }
-        
-        if (currentUrl == null || currentUrl.trim().isEmpty() || currentUrl.equals(" ")) {
-            // No URL available, no update possible
-            return false;
-        }
-        
-        // Check stored URL
-        File urlHashFile = getUrlHashFile(imageFile);
-        String storedUrl = null;
-        
-        if (urlHashFile.exists()) {
-            try {
-                java.io.FileReader reader = new java.io.FileReader(urlHashFile);
-                java.io.BufferedReader bufferedReader = new java.io.BufferedReader(reader);
-                String line = bufferedReader.readLine();
-                if (line != null && line.contains("|")) {
-                    String[] parts = line.split("\\|", 2);
-                    if (parts.length > 1) {
-                        storedUrl = parts[1].trim();
-                    }
-                }
-                bufferedReader.close();
-                reader.close();
-            } catch (Exception e) {
-                Log.e("ImageFile", "Error reading URL hash file: " + e.getMessage());
-            }
-        }
-        
-        // If no stored URL, assume it needs update (old format or first download)
-        if (storedUrl == null || storedUrl.trim().isEmpty()) {
-            Log.d("ImageFile", "No stored URL for " + bandName + " - needs update");
+
+        String storedUrl = readStoredUrlFromSidecar(imageFile);
+        if (storedUrl == null || storedUrl.isEmpty()) {
+            // PNG exists but no URL sidecar (pre–URL-compare builds): do not trust bytes; re-download once,
+            // then saveUrlHash after download ties cache to this data URL.
+            Log.d("ImageFile", "No URL sidecar for " + bandName + " — re-download to verify cache");
             return true;
         }
-        
-        // Compare URLs
+
         if (!storedUrl.equals(currentUrl)) {
-            Log.d("ImageFile", "URL changed for " + bandName + " - needs update");
+            Log.d("ImageFile", "Image URL changed for " + bandName + " - needs update");
             return true;
         }
-        
-        Log.d("ImageFile", "Cached image is current for " + bandName + " - no update needed");
+
+        Log.d("ImageFile", "Cached image matches data URL for " + bandName + " - no update needed");
         return false;
     }
     
     /**
-     * Saves the URL hash and actual URL for a downloaded image.
-     * Only saves hash for schedule images (with ImageDate) - artist images don't need URL validation.
-     * Stores both hash and URL to avoid hash collision issues.
-     * @param imageFile The image file
-     * @param imageUrl The URL that was used to download the image
-     * @param imageDate The ImageDate if this is a schedule image, null for artist images
+     * Saves the URL used for the cached image next to the file ({@code .url} sidecar).
+     * Format {@code hash|url} matches historical schedule entries; artist images use the same
+     * so bulk download and {@link #needsImageUpdate} can skip when the data URL is unchanged.
      */
     private void saveUrlHash(File imageFile, String imageUrl, String imageDate) {
-        // Only save URL hash for schedule images (with ImageDate)
-        // Artist images don't expire, so they don't need URL validation
-        if (imageDate == null || imageDate.trim().isEmpty()) {
-            Log.d("ImageFile", "Skipping URL hash save for artist image " + imageFile.getName() + " (no expiration)");
-            return;
-        }
-        
         if (imageUrl == null || imageUrl.trim().isEmpty() || imageUrl.equals(" ")) {
             return;
         }
-        
+        String normalized = normalizeImageUrlForCache(imageUrl);
         try {
             File urlHashFile = getUrlHashFile(imageFile);
             java.io.FileWriter writer = new java.io.FileWriter(urlHashFile);
-            String urlHash = String.valueOf(imageUrl.hashCode());
-            // Store both hash and URL: "hash|url" format
-            // This allows us to detect hash collisions by comparing actual URLs
-            writer.write(urlHash + "|" + imageUrl);
+            String urlHash = String.valueOf(normalized.hashCode());
+            writer.write(urlHash + "|" + normalized);
             writer.close();
-            Log.d("ImageFile", "Saved URL hash and URL for schedule image " + imageFile.getName() + " (date: " + imageDate + "): hash=" + urlHash + ", url=" + imageUrl);
+            Log.d("ImageFile", "Saved image URL sidecar for " + imageFile.getName()
+                    + (imageDate != null && !imageDate.trim().isEmpty() ? " (schedule " + imageDate + ")" : " (artist)"));
         } catch (Exception e) {
-            Log.e("ImageFile", "Error saving URL hash: " + e.getMessage());
+            Log.e("ImageFile", "Error saving URL sidecar: " + e.getMessage());
         }
     }
     
@@ -422,7 +430,7 @@ public class ImageHandler {
 
         Log.d("loadImageFile", "getImage called for " + this.bandName + " at " + bandImageFile.getAbsolutePath());
 
-        // Simple check: if cached image exists, use it
+        // Cache-first for list/UI paths; URL-based invalidation is handled by bulk + getImageImmediate.
         if (isCachedImageValid(this.bandName, bandImageFile)) {
             localURL = bandImageFile.toURI();
             Log.d("loadImageFile", "Using cached image for " + this.bandName);
@@ -457,23 +465,25 @@ public class ImageHandler {
 
         Log.d("loadImageFile", "getImageImmediate called for " + this.bandName + ", file exists: " + bandImageFile.exists());
 
-        // SIMPLE CACHE-FIRST LOGIC: Use cache if exists, otherwise download if online
-        if (isCachedImageValid(this.bandName, bandImageFile)) {
-            // Cached image exists - use it!
+        if (bandImageFile.exists() && !needsImageUpdate(this.bandName, bandImageFile)) {
             localURL = bandImageFile.toURI();
             Log.d("loadImageFile", "Using cached image for " + this.bandName);
-        } else {
-            // No cached image - download if online
-            Log.d("loadImageFile", "No cached image for " + this.bandName + ", attempting download");
+        } else if (OnlineStatus.isOnline()) {
+            Log.d("loadImageFile", "No cache or URL changed for " + this.bandName + ", attempting download");
             downloadImageImmediate();
-            
             if (bandImageFile.exists()) {
                 localURL = bandImageFile.toURI();
-                Log.d("loadImageFile", "Image downloaded successfully for " + this.bandName);
+                Log.d("loadImageFile", "Image ready for " + this.bandName);
             } else {
                 localURL = null;
                 Log.d("loadImageFile", "Image not available for " + this.bandName);
             }
+        } else if (bandImageFile.exists()) {
+            localURL = bandImageFile.toURI();
+            Log.d("loadImageFile", "Offline: using cached image despite possible stale URL for " + this.bandName);
+        } else {
+            localURL = null;
+            Log.d("loadImageFile", "No cached image for " + this.bandName);
         }
 
         return localURL;

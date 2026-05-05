@@ -205,6 +205,9 @@ class DetailViewModel: ObservableObject {
     private var originalNotes: String = ""
     private var hasNotesChanged: Bool = false
     
+    /// Normalized list slot for the row shown in detail (e.g. `801028800.0:Sinister`). Same band name can appear on multiple rows; this disambiguates swipe order.
+    private var detailNavigationSlotKey: String = ""
+    
     // MARK: - Initialization
     
     init(bandName: String) {
@@ -331,6 +334,7 @@ class DetailViewModel: ObservableObject {
             self.loadPriority()
             self.setupTranslationButton()
             self.updateNavigationState()
+            self.refreshDetailNavigationAnchorIfNeeded()
             
             // Check if essential data is still missing after initial load
             self.checkAndHandleMissingData()
@@ -521,25 +525,156 @@ class DetailViewModel: ObservableObject {
     }
     
     private func canNavigateToPrevious() -> Bool {
-        let currentIndex = findCurrentBandIndex()
-        return currentIndex > 0
+        guard !currentBandList.isEmpty else { return false }
+        let lists = buildLoopNavigationLists()
+        guard let loopIdx = resolveLoopNavigationIndex(loopList: lists.loop, sourceRaw: lists.sourceRaw) else { return false }
+        return hasDistinctBandBehind(loopIdx: loopIdx, loopList: lists.loop, displayName: bandName)
     }
     
     private func canNavigateToNext() -> Bool {
-        let currentIndex = findCurrentBandIndex()
-        let totalBands = currentBandList.count
-        return currentIndex < totalBands - 1
+        guard !currentBandList.isEmpty else { return false }
+        let lists = buildLoopNavigationLists()
+        guard let loopIdx = resolveLoopNavigationIndex(loopList: lists.loop, sourceRaw: lists.sourceRaw) else { return false }
+        return hasDistinctBandAhead(loopIdx: loopIdx, loopList: lists.loop, displayName: bandName)
     }
     
     private func findCurrentBandIndex() -> Int {
-        for (index, bandIndex) in currentBandList.enumerated() {
-            let bandFromIndex = getBandFromIndex(index: bandIndex)
-            let bandNameFromIndex = bandNameFromIndex(index: bandFromIndex)
-            if bandNameFromIndex == bandName {
-                return index
+        return findCurrentRawBandListIndex()
+    }
+    
+    /// Raw row index in `currentBandList` for the band on screen (disambiguates duplicate display names).
+    private func findCurrentRawBandListIndex() -> Int {
+        if currentBandList.isEmpty { return -1 }
+        if !detailNavigationSlotKey.isEmpty {
+            for (i, raw) in currentBandList.enumerated() {
+                if getBandFromIndex(index: raw) == detailNavigationSlotKey {
+                    return i
+                }
             }
         }
-        return -1
+        var best = -1
+        var bestDist = Int.max
+        for (i, raw) in currentBandList.enumerated() {
+            let slot = getBandFromIndex(index: raw)
+            if bandNameFromIndex(index: slot) == bandName {
+                let d = abs(i - bandListIndexCache)
+                if d < bestDist {
+                    bestDist = d
+                    best = i
+                }
+            }
+        }
+        return best
+    }
+    
+    private func buildLoopNavigationLists() -> (loop: [String], sourceRaw: [Int]) {
+        var loopThroughBandList = [String]()
+        var loopSourceRawIndex = [Int]()
+        var previousInLoop = ""
+        for (rawIdx, index) in currentBandList.enumerated() {
+            let bandInIndex = getBandFromIndex(index: index)
+            if bandInIndex == previousInLoop {
+                continue
+            }
+            previousInLoop = bandInIndex
+            loopThroughBandList.append(bandInIndex)
+            loopSourceRawIndex.append(rawIdx)
+        }
+        return (loopThroughBandList, loopSourceRawIndex)
+    }
+    
+    /// True if swiping Next can reach a row whose display name differs (skips multiple events for the same band).
+    private func hasDistinctBandAhead(loopIdx: Int, loopList: [String], displayName: String) -> Bool {
+        guard loopIdx + 1 < loopList.count else { return false }
+        for i in (loopIdx + 1)..<loopList.count {
+            if bandNameFromIndex(index: loopList[i]) != displayName { return true }
+        }
+        return false
+    }
+    
+    /// True if swiping Previous can reach a row whose display name differs.
+    private func hasDistinctBandBehind(loopIdx: Int, loopList: [String], displayName: String) -> Bool {
+        guard loopIdx > 0 else { return false }
+        for i in (0..<loopIdx).reversed() {
+            if bandNameFromIndex(index: loopList[i]) != displayName { return true }
+        }
+        return false
+    }
+    
+    /// Next or previous loop index whose display name differs from `currentDisplayName`, or nil at the list boundary.
+    private func nextDistinctBandLoopIndex(from counter: Int, direction: String, loopList: [String], currentDisplayName: String) -> Int? {
+        let sizeBands = loopList.count
+        if direction == "Next" {
+            var i = counter + 1
+            while i < sizeBands {
+                if bandNameFromIndex(index: loopList[i]) != currentDisplayName {
+                    return i
+                }
+                i += 1
+            }
+            return nil
+        }
+        if direction == "Previous" {
+            var i = counter - 1
+            while i >= 0 {
+                if bandNameFromIndex(index: loopList[i]) != currentDisplayName {
+                    return i
+                }
+                i -= 1
+            }
+            return nil
+        }
+        return nil
+    }
+    
+    /// Index in the collapsed swipe list matching the current detail row.
+    private func resolveLoopNavigationIndex(loopList: [String], sourceRaw: [Int]) -> Int? {
+        guard loopList.count == sourceRaw.count, !loopList.isEmpty else { return nil }
+        if !detailNavigationSlotKey.isEmpty {
+            for i in 0..<loopList.count {
+                if loopList[i] == detailNavigationSlotKey,
+                   bandNameFromIndex(index: loopList[i]) == bandName {
+                    return i
+                }
+            }
+        }
+        var candidates: [Int] = []
+        for i in 0..<loopList.count {
+            if bandNameFromIndex(index: loopList[i]) == bandName {
+                candidates.append(i)
+            }
+        }
+        guard !candidates.isEmpty else { return nil }
+        if candidates.count == 1 {
+            return candidates[0]
+        }
+        var best = candidates[0]
+        var bestDist = abs(sourceRaw[best] - bandListIndexCache)
+        for c in candidates.dropFirst() {
+            let d = abs(sourceRaw[c] - bandListIndexCache)
+            if d < bestDist {
+                bestDist = d
+                best = c
+            }
+        }
+        return best
+    }
+    
+    /// After list refresh, keep or re-seed `detailNavigationSlotKey` so duplicate-band swipe state stays coherent.
+    private func refreshDetailNavigationAnchorIfNeeded() {
+        guard !currentBandList.isEmpty else { return }
+        if !detailNavigationSlotKey.isEmpty {
+            let stillPresent = currentBandList.contains { getBandFromIndex(index: $0) == detailNavigationSlotKey }
+            if stillPresent {
+                return
+            }
+            detailNavigationSlotKey = ""
+        }
+        let raw = findCurrentRawBandListIndex()
+        if raw >= 0, raw < currentBandList.count {
+            detailNavigationSlotKey = getBandFromIndex(index: currentBandList[raw])
+            bandListIndexCache = raw
+        }
     }
     
     func toggleAttendedStatus(for event: ScheduleEvent) {
@@ -1776,11 +1911,7 @@ class DetailViewModel: ObservableObject {
         print("DEBUG: swipeToNextRecord() called with direction: \(direction)")
         print("DEBUG: currentBandList: \(currentBandList)")
         print("DEBUG: current bandName: \(bandName)")
-        
-        var loopThroughBandList = [String]()
-        var previousInLoop = ""
-        var bandNameNext = ""
-        var timeView = true
+        print("DEBUG: detailNavigationSlotKey: '\(detailNavigationSlotKey)' bandListIndexCache: \(bandListIndexCache)")
         
         // Disable swiping if needed
         if blockSwiping {
@@ -1794,61 +1925,38 @@ class DetailViewModel: ObservableObject {
             self.blockSwiping = false
         }
         
-        // Build universal list of bands for all view types
+        let lists = buildLoopNavigationLists()
+        let loopThroughBandList = lists.loop
+        let loopSourceRawIndex = lists.sourceRaw
         print("Checking next bandName currentBandList is \(currentBandList)")
-        for index in currentBandList {
-            
-            var bandInIndex = getBandFromIndex(index: index)
-            
-            // Disallow back to back duplicates
-            if bandInIndex == previousInLoop {
-                continue
-            }
-            previousInLoop = bandInIndex
-            
-            loopThroughBandList.append(bandInIndex)
-            
-            // Determine if time applies here
-            let indexSplit = index.components(separatedBy: ":")
-            if indexSplit.count == 1 {
-                timeView = false
-            }
-        }
-        
-        // Find where in list
-        var counter = 0
-        let sizeBands = loopThroughBandList.count
         print("Checking next bandName list of bands is \(loopThroughBandList)")
         
-        for index in loopThroughBandList {
-            if bandName == bandNameFromIndex(index: index) {
-                print("Checking next bandName Found match at \(counter) for \(bandName)")
-                
-                if direction == "Previous" {
-                    let previousIndex = counter - 1
-                    if previousIndex >= 0 {
-                        let nextIndex = getBandFromIndex(index: loopThroughBandList[previousIndex])
-                        eventSelectedIndex = timeIndexMap[nextIndex] ?? ""
-                        let bandNameFromIndex = nextIndex.components(separatedBy: ":")
-                        bandNameNext = bandNameFromIndex[1]
-                        print("Checking next bandName Previous \(nextIndex) - \(eventSelectedIndex) - \(bandNameFromIndex) - \(bandNameNext)")
-                    }
-                } else {
-                    let nextCounter = counter + 1
-                    if nextCounter < sizeBands {
-                        let nextIndex = getBandFromIndex(index: loopThroughBandList[nextCounter])
-                        eventSelectedIndex = timeIndexMap[nextIndex] ?? ""
-                        let bandNameFromIndex = nextIndex.components(separatedBy: ":")
-                        bandNameNext = bandNameFromIndex[1]
-                        print("Checking next bandName Next \(nextIndex) - \(eventSelectedIndex) - \(bandNameFromIndex) - \(bandNameNext)")
-                    }
-                }
-                break
+        guard let counter = resolveLoopNavigationIndex(loopList: loopThroughBandList, sourceRaw: loopSourceRawIndex) else {
+            print("Checking next bandName No loop index resolved for '\(bandName)'")
+            jumpToNextOrPreviousScreen(nextBandName: "", direction: direction, nextNavigationSlotKey: "", nextSourceRawIndex: -1)
+            return
+        }
+        print("Checking next bandName Resolved loop index \(counter) for \(bandName) (slot: \(loopThroughBandList[counter]))")
+        
+        var bandNameNext = ""
+        var nextNavigationSlotKey = ""
+        var nextSourceRawIndex = -1
+        
+        if let targetIdx = nextDistinctBandLoopIndex(from: counter, direction: direction, loopList: loopThroughBandList, currentDisplayName: bandName) {
+            let nextIndex = getBandFromIndex(index: loopThroughBandList[targetIdx])
+            eventSelectedIndex = timeIndexMap[nextIndex] ?? ""
+            bandNameNext = bandNameFromIndex(index: nextIndex)
+            nextNavigationSlotKey = loopThroughBandList[targetIdx]
+            nextSourceRawIndex = loopSourceRawIndex[targetIdx]
+            if targetIdx != counter + 1 && direction == "Next" {
+                print("Checking next bandName Skipped same-band events; landing at loop \(targetIdx): \(bandNameNext)")
+            } else if targetIdx != counter - 1 && direction == "Previous" {
+                print("Checking next bandName Skipped same-band events; landing at loop \(targetIdx): \(bandNameNext)")
             }
-            counter += 1
+            print("Checking next bandName \(direction) \(nextIndex) - \(eventSelectedIndex) - \(bandNameNext)")
         }
         
-        jumpToNextOrPreviousScreen(nextBandName: bandNameNext, direction: direction)
+        jumpToNextOrPreviousScreen(nextBandName: bandNameNext, direction: direction, nextNavigationSlotKey: nextNavigationSlotKey, nextSourceRawIndex: nextSourceRawIndex)
     }
     
     private func getBandFromIndex(index: String) -> String {
@@ -1881,11 +1989,11 @@ class DetailViewModel: ObservableObject {
         return bandName
     }
     
-    private func jumpToNextOrPreviousScreen(nextBandName: String, direction: String) {
+    private func jumpToNextOrPreviousScreen(nextBandName: String, direction: String, nextNavigationSlotKey: String = "", nextSourceRawIndex: Int = -1) {
         var message = ""
         let translatedDirection = NSLocalizedString(direction, comment: "")
         
-        print("DEBUG: jumpToNextOrPreviousScreen - from '\(bandName)' to '\(nextBandName)'")
+        print("DEBUG: jumpToNextOrPreviousScreen - from '\(bandName)' to '\(nextBandName)' (nextSlot: '\(nextNavigationSlotKey)')")
         
         if nextBandName.isEmpty {
             if direction == "Next" {
@@ -1909,9 +2017,15 @@ class DetailViewModel: ObservableObject {
             // Update to the new band (like original: immediate update)
             bandSelected = nextBandName
             bandName = nextBandName
+            if !nextNavigationSlotKey.isEmpty {
+                detailNavigationSlotKey = nextNavigationSlotKey
+            }
+            if nextSourceRawIndex >= 0 {
+                bandListIndexCache = nextSourceRawIndex
+            }
             isLoadingImage = false // Reset image loading state for new band
             bandImage = nil // Clear previous band's image
-            print("DEBUG: Updated bandName from '\(currentBand)' to '\(self.bandName)'")
+            print("DEBUG: Updated bandName from '\(currentBand)' to '\(self.bandName)' (detailNavigationSlotKey: '\(detailNavigationSlotKey)')")
             
             toastManager.show(message: message, placeHigh: false)
             
