@@ -118,8 +118,15 @@ class DetailViewModel: ObservableObject {
     // Toast messaging
     @Published var toastManager = ToastManager()
     
-    // Loading state for missing essential data
+    // Loading state for missing essential data (legacy; detail uses display-first + background hydration)
     @Published var isLoadingEssentialData: Bool = false
+    
+    /// Bumped on each `loadBandData` so stale background completions are ignored after swipe / refresh.
+    private var loadBandDataGeneration: Int = 0
+    /// When true, `bandNamesCacheReady` / `RefreshDisplay` may reload links and details from the band-name cache.
+    private var pendingEssentialDataHydration: Bool = false
+    /// Generation of the newest `getCachedData` hydration kicked off from detail (stale completions ignore this).
+    private var inFlightEssentialHydrationGeneration: Int?
     
     // Swipe navigation state
     private var blockSwiping: Bool = false
@@ -141,6 +148,10 @@ class DetailViewModel: ObservableObject {
             return false // Don't show loading in landscape - data is intentionally hidden
         }
         
+        if DetailProfileBypassBandNames.shouldBypassEssentialProfileLoad(displayName: bandName) {
+            return false
+        }
+        
         // Check if this is a single-event band (likely won't have full profile data)
         let eventCount = scheduleEvents.count
         let isSingleEventBand = eventCount == 1
@@ -159,12 +170,11 @@ class DetailViewModel: ObservableObject {
             return false // Don't show loading for bands with few events and no existing profile data
         }
         
-        // Only consider data missing if we have no links AND no band details AND not currently loading
-        // This prevents showing loading for bands that legitimately don't have this data
-        let missing = !hasAnyLinks && !hasBandDetails && !isLoadingEssentialData
+        // Only consider data missing if we have no links AND no band details
+        let missing = !hasAnyLinks && !hasBandDetails
         
         if missing {
-            print("DEBUG: isEssentialDataMissing=true for '\(bandName)' (events: \(eventCount)) - hasAnyLinks: \(hasAnyLinks), hasBandDetails: \(hasBandDetails), isLoadingEssentialData: \(isLoadingEssentialData)")
+            print("DEBUG: isEssentialDataMissing=true for '\(bandName)' (events: \(eventCount)) - hasAnyLinks: \(hasAnyLinks), hasBandDetails: \(hasBandDetails)")
         }
         
         return missing
@@ -239,10 +249,9 @@ class DetailViewModel: ObservableObject {
         ) { [weak self] _ in
             guard let self = self else { return }
             
-            // If we're currently showing loading indicator, check if data is now available
-            if self.isLoadingEssentialData {
-                print("🔄 Received RefreshDisplay notification while loading data for '\(self.bandName)'")
-                self.checkForDataAfterRefresh()
+            if self.pendingEssentialDataHydration {
+                print("🔄 Received RefreshDisplay — applying band cache to detail for '\(self.bandName)'")
+                self.applyEssentialDataFromBandNameCache()
             }
         }
         
@@ -254,10 +263,9 @@ class DetailViewModel: ObservableObject {
         ) { [weak self] _ in
             guard let self = self else { return }
             
-            // If we're currently showing loading indicator, check if data is now available
-            if self.isLoadingEssentialData {
-                print("🔄 Received bandNamesCacheReady notification while loading data for '\(self.bandName)'")
-                self.checkForDataAfterRefresh()
+            if self.pendingEssentialDataHydration {
+                print("🔄 Received bandNamesCacheReady — applying band cache to detail for '\(self.bandName)'")
+                self.applyEssentialDataFromBandNameCache()
             }
         }
         
@@ -325,6 +333,8 @@ class DetailViewModel: ObservableObject {
         
         // Ensure we're on the main thread for UI updates
         DispatchQueue.main.async {
+            self.loadBandDataGeneration += 1
+            let generation = self.loadBandDataGeneration
             // IMPORTANT: Load schedule events BEFORE image so we have imageDate available
             self.loadScheduleEvents()
             self.loadBandImage()
@@ -337,50 +347,47 @@ class DetailViewModel: ObservableObject {
             self.refreshDetailNavigationAnchorIfNeeded()
             
             // Check if essential data is still missing after initial load
-            self.checkAndHandleMissingData()
+            self.checkAndHandleMissingData(generation: generation)
             
             print("DEBUG: loadBandData() completed for band: '\(self.bandName)'")
         }
     }
     
-    private func checkAndHandleMissingData() {
+    private func checkAndHandleMissingData(generation: Int) {
         print("DEBUG: checkAndHandleMissingData for '\(bandName)' - hasAnyLinks: \(hasAnyLinks), hasBandDetails: \(hasBandDetails)")
         print("DEBUG: Current data state - country: '\(country)', genre: '\(genre)', lastOnCruise: '\(lastOnCruise)'")
         print("DEBUG: Current links - official: '\(officialUrl)', wikipedia: '\(wikipediaUrl)', youtube: '\(youtubeUrl)', metalArchives: '\(metalArchivesUrl)'")
         
         if isEssentialDataMissing {
-            print("DEBUG: ⚠️ Essential data missing for '\(bandName)', starting loading indicator and retry")
-            isLoadingEssentialData = true
-            
-            // Retry loading data after a delay to allow background data loading to complete
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                self.retryLoadingEssentialData()
-            }
+            print("DEBUG: ⚠️ Essential data not yet shown for '\(bandName)' — hydrating band-name cache in background (no blocking UI)")
+            pendingEssentialDataHydration = true
+            startEssentialDataBackgroundHydration(generation: generation)
         } else {
-            print("DEBUG: ✅ Essential data present for '\(bandName)', no loading needed")
+            pendingEssentialDataHydration = false
+            print("DEBUG: ✅ Essential data present or bypassed for '\(bandName)', no background hydration needed")
         }
     }
     
-    private func retryLoadingEssentialData() {
-        print("DEBUG: 🔄 First retry loading essential data for '\(bandName)'")
-        print("DEBUG: Before retry - country: '\(country)', genre: '\(genre)', lastOnCruise: '\(lastOnCruise)'")
-        print("DEBUG: Before retry - links: official='\(officialUrl)', wiki='\(wikipediaUrl)', youtube='\(youtubeUrl)', metal='\(metalArchivesUrl)'")
-        
-        // First check if the bandNames dictionary has been populated at all
-        let bandNamesCount = bandNameHandle.getBandNames().count
-        print("DEBUG: BandNames dictionary contains \(bandNamesCount) bands")
-        
-        if bandNamesCount == 0 {
-            print("DEBUG: ⚠️ BandNames dictionary is empty - data still loading from background")
-            // Don't bother checking individual band data if the entire dictionary is empty
-            // Continue retry - data is still loading
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                self.finalRetryLoadingEssentialData()
+    /// Loads SQLite-backed band names off the main thread, then mirrors the prior `getCachedData` follow-up (background `gatherData`) and reapplies detail fields on the main thread.
+    private func startEssentialDataBackgroundHydration(generation: Int) {
+        inFlightEssentialHydrationGeneration = generation
+        let handler = bandNameHandle
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            handler.loadCachedDataImmediately()
+            handler.getCachedData(forceNetwork: false) {
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+                    if self.inFlightEssentialHydrationGeneration == generation {
+                        self.inFlightEssentialHydrationGeneration = nil
+                    }
+                    guard self.loadBandDataGeneration == generation else { return }
+                    self.applyEssentialDataFromBandNameCache()
+                }
             }
-            return
         }
-        
-        // Check if the underlying data source is available for this specific band
+    }
+    
+    private func hasAnySourceDataForCurrentBand() -> Bool {
         let testCountry = bandNameHandle.getBandCountry(bandName)
         let testGenre = bandNameHandle.getBandGenre(bandName)
         let testPriorYears = bandNameHandle.getPriorYears(bandName)
@@ -388,120 +395,31 @@ class DetailViewModel: ObservableObject {
         let testWiki = bandNameHandle.getWikipediaPage(bandName)
         let testYoutube = bandNameHandle.getYouTubePage(bandName)
         let testMetal = bandNameHandle.getMetalArchives(bandName)
-        
-        print("DEBUG: Direct data source check - country: '\(testCountry)', genre: '\(testGenre)', priorYears: '\(testPriorYears)'")
-        print("DEBUG: Direct links check - official: '\(testOfficial)', wiki: '\(testWiki)', youtube: '\(testYoutube)', metal: '\(testMetal)'")
-        
-        // Check if data source has any data at all for this band
-        let hasAnySourceData = !testCountry.isEmpty || !testGenre.isEmpty || !testPriorYears.isEmpty || 
-                               !testOfficial.isEmpty || !testWiki.isEmpty || !testYoutube.isEmpty || !testMetal.isEmpty
-        print("DEBUG: Data source has any data for '\(bandName)': \(hasAnySourceData)")
-        
-        // Reload the essential data
-        loadBandDetails()
-        loadBandLinks()
-        
-        print("DEBUG: After retry - country: '\(country)', genre: '\(genre)', lastOnCruise: '\(lastOnCruise)'")
-        print("DEBUG: After retry - links: official='\(officialUrl)', wiki='\(wikipediaUrl)', youtube='\(youtubeUrl)', metal='\(metalArchivesUrl)'")
-        
-        // Check if we now have data
-        if hasAnyLinks || hasBandDetails {
-            print("DEBUG: ✅ Essential data loaded successfully on first retry for '\(bandName)'")
-            isLoadingEssentialData = false
-        } else if !hasAnySourceData {
-            print("DEBUG: ❌ No source data available for '\(bandName)' - stopping loading (band may not exist in database)")
-            isLoadingEssentialData = false
-        } else {
-            print("DEBUG: ⚠️ Source has data but first retry failed, scheduling final retry for '\(bandName)'")
-            // Try one more time after a longer delay to give more time for data loading
-            DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
-                self.finalRetryLoadingEssentialData()
-            }
-        }
+        return !testCountry.isEmpty || !testGenre.isEmpty || !testPriorYears.isEmpty ||
+            !testOfficial.isEmpty || !testWiki.isEmpty || !testYoutube.isEmpty || !testMetal.isEmpty
     }
     
-    private func finalRetryLoadingEssentialData() {
-        print("DEBUG: 🔄 Final retry to load essential data for '\(bandName)'")
-        
-        // First check if the bandNames dictionary has been populated at all
-        let bandNamesCount = bandNameHandle.getBandNames().count
-        print("DEBUG: Final retry - BandNames dictionary contains \(bandNamesCount) bands")
-        
-        if bandNamesCount == 0 {
-            print("DEBUG: ❌ BandNames dictionary still empty on final retry - background loading may have failed")
-            isLoadingEssentialData = false
+    private func applyEssentialDataFromBandNameCache() {
+        guard pendingEssentialDataHydration else { return }
+        loadBandDetails()
+        loadBandLinks()
+        if hasAnyLinks || hasBandDetails {
+            print("DEBUG: ✅ Essential profile fields now available for '\(bandName)'")
+            pendingEssentialDataHydration = false
             return
         }
-        
-        // Check data source for this specific band
-        let testCountry = bandNameHandle.getBandCountry(bandName)
-        let testGenre = bandNameHandle.getBandGenre(bandName)
-        let testPriorYears = bandNameHandle.getPriorYears(bandName)
-        let testOfficial = bandNameHandle.getofficalPage(bandName)
-        let testWiki = bandNameHandle.getWikipediaPage(bandName)
-        let testYoutube = bandNameHandle.getYouTubePage(bandName)
-        let testMetal = bandNameHandle.getMetalArchives(bandName)
-        
-        print("DEBUG: Final retry - direct source check: country='\(testCountry)', genre='\(testGenre)', priorYears='\(testPriorYears)'")
-        print("DEBUG: Final retry - direct links check: official='\(testOfficial)', wiki='\(testWiki)', youtube='\(testYoutube)', metal='\(testMetal)'")
-        
-        let hasAnySourceData = !testCountry.isEmpty || !testGenre.isEmpty || !testPriorYears.isEmpty || 
-                               !testOfficial.isEmpty || !testWiki.isEmpty || !testYoutube.isEmpty || !testMetal.isEmpty
-        print("DEBUG: Final retry - data source has any data for '\(bandName)': \(hasAnySourceData)")
-        
-        // Final attempt to load data
-        loadBandDetails()
-        loadBandLinks()
-        
-        print("DEBUG: Final retry results - country: '\(country)', genre: '\(genre)', lastOnCruise: '\(lastOnCruise)'")
-        print("DEBUG: Final retry results - links: official='\(officialUrl)', wiki='\(wikipediaUrl)', youtube='\(youtubeUrl)', metal='\(metalArchivesUrl)'")
-        
-        if hasAnyLinks || hasBandDetails {
-            print("DEBUG: ✅ Essential data loaded on final retry for '\(bandName)'")
-        } else if !hasAnySourceData {
-            print("DEBUG: ❌ No source data available for '\(bandName)' - band may not exist in database")
-        } else {
-            print("DEBUG: ❌ Source has data but final retry failed for '\(bandName)' - possible loading issue")
-        }
-        
-        // Stop loading regardless of outcome
-        isLoadingEssentialData = false
-    }
-    
-    private func checkForDataAfterRefresh() {
-        print("DEBUG: 🔔 Checking for data after refresh notification for '\(bandName)'")
-        
-        // Check if the bandNames dictionary is now populated
         let bandNamesCount = bandNameHandle.getBandNames().count
-        print("DEBUG: After notification - BandNames dictionary contains \(bandNamesCount) bands")
-        
         if bandNamesCount == 0 {
-            print("DEBUG: ⚠️ BandNames dictionary still empty after notification - waiting longer")
-            return // Keep loading indicator, data still not ready
+            print("DEBUG: Band-name cache still empty for '\(bandName)' — will retry when cache notifications arrive")
+            return
         }
-        
-        // Check data source directly first
-        let testCountry = bandNameHandle.getBandCountry(bandName)
-        let testGenre = bandNameHandle.getBandGenre(bandName)
-        let testPriorYears = bandNameHandle.getPriorYears(bandName)
-        let testOfficial = bandNameHandle.getofficalPage(bandName)
-        
-        print("DEBUG: After notification - direct source check: country='\(testCountry)', genre='\(testGenre)', priorYears='\(testPriorYears)', official='\(testOfficial)'")
-        
-        // Reload the essential data
-        loadBandDetails()
-        loadBandLinks()
-        
-        print("DEBUG: After notification reload - country: '\(country)', genre: '\(genre)', lastOnCruise: '\(lastOnCruise)'")
-        print("DEBUG: After notification reload - links: official='\(officialUrl)', wiki='\(wikipediaUrl)', youtube='\(youtubeUrl)', metal='\(metalArchivesUrl)'")
-        
-        // Check if we now have data
-        if hasAnyLinks || hasBandDetails {
-            print("DEBUG: ✅ Essential data loaded after refresh notification for '\(bandName)'")
-            isLoadingEssentialData = false
-        } else {
-            print("DEBUG: ⚠️ Data still missing after refresh notification for '\(bandName)'")
+        if !hasAnySourceDataForCurrentBand() {
+            print("DEBUG: No CSV/SQLite profile rows for '\(bandName)' — stopping background hydration")
+            pendingEssentialDataHydration = false
+            return
         }
+        print("DEBUG: Source has data for '\(bandName)' but UI fields empty after reload — stopping hydration to avoid loops")
+        pendingEssentialDataHydration = false
     }
     
     func navigateToPrevious() {
