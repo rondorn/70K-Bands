@@ -142,7 +142,7 @@
     <string name="MeetAndGreetsPlural">Meet &amp; Greets</string>
     <string name="ClinicsPlural">Clinics</string>
     <string name="SpecialEventsPlural">Special Events</string>
-    <string name="CruiseEventsPlural">Cruise Events</string>
+    <string name="CruiseEventsPlural">Attendee Organized Events</string>
     
     <!-- WebView Navigation Buttons -->
     <string name="navigation_close">Close</string>

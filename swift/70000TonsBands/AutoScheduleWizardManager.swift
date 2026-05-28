@@ -18,6 +18,7 @@ final class AutoScheduleWizardManager {
     private static let defaultsKeyLastRunScheduleName = "AutoScheduleWizardLastRunScheduleName"
     private static let notificationPresentWizardWithoutAlert = "PresentAutoChooseAttendanceWizardWithoutAlert"
     private static let pointerKeys = (flag: "AutoScheduleFlag", repeat: "AutoScheduleFlagRepeat", name: "AutoScheduleName")
+    private static let minimumRankedBandFractionToOfferWizard = 0.5
 
     /// Call when pointer data may have updated (e.g. after PointerDataUpdated).
     /// Reads pointer file; if AutoScheduleFlag=Yes and schedule not yet run for current AutoScheduleName, shows alert.
@@ -51,6 +52,24 @@ final class AutoScheduleWizardManager {
             if let y = readPointerCurrentValue(key: "eventYear"), let i = Int(y), i > 2000 { return i }
             return Int(getPointerUrlData(keyValue: "eventYear")) ?? Calendar.current.component(.year, from: Date())
         }()
+
+        // Only offer Build My Schedule when user has enough Must/Might/Wont data.
+        // Requirement: at least half of lineup bands are ranked (1/2, rounded up for odd totals).
+        let lineupBands = bandNamesHandler.shared.getBandNames().filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        let totalBands = lineupBands.count
+        guard totalBands > 0 else {
+            print("🧙 [AUTO_SCHEDULE] No lineup bands available yet, skipping wizard prompt")
+            return
+        }
+        let rankedBands = lineupBands.reduce(into: 0) { count, bandName in
+            let p = SQLitePriorityManager.shared.getPriority(for: bandName, eventYear: eventYear)
+            if (1...3).contains(p) { count += 1 }
+        }
+        let rankedFraction = Double(rankedBands) / Double(totalBands)
+        guard rankedFraction >= minimumRankedBandFractionToOfferWizard else {
+            print("🧙 [AUTO_SCHEDULE] Skipping wizard prompt: ranked \(rankedBands)/\(totalBands) (\(String(format: "%.1f", rankedFraction * 100))%) < 50% threshold")
+            return
+        }
 
         let messageKey = isRepeat ? "AutoScheduleReleasedRerunPrompt" : "AutoScheduleReleasedCreatePrompt"
         let messageFormat = NSLocalizedString(messageKey, comment: "Auto schedule released - offer wizard; first line includes %@ for Current::AutoScheduleName")

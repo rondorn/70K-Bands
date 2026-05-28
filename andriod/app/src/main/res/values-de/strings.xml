@@ -328,7 +328,7 @@
     <string name="MeetAndGreetsPlural">Meet &amp; Greets</string>
     <string name="ClinicsPlural">Workshops</string>
     <string name="SpecialEventsPlural">Spezielle Veranstaltungen</string>
-    <string name="CruiseEventsPlural">Kreuzfahrt Veranstaltungen</string>
+    <string name="CruiseEventsPlural">Von Teilnehmern organisierte Veranstaltungen</string>
     <string name="UnofficialEventsPlural">Inoffizielle Veranstaltungen</string>
     
     <!-- Default description text -->

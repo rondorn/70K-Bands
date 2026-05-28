@@ -192,31 +192,6 @@ public final class ShowBandsLandscapeCoordinator {
         Log.d("LANDSCAPE_SCHEDULE", "Updating day from visible cells - firstVisible: " + firstVisiblePosition + ", lastVisible: " + lastVisiblePosition + ", adapterCount: " + adapterCount + ", currentViewingDay: " + currentViewingDay);
 
         if (firstVisiblePosition >= 0 && firstVisiblePosition < adapterCount) {
-            String expectedDay = currentViewingDay;
-            boolean hasExpectedDay = (expectedDay != null && !expectedDay.isEmpty());
-
-            if (hasExpectedDay) {
-                int maxForward = Math.min(50, adapterCount - firstVisiblePosition);
-                Log.d("LANDSCAPE_SCHEDULE", "currentViewingDay is set to '" + expectedDay + "', searching forward " + maxForward + " positions from " + firstVisiblePosition + " to find expected day");
-                for (int i = 0; i < maxForward; i++) {
-                    int position = firstVisiblePosition + i;
-                    try {
-                        bandListItem item = bandAdapter.getItem(position);
-                        String rawDay = extractRawDayFromBandListItem(item);
-                        if (rawDay != null && !rawDay.isEmpty()) {
-                            if (rawDay.trim().equals(expectedDay.trim())) {
-                                currentViewingDay = rawDay;
-                                Log.d("LANDSCAPE_SCHEDULE", "✅ Found expected day '" + rawDay + "' at position " + position + " (was at boundary)");
-                                return;
-                            }
-                        }
-                    } catch (Exception e) {
-                        // Continue searching
-                    }
-                }
-                Log.d("LANDSCAPE_SCHEDULE", "Expected day '" + expectedDay + "' not found forward, using normal detection logic");
-            }
-
             try {
                 bandListItem item = bandAdapter.getItem(firstVisiblePosition);
                 String rawDay = extractRawDayFromBandListItem(item);
@@ -464,12 +439,7 @@ public final class ShowBandsLandscapeCoordinator {
 
         Log.d("LANDSCAPE_SCHEDULE", "Presenting landscape schedule view");
 
-        if (currentViewingDay == null || currentViewingDay.isEmpty()) {
-            Log.d("LANDSCAPE_SCHEDULE", "currentViewingDay is not set, updating from visible cells");
-            updateCurrentViewingDayFromVisibleCells();
-        } else {
-            Log.d("LANDSCAPE_SCHEDULE", "Preserving existing currentViewingDay: '" + currentViewingDay + "' (not updating from visible cells)");
-        }
+        updateCurrentViewingDayFromVisibleCells();
 
         boolean hideExpiredEvents = staticVariables.preferences.getHideExpiredEvents();
         Log.d("LANDSCAPE_SCHEDULE", "hideExpiredEvents: " + hideExpiredEvents);

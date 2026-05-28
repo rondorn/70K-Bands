@@ -16,8 +16,10 @@ import android.widget.TextView;
 import androidx.appcompat.app.AlertDialog;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 /**
@@ -37,6 +39,7 @@ public final class AutoScheduleWizardManager {
     private static final String POINTER_REPEAT = "AutoScheduleFlagRepeat";
     private static final String POINTER_NAME = "AutoScheduleName";
     private static final String POINTER_EVENT_YEAR = "eventYear";
+    private static final double MINIMUM_RANKED_BAND_FRACTION_TO_OFFER_WIZARD = 0.5;
 
     /** Dark grey for dialog background (matches iOS 0.10 white). */
     private static final int DARK_BG_COLOR = 0xFF1A1A1A;
@@ -80,6 +83,14 @@ public final class AutoScheduleWizardManager {
         boolean isRepeat = "yes".equalsIgnoreCase(trimOrEmpty(readPointerCurrentValue(POINTER_REPEAT)));
         int messageRes = isRepeat ? R.string.auto_schedule_released_rerun_prompt : R.string.auto_schedule_released_create_prompt;
         String message = activity.getString(messageRes, scheduleNameFinal);
+
+        // Only offer Build My Schedule when user has enough Must/Might/Wont data.
+        // Requirement: at least half of lineup bands are ranked.
+        if (!meetsRankedBandThreshold(eventYearInt)) {
+            Log.d(TAG, "Skipping wizard prompt: below ranked band threshold");
+            if (whenNotShownOrDismissed != null) whenNotShownOrDismissed.run();
+            return;
+        }
 
         String title = activity.getString(R.string.plan_your_schedule);
         String noStr = activity.getString(R.string.No);
@@ -181,6 +192,34 @@ public final class AutoScheduleWizardManager {
 
     private static String trimOrEmpty(String s) {
         return s == null ? "" : s.trim();
+    }
+
+    private static boolean meetsRankedBandThreshold(int eventYear) {
+        Set<String> lineupBandSet = BandInfo.getLineupBandNameSet();
+        if (lineupBandSet == null || lineupBandSet.isEmpty()) {
+            Log.d(TAG, "No lineup bands available yet, threshold check fails");
+            return false;
+        }
+
+        int totalBands = 0;
+        int rankedBands = 0;
+        for (String bandName : lineupBandSet) {
+            if (bandName == null || bandName.trim().isEmpty()) continue;
+            totalBands++;
+            int priority = rankStore.getPriorityForBand(bandName.trim());
+            if (priority >= 1 && priority <= 3) {
+                rankedBands++;
+            }
+        }
+
+        if (totalBands == 0) {
+            Log.d(TAG, "No valid lineup bands after trim, threshold check fails");
+            return false;
+        }
+
+        double fraction = ((double) rankedBands) / ((double) totalBands);
+        Log.d(TAG, "Ranked threshold check: " + rankedBands + "/" + totalBands + " (" + (fraction * 100.0) + "%)");
+        return fraction >= MINIMUM_RANKED_BAND_FRACTION_TO_OFFER_WIZARD;
     }
 
     private static final int WHITE = 0xFFFFFFFF;

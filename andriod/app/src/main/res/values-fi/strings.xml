@@ -334,7 +334,7 @@
     <string name="MeetAndGreetsPlural">Tapaamiset &amp; Tervehdykset</string>
     <string name="ClinicsPlural">Kliinikat</string>
     <string name="SpecialEventsPlural">Erikoistapahtumat</string>
-    <string name="CruiseEventsPlural">Risteilytapahtumat</string>
+    <string name="CruiseEventsPlural">Osallistujien jarjestamat tapahtumat</string>
     <string name="UnofficialEventsPlural">Epäviralliset Tapahtumat</string>
 
     <string name="HereAreMy">Tässä ovat minun</string>

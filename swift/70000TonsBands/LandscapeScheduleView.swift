@@ -200,6 +200,86 @@ struct ScrollOffsetPreferenceKey: PreferenceKey {
     }
 }
 
+/// Applies a one-time vertical content offset to the parent SwiftUI `ScrollView` (via UIKit introspection).
+private struct ApplyScrollOffsetOnce: UIViewRepresentable {
+    let offset: CGFloat
+    @Binding var applied: Bool
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+    
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView(frame: .zero)
+        view.isUserInteractionEnabled = false
+        view.isHidden = true
+        context.coordinator.anchorView = view
+        return view
+    }
+    
+    func updateUIView(_ uiView: UIView, context: Context) {
+        context.coordinator.anchorView = uiView
+        guard !applied, offset > 0 else { return }
+        context.coordinator.startIfNeeded(offset: offset, applied: $applied)
+    }
+    
+    final class Coordinator {
+        var attempts = 0
+        var hasStarted = false
+        weak var anchorView: UIView?
+        private var retryWorkItem: DispatchWorkItem?
+        
+        func startIfNeeded(offset: CGFloat, applied: Binding<Bool>) {
+            guard !hasStarted else { return }
+            hasStarted = true
+            tryApply(offset: offset, applied: applied)
+        }
+        
+        private func tryApply(offset: CGFloat, applied: Binding<Bool>) {
+            guard !applied.wrappedValue, offset > 0, attempts < 15 else { return }
+            attempts += 1
+            guard let uiView = anchorView else { return }
+            
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self, !applied.wrappedValue else { return }
+                guard let scrollView = Self.findEnclosingScrollView(from: uiView) else {
+                    self.retry(offset: offset, applied: applied)
+                    return
+                }
+                let scrollableHeight = scrollView.contentSize.height - scrollView.bounds.height
+                guard scrollableHeight > 1 else {
+                    self.retry(offset: offset, applied: applied)
+                    return
+                }
+                let maxY = max(0, scrollableHeight + scrollView.adjustedContentInset.bottom)
+                let y = min(offset, maxY)
+                scrollView.setContentOffset(CGPoint(x: 0, y: y), animated: false)
+                applied.wrappedValue = true
+                print("🕐 [LANDSCAPE_SCHEDULE] Launch scroll to y=\(y) (requested=\(offset), max=\(maxY))")
+            }
+        }
+        
+        private func retry(offset: CGFloat, applied: Binding<Bool>) {
+            let work = DispatchWorkItem { [weak self] in
+                self?.tryApply(offset: offset, applied: applied)
+            }
+            retryWorkItem = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05, execute: work)
+        }
+        
+        private static func findEnclosingScrollView(from view: UIView) -> UIScrollView? {
+            var parent: UIView? = view.superview
+            while let current = parent {
+                if let scrollView = current as? UIScrollView {
+                    return scrollView
+                }
+                parent = current.superview
+            }
+            return nil
+        }
+    }
+}
+
 // MARK: - Models
 
 struct DayScheduleData: Identifiable {
@@ -249,6 +329,11 @@ struct LandscapeScheduleView: View {
     @State private var dayBeforeFilterChange: String? = nil
     @State private var rubberBandOffset: CGFloat = 0
     @State private var swipeBlocked: Bool = false
+    /// One-time launch scroll (1 hour before now) when the initially displayed day is today.
+    @State private var didScheduleLaunchTimeScroll = false
+    @State private var launchScrollDayLabel: String?
+    @State private var launchScrollYOffset: CGFloat?
+    @State private var launchScrollApplied = false
     
     let priorityManager: SQLitePriorityManager
     let onBandTapped: (String, String?) -> Void  // (bandName, currentDay)
@@ -363,8 +448,25 @@ struct LandscapeScheduleView: View {
             onCurrentDayChanged?(viewModel.currentDayData?.dayLabel)
         }
         .onChange(of: viewModel.isLoading) { isLoading in
-            if !isLoading { onCurrentDayChanged?(viewModel.currentDayData?.dayLabel) }
+            if !isLoading {
+                onCurrentDayChanged?(viewModel.currentDayData?.dayLabel)
+                scheduleLaunchScrollToCurrentTimeIfNeeded()
+            }
         }
+    }
+    
+    /// On first calendar load, if the displayed day is today, scroll so one hour before now is at the top.
+    private func scheduleLaunchScrollToCurrentTimeIfNeeded() {
+        guard !didScheduleLaunchTimeScroll else { return }
+        didScheduleLaunchTimeScroll = true
+        guard let dayData = viewModel.currentDayData,
+              viewModel.shouldAutoScrollOnLaunch(for: dayData) else {
+            return
+        }
+        launchScrollDayLabel = dayData.dayLabel
+        launchScrollYOffset = viewModel.scrollYOffsetOneHourBeforeNow(for: dayData)
+        launchScrollApplied = false
+        print("🕐 [LANDSCAPE_SCHEDULE] Scheduled launch scroll for '\(dayData.dayLabel)' offset=\(launchScrollYOffset ?? 0)")
     }
     
     // MARK: - Loading View
@@ -468,6 +570,8 @@ struct LandscapeScheduleView: View {
                     dayData: dayData,
                     hiddenVenueNames: viewModel.hiddenVenueNames,
                     scrollDisabled: showVenueFilterSheet,
+                    initialScrollYOffset: launchScrollDayLabel == dayData.dayLabel ? launchScrollYOffset : nil,
+                    initialScrollApplied: $launchScrollApplied,
                     onBandTapped: onBandTapped,
                     onLongPress: onLongPress,
                     priorityManager: priorityManager,
@@ -693,6 +797,8 @@ struct LandscapeScheduleView: View {
         let dayData: DayScheduleData
         let hiddenVenueNames: Set<String>
         let scrollDisabled: Bool
+        var initialScrollYOffset: CGFloat?
+        @Binding var initialScrollApplied: Bool
         let onBandTapped: (String, String?) -> Void
         let onLongPress: ((String, String, String, String, String) -> Void)?
         let priorityManager: SQLitePriorityManager
@@ -714,6 +820,9 @@ struct LandscapeScheduleView: View {
                     // Main scrollable content (vertical only)
                     TrackableScrollView(axes: .vertical, showsIndicators: true, scrollDisabled: scrollDisabled, contentOffset: $scrollOffset) {
                         VStack(alignment: .leading, spacing: 0) {
+                            if let yOffset = initialScrollYOffset, !initialScrollApplied {
+                                ApplyScrollOffsetOnce(offset: yOffset, applied: $initialScrollApplied)
+                            }
                             // Spacer for headers
                             Color.clear.frame(height: 44)
                             

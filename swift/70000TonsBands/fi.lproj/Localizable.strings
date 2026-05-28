@@ -210,7 +210,7 @@
 "MeetAndGreetsPlural" = "Tapaamiset & Tervehdykset";
 "ClinicsPlural" = "Kliinikat";
 "SpecialEventsPlural" = "Erikoistapahtumat";
-"CruiseEventsPlural" = "Risteilytapahtumat";
+"CruiseEventsPlural" = "Osallistujien jarjestamat tapahtumat";
 "UnofficialEventsPlural" = "Epäviralliset Tapahtumat";
 
 "year_change_loading" = "Ladataan uuden vuoden tietoja, odota...";

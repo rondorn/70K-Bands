@@ -426,6 +426,117 @@ class LandscapeScheduleViewModel: ObservableObject {
         currentDayIndex += 1
     }
     
+    /// Events for the displayed festival day (from `EventData.day`, not from parsing the day label).
+    func eventsForDisplayedDay(dayLabel: String) -> [EventData] {
+        allEventsForYear.filter { $0.day == dayLabel }
+    }
+    
+    /// Whether launch should auto-scroll: current time falls on today's calendar date within this day's events (midnight splits multi-date festival days).
+    func shouldAutoScrollOnLaunch(for dayData: DayScheduleData) -> Bool {
+        let events = eventsForDisplayedDay(dayLabel: dayData.dayLabel)
+        guard !events.isEmpty else { return false }
+        
+        let now = Date().timeIntervalSinceReferenceDate
+        guard let window = activeTimeWindow(for: events) else { return false }
+        guard now >= window.start, now <= window.end else {
+            print("🕐 [LANDSCAPE_SCHEDULE] Launch scroll skipped (now outside festival day window)")
+            return false
+        }
+        
+        let today = ScheduleDateNormalization.formatCanonicalStorageString(from: Date())
+        let calendarDates = uniqueCalendarDates(from: events)
+        
+        if calendarDates.isEmpty {
+            print("🕐 [LANDSCAPE_SCHEDULE] Launch scroll allowed (no event dates; using time window)")
+            return true
+        }
+        
+        if calendarDates.count == 1 {
+            let matches = calendarDates[0] == today
+            print("🕐 [LANDSCAPE_SCHEDULE] Launch scroll \(matches ? "allowed" : "skipped") (single event date \(calendarDates[0]) vs today \(today))")
+            return matches
+        }
+        
+        guard let activeDate = calendarDateContainingNow(now, among: calendarDates) else {
+            print("🕐 [LANDSCAPE_SCHEDULE] Launch scroll skipped (now not on any event calendar date)")
+            return false
+        }
+        let matches = activeDate == today
+        print("🕐 [LANDSCAPE_SCHEDULE] Launch scroll \(matches ? "allowed" : "skipped") (multi-date day; active segment \(activeDate) vs today \(today))")
+        return matches
+    }
+    
+    /// Vertical scroll offset so (~1 hour before now) aligns with the top of the grid (below the sticky header).
+    func scrollYOffsetOneHourBeforeNow(for dayData: DayScheduleData) -> CGFloat {
+        guard let firstTimeSlot = dayData.timeSlots.first else { return 0 }
+        let events = eventsForDisplayedDay(dayLabel: dayData.dayLabel)
+        let now = Date().timeIntervalSinceReferenceDate
+        var targetTimeIndex = now - 3600
+        
+        let calendarDates = uniqueCalendarDates(from: events)
+        if calendarDates.count > 1, let activeDate = calendarDateContainingNow(now, among: calendarDates),
+           let segmentStart = startOfDayTimeIndex(forCanonicalDate: activeDate) {
+            // After midnight on a multi-date festival day, do not scroll above this calendar segment.
+            targetTimeIndex = max(targetTimeIndex, segmentStart)
+        }
+        
+        if let window = activeTimeWindow(for: events) {
+            targetTimeIndex = min(max(targetTimeIndex, window.start), window.end)
+        }
+        
+        let gridStartSeconds = dayData.startTime.timeIntervalSince(firstTimeSlot.time)
+        let offsetFromBase = targetTimeIndex - dayData.baseTimeIndex
+        let totalOffsetSeconds = offsetFromBase + gridStartSeconds
+        let pixelsPerSecond: CGFloat = 120.0 / 3600.0
+        return max(0, CGFloat(totalOffsetSeconds) * pixelsPerSecond)
+    }
+    
+    private func activeTimeWindow(for events: [EventData]) -> (start: TimeInterval, end: TimeInterval)? {
+        guard !events.isEmpty else { return nil }
+        var start = TimeInterval.greatestFiniteMagnitude
+        var end = -TimeInterval.greatestFiniteMagnitude
+        for event in events {
+            var eventEnd = event.endTimeIndex
+            if event.timeIndex > eventEnd {
+                eventEnd += 86400
+            }
+            start = min(start, event.timeIndex)
+            end = max(end, eventEnd)
+        }
+        guard start.isFinite, end.isFinite, end >= start else { return nil }
+        return (start, end)
+    }
+    
+    private func uniqueCalendarDates(from events: [EventData]) -> [String] {
+        var dates = Set<String>()
+        for event in events {
+            if let canonical = ScheduleDateNormalization.canonicalStorageCalendarDate(from: event.date ?? "") {
+                dates.insert(canonical)
+            }
+        }
+        return dates.sorted()
+    }
+    
+    /// Local-midnight calendar segment containing `now` among the day's event dates.
+    private func calendarDateContainingNow(_ now: TimeInterval, among canonicalDates: [String]) -> String? {
+        for canonical in canonicalDates.sorted() {
+            guard let dayStart = startOfDayTimeIndex(forCanonicalDate: canonical) else { continue }
+            let dayEnd = dayStart + 86400
+            if now >= dayStart && now < dayEnd {
+                return canonical
+            }
+        }
+        return nil
+    }
+    
+    private func startOfDayTimeIndex(forCanonicalDate canonical: String) -> TimeInterval? {
+        guard let date = ScheduleDateNormalization.parseCalendarDateOnly(canonical) else { return nil }
+        let cal = Calendar.current
+        let components = cal.dateComponents([.year, .month, .day], from: date)
+        guard let start = cal.date(from: components) else { return nil }
+        return start.timeIntervalSinceReferenceDate
+    }
+    
     func updateAttendanceForEvent(bandName: String, location: String, startTime: String, eventType: String, scheduleDay: String) {
         print("🔄 [LANDSCAPE_SCHEDULE] Updating attendance for \(bandName) (\(eventType)) at \(location) \(startTime) day=\(scheduleDay)")
         

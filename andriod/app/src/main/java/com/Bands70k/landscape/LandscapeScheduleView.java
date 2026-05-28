@@ -67,6 +67,8 @@ public class LandscapeScheduleView extends LinearLayout {
     private int currentDayIndex = 0;
     /** Day index last time we drew content; used to scroll to first event when switching days. */
     private int lastDisplayedDayIndex = -1;
+    /** One-time launch behavior: auto-scroll only when first entering calendar view. */
+    private boolean hasAppliedLaunchTimeScroll = false;
     private OnBandTappedListener bandTappedListener;
     private OnDismissRequestedListener dismissRequestedListener;
     private showsAttended attendedHandle;
@@ -1075,14 +1077,165 @@ public class LandscapeScheduleView extends LinearLayout {
         // When switching days, start at the first event of the new day (scroll to top)
         if (contentScrollView != null && !days.isEmpty() && currentDayIndex >= 0 && currentDayIndex < days.size()) {
             if (currentDayIndex != lastDisplayedDayIndex) {
+                final int displayDayIndex = currentDayIndex;
                 lastDisplayedDayIndex = currentDayIndex;
                 contentScrollView.post(new Runnable() {
                     @Override
                     public void run() {
+                        if (!hasAppliedLaunchTimeScroll) {
+                            hasAppliedLaunchTimeScroll = true;
+                            if (displayDayIndex >= 0 && displayDayIndex < days.size()) {
+                                DayScheduleData launchDay = days.get(displayDayIndex);
+                                Integer launchScrollY = calculateLaunchScrollYIfNeeded(launchDay);
+                                if (launchScrollY != null) {
+                                    contentScrollView.scrollTo(0, launchScrollY);
+                                    Log.d(TAG, "🕐 Launch scroll applied to y=" + launchScrollY + " for day '" + launchDay.dayLabel + "'");
+                                    return;
+                                }
+                            }
+                        }
                         contentScrollView.scrollTo(0, 0);
                     }
                 });
             }
+        }
+    }
+
+    /**
+     * On first calendar launch only, scroll so ~1 hour before now is near top when this displayed day
+     * corresponds to today's active event date (with midnight boundary handling for multi-date day labels).
+     *
+     * @return y offset in px, or null if launch auto-scroll should not run for this displayed day.
+     */
+    private Integer calculateLaunchScrollYIfNeeded(DayScheduleData dayData) {
+        if (dayData == null) return null;
+
+        List<ScheduleBlock> dayEvents = getEventsForDay(dayData);
+        if (dayEvents.isEmpty()) return null;
+
+        double nowSeconds = System.currentTimeMillis() / 1000.0;
+        TimeWindow eventWindow = getActiveTimeWindow(dayEvents);
+        if (eventWindow == null) return null;
+
+        // Only auto-scroll when "now" falls within the displayed day's active event window.
+        if (nowSeconds < eventWindow.startSeconds || nowSeconds > eventWindow.endSeconds) {
+            Log.d(TAG, "🕐 Launch scroll skipped: now outside displayed day window");
+            return null;
+        }
+
+        List<Long> eventDayStartSeconds = getUniqueEventDayStarts(dayEvents);
+        long todayStartSeconds = getStartOfLocalDaySeconds(System.currentTimeMillis());
+
+        if (!eventDayStartSeconds.isEmpty()) {
+            if (eventDayStartSeconds.size() == 1) {
+                if (eventDayStartSeconds.get(0) != todayStartSeconds) {
+                    Log.d(TAG, "🕐 Launch scroll skipped: single event date != today");
+                    return null;
+                }
+            } else {
+                Long activeSegmentStart = findDayStartContainingNow(eventDayStartSeconds, nowSeconds);
+                if (activeSegmentStart == null || activeSegmentStart != todayStartSeconds) {
+                    Log.d(TAG, "🕐 Launch scroll skipped: active midnight segment != today");
+                    return null;
+                }
+            }
+        }
+
+        // Target one hour before now, clamped to event window and (for multi-date labels) active day's midnight.
+        double targetSeconds = nowSeconds - 3600.0;
+        if (eventDayStartSeconds.size() > 1) {
+            Long activeSegmentStart = findDayStartContainingNow(eventDayStartSeconds, nowSeconds);
+            if (activeSegmentStart != null) {
+                targetSeconds = Math.max(targetSeconds, activeSegmentStart);
+            }
+        }
+        targetSeconds = Math.max(targetSeconds, eventWindow.startSeconds);
+        targetSeconds = Math.min(targetSeconds, eventWindow.endSeconds);
+
+        int y = calculateYPositionFromTimeIndex(targetSeconds, dayData);
+        return Math.max(0, y);
+    }
+
+    private List<ScheduleBlock> getEventsForDay(DayScheduleData dayData) {
+        List<ScheduleBlock> events = new ArrayList<>();
+        if (dayData == null || dayData.venues == null) return events;
+        for (VenueColumn venue : dayData.venues) {
+            if (venue == null || venue.events == null) continue;
+            events.addAll(venue.events);
+        }
+        return events;
+    }
+
+    private TimeWindow getActiveTimeWindow(List<ScheduleBlock> events) {
+        if (events == null || events.isEmpty()) return null;
+        double startSeconds = Double.POSITIVE_INFINITY;
+        double endSeconds = Double.NEGATIVE_INFINITY;
+
+        for (ScheduleBlock event : events) {
+            if (event == null || event.timeIndex <= 0) continue;
+            double eventStart = event.timeIndex;
+            double durationSeconds = 3600.0;
+            if (event.startTime != null && event.endTime != null) {
+                long diffMs = event.endTime.getTime() - event.startTime.getTime();
+                if (diffMs > 0) {
+                    durationSeconds = diffMs / 1000.0;
+                }
+            }
+            double eventEnd = eventStart + durationSeconds;
+            if (eventEnd < eventStart) {
+                eventEnd += 86400.0;
+            }
+            startSeconds = Math.min(startSeconds, eventStart);
+            endSeconds = Math.max(endSeconds, eventEnd);
+        }
+
+        if (!Double.isFinite(startSeconds) || !Double.isFinite(endSeconds) || endSeconds < startSeconds) {
+            return null;
+        }
+        return new TimeWindow(startSeconds, endSeconds);
+    }
+
+    private List<Long> getUniqueEventDayStarts(List<ScheduleBlock> events) {
+        Set<Long> dayStarts = new HashSet<>();
+        if (events == null) return new ArrayList<>();
+        for (ScheduleBlock event : events) {
+            if (event == null || event.timeIndex <= 0) continue;
+            long startMillis = (long) (event.timeIndex * 1000.0);
+            dayStarts.add(getStartOfLocalDaySeconds(startMillis));
+        }
+        List<Long> sorted = new ArrayList<>(dayStarts);
+        Collections.sort(sorted);
+        return sorted;
+    }
+
+    private Long findDayStartContainingNow(List<Long> dayStarts, double nowSeconds) {
+        if (dayStarts == null || dayStarts.isEmpty()) return null;
+        for (Long dayStart : dayStarts) {
+            if (dayStart == null) continue;
+            long dayEnd = dayStart + 86400L;
+            if (nowSeconds >= dayStart && nowSeconds < dayEnd) {
+                return dayStart;
+            }
+        }
+        return null;
+    }
+
+    private long getStartOfLocalDaySeconds(long epochMillis) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(epochMillis);
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTimeInMillis() / 1000L;
+    }
+
+    private static class TimeWindow {
+        final double startSeconds;
+        final double endSeconds;
+        TimeWindow(double startSeconds, double endSeconds) {
+            this.startSeconds = startSeconds;
+            this.endSeconds = endSeconds;
         }
     }
     
@@ -2112,9 +2265,26 @@ public class LandscapeScheduleView extends LinearLayout {
     }
     
     private int calculateYPositionFromTimeIndex(double eventTimeIndex, DayScheduleData dayData) {
-        // Use date-based positioning instead of timeIndex to avoid huge values
-        // This method is kept for compatibility but should use calculateYPosition with dates
-        return 0;
+        // Launch auto-scroll uses epoch seconds; convert against dayData's baseTimeIndex timeline.
+        // This mirrors iOS math so "one hour before now" maps to the expected visible slot.
+        if (dayData == null || dayData.timeSlots == null || dayData.timeSlots.isEmpty()) {
+            return 0;
+        }
+
+        Date firstSlotTime = dayData.timeSlots.get(0).time;
+        if (firstSlotTime == null) {
+            return 0;
+        }
+
+        // Grid may start before the first event's base time because slots round down to the hour.
+        double gridStartSeconds = (dayData.startTime.getTime() - firstSlotTime.getTime()) / 1000.0;
+        double offsetFromBase = eventTimeIndex - dayData.baseTimeIndex;
+        double totalOffsetSeconds = offsetFromBase + gridStartSeconds;
+
+        // 30dp per 15 minutes => 120dp per hour.
+        double pixelsPerSecond = dpToPx(120) / 3600.0;
+        int y = (int) Math.round(totalOffsetSeconds * pixelsPerSecond);
+        return Math.max(0, y);
     }
     
     private int calculateYPosition(Date eventTime, DayScheduleData dayData) {
