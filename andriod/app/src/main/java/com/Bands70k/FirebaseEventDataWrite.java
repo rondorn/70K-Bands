@@ -80,12 +80,12 @@ public class FirebaseEventDataWrite {
             Log.d("FirebaseEventDataWrite", "🔥 firebase EVENT_WRITE: Starting writeData - total attended events: " + 
                     showsAttendedArray.size());
             
-            // Ensure eventYear is set before using it
-            if (staticVariables.eventYear == 0) {
-                staticVariables.ensureEventYearIsSet();
+            int storageYear = staticVariables.resolveStorageEventYear();
+            if (storageYear <= 0) {
+                Log.e("FirebaseEventDataWrite", "Missing eventYear in production pointer file");
+                return;
             }
-            // Get current year for filtering
-            String currentYear = String.valueOf(staticVariables.eventYear);
+            String currentYear = String.valueOf(storageYear);
             Log.d("FirebaseEventDataWrite", "🔥 firebase EVENT_WRITE: Filtering for current year: " + currentYear);
             
             // Filter events to only include current year

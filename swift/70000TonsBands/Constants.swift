@@ -34,6 +34,9 @@ enum NetworkTimeoutPolicy {
 // MARK: - Firebase Cloud Messaging
 var FCMnumber = ""
 
+// MARK: - Shared band descriptions (MDF production pointer: Current::enableSharedComments::YES)
+var enableSharedComments = false
+
 // MARK: - Legacy File Path Accessors (for backward compatibility)
 // These are kept for backward compatibility during migration
 // TODO: Update all references to use FilePaths directly

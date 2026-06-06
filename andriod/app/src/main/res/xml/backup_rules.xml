@@ -4,6 +4,7 @@
     <include domain="file" path="70kBands/" />
     
     <!-- Exclude cache files and temporary data -->
+    <exclude domain="file" path="70kBands/pointerCache.txt" />
     <exclude domain="file" path="70kBands/bandListCache.data" />
     <exclude domain="file" path="70kBands/backupFileTemp.zip" />
     <exclude domain="file" path="70kBands/cachedImages/" />

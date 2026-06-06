@@ -32,7 +32,7 @@ final class AutoScheduleWizardManager {
         // Use pointer schedule name when present; otherwise a stable default so wizard still runs when flag=Yes.
         let eventYearForName: Int = {
             if let y = readPointerCurrentValue(key: "eventYear"), let i = Int(y), i > 2000 { return i }
-            return Int(getPointerUrlData(keyValue: "eventYear")) ?? Calendar.current.component(.year, from: Date())
+            return Int(getPointerUrlData(keyValue: "eventYear")) ?? 0
         }()
         let scheduleName: String = {
             guard let name = readPointerCurrentValue(key: pointerKeys.name), !name.isEmpty else {
@@ -50,7 +50,7 @@ final class AutoScheduleWizardManager {
         let isRepeat = (readPointerCurrentValue(key: pointerKeys.repeat) ?? "").lowercased() == "yes"
         let eventYear: Int = {
             if let y = readPointerCurrentValue(key: "eventYear"), let i = Int(y), i > 2000 { return i }
-            return Int(getPointerUrlData(keyValue: "eventYear")) ?? Calendar.current.component(.year, from: Date())
+            return Int(getPointerUrlData(keyValue: "eventYear")) ?? 0
         }()
 
         // Only offer Build My Schedule when user has enough Must/Might/Wont data.

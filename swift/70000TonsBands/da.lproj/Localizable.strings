@@ -394,3 +394,16 @@
 "genre" = "Genre";
 "verifyCountry" = "Bekræft Dit Land";
 "waiting_for_data" = "Venter på at data indlæses, vent venligst....";
+
+// Shared band descriptions
+"Save Note" = "Gem notat";
+"Post To All Users" = "Del med alle brugere";
+"Shared Comments Guidelines Title" = "Del en nyttig bandbeskrivelse";
+"Shared Comments Guidelines Body" = "Skriv så nogen, der kun kender bandnavnet, kan beslutte, om de vil se dem.\n\n• Vær faktuel og beskrivende, ikke subjektiv.\n• Undgå negativt sprog. Hvis en stil ikke er noget for dig, spring det band over eller beskriv det på en måde, som fans af den stil vil finde nyttig.\n\nVed at dele accepterer du:\n• Du giver appen en ubegrænset licens til at bruge, vise, redigere eller udelade din tekst (inkl. i skærmbilleder og markedsføring).\n• Denne app er open source; delt tekst er ikke privat og kan tilgås af andre værktøjer.\n• Forfatteren er ikke ansvarlig for uautoriseret brug af indsendt indhold.";
+"Shared Comments Username Title" = "Vælg et visningsnavn";
+"Shared Comments Username Message" = "Dette navn vises ved dine beskrivelser. Det kan ikke ændres efter du har sendt.";
+"Shared Comments Username Placeholder" = "Visningsnavn";
+"Shared Comments Username Invalid" = "Indtast et visningsnavn på mellem 2 og 24 tegn.";
+"Shared Comments Submit Success" = "Beskrivelse indsendt til gennemgang.";
+"Shared Comments Submit Failed" = "Kunne ikke indsende beskrivelsen";
+

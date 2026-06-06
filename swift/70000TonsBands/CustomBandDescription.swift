@@ -785,6 +785,15 @@ open class CustomBandDescription {
         return ""
     }
     
+    /// Returns whether the band has a published entry in descriptionMap.
+    func isBandInDescriptionMap(bandName: String) -> Bool {
+        getDescriptionMap()
+        let normalizedBand = normalizeBandName(bandName)
+        return readDescriptionMap {
+            bandDescriptionUrlDate.keys.contains(normalizedBand)
+        }
+    }
+
     /// Returns the date of the description for a given band, or an empty string if not found.
     /// - Parameter band: The name of the band.
     /// - Returns: The date string for the band's description.

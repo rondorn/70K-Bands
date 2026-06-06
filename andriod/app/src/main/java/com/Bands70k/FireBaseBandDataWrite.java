@@ -74,12 +74,12 @@ public class FireBaseBandDataWrite {
             if (checkIfDataHasChanged() == true) {
                 //FirebaseDatabase.getInstance().goOnline();
                 
-                // Ensure eventYear is set before using it
-                if (staticVariables.eventYear == 0) {
-                    staticVariables.ensureEventYearIsSet();
+                int storageYear = staticVariables.resolveStorageEventYear();
+                if (storageYear <= 0) {
+                    Log.e("FireBaseBandDataWrite", "Missing eventYear in production pointer file");
+                    return;
                 }
-                // OPTIMIZATION: Use batch write instead of individual writes
-                String eventYear = String.valueOf(staticVariables.eventYear);
+                String eventYear = String.valueOf(storageYear);
                 DatabaseReference bandDataRef = mDatabase.child("bandData/").child(staticVariables.userID).child(eventYear);
                 
                 Map<String, Object> batchUpdate = new HashMap<>();
@@ -131,11 +131,8 @@ public class FireBaseBandDataWrite {
         BandInfo bandInfoNames = new BandInfo();
         List<String> bandNames = bandInfoNames.getBandNames();
         
-        // Ensure eventYear is set before using it
-        if (staticVariables.eventYear == 0) {
-            staticVariables.ensureEventYearIsSet();
-        }
-        String currentYear = String.valueOf(staticVariables.eventYear);
+        int storageYear = staticVariables.resolveStorageEventYear();
+        String currentYear = storageYear > 0 ? String.valueOf(storageYear) : String.valueOf(staticVariables.eventYear);
         Log.d("FireBaseBandDataWrite", "🔥 firebase BAND_WRITE: Building band array for current year: " + currentYear);
         Log.d("FireBaseBandDataWrite", "🔥 firebase BAND_WRITE: Found " + bandNames.size() + " bands from getBandNames()");
 

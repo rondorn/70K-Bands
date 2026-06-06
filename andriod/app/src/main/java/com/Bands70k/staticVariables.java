@@ -90,6 +90,10 @@ public class staticVariables {
     public static Map<String, String> imageUrlMap = new HashMap<String, String>();
     public static Map<String, String> imageDateMap = new HashMap<String, String>(); // ImageDate for cache invalidation (schedule images only)
     public static Map<String, String> descriptionMapModData = new HashMap<String, String>();
+    /** MDF production pointer: Current::enableSharedComments::YES */
+    public static boolean enableSharedComments = false;
+    /** Last {@code Current::eventYear} applied from the production pointer (detects year advance). */
+    private static int lastAppliedPointerCurrentYear = 0;
     public static List<String> eventYearArray = new ArrayList<String>();
     
     // Cache for pointer data
@@ -373,6 +377,7 @@ public class staticVariables {
         if (artistURL == null) {
             lookupUrls();
         }
+        SharedCommentsSettings.loadEnableSharedComments();
 
         if (context == null) {
             context = Bands70k.getAppContext();
@@ -553,25 +558,38 @@ public class staticVariables {
      */
     public static void getEventYear(){
 
-        // CRITICAL FIX: Try to read from cached file first (works offline)
-        // Try common year filenames (2024, 2025, 2026, etc.) to find the cached year
+        // Prefer production pointer (Current::eventYear or explicit user year preference).
+        lookupUrls();
+        int pointerYear = resolveStorageEventYear();
+        if (pointerYear > 0) {
+            Log.d("EventYear", "Resolved from pointer: " + pointerYear);
+            return;
+        }
+
+        // Offline fallback: try cached year files (highest year wins).
         if (eventYearRaw == 0) {
-            // Try to read from cached event year files
+            int bestCachedYear = 0;
             for (int year = 2024; year <= 2030; year++) {
                 File cachedYearFile = new File(showBands.newRootDir + FileHandler70k.directoryName + year + ".txt");
                 if (cachedYearFile.exists()) {
                     try {
                         String cachedYear = FileHandler70k.loadData(cachedYearFile).trim();
                         if (!cachedYear.isEmpty()) {
-                            eventYearRaw = Integer.valueOf(cachedYear);
-                            eventYear = eventYearRaw;
-                            Log.d("EventYear", "Read event year from cached file: " + eventYear);
-                            return;
+                            int parsed = Integer.valueOf(cachedYear);
+                            if (parsed > bestCachedYear) {
+                                bestCachedYear = parsed;
+                            }
                         }
                     } catch (Exception e) {
                         Log.w("EventYear", "Error reading cached year file " + year + ".txt: " + e.getMessage());
                     }
                 }
+            }
+            if (bestCachedYear > 0) {
+                eventYearRaw = bestCachedYear;
+                eventYear = bestCachedYear;
+                Log.d("EventYear", "Read event year from cached file (best): " + eventYear);
+                return;
             }
             
             // If no cached file found, try to extract from showsAttended data
@@ -634,18 +652,27 @@ public class staticVariables {
     public static Integer ensureEventYearIsSet() {
         // Prevent infinite recursion
         if (isResolvingEventYear) {
-            Log.w("EventYear", "⚠️ Recursion detected in ensureEventYearIsSet(), using default year");
-            Integer defaultYear = 2026;
-            eventYearRaw = defaultYear;
-            eventYear = defaultYear;
-            return eventYear;
+            Log.w("EventYear", "⚠️ Recursion detected in ensureEventYearIsSet()");
+            return eventYear != null && eventYear > 0 ? eventYear : 0;
         }
         
         isResolvingEventYear = true;
         try {
             Log.w("EventYear", "⚠️ eventYear is 0! Attempting to resolve...");
+
+            int pointerYear = resolveStorageEventYearFromPointerOnly();
+            if (pointerYear > 0) {
+                eventYearRaw = pointerYear;
+                eventYear = pointerYear;
+                eventYearFile = new File(showBands.newRootDir + FileHandler70k.directoryName + eventYear + ".txt");
+                writeEventYearFile();
+                Log.d("EventYear", "✅ Resolved from pointer: " + eventYear);
+                return eventYear;
+            }
             
-            // Strategy 1: Try to read from cached event year files
+            // Strategy 1: Try to read from cached event year files (highest year wins)
+            int bestCachedYear = 0;
+            File bestCachedYearFile = null;
             for (int year = 2024; year <= 2030; year++) {
                 File cachedYearFile = new File(showBands.newRootDir + FileHandler70k.directoryName + year + ".txt");
                 if (cachedYearFile.exists()) {
@@ -653,16 +680,22 @@ public class staticVariables {
                         String cachedYear = FileHandler70k.loadData(cachedYearFile).trim();
                         if (!cachedYear.isEmpty()) {
                             Integer resolvedYear = Integer.valueOf(cachedYear);
-                            eventYearRaw = resolvedYear;
-                            eventYear = resolvedYear;
-                            eventYearFile = cachedYearFile;
-                            Log.d("EventYear", "✅ Resolved from cached file: " + eventYear);
-                            return eventYear;
+                            if (resolvedYear > bestCachedYear) {
+                                bestCachedYear = resolvedYear;
+                                bestCachedYearFile = cachedYearFile;
+                            }
                         }
                     } catch (Exception e) {
                         Log.w("EventYear", "Error reading cached year file " + year + ".txt: " + e.getMessage());
                     }
                 }
+            }
+            if (bestCachedYear > 0) {
+                eventYearRaw = bestCachedYear;
+                eventYear = bestCachedYear;
+                eventYearFile = bestCachedYearFile;
+                Log.d("EventYear", "✅ Resolved from cached file (best): " + eventYear);
+                return eventYear;
             }
             
             // Strategy 2: Extract from showsAttended data file directly (avoid creating object to prevent recursion)
@@ -719,15 +752,8 @@ public class staticVariables {
                 Log.d("EventYear", "Skipping online lookup on UI thread; will use default year and refresh later");
             }
             
-            // Strategy 4: Default fallback (should be updated annually)
-            Integer defaultYear = 2026; // Update this each year
-            Log.e("EventYear", "⚠️ All resolution strategies failed! Using default year: " + defaultYear);
-            eventYearRaw = defaultYear;
-            eventYear = defaultYear;
-            eventYearFile = new File(showBands.newRootDir + FileHandler70k.directoryName + eventYear + ".txt");
-            writeEventYearFile();
-            
-            return eventYear;
+            Log.e("EventYear", "⚠️ All resolution strategies failed — no pointer eventYear available");
+            return 0;
         } finally {
             isResolvingEventYear = false;
         }
@@ -750,15 +776,19 @@ public class staticVariables {
                 eventYearString = String.valueOf(eventYearRaw);
                 Log.d("EventYear", "Event year already resolved (cached/in-memory): " + eventYearString);
             } else {
-                // Default year if there are issues (This should be updated every year)
-                eventYearString = "2026";
-                Log.w("EventYear", "Event year not available yet; using default year: " + eventYearString);
+                int pointerYear = resolveStorageEventYearFromPointerOnly();
+                if (pointerYear > 0) {
+                    eventYearString = String.valueOf(pointerYear);
+                    Log.d("EventYear", "Event year from pointer: " + eventYearString);
+                } else {
+                    Log.w("EventYear", "Event year not available from pointer");
+                    return 0;
+                }
             }
 
         } catch (Exception error) {
             Log.e("readEventYearFile", "readEventYearFile error " + error.getMessage());
-            //default year if there are issues (This should be updated every year
-            eventYearString = "2026";
+            return 0;
         }
 
         return Integer.valueOf(eventYearString);
@@ -768,10 +798,10 @@ public class staticVariables {
      * Writes the current event year to the event year file.
      */
     private static void writeEventYearFile(){
-
+        if (eventYear == null || eventYear <= 0 || eventYearFile == null) {
+            return;
+        }
         FileHandler70k.saveData(String.valueOf(eventYear), eventYearFile);
-        FileHandler70k.saveData(String.valueOf(eventYear), eventYearFile);
-
     }
 
     /**
@@ -809,11 +839,7 @@ public class staticVariables {
         descriptionMap = storePointerData.get("descriptionMap");
         String eventYearStr = storePointerData.get("eventYear");
         if (eventYearStr != null && !eventYearStr.isEmpty()) {
-            try {
-                eventYearRaw = Integer.valueOf(eventYearStr);
-            } catch (NumberFormatException e) {
-                Log.w("lookupUrls", "Invalid eventYear in cache: " + eventYearStr);
-            }
+            applyYearAfterPointerUpdate(eventYearStr, "loadFromCache");
         }
         
         Log.d("lookupUrls", "Loaded from cache - artistURL: " + artistURL);
@@ -884,6 +910,7 @@ public class staticVariables {
             try {
                 FileHandler70k.saveData(data.trim(), FileHandler70k.pointerCacheFile);
                 Log.d("lookupUrls", "Saved pointer cache to " + FileHandler70k.pointerCacheFile.getAbsolutePath());
+                SharedCommentsSettings.loadEnableSharedComments();
             } catch (Exception e) {
                 Log.w("lookupUrls", "Failed to save pointer cache: " + e.getMessage());
             }
@@ -973,6 +1000,7 @@ public class staticVariables {
             }
 
             updateCacheAndVariables(downloadUrls);
+            SharedCommentsSettings.loadEnableSharedComments();
             Log.d("lookupUrls", "Loaded URLs from cached pointer file for yearIndex=" + yearIndex);
             return true;
         } catch (Exception e) {
@@ -1003,11 +1031,7 @@ public class staticVariables {
         descriptionMap = downloadUrls.get("descriptionMap");
         String eventYearStr = downloadUrls.get("eventYear");
         if (eventYearStr != null && !eventYearStr.isEmpty()) {
-            try {
-                eventYearRaw = Integer.valueOf(eventYearStr);
-            } catch (NumberFormatException e) {
-                Log.w("lookupUrls", "Invalid eventYear: " + eventYearStr);
-            }
+            applyYearAfterPointerUpdate(eventYearStr, "updateCacheAndVariables");
         }
 
         Log.d("pointerUrl", "artistURL = " + artistURL);
@@ -1212,5 +1236,337 @@ public class staticVariables {
         Log.d("getLanguageSpecificKey", "Language-specific key: " + languageSpecificKey);
         
         return languageSpecificKey;
+    }
+
+    // MARK: - Pointer-backed storage year (Firebase paths, attendance keys, etc.)
+
+    /**
+     * User's year index from preferences: {@code Current} or an explicit year like {@code 2025}.
+     */
+    public static String getYearPreferenceIndex() {
+        if (preferences == null) {
+            return "Current";
+        }
+        String yearIndex = preferences.getEventYearToLoad();
+        if (yearIndex == null || yearIndex.isEmpty()
+                || yearIndex.equals("true") || yearIndex.equals("false")) {
+            return "Current";
+        }
+        return yearIndex;
+    }
+
+    private static boolean isExplicitYearString(String value) {
+        if (value == null || value.isEmpty()) {
+            return false;
+        }
+        try {
+            int year = Integer.parseInt(value.trim());
+            return year > 2000 && year < 2100;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Reads event year from cached pointer data only (never uses calendar defaults).
+     * When the user selected an explicit past year, that year is used.
+     * When on {@code Current}, uses {@code Current::eventYear} from the pointer file.
+     */
+    public static int resolveStorageEventYearFromPointerOnly() {
+        String yearPreference = getYearPreferenceIndex();
+
+        if (isExplicitYearString(yearPreference)) {
+            try {
+                int explicitYear = Integer.parseInt(yearPreference.trim());
+                Log.d("EventYear", "Storage year from explicit preference: " + explicitYear);
+                return explicitYear;
+            } catch (NumberFormatException ignored) {
+                // fall through
+            }
+        }
+
+        String yearStr = getPointerUrlData("eventYear");
+        if (yearStr != null && !yearStr.trim().isEmpty()) {
+            try {
+                int year = Integer.parseInt(yearStr.trim());
+                if (year > 2000) {
+                    Log.d("EventYear", "Storage year from pointer eventYear: " + year);
+                    return year;
+                }
+            } catch (NumberFormatException e) {
+                Log.w("EventYear", "Invalid pointer eventYear: " + yearStr);
+            }
+        }
+
+        if (storePointerData != null) {
+            String cached = storePointerData.get("eventYear");
+            if (cached != null && !cached.trim().isEmpty()) {
+                try {
+                    int year = Integer.parseInt(cached.trim());
+                    if (year > 2000) {
+                        return year;
+                    }
+                } catch (NumberFormatException ignored) {
+                    // fall through
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * Resolves the active festival year for storage/Firebase and syncs {@link #eventYear}.
+     */
+    public static int resolveStorageEventYear() {
+        int year = resolveStorageEventYearFromPointerOnly();
+        if (year > 0 && (eventYear == null || eventYear == 0 || eventYear != year)) {
+            eventYear = year;
+            eventYearRaw = year;
+            eventYearFile = new File(showBands.newRootDir + FileHandler70k.directoryName + year + ".txt");
+            writeEventYearFile();
+        }
+        return year;
+    }
+
+    /**
+     * Applies festival year after pointer cache load (mirrors iOS YearManagementService).
+     */
+    public static void applyYearAfterPointerUpdate(String pointerEventYear, String reason) {
+        if (pointerEventYear == null || pointerEventYear.trim().isEmpty()) {
+            Log.w("EventYear", "applyYearAfterPointerUpdate(" + reason + "): empty pointer year");
+            return;
+        }
+
+        int pointerYearInt;
+        try {
+            pointerYearInt = Integer.parseInt(pointerEventYear.trim());
+        } catch (NumberFormatException e) {
+            Log.w("EventYear", "applyYearAfterPointerUpdate(" + reason + "): invalid '" + pointerEventYear + "'");
+            return;
+        }
+        if (pointerYearInt <= 2000) {
+            Log.w("EventYear", "applyYearAfterPointerUpdate(" + reason + "): out of range '" + pointerEventYear + "'");
+            return;
+        }
+
+        String yearPreference = getYearPreferenceIndex();
+        int targetYear;
+        if (isExplicitYearString(yearPreference)) {
+            targetYear = Integer.parseInt(yearPreference.trim());
+        } else {
+            targetYear = pointerYearInt;
+        }
+
+        int oldGlobalYear = eventYear != null ? eventYear : 0;
+        boolean onCurrent = !isExplicitYearString(yearPreference);
+        boolean pointerYearAdvanced = onCurrent
+                && lastAppliedPointerCurrentYear > 0
+                && pointerYearInt > lastAppliedPointerCurrentYear;
+        boolean globalYearChanged = oldGlobalYear > 0 && targetYear > 0 && oldGlobalYear != targetYear;
+
+        if (pointerYearAdvanced || globalYearChanged) {
+            Log.d("EventYear", "Year change detected (" + reason + "): pointer "
+                    + lastAppliedPointerCurrentYear + "→" + pointerYearInt
+                    + ", global " + oldGlobalYear + "→" + targetYear + " — clearing stale cache");
+            clearYearDependentCacheFiles();
+        }
+
+        if (onCurrent) {
+            lastAppliedPointerCurrentYear = pointerYearInt;
+        }
+
+        eventYear = targetYear;
+        eventYearRaw = targetYear;
+        eventYearFile = new File(showBands.newRootDir + FileHandler70k.directoryName + targetYear + ".txt");
+        writeEventYearFile();
+
+        SynchronizationManager.signalEventYearResolutionComplete();
+        Log.d("EventYear", "applyYearAfterPointerUpdate(" + reason + "): eventYear=" + targetYear
+                + " (pointer Current=" + pointerYearInt + ", preference=" + yearPreference + ")");
+    }
+
+    /**
+     * Deletes year-specific CSV caches and in-memory data so a pointer year advance can re-download.
+     * Mirrors the manual year-change path in {@link preferenceLayout}.
+     */
+    public static void clearYearDependentCacheFiles() {
+        try {
+            if (FileHandler70k.bandInfo.exists()) {
+                FileHandler70k.bandInfo.delete();
+                Log.d("EventYear", "Deleted stale bandInfo cache");
+            }
+        } catch (Exception e) {
+            Log.w("EventYear", "Failed deleting bandInfo: " + e.getMessage());
+        }
+        try {
+            if (FileHandler70k.schedule.exists()) {
+                FileHandler70k.schedule.delete();
+                Log.d("EventYear", "Deleted stale schedule cache");
+            }
+        } catch (Exception e) {
+            Log.w("EventYear", "Failed deleting schedule: " + e.getMessage());
+        }
+        try {
+            if (FileHandler70k.descriptionMapFile.exists()) {
+                FileHandler70k.descriptionMapFile.delete();
+                Log.d("EventYear", "Deleted stale descriptionMap cache");
+            }
+        } catch (Exception e) {
+            Log.w("EventYear", "Failed deleting descriptionMap: " + e.getMessage());
+        }
+
+        CacheHashManager cacheManager = CacheHashManager.getInstance();
+        cacheManager.clearHash("bandInfo");
+        cacheManager.clearHash("scheduleInfo");
+        cacheManager.clearHash("descriptionMap");
+
+        try {
+            staticVariables.showNotesMap.clear();
+            staticVariables.imageUrlMap.clear();
+            staticVariables.imageDateMap.clear();
+        } catch (Exception ignored) {}
+        staticVariables.schedulePresent = false;
+        BandInfo.scheduleRecords = null;
+
+        try {
+            staticVariables.descriptionMapModData.clear();
+        } catch (Exception ignored) {}
+
+        try {
+            CombinedImageListHandler.getInstance().clearCache();
+        } catch (Exception e) {
+            Log.w("EventYear", "Failed clearing combined image cache: " + e.getMessage());
+        }
+
+        try {
+            scheduleAlertHandler alerts = new scheduleAlertHandler();
+            alerts.clearAlerts();
+        } catch (Exception e) {
+            Log.w("EventYear", "Failed clearing alerts: " + e.getMessage());
+        }
+    }
+
+    /**
+     * True when the production pointer file exists on disk with non-empty content.
+     */
+    public static boolean hasPointerOnDisk() {
+        File file = FileHandler70k.pointerCacheFile;
+        if (file == null || !file.exists() || file.length() <= 0) {
+            return false;
+        }
+        try {
+            String content = FileHandler70k.loadData(file);
+            return content != null && !content.trim().isEmpty();
+        } catch (Exception e) {
+            Log.w("POINTER_POLICY", "hasPointerOnDisk: " + e.getMessage());
+            return false;
+        }
+    }
+
+    private static void applyPointerYearAfterDownload(String reason) {
+        String yearIndex = getYearPreferenceIndex();
+        loadUrlsFromCachedPointerFile(yearIndex);
+        String yearStr = getCachedPointerData("eventYear");
+        if (yearStr != null && !yearStr.trim().isEmpty()) {
+            applyYearAfterPointerUpdate(yearStr, reason);
+        } else {
+            resolveStorageEventYear();
+        }
+        SharedCommentsSettings.loadEnableSharedComments();
+    }
+
+    /**
+     * Ensures a production pointer file is available before other downloads proceed.
+     * Must be called from a background thread when a network refresh may be needed.
+     *
+     * @return {@code true} if pointer data is ready (downloaded or cached), {@code false} if unavailable
+     */
+    public static boolean ensurePointerFileAvailable() {
+        boolean isMainThread = Looper.myLooper() == Looper.getMainLooper();
+        if (isMainThread) {
+            Log.w("POINTER_POLICY", "ensurePointerFileAvailable on UI thread — using cache only");
+            if (hasPointerOnDisk()) {
+                lookupUrls();
+                resolveStorageEventYear();
+                SharedCommentsSettings.loadEnableSharedComments();
+                return true;
+            }
+            return false;
+        }
+
+        boolean hadCachedPointer = hasPointerOnDisk();
+        if (!hadCachedPointer) {
+            Log.d("POINTER_POLICY", "No pointer on disk — blocking until download succeeds");
+            int attempt = 0;
+            while (true) {
+                attempt++;
+                Log.d("POINTER_POLICY", "Required pointer download attempt " + attempt);
+                if (forceLookupUrlsFromNetwork()) {
+                    applyPointerYearAfterDownload("ensurePointerFileAvailable-required");
+                    return true;
+                }
+                if (!OnlineStatus.isOnline()) {
+                    Log.e("POINTER_POLICY", "Offline with no pointer on disk — cannot proceed");
+                    return false;
+                }
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    Log.w("POINTER_POLICY", "Pointer download wait interrupted");
+                    return false;
+                }
+            }
+        }
+
+        Log.d("POINTER_POLICY", "Pointer on disk — best-effort network refresh");
+        if (forceLookupUrlsFromNetwork()) {
+            applyPointerYearAfterDownload("ensurePointerFileAvailable-refresh");
+            return true;
+        }
+
+        Log.w("POINTER_POLICY", "Best-effort refresh failed — continuing with cached pointer");
+        lookupUrls();
+        resolveStorageEventYear();
+        SharedCommentsSettings.loadEnableSharedComments();
+        return hasPointerOnDisk();
+    }
+
+    /**
+     * Downloads core CSV files in strict order: bandInfo, schedule, descriptionMap.
+     * Caller must have already ensured the pointer file is available.
+     * Must be called from a background thread.
+     */
+    public static void downloadCoreCsvFiles() {
+        boolean isMainThread = Looper.myLooper() == Looper.getMainLooper();
+        if (isMainThread) {
+            Log.w("CORE_CSV", "downloadCoreCsvFiles called on UI thread — skipping network downloads");
+            return;
+        }
+
+        Log.d("CORE_CSV", "Starting core CSV download pipeline");
+        lookupUrls();
+
+        BandInfo bandInfo = new BandInfo();
+        bandInfo.DownloadBandFile();
+
+        String scheduleUrl = scheduleURL;
+        if (scheduleUrl == null || scheduleUrl.trim().isEmpty()) {
+            bandInfo.getDownloadtUrls();
+            scheduleUrl = scheduleURL;
+        }
+        if (scheduleUrl != null && !scheduleUrl.trim().isEmpty()) {
+            scheduleInfo scheduleData = new scheduleInfo();
+            scheduleData.DownloadScheduleFile(scheduleUrl);
+        } else {
+            Log.w("CORE_CSV", "Schedule URL empty — skipping schedule download");
+        }
+
+        CustomerDescriptionHandler descHandler = CustomerDescriptionHandler.getInstance();
+        descHandler.getDescriptionMapFile();
+        descHandler.getDescriptionMap();
+
+        Log.d("CORE_CSV", "Core CSV download pipeline complete");
     }
 }

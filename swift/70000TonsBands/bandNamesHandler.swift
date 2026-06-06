@@ -146,26 +146,15 @@ open class bandNamesHandler {
             return
         }
         
-        print("📅 [BAND_INIT] eventYear is 0, attempting to load cached year")
+        print("📅 [BAND_INIT] eventYear is 0, reading from production pointer file")
         
-        // Try to load from cache file
-        if FileManager.default.fileExists(atPath: eventYearFile) {
-            do {
-                let cachedYearString = try String(contentsOfFile: eventYearFile, encoding: .utf8)
-                if let yearInt = Int(cachedYearString.trimmingCharacters(in: .whitespacesAndNewlines)), yearInt > 0 {
-                    eventYear = yearInt
-                    print("📅 [BAND_INIT] Loaded cached year: \(eventYear)")
-                    return
-                }
-            } catch {
-                print("📅 [BAND_INIT] Failed to read cached year file: \(error)")
-            }
+        let pointerYear = Int(getPointerUrlData(keyValue: "eventYear")) ?? 0
+        if pointerYear > 2000 {
+            eventYear = pointerYear
+            print("📅 [BAND_INIT] Resolved eventYear from production pointer file: \(eventYear)")
+        } else {
+            print("📅 [BAND_INIT] No eventYear in production pointer file")
         }
-        
-        // If no cache or invalid, use current calendar year as fallback
-        let currentYear = Calendar.current.component(.year, from: Date())
-        eventYear = currentYear
-        print("📅 [BAND_INIT] No cached year, using current year: \(eventYear)")
     }
     
     // MARK: - SQLite Cache Management

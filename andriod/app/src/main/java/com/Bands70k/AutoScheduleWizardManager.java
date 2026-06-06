@@ -187,7 +187,8 @@ public final class AutoScheduleWizardManager {
                 if (i > 2000) return i;
             } catch (NumberFormatException ignored) {}
         }
-        return staticVariables.eventYear != null ? staticVariables.eventYear : java.util.Calendar.getInstance().get(java.util.Calendar.YEAR);
+        int fromPointer = staticVariables.resolveStorageEventYear();
+        return fromPointer > 0 ? fromPointer : 0;
     }
 
     private static String trimOrEmpty(String s) {

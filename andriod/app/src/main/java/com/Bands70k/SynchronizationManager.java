@@ -22,6 +22,10 @@ public class SynchronizationManager {
     private static final ReentrantLock loadingNotesLock = new ReentrantLock();
     private static CountDownLatch loadingNotesLatch = new CountDownLatch(0);
     
+    // Event year resolution (pointer file download + parse)
+    private static final ReentrantLock eventYearLock = new ReentrantLock();
+    private static CountDownLatch eventYearLatch = new CountDownLatch(0);
+    
     /**
      * Waits for band loading to complete without busy-waiting.
      * Modern replacement for polling staticVariables.loadingBands with Thread.sleep.
@@ -121,6 +125,84 @@ public class SynchronizationManager {
             Log.d(TAG, "Notes loading completed - signaling waiters");
         } finally {
             loadingNotesLock.unlock();
+        }
+    }
+    
+    /**
+     * Marks that event year resolution is in progress (pointer download pending).
+     * Call when starting a pointer refresh while year is still unresolved.
+     */
+    public static void markEventYearResolutionPending() {
+        eventYearLock.lock();
+        try {
+            if (eventYearLatch.getCount() == 0 && staticVariables.resolveStorageEventYearFromPointerOnly() <= 0) {
+                eventYearLatch = new CountDownLatch(1);
+                Log.d(TAG, "Event year resolution pending — waiters will block");
+            }
+        } finally {
+            eventYearLock.unlock();
+        }
+    }
+    
+    /**
+     * Waits for pointer-backed event year to become available.
+     *
+     * @param timeoutSeconds Maximum time to wait in seconds
+     * @return Resolved year, or 0 if still unavailable after timeout
+     */
+    public static int waitForStorageEventYear(int timeoutSeconds) {
+        int immediate = staticVariables.resolveStorageEventYearFromPointerOnly();
+        if (immediate > 0) {
+            return immediate;
+        }
+        
+        Log.d(TAG, "Waiting for event year resolution (max " + timeoutSeconds + "s)");
+        long deadlineMs = System.currentTimeMillis() + (timeoutSeconds * 1000L);
+        
+        while (System.currentTimeMillis() < deadlineMs) {
+            eventYearLock.lock();
+            CountDownLatch latch = eventYearLatch;
+            eventYearLock.unlock();
+            
+            if (latch.getCount() > 0) {
+                try {
+                    latch.await(500, TimeUnit.MILLISECONDS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    Log.w(TAG, "Wait for event year interrupted", e);
+                    break;
+                }
+            } else {
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    Log.w(TAG, "Wait for event year interrupted", e);
+                    break;
+                }
+            }
+            
+            immediate = staticVariables.resolveStorageEventYearFromPointerOnly();
+            if (immediate > 0) {
+                return immediate;
+            }
+        }
+        
+        return staticVariables.resolveStorageEventYearFromPointerOnly();
+    }
+    
+    /**
+     * Signals that event year resolution finished (success or failure).
+     */
+    public static void signalEventYearResolutionComplete() {
+        eventYearLock.lock();
+        try {
+            if (eventYearLatch.getCount() > 0) {
+                eventYearLatch.countDown();
+                Log.d(TAG, "Event year resolution complete — signaling waiters");
+            }
+        } finally {
+            eventYearLock.unlock();
         }
     }
     

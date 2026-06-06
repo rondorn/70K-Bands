@@ -94,7 +94,7 @@ class DetailHostingController: UIHostingController<AnyView> {
             userInfo: ["bandName": bandName]
         )
         
-        // The SwiftUI view will handle saving notes in its onDisappear modifier
+        // Notes save only when the user taps Save Note in DetailView (no auto-save on disappear).
     }
     
     override var preferredStatusBarStyle: UIStatusBarStyle {

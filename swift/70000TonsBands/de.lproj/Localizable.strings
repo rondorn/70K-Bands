@@ -402,3 +402,16 @@
 "Close" = "Schließen";
 "Multiple bands share this event. Which band would you like to view?" = "Mehrere Bands teilen sich diese Veranstaltung. Welche Band möchten Sie ansehen?";
 
+
+// Shared band descriptions
+"Save Note" = "Notiz speichern";
+"Post To All Users" = "Für alle Nutzer veröffentlichen";
+"Shared Comments Guidelines Title" = "Eine hilfreiche Bandbeschreibung teilen";
+"Shared Comments Guidelines Body" = "Schreiben Sie so, dass jemand, der nur den Bandnamen kennt, entscheiden kann, ob er die Band sehen möchte.\n\n• Seien Sie sachlich und beschreibend, nicht meinungsbetont.\n• Vermeiden Sie negative Formulierungen. Wenn ein Stil nichts für Sie ist, überspringen Sie diese Band oder beschreiben Sie sie so, dass Fans dieses Stils es nützlich finden.\n\nMit dem Veröffentlichen stimmen Sie zu:\n• Sie gewähren der App eine unbegrenzte Lizenz zur Nutzung, Anzeige, Bearbeitung oder Weglassung Ihres Textes (einschließlich in Screenshots und Werbung).\n• Diese App ist Open Source; veröffentlichte Texte sind nicht privat und können von anderen Tools abgerufen werden.\n• Der Autor ist nicht verantwortlich für unbefugte Nutzung eingereichter Inhalte.";
+"Shared Comments Username Title" = "Anzeigenamen wählen";
+"Shared Comments Username Message" = "Dieser Name wird bei Ihren Beschreibungen angezeigt. Er kann nach dem Absenden nicht mehr geändert werden.";
+"Shared Comments Username Placeholder" = "Anzeigename";
+"Shared Comments Username Invalid" = "Geben Sie einen Anzeigenamen mit 2 bis 24 Zeichen ein.";
+"Shared Comments Submit Success" = "Beschreibung zur Prüfung eingereicht.";
+"Shared Comments Submit Failed" = "Beschreibung konnte nicht eingereicht werden";
+

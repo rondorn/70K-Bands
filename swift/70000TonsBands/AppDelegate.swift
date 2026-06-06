@@ -277,6 +277,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                         }
                         
                         DispatchQueue.main.async {
+                            SharedCommentsSettings.loadEnableSharedComments()
                             NotificationCenter.default.post(name: Notification.Name("PointerDataUpdated"), object: nil)
                             completion?(true)
                         }
@@ -459,6 +460,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             print("✅ Firebase configured")
             
             setupCurrentYearUrls()
+            SharedCommentsSettings.loadEnableSharedComments()
             self.downloadAndUpdatePointerFileOnLaunch()
             
             // Initialize Firebase Messaging after Firebase is configured

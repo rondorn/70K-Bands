@@ -400,3 +400,16 @@
 "genre" = "Tyylilaji";
 "verifyCountry" = "Vahvista Maasi";
 "waiting_for_data" = "Odotetaan tietojen latautumista, odota hetki....";
+
+// Shared band descriptions
+"Save Note" = "Tallenna muistiinpano";
+"Post To All Users" = "Julkaise kaikille käyttäjille";
+"Shared Comments Guidelines Title" = "Jaa hyödyllinen bändikuvaus";
+"Shared Comments Guidelines Body" = "Kirjoita niin, että joku, joka tuntee vain bändin nimen, voi päättää, haluaako nähdä heidät.\n\n• Ole asiallinen ja kuvaileva, älä mielipiteinen.\n• Vältä negatiivista kieltä. Jos tyyli ei ole sinua varten, ohita bändi tai kuvaile sitä tavalla, josta kyseisen tyylin fanit pitävät hyödyllisenä.\n\nJulkaisemalla hyväksyt:\n• Myönnät sovellukselle rajoittamattoman lisenssin käyttää, näyttää, muokata tai jättää pois tekstiäsi (mukaan lukien kuvakaappauksissa ja markkinoinnissa).\n• Tämä sovellus on avoimen lähdekoodin; julkaistu teksti ei ole yksityinen ja muihin työkaluihin voi päästä siihen käsiksi.\n• Tekijä ei ole vastuussa lähetetyn sisällön luvattomasta käytöstä.";
+"Shared Comments Username Title" = "Valitse näyttönimi";
+"Shared Comments Username Message" = "Tämä nimi näkyy kuvaustesi yhteydessä. Sitä ei voi muuttaa lähetyksen jälkeen.";
+"Shared Comments Username Placeholder" = "Näyttönimi";
+"Shared Comments Username Invalid" = "Syötä näyttönimi, 2–24 merkkiä.";
+"Shared Comments Submit Success" = "Kuvaus lähetetty tarkistettavaksi.";
+"Shared Comments Submit Failed" = "Kuvausta ei voitu lähettää";
+

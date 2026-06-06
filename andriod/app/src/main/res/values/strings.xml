@@ -462,4 +462,15 @@
     <string name="schedule_qr_band_file_download_failed">Could not download band list. Please try again.</string>
     <string name="schedule_qr_import_validation_failed">Data was imported successfully, but failed validation checks. The data appears corrupted.\n\nExample: %1$s</string>
     <string name="schedule_qr_import_validation_failed_title">Schedule import validation failed</string>
+
+    <string name="post_to_all_users">Post To All Users</string>
+    <string name="save_note">Save Note</string>
+    <string name="shared_comments_guidelines_title">Share a Helpful Band Description</string>
+    <string name="shared_comments_guidelines_body">Write so someone who only knows the band name can decide if they want to see them.\n\n• Be factual and descriptive, not opinionated.\n• Avoid negative language. If a style is not for you, skip that band or describe it in a way fans of that style would find useful.\n\nBy posting, you agree:\n• You grant the app an unlimited license to use, display, edit, or omit your text (including in screenshots and promotion).\n• This app is open source; posted text is not private and may be accessed by other tools.\n• The author is not responsible for unauthorized use of submitted content.</string>
+    <string name="shared_comments_username_title">Choose a Display Name</string>
+    <string name="shared_comments_username_message">This name will appear with your descriptions. It cannot be changed after you submit.</string>
+    <string name="shared_comments_username_placeholder">Display name</string>
+    <string name="shared_comments_username_invalid">Enter a display name between 2 and 24 characters.</string>
+    <string name="shared_comments_submit_success">Description submitted for review.</string>
+    <string name="shared_comments_submit_failed">Could not submit description</string>
 </resources>

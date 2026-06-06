@@ -15,6 +15,7 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Rect;
 
 import android.net.Uri;
 import android.os.Bundle;
@@ -40,6 +41,7 @@ import android.view.Display;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 
 import android.widget.ProgressBar;
@@ -48,6 +50,9 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.ColorDrawable;
@@ -2503,7 +2508,7 @@ public class showBandDetails extends Activity {
         final BandNotes noteHandlerForBand = new BandNotes(bandName);
 
         // Create custom dialog using our new layout
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.DarkDialogTheme);
         
         // Inflate the custom layout
         View dialogView = getLayoutInflater().inflate(R.layout.edit_note_dialog, null);
@@ -2511,7 +2516,9 @@ public class showBandDetails extends Activity {
         
         // Get references to the views
         TextView titleView = dialogView.findViewById(R.id.edit_note_title);
+        TextView subtitleView = dialogView.findViewById(R.id.edit_note_subtitle);
         final EditText input = dialogView.findViewById(R.id.edit_note_input);
+        final CheckBox postToAllCheckbox = dialogView.findViewById(R.id.post_to_all_users_checkbox);
         Button cancelButton = dialogView.findViewById(R.id.cancel_button);
         Button saveButton = dialogView.findViewById(R.id.save_button);
         Button selectAllButton = dialogView.findViewById(R.id.select_all_button);
@@ -2519,22 +2526,52 @@ public class showBandDetails extends Activity {
         Button copyButton = dialogView.findViewById(R.id.copy_button);
         Button pasteButton = dialogView.findViewById(R.id.paste_button);
         
-        // Set the title
-        titleView.setText("Edit Note for " + bandName);
+        titleView.setText("Edit Note");
+        subtitleView.setText(bandName);
+        subtitleView.setVisibility(View.VISIBLE);
         
-        // Set current note content
-        // IMPORTANT: Populate from disk-backed note state (custom if present, else default),
-        // not from the in-memory `bandNote` field which can be blank during progressive loading
-        // or after clearing a custom note.
+        // Set current note content — use the same resolution order as the on-screen note display.
         String currentNote = noteHandlerForBand.getBandNoteFromFile();
         if (currentNote == null || currentNote.trim().isEmpty()) {
-            // Fallback to whatever is currently displayed in-memory (best-effort) to avoid showing a blank editor
+            currentNote = getRawBandNote(bandName);
+        }
+        if (currentNote == null || currentNote.trim().isEmpty()) {
             currentNote = bandNote == null ? "" : bandNote;
         }
 
         currentNote = currentNote.replaceAll("<br>", "\n");
         currentNote = currentNote.replaceAll("<[^>]*>", ""); // Remove HTML tags
+        currentNote = currentNote.replaceAll("&nbsp;", " ");
+        if (FestivalConfig.getInstance().isEmptyGenericNoteText(currentNote, this)) {
+            currentNote = "";
+            input.setHint("");
+        }
         input.setText(currentNote);
+
+        final Runnable updatePostCheckboxEligibility = new Runnable() {
+            @Override
+            public void run() {
+                String text = input.getText().toString();
+                boolean eligible = SharedCommentsSettings.canOfferPostToAllUsers(bandName, text);
+                postToAllCheckbox.setVisibility(eligible ? View.VISIBLE : View.GONE);
+                if (!eligible) {
+                    postToAllCheckbox.setChecked(false);
+                }
+            }
+        };
+        updatePostCheckboxEligibility.run();
+        input.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                updatePostCheckboxEligibility.run();
+            }
+        });
         
         // Get clipboard manager
         final ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
@@ -2607,6 +2644,8 @@ public class showBandDetails extends Activity {
             public void onClick(View v) {
                 String noteTextRaw = input.getText().toString();
                 String noteText = noteTextRaw == null ? "" : noteTextRaw.trim();
+                boolean shouldSubmitShared = postToAllCheckbox.getVisibility() == View.VISIBLE
+                        && postToAllCheckbox.isChecked();
                 
                 // Treat invisible/zero-width characters as empty too (trim() won't remove these).
                 // This matters for "Select All" + "Cut" flows that can sometimes leave hidden chars behind.
@@ -2659,10 +2698,161 @@ public class showBandDetails extends Activity {
                 setupExtraDataSection(); // This will update the note display without affecting the image
                 
                 dialog.dismiss();
+
+                if (shouldSubmitShared) {
+                    beginSharedCommentSubmissionFlow(bandName, noteTextRaw);
+                }
             }
         });
         
+        dialog.setOnShowListener(dialogInterface -> {
+            attachEditNoteDialogKeyboardHandler(dialog, dialogView);
+            input.requestFocus();
+        });
         dialog.show();
+    }
+
+    /**
+     * Sizes the note editor dialog as a fraction of the available screen so it scales
+     * with device size (larger on big phones, more compact on small phones).
+     * Shrinks the dialog when the keyboard is visible so toolbar and action buttons stay on screen.
+     */
+    private void attachEditNoteDialogKeyboardHandler(final AlertDialog dialog, final View dialogView) {
+        if (dialog.getWindow() == null) {
+            return;
+        }
+
+        final android.view.Window window = dialog.getWindow();
+        final DisplayMetrics metrics = getResources().getDisplayMetrics();
+        final int screenWidthPx = metrics.widthPixels;
+        final int screenHeightPx = metrics.heightPixels;
+        final float density = metrics.density;
+
+        final int maxWidthPx = (int) (560 * density);
+        final int dialogWidthPx = Math.min((int) (screenWidthPx * 0.92f), maxWidthPx);
+
+        final float screenHeightDp = screenHeightPx / density;
+        final float heightFraction = screenHeightDp < 640f ? 0.66f : (screenHeightDp < 780f ? 0.72f : 0.78f);
+        int dialogHeightPx = (int) (screenHeightPx * heightFraction);
+        final int minHeightPx = (int) (280 * density);
+        final int maxHeightPx = (int) (screenHeightPx * 0.84f);
+        final int baseDialogHeightPx = Math.max(minHeightPx, Math.min(maxHeightPx, dialogHeightPx));
+        final int topMarginPx = (int) (12 * density);
+
+        window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+
+        final Runnable applyDialogSize = new Runnable() {
+            @Override
+            public void run() {
+                Rect visibleFrame = new Rect();
+                final View activityRoot = getWindow().getDecorView();
+                activityRoot.getWindowVisibleDisplayFrame(visibleFrame);
+
+                int targetHeight = baseDialogHeightPx;
+                int rootHeight = activityRoot.getRootView().getHeight();
+                int keyboardHeight = rootHeight - visibleFrame.bottom;
+                if (keyboardHeight > rootHeight * 0.12) {
+                    targetHeight = visibleFrame.height() - topMarginPx;
+                    targetHeight = Math.max(minHeightPx, Math.min(baseDialogHeightPx, targetHeight));
+                }
+
+                window.setLayout(dialogWidthPx, targetHeight);
+                ViewGroup.LayoutParams rootLayoutParams = dialogView.getLayoutParams();
+                if (rootLayoutParams == null) {
+                    rootLayoutParams = new ViewGroup.LayoutParams(dialogWidthPx, targetHeight);
+                } else {
+                    rootLayoutParams.width = dialogWidthPx;
+                    rootLayoutParams.height = targetHeight;
+                }
+                dialogView.setLayoutParams(rootLayoutParams);
+            }
+        };
+
+        final View activityRoot = getWindow().getDecorView();
+        final ViewTreeObserver.OnGlobalLayoutListener keyboardLayoutListener = new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                if (dialog.isShowing()) {
+                    applyDialogSize.run();
+                }
+            }
+        };
+
+        applyDialogSize.run();
+        activityRoot.getViewTreeObserver().addOnGlobalLayoutListener(keyboardLayoutListener);
+        dialog.setOnDismissListener(d -> activityRoot.getViewTreeObserver().removeOnGlobalLayoutListener(keyboardLayoutListener));
+    }
+
+    private void beginSharedCommentSubmissionFlow(final String bandName, final String descriptionText) {
+        if (!SharedCommentsSettings.hasAcceptedTerms()) {
+            presentSharedCommentsGuidelinesAlert(bandName, descriptionText);
+            return;
+        }
+        if (SharedCommentsSettings.getUsername() == null) {
+            presentSharedCommentsUsernamePrompt(bandName, descriptionText);
+            return;
+        }
+        submitSharedCommentToFirebase(bandName, descriptionText);
+    }
+
+    private void presentSharedCommentsGuidelinesAlert(final String bandName, final String descriptionText) {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.shared_comments_guidelines_title)
+                .setMessage(R.string.shared_comments_guidelines_body)
+                .setNegativeButton(R.string.Cancel, null)
+                .setPositiveButton(R.string.Ok, (dialog, which) -> {
+                    SharedCommentsSettings.setTermsAccepted();
+                    beginSharedCommentSubmissionFlow(bandName, descriptionText);
+                })
+                .show();
+    }
+
+    private void presentSharedCommentsUsernamePrompt(final String bandName, final String descriptionText) {
+        final EditText usernameInput = new EditText(this);
+        usernameInput.setHint(R.string.shared_comments_username_placeholder);
+        usernameInput.setSingleLine(true);
+        int padding = (int) (16 * getResources().getDisplayMetrics().density);
+        usernameInput.setPadding(padding, padding, padding, padding);
+
+        final AlertDialog alert = new AlertDialog.Builder(this)
+                .setTitle(R.string.shared_comments_username_title)
+                .setMessage(R.string.shared_comments_username_message)
+                .setView(usernameInput)
+                .setNegativeButton(R.string.Cancel, null)
+                .setPositiveButton(R.string.save_note, null)
+                .create();
+
+        alert.setOnShowListener(d -> {
+            alert.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+                String enteredName = usernameInput.getText().toString();
+                if (!SharedCommentsSettings.isValidUsername(enteredName)) {
+                    showToast(getString(R.string.shared_comments_username_invalid));
+                    return;
+                }
+                SharedCommentsSettings.setUsername(enteredName);
+                alert.dismiss();
+                submitSharedCommentToFirebase(bandName, descriptionText);
+            });
+        });
+        alert.show();
+    }
+
+    private void submitSharedCommentToFirebase(String bandName, String descriptionText) {
+        String userName = SharedCommentsSettings.getUsername();
+        if (userName == null) {
+            presentSharedCommentsUsernamePrompt(bandName, descriptionText);
+            return;
+        }
+
+        FirebaseSharedCommentsWrite writer = new FirebaseSharedCommentsWrite();
+        writer.writeSharedComment(bandName, descriptionText, userName, success -> runOnUiThread(() -> {
+            if (success) {
+                showToast(getString(R.string.shared_comments_submit_success));
+            } else {
+                showToast(getString(R.string.shared_comments_submit_failed));
+            }
+        }));
     }
     
     /**

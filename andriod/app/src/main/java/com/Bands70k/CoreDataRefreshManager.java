@@ -51,27 +51,12 @@ public final class CoreDataRefreshManager {
             try {
                 Log.d(TAG, "Core refresh starting (background->foreground)");
 
-                // 1) pointer (FORCED network fetch)
-                staticVariables.forceLookupUrlsFromNetwork();
-
-                // 2) band CSV
-                BandInfo bandInfo = new BandInfo();
-                bandInfo.DownloadBandFile();
-
-                // 3) schedule CSV
-                scheduleInfo schedule = new scheduleInfo();
-                String scheduleUrl = staticVariables.scheduleURL;
-                if (scheduleUrl == null || scheduleUrl.trim().isEmpty()) {
-                    scheduleUrl = FestivalConfig.getInstance().scheduleUrlDefault;
-                    Log.d(TAG, "Using fallback scheduleUrl for core refresh");
+                if (!staticVariables.ensurePointerFileAvailable()) {
+                    Log.e(TAG, "Pointer file unavailable — aborting core refresh");
+                    return;
                 }
-                scheduleInfo.setLastPreviousEventKeysForWizard(scheduleInfo.collectEventKeys(BandInfo.scheduleRecords));
-                BandInfo.scheduleRecords = schedule.DownloadScheduleFile(scheduleUrl);
 
-                // 4) descriptionMap CSV (download + parse)
-                CustomerDescriptionHandler descHandler = CustomerDescriptionHandler.getInstance();
-                descHandler.getDescriptionMapFile();
-                descHandler.getDescriptionMap();
+                staticVariables.downloadCoreCsvFiles();
 
                 Log.d(TAG, "Core refresh completed");
             } catch (Exception e) {

@@ -407,3 +407,16 @@
 "Show Meet & Greet" = "Mostrar Meet & Greet";
 "Show Special/Other" = "Mostrar Especial/Outro";
 "Show Unofficial" = "Mostrar Não oficial";
+
+// Shared band descriptions
+"Save Note" = "Guardar nota";
+"Post To All Users" = "Publicar para todos os utilizadores";
+"Shared Comments Guidelines Title" = "Partilhe uma descrição útil da banda";
+"Shared Comments Guidelines Body" = "Escreva de modo a que alguém que só conheça o nome da banda possa decidir se a quer ver.\n\n• Seja factual e descritivo, não opinativo.\n• Evite linguagem negativa. Se um estilo não é para si, ignore essa banda ou descreva-a de forma útil para os fãs desse estilo.\n\nAo publicar, concorda:\n• Concede à app uma licença ilimitada para usar, exibir, editar ou omitir o seu texto (incluindo em capturas de ecrã e promoção).\n• Esta app é de código aberto; o texto publicado não é privado e pode ser acedido por outras ferramentas.\n• O autor não é responsável pelo uso não autorizado do conteúdo enviado.";
+"Shared Comments Username Title" = "Escolha um nome de exibição";
+"Shared Comments Username Message" = "Este nome aparecerá nas suas descrições. Não pode ser alterado depois de enviar.";
+"Shared Comments Username Placeholder" = "Nome de exibição";
+"Shared Comments Username Invalid" = "Introduza um nome de exibição entre 2 e 24 caracteres.";
+"Shared Comments Submit Success" = "Descrição enviada para revisão.";
+"Shared Comments Submit Failed" = "Não foi possível enviar a descrição";
+

@@ -411,6 +411,12 @@
 		B0B1C2D3E4F5061728394A5C /* MinimumVersionWarningManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0B1C2D3E4F5061728394A5B /* MinimumVersionWarningManager.swift */; };
 		B0B1C2D3E4F5061728394A5D /* MinimumVersionWarningManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0B1C2D3E4F5061728394A5B /* MinimumVersionWarningManager.swift */; };
 		B0B1C2D3E4F5061728394A5E /* MinimumVersionWarningManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0B1C2D3E4F5061728394A5B /* MinimumVersionWarningManager.swift */; };
+		C0C1C2D3E4F5061728394B1C /* SharedCommentsSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C1C2D3E4F5061728394B0B /* SharedCommentsSettings.swift */; };
+		C0C1C2D3E4F5061728394B1D /* SharedCommentsSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C1C2D3E4F5061728394B0B /* SharedCommentsSettings.swift */; };
+		C0C1C2D3E4F5061728394B1E /* SharedCommentsSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C1C2D3E4F5061728394B0B /* SharedCommentsSettings.swift */; };
+		C0C1C2D3E4F5061728394B2C /* firebaseSharedCommentsWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C1C2D3E4F5061728394B0C /* firebaseSharedCommentsWrite.swift */; };
+		C0C1C2D3E4F5061728394B2D /* firebaseSharedCommentsWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C1C2D3E4F5061728394B0C /* firebaseSharedCommentsWrite.swift */; };
+		C0C1C2D3E4F5061728394B2E /* firebaseSharedCommentsWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C1C2D3E4F5061728394B0C /* firebaseSharedCommentsWrite.swift */; };
 		C35E54136ED3499D5AD15A2A /* Pods_70K_BandsTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7244FDFE5D87C624F0B9DB94 /* Pods_70K_BandsTests.framework */; };
 /* End PBXBuildFile section */
 
@@ -620,6 +626,8 @@
 		8DDB7E0B0AC440BA94B56DBD /* LandscapeScheduleViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandscapeScheduleViewModel.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718293A4B5B /* AutoScheduleWizardManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoScheduleWizardManager.swift; sourceTree = "<group>"; };
 		B0B1C2D3E4F5061728394A5B /* MinimumVersionWarningManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MinimumVersionWarningManager.swift; sourceTree = "<group>"; };
+		C0C1C2D3E4F5061728394B0B /* SharedCommentsSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedCommentsSettings.swift; sourceTree = "<group>"; };
+		C0C1C2D3E4F5061728394B0C /* firebaseSharedCommentsWrite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = firebaseSharedCommentsWrite.swift; sourceTree = "<group>"; };
 		DDAE333FDF216D5113AD6F14 /* Pods_MDF_Bands.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MDF_Bands.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		E5280282B2B9A8824CA090AF /* Pods-MDF Bands.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MDF Bands.release.xcconfig"; path = "Target Support Files/Pods-MDF Bands/Pods-MDF Bands.release.xcconfig"; sourceTree = "<group>"; };
 		FE3B5991B589286B7C27B395 /* Pods_70K_Bands.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_70K_Bands.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -788,6 +796,7 @@
 				116C9D7C2F415D370036743C /* FilePaths.swift */,
 				11D4844A2241DA0C00910878 /* firebaseBandDataWrite.swift */,
 				11D4844D2241DED700910878 /* firebaseEventDataWrite.swift */,
+				C0C1C2D3E4F5061728394B0C /* firebaseSharedCommentsWrite.swift */,
 				11D4844422418A9E00910878 /* firebaseUserWrite.swift */,
 				1156B4F21A660BE500D48D12 /* guiIcons.swift */,
 				11C8BDC71A7D264F00037F2B /* httpHandler.swift */,
@@ -810,6 +819,7 @@
 				116C9D812F415D370036743E /* MasterViewModel.swift */,
 				116C9D832F415D3700367440 /* MasterViewUIManager.swift */,
 				B0B1C2D3E4F5061728394A5B /* MinimumVersionWarningManager.swift */,
+				C0C1C2D3E4F5061728394B0B /* SharedCommentsSettings.swift */,
 				1122E3ED23DC8E38005EE50D /* NetworkTesting.swift */,
 				11FBBE1D232F26E000109035 /* NotificationPayload.apns */,
 				11DCE9BE1A87058000A25FB8 /* OnMyWayToDeath.wav */,
@@ -1466,6 +1476,8 @@
 				1154F6111A575893003F4764 /* MasterViewController.swift in Sources */,
 				A1B2C3D4E5F60718293A4B5C /* AutoScheduleWizardManager.swift in Sources */,
 				B0B1C2D3E4F5061728394A5C /* MinimumVersionWarningManager.swift in Sources */,
+				C0C1C2D3E4F5061728394B1C /* SharedCommentsSettings.swift in Sources */,
+				C0C1C2D3E4F5061728394B2C /* firebaseSharedCommentsWrite.swift in Sources */,
 				115F0DD02F551A76003CD82C /* AIScheduleBuilder.swift in Sources */,
 				115F0DD12F551A76003CD82C /* CreateAIScheduleSheet.swift in Sources */,
 				110E08542AECB6E200075618 /* DropDown+Appearance.swift in Sources */,
@@ -1581,6 +1593,8 @@
 				1155E3B51A8B126500D51ED9 /* MasterViewController.swift in Sources */,
 				A1B2C3D4E5F60718293A4B5D /* AutoScheduleWizardManager.swift in Sources */,
 				B0B1C2D3E4F5061728394A5D /* MinimumVersionWarningManager.swift in Sources */,
+				C0C1C2D3E4F5061728394B1D /* SharedCommentsSettings.swift in Sources */,
+				C0C1C2D3E4F5061728394B2D /* firebaseSharedCommentsWrite.swift in Sources */,
 				11C62E8C2E6661F0000D9AF2 /* EventCSVImporter.swift in Sources */,
 				110E08552AECB6E200075618 /* DropDown+Appearance.swift in Sources */,
 				115F0DCC2F551A76003CD82C /* AIScheduleBuilder.swift in Sources */,
@@ -1702,6 +1716,8 @@
 				115F0DCF2F551A76003CD82C /* CreateAIScheduleSheet.swift in Sources */,
 				A1B2C3D4E5F60718293A4B5E /* AutoScheduleWizardManager.swift in Sources */,
 				B0B1C2D3E4F5061728394A5E /* MinimumVersionWarningManager.swift in Sources */,
+				C0C1C2D3E4F5061728394B1E /* SharedCommentsSettings.swift in Sources */,
+				C0C1C2D3E4F5061728394B2E /* firebaseSharedCommentsWrite.swift in Sources */,
 				1172EE1F2E5A1C4D006E3596 /* DropDown+Appearance.swift in Sources */,
 				1172EE202E5A1C4D006E3596 /* httpHandler.swift in Sources */,
 				1172EE212E5A1C4D006E3596 /* DPDUIView+Extension.swift in Sources */,
@@ -1942,7 +1958,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260526001;
+				CURRENT_PROJECT_VERSION = 20260606001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -1970,7 +1986,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260526002;
+				MARKETING_VERSION = 20260606001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -2026,7 +2042,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260526001;
+				CURRENT_PROJECT_VERSION = 20260606001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -2051,7 +2067,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260526002;
+				MARKETING_VERSION = 20260606001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -2248,7 +2264,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260526002;
+				CURRENT_PROJECT_VERSION = 20260606001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -2269,7 +2285,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260526002;
+				MARKETING_VERSION = 20260606001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -2325,7 +2341,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260526002;
+				CURRENT_PROJECT_VERSION = 20260606001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -2350,7 +2366,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260526002;
+				MARKETING_VERSION = 20260606001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",

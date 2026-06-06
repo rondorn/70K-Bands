@@ -354,3 +354,16 @@
 "AIScheduleUnknownBandsMessage" = "%d bands don't have Must or Might set. Only Must and Might bands are added. Continue anyway?";
 "AIScheduleUnknownBandsContinue" = "Continue";
 "AIScheduleUnknownBandsReminder" = "%d bands are Unknown or Wont — only Must and Might get added.";
+
+// Shared band descriptions
+"Save Note" = "Save Note";
+"Post To All Users" = "Post To All Users";
+"Shared Comments Guidelines Title" = "Share a Helpful Band Description";
+"Shared Comments Guidelines Body" = "Write so someone who only knows the band name can decide if they want to see them.\n\n• Be factual and descriptive, not opinionated.\n• Avoid negative language. If a style is not for you, skip that band or describe it in a way fans of that style would find useful.\n\nBy posting, you agree:\n• You grant the app an unlimited license to use, display, edit, or omit your text (including in screenshots and promotion).\n• This app is open source; posted text is not private and may be accessed by other tools.\n• The author is not responsible for unauthorized use of submitted content.";
+"Shared Comments Username Title" = "Choose a Display Name";
+"Shared Comments Username Message" = "This name will appear with your descriptions. It cannot be changed after you submit.";
+"Shared Comments Username Placeholder" = "Display name";
+"Shared Comments Username Invalid" = "Enter a display name between 2 and 24 characters.";
+"Shared Comments Submit Success" = "Description submitted for review.";
+"Shared Comments Submit Failed" = "Could not submit description";
+

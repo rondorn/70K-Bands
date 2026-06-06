@@ -728,44 +728,12 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                         // 2) bandInfo.csv
                         // 3) schedule.csv
                         // 4) descriptionMap.csv
-                        try {
-                            // Prescribed time: pull-to-refresh is allowed to download the pointer file.
-                            staticVariables.forceLookupUrlsFromNetwork();
-                        } catch (Exception e) {
-                            Log.e("PullToRefresh", "Error refreshing pointer data", e);
+                        if (!staticVariables.ensurePointerFileAvailable()) {
+                            Log.e("PullToRefresh", "Pointer file unavailable — aborting pull-to-refresh download");
+                            return;
                         }
 
-                        // 2) bandInfo.csv
-                        try {
-                            BandInfo bandInfo = new BandInfo();
-                            bandInfo.DownloadBandFile();
-                        } catch (Exception e) {
-                            Log.e("PullToRefresh", "Error downloading band data", e);
-                        }
-
-                        // 3) schedule.csv
-                        try {
-                            scheduleInfo schedule = new scheduleInfo();
-                            String scheduleUrl = staticVariables.scheduleURL;
-                            if (scheduleUrl == null || scheduleUrl.trim().isEmpty()) {
-                                scheduleUrl = FestivalConfig.getInstance().scheduleUrlDefault;
-                                Log.d("DownloadUrls", "Using fallback scheduleUrl");
-                            }
-                            Log.d("PullToRefresh", "Downloading schedule from URL: " + scheduleUrl);
-                            scheduleInfo.setLastPreviousEventKeysForWizard(scheduleInfo.collectEventKeys(BandInfo.scheduleRecords));
-                            BandInfo.scheduleRecords = schedule.DownloadScheduleFile(scheduleUrl);
-                        } catch (Exception e) {
-                            Log.e("PullToRefresh", "Error downloading schedule data", e);
-                        }
-
-                        // 4) descriptionMap.csv (hash-checked; only replaces file if content changed) + parse
-                        try {
-                            CustomerDescriptionHandler descHandler = CustomerDescriptionHandler.getInstance();
-                            descHandler.getDescriptionMapFile();
-                            descHandler.getDescriptionMap();
-                        } catch (Exception e) {
-                            Log.e("PullToRefresh", "Error downloading descriptionMap", e);
-                        }
+                        staticVariables.downloadCoreCsvFiles();
                     } finally {
                         staticVariables.loadingBands = false;
                         SynchronizationManager.signalBandLoadingComplete();
@@ -2547,14 +2515,23 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
               ", size=" + scheduleSize + ", hasCachedData=" + hasCachedData + 
               ", fileDownloaded=" + fileDownloaded);
         
+        if (!staticVariables.hasPointerOnDisk()) {
+            Log.d("FRESH_INSTALL", "No pointer on disk — showing waiting message until pointer downloads");
+            showWaitingForDataPlaceholderOnUi();
+        }
+
         if (fileDownloaded == false && !hasCachedData) {
             // No cached data - need to download
             Log.d("MDF_DEBUG", "🚀 populateBandList() - No cached data, calling refreshNewData()");
             refreshNewData();
         } else {
-            // We have cached data (either fileDownloaded=true or files exist) - load from cache
-            Log.d("MDF_DEBUG", "🚀 populateBandList() - Has cached data, calling reloadData()");
+            // Show restored/offline cache immediately, then refresh pointer + CSVs in background.
+            // Required after reinstall when Android backup restores old year data but pointer advances.
+            Log.d("MDF_DEBUG", "🚀 populateBandList() - Has cached data, reloadData() + background core refresh");
             reloadData();
+            if (!staticVariables.loadingBands) {
+                executeAsyncListViewLoader();
+            }
         }
 
         Log.d("MDF_DEBUG", "🚀 populateBandList() - Calling setupSwipeList()");
@@ -2568,6 +2545,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     }
     
     public void refreshNewData(boolean forceRefresh) {
+        if (staticVariables.loadingBands) {
+            Log.d("refreshNewData", "Data load already in progress — skipping duplicate refreshNewData");
+            return;
+        }
 
         RelativeLayout showBandLayout = (RelativeLayout) findViewById(R.id.showBandsView);
         showBandLayout.invalidate();
@@ -2959,6 +2940,38 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             return getString(R.string.data_filter_issue);
         }
         return getString(R.string.waiting_for_data);
+    }
+
+    /**
+     * Shows the localized waiting message immediately while the pointer file is downloaded (first install).
+     */
+    private void showWaitingForDataPlaceholderOnUi() {
+        runOnUiThread(() -> {
+            try {
+                String waiting = getString(R.string.waiting_for_data);
+                List<bandListItem> items = new ArrayList<>();
+                items.add(new bandListItem(waiting));
+                if (adapter == null) {
+                    adapter = new bandListView(getApplicationContext(), R.layout.bandlist70k);
+                }
+                adapter.replaceAll(items);
+                if (bandNamesList != null) {
+                    if (bandNamesList.getAdapter() != adapter) {
+                        bandNamesList.setAdapter(adapter);
+                    } else {
+                        adapter.notifyDataSetChanged();
+                    }
+                    bandNamesList.setVisibility(View.VISIBLE);
+                }
+                if (listHandler == null) {
+                    listHandler = new mainListHandler(showBands.this);
+                }
+                listHandler.sortableBandNames = new ArrayList<>();
+                listHandler.sortableBandNames.add(waiting);
+            } catch (Exception e) {
+                Log.e("FRESH_INSTALL", "Error showing waiting placeholder", e);
+            }
+        });
     }
 
     private void displayBandDataWithoutSchedule() {
@@ -4517,50 +4530,18 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 isWaitingForData = true;
             } else {
                 List<String> sortableNames = listHandler.getSortableBandNames();
-                if (sortableNames.isEmpty() || 
-                    (sortableNames.size() == 1 && sortableNames.get(0).contains("Waiting for data"))) {
+                String waitingMsg = getString(R.string.waiting_for_data);
+                if (sortableNames.isEmpty() ||
+                    (sortableNames.size() == 1 && waitingMsg.equals(sortableNames.get(0)))) {
                     isWaitingForData = true;
                 }
             }
             
             if (isWaitingForData) {
-                Log.d("FRESH_INSTALL", "🚀 Applying pull-to-refresh logic for fresh install");
-                
-                // PERFORMANCE FIX: Move heavy operations to background thread to prevent ANR
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            // Apply the EXACT same logic as pull-to-refresh (in background)
-                            bandInfo = new BandInfo();
-                            staticVariables.loadingNotes = false;
-                            SynchronizationManager.signalNotesLoadingComplete();
-                            
-                            // Refresh description map cache (same as pull-to-refresh)
-                            Log.d("DescriptionMap", "Refreshing description map cache on fresh install");
-                            CustomerDescriptionHandler descHandler = CustomerDescriptionHandler.getInstance();
-                            descHandler.getDescriptionMap();
-                            
-                            // Apply the same refresh sequence as pull-to-refresh (on UI thread)
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    try {
-                                        refreshNewData();
-                                        reloadData();
-                                        Log.d("FRESH_INSTALL", "🚀 Fresh install refresh sequence complete");
-                                    } catch (Exception e) {
-                                        Log.e("FRESH_INSTALL", "🚨 Error in UI refresh: " + e.getMessage(), e);
-                                    }
-                                }
-                            });
-                        } catch (Exception e) {
-                            Log.e("FRESH_INSTALL", "🚨 Error in background refresh: " + e.getMessage(), e);
-                        }
-                    }
-                }).start();
-                
-                return; // Skip the normal refresh logic below
+                // onCreate already started executeAsyncListViewLoader (pointer → CSVs → UI refresh).
+                // Do not start a second partial load here — it races and can time out while the real load runs.
+                Log.d("FRESH_INSTALL", "Waiting for data — initial load from onCreate is in progress or will refresh UI when done");
+                return;
             }
             // DETAILS RETURN FIX: Always refresh to show updated data, but preserve scroll position
             if (staticVariables.listPosition > 0) {
@@ -4891,15 +4872,15 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 // Background task
                 Log.d("Refresh", "Refresh Stage = Background-Start");
                 
-                // Wait for any existing loading to complete using proper synchronization
-                if (!SynchronizationManager.waitForBandLoadingComplete(10)) {
-                    Log.w("Refresh", "Timeout waiting for existing band loading to complete");
-                    return; // Don't proceed if we can't ensure exclusive access
+                // Pre-execute already marked loadingBands; only wait if another loader owns the lock.
+                if (!staticVariables.loadingBands) {
+                    if (!SynchronizationManager.waitForBandLoadingComplete(10)) {
+                        Log.w("Refresh", "Timeout waiting for existing band loading to complete");
+                        return;
+                    }
+                    SynchronizationManager.signalBandLoadingStarted();
+                    staticVariables.loadingBands = true;
                 }
-                
-                // Signal that we're starting band loading
-                SynchronizationManager.signalBandLoadingStarted();
-                staticVariables.loadingBands = true;
 
                 // Cache-first startup:
                 // - If cache exists, UI is already showing it; we can attempt background refresh without waiting.
@@ -4915,54 +4896,17 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
                 Log.d("AsyncTask", "Downloading data (background)");
                 try {
-                    // Ensure pointer data is refreshed first (background, non-blocking UI).
-                    // This sets artistURL/scheduleURL/descriptionMap + eventYearRaw.
-                    // Prescribed time: startup refresh is allowed to download the pointer file.
-                    staticVariables.forceLookupUrlsFromNetwork();
-
-                    BandInfo bandInfo = new BandInfo();
-                    bandInfo.DownloadBandFile();
-
-                    // Download schedule AFTER band data (strict ordering requirement).
-                    try {
-                        scheduleInfo schedule = new scheduleInfo();
-                        String scheduleUrl = staticVariables.scheduleURL;
-                        if (scheduleUrl == null || scheduleUrl.trim().isEmpty()) {
-                            scheduleUrl = FestivalConfig.getInstance().scheduleUrlDefault;
-                            Log.d("DownloadUrls", "Using fallback scheduleUrl");
-                        }
-                        Log.d("FILTER_DEBUG", "🔍 STARTUP: About to download schedule from URL: " + scheduleUrl);
-                        scheduleInfo.setLastPreviousEventKeysForWizard(scheduleInfo.collectEventKeys(BandInfo.scheduleRecords));
-                        // Force schedule reload on initial launch only: bypass hash check so downloaded schedule is always applied.
-                        if (staticVariables.justLaunched) {
-                            CacheHashManager.getInstance().clearHash("scheduleInfo");
-                            Log.d("ScheduleInfo", "Initial launch: cleared schedule hash to force reload");
-                        }
-                        BandInfo.scheduleRecords = schedule.DownloadScheduleFile(scheduleUrl);
-                        if (staticVariables.justLaunched) {
-                            staticVariables.justLaunched = false;
-                        }
-                        Log.d("FILTER_DEBUG", "🔍 STARTUP: Schedule download complete, scheduleRecords has " +
-                                (BandInfo.scheduleRecords != null ? BandInfo.scheduleRecords.size() : "NULL") + " records");
-
-                        // Regenerate combined image list after schedule data is loaded (metadata only).
-                        CombinedImageListHandler combinedHandler = CombinedImageListHandler.getInstance();
-                        combinedHandler.regenerateAfterDataChange(bandInfo);
-                    } catch (Exception e) {
-                        Log.e("bandInfo", "Error downloading schedule data: " + e.getMessage(), e);
+                    // 1) Pointer — block when missing; best-effort when cached.
+                    if (!staticVariables.ensurePointerFileAvailable()) {
+                        Log.e("AsyncTask", "Pointer file unavailable — aborting data download");
+                        return;
                     }
+                    Log.d("AsyncTask", "Pointer ready — downloading band, schedule, and descriptionMap");
 
-                    // Keep descriptionMap in sync with band/schedule on startup/foreground refresh:
-                    // Download (hash-checked) and then parse to populate descriptionMapData + descriptionMapModData.
-                    try {
-                        CustomerDescriptionHandler descHandler = CustomerDescriptionHandler.getInstance();
-                        descHandler.getDescriptionMapFile();   // content-hash checked
-                        descHandler.getDescriptionMap();       // parse into in-memory maps (incl. mod dates)
-                    } catch (Exception e) {
-                        Log.e("bandInfo", "Error downloading/parsing descriptionMap: " + e.getMessage(), e);
-                    }
+                    // 2–4) Core CSV downloads (same pipeline as pull-to-refresh).
+                    staticVariables.downloadCoreCsvFiles();
                 } catch (Exception error) {
-                    Log.e("bandInfo", "Error downloading band data: " + error.getMessage(), error);
+                    Log.e("bandInfo", "Error during startup data download: " + error.getMessage(), error);
                 } finally {
                     // Always signal completion, even if there was an error
                     staticVariables.loadingBands = false;
@@ -4970,23 +4914,20 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 }
                 Log.d("Refresh", "Refresh Stage = Background-Stop");
             },
-            // Pre-execute on UI thread
+            // Pre-execute on UI thread — claim the load lock before onResume can start a duplicate path.
             () -> {
                 Log.d("DisplayListData", "Refresh Stage = Pre-Start");
                 if (!staticVariables.loadingBands) {
-                    Log.d("DisplayListData", "onPreExecuteRefresh - 1");
                     staticVariables.loadingBands = true;
+                    SynchronizationManager.signalBandLoadingStarted();
                     Log.d("AsyncList refresh", "Starting AsyncList refresh");
-                    
-                    // ANIMATION FIX: Save scroll position before async refresh
+
                     if (bandNamesList != null && staticVariables.savedScrollPosition < 0) {
                         saveScrollPosition();
                         Log.d("ScrollPosition", "Async refresh scroll preservation activated");
                     }
-                    
+
                     refreshData();
-                    staticVariables.loadingBands = false;
-                    Log.d("DisplayListData", "onPreExecuteRefresh - 2");
                 }
                 Log.d("Refresh", "Refresh Stage = Pre-Stop");
             },
@@ -4998,19 +4939,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 // NOTE: refreshData() will check if data changed and skip refresh if unchanged
                 // This prevents unnecessary refreshes that cause flashing
                 // Only refresh if we don't have data yet (fresh install) or if forceRefresh is needed
-                boolean needsRefresh = (adapter == null || adapter.getCount() == 0 || 
-                    (adapter.getCount() == 1 && adapter.getItem(0) != null && 
-                     adapter.getItem(0).getBandName() != null && 
-                     adapter.getItem(0).getBandName().contains("waiting for data")));
-                
-                if (needsRefresh) {
-                    Log.d("onPostExecuteRefresh", "Fresh install or blank list - refreshing");
-                    refreshData();
-                } else {
-                    Log.d("onPostExecuteRefresh", "List already has data - refreshData() will check if update needed");
-                    refreshData(); // Still call it, but it will skip if data unchanged
-                }
-                Log.d("onPostExecuteRefresh", "Post-execute refresh (displaying downloaded data)");
+                Log.d("onPostExecuteRefresh", "Core data download finished — refreshing UI from downloaded files");
+                refreshData(true);
                 
                 // Note: Scroll preservation is handled within refreshData() if needed
 

@@ -309,11 +309,17 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         //do an initial load of iCloud data on launch
         let showsAttendedHandle = ShowsAttended()
         
-        // Only show initial waiting message on first install (reuse hasRunBefore from above)
+        // Block with waiting message when pointer file is missing (first install or deleted cache).
+        if !YearManagementService.shared.hasPointerOnDisk() {
+            print("[MasterViewController] No pointer on disk — showing waiting message until pointer downloads")
+            showInitialWaitingMessage()
+        } else if !hasRunBefore {
+            print("[MasterViewController] First install with cached pointer — skipping waiting placeholder")
+        }
+        
         if !hasRunBefore {
             print("🎮 [MDF_DEBUG] FIRST LAUNCH PATH - will call performOptimizedFirstLaunch")
             print("[MasterViewController] 🚀 FIRST INSTALL - Starting optimized first launch sequence")
-            showInitialWaitingMessage()
             
             // OPTIMIZED FIRST LAUNCH: Download and import data in proper sequence
             // FIX: Call directly instead of dispatching - the delay was preventing execution
@@ -6189,14 +6195,15 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     /// Continue first launch sequence after initial data load
     private func continueFirstLaunchAfterDataLoad() {
         
-        // CRITICAL FIX: Clear justLaunched flag to prevent getting stuck in "waiting" mode
-        // This ensures the app shows cached data even if there are network/loading issues
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-            if cacheVariables.justLaunched {
-                print("🔧 SAFETY: Clearing justLaunched flag after 3 seconds to prevent app from getting stuck")
-                cacheVariables.justLaunched = false
+        // Only clear justLaunched early when pointer already exists (offline grace).
+        // First install without pointer must stay blocked until pointer + data load completes.
+        if YearManagementService.shared.hasPointerOnDisk() {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                if cacheVariables.justLaunched {
+                    print("🔧 SAFETY: Clearing justLaunched flag after 3 seconds (cached pointer present)")
+                    cacheVariables.justLaunched = false
+                }
             }
-            print("✅ FIRST LAUNCH: 3-second safety timer completed, justLaunched flag cleared")
         }
         
         print("🚀 FIRST LAUNCH: Using unified parallel download with pointer refresh")
@@ -6293,50 +6300,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 }
             }
             
-            // STEP 1: Download and update pointer file FIRST (synchronously)
-            print("🔄 [UNIFIED_REFRESH] Step 1 - Downloading pointer file FIRST")
-            let pointerUpdated = self.downloadAndUpdatePointerFileSync()
-            
-            if pointerUpdated {
-                print("✅ [UNIFIED_REFRESH] Pointer file updated successfully")
-                
-                // Notify pointer consumers (wizard, band list refresh, etc.) so they run on foreground return as well as launch.
-                DispatchQueue.main.async {
-                    NotificationCenter.default.post(name: Notification.Name("PointerDataUpdated"), object: nil)
-                }
-                
-                // STEP 2: Check if year changed
-                let newYear = getPointerUrlData(keyValue: "eventYear") ?? String(eventYear)
-                let newYearInt = Int(newYear) ?? eventYear
-                
-                if newYearInt != eventYear {
-                    print("🔄 [UNIFIED_REFRESH] Year changed from \(eventYear) to \(newYearInt)")
-                    eventYear = newYearInt
-                    
-                    // Update year file
-                    do {
-                        try newYear.write(toFile: eventYearFile, atomically: true, encoding: .utf8)
-                        print("✅ [UNIFIED_REFRESH] Updated year file to \(newYear)")
-                    } catch {
-                        print("⚠️ [UNIFIED_REFRESH] Failed to update year file: \(error)")
-                    }
-                    
-                    // Notify that year changed
-                    DispatchQueue.main.async {
-                        NotificationCenter.default.post(
-                            name: Notification.Name("YearChangedAutomatically"),
-                            object: nil,
-                            userInfo: ["newYear": newYearInt, "oldYear": eventYear]
-                        )
-                    }
-                }
-            } else {
-                print("⚠️ [UNIFIED_REFRESH] Pointer file update failed, continuing with cached pointer data")
+            // STEP 1: Pointer policy — block when missing on disk; best-effort refresh when cached.
+            let pointerResult = self.ensurePointerFileAvailable(reason: reason)
+            guard pointerResult.ready else {
+                print("❌ [UNIFIED_REFRESH] Required pointer download failed — aborting refresh")
+                return
             }
 
             // Version warning: check after pointer refresh attempt (fresh if download succeeded; cached otherwise).
             // Requirement: check on app launch and when returning from background; both flows use unified refresh.
-            MinimumVersionWarningManager.checkAndShowIfNeeded(reason: "UnifiedRefresh(\(reason)) pointerUpdated=\(pointerUpdated)")
+            MinimumVersionWarningManager.checkAndShowIfNeeded(reason: "UnifiedRefresh(\(reason)) pointerUpdated=\(pointerResult.networkRefreshSucceeded)")
             
             // STEP 3: Launch 3 parallel CSV download threads
             print("🔄 [UNIFIED_REFRESH] Step 3 - Launching 3 parallel CSV download threads")
@@ -6419,6 +6392,58 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     print("✅ [UNIFIED_REFRESH] Display updated - refresh complete")
                 }
             }
+        }
+    }
+    
+    private struct PointerAvailabilityResult {
+        let ready: Bool
+        let networkRefreshSucceeded: Bool
+    }
+    
+    /// Ensures a production pointer file is available before other downloads proceed.
+    /// - No pointer on disk: blocks (with waiting UI) until download succeeds.
+    /// - Pointer on disk: best-effort network refresh; continues with cache if refresh fails.
+    private func ensurePointerFileAvailable(reason: String) -> PointerAvailabilityResult {
+        let hadCachedPointer = YearManagementService.shared.hasPointerOnDisk()
+        
+        if !hadCachedPointer {
+            print("📍 [POINTER_POLICY] No pointer on disk — blocking until download succeeds")
+            DispatchQueue.main.async {
+                self.showInitialWaitingMessage()
+            }
+            
+            var attempt = 0
+            while true {
+                attempt += 1
+                print("📍 [POINTER_POLICY] Required pointer download attempt \(attempt)")
+                if self.downloadAndUpdatePointerFileSync() {
+                    self.applyPointerYearAfterDownload(reason: reason)
+                    return PointerAvailabilityResult(ready: true, networkRefreshSucceeded: true)
+                }
+                Thread.sleep(forTimeInterval: 2.0)
+            }
+        }
+        
+        print("📍 [POINTER_POLICY] Pointer on disk — best-effort network refresh")
+        if self.downloadAndUpdatePointerFileSync() {
+            self.applyPointerYearAfterDownload(reason: reason)
+            return PointerAvailabilityResult(ready: true, networkRefreshSucceeded: true)
+        }
+        
+        print("⚠️ [POINTER_POLICY] Best-effort refresh failed — continuing with cached pointer")
+        YearManagementService.shared.warmYearFromCachedPointerIfAvailable()
+        return PointerAvailabilityResult(ready: true, networkRefreshSucceeded: false)
+    }
+    
+    private func applyPointerYearAfterDownload(reason: String) {
+        let pointerYear = getPointerUrlData(keyValue: "eventYear")
+        YearManagementService.shared.applyYearAfterPointerUpdate(
+            pointerEventYear: pointerYear,
+            reason: reason
+        )
+        DispatchQueue.main.async {
+            SharedCommentsSettings.loadEnableSharedComments()
+            NotificationCenter.default.post(name: Notification.Name("PointerDataUpdated"), object: nil)
         }
     }
     

@@ -412,6 +412,49 @@ public class FestivalConfig {
         return text.contains("Comment text is not available yet") || 
                text.contains("No notes are available, right now, feel free to add your own");
     }
+
+    /**
+     * True when the note is only the empty generic placeholder (e.g. "Click to add notes",
+     * "waiting for Aaron's description") and not real downloaded band description content.
+     */
+    public boolean isEmptyGenericNoteText(String text, android.content.Context context) {
+        if (text == null || text.trim().isEmpty()) {
+            return false;
+        }
+
+        String normalized = normalizeGenericNoteCompareText(text);
+        String defaultText = normalizeGenericNoteCompareText(getDefaultDescriptionText(context));
+        if (!defaultText.isEmpty() && normalized.equals(defaultText)) {
+            return true;
+        }
+
+        if (normalized.contains("Comment text is not available yet")) {
+            return true;
+        }
+        if (normalized.contains("No notes are available, right now, feel free to add your own")) {
+            return true;
+        }
+        if (normalized.equalsIgnoreCase("Double click to add your own notes")
+                || normalized.equalsIgnoreCase("Click to add your own notes")
+                || normalized.contains("Double click to add your own")
+                || normalized.contains("Click to add your own notes")) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private String normalizeGenericNoteCompareText(String text) {
+        if (text == null) {
+            return "";
+        }
+        return text.replaceAll("<br>", "\n")
+                .replaceAll("<[^>]*>", "")
+                .replaceAll("&nbsp;", " ")
+                .replaceAll("\\s+", " ")
+                .replaceAll("[^\\p{ASCII}]", "")
+                .trim();
+    }
     
     // ---- Drawable resolution (same usage as Swift: config holds asset names, resolve to resource ID) ----
     

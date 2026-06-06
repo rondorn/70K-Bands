@@ -9,6 +9,14 @@
 import SwiftUI
 import Translation
 
+private struct TopContentHeightPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
+}
+
 struct DetailView: View {
     @StateObject private var viewModel: DetailViewModel
     @Environment(\.presentationMode) var presentationMode
@@ -18,7 +26,15 @@ struct DetailView: View {
     @State private var dragStartX: CGFloat = 0
     @State private var isModalPresentation: Bool = false
     @State private var currentOrientation: UIDeviceOrientation = UIDevice.current.orientation
-    
+    @FocusState private var notesFieldFocused: Bool
+    @State private var keyboardOverlapHeight: CGFloat = 0
+    @State private var topContentHeight: CGFloat = 0
+
+    private let notesTopGap: CGFloat = 20
+    private let notesKeyboardAccessoryHeight: CGFloat = 44
+    private let prioritySectionHeight: CGFloat = 68
+    private let translationSectionHeight: CGFloat = 52
+
     let showCustomBackButton: Bool
     
     init(bandName: String, showCustomBackButton: Bool = false) {
@@ -32,8 +48,8 @@ struct DetailView: View {
                 // Main content that slides with animation
                 mainContent
                     .offset(x: offset)
-                    .modifier(DetailNavigationModifier(viewModel: viewModel, showCustomBackButton: showCustomBackButton))
-                    .modifier(DetailLifecycleModifiers(viewModel: viewModel))
+                    .modifier(DetailNavigationModifier(viewModel: viewModel, showCustomBackButton: showCustomBackButton, notesFieldFocused: $notesFieldFocused))
+                    .modifier(DetailLifecycleModifiers(viewModel: viewModel, notesFieldFocused: $notesFieldFocused))
                     .preferredColorScheme(.dark)
                     .environment(\.colorScheme, .dark)
                     .background(Color.black.edgesIgnoringSafeArea(.all))
@@ -130,10 +146,17 @@ struct DetailView: View {
                     }
                 }
             }
-            .ignoresSafeArea(.keyboard)
             .onAppear {
                 // Initialize orientation state
                 currentOrientation = UIDevice.current.orientation
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillChangeFrameNotification)) { notification in
+                updateKeyboardOverlap(from: notification)
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+                withAnimation(.easeOut(duration: 0.25)) {
+                    keyboardOverlapHeight = 0
+                }
             }
             .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
                 // Update orientation state to trigger view refresh
@@ -353,86 +376,131 @@ struct DetailView: View {
     
     // Portrait with schedule: logo, schedule, links, band details, notes
     private var portraitWithScheduleView: some View {
-        VStack(spacing: 0) {
-            // Compact top section - non-scrollable
-            VStack(spacing: 0) {
-                // On large display devices, show band name above logo with proper spacing
-                let isLargeDisplay = DeviceSizeManager.isLargeDisplay()
-                if isLargeDisplay && showCustomBackButton {
-                    // Band name text above logo (iPad only, when using custom back button)
-                    Text(viewModel.bandName)
-                        .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
-                        .padding(.top, 8) // Space from back button
-                        .padding(.bottom, 12) // Space before logo
-                        .frame(maxWidth: .infinity)
-                }
-                
-                // Band Logo
-                bandLogoSection
-                
-                // Schedule Events
-                scheduleEventsSection
-                
-                // Links Section
-                if viewModel.hasAnyLinks {
-                    linksSection
-                }
-                
-                // Band Details
-                bandDetailsSection
+        portraitNotesLayout {
+            // Band Logo
+            bandLogoSection
+
+            // Schedule Events
+            scheduleEventsSection
+
+            // Links Section
+            if viewModel.hasAnyLinks {
+                linksSection
             }
-            .padding(.horizontal, 14)
-            .background(Color.black)
-            
-            // Larger space before notes section
-            Spacer(minLength: 20)
-            
-            // Scrollable Notes Section - takes remaining space
-            notesSection
-                .frame(maxHeight: .infinity)
+
+            // Band Details
+            bandDetailsSection
         }
     }
-    
+
     // Portrait without schedule: logo, links, band details, notes (no schedule)
     private var portraitWithoutScheduleView: some View {
-        VStack(spacing: 0) {
-            // Compact top section - non-scrollable
-            VStack(spacing: 0) {
-                // On large display devices, show band name above logo with proper spacing
-                let isLargeDisplay = DeviceSizeManager.isLargeDisplay()
-                if isLargeDisplay && showCustomBackButton {
-                    // Band name text above logo (iPad only, when using custom back button)
-                    Text(viewModel.bandName)
-                        .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
-                        .padding(.top, 8) // Space from back button
-                        .padding(.bottom, 12) // Space before logo
-                        .frame(maxWidth: .infinity)
-                }
-                
-                // Band Logo
-                bandLogoSection
-                
-                // Links Section
-                if viewModel.hasAnyLinks {
-                    linksSection
-                }
-                
-                // Band Details
-                bandDetailsSection
+        portraitNotesLayout {
+            // Band Logo
+            bandLogoSection
+
+            // Links Section
+            if viewModel.hasAnyLinks {
+                linksSection
             }
-            .padding(.horizontal, 14)
-            .background(Color.black)
-            
-            // Larger space before notes section
-            Spacer(minLength: 20)
-            
-            // Scrollable Notes Section - takes remaining space
-            notesSection
-                .frame(maxHeight: .infinity)
+
+            // Band Details
+            bandDetailsSection
+        }
+    }
+
+    @ViewBuilder
+    private func portraitNotesLayout<Content: View>(@ViewBuilder topContent: @escaping () -> Content) -> some View {
+        GeometryReader { geometry in
+            let notesAvailableHeight = max(
+                80,
+                geometry.size.height
+                    - topContentHeight
+                    - notesTopGap
+                    - notesLayoutBottomInset
+            )
+
+            VStack(alignment: .leading, spacing: 0) {
+                VStack(spacing: 0) {
+                    let isLargeDisplay = DeviceSizeManager.isLargeDisplay()
+                    if isLargeDisplay && showCustomBackButton {
+                        Text(viewModel.bandName)
+                            .font(.system(size: 24, weight: .bold))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                            .padding(.top, 8)
+                            .padding(.bottom, 12)
+                            .frame(maxWidth: .infinity)
+                    }
+
+                    topContent()
+                }
+                .padding(.horizontal, 14)
+                .background(Color.black)
+                .fixedSize(horizontal: false, vertical: true)
+                .background(
+                    GeometryReader { topProxy in
+                        Color.clear.preference(
+                            key: TopContentHeightPreferenceKey.self,
+                            value: topProxy.size.height
+                        )
+                    }
+                )
+
+                Color.clear.frame(height: notesTopGap)
+
+                notesSection
+                    .frame(height: notesAvailableHeight, alignment: .top)
+                    .clipped()
+            }
+            .frame(width: geometry.size.width, height: geometry.size.height, alignment: .top)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .ignoresSafeArea(.keyboard, edges: .bottom)
+        .onPreferenceChange(TopContentHeightPreferenceKey.self) { height in
+            topContentHeight = height
+        }
+    }
+
+    private var shouldShowTranslationAbovePriority: Bool {
+        guard viewModel.showTranslationButton else { return false }
+        let isLandscapeOnPhone = (UIApplication.shared.statusBarOrientation.isLandscape || currentOrientation.isLandscape) &&
+            !DeviceSizeManager.isLargeDisplay()
+        let hasSchedule = !viewModel.scheduleEvents.isEmpty
+        return !(isLandscapeOnPhone && hasSchedule)
+    }
+
+    /// Space reserved below the notes editor: keyboard + accessory when typing, otherwise pinned footer chrome.
+    private var notesLayoutBottomInset: CGFloat {
+        if keyboardOverlapHeight > 0 {
+            return keyboardOverlapHeight + notesKeyboardAccessoryHeight
+        }
+
+        var inset = prioritySectionHeight
+        if shouldShowTranslationAbovePriority {
+            inset += translationSectionHeight
+        }
+        return inset
+    }
+
+    private func updateKeyboardOverlap(from notification: Notification) {
+        guard let frameValue = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue else { return }
+
+        let keyboardFrame = frameValue.cgRectValue
+        let overlap: CGFloat
+        if let window = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .flatMap({ $0.windows })
+            .first(where: { $0.isKeyWindow }) {
+            let keyboardInWindow = window.convert(keyboardFrame, from: nil)
+            overlap = max(0, window.bounds.intersection(keyboardInWindow).height)
+        } else {
+            overlap = max(0, keyboardFrame.height)
+        }
+
+        let duration = (notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double) ?? 0.25
+        withAnimation(.easeOut(duration: duration)) {
+            keyboardOverlapHeight = overlap
         }
     }
     
@@ -671,24 +739,8 @@ struct DetailView: View {
     private var notesSection: some View {
         VStack(alignment: .leading, spacing: 0) {
             if viewModel.isNotesEditable {
-                // Editable TextEditor for custom notes
-                TextEditor(text: $viewModel.customNotes)
-                    .font(.system(size: viewModel.noteFontSizeLarge ? 19 : 15)) // Reduced by 1pt
-                    .foregroundColor(.white)
-                    .background(Color.black)
-                    .modifier(ConditionalScrollContentBackground())
-                    .padding(.horizontal, 14)
-                    .padding(.top, 0)
-                    .onChange(of: viewModel.customNotes) { _ in
-                        viewModel.notesDidChange()
-                    }
-                    .toolbar {
-                        ToolbarItemGroup(placement: .keyboard) {
-                            keyboardToolbarButtons
-                        }
-                    }
+                editableNotesEditor(paddingTop: 0)
             } else {
-                // Read-only Text with hyperlink support in ScrollView
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
                         if viewModel.customNotes.isEmpty {
@@ -699,7 +751,6 @@ struct DetailView: View {
                                 .padding(.horizontal, 14)
                                 .padding(.top, 0)
                         } else {
-                            // Use hyperlink text parsing for !!!!https:// links
                             HyperlinkTextView(
                                 text: viewModel.customNotes,
                                 fontSize: viewModel.noteFontSizeLarge ? 19 : 15
@@ -707,15 +758,13 @@ struct DetailView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 14)
                             .padding(.top, 0)
-                            .textSelection(.enabled) // Allow text selection for non-link text
+                            .textSelection(.enabled)
                         }
-                        
-                        // Add bottom padding to account for pinned sections
-                        Spacer(minLength: viewModel.showTranslationButton ? 140 : 80)
                     }
                 }
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Color.black)
     }
     
@@ -723,21 +772,7 @@ struct DetailView: View {
     private var notesContentInline: some View {
         VStack(alignment: .leading, spacing: 0) {
             if viewModel.isNotesEditable {
-                // Editable TextEditor for custom notes
-                TextEditor(text: $viewModel.customNotes)
-                    .font(.system(size: viewModel.noteFontSizeLarge ? 19 : 15))
-                    .foregroundColor(.white)
-                    .background(Color.black)
-                    .modifier(ConditionalScrollContentBackground())
-                    .frame(minHeight: 100)
-                    .onChange(of: viewModel.customNotes) { _ in
-                        viewModel.notesDidChange()
-                    }
-                    .toolbar {
-                        ToolbarItemGroup(placement: .keyboard) {
-                            keyboardToolbarButtons
-                        }
-                    }
+                editableNotesEditor(minHeight: 100)
             } else {
                 // Read-only Text with hyperlink support (no ScrollView wrapper)
                 VStack(alignment: .leading, spacing: 0) {
@@ -815,26 +850,87 @@ struct DetailView: View {
         .padding(.vertical, 16)
     }
     
+    // MARK: - Notes editing UI
+
+    @ViewBuilder
+    private func editableNotesEditor(minHeight: CGFloat? = nil, paddingTop: CGFloat = 0) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if viewModel.isEditingNotes && viewModel.canEditNotes && viewModel.canShowPostToAllUsers {
+                notesEditingActionBar
+            }
+
+            TextEditor(text: $viewModel.customNotes)
+                .font(.system(size: viewModel.noteFontSizeLarge ? 19 : 15))
+                .foregroundColor(.white)
+                .background(Color.black)
+                .modifier(ConditionalScrollContentBackground())
+                .padding(.horizontal, 14)
+                .padding(.top, paddingTop)
+                .apply { editor in
+                    if let minHeight {
+                        editor.frame(minHeight: minHeight)
+                    } else {
+                        editor.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    }
+                }
+                .focused($notesFieldFocused)
+                .onChange(of: viewModel.customNotes) { _ in
+                    viewModel.notesDidChange()
+                }
+                .onChange(of: notesFieldFocused) { isFocused in
+                    if isFocused {
+                        viewModel.beginNotesEditing()
+                    } else if viewModel.isEditingNotes {
+                        viewModel.cancelNotesEditing()
+                    }
+                }
+                .toolbar {
+                    ToolbarItemGroup(placement: .keyboard) {
+                        keyboardToolbarButtons
+                    }
+                }
+        }
+        .frame(maxHeight: .infinity, alignment: .top)
+    }
+
+    /// Post To All Users lives above the notes field so the full label stays readable.
+    private var notesEditingActionBar: some View {
+        Toggle(isOn: $viewModel.postToAllUsers) {
+            Text(NSLocalizedString("Post To All Users", comment: "Post To All Users"))
+                .font(.system(size: 15))
+                .foregroundColor(.white)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .toggleStyle(SwitchToggleStyle(tint: .blue))
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(Color(white: 0.12))
+    }
+
     // MARK: - Keyboard Toolbar
-    
+
     private var keyboardToolbarButtons: some View {
-        HStack {
-            // Select All button
+        HStack(spacing: 16) {
             Button(NSLocalizedString("Select All", comment: "")) {
-                // Select all text in the notes field
                 UIApplication.shared.sendAction(#selector(UIResponder.selectAll(_:)), to: nil, from: nil, for: nil)
             }
             .foregroundColor(.blue)
-            
+
             Spacer()
-            
-            // Done button
-            Button(NSLocalizedString("Done", comment: "")) {
-                // Dismiss keyboard
-                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+
+            Button(NSLocalizedString("Save", comment: "Save note keyboard action")) {
+                viewModel.saveNoteTapped()
+                notesFieldFocused = false
             }
             .foregroundColor(.blue)
             .modifier(ConditionalFontWeight())
+
+            Button(NSLocalizedString("Cancel", comment: "Cancel button")) {
+                viewModel.cancelNotesEditing()
+                notesFieldFocused = false
+            }
+            .foregroundColor(.blue)
         }
         .padding(.horizontal, 16)
     }
@@ -1103,36 +1199,43 @@ struct ToastOverlayView: View {
 struct DetailNavigationModifier: ViewModifier {
     @ObservedObject var viewModel: DetailViewModel
     let showCustomBackButton: Bool
-    
+    @FocusState.Binding var notesFieldFocused: Bool
+
     func body(content: Content) -> some View {
         if showCustomBackButton {
-            // When using custom back button overlay, hide navigation bar completely
             content
                 .navigationBarHidden(true)
         } else {
-            // Normal navigation with title
             content
                 .navigationTitle(viewModel.bandName)
                 .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    if viewModel.isEditingNotes && viewModel.canEditNotes {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button(NSLocalizedString("Save Note", comment: "Save Note")) {
+                                viewModel.saveNoteTapped()
+                                notesFieldFocused = false
+                            }
+                        }
+                    }
+                }
         }
     }
 }
 
 struct DetailLifecycleModifiers: ViewModifier {
     @ObservedObject var viewModel: DetailViewModel
-    
+    @FocusState.Binding var notesFieldFocused: Bool
+
     func body(content: Content) -> some View {
         content
             .onAppear {
                 print("DEBUG: DetailView appeared for band: '\(viewModel.bandName)'")
-                // NOTE: loadBandData() is already called in DetailViewModel.init(), so no need to call it here
-                // This prevents duplicate data loading and improves performance
             }
             .onDisappear {
                 print("DEBUG: DetailView disappeared for band: '\(viewModel.bandName)'")
-                // Only save if we're actually leaving the detail view entirely
-                // (not during swipe navigation which handles saving manually)
-                viewModel.saveNotes()
+                viewModel.discardUnsavedNotesIfEditing()
+                notesFieldFocused = false
             }
             .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
                 viewModel.handleOrientationChange()

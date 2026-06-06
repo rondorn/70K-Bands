@@ -14,6 +14,133 @@ class YearManagementService {
     static let shared = YearManagementService()
     private init() {}
     
+    // MARK: - Event Year Wait State
+    
+    private let eventYearReadyLock = NSLock()
+    private var eventYearWaitersSignaled = false
+    private let eventYearReadySemaphore = DispatchSemaphore(value: 0)
+    private var lastAppliedPointerYear: Int = 0
+    
+    /// Blocks until the production pointer file provides a valid event year, or until timeout.
+    /// Call from code paths that require year (Firebase writes, band load keyed by year, etc.).
+    func waitForStorageEventYear(maxWaitSeconds: TimeInterval = 90) -> Int {
+        let immediate = resolveStorageEventYearFromPointerOnly()
+        if immediate > 0 {
+            return immediate
+        }
+        
+        print("⏳ waitForStorageEventYear: Waiting up to \(maxWaitSeconds)s for pointer year resolution")
+        let deadline = Date().addingTimeInterval(maxWaitSeconds)
+        while Date() < deadline {
+            _ = eventYearReadySemaphore.wait(timeout: .now() + 0.5)
+            let year = resolveStorageEventYearFromPointerOnly()
+            if year > 0 {
+                print("✅ waitForStorageEventYear: Resolved year \(year)")
+                return year
+            }
+        }
+        
+        let finalYear = resolveStorageEventYearFromPointerOnly()
+        if finalYear <= 0 {
+            print("❌ waitForStorageEventYear: Timed out without pointer year")
+        }
+        return finalYear
+    }
+    
+    private func signalEventYearReady() {
+        eventYearReadyLock.lock()
+        defer { eventYearReadyLock.unlock() }
+        if !eventYearWaitersSignaled {
+            eventYearWaitersSignaled = true
+            eventYearReadySemaphore.signal()
+        }
+    }
+    
+    /// Applies festival year from a freshly downloaded or cached pointer file.
+    /// Updates in-memory caches, mirrors the year file, runs year-change cleanup when the pointer year advances,
+    /// and unblocks any waiters blocked on year resolution.
+    func applyYearAfterPointerUpdate(pointerEventYear: String, reason: String) {
+        let trimmedPointerYear = pointerEventYear.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let pointerYearInt = Int(trimmedPointerYear), pointerYearInt > 2000 else {
+            print("❌ applyYearAfterPointerUpdate(\(reason)): invalid pointer year '\(pointerEventYear)'")
+            return
+        }
+        
+        let yearPreference = getScheduleUrl()
+        let targetYear: Int
+        if yearPreference.isYearString, let explicitYear = Int(yearPreference), explicitYear > 2000 {
+            targetYear = explicitYear
+        } else {
+            targetYear = pointerYearInt
+        }
+        
+        let oldGlobalYear = eventYear
+        
+        storePointerLock.sync {
+            cacheVariables.storePointerData["Current:eventYear"] = trimmedPointerYear
+            cacheVariables.storePointerData["\(yearPreference):eventYear"] = String(targetYear)
+        }
+        
+        if yearPreference == "Current",
+           lastAppliedPointerYear > 0,
+           lastAppliedPointerYear != pointerYearInt {
+            print("📅 applyYearAfterPointerUpdate(\(reason)): Pointer year advanced \(lastAppliedPointerYear) → \(pointerYearInt)")
+            checkAndHandleYearChange(newYear: String(targetYear))
+            
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(
+                    name: Notification.Name("YearChangedAutomatically"),
+                    object: nil,
+                    userInfo: ["newYear": targetYear, "oldYear": oldGlobalYear > 0 ? oldGlobalYear : self.lastAppliedPointerYear]
+                )
+            }
+        }
+        
+        lastAppliedPointerYear = pointerYearInt
+        
+        DispatchQueue.main.async {
+            eventYear = targetYear
+        }
+        
+        do {
+            try String(targetYear).write(toFile: eventYearFile, atomically: true, encoding: .utf8)
+        } catch {
+            print("applyYearAfterPointerUpdate(\(reason)): Could not mirror eventYear file: \(error)")
+        }
+        
+        signalEventYearReady()
+        print("✅ applyYearAfterPointerUpdate(\(reason)): eventYear=\(targetYear) (pointer Current=\(pointerYearInt))")
+    }
+    
+    /// Reads event year from cached pointer data only (never blocks, never uses calendar defaults).
+    func resolveStorageEventYearFromPointerOnly() -> Int {
+        let yearString = getPointerUrlData(keyValue: "eventYear")
+        if let year = Int(yearString.trimmingCharacters(in: .whitespacesAndNewlines)), year > 2000 {
+            return year
+        }
+        return 0
+    }
+    
+    /// Seeds year wait state from an existing on-disk pointer cache at launch (no network).
+    func warmYearFromCachedPointerIfAvailable() {
+        let year = resolveStorageEventYearFromPointerOnly()
+        guard year > 0 else { return }
+        let yearString = getPointerUrlData(keyValue: "eventYear")
+        applyYearAfterPointerUpdate(pointerEventYear: yearString, reason: "launch-cached-pointer")
+    }
+    
+    /// True when the production pointer file exists on disk with non-empty content.
+    func hasPointerOnDisk() -> Bool {
+        let path = FilePaths.cachedPointerFile
+        guard FileManager.default.fileExists(atPath: path) else { return false }
+        guard let attrs = try? FileManager.default.attributesOfItem(atPath: path),
+              let size = attrs[.size] as? NSNumber,
+              size.intValue > 0 else {
+            return false
+        }
+        return true
+    }
+    
     // MARK: - Year Resolution
     
     /// Ensures the year is properly resolved at launch, with fallback mechanisms.
@@ -34,32 +161,18 @@ class YearManagementService {
             }
         }
         
-        // Step 2: If no memory cache, try cached file (still fast, no network)
+        // Step 2: Resolve from cached production pointer file only.
         if resolvedYear.isEmpty {
-            print("🚀 LAUNCH OPTIMIZATION: No memory cache, trying cached year file")
-            do {
-                if FileManager.default.fileExists(atPath: eventYearFile) {
-                    resolvedYear = try String(contentsOfFile: eventYearFile, encoding: String.Encoding.utf8)
-                    print("🚀 LAUNCH OPTIMIZATION: Found cached year file: \(resolvedYear)")
-                    
-                    // Cache in memory for next time
-                    if !resolvedYear.isEmpty {
-                        storePointerLock.sync() {
-                            cacheVariables.storePointerData[cacheKey] = resolvedYear
-                        }
-                    }
+            print("🚀 LAUNCH OPTIMIZATION: No memory cache, reading eventYear from production pointer file")
+            resolvedYear = getPointerUrlData(keyValue: "eventYear")
+            if !resolvedYear.isEmpty {
+                storePointerLock.sync() {
+                    cacheVariables.storePointerData[cacheKey] = resolvedYear
                 }
-            } catch {
-                print("🚀 LAUNCH OPTIMIZATION: Could not read cached year file")
             }
         }
         
-        // Step 3: If still no data, use sensible default.
-        // Pointer file will be downloaded during startup (AppDelegate) and/or pull-to-refresh.
-        if resolvedYear.isEmpty {
-            print("🚀 LAUNCH OPTIMIZATION: No cached year data - using default and triggering background update")
-            resolvedYear = getDefaultPointerValue(for: "eventYear")
-        } else {
+        if !resolvedYear.isEmpty {
             // We have cached year - check if user is on "Current" and if pointer file has newer year
             let yearPreference = getScheduleUrl() // Returns "Current" or specific year like "2025"
             if yearPreference == "Current" {
@@ -74,12 +187,9 @@ class YearManagementService {
             }
         }
         
-        // Validate the year
         guard let yearInt = Int(resolvedYear), yearInt > 2000 && yearInt < 2030 else {
-            print("🚀 LAUNCH OPTIMIZATION: Invalid year '\(resolvedYear)', using current year as fallback")
-            let currentYear = Calendar.current.component(.year, from: Date())
-            print("🚀 LAUNCH OPTIMIZATION: Using current year \(currentYear) (no hardcoded minimum)")
-            return currentYear
+            print("🚀 LAUNCH OPTIMIZATION: No valid eventYear in production pointer file (got '\(resolvedYear)')")
+            return 0
         }
         
         print("🚀 LAUNCH OPTIMIZATION: Final resolved year (NON-BLOCKING): \(resolvedYear)")
@@ -362,15 +472,11 @@ class YearManagementService {
         // Use robust year resolution that handles launch scenarios
         let resolvedYear = ensureYearResolvedAtLaunch()
         
-        // SAFETY CHECK: If year is 0, use current calendar year as fallback
-        if resolvedYear == 0 {
-            print("❌ CRITICAL: eventYear resolved to 0 - using current year as fallback")
-            let currentYear = Calendar.current.component(.year, from: Date())
-            eventYear = currentYear
-            print("📅 Set eventYear to current year: \(currentYear)")
-        } else {
+        if resolvedYear > 0 {
             eventYear = resolvedYear
-            print("📅 Set eventYear to resolved year: \(resolvedYear)")
+            print("📅 Set eventYear to pointer-resolved year: \(resolvedYear)")
+        } else {
+            print("❌ CRITICAL: eventYear not available — production pointer file missing eventYear")
         }
         
         print("🎯 [MDF_DEBUG] GLOBAL eventYear RESOLUTION:")

@@ -440,4 +440,15 @@
     <string name="schedule_qr_compression_failed">QR-Code konnte nicht erstellt werden.</string>
     <string name="schedule_qr_camera_required">Kamerazugriff ist zum Scannen des Zeitplan-QR-Codes erforderlich. In Einstellungen aktivieren.</string>
     <string name="schedule_qr_camera_unavailable">Kamera konnte nicht geöffnet werden.</string>
+
+    <string name="post_to_all_users">Für alle Nutzer veröffentlichen</string>
+    <string name="save_note">Notiz speichern</string>
+    <string name="shared_comments_guidelines_title">Eine hilfreiche Bandbeschreibung teilen</string>
+    <string name="shared_comments_guidelines_body">Schreiben Sie so, dass jemand, der nur den Bandnamen kennt, entscheiden kann, ob er die Band sehen möchte.\n\n• Seien Sie sachlich und beschreibend, nicht meinungsbetont.\n• Vermeiden Sie negative Formulierungen. Wenn ein Stil nichts für Sie ist, überspringen Sie diese Band oder beschreiben Sie sie so, dass Fans dieses Stils es nützlich finden.\n\nMit dem Veröffentlichen stimmen Sie zu:\n• Sie gewähren der App eine unbegrenzte Lizenz zur Nutzung, Anzeige, Bearbeitung oder Weglassung Ihres Textes (einschließlich in Screenshots und Werbung).\n• Diese App ist Open Source; veröffentlichte Texte sind nicht privat und können von anderen Tools abgerufen werden.\n• Der Autor ist nicht verantwortlich für unbefugte Nutzung eingereichter Inhalte.</string>
+    <string name="shared_comments_username_title">Anzeigenamen wählen</string>
+    <string name="shared_comments_username_message">Dieser Name wird bei Ihren Beschreibungen angezeigt. Er kann nach dem Absenden nicht mehr geändert werden.</string>
+    <string name="shared_comments_username_placeholder">Anzeigename</string>
+    <string name="shared_comments_username_invalid">Geben Sie einen Anzeigenamen mit 2 bis 24 Zeichen ein.</string>
+    <string name="shared_comments_submit_success">Beschreibung zur Prüfung eingereicht.</string>
+    <string name="shared_comments_submit_failed">Beschreibung konnte nicht eingereicht werden</string>
 </resources>

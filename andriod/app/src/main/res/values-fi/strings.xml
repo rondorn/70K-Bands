@@ -443,4 +443,15 @@
     <string name="schedule_qr_compression_failed">QR-koodia ei voitu luoda.</string>
     <string name="schedule_qr_camera_required">Kameran käyttöoikeus tarvitaan QR-koodin skannaamiseen. Ota se käyttöön Asetuksissa.</string>
     <string name="schedule_qr_camera_unavailable">Kameraan ei voitu yhteyttä.</string>
+
+    <string name="post_to_all_users">Julkaise kaikille käyttäjille</string>
+    <string name="save_note">Tallenna muistiinpano</string>
+    <string name="shared_comments_guidelines_title">Jaa hyödyllinen bändikuvaus</string>
+    <string name="shared_comments_guidelines_body">Kirjoita niin, että joku, joka tuntee vain bändin nimen, voi päättää, haluaako nähdä heidät.\n\n• Ole asiallinen ja kuvaileva, älä mielipiteinen.\n• Vältä negatiivista kieltä. Jos tyyli ei ole sinua varten, ohita bändi tai kuvaile sitä tavalla, josta kyseisen tyylin fanit pitävät hyödyllisenä.\n\nJulkaisemalla hyväksyt:\n• Myönnät sovellukselle rajoittamattoman lisenssin käyttää, näyttää, muokata tai jättää pois tekstiäsi (mukaan lukien kuvakaappauksissa ja markkinoinnissa).\n• Tämä sovellus on avoimen lähdekoodin; julkaistu teksti ei ole yksityinen ja muihin työkaluihin voi päästä siihen käsiksi.\n• Tekijä ei ole vastuussa lähetetyn sisällön luvattomasta käytöstä.</string>
+    <string name="shared_comments_username_title">Valitse näyttönimi</string>
+    <string name="shared_comments_username_message">Tämä nimi näkyy kuvaustesi yhteydessä. Sitä ei voi muuttaa lähetyksen jälkeen.</string>
+    <string name="shared_comments_username_placeholder">Näyttönimi</string>
+    <string name="shared_comments_username_invalid">Syötä näyttönimi, 2–24 merkkiä.</string>
+    <string name="shared_comments_submit_success">Kuvaus lähetetty tarkistettavaksi.</string>
+    <string name="shared_comments_submit_failed">Kuvausta ei voitu lähettää</string>
 </resources>

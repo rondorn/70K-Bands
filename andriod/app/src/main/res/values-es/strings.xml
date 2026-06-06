@@ -430,4 +430,15 @@
     <string name="schedule_qr_compression_failed">No se pudo crear el código QR.</string>
     <string name="schedule_qr_camera_required">Se necesita el permiso de cámara para escanear el código QR. Actívalo en Ajustes.</string>
     <string name="schedule_qr_camera_unavailable">No se pudo acceder a la cámara.</string>
+
+    <string name="post_to_all_users">Publicar para todos los usuarios</string>
+    <string name="save_note">Guardar nota</string>
+    <string name="shared_comments_guidelines_title">Comparte una descripción útil de la banda</string>
+    <string name="shared_comments_guidelines_body">Escribe de modo que alguien que solo conozca el nombre de la banda pueda decidir si quiere verla.\n\n• Sé objetivo y descriptivo, no opinativo.\n• Evita el lenguaje negativo. Si un estilo no es para ti, omite esa banda o descríbela de forma útil para los fans de ese estilo.\n\nAl publicar, aceptas:\n• Concedes a la app una licencia ilimitada para usar, mostrar, editar u omitir tu texto (incluido en capturas de pantalla y promoción).\n• Esta app es de código abierto; el texto publicado no es privado y puede ser accedido por otras herramientas.\n• El autor no es responsable del uso no autorizado del contenido enviado.</string>
+    <string name="shared_comments_username_title">Elige un nombre para mostrar</string>
+    <string name="shared_comments_username_message">Este nombre aparecerá con tus descripciones. No podrá cambiarse después de enviarlo.</string>
+    <string name="shared_comments_username_placeholder">Nombre para mostrar</string>
+    <string name="shared_comments_username_invalid">Introduce un nombre para mostrar de entre 2 y 24 caracteres.</string>
+    <string name="shared_comments_submit_success">Descripción enviada para revisión.</string>
+    <string name="shared_comments_submit_failed">No se pudo enviar la descripción</string>
 </resources>

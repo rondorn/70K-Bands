@@ -72,6 +72,8 @@ class DetailViewModel: ObservableObject {
     @Published var isLoadingImage: Bool = false
     @Published var customNotes: String = ""
     @Published var isEditingNotes: Bool = false
+    @Published var postToAllUsers: Bool = false
+    @Published var canShowPostToAllUsers: Bool = false
     @Published var selectedPriority: Int = 0 {
         didSet {
             // Only save if we're not currently loading data
@@ -887,96 +889,195 @@ class DetailViewModel: ObservableObject {
         loadBandDetails() // Refresh details display based on orientation
     }
     
-    func saveNotes() {
-        guard !bandName.isEmpty else { return }
-        
-        // Only save if notes have actually been modified
-        guard notesHaveChanged() else {
-            print("DEBUG: Notes unchanged for band: \(bandName) - skipping save")
-            return
+    var canEditNotes: Bool {
+        return isNotesEditable && !doNotSaveText && !bandName.isEmpty
+    }
+
+    func beginNotesEditing() {
+        guard canEditNotes else { return }
+        if FestivalConfig.current.isEmptyGenericNoteText(customNotes) {
+            customNotes = ""
         }
-        
-        print("DEBUG: Saving notes for band: \(bandName)")
-        
-        let custCommentFile = directoryPath.appendingPathComponent("\(bandName)_comment.note-cust")
-        
-        // Check various conditions that prevent saving (matching original logic)
-        if customNotes.starts(with: FestivalConfig.current.getDefaultDescriptionText()) {
-            print("DEBUG: Removing default waiting message")
-            removeBadNote(commentFile: custCommentFile)
-            
-        } else if doNotSaveText {
-            print("DEBUG: Description contains link, edit not available")
-            
-        } else if customNotes.count < 2 {
-            print("DEBUG: Removing note - less than 2 characters")
-            removeBadNote(commentFile: custCommentFile)
-            
-        } else if bandNotes.custMatchesDefault(customNote: customNotes, bandName: bandName) {
-            print("DEBUG: Description has not changed")
-            
-        } else if #available(iOS 18.0, *), isCurrentTextActuallyTranslated(currentText: customNotes) {
-            print("DEBUG: Text is translated - NOT saving as custom English description")
-            
-        } else {
-            // Save the custom notes
-            let commentString = customNotes
-            DispatchQueue.global(qos: .default).async {
-                print("DEBUG: Writing custom note file: \(custCommentFile)")
-                
-                do {
-                    try commentString.write(to: custCommentFile, atomically: false, encoding: .utf8)
-                    print("DEBUG: Successfully saved custom notes for band: \(self.bandName)")
-                } catch {
-                    print("DEBUG: Error saving custom notes: \(error.localizedDescription)")
-                }
-            }
+        isEditingNotes = true
+        postToAllUsers = false
+        updatePostCheckboxEligibility()
+    }
+
+    func updatePostCheckboxEligibility() {
+        var eligible = canEditNotes &&
+            SharedCommentsSettings.canOfferPostToAllUsers(bandName: bandName, bandNotes: customNotes)
+
+        if #available(iOS 18.0, *), isCurrentTextActuallyTranslated(currentText: customNotes) {
+            eligible = false
+        }
+
+        canShowPostToAllUsers = eligible
+        if !canShowPostToAllUsers {
+            postToAllUsers = false
         }
     }
-    
-    func saveNotesForBand(_ specificBandName: String) {
+
+    func cancelNotesEditing() {
+        guard isEditingNotes else { return }
+        customNotes = originalNotes
+        hasNotesChanged = false
+        isEditingNotes = false
+        postToAllUsers = false
+        canShowPostToAllUsers = false
+    }
+
+    func discardUnsavedNotesIfEditing() {
+        if isEditingNotes {
+            cancelNotesEditing()
+        }
+    }
+
+    func saveNoteTapped() {
+        guard canEditNotes else { return }
+
+        let shouldSubmitShared = postToAllUsers && canShowPostToAllUsers
+        performLocalSave(for: bandName)
+
+        isEditingNotes = false
+        postToAllUsers = false
+        canShowPostToAllUsers = false
+
+        if shouldSubmitShared {
+            beginSharedCommentSubmissionFlow()
+        }
+    }
+
+    private func performLocalSave(for specificBandName: String) {
         guard !specificBandName.isEmpty else { return }
-        
-        // Only save if notes have actually been modified
+
         guard notesHaveChanged() else {
-            print("DEBUG: Notes unchanged for band: \(specificBandName) - skipping save")
+            print("DEBUG: Notes unchanged for band: \(specificBandName) - skipping local save")
             return
         }
-        
-        print("DEBUG: Saving notes for specific band: \(specificBandName)")
+
+        print("DEBUG: Saving notes for band: \(specificBandName)")
         
         let custCommentFile = directoryPath.appendingPathComponent("\(specificBandName)_comment.note-cust")
-        
-        // Check various conditions that prevent saving (matching original logic)
+
         if customNotes.starts(with: FestivalConfig.current.getDefaultDescriptionText()) {
             print("DEBUG: Removing default waiting message for \(specificBandName)")
             removeBadNote(commentFile: custCommentFile)
-            
+
         } else if doNotSaveText {
             print("DEBUG: Description contains link, edit not available for \(specificBandName)")
-            
+
         } else if customNotes.count < 2 {
             print("DEBUG: Removing note - less than 2 characters for \(specificBandName)")
             removeBadNote(commentFile: custCommentFile)
-            
+
         } else if bandNotes.custMatchesDefault(customNote: customNotes, bandName: specificBandName) {
             print("DEBUG: Description has not changed for \(specificBandName)")
-            
+
         } else if #available(iOS 18.0, *), isCurrentTextActuallyTranslated(currentText: customNotes) {
             print("DEBUG: Text is translated - NOT saving as custom English description for \(specificBandName)")
-            
+
         } else {
-            // Save the custom notes
             let commentString = customNotes
+            originalNotes = commentString
+            hasNotesChanged = false
+
             DispatchQueue.global(qos: .default).async {
                 print("DEBUG: Writing custom note file for \(specificBandName): \(custCommentFile)")
-                
+
                 do {
                     try commentString.write(to: custCommentFile, atomically: false, encoding: .utf8)
                     print("DEBUG: Successfully saved custom notes for band: \(specificBandName)")
                 } catch {
                     print("DEBUG: Error saving custom notes for \(specificBandName): \(error.localizedDescription)")
                 }
+            }
+        }
+    }
+
+    private func beginSharedCommentSubmissionFlow() {
+        if !SharedCommentsSettings.hasAcceptedTerms {
+            presentSharedCommentsGuidelinesAlert()
+            return
+        }
+
+        if SharedCommentsSettings.username == nil {
+            presentSharedCommentsUsernamePrompt()
+            return
+        }
+
+        submitSharedCommentToFirebase()
+    }
+
+    private func presentSharedCommentsGuidelinesAlert() {
+        guard let presenter = getHostingController() else { return }
+
+        let title = NSLocalizedString("Shared Comments Guidelines Title", comment: "Share a Helpful Band Description")
+        let message = NSLocalizedString("Shared Comments Guidelines Body", comment: "Shared comments guidelines body")
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.overrideUserInterfaceStyle = .dark
+
+        let cancelTitle = NSLocalizedString("Cancel", comment: "Cancel button")
+        alert.addAction(UIAlertAction(title: cancelTitle, style: .cancel, handler: nil))
+
+        let acceptTitle = NSLocalizedString("Ok", comment: "OK button")
+        alert.addAction(UIAlertAction(title: acceptTitle, style: .default) { [weak self] _ in
+            SharedCommentsSettings.setTermsAccepted()
+            self?.beginSharedCommentSubmissionFlow()
+        })
+
+        presenter.present(alert, animated: true, completion: nil)
+    }
+
+    private func presentSharedCommentsUsernamePrompt() {
+        guard let presenter = getHostingController() else { return }
+
+        let title = NSLocalizedString("Shared Comments Username Title", comment: "Choose a Display Name")
+        let message = NSLocalizedString("Shared Comments Username Message", comment: "Username prompt message")
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.overrideUserInterfaceStyle = .dark
+
+        alert.addTextField { textField in
+            textField.placeholder = NSLocalizedString("Shared Comments Username Placeholder", comment: "Display name")
+            textField.autocapitalizationType = .words
+            textField.autocorrectionType = .no
+        }
+
+        let cancelTitle = NSLocalizedString("Cancel", comment: "Cancel button")
+        alert.addAction(UIAlertAction(title: cancelTitle, style: .cancel, handler: nil))
+
+        let submitTitle = NSLocalizedString("Save Note", comment: "Save Note")
+        alert.addAction(UIAlertAction(title: submitTitle, style: .default) { [weak self, weak alert] _ in
+            guard let self = self else { return }
+            let enteredName = alert?.textFields?.first?.text ?? ""
+            guard SharedCommentsSettings.isValidUsername(enteredName) else {
+                let invalidMessage = NSLocalizedString("Shared Comments Username Invalid", comment: "Invalid username")
+                self.toastManager.show(message: invalidMessage, placeHigh: false)
+                self.presentSharedCommentsUsernamePrompt()
+                return
+            }
+            SharedCommentsSettings.setUsername(enteredName)
+            self.submitSharedCommentToFirebase()
+        })
+
+        presenter.present(alert, animated: true, completion: nil)
+    }
+
+    private func submitSharedCommentToFirebase() {
+        guard let userName = SharedCommentsSettings.username else {
+            presentSharedCommentsUsernamePrompt()
+            return
+        }
+
+        let descriptionText = customNotes
+        let writer = firebaseSharedCommentsWrite()
+        writer.writeSharedComment(bandName: bandName, descriptionText: descriptionText, userName: userName) { [weak self] success in
+            guard let self = self else { return }
+            if success {
+                let message = NSLocalizedString("Shared Comments Submit Success", comment: "Description submitted for review.")
+                self.toastManager.show(message: message, placeHigh: false)
+            } else {
+                let message = NSLocalizedString("Shared Comments Submit Failed", comment: "Could not submit description")
+                self.toastManager.show(message: message, placeHigh: false)
             }
         }
     }
@@ -1570,6 +1671,9 @@ class DetailViewModel: ObservableObject {
         // Store original notes for change tracking
         originalNotes = noteText
         hasNotesChanged = false
+        isEditingNotes = false
+        postToAllUsers = false
+        canShowPostToAllUsers = false
         
         print("DEBUG: Loaded notes for '\(self.bandName)': '\(noteText.prefix(50))...' (length: \(noteText.count))")
         
@@ -1924,10 +2028,9 @@ class DetailViewModel: ObservableObject {
             print("DEBUG: Localized string for AlreadyAtStart: '\(NSLocalizedString("AlreadyAtStart", comment: ""))'")
             toastManager.show(message: message, placeHigh: false)
         } else {
-            // Save notes for the current band before switching
+            discardUnsavedNotesIfEditing()
             let currentBand = bandName
-            print("DEBUG: Saving notes for current band '\(currentBand)' before switching to '\(nextBandName)'")
-            saveNotesForBand(currentBand)
+            print("DEBUG: Discarding unsaved notes for current band '\(currentBand)' before switching to '\(nextBandName)'")
             
             message = translatedDirection + "-" + nextBandName
             print("DEBUG: Showing navigation message: \(message)")
@@ -2228,6 +2331,9 @@ class DetailViewModel: ObservableObject {
     /// Called when the user modifies the notes to track changes
     func notesDidChange() {
         hasNotesChanged = true
+        if isEditingNotes {
+            updatePostCheckboxEligibility()
+        }
     }
     
     /// Check if notes have been modified since they were loaded

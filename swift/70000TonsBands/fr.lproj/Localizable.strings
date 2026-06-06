@@ -401,3 +401,16 @@
 "ShowsPlural" = "Concerts";
 "SpecialEventsPlural" = "Événements Spéciaux";
 "UnofficialEventsPlural" = "Événements Non Officiels";
+
+// Shared band descriptions
+"Save Note" = "Enregistrer la note";
+"Post To All Users" = "Publier pour tous les utilisateurs";
+"Shared Comments Guidelines Title" = "Partager une description utile du groupe";
+"Shared Comments Guidelines Body" = "Rédigez de sorte que quelqu'un qui ne connaît que le nom du groupe puisse décider s'il veut le voir.\n\n• Soyez factuel et descriptif, pas partisan.\n• Évitez le langage négatif. Si un style ne vous convient pas, passez ce groupe ou décrivez-le d'une manière utile aux fans de ce style.\n\nEn publiant, vous acceptez :\n• Vous accordez à l'application une licence illimitée pour utiliser, afficher, modifier ou omettre votre texte (y compris dans des captures d'écran et à des fins promotionnelles).\n• Cette application est open source ; le texte publié n'est pas privé et peut être consulté par d'autres outils.\n• L'auteur n'est pas responsable de l'utilisation non autorisée du contenu soumis.";
+"Shared Comments Username Title" = "Choisir un nom d'affichage";
+"Shared Comments Username Message" = "Ce nom apparaîtra avec vos descriptions. Il ne pourra pas être modifié après votre envoi.";
+"Shared Comments Username Placeholder" = "Nom d'affichage";
+"Shared Comments Username Invalid" = "Saisissez un nom d'affichage entre 2 et 24 caractères.";
+"Shared Comments Submit Success" = "Description envoyée pour examen.";
+"Shared Comments Submit Failed" = "Impossible d'envoyer la description";
+

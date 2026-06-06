@@ -381,6 +381,28 @@ struct FestivalConfig {
         return NSLocalizedString("DefaultDescription70K", comment: "Default description for 70K festival")
         #endif
     }
+
+    /// True when the note is only the empty generic placeholder (e.g. "Click to add notes",
+    /// "waiting for Aaron's description") and not real downloaded band description content.
+    func isEmptyGenericNoteText(_ text: String) -> Bool {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return false }
+
+        let defaultText = getDefaultDescriptionText().trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed == defaultText {
+            return true
+        }
+
+        if trimmed.hasPrefix("Comment text is not available yet") {
+            return true
+        }
+
+        if trimmed.contains("No notes are available, right now, feel free to add your own") {
+            return true
+        }
+
+        return false
+    }
     
     /// Returns the localized comments not available message for the current festival
     func getCommentsNotAvailableMessage() -> String {
