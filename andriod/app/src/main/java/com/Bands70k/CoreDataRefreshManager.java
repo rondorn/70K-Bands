@@ -72,6 +72,8 @@ public final class CoreDataRefreshManager {
                             showBands main = (showBands) activity;
                             Log.d(TAG, "Refreshing main UI after core refresh");
                             main.refreshData();
+                            Log.d(TAG, "Core refresh done — queueing bulk image/note downloads");
+                            ForegroundDownloadManager.requestBulkDownloads(main, "foreground-return");
                             main.offerAutoSchedulePromptFromPointerThenMaybeWizard();
                         }
                     } catch (Exception ignored) {

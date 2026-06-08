@@ -1497,36 +1497,61 @@ public class staticVariables {
 
         boolean hadCachedPointer = hasPointerOnDisk();
         if (!hadCachedPointer) {
-            Log.d("POINTER_POLICY", "No pointer on disk — blocking until download succeeds");
-            int attempt = 0;
-            while (true) {
-                attempt++;
+            final int maxAttempts = 45;
+            final long retryDelayMs = 2000L;
+            Log.d("POINTER_POLICY", "No pointer on disk — blocking until download succeeds (max "
+                    + maxAttempts + " attempts)");
+            for (int attempt = 1; attempt <= maxAttempts; attempt++) {
                 Log.d("POINTER_POLICY", "Required pointer download attempt " + attempt);
+                // Cold start: DNS/connectivity may not be ready yet; don't trust a stale offline cache.
+                OnlineStatus.invalidateConnectivityCache();
                 if (forceLookupUrlsFromNetwork()) {
                     applyPointerYearAfterDownload("ensurePointerFileAvailable-required");
                     return true;
                 }
-                if (!OnlineStatus.isOnline()) {
-                    Log.e("POINTER_POLICY", "Offline with no pointer on disk — cannot proceed");
-                    return false;
+                if (attempt >= maxAttempts) {
+                    break;
                 }
+                Log.w("POINTER_POLICY", "Pointer download attempt " + attempt
+                        + " failed — retrying in " + retryDelayMs + "ms");
                 try {
-                    Thread.sleep(2000);
+                    Thread.sleep(retryDelayMs);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     Log.w("POINTER_POLICY", "Pointer download wait interrupted");
                     return false;
                 }
             }
+            Log.e("POINTER_POLICY", "Pointer unavailable after " + maxAttempts + " attempts");
+            return false;
         }
 
-        Log.d("POINTER_POLICY", "Pointer on disk — best-effort network refresh");
-        if (forceLookupUrlsFromNetwork()) {
-            applyPointerYearAfterDownload("ensurePointerFileAvailable-refresh");
-            return true;
+        final int maxCachedRefreshAttempts = 3;
+        final long cachedRetryDelayMs = 2000L;
+        Log.d("POINTER_POLICY", "Pointer on disk — best-effort network refresh (max "
+                + maxCachedRefreshAttempts + " attempts)");
+        for (int attempt = 1; attempt <= maxCachedRefreshAttempts; attempt++) {
+            Log.d("POINTER_POLICY", "Cached pointer refresh attempt " + attempt);
+            if (forceLookupUrlsFromNetwork()) {
+                applyPointerYearAfterDownload("ensurePointerFileAvailable-refresh");
+                return true;
+            }
+            if (attempt >= maxCachedRefreshAttempts) {
+                break;
+            }
+            Log.w("POINTER_POLICY", "Cached pointer refresh attempt " + attempt
+                    + " failed — retrying in " + cachedRetryDelayMs + "ms");
+            try {
+                Thread.sleep(cachedRetryDelayMs);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                Log.w("POINTER_POLICY", "Cached pointer refresh wait interrupted");
+                break;
+            }
         }
 
-        Log.w("POINTER_POLICY", "Best-effort refresh failed — continuing with cached pointer");
+        Log.w("POINTER_POLICY", "Best-effort refresh failed after " + maxCachedRefreshAttempts
+                + " attempts — continuing with cached pointer");
         lookupUrls();
         resolveStorageEventYear();
         SharedCommentsSettings.loadEnableSharedComments();

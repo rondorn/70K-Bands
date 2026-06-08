@@ -51,10 +51,18 @@ public class OnlineStatus {
     @Deprecated
     public static void forceRefreshNetworkStatus() {
         Log.d("Internet Found", "Force refreshing network status cache");
-        // Clear the cache to force a fresh check
+        invalidateConnectivityCache();
+    }
+
+    /**
+     * Clears cached connectivity state so the next check performs a fresh network/DNS test.
+     * Used during cold-start pointer downloads when an early false-negative would otherwise abort retries.
+     */
+    public static void invalidateConnectivityCache() {
         staticVariables.internetCheckCache = "Unknown";
         staticVariables.internetCheckCacheDate = 0L;
-        // Clear DNS cache as well
+        lastValidatedAtMs = 0L;
+        lastValidatedResult = false;
         dnsResolveCache = null;
     }
     

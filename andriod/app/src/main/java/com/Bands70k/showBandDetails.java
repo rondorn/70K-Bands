@@ -70,8 +70,10 @@ import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.content.Context;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.io.File;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
@@ -153,6 +155,13 @@ public class showBandDetails extends Activity {
      */
     private boolean suppressProgressiveLoadOnNextResume = false;
 
+    /** One background download attempt per band per details visit; no retry after failure. */
+    private final Set<String> backgroundNoteDownloadAttempted = new HashSet<>();
+    private final Set<String> backgroundImageDownloadAttempted = new HashSet<>();
+
+    /** Invalidates in-flight progressive loads when a new band/load starts. */
+    private volatile int progressiveLoadGeneration = 0;
+
     public void onCreate(Bundle savedInstanceState) {
 
         setTheme(R.style.AppTheme);
@@ -233,7 +242,10 @@ public class showBandDetails extends Activity {
      */
     private void loadAllContentProgressively() {
         Log.d("ProgressiveLoading", "Starting progressive content loading for " + bandName);
-        
+
+        final int loadId = ++progressiveLoadGeneration;
+        final String loadingBand = bandName;
+
         // Single background thread handles all data loading and UI updates
         new Thread(new Runnable() {
             @Override
@@ -246,52 +258,42 @@ public class showBandDetails extends Activity {
                     }
                     
                     // PHASE 1: Load cached note immediately if available
-                    loadCachedNoteIfAvailable();
-                    
-                    // Check activity state between phases
-                    if (isFinishing() || isDestroyed()) {
-                        Log.d("ProgressiveLoading", "Activity destroyed after Phase 1 for " + bandName);
+                    loadCachedNoteIfAvailable(loadId, loadingBand);
+
+                    if (isStaleProgressiveLoad(loadId, loadingBand) || isFinishing() || isDestroyed()) {
                         return;
                     }
-                    
+
                     // PHASE 2: Load and display cached image
-                    loadAndDisplayCachedImage();
-                    
-                    // Check activity state between phases
-                    if (isFinishing() || isDestroyed()) {
-                        Log.d("ProgressiveLoading", "Activity destroyed after Phase 2 for " + bandName);
+                    loadAndDisplayCachedImage(loadId, loadingBand);
+
+                    if (isStaleProgressiveLoad(loadId, loadingBand) || isFinishing() || isDestroyed()) {
                         return;
                     }
-                    
+
                     // PHASE 3: Populate schedule, links, and other data
-                    populateStaticDataSections();
-                    
-                    // Check activity state between phases
-                    if (isFinishing() || isDestroyed()) {
-                        Log.d("ProgressiveLoading", "Activity destroyed after Phase 3 for " + bandName);
+                    populateStaticDataSections(loadId, loadingBand);
+
+                    if (isStaleProgressiveLoad(loadId, loadingBand) || isFinishing() || isDestroyed()) {
                         return;
                     }
-                    
-                    // PHASE 4: Download missing note if needed
-                    downloadMissingNoteIfNeeded();
-                    
-                    // Check activity state between phases
-                    if (isFinishing() || isDestroyed()) {
-                        Log.d("ProgressiveLoading", "Activity destroyed after Phase 4 for " + bandName);
+
+                    // PHASE 4: One background attempt when note cache is empty
+                    downloadMissingNoteIfNeeded(loadId, loadingBand);
+
+                    if (isStaleProgressiveLoad(loadId, loadingBand) || isFinishing() || isDestroyed()) {
                         return;
                     }
-                    
-                    // PHASE 5: Download missing image if needed  
-                    downloadMissingImageIfNeeded();
-                    
-                    // Check activity state before final phase
-                    if (isFinishing() || isDestroyed()) {
-                        Log.d("ProgressiveLoading", "Activity destroyed after Phase 5 for " + bandName);
+
+                    // PHASE 5: One background attempt when image cache is empty
+                    downloadMissingImageIfNeeded(loadId, loadingBand);
+
+                    if (isStaleProgressiveLoad(loadId, loadingBand) || isFinishing() || isDestroyed()) {
                         return;
                     }
-                    
+
                     // PHASE 6: Final UI cleanup
-                    finalizeUILoading();
+                    finalizeUILoading(loadId, loadingBand);
                     
                 } catch (OutOfMemoryError oom) {
                     Log.e("ProgressiveLoading", "OutOfMemoryError in progressive loading for " + bandName, oom);
@@ -429,11 +431,83 @@ public class showBandDetails extends Activity {
     }
     
     // ==================== PROGRESSIVE LOADING PHASES ====================
-    
+
+    private boolean isStaleProgressiveLoad(int loadId, String expectedBand) {
+        return loadId != progressiveLoadGeneration || !expectedBand.equals(bandName);
+    }
+
+    private boolean hasCachedNoteContent() {
+        String cached = bandHandler.getBandNoteFromFile();
+        return cached != null && !cached.trim().isEmpty()
+                && !FestivalConfig.getInstance().isEmptyGenericNoteText(cached, this);
+    }
+
+    /**
+     * Ensures descriptionMapModData is populated so isBandInDescriptionMap is accurate.
+     */
+    private void ensureDescriptionMapModDataLoaded() {
+        if (staticVariables.descriptionMapModData.isEmpty()
+                && FileHandler70k.descriptionMapFile.exists()) {
+            CustomerDescriptionHandler.getInstance().reloadDescriptionMapFromDisk();
+        }
+    }
+
+    /**
+     * Resolves note text for display. Uses cached/custom content when present; when the band
+     * has no published descriptionMap entry and no cache, returns the localized placeholder
+     * (never persisted to disk).
+     */
+    private String resolveNoteTextForDisplay() {
+        String raw = "";
+        if (bandNote != null && !bandNote.trim().isEmpty()) {
+            raw = bandNote;
+        } else {
+            raw = getRawBandNote(bandName);
+        }
+        if (raw != null && !raw.trim().isEmpty()) {
+            return raw;
+        }
+        ensureDescriptionMapModDataLoaded();
+        if (!SharedCommentsSettings.isBandInDescriptionMap(bandName)) {
+            return FestivalConfig.getInstance().getDefaultDescriptionText(this);
+        }
+        return "";
+    }
+
+    private String formatCachedNoteText(String rawNote) {
+        if (rawNote == null) {
+            return "";
+        }
+        String formatted = rawNote;
+        if (formatted.contains("!!!!https://")) {
+            formatted = formatted.replaceAll(
+                    "!!!!https://([^\\s]+)",
+                    "<a  target='_blank' style='color: lightblue' href=https://$1>$1</a>");
+        }
+        return formatted;
+    }
+
+    private void applyCachedNoteToUi(final int loadId, final String loadingBand, final String rawNote) {
+        if (!isFinishing() && !isDestroyed()) {
+            runOnUiThread(() -> {
+                try {
+                    if (isStaleProgressiveLoad(loadId, loadingBand) || isFinishing() || isDestroyed()
+                            || noteValue == null) {
+                        return;
+                    }
+                    bandNote = formatCachedNoteText(rawNote);
+                    setupExtraDataSection();
+                } catch (Exception e) {
+                    Log.e("ProgressiveLoading", "Error applying note to UI for " + loadingBand, e);
+                }
+            });
+        }
+    }
+
     /**
      * PHASE 1: Load cached note immediately if available (CRASH-SAFE with lifecycle checks)
      */
-    private void loadCachedNoteIfAvailable() {
+    private void loadCachedNoteIfAvailable(int loadId, String loadingBand) {
         try {
             // Check if activity is still valid before proceeding
             if (isFinishing() || isDestroyed()) {
@@ -441,31 +515,11 @@ public class showBandDetails extends Activity {
                 return;
             }
             
-            String cachedNote = bandHandler.getBandNoteFromFile();
-            if (cachedNote != null && !cachedNote.trim().isEmpty()) {
-                Log.d("ProgressiveLoading", "Phase 1: Cached note found for " + bandName);
-                final String formattedNote = bandHandler.getBandNote(); // Apply URL formatting
-                
-                // CRASH PREVENTION: Check activity state before UI update
-                if (!isFinishing() && !isDestroyed()) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                // Final check before UI update
-                                if (!isFinishing() && !isDestroyed() && noteValue != null) {
-                                    bandNote = formattedNote;
-                                    setupExtraDataSection(); // Update note display immediately (this is where notes are actually shown)
-                                    Log.d("ProgressiveLoading", "Phase 1: Cached note UI updated for " + bandName);
-                                }
-                            } catch (Exception e) {
-                                Log.e("ProgressiveLoading", "Phase 1: Error updating UI for " + bandName, e);
-                            }
-                        }
-                    });
-                                    }
-                                } else {
-                Log.d("ProgressiveLoading", "Phase 1: No cached note for " + bandName);
+            if (hasCachedNoteContent()) {
+                Log.d("ProgressiveLoading", "Phase 1: Cached note found for " + loadingBand);
+                applyCachedNoteToUi(loadId, loadingBand, bandHandler.getBandNoteFromFile());
+            } else {
+                Log.d("ProgressiveLoading", "Phase 1: No cached note for " + loadingBand);
             }
         } catch (Exception e) {
             Log.e("ProgressiveLoading", "Phase 1: Error loading cached note for " + bandName, e);
@@ -475,7 +529,7 @@ public class showBandDetails extends Activity {
     /**
      * PHASE 2: Load and display cached image (CRASH-SAFE with memory management)
      */
-    private void loadAndDisplayCachedImage() {
+    private void loadAndDisplayCachedImage(int loadId, String loadingBand) {
         try {
             // Check if activity is still valid before proceeding
             if (isFinishing() || isDestroyed()) {
@@ -518,39 +572,35 @@ public class showBandDetails extends Activity {
                         if (bitmap != null && !bitmap.isRecycled()) {
                             // CRASH PREVENTION: Check activity state before UI update
                             if (!isFinishing() && !isDestroyed()) {
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        try {
-                                            // Final check before UI update
-                                            if (!isFinishing() && !isDestroyed() && bandLogoImage != null) {
-                                                displayBandImage(bitmap);
-                                            } else {
-                                                // Activity destroyed, recycle bitmap to prevent memory leak
-                                                if (!bitmap.isRecycled()) {
-                                                    bitmap.recycle();
-                                                }
+                                runOnUiThread(() -> {
+                                    try {
+                                        if (isStaleProgressiveLoad(loadId, loadingBand) || isFinishing()
+                                                || isDestroyed() || bandLogoImage == null) {
+                                            if (!bitmap.isRecycled()) {
+                                                bitmap.recycle();
                                             }
-                                        } catch (Exception e) {
-                                            Log.e("ProgressiveLoading", "Phase 2: Error updating UI for " + bandName, e);
-                                }
-                            }
-                        });
-                    } else {
-                                // Activity destroyed, recycle bitmap to prevent memory leak
+                                            return;
+                                        }
+                                        displayBandImage(bitmap);
+                                    } catch (Exception e) {
+                                        Log.e("ProgressiveLoading", "Phase 2: Error updating UI for "
+                                                + loadingBand, e);
+                                    }
+                                });
+                            } else {
                                 bitmap.recycle();
                             }
                         }
                     } else {
-                        Log.w("ProgressiveLoading", "Phase 2: Invalid image dimensions for " + bandName + 
-                              " (" + options.outWidth + "x" + options.outHeight + ")");
+                        Log.w("ProgressiveLoading", "Phase 2: Invalid image dimensions for " + loadingBand
+                                + " (" + options.outWidth + "x" + options.outHeight + ")");
                     }
                 }
             } else {
-                Log.d("ProgressiveLoading", "Phase 2: No cached image for " + bandName);
+                Log.d("ProgressiveLoading", "Phase 2: No cached image for " + loadingBand);
             }
         } catch (OutOfMemoryError oom) {
-            Log.e("ProgressiveLoading", "Phase 2: OutOfMemoryError loading image for " + bandName, oom);
+            Log.e("ProgressiveLoading", "Phase 2: OutOfMemoryError loading image for " + loadingBand, oom);
             // Force garbage collection to try to recover
             System.gc();
         } catch (Exception e) {
@@ -561,7 +611,7 @@ public class showBandDetails extends Activity {
     /**
      * PHASE 3: Populate schedule, links, and other static data (CRASH-SAFE with lifecycle checks)
      */
-    private void populateStaticDataSections() {
+    private void populateStaticDataSections(int loadId, String loadingBand) {
         try {
             // Check if activity is still valid before proceeding
             if (isFinishing() || isDestroyed()) {
@@ -569,24 +619,21 @@ public class showBandDetails extends Activity {
                 return;
             }
             
-            Log.d("ProgressiveLoading", "Phase 3: Populating static data for " + bandName);
-            
-            // CRASH PREVENTION: Check activity state before UI update
+            Log.d("ProgressiveLoading", "Phase 3: Populating static data for " + loadingBand);
+
             if (!isFinishing() && !isDestroyed()) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            // Final check before UI update
-                            if (!isFinishing() && !isDestroyed() && scheduleSection != null) {
-                                setupScheduleSection();
-                                setupLinksSection();
-                                setupExtraDataSection();
-                                setupRankingButtons();
-                            }
-                } catch (Exception e) {
-                            Log.e("ProgressiveLoading", "Phase 3: Error updating UI for " + bandName, e);
+                runOnUiThread(() -> {
+                    try {
+                        if (isStaleProgressiveLoad(loadId, loadingBand) || isFinishing() || isDestroyed()
+                                || scheduleSection == null) {
+                            return;
                         }
+                        setupScheduleSection();
+                        setupLinksSection();
+                        setupExtraDataSection();
+                        setupRankingButtons();
+                    } catch (Exception e) {
+                        Log.e("ProgressiveLoading", "Phase 3: Error updating UI for " + loadingBand, e);
                     }
                 });
             }
@@ -596,126 +643,86 @@ public class showBandDetails extends Activity {
     }
     
     /**
-     * PHASE 4: Download missing note if needed (CRASH-SAFE with lifecycle checks)
+     * PHASE 4: Single background download when note file is missing; refresh UI only on success.
      */
-    private void downloadMissingNoteIfNeeded() {
+    private void downloadMissingNoteIfNeeded(int loadId, String loadingBand) {
         try {
-            // Check if activity is still valid before proceeding
             if (isFinishing() || isDestroyed()) {
-                Log.d("ProgressiveLoading", "Phase 4: Activity destroyed, skipping note download for " + bandName);
                 return;
             }
-            
-            String cachedNote = bandHandler.getBandNoteFromFile();
-            if (cachedNote == null || cachedNote.trim().isEmpty()) {
-                Log.d("ProgressiveLoading", "Phase 4: Downloading missing note for " + bandName);
-                
-                // CRASH PREVENTION: Check activity state before expensive download
-                if (isFinishing() || isDestroyed()) {
-                    Log.d("ProgressiveLoading", "Phase 4: Activity destroyed during download check for " + bandName);
-                    return;
-                }
-                
-                String downloadedNote = bandHandler.getBandNoteImmediate();
-                if (downloadedNote != null && !downloadedNote.trim().isEmpty()) {
-                    // Apply proper formatting to the downloaded note
-                    final String formattedNote = bandHandler.getBandNote(); // This applies URL formatting
-                    
-                    // CRASH PREVENTION: Check activity state before UI update
-                    if (!isFinishing() && !isDestroyed()) {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                try {
-                                    // Final check before UI update
-                                    if (!isFinishing() && !isDestroyed() && noteValue != null) {
-                                        bandNote = formattedNote;
-                                        setupExtraDataSection(); // Update with properly formatted note (this is where notes are actually shown)
-                                        Log.d("ProgressiveLoading", "Phase 4: Note UI updated for " + bandName);
-                                    }
-                                } catch (Exception e) {
-                                    Log.e("ProgressiveLoading", "Phase 4: Error updating UI for " + bandName, e);
-                                }
-                            }
-                        });
-                    }
-                } else {
-                    // CRASH PREVENTION: Check activity state before UI update
-                    if (!isFinishing() && !isDestroyed()) {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                try {
-                                    if (!isFinishing() && !isDestroyed() && noteValue != null) {
-                                        bandNote = "No note available for this band.";
-                                        setupExtraDataSection(); // Update note display (this is where notes are actually shown)
-                                    }
-                                } catch (Exception e) {
-                                    Log.e("ProgressiveLoading", "Phase 4: Error updating UI for " + bandName, e);
-                                }
-                            }
-                        });
-                    }
-                }
+
+            if (hasCachedNoteContent()) {
+                Log.d("ProgressiveLoading", "Phase 4: Note already cached for " + loadingBand);
+                return;
+            }
+
+            if (backgroundNoteDownloadAttempted.contains(loadingBand)) {
+                Log.d("ProgressiveLoading", "Phase 4: Note download already attempted for " + loadingBand
+                        + " — skipping retry");
+                return;
+            }
+            backgroundNoteDownloadAttempted.add(loadingBand);
+
+            Log.d("ProgressiveLoading", "Phase 4: Background note download (single attempt) for " + loadingBand);
+            bandHandler.getBandNoteImmediate();
+
+            if (isStaleProgressiveLoad(loadId, loadingBand)) {
+                return;
+            }
+
+            if (hasCachedNoteContent()) {
+                Log.d("ProgressiveLoading", "Phase 4: Note download succeeded for " + loadingBand);
+                applyCachedNoteToUi(loadId, loadingBand, bandHandler.getBandNoteFromFile());
             } else {
-                Log.d("ProgressiveLoading", "Phase 4: Note already cached, skipping download for " + bandName);
+                Log.d("ProgressiveLoading", "Phase 4: Note download failed for " + loadingBand + " — no retry");
             }
         } catch (Exception e) {
-            Log.e("ProgressiveLoading", "Phase 4: Error downloading note for " + bandName, e);
-            // CRASH PREVENTION: Check activity state before UI update
-            if (!isFinishing() && !isDestroyed()) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            if (!isFinishing() && !isDestroyed() && noteValue != null) {
-                                bandNote = "Note could not be loaded.";
-                                setupExtraDataSection(); // Update note display (this is where notes are actually shown)
-                            }
-                        } catch (Exception e2) {
-                            Log.e("ProgressiveLoading", "Phase 4: Error updating error UI for " + bandName, e2);
-                        }
-                    }
-                });
-            }
+            Log.e("ProgressiveLoading", "Phase 4: Error downloading note for " + loadingBand, e);
         }
     }
     
     /**
-     * PHASE 5: Download missing image if needed (CRASH-SAFE with memory management)
+     * PHASE 5: Single background download when image file is missing; refresh UI only on success.
      */
-    private void downloadMissingImageIfNeeded() {
+    private void downloadMissingImageIfNeeded(int loadId, String loadingBand) {
         try {
-            // Check if activity is still valid before proceeding
             if (isFinishing() || isDestroyed()) {
-                Log.d("ProgressiveLoading", "Phase 5: Activity destroyed, skipping image download for " + bandName);
                 return;
             }
-            
-            ImageHandler imageHandler = new ImageHandler(bandName);
+
+            ImageHandler imageHandler = new ImageHandler(loadingBand);
             java.net.URI existingImage = imageHandler.getImage();
-            if (existingImage == null) {
-                Log.d("ProgressiveLoading", "Phase 5: Downloading missing image for " + bandName);
-                
-                // CRASH PREVENTION: Check activity state before expensive download
-                if (isFinishing() || isDestroyed()) {
-                    Log.d("ProgressiveLoading", "Phase 5: Activity destroyed during download check for " + bandName);
-                    return;
-                }
-                
-                // CRASH PREVENTION: Wrap network download in try-catch for stability
-                java.net.URI downloadedImage = null;
-                try {
-                    downloadedImage = imageHandler.getImageImmediate();
-                } catch (OutOfMemoryError oom) {
-                    Log.e("ProgressiveLoading", "Phase 5: OutOfMemoryError during image download for " + bandName, oom);
-                    System.gc(); // Request garbage collection
-                    return; // Skip this image to prevent crash
-                } catch (Exception e) {
-                    Log.e("ProgressiveLoading", "Phase 5: Exception during image download for " + bandName, e);
-                    return; // Skip this image to prevent crash
-                }
-                if (downloadedImage != null) {
+            if (existingImage != null) {
+                Log.d("ProgressiveLoading", "Phase 5: Image already cached for " + loadingBand);
+                return;
+            }
+
+            if (backgroundImageDownloadAttempted.contains(loadingBand)) {
+                Log.d("ProgressiveLoading", "Phase 5: Image download already attempted for " + loadingBand
+                        + " — skipping retry");
+                return;
+            }
+            backgroundImageDownloadAttempted.add(loadingBand);
+
+            Log.d("ProgressiveLoading", "Phase 5: Background image download (single attempt) for " + loadingBand);
+
+            java.net.URI downloadedImage = null;
+            try {
+                downloadedImage = imageHandler.getImageImmediate();
+            } catch (OutOfMemoryError oom) {
+                Log.e("ProgressiveLoading", "Phase 5: OutOfMemoryError during image download for " + loadingBand, oom);
+                System.gc();
+                return;
+            } catch (Exception e) {
+                Log.e("ProgressiveLoading", "Phase 5: Exception during image download for " + loadingBand, e);
+                return;
+            }
+
+            if (isStaleProgressiveLoad(loadId, loadingBand)) {
+                return;
+            }
+
+            if (downloadedImage != null) {
                     java.io.File imageFile = new java.io.File(downloadedImage);
                     if (imageFile.exists() && imageFile.length() > 0) {
                         // CRASH PREVENTION: Use safe bitmap decoding with memory limits
@@ -746,77 +753,66 @@ public class showBandDetails extends Activity {
                             if (bitmap != null && !bitmap.isRecycled()) {
                                 // CRASH PREVENTION: Check activity state before UI update
                                 if (!isFinishing() && !isDestroyed()) {
-                                    runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            try {
-                                                // Final check before UI update
-                                                if (!isFinishing() && !isDestroyed() && bandLogoImage != null) {
-                                                    displayBandImage(bitmap);
-                                                } else {
-                                                    // Activity destroyed, recycle bitmap to prevent memory leak
-                                                    if (!bitmap.isRecycled()) {
-                                                        bitmap.recycle();
-                                                    }
+                                    runOnUiThread(() -> {
+                                        try {
+                                            if (isStaleProgressiveLoad(loadId, loadingBand) || isFinishing()
+                                                    || isDestroyed() || bandLogoImage == null) {
+                                                if (!bitmap.isRecycled()) {
+                                                    bitmap.recycle();
                                                 }
-                                            } catch (Exception e) {
-                                                Log.e("ProgressiveLoading", "Phase 5: Error updating UI for " + bandName, e);
+                                                return;
                                             }
+                                            displayBandImage(bitmap);
+                                            Log.d("ProgressiveLoading", "Phase 5: Image UI updated for "
+                                                    + loadingBand);
+                                        } catch (Exception e) {
+                                            Log.e("ProgressiveLoading", "Phase 5: Error updating UI for "
+                                                    + loadingBand, e);
                                         }
                                     });
                                 } else {
-                                    // Activity destroyed, recycle bitmap to prevent memory leak
                                     bitmap.recycle();
                                 }
                             }
                         } else {
-                            Log.w("ProgressiveLoading", "Phase 5: Invalid downloaded image dimensions for " + bandName + 
-                                  " (" + options.outWidth + "x" + options.outHeight + ")");
+                            Log.w("ProgressiveLoading", "Phase 5: Invalid downloaded image dimensions for "
+                                    + loadingBand + " (" + options.outWidth + "x" + options.outHeight + ")");
                         }
                     }
-                } else {
-                    Log.d("ProgressiveLoading", "Phase 5: Image download failed for " + bandName);
-                }
             } else {
-                Log.d("ProgressiveLoading", "Phase 5: Image already cached, skipping download for " + bandName);
+                Log.d("ProgressiveLoading", "Phase 5: Image download failed for " + loadingBand + " — no retry");
             }
         } catch (OutOfMemoryError oom) {
-            Log.e("ProgressiveLoading", "Phase 5: OutOfMemoryError downloading image for " + bandName, oom);
-            // Force garbage collection to try to recover
+            Log.e("ProgressiveLoading", "Phase 5: OutOfMemoryError downloading image for " + loadingBand, oom);
             System.gc();
         } catch (Exception e) {
-            Log.e("ProgressiveLoading", "Phase 5: Error downloading image for " + bandName, e);
+            Log.e("ProgressiveLoading", "Phase 5: Error downloading image for " + loadingBand, e);
         }
     }
     
     /**
      * PHASE 6: Final UI cleanup (CRASH-SAFE with lifecycle checks)
      */
-    private void finalizeUILoading() {
+    private void finalizeUILoading(int loadId, String loadingBand) {
         try {
-            Log.d("ProgressiveLoading", "Phase 6: Finalizing UI for " + bandName);
-            
-            // CRASH PREVENTION: Check activity state before UI update
+            Log.d("ProgressiveLoading", "Phase 6: Finalizing UI for " + loadingBand);
+
             if (!isFinishing() && !isDestroyed()) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            // Final check before UI update
-                            if (!isFinishing() && !isDestroyed() && loadingProgressBar != null) {
-                                loadingProgressBar.setVisibility(View.GONE);
-                                Log.d("ProgressiveLoading", "Progressive loading complete for " + bandName);
-                            }
-                        } catch (Exception e) {
-                            Log.e("ProgressiveLoading", "Phase 6: Error finalizing UI for " + bandName, e);
+                runOnUiThread(() -> {
+                    try {
+                        if (isStaleProgressiveLoad(loadId, loadingBand) || isFinishing() || isDestroyed()
+                                || loadingProgressBar == null) {
+                            return;
                         }
+                        loadingProgressBar.setVisibility(View.GONE);
+                        Log.d("ProgressiveLoading", "Progressive loading complete for " + loadingBand);
+                    } catch (Exception e) {
+                        Log.e("ProgressiveLoading", "Phase 6: Error finalizing UI for " + loadingBand, e);
                     }
                 });
-            } else {
-                Log.d("ProgressiveLoading", "Phase 6: Activity destroyed, skipping finalization for " + bandName);
             }
         } catch (Exception e) {
-            Log.e("ProgressiveLoading", "Phase 6: Error in finalization for " + bandName, e);
+            Log.e("ProgressiveLoading", "Phase 6: Error in finalization for " + loadingBand, e);
         }
     }
     
@@ -964,7 +960,9 @@ public class showBandDetails extends Activity {
         
         // Update the band name and refresh content with slide animation
         bandName = resolvedBand;
-        
+        bandNote = "";
+        cacheCleanupAttempted = false;
+
         // CRITICAL FIX: Recreate bandHandler with new band name so descriptions update properly
         bandHandler = new BandNotes(bandName);
         
@@ -1554,19 +1552,8 @@ public class showBandDetails extends Activity {
             setupNoteDoubleTapListener();
         }
         
-        // Set online status for links
-        boolean isOnline = OnlineStatus.isOnline();
-        websiteLink.setEnabled(isOnline);
-        metalArchivesLink.setEnabled(isOnline);
-        wikipediaLink.setEnabled(isOnline);
-        youtubeLink.setEnabled(isOnline);
-        
-        if (!isOnline) {
-            websiteLink.setAlpha(0.5f);
-            metalArchivesLink.setAlpha(0.5f);
-            wikipediaLink.setAlpha(0.5f);
-            youtubeLink.setAlpha(0.5f);
-        }
+        // Link enable state from cached connectivity only — never block UI with network probes.
+        refreshUIForOnlineStatus();
     }
     
     /**
@@ -2530,18 +2517,8 @@ public class showBandDetails extends Activity {
         subtitleView.setText(bandName);
         subtitleView.setVisibility(View.VISIBLE);
         
-        // Set current note content — use the same resolution order as the on-screen note display.
-        String currentNote = noteHandlerForBand.getBandNoteFromFile();
-        if (currentNote == null || currentNote.trim().isEmpty()) {
-            currentNote = getRawBandNote(bandName);
-        }
-        if (currentNote == null || currentNote.trim().isEmpty()) {
-            currentNote = bandNote == null ? "" : bandNote;
-        }
-
-        currentNote = currentNote.replaceAll("<br>", "\n");
-        currentNote = currentNote.replaceAll("<[^>]*>", ""); // Remove HTML tags
-        currentNote = currentNote.replaceAll("&nbsp;", " ");
+        // Load the same plain text the user sees on the details screen (including paragraph spacing).
+        String currentNote = getDisplayedNotePlainText();
         if (FestivalConfig.getInstance().isEmptyGenericNoteText(currentNote, this)) {
             currentNote = "";
             input.setHint("");
@@ -2972,25 +2949,17 @@ public class showBandDetails extends Activity {
      */
     private String getRawBandNote(String bandName) {
         try {
-            // First check for custom note
             BandNotes bandHandler = new BandNotes(bandName);
-            String customNote = bandHandler.getBandNoteFromFile();
-            if (customNote != null && !customNote.trim().isEmpty() && 
-                !FestivalConfig.getInstance().isDefaultDescriptionText(customNote)) {
-                Log.d("RawBandNote", "Returning custom note for " + bandName);
-                return customNote;
+            String note = bandHandler.getBandNoteFromFile();
+            if (note != null && !note.trim().isEmpty()
+                    && !FestivalConfig.getInstance().isEmptyGenericNoteText(note, this)) {
+                Log.d("RawBandNote", "Returning cached note for " + bandName);
+                return note;
             }
-            
-            // Get default note directly without HTML conversion
-            CustomerDescriptionHandler descHandler = CustomerDescriptionHandler.getInstance();
-            // This calls the full getDescription but we'll strip HTML if present
-            String note = descHandler.getDescription(bandName);
-            Log.d("RawBandNote", "Got note from CustomerDescriptionHandler: " + note);
-            return note;
-            
+            return "";
         } catch (Exception e) {
             Log.e("RawBandNote", "Error getting raw band note for " + bandName, e);
-            return FestivalConfig.getInstance().getDefaultDescriptionText(this);
+            return "";
         }
     }
     
@@ -3323,6 +3292,23 @@ public class showBandDetails extends Activity {
     }
     
     /**
+     * Plain-text note as shown in the details view (same line breaks and URL flattening as display).
+     */
+    private String getDisplayedNotePlainText() {
+        String rawNote = resolveNoteTextForDisplay();
+        if (rawNote == null || rawNote.isEmpty()) {
+            return "";
+        }
+
+        String noteText = processLineBreaks(rawNote);
+        noteText = noteText.replaceAll("<a[^>]*href=([^\\s>]+)[^>]*>([^<]+)</a>", "$1");
+        noteText = noteText.replaceAll("!!!!https://([^\\s]+)", "https://$1");
+        noteText = noteText.replaceAll("<[^>]*>", "");
+        noteText = noteText.replaceAll("&nbsp;", " ");
+        return noteText;
+    }
+
+    /**
      * Helper method to process text and ensure proper line break handling
      */
     private String processLineBreaks(String text) {
@@ -3474,15 +3460,10 @@ public class showBandDetails extends Activity {
             csvNoteworthyRow.setVisibility(View.GONE);
         }
         
-        // Editable Note - Get note data without HTML conversion for native TextView
-        String rawNote = "";
-        if (bandNote != null && !bandNote.trim().isEmpty()) {
-            rawNote = bandNote;
-        } else {
-            // Get raw note data without HTML conversion by directly accessing BandNotes file
-            rawNote = getRawBandNote(bandName);
-        }
-        
+        // Editable Note — cached/custom content, or localized placeholder when band is not
+        // in descriptionMap (state-based; placeholder is never read from a cache file).
+        String rawNote = resolveNoteTextForDisplay();
+
         if (!rawNote.isEmpty()) {
             // INFINITE LOOP FIX: Only clear cache once per activity instance to prevent continuous refresh
             if (rawNote.contains("<br>") && !cacheCleanupAttempted) {

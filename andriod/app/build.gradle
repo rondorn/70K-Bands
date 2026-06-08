@@ -13,10 +13,10 @@ android {
         // applicationId will be set by product flavors
         minSdkVersion 26
         targetSdkVersion 35
-        // Android versionCode 2026050402must fit in signed 32-bit int.
+        // Android versionCode 2026060701must fit in signed 32-bit int.
         //noinspection HighAppVersionCode
-        versionCode 2026050402
-        versionName "2026050402"
+        versionCode 2026060701
+        versionName "2026060701"
         android.compileOptions.incremental = false
         multiDexEnabled false
     }
@@ -86,9 +86,12 @@ dependencies {
     implementation 'androidx.compose.material3:material3:1.3.2'
     implementation 'androidx.appcompat:appcompat:1.7.0'
     //implementation 'com.google.android.material:material:1.12.0'
-    implementation 'com.google.firebase:firebase-core:21.1.1'
-    implementation 'com.google.firebase:firebase-messaging:23.2.1'
-    implementation 'com.google.firebase:firebase-database:20.2.2'
+    implementation('com.google.firebase:firebase-messaging:23.2.1') {
+        exclude group: 'com.google.firebase', module: 'firebase-analytics'
+    }
+    implementation('com.google.firebase:firebase-database:20.2.2') {
+        exclude group: 'com.google.firebase', module: 'firebase-analytics'
+    }
     implementation 'org.apache.commons:commons-io:1.3.2'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'

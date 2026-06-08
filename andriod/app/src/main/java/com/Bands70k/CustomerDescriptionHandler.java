@@ -587,9 +587,27 @@ public class CustomerDescriptionHandler {
      * @param bandNameValue The name of the band.
      * @return The band description string.
      */
+    /**
+     * Reads band description from on-disk cache only. Never performs network I/O.
+     * Used when callers run on the UI thread (details screen layout, etc.).
+     */
+    private String getDescriptionFromCacheOnly(String bandNameValue) {
+        String bandNoteDefault = FestivalConfig.getInstance().getDefaultDescriptionText(staticVariables.context);
+        BandNotes bandNoteHandler = new BandNotes(bandNameValue);
+        String note = bandNoteHandler.getBandNoteFromFile();
+        if (note != null && !note.trim().isEmpty()) {
+            return removeSpecialCharsFromString(note);
+        }
+        return bandNoteDefault;
+    }
+
     public String getDescription (String bandNameValue){
 
         Log.d("70K_NOTE_DEBUG", "getDescription called for " + bandNameValue);
+
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            return getDescriptionFromCacheOnly(bandNameValue);
+        }
 
         String bandName = bandNameValue;
         String normalizedBandName = normalizeBandName(bandName);
@@ -663,6 +681,17 @@ public class CustomerDescriptionHandler {
     }
 
     /**
+     * Re-reads the description map from the on-disk CSV, refreshing URL and date-modified
+     * entries used for per-band note cache validation. Does not download or use stale memory.
+     */
+    public void reloadDescriptionMapFromDisk() {
+        descriptionMapData.clear();
+        staticVariables.descriptionMapModData.clear();
+        readDescriptionMapFileOnly();
+        Log.d("70K_NOTE_DEBUG", "reloadDescriptionMapFromDisk: loaded " + descriptionMapData.size() + " entries");
+    }
+
+    /**
      * Reads the description map file without triggering any downloads.
      * Only reads the existing file if it exists.
      */
@@ -722,26 +751,16 @@ public class CustomerDescriptionHandler {
             return customNote;
         }
 
-        // Check if year has changed and reload description map if needed
-        if (checkYearChange()) {
-            Log.d("70K_NOTE_DEBUG", "Year changed in immediate loading, reloading description map");
-            getDescriptionMapFile();
-        }
-
-        // IMPORTANT: Do NOT download/refresh the descriptionMap just because the user opened details.
-        // The descriptionMap is one of the 4 startup/refresh files and should only be downloaded on:
-        // - pull-to-refresh
-        // - true background -> foreground transitions (app resume)
-        //
-        // Here we use the cached file if present, and only download if the file is missing (fresh install / cache cleared).
+        // Cache-first: read description map from disk; one download only if the file is missing.
         if (descriptionMapData.isEmpty()) {
-            if (!FileHandler70k.descriptionMapFile.exists()) {
-                Log.d("70K_NOTE_DEBUG", "Description map file missing in details; downloading it (immediate)");
+            if (FileHandler70k.descriptionMapFile.exists()) {
+                Log.d("70K_NOTE_DEBUG", "Reading description map from cached file for details screen");
+                readDescriptionMapFileOnly();
+            } else {
+                Log.d("70K_NOTE_DEBUG", "Description map file missing — single background download attempt");
                 getDescriptionMapFileImmediate();
+                readDescriptionMapFileOnly();
             }
-
-            Log.d("70K_NOTE_DEBUG", "Reading description map from cached file for details screen");
-            readDescriptionMapFileOnly();
         }
 
         if (descriptionMapData.containsKey(normalizedBandName) == false) {
@@ -784,6 +803,11 @@ public class CustomerDescriptionHandler {
     public void loadNoteFromURLImmediate(String bandName) {
         Log.d("70K_NOTE_DEBUG", "loadNoteFromURLImmediate called for " + bandName);
 
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            Log.w("70K_NOTE_DEBUG", "loadNoteFromURLImmediate on UI thread — skipping network download");
+            return;
+        }
+
         BandNotes bandNoteHandler = new BandNotes(bandName);
         File oldBandNoteFile = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + ".note");
         if (oldBandNoteFile.exists() == true) {
@@ -812,23 +836,14 @@ public class CustomerDescriptionHandler {
                 Log.d("70K_NOTE_DEBUG", "getDescription, no cached note with current date for " + bandName + ", downloading");
             }
             
-            // Check if year has changed and reload description map if needed
-            if (checkYearChange()) {
-                Log.d("70K_NOTE_DEBUG", "Year changed in immediate URL loading, reloading description map");
-                getDescriptionMapFile();
-            }
-            
-            // Ensure description map file exists before trying to read it
-            if (!FileHandler70k.descriptionMapFile.exists()) {
-                Log.d("70K_NOTE_DEBUG", "Description map file doesn't exist, downloading it");
-                getDescriptionMapFile();
-            }
-            
             String normalizedBandName = normalizeBandName(bandName);
-            if (descriptionMapData.containsKey(normalizedBandName) == false) {
-                descriptionMapData = new HashMap<String,String>();
-                getDescriptionMapFile();
-                descriptionMapData = this.getDescriptionMap();
+            if (descriptionMapData.isEmpty()) {
+                if (FileHandler70k.descriptionMapFile.exists()) {
+                    readDescriptionMapFileOnly();
+                } else {
+                    getDescriptionMapFileImmediate();
+                    readDescriptionMapFileOnly();
+                }
             }
 
             URL url;
@@ -905,6 +920,11 @@ public class CustomerDescriptionHandler {
      * @param bandName The name of the band.
      */
     public void loadNoteFromURL(String bandName){
+
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            Log.w("70K_NOTE_DEBUG", "loadNoteFromURL on UI thread — skipping network download");
+            return;
+        }
 
         BandNotes bandNoteHandler = new BandNotes(bandName);
         File oldBandNoteFile = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + ".note");

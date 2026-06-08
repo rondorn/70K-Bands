@@ -375,37 +375,36 @@ struct DetailView: View {
     // MARK: - Four Distinct Views
     
     // Portrait with schedule: logo, schedule, links, band details, notes
+    // While editing notes, only logo + notes are shown so the editor has enough room.
     private var portraitWithScheduleView: some View {
         portraitNotesLayout {
-            // Band Logo
             bandLogoSection
 
-            // Schedule Events
-            scheduleEventsSection
+            if !viewModel.isEditingNotes {
+                scheduleEventsSection
 
-            // Links Section
-            if viewModel.hasAnyLinks {
-                linksSection
+                if viewModel.hasAnyLinks {
+                    linksSection
+                }
+
+                bandDetailsSection
             }
-
-            // Band Details
-            bandDetailsSection
         }
     }
 
     // Portrait without schedule: logo, links, band details, notes (no schedule)
+    // While editing notes, only logo + notes are shown so the editor has enough room.
     private var portraitWithoutScheduleView: some View {
         portraitNotesLayout {
-            // Band Logo
             bandLogoSection
 
-            // Links Section
-            if viewModel.hasAnyLinks {
-                linksSection
-            }
+            if !viewModel.isEditingNotes {
+                if viewModel.hasAnyLinks {
+                    linksSection
+                }
 
-            // Band Details
-            bandDetailsSection
+                bandDetailsSection
+            }
         }
     }
 

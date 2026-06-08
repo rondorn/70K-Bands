@@ -83,61 +83,65 @@ public class ForegroundDownloadManager {
     }
     
     /**
-     * Starts downloads immediately (called after CSV processing completes).
-     * Starts on initial launch OR when coming from another app, but NOT when returning from details screen.
+     * Starts bulk downloads after core CSV processing (launch or foreground return).
      */
     public static void startDownloadsAfterCSV(Activity activity) {
+        requestBulkDownloads(activity, "after-core-csv");
+    }
+
+    /**
+     * Starts bulk downloads after pull-to-refresh completes its core CSV refresh.
+     */
+    public static void startBulkAfterPullToRefresh(Activity activity) {
+        requestBulkDownloads(activity, "pull-to-refresh");
+    }
+
+    /**
+     * Queues a bulk validation and download pass on a background thread.
+     * Always runs a per-band cache check (images, notes, Firebase backlog) — never skips
+     * based on a pre-check guess. Individual phases only download what fails validation.
+     * Does not run when returning from the band details screen.
+     */
+    public static void requestBulkDownloads(Activity activity, String reason) {
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+            Log.d(TAG, "requestBulkDownloads(" + reason + ") skipped — activity invalid");
+            return;
+        }
+
         if (isDownloading.get()) {
-            Log.d(TAG, "Downloads already in progress, skipping");
+            Log.d(TAG, "requestBulkDownloads(" + reason + ") skipped — bulk already in progress");
             return;
         }
-        
-        // Check if we're returning from details screen - if so, don't START new downloads
-        // but DO restore the progress indicator if downloads are already running
+
         if (showBands.returningFromDetailsScreen) {
-            Log.d(TAG, "Returning from details screen, skipping new bulk downloads");
-            justCameFromBackground.set(false); // Clear flag
-            
-            // But restore progress indicator if downloads are already running
-            if (isDownloading.get() && activity != null) {
-                Log.d(TAG, "Downloads still running, restoring progress indicator after details return");
-                currentActivity = activity;
-                showFloatingProgressIndicator(activity);
-            }
+            Log.d(TAG, "requestBulkDownloads(" + reason + ") skipped — returning from details");
+            justCameFromBackground.set(false);
             return;
         }
-        
-        // Start downloads if:
-        // 1. We just came from background (another app) OR
-        // 2. This is initial launch (appFullyInitialized is true AND we haven't completed initial downloads yet)
-        boolean shouldStart = justCameFromBackground.get();
-        
-        // On initial launch, justCameFromBackground will be false, but we should still start downloads
-        // Detect initial launch by checking if app is fully initialized AND initial downloads haven't been completed
-        if (!shouldStart && showBands.appFullyInitialized && !initialDownloadsCompleted.get()) {
-            // This is initial launch or first time CSV processing completes - start downloads
-            Log.d(TAG, "Initial launch detected (appFullyInitialized=true, initialDownloadsCompleted=false), starting downloads");
-            shouldStart = true;
-        }
-        
-        if (!shouldStart) {
-            Log.d(TAG, "Not coming from background and not initial launch, skipping bulk downloads");
-            return;
-        }
-        
-        // CRITICAL: Only start downloads if online
-        if (!OnlineStatus.isOnline()) {
-            Log.d(TAG, "Device is offline, skipping bulk downloads");
-            justCameFromBackground.set(false); // Clear flag
-            return;
-        }
-        
-        Log.d(TAG, "Starting downloads immediately after CSV processing (online mode)");
-        justCameFromBackground.set(false); // Clear flag after using it
+
+        justCameFromBackground.set(false);
         currentActivity = activity;
-        // Don't show progress indicator yet - wait until we know there's actual work to do
-        // The indicator will be shown by downloadImages() or downloadNotes() if there's work
-        startForegroundDownloads();
+
+        ThreadManager.getInstance().executeGeneral(() -> {
+            if (!OnlineStatus.isOnline()) {
+                Log.d(TAG, "requestBulkDownloads(" + reason + ") skipped — offline");
+                return;
+            }
+
+            Log.d(TAG, "requestBulkDownloads(" + reason + ") starting bulk validation pass");
+
+            ThreadManager.getInstance().runOnUiThread(() -> {
+                if (activity.isFinishing() || activity.isDestroyed()) {
+                    return;
+                }
+                if (showBands.returningFromDetailsScreen) {
+                    Log.d(TAG, "requestBulkDownloads(" + reason + ") aborted on UI thread — details return");
+                    return;
+                }
+                currentActivity = activity;
+                startForegroundDownloads();
+            });
+        });
     }
     
     /**

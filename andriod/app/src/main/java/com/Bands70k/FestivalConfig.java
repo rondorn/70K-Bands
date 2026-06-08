@@ -407,10 +407,13 @@ public class FestivalConfig {
         if (text == null || text.trim().isEmpty()) {
             return false;
         }
-        
-        // Check against both possible default texts (English versions for simplicity)
-        return text.contains("Comment text is not available yet") || 
-               text.contains("No notes are available, right now, feel free to add your own");
+        if (staticVariables.context != null) {
+            return isEmptyGenericNoteText(text, staticVariables.context);
+        }
+        return text.contains("Comment text is not available yet")
+                || text.contains("No notes are available, right now, feel free to add your own")
+                || text.contains("Double click to add your own")
+                || text.contains("Click to add your own notes");
     }
 
     /**

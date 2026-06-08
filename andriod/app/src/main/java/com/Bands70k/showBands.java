@@ -135,6 +135,11 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     
     // INTERMITTENT POSITION LOSS FIX: Flag to track when we're returning from details screen
     public static Boolean returningFromDetailsScreen = false;
+
+    private static final int REQUEST_CODE_BAND_DETAILS = 1001;
+
+    /** Set when launching band details; cleared after list refresh on return. */
+    private boolean openedDetailsScreen = false;
     
     // Flag to track when we're returning from landscape schedule activity (to prevent state restoration from overwriting scroll)
     boolean returningFromLandscapeSchedule = false;
@@ -754,6 +759,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                         alerts.execute();
 
                         offerAutoSchedulePromptFromPointerThenMaybeWizard();
+
+                        Log.d("PullToRefresh", "Core CSV refresh done — queueing bulk image/note downloads");
+                        ForegroundDownloadManager.startBulkAfterPullToRefresh(showBands.this);
                     } catch (Exception e) {
                         Log.e("PullToRefresh", "Error refreshing UI after pull-to-refresh downloads", e);
                     }
@@ -2340,6 +2348,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 if (adapter != null) {
                     adapter.notifyDataSetChanged();
                 }
+            } else if (requestCode == REQUEST_CODE_BAND_DETAILS) {
+                Log.d("ListRefresh", "Returned from band details — refreshing list for priority/attendance changes");
+                handleReturnFromDetailsScreen();
             } else {
                 Log.d("LANDSCAPE_SCHEDULE", "⚠️ requestCode does not match - got " + requestCode + ", expected " + ShowBandsLandscapeCoordinator.REQUEST_CODE_LANDSCAPE_SCHEDULE);
             }
@@ -3188,6 +3199,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         } else {
             // Data unchanged - no refresh needed, no flash!
             Log.d("VIEW_MODE_DEBUG", "🎵 displayBandDataWithoutSchedule: Data unchanged, skipping refresh to avoid flash");
+            if (returningFromDetailsScreen) {
+                refreshRankIconsInList();
+            }
         }
         
         // Setup swipe and filters
@@ -3746,6 +3760,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         } else {
             // Data unchanged - no refresh needed, no flash!
             Log.d("DisplayListData", "🔧 displayBandDataWithSchedule: Data unchanged, skipping refresh to avoid flash");
+            if (returningFromDetailsScreen) {
+                refreshRankIconsInList();
+            }
         }
 
         //swip stuff
@@ -3791,9 +3808,6 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         Log.d("MDF_DEBUG", "📅 displayBandDataWithSchedule() END - Final counter: " + counter + ", adapter items: " + 
               (adapter != null ? adapter.getCount() : "NULL"));
         
-        // JUMPING FIX: Position restoration is no longer needed here
-        // We now prevent the refresh entirely when returning from details screen
-        // This eliminates the jumping because the list never gets rebuilt
     }
 
 
@@ -4512,9 +4526,11 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             }
         }, 500);
         
-        // Only refresh if we're not returning from stats page to avoid blocking stats loading
-        // The stats page should load immediately without waiting for main activity refresh
-        if (!returningFromStatsPage) {
+        // Returning from details must refresh Must/Might/Wont icons even if a background load is running.
+        if (openedDetailsScreen) {
+            Log.d("ListRefresh", "onResume fallback: returning from details screen");
+            handleReturnFromDetailsScreen();
+        } else if (!returningFromStatsPage) {
             
             // FRESH INSTALL FIX: Only trigger refresh if data loading is NOT already in progress
             // This prevents duplicate downloads on first install (onCreate already started loading)
@@ -4538,64 +4554,43 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             }
             
             if (isWaitingForData) {
-                // onCreate already started executeAsyncListViewLoader (pointer → CSVs → UI refresh).
-                // Do not start a second partial load here — it races and can time out while the real load runs.
-                Log.d("FRESH_INSTALL", "Waiting for data — initial load from onCreate is in progress or will refresh UI when done");
+                if (staticVariables.loadingBands) {
+                    Log.d("FRESH_INSTALL", "Waiting for data — initial load still in progress");
+                    return;
+                }
+                Log.d("FRESH_INSTALL", "Still waiting for data with no active load — retrying download");
+                refreshNewData();
                 return;
             }
-            // DETAILS RETURN FIX: Always refresh to show updated data, but preserve scroll position
-            if (staticVariables.listPosition > 0) {
-                returningFromDetailsScreen = true;
-                Log.d("ListPosition", "Detected return from details screen - refreshing with smooth animation control");
-                
-                // Save current scroll position before refresh (AsyncTask will also save if needed)
-                saveScrollPosition();
-                
-                // IMPORTANT: Returning from an internal screen (details/preferences/etc) should NOT trigger
-                // a re-download of the core CSV files. Just reload from cache and refresh the UI.
-                reloadData();
-                refreshData();
-                
-                // Reset flags after refresh completes (not immediately, as refreshNewData is async)
-                // The flag will be reset after displayBandData completes in displayBandDataWithSchedule
-                staticVariables.listPosition = 0;
-                
-                // Restore progress indicator if downloads are still running
-                if (ForegroundDownloadManager.isDownloading()) {
-                    Log.d("ListPosition", "Downloads still running, restoring progress indicator");
-                    ForegroundDownloadManager.setCurrentActivity(showBands.this);
-                }
+            Log.d("ListPosition", "Normal onResume - checking if offline to optimize loading");
+
+            boolean hasCachedData = FileHandler70k.bandInfo.exists() && FileHandler70k.schedule.exists();
+
+            if (!hasCachedData) {
+                Log.d("refreshNewData", "No cached data - downloading core data files");
+                refreshNewData();
             } else {
-                Log.d("ListPosition", "Normal onResume - checking if offline to optimize loading");
-                
-                boolean hasCachedData = FileHandler70k.bandInfo.exists() && FileHandler70k.schedule.exists();
-                
-                if (!hasCachedData) {
-                    Log.d("refreshNewData", "No cached data - downloading core data files");
-                    refreshNewData();
-                } else {
-                    // Normal resume (including internal navigation and true background->foreground):
-                    // - Core refresh is handled at the Application level (Bands70k -> CoreDataRefreshManager)
-                    // - If schedule file was modified while in background (e.g. data added back), re-read from disk so UI and wizard see new data
-                    if (FileHandler70k.schedule.exists()) {
-                        String currentHash = CacheHashManager.getInstance().calculateFileHash(FileHandler70k.schedule);
-                        String lastHash = dataTimestampPrefs.getString("schedule_hash", null);
-                        if (currentHash != null && !currentHash.equals(lastHash)) {
-                            try {
-                                scheduleInfo.setLastPreviousEventKeysForWizard(scheduleInfo.collectEventKeys(BandInfo.scheduleRecords));
-                                scheduleInfo schedule = new scheduleInfo();
-                                BandInfo.scheduleRecords = schedule.ParseScheduleCSV();
-                                Log.d("OnResume", "Schedule file changed on disk; re-parsed " + (BandInfo.scheduleRecords != null ? BandInfo.scheduleRecords.size() : 0) + " bands");
-                                dataTimestampPrefs.edit().putString("schedule_hash", currentHash).apply();
-                            } catch (Exception e) {
-                                Log.e("OnResume", "Error re-reading schedule from disk", e);
-                            }
+                // Normal resume (including internal navigation and true background->foreground):
+                // - Core refresh is handled at the Application level (Bands70k -> CoreDataRefreshManager)
+                // - If schedule file was modified while in background (e.g. data added back), re-read from disk so UI and wizard see new data
+                if (FileHandler70k.schedule.exists()) {
+                    String currentHash = CacheHashManager.getInstance().calculateFileHash(FileHandler70k.schedule);
+                    String lastHash = dataTimestampPrefs.getString("schedule_hash", null);
+                    if (currentHash != null && !currentHash.equals(lastHash)) {
+                        try {
+                            scheduleInfo.setLastPreviousEventKeysForWizard(scheduleInfo.collectEventKeys(BandInfo.scheduleRecords));
+                            scheduleInfo schedule = new scheduleInfo();
+                            BandInfo.scheduleRecords = schedule.ParseScheduleCSV();
+                            Log.d("OnResume", "Schedule file changed on disk; re-parsed " + (BandInfo.scheduleRecords != null ? BandInfo.scheduleRecords.size() : 0) + " bands");
+                            dataTimestampPrefs.edit().putString("schedule_hash", currentHash).apply();
+                        } catch (Exception e) {
+                            Log.e("OnResume", "Error re-reading schedule from disk", e);
                         }
                     }
-                    reloadData();
-                    refreshData();
-                    offerAutoSchedulePromptFromPointerThenMaybeWizard();
                 }
+                reloadData();
+                refreshData();
+                offerAutoSchedulePromptFromPointerThenMaybeWizard();
             }
         } else {
             Log.d("DisplayListData", "Skipping refresh - returning from stats page");
@@ -4802,8 +4797,78 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         Log.d("NAVIGATION_DEBUG", "🚀 Starting showBandDetails activity");
         // Update activity reference for progress indicator if downloads are running
         ForegroundDownloadManager.setCurrentActivity(showBands.this);
-        startActivity(showDetails);
+        openedDetailsScreen = true;
+        startActivityForResult(showDetails, REQUEST_CODE_BAND_DETAILS);
         Log.d("NAVIGATION_DEBUG", "🚀 showBandDetails activity started");
+    }
+
+    /**
+     * Reload list after band details closes so Must/Might/Wont (and related) changes appear immediately.
+     */
+    private void handleReturnFromDetailsScreen() {
+        returningFromDetailsScreen = true;
+        openedDetailsScreen = false;
+
+        if (listHandler != null) {
+            listHandler.clearCache();
+        }
+
+        rankStore.getBandRankings();
+
+        saveScrollPosition();
+        refreshData();
+        refreshRankIconsInList();
+
+        staticVariables.listPosition = 0;
+
+        if (ForegroundDownloadManager.isDownloading()) {
+            Log.d("ListPosition", "Downloads still running, restoring progress indicator");
+            ForegroundDownloadManager.setCurrentActivity(showBands.this);
+        }
+    }
+
+    /**
+     * Sync rank icons from rankStore into the visible list rows (lightweight details-return refresh).
+     */
+    private void refreshRankIconsInList() {
+        if (adapter == null) {
+            return;
+        }
+
+        String waitingMsg = getString(R.string.waiting_for_data);
+        String filterMsg = getString(R.string.data_filter_issue);
+        boolean anyChanged = false;
+
+        for (int i = 0; i < adapter.getCount(); i++) {
+            try {
+                bandListItem item = adapter.getItem(i);
+                if (item == null) {
+                    continue;
+                }
+                String bandName = item.getBandName();
+                if (bandName == null || bandName.isEmpty()
+                        || bandName.equals(waitingMsg) || bandName.equals(filterMsg)) {
+                    continue;
+                }
+                int newRankImg = rankStore.getRankImageForBand(bandName);
+                if (item.getRankImg() != newRankImg) {
+                    item.setRankImg(newRankImg);
+                    anyChanged = true;
+                }
+            } catch (Exception e) {
+                Log.w("ListRefresh", "Error refreshing rank icon at position " + i, e);
+            }
+        }
+
+        if (anyChanged && bandNamesList != null) {
+            if (bandNamesList.getAdapter() != adapter) {
+                bandNamesList.setAdapter(adapter);
+            } else {
+                adapter.notifyDataSetChanged();
+            }
+            bandNamesList.invalidateViews();
+            Log.d("ListRefresh", "Updated rank icons in list after details return");
+        }
     }
 
     @Override
@@ -4956,7 +5021,20 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 Log.d("onPostExecuteRefresh", "onPostExecuteRefresh - 3");
                 bandNamesPullRefresh = (SwipeRefreshLayout) findViewById(R.id.swiperefresh);
                 bandNamesPullRefresh.setRefreshing(false);
-                fileDownloaded = true;
+                boolean hasCachedDataAfterLoad = FileHandler70k.bandInfo.exists()
+                        && FileHandler70k.schedule.exists()
+                        && FileHandler70k.bandInfo.length() > 0
+                        && FileHandler70k.schedule.length() > 0;
+                fileDownloaded = hasCachedDataAfterLoad;
+                if (!hasCachedDataAfterLoad && !staticVariables.hasPointerOnDisk()) {
+                    Log.w("FRESH_INSTALL", "Core load finished without data — scheduling follow-up retry");
+                    new Handler().postDelayed(() -> {
+                        if (!isFinishing() && !isDestroyed() && !staticVariables.loadingBands
+                                && !staticVariables.hasPointerOnDisk()) {
+                            refreshNewData();
+                        }
+                    }, 5000);
+                }
                 
                 // FLASHING FIX: refreshData() already handles setting/updating the adapter
                 // We should NOT call setAdapter() here as it causes flashing when data is unchanged

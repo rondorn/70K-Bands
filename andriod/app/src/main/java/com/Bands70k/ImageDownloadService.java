@@ -203,7 +203,82 @@ public class ImageDownloadService extends Service {
         Log.d(TAG, "runDownloadTask called, isRunning=" + isRunning.get());
         new DownloadTaskRunner().run();
     }
-    
+
+    /**
+     * Refreshes in-memory metadata from on-disk CSV/cache before bulk validation.
+     * Ensures per-band checks use current description-map dates and band/schedule image URLs.
+     */
+    private static void prepareBulkValidation() {
+        try {
+            CustomerDescriptionHandler.getInstance().reloadDescriptionMapFromDisk();
+        } catch (Exception e) {
+            Log.w(TAG, "prepareBulkValidation: description map reload failed", e);
+        }
+        try {
+            BandInfo bandInfo = new BandInfo();
+            CombinedImageListHandler.getInstance().ensureCurrentFromBandData(bandInfo);
+        } catch (Exception e) {
+            Log.w(TAG, "prepareBulkValidation: combined image list refresh failed", e);
+        }
+    }
+
+    /**
+     * Fast file-based scan of how many images/notes still need downloading.
+     * Does not perform network I/O — safe to call from a background thread.
+     * Always reloads metadata from disk first so counts reflect current CSV dates/URLs.
+     *
+     * @return int[2] = { pendingImages, pendingNotes }
+     */
+    public static int[] estimatePendingBulkWork() {
+        prepareBulkValidation();
+
+        int pendingImages = 0;
+        int pendingNotes = 0;
+
+        try {
+            ImageHandler imageHandler = ImageHandler.getInstance();
+            CombinedImageListHandler combinedHandler = CombinedImageListHandler.getInstance();
+            Map<String, String> combinedImageList = combinedHandler.getCombinedImageList();
+            for (Map.Entry<String, String> entry : combinedImageList.entrySet()) {
+                String bandName = entry.getKey();
+                String cacheFilename = imageHandler.getCacheFilename(bandName);
+                File imageFile = new File(FileHandler70k.baseImageDirectory + "/" + cacheFilename);
+                if (imageHandler.needsImageUpdate(bandName, imageFile)) {
+                    pendingImages++;
+                }
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "estimatePendingBulkWork: image scan failed", e);
+        }
+
+        try {
+            if (!FileHandler70k.descriptionMapFile.exists()) {
+                Log.d(TAG, "estimatePendingBulkWork: description map missing — notes phase would skip");
+            } else {
+                CustomerDescriptionHandler descriptionHandler = CustomerDescriptionHandler.getInstance();
+                Map<String, String> descriptionMapData = descriptionHandler.getDescriptionMap();
+                if (descriptionMapData != null) {
+                    for (String bandName : descriptionMapData.keySet()) {
+                        File bandCustNoteFile = new File(
+                                showBands.newRootDir + FileHandler70k.directoryName + bandName + ".note_cust");
+                        if (bandCustNoteFile.exists()) {
+                            continue;
+                        }
+                        BandNotes bandNoteHandler = new BandNotes(bandName);
+                        if (!bandNoteHandler.fileExists()) {
+                            pendingNotes++;
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "estimatePendingBulkWork: note scan failed", e);
+        }
+
+        Log.d(TAG, "estimatePendingBulkWork: pendingImages=" + pendingImages + " pendingNotes=" + pendingNotes);
+        return new int[] { pendingImages, pendingNotes };
+    }
+
     /**
      * Task runner that handles all background network operations: images, notes, and Firebase reporting.
      * Can be run in a thread (when app is in foreground) or in a service (when app is in background).
@@ -225,6 +300,10 @@ public class ImageDownloadService extends Service {
                 }
                 
                 Log.d(TAG, "Device is online, proceeding with downloads");
+
+                // Reload description-map dates and combined image URLs from disk/CSV
+                // before scanning every band — no short-circuit based on stale in-memory state.
+                prepareBulkValidation();
                 
                 // Calculate total tasks for progress tracking
                 int imageCount = 0;
@@ -461,6 +540,7 @@ public class ImageDownloadService extends Service {
                     return;
                 }
 
+                descriptionHandler.reloadDescriptionMapFromDisk();
                 Map<String, String> descriptionMapData = descriptionHandler.getDescriptionMap();
                 
                 if (descriptionMapData == null || descriptionMapData.isEmpty()) {

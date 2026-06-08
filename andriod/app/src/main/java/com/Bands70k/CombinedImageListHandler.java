@@ -105,74 +105,102 @@ public class CombinedImageListHandler {
         Log.d(TAG, "Generating combined image list (URLs only, no downloads)...");
         
         new Thread(() -> {
-            Map<String, String> newCombinedList = new HashMap<>();
-            
-            // Get all band names and their image URLs
-            ArrayList<String> bandNames = bandInfo.getBandNames();
-            for (String bandName : bandNames) {
-                String imageUrl = BandInfo.getImageUrl(bandName);
-                if (imageUrl != null && !imageUrl.trim().isEmpty()) {
-                    newCombinedList.put(bandName, imageUrl);
-                    Log.d(TAG, "Added artist image for " + bandName + ": " + imageUrl);
-                }
-            }
-            
-            // Get all event names and their image URLs from schedule data
-            // Android already parses ImageURL from schedule CSV and stores in staticVariables.imageUrlMap
-            if (staticVariables.imageUrlMap != null) {
-                for (Map.Entry<String, String> entry : staticVariables.imageUrlMap.entrySet()) {
-                    String bandName = entry.getKey();
-                    String imageUrl = entry.getValue();
-                    
-                    if (imageUrl != null && !imageUrl.trim().isEmpty()) {
-                        // Only add if not already present (artist takes priority)
-                        if (!newCombinedList.containsKey(bandName)) {
-                            // Get ImageDate if available for this event
-                            String imageDate = null;
-                            if (staticVariables.imageDateMap != null && staticVariables.imageDateMap.containsKey(bandName)) {
-                                imageDate = staticVariables.imageDateMap.get(bandName);
-                            }
-                            
-                            // Store as JSON if date exists, otherwise just URL string (backward compatible)
-                            if (imageDate != null && !imageDate.trim().isEmpty()) {
-                                try {
-                                    JSONObject imageInfo = new JSONObject();
-                                    imageInfo.put("url", imageUrl);
-                                    imageInfo.put("date", imageDate);
-                                    newCombinedList.put(bandName, imageInfo.toString());
-                                    Log.d(TAG, "Added event image URL for " + bandName + " with date " + imageDate + ": " + imageUrl);
-                                } catch (JSONException e) {
-                                    // Fallback to simple URL if JSON creation fails
-                                    newCombinedList.put(bandName, imageUrl);
-                                    Log.e(TAG, "Error creating JSON for " + bandName + ", using simple URL: " + e.getMessage());
-                                }
-                            } else {
-                                // No date - store as simple URL string (backward compatible)
-                                newCombinedList.put(bandName, imageUrl);
-                                Log.d(TAG, "Added event image URL for " + bandName + " (no date): " + imageUrl);
-                            }
-                        } else {
-                            Log.d(TAG, "Skipped event image URL for " + bandName + " (artist already has image): " + imageUrl);
-                        }
-                    }
-                }
-            }
-            
-            // Update the combined list
-            synchronized (lock) {
-                combinedImageList.clear();
-                combinedImageList.putAll(newCombinedList);
-            }
-            
-            // Save to disk
-            saveCombinedImageList();
-            
-            Log.d(TAG, "Combined image list generated with " + newCombinedList.size() + " URL entries (no downloads)");
-            
+            Map<String, String> newCombinedList = buildCombinedImageListFromBandData(bandInfo);
+            applyCombinedImageList(newCombinedList, null);
             if (completion != null) {
                 completion.run();
             }
         }).start();
+    }
+
+    /**
+     * Synchronously rebuilds the combined image list when band/schedule CSV hashes changed.
+     * Safe on a background thread before bulk per-band cache validation.
+     */
+    public void ensureCurrentFromBandData(BandInfo bandInfo) {
+        boolean yearChanged = checkYearChange();
+        CacheHashManager cacheManager = CacheHashManager.getInstance();
+        String currentBandHash = cacheManager.getCachedHash("bandInfo");
+        String currentScheduleHash = cacheManager.getCachedHash("scheduleInfo");
+        final String newSourceDataHash;
+        if (currentBandHash != null && currentScheduleHash != null) {
+            newSourceDataHash = currentBandHash + "|" + currentScheduleHash;
+        } else {
+            newSourceDataHash = "";
+        }
+        String lastSourceDataHash = cacheManager.getCachedHash("combinedImageListSource");
+        boolean dataChanged = yearChanged
+                || combinedImageList.isEmpty()
+                || !newSourceDataHash.equals(lastSourceDataHash)
+                || newSourceDataHash.isEmpty();
+        if (!dataChanged) {
+            Log.d(TAG, "ensureCurrentFromBandData: combined list is current (" + combinedImageList.size() + " entries)");
+            return;
+        }
+        Log.d(TAG, "ensureCurrentFromBandData: regenerating from current band/schedule data");
+        Map<String, String> newCombinedList = buildCombinedImageListFromBandData(bandInfo);
+        applyCombinedImageList(newCombinedList, newSourceDataHash);
+    }
+
+    private Map<String, String> buildCombinedImageListFromBandData(BandInfo bandInfo) {
+        Map<String, String> newCombinedList = new HashMap<>();
+
+        ArrayList<String> bandNames = bandInfo.getBandNames();
+        for (String bandName : bandNames) {
+            String imageUrl = BandInfo.getImageUrl(bandName);
+            if (imageUrl != null && !imageUrl.trim().isEmpty()) {
+                newCombinedList.put(bandName, imageUrl);
+                Log.d(TAG, "Added artist image for " + bandName + ": " + imageUrl);
+            }
+        }
+
+        if (staticVariables.imageUrlMap != null) {
+            for (Map.Entry<String, String> entry : staticVariables.imageUrlMap.entrySet()) {
+                String bandName = entry.getKey();
+                String imageUrl = entry.getValue();
+
+                if (imageUrl != null && !imageUrl.trim().isEmpty()) {
+                    if (!newCombinedList.containsKey(bandName)) {
+                        String imageDate = null;
+                        if (staticVariables.imageDateMap != null && staticVariables.imageDateMap.containsKey(bandName)) {
+                            imageDate = staticVariables.imageDateMap.get(bandName);
+                        }
+
+                        if (imageDate != null && !imageDate.trim().isEmpty()) {
+                            try {
+                                JSONObject imageInfo = new JSONObject();
+                                imageInfo.put("url", imageUrl);
+                                imageInfo.put("date", imageDate);
+                                newCombinedList.put(bandName, imageInfo.toString());
+                                Log.d(TAG, "Added event image URL for " + bandName + " with date " + imageDate + ": " + imageUrl);
+                            } catch (JSONException e) {
+                                newCombinedList.put(bandName, imageUrl);
+                                Log.e(TAG, "Error creating JSON for " + bandName + ", using simple URL: " + e.getMessage());
+                            }
+                        } else {
+                            newCombinedList.put(bandName, imageUrl);
+                            Log.d(TAG, "Added event image URL for " + bandName + " (no date): " + imageUrl);
+                        }
+                    } else {
+                        Log.d(TAG, "Skipped event image URL for " + bandName + " (artist already has image): " + imageUrl);
+                    }
+                }
+            }
+        }
+
+        return newCombinedList;
+    }
+
+    private void applyCombinedImageList(Map<String, String> newCombinedList, String sourceDataHash) {
+        synchronized (lock) {
+            combinedImageList.clear();
+            combinedImageList.putAll(newCombinedList);
+        }
+        saveCombinedImageList();
+        if (sourceDataHash != null && !sourceDataHash.isEmpty()) {
+            CacheHashManager.getInstance().saveCachedHash("combinedImageListSource", sourceDataHash);
+        }
+        Log.d(TAG, "Combined image list updated with " + newCombinedList.size() + " URL entries (no downloads)");
     }
     
     /**
