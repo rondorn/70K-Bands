@@ -167,6 +167,8 @@ struct FestivalConfig {
     
     // Venue configuration
     let venues: [Venue]
+    /// Ordered color slots for schedule locations that are not named venues. Assigned by CSV row order at import.
+    let genericVenueSlots: [GenericVenueSlot]
     
     // Event type filter visibility defaults
     let meetAndGreetsEnabledDefault: Bool
@@ -211,12 +213,80 @@ struct FestivalConfig {
         static let preferencesIcon = "icon-gear-alt-Raw"
         static let shareIcon = "icon-share"
         static let statsIcon = "Stats v 4On Black"
+        static let genericGoingIcon = "Royal-Theater-Going-wBox"
+        static let genericNotGoingIcon = "Royal-Theater-NotGoing-wBox"
+        static let miscGenericGoingIcon = "Unknown-Going-wBox"
+        static let miscGenericNotGoingIcon = "Unknown-NotGoing-wBox"
+    }
+
+    /// Default generic slots for festivals with named venues (overflow / ad-hoc locations in CSV).
+    private static func defaultMiscGenericVenueSlots() -> [GenericVenueSlot] {
+        [
+            // Teal — distinct from emerald/cyan/blue named venues; white text readable
+            GenericVenueSlot(color: "0F766E", goingIcon: Defaults.miscGenericGoingIcon, notGoingIcon: Defaults.miscGenericNotGoingIcon),
+            // Deep purple — distinct from violet/magenta/blue-violet named venues
+            GenericVenueSlot(color: "5B21B6", goingIcon: Defaults.miscGenericGoingIcon, notGoingIcon: Defaults.miscGenericNotGoingIcon),
+            // Warm stone — neutral misc slot; not the cool slate used by Arcade (334155)
+            GenericVenueSlot(color: "44403C", goingIcon: Defaults.miscGenericGoingIcon, notGoingIcon: Defaults.miscGenericNotGoingIcon)
+        ]
+    }
+
+    /// MMF sponsor stages: colors only; venue names come from the schedule CSV.
+    private static func mmfGenericVenueSlots() -> [GenericVenueSlot] {
+        [
+            GenericVenueSlot(color: "991B1B", goingIcon: Defaults.genericGoingIcon, notGoingIcon: Defaults.genericNotGoingIcon),
+            GenericVenueSlot(color: "1D4ED8", goingIcon: Defaults.genericGoingIcon, notGoingIcon: Defaults.genericNotGoingIcon),
+            GenericVenueSlot(color: "047857", goingIcon: Defaults.genericGoingIcon, notGoingIcon: Defaults.genericNotGoingIcon)
+        ]
     }
     
     private init() {
         print("🏛️ [MDF_DEBUG] FestivalConfig init() called")
         
-        #if FESTIVAL_MDF
+        #if FESTIVAL_MMF
+        // MARK: ---- FESTIVAL: Milwaukee Metal Fest (MMF) ----
+        print("🏛️ [MDF_DEBUG] Building MMF configuration")
+        self.festivalName = "Milwaukee Metal Fest"
+        self.festivalShortName = "MMF"
+        self.appName = "MMF Bands"
+        self.bundleIdentifier = "com.rdorn.mmfbands"
+        self.defaultStorageUrl = "https://www.dropbox.com/scl/fi/placeholder/mmf_productionPointer.txt?rlkey=placeholder&raw=1"
+        self.defaultStorageUrlTest = "https://www.dropbox.com/scl/fi/placeholder/mmf_productionPointer_test.txt?rlkey=placeholder&raw=1"
+        self.firebaseConfigFile = "GoogleService-Info-MMF"
+        self.subscriptionTopic = Defaults.subscriptionTopic
+        self.subscriptionTopicTest = Defaults.subscriptionTopicTest
+        self.subscriptionUnofficalTopic = Defaults.subscriptionUnofficalTopic
+        self.artistUrlDefault = Defaults.artistUrlDefault
+        self.scheduleUrlDefault = Defaults.scheduleUrlDefault
+        self.logoUrl = "mdf_logo"
+        self.shareUrl = "https://www.facebook.com/profile.php?id=61580889273388"
+        self.mustSeeIconSmall = Defaults.mustSeeIconSmall
+        self.mightSeeIconSmall = Defaults.mightSeeIconSmall
+        self.wontSeeIconSmall = Defaults.wontSeeIconSmall
+        self.unknownIconSmall = Defaults.unknownIconSmall
+        self.mustSeeIcon = Defaults.mustSeeIcon
+        self.mustSeeIconAlt = Defaults.mustSeeIconAlt
+        self.mightSeeIcon = Defaults.mightSeeIcon
+        self.mightSeeIconAlt = Defaults.mightSeeIconAlt
+        self.wontSeeIcon = Defaults.wontSeeIcon
+        self.wontSeeIconAlt = Defaults.wontSeeIconAlt
+        self.unknownIcon = Defaults.unknownIcon
+        self.unknownIconAlt = Defaults.unknownIconAlt
+        self.preferencesIcon = Defaults.preferencesIcon
+        self.shareIcon = Defaults.shareIcon
+        self.statsIcon = Defaults.statsIcon
+        self.venues = []
+        self.genericVenueSlots = FestivalConfig.mmfGenericVenueSlots()
+        self.meetAndGreetsEnabledDefault = true
+        self.specialEventsEnabledDefault = true
+        self.unofficalEventsEnabledDefault = true
+        self.eventTypeDisplayNames = FestivalConfig.buildEventTypeDisplayNamesForMDF()
+        self.eventTypeFilterDisplayNames = FestivalConfig.buildEventTypeFilterDisplayNamesForMDF()
+        self.commentsNotAvailableTranslationKey = "DefaultDescriptionMDF"
+        self.aiSchedule = true
+        self.scheduleQRShareEnabled = false
+
+        #elseif FESTIVAL_MDF
         // MARK: ---- FESTIVAL: Maryland Deathfest (MDF) ----
         print("🏛️ [MDF_DEBUG] Building MDF configuration")
         self.festivalName = "Maryland Deathfest"
@@ -260,6 +330,7 @@ struct FestivalConfig {
             Venue(name: "Angels Rock Bar", color: "A16207", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "10 Market"),
             Venue(name: "Mosaic Nightclub", color: "5E4FA8", goingIcon: "Royal-Theater-Going-wBox", notGoingIcon: "Royal-Theater-NotGoing-wBox", location: "34 Market Pl")
         ]
+        self.genericVenueSlots = FestivalConfig.defaultMiscGenericVenueSlots()
         self.meetAndGreetsEnabledDefault = true
         self.specialEventsEnabledDefault = true
         self.unofficalEventsEnabledDefault = true
@@ -319,6 +390,7 @@ struct FestivalConfig {
             Venue(name: "Bull And Bear Pub", color: "B22222", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 5"),
             Venue(name: "Bull & Bear Pub", color: "B22222", goingIcon: "Unknown-Going-wBox", notGoingIcon: "Unknown-NotGoing-wBox", location: "Deck 5")
         ]
+        self.genericVenueSlots = FestivalConfig.defaultMiscGenericVenueSlots()
         self.meetAndGreetsEnabledDefault = true
         self.specialEventsEnabledDefault = true
         self.unofficalEventsEnabledDefault = true
@@ -348,6 +420,10 @@ struct FestivalConfig {
     func isMDF() -> Bool {
         return festivalShortName == "MDF"
     }
+
+    func isMMF() -> Bool {
+        return festivalShortName == "MMF"
+    }
     
     func is70K() -> Bool {
         return festivalShortName == "70K"
@@ -375,7 +451,9 @@ struct FestivalConfig {
     
     /// Returns the localized default description text for the current festival
     func getDefaultDescriptionText() -> String {
-        #if FESTIVAL_MDF
+        #if FESTIVAL_MMF
+        return NSLocalizedString("DefaultDescriptionMDF", comment: "Default description for MMF festival")
+        #elseif FESTIVAL_MDF
         return NSLocalizedString("DefaultDescriptionMDF", comment: "Default description for MDF festival")
         #else
         return NSLocalizedString("DefaultDescription70K", comment: "Default description for 70K festival")
@@ -410,10 +488,15 @@ struct FestivalConfig {
     }
     
     // MARK: - Venue Helper Methods
+
+    /// Exact match against configured named venues (not generic slots).
+    func hasNamedVenue(exactName: String) -> Bool {
+        return venues.contains { $0.name == exactName }
+    }
     
-    /// Get venue by name
+    /// Get venue by name (exact match only)
     func getVenue(named name: String) -> Venue? {
-        return venues.first { $0.name.lowercased() == name.lowercased() }
+        return venues.first { $0.name == name }
     }
     
     /// Get venue by partial name match (for backwards compatibility)
@@ -439,27 +522,46 @@ struct FestivalConfig {
 
     /// Get venue color for a given venue name (returns UIColor) - EXACT match only
     func getVenueColor(for venueName: String) -> UIColor {
-        let venue = getVenue(named: venueName)
-        if let venue = venue {
+        if let venue = getVenue(named: venueName) {
             return venue.uiColor
-        } else {
-            return UIColor.gray
         }
+        if let assigned = VenueColorAssignmentStore.shared.uiColor(for: venueName, year: eventYear) {
+            return assigned
+        }
+        return UIColor.gray
     }
     
     /// Get venue color for a given venue name (returns SwiftUI Color) - EXACT match only
     func getVenueSwiftUIColor(for venueName: String) -> Color {
-        return getVenue(named: venueName)?.swiftUIColor ?? Color.gray
+        if let venue = getVenue(named: venueName) {
+            return venue.swiftUIColor
+        }
+        if let assigned = VenueColorAssignmentStore.shared.swiftUIColor(for: venueName, year: eventYear) {
+            return assigned
+        }
+        return Color.gray
     }
     
     /// Get venue going icon for a given venue name - EXACT match only
     func getVenueGoingIcon(for venueName: String) -> String {
-        return getVenue(named: venueName)?.goingIcon ?? "Unknown-Going-wBox"
+        if let venue = getVenue(named: venueName) {
+            return venue.goingIcon
+        }
+        if let assigned = VenueColorAssignmentStore.shared.goingIcon(for: venueName, year: eventYear) {
+            return assigned
+        }
+        return Defaults.miscGenericGoingIcon
     }
     
     /// Get venue not going icon for a given venue name - EXACT match only
     func getVenueNotGoingIcon(for venueName: String) -> String {
-        return getVenue(named: venueName)?.notGoingIcon ?? "Unknown-NotGoing-wBox"
+        if let venue = getVenue(named: venueName) {
+            return venue.notGoingIcon
+        }
+        if let assigned = VenueColorAssignmentStore.shared.notGoingIcon(for: venueName, year: eventYear) {
+            return assigned
+        }
+        return Defaults.miscGenericNotGoingIcon
     }
     
     /// Get venue location for a given venue name - EXACT match only

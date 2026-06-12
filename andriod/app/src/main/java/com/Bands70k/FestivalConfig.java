@@ -58,6 +58,22 @@ class Venue {
 }
 
 /**
+ * Color/icon slot for schedule locations not listed as named venues.
+ * Assigned dynamically from CSV row order at schedule import.
+ */
+class GenericVenueSlot {
+    public final String color;
+    public final String goingIcon;
+    public final String notGoingIcon;
+
+    GenericVenueSlot(String color, String goingIcon, String notGoingIcon) {
+        this.color = color;
+        this.goingIcon = goingIcon;
+        this.notGoingIcon = notGoingIcon;
+    }
+}
+
+/**
  * Festival-specific configuration class that provides centralized access to
  * festival-dependent settings like URLs, app names, Firebase configs, etc.
  * 
@@ -123,6 +139,8 @@ public class FestivalConfig {
     
     // Venue configuration
     public final List<Venue> venues;
+    /** Color/icon slots for schedule locations not listed as named venues (CSV row order). */
+    public final List<GenericVenueSlot> genericVenueSlots;
     
     // Event type filter visibility settings (festival-specific)
     public final boolean meetAndGreetsEnabledDefault;
@@ -165,6 +183,19 @@ public class FestivalConfig {
         static final String PREFERENCES_ICON = "icon_gear";
         static final String SHARE_ICON = "icon_share";
         static final String STATS_ICON = "stats_icon";
+        static final String MISC_GENERIC_GOING_ICON = "Unknown-Going-wBox";
+        static final String MISC_GENERIC_NOT_GOING_ICON = "Unknown-NotGoing-wBox";
+    }
+
+    private static List<GenericVenueSlot> defaultMiscGenericVenueSlots() {
+        return Arrays.asList(
+            // Teal — distinct from emerald/cyan/blue named venues; white text readable
+            new GenericVenueSlot("0F766E", Defaults.MISC_GENERIC_GOING_ICON, Defaults.MISC_GENERIC_NOT_GOING_ICON),
+            // Deep purple — distinct from violet/magenta/blue-violet named venues
+            new GenericVenueSlot("5B21B6", Defaults.MISC_GENERIC_GOING_ICON, Defaults.MISC_GENERIC_NOT_GOING_ICON),
+            // Warm stone — neutral misc slot; not the cool slate used by Arcade (334155)
+            new GenericVenueSlot("44403C", Defaults.MISC_GENERIC_GOING_ICON, Defaults.MISC_GENERIC_NOT_GOING_ICON)
+        );
     }
     
     /**
@@ -228,6 +259,7 @@ public class FestivalConfig {
                 new Venue("Angels Rock Bar", "A16207", "icon_theater", "icon_theater_alt", "10 Market"),     // Yellow (dark)
                 new Venue("Mosaic Nightclub", "5E4FA8", "icon_theater", "icon_theater_alt", "34 Market Pl") // Blue-violet
             );
+            this.genericVenueSlots = defaultMiscGenericVenueSlots();
             
             // MDF: Hide all event type filters by default
             this.meetAndGreetsEnabledDefault = false;
@@ -304,6 +336,7 @@ public class FestivalConfig {
                 new Venue("Bull And Bear Pub", "991B1B", "icon_unknown", "icon_unknown_alt", "Deck 5"),  // Dark red
                 new Venue("Bull & Bear Pub", "991B1B", "icon_unknown", "icon_unknown_alt", "Deck 5")     // Dark red
             );
+            this.genericVenueSlots = defaultMiscGenericVenueSlots();
             
             // 70K: Show all event type filters by default (maintain existing behavior)
             this.meetAndGreetsEnabledDefault = true;
@@ -691,13 +724,29 @@ public class FestivalConfig {
     }
     
     // MARK: - Venue Helper Methods
+
+    /** Exact match against configured named venues (not generic slots). */
+    public boolean hasNamedVenue(String exactName) {
+        if (exactName == null) {
+            return false;
+        }
+        for (Venue venue : venues) {
+            if (exactName.equals(venue.name)) {
+                return true;
+            }
+        }
+        return false;
+    }
     
     /**
-     * Get venue by name
+     * Get venue by name (exact match only)
      */
     public Venue getVenue(String name) {
+        if (name == null) {
+            return null;
+        }
         for (Venue venue : venues) {
-            if (venue.name.equalsIgnoreCase(name)) {
+            if (name.equals(venue.name)) {
                 return venue;
             }
         }
@@ -756,27 +805,55 @@ public class FestivalConfig {
     }
     
     /**
-     * Get venue color for a given venue name (returns hex string)
+     * Get venue color for a given venue name (returns hex string). Exact named match, then CSV generic slot.
      */
     public String getVenueColor(String venueName) {
-        Venue venue = getVenueByExactOrPrefixName(venueName);
-        return venue != null ? venue.color : "A9A9A9"; // Default to gray
+        Venue venue = getVenue(venueName);
+        if (venue != null) {
+            return venue.color;
+        }
+        GenericVenueSlot slot = resolveGenericSlot(venueName);
+        if (slot != null) {
+            return slot.color;
+        }
+        return "A9A9A9";
     }
     
     /**
-     * Get venue going icon for a given venue name
+     * Get venue going icon for a given venue name (exact match, then generic slot)
      */
     public String getVenueGoingIcon(String venueName) {
-        Venue venue = getVenueByExactOrPrefixName(venueName);
-        return venue != null ? venue.goingIcon : "Unknown-Going-wBox";
+        Venue venue = getVenue(venueName);
+        if (venue != null) {
+            return venue.goingIcon;
+        }
+        GenericVenueSlot slot = resolveGenericSlot(venueName);
+        if (slot != null) {
+            return slot.goingIcon;
+        }
+        return Defaults.MISC_GENERIC_GOING_ICON;
     }
     
     /**
-     * Get venue not going icon for a given venue name
+     * Get venue not going icon for a given venue name (exact match, then generic slot)
      */
     public String getVenueNotGoingIcon(String venueName) {
-        Venue venue = getVenueByExactOrPrefixName(venueName);
-        return venue != null ? venue.notGoingIcon : "Unknown-NotGoing-wBox";
+        Venue venue = getVenue(venueName);
+        if (venue != null) {
+            return venue.notGoingIcon;
+        }
+        GenericVenueSlot slot = resolveGenericSlot(venueName);
+        if (slot != null) {
+            return slot.notGoingIcon;
+        }
+        return Defaults.MISC_GENERIC_NOT_GOING_ICON;
+    }
+
+    private GenericVenueSlot resolveGenericSlot(String venueName) {
+        if (venueName == null || staticVariables.context == null || staticVariables.eventYear == null) {
+            return null;
+        }
+        return VenueColorAssignment.getInstance().resolveSlot(venueName, staticVariables.context, staticVariables.eventYear);
     }
     
     /**

@@ -14,8 +14,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -129,6 +131,7 @@ public class scheduleInfo {
     public Map <String, scheduleTimeTracker> ParseScheduleCSV(){
 
         Map<String, scheduleTimeTracker> bandSchedule = new HashMap<>();
+        List<String> locationsInCSVOrder = new ArrayList<>();
 
         Log.d("ParseScheduleCSV", "ParseScheduleCSV - 1");
         Log.d("FILTER_DEBUG", "🔍 SCHEDULE PARSING: Starting to parse schedule CSV");
@@ -163,6 +166,16 @@ public class scheduleInfo {
                         labelRow = false;
                     } else {
                         scheduleHandler scheduleLine = new scheduleHandler();
+
+                        if (labelKeys.containsKey(staticVariables.schedLocationRow)) {
+                            int locIdx = labelKeys.get(staticVariables.schedLocationRow);
+                            if (RowData.length > locIdx) {
+                                String location = RowData[locIdx];
+                                if (location != null && !location.isEmpty()) {
+                                    locationsInCSVOrder.add(location);
+                                }
+                            }
+                        }
 
                         String bandName = RowData[labelKeys.get(staticVariables.schedBandRow)];
 
@@ -238,6 +251,10 @@ public class scheduleInfo {
 
         Log.d("ParseScheduleCSV", "ParseScheduleCSV - 7");
         Log.d("ScheduleInfo", "Parsed schedule CSV: " + bandSchedule.size() + " bands");
+        if (staticVariables.context != null && staticVariables.eventYear != null && staticVariables.eventYear > 0) {
+            VenueColorAssignment.getInstance().updateFromCsvLocations(
+                    staticVariables.context, locationsInCSVOrder, staticVariables.eventYear);
+        }
         showsAttended.invalidateAttendanceCollisionCache();
         return bandSchedule;
     }

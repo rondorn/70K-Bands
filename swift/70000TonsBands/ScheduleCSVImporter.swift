@@ -67,8 +67,13 @@ class ScheduleCSVImporter {
         var eventsToImport: [EventData] = []
         var errorCount = 0
         var skippedUnofficialCount = 0
+        var locationsInCSVOrder: [String] = []
         
         for (rowIndex, lineData) in csvData.rows.enumerated() {
+            if let location = lineData[locationField], !location.isEmpty {
+                locationsInCSVOrder.append(location)
+            }
+
             guard let bandName = lineData[bandField],
                   let location = lineData[locationField],
                   let date = lineData[dateField],
@@ -122,6 +127,8 @@ class ScheduleCSVImporter {
             print("❌ [EVENT_IMPORT] replaceEvents failed (e.g. database locked) — DB unchanged; do not store checksum")
             return (false, 0)
         }
+
+        VenueColorAssignmentStore.shared.update(locationsInCSVOrder: locationsInCSVOrder, year: eventYear)
         
         let eventsInSQLite = dataManager.fetchEvents(forYear: eventYear)
         print("✅ [SQLITE_FIX] Total events in SQLite for year \(eventYear): \(eventsInSQLite.count)")

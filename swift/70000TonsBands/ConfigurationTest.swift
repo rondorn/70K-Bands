@@ -44,8 +44,17 @@ class ConfigurationTest {
             return false
         }
         
-        // Festival-specific validation (70K = default, MDF = FESTIVAL_MDF)
-        #if FESTIVAL_MDF
+        // Festival-specific validation (70K = default, MMF/MDF = compiler flags)
+        #if FESTIVAL_MMF
+        guard config.isMMF() && !config.is70K() && !config.isMDF() else {
+            print("❌ Configuration validation failed: MMF flags incorrect")
+            return false
+        }
+        guard config.defaultStorageUrl.contains("mmf_productionPointer") else {
+            print("❌ Configuration validation failed: MMF should use MMF storage URL")
+            return false
+        }
+        #elseif FESTIVAL_MDF
         guard config.isMDF() && !config.is70K() else {
             print("❌ Configuration validation failed: MDF flags incorrect")
             return false

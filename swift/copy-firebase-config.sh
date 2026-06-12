@@ -10,14 +10,20 @@ echo "🔥 Firebase Config Script: Target name: ${TARGET_NAME}"
 # Define source files
 FIREBASE_70K="${SRCROOT}/GoogleService-Info-70K.plist"
 FIREBASE_MDF="${SRCROOT}/GoogleService-Info-MDF.plist"
+FIREBASE_MMF="${SRCROOT}/GoogleService-Info-MMF.plist"
 FIREBASE_DEST="${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app/GoogleService-Info.plist"
 
 echo "🔥 Firebase Config Script: Checking for source files..."
 echo "🔥 Firebase Config Script: 70K file exists: $(test -f "$FIREBASE_70K" && echo "YES" || echo "NO")"
 echo "🔥 Firebase Config Script: MDF file exists: $(test -f "$FIREBASE_MDF" && echo "YES" || echo "NO")"
+echo "🔥 Firebase Config Script: MMF file exists: $(test -f "$FIREBASE_MMF" && echo "YES" || echo "NO")"
 
 # Determine which Firebase config to use based on build configuration or target name
-if [[ "${PRODUCT_NAME}" == *"MDF"* ]] || [[ "${TARGET_NAME}" == *"MDF"* ]] || [[ "${CONFIGURATION}" == *"MDF"* ]]; then
+if [[ "${PRODUCT_NAME}" == *"MMF"* ]] || [[ "${TARGET_NAME}" == *"MMF"* ]] || [[ "${CONFIGURATION}" == *"MMF"* ]]; then
+    echo "🔥 Firebase Config Script: Detected MMF Bands build - using MMF Firebase config"
+    SOURCE_FILE="$FIREBASE_MMF"
+    FESTIVAL_TYPE="MMF"
+elif [[ "${PRODUCT_NAME}" == *"MDF"* ]] || [[ "${TARGET_NAME}" == *"MDF"* ]] || [[ "${CONFIGURATION}" == *"MDF"* ]]; then
     echo "🔥 Firebase Config Script: Detected MDF Bands build - using MDF Firebase config"
     SOURCE_FILE="$FIREBASE_MDF"
     FESTIVAL_TYPE="MDF"
