@@ -277,7 +277,9 @@
 "Give this share a name so the recipient can identify you." = "Give this share a name so the recipient can identify you.";
 
 // Import Feature
-"This file is not a valid 70K Bands share file." = "This file is not a valid 70K Bands share file.";
+"%@ Shared Preferences: %@" = "%@ Shared Preferences: %@";
+"This file is not a valid %@ share file." = "This file is not a valid %@ share file.";
+"This file is not compatible with %@. Please use the correct app to open this file." = "This file is not compatible with %@. Please use the correct app to open this file.";
 "Import Shared Preferences" = "Import Shared Preferences";
 
 // Share Schedule via QR Code – button and menu strings

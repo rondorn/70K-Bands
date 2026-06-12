@@ -1278,58 +1278,81 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     // MARK: - Shared Preferences Import Support
     
-    /// Check if the file extension is valid for THIS specific app (no cross-compatibility)
-    private func isValidShareExtension(_ extension: String) -> Bool {
-        // 70K Bands only accepts .70kshare, MDF only accepts .mdfshare
-        let expectedExtension = FestivalConfig.current.isMDF() ? "mdfshare" : "70kshare"
-        return `extension` == expectedExtension
+    private func handleIncomingShareFile(url: URL, delay: TimeInterval = 0) -> Bool {
+        let ext = url.pathExtension
+        let config = FestivalConfig.current
+
+        if config.isValidShareFileExtension(pathExtension: ext) {
+            let importBlock = {
+                _ = SharedPreferencesImportHandler.shared.handleIncomingFile(url)
+            }
+            if delay > 0 {
+                DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: importBlock)
+            } else {
+                importBlock()
+            }
+            return true
+        }
+
+        if config.isOtherFestivalShareFile(pathExtension: ext) {
+            print("⚠️ Rejected cross-festival share file: .\(ext)")
+            showIncompatibleShareFileAlert()
+        } else {
+            print("⚠️ Rejected file with extension .\(ext) - not a share file for this app")
+        }
+        return false
+    }
+
+    private func showIncompatibleShareFileAlert() {
+        let appName = FestivalConfig.current.appName
+        let message = String(
+            format: NSLocalizedString(
+                "This file is not compatible with %@. Please use the correct app to open this file.",
+                comment: "Wrong festival share file"
+            ),
+            appName
+        )
+
+        DispatchQueue.main.async {
+            guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                  let topVC = windowScene.windows.first?.rootViewController else {
+                return
+            }
+
+            let alert = UIAlertController(
+                title: NSLocalizedString("Import Failed", comment: "Import failed title"),
+                message: message,
+                preferredStyle: .alert
+            )
+            alert.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: "OK button"), style: .default))
+
+            var presenter = topVC
+            while let presented = presenter.presentedViewController {
+                presenter = presented
+            }
+            presenter.present(alert, animated: true)
+        }
     }
     
     /// Handles opening share files (iOS 9+) - app-specific extension only
     func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
         print("📥 AppDelegate: Opening URL (iOS 9+): \(url)")
-        
-        // Check if this is a valid shared preferences file for THIS app
-        if isValidShareExtension(url.pathExtension) {
-            // Handle the import
-            return SharedPreferencesImportHandler.shared.handleIncomingFile(url)
-        } else {
-            print("⚠️ Rejected file with extension .\(url.pathExtension) - not compatible with this app")
-        }
-        
-        return false
+        return handleIncomingShareFile(url: url)
     }
     
     /// Legacy method for opening URLs (iOS 4.2-9.0, still called by some apps)
     func application(_ application: UIApplication, open url: URL, sourceApplication: String?, annotation: Any) -> Bool {
         print("📥 AppDelegate: Opening URL (Legacy): \(url)")
-        
-        // Check if this is a valid shared preferences file for THIS app
-        if isValidShareExtension(url.pathExtension) {
-            // Handle the import
-            return SharedPreferencesImportHandler.shared.handleIncomingFile(url)
-        } else {
-            print("⚠️ Rejected file with extension .\(url.pathExtension) - not compatible with this app")
-        }
-        
-        return false
+        return handleIncomingShareFile(url: url)
     }
     
     /// Handle opening documents (alternative entry point)
     func application(_ application: UIApplication, willFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         print("📥 AppDelegate: willFinishLaunchingWithOptions")
         
-        // Check if launched with a URL
         if let url = launchOptions?[.url] as? URL {
             print("📥 Launched with URL: \(url)")
-            if isValidShareExtension(url.pathExtension) {
-                // Delay handling to ensure UI is ready
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    _ = SharedPreferencesImportHandler.shared.handleIncomingFile(url)
-                }
-            } else {
-                print("⚠️ Rejected file with extension .\(url.pathExtension) - not compatible with this app")
-            }
+            _ = handleIncomingShareFile(url: url, delay: 1.0)
         }
         
         return true

@@ -227,7 +227,9 @@
 "Give this share a name so the recipient can identify you." = "Anna tälle jaolle nimi, jotta vastaanottaja voi tunnistaa sinut.";
 
 // Import Feature
-"This file is not a valid 70K Bands share file." = "Tämä tiedosto ei ole kelvollinen 70K Bands -jakotiedosto.";
+"%@ Shared Preferences: %@" = "%@ Jaetut asetukset: %@";
+"This file is not a valid %@ share file." = "Tämä tiedosto ei ole kelvollinen %@ -jakotiedosto.";
+"This file is not compatible with %@. Please use the correct app to open this file." = "Tämä tiedosto ei ole yhteensopiva sovelluksen %@ kanssa. Avaa tiedosto oikealla sovelluksella.";
 "Import Shared Preferences" = "Tuo Jaetut Asetukset";
 
 // Share Schedule via QR Code – button and menu strings

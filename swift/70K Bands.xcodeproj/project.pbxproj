@@ -473,7 +473,7 @@
 		6CE34996204CCBD7380D814B /* CustomBandDescription.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110924351F748601002237AB /* CustomBandDescription.swift */; };
 		6EA7DF275C4D59602480C9C4 /* userDataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ABAA5F222C7EFF00A04397 /* userDataHandler.swift */; };
 		6FCE71239F3F64BF35D0D6BC /* DataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11895B962EE4C8EB008CC4A9 /* DataManager.swift */; };
-		729ECFBC3A7715C5224D9F56 /* UILaunchScreen-MMF.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1463329C2FDC27932432B73F /* UILaunchScreen-MMF.xib */; };
+		729ECFBC3A7715C5224D9F56 /* Base.lproj/UILaunchScreen-MMF.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1463329C2FDC27932432B73F /* Base.lproj/UILaunchScreen-MMF.xib */; };
 		75412DD8446520A4ED4D7EB7 /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D661A6827FC00267A8F /* CFNetwork.framework */; };
 		75419F402F47B68D1313D12C /* about-team.png in Resources */ = {isa = PBXBuildFile; fileRef = 11EB86AE2F353160007D5AD0 /* about-team.png */; };
 		767199D3B512AFCE2A8ACCBA /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1172A2251B5AADC900C28AB3 /* Localizable.strings */; };
@@ -759,7 +759,7 @@
 		11FAC0012FEF20260507A001 /* DetailProfileBypassBandNames.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailProfileBypassBandNames.swift; sourceTree = "<group>"; };
 		11FBBE1D232F26E000109035 /* NotificationPayload.apns */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = NotificationPayload.apns; sourceTree = "<group>"; };
 		11FD1F1D20E006C100BE0141 /* CloudKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CloudKit.framework; path = System/Library/Frameworks/CloudKit.framework; sourceTree = SDKROOT; };
-		1463329C2FDC27932432B73F /* UILaunchScreen-MMF.xib */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = file.xib; path = "UILaunchScreen-MMF.xib"; sourceTree = "<group>"; };
+		1463329C2FDC27932432B73F /* Base.lproj/UILaunchScreen-MMF.xib */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = file.xib; path = "Base.lproj/UILaunchScreen-MMF.xib"; sourceTree = "<group>"; };
 		14677FEA3EAA1BFCE25B34E5 /* Pods-MDF Bands.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MDF Bands.debug.xcconfig"; path = "Target Support Files/Pods-MDF Bands/Pods-MDF Bands.debug.xcconfig"; sourceTree = "<group>"; };
 		1530C58547653A0C1AAAA76C /* ProfileTutorialOverlay.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProfileTutorialOverlay.swift; sourceTree = "<group>"; };
 		258A83DBED7249498300F870 /* Info-MMF.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "Info-MMF.plist"; sourceTree = "<group>"; };
@@ -1033,7 +1033,7 @@
 				116C9D7E2F415D370036743C /* UIConstants.swift */,
 				1154F6191A575893003F4764 /* UILaunchScreen.xib */,
 				1172EE652E5A3486006E3596 /* UILaunchScreen-MDF.xib */,
-				1463329C2FDC27932432B73F /* UILaunchScreen-MMF.xib */,
+				1463329C2FDC27932432B73F /* Base.lproj/UILaunchScreen-MMF.xib */,
 				1156B4F41A6613E700D48D12 /* urlStorage.swift */,
 				11ABAA5F222C7EFF00A04397 /* userDataHandler.swift */,
 				11ED61801A9103C100D29A5B /* UtilityHandler.swift */,
@@ -1381,7 +1381,7 @@
 				34C09F702DCA028E120D3BA8 /* NotificationPayload.apns in Resources */,
 				2EF13079D62489398791AF32 /* GoogleService-Info-MMF.plist in Resources */,
 				E9CF01F4CBB9E6C220BD3539 /* Info-MMF.plist in Resources */,
-				729ECFBC3A7715C5224D9F56 /* UILaunchScreen-MMF.xib in Resources */,
+				729ECFBC3A7715C5224D9F56 /* Base.lproj/UILaunchScreen-MMF.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2846,7 +2846,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 8A0E0A93C04D20A741A328BB /* Pods-MMF Bands.debug.xcconfig */;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = mdf_bands_logo;
+				ASSETCATALOG_COMPILER_APPICON_NAME = mmf_bands_logo;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = NO;
@@ -2857,7 +2857,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260606002;
+				CURRENT_PROJECT_VERSION = 20260612005;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -2878,7 +2878,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260606002;
+				MARKETING_VERSION = 20260612005;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -2927,7 +2927,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 2D55AA9C35482C2375F13C92 /* Pods-MMF Bands.release.xcconfig */;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = mdf_bands_logo;
+				ASSETCATALOG_COMPILER_APPICON_NAME = mmf_bands_logo;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = NO;
@@ -2937,7 +2937,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260606002;
+				CURRENT_PROJECT_VERSION = 20260612005;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -2962,7 +2962,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260606002;
+				MARKETING_VERSION = 20260612005;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",

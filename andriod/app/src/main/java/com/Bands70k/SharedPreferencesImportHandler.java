@@ -54,7 +54,8 @@ public class SharedPreferencesImportHandler {
         // Validate and parse the file
         SharedPreferenceSet preferenceSet = sharingManager.validateImportedFile(uri);
         if (preferenceSet == null) {
-            showErrorAlert(activity, context.getString(R.string.invalid_share_file));
+            showErrorAlert(activity, context.getString(
+                    R.string.invalid_share_file, FestivalConfig.getInstance().appName));
             return false;
         }
         

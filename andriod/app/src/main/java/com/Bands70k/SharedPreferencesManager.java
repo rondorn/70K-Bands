@@ -61,10 +61,10 @@ public class SharedPreferencesManager {
     
     /**
      * Gets the file extension for shared preference files (app-specific)
-     * @return File extension (.70kshare or .mdfshare)
+     * @return File extension (.70kshare, .mdfshare, or .mmfshare)
      */
     private String getFileExtension() {
-        return FestivalConfig.getInstance().isMDF() ? "mdfshare" : "70kshare";
+        return FestivalConfig.getInstance().shareFileExtension;
     }
     
     /**
@@ -260,6 +260,15 @@ public class SharedPreferencesManager {
      * @return SharedPreferenceSet if valid, null otherwise
      */
     public SharedPreferenceSet validateImportedFile(Uri uri) {
+        String filename = resolveFilenameFromUri(uri);
+        String pathExtension = extensionFromFilename(filename);
+        FestivalConfig config = FestivalConfig.getInstance();
+        if (!config.hasValidShareFileExtension(filename, pathExtension, uri.getLastPathSegment())) {
+            Log.e(TAG, "❌ Invalid share file extension for " + config.appName
+                    + ". Expected: " + config.getShareFileExtensionWithDot() + ", got: " + filename);
+            return null;
+        }
+
         try {
             // Read file content
             FileInputStream fis = (FileInputStream) context.getContentResolver().openInputStream(uri);
@@ -276,7 +285,7 @@ public class SharedPreferencesManager {
             
             String senderUserId = json.getString("senderUserId");
             String senderName = json.optString("senderName", "");
-            long shareDate = json.getLong("shareDate");
+            long shareDate = parseShareDateMillis(json);
             int eventYear = json.getInt("eventYear");
             String version = json.optString("version", "1.0");
             
@@ -585,6 +594,72 @@ public class SharedPreferencesManager {
             }
             directory.delete();
         }
+    }
+
+    /**
+     * Parses shareDate from JSON written by any app version or platform.
+     * Supports epoch milliseconds (Android), epoch seconds, and iOS reference-date seconds.
+     */
+    private long parseShareDateMillis(org.json.JSONObject json) throws org.json.JSONException {
+        Object raw = json.get("shareDate");
+        if (!(raw instanceof Number)) {
+            return json.getLong("shareDate");
+        }
+        double value = ((Number) raw).doubleValue();
+        if (value > 1_000_000_000_000d) {
+            return (long) value;
+        }
+        if (value > 1_000_000_000d) {
+            return (long) (value * 1000d);
+        }
+        // iOS JSONEncoder default: seconds since 2001-01-01 UTC
+        return (long) ((value * 1000d) + 978307200000d);
+    }
+
+    private String extensionFromFilename(String filename) {
+        if (filename == null) {
+            return null;
+        }
+        int dot = filename.lastIndexOf('.');
+        if (dot < 0 || dot >= filename.length() - 1) {
+            return null;
+        }
+        return filename.substring(dot + 1);
+    }
+
+    private String resolveFilenameFromUri(Uri uri) {
+        String filename = null;
+
+        if ("content".equals(uri.getScheme())) {
+            android.database.Cursor cursor = null;
+            try {
+                cursor = context.getContentResolver().query(uri, null, null, null, null);
+                if (cursor != null && cursor.moveToFirst()) {
+                    int nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
+                    if (nameIndex != -1) {
+                        filename = cursor.getString(nameIndex);
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error resolving filename from content URI", e);
+            } finally {
+                if (cursor != null) {
+                    cursor.close();
+                }
+            }
+        }
+
+        if (filename == null) {
+            String path = uri.getPath();
+            if (path != null) {
+                int lastSlash = path.lastIndexOf('/');
+                if (lastSlash != -1 && lastSlash < path.length() - 1) {
+                    filename = path.substring(lastSlash + 1);
+                }
+            }
+        }
+
+        return filename;
     }
 }
 

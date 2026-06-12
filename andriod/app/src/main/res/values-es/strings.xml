@@ -363,7 +363,8 @@
     <string name="import_button">Importar</string>
     <string name="updated">Actualizado</string>
     <string name="with_new_data">¡con nuevos datos!</string>
-    <string name="invalid_share_file">Este archivo no es un archivo de compartir válido de 70K Bands.</string>
+    <string name="invalid_share_file">Este archivo no es un archivo de compartir válido de %1$s.</string>
+    <string name="incompatible_share_file">Este archivo no es compatible con %1$s. Utilice la aplicación correcta para abrir este archivo.</string>
     <string name="failed_to_import">No se pudo importar. Por favor, inténtalo de nuevo.</string>
     <string name="import_failed">Importación Fallida</string>
     <string name="profile_updated">Perfil Actualizado</string>

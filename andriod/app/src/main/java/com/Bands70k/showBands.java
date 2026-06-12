@@ -1965,7 +1965,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             
             // Use share name with extension as the subject so Google Drive uses it as filename
             // Simple format: "John's Phone.70kshare"
-            String fileExtension = FestivalConfig.getInstance().isMDF() ? ".mdfshare" : ".70kshare";
+            String fileExtension = FestivalConfig.getInstance().getShareFileExtensionWithDot();
             String subject = shareName + fileExtension;
             sharingIntent.putExtra(Intent.EXTRA_SUBJECT, subject);
             
@@ -4430,22 +4430,27 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         Log.d(TAG, "🔥🔥🔥 Resolved filename: " + filename + " 🔥🔥🔥");
         
         // Only accept the appropriate file extension for this app variant
-        String expectedExtension = FestivalConfig.getInstance().isMDF() ? ".mdfshare" : ".70kshare";
-        
-        if (filename != null && filename.endsWith(expectedExtension)) {
+        FestivalConfig festivalConfig = FestivalConfig.getInstance();
+        String expectedExtension = festivalConfig.getShareFileExtensionWithDot();
+        String pathExtension = null;
+        if (filename != null) {
+            int dot = filename.lastIndexOf('.');
+            if (dot >= 0 && dot < filename.length() - 1) {
+                pathExtension = filename.substring(dot + 1);
+            }
+        }
+
+        if (festivalConfig.hasValidShareFileExtension(filename, pathExtension, data.getLastPathSegment())) {
             Log.d(TAG, "🔥🔥🔥 Detected shared preference file: " + filename + " 🔥🔥🔥");
             SharedPreferencesImportHandler.getInstance().handleIncomingFile(data, this);
             // Clear the intent so we don't process it again on resume
             setIntent(new Intent());
+        } else if (festivalConfig.isOtherFestivalShareFile(filename)) {
+            String appName = festivalConfig.appName;
+            Toast.makeText(this, getString(R.string.incompatible_share_file, appName), Toast.LENGTH_LONG).show();
+            Log.d(TAG, "🔥 Wrong file extension detected. Expected: " + expectedExtension + ", got: " + filename);
         } else {
-            String wrongExtension = FestivalConfig.getInstance().isMDF() ? ".70kshare" : ".mdfshare";
-            if (filename != null && filename.endsWith(wrongExtension)) {
-                String appName = FestivalConfig.getInstance().appName;
-                Toast.makeText(this, "This file is not compatible with " + appName + ". Please use the correct app to open this file.", Toast.LENGTH_LONG).show();
-                Log.d(TAG, "🔥 Wrong file extension detected. Expected: " + expectedExtension + ", got: " + wrongExtension);
-            } else {
-                Log.d(TAG, "🔥 Filename doesn't end with " + expectedExtension + ": " + filename);
-            }
+            Log.d(TAG, "🔥 Filename doesn't end with " + expectedExtension + ": " + filename);
         }
     }
     

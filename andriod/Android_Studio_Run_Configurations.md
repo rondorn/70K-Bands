@@ -6,11 +6,16 @@
 - **View** → **Tool Windows** → **Build Variants**
 - You'll see a panel with your app module
 
-### Step 2: Switch Variants
-- **For 70K Bands**: Select `bands70kDebug` in the dropdown
-- **For MDF Bands**: Select `mdfbandsDebug` in the dropdown
+### Step 2: Sync Gradle (required after adding a new flavor)
+- **File** → **Sync Project with Gradle Files**
+- Open the **`andriod`** folder as the project root (not the parent `70K-Bands` repo)
 
-### Step 3: Run
+### Step 3: Switch Variants
+- **For 70K Bands**: `bands70kDebug` or `bands70kRelease`
+- **For MDF Bands**: `mdfbandsDebug` or `mdfbandsRelease`
+- **For MMF Bands**: `mmfbandsDebug` or `mmfbandsRelease`
+
+### Step 4: Run
 - Click the **Run button** (▶️) or press `Shift + F10`
 - Android Studio automatically builds and runs the selected variant
 

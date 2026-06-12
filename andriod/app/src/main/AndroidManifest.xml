@@ -36,6 +36,7 @@
             <!-- File extension intent filters are defined in flavor-specific manifests -->
             <!-- See: src/bands70k/AndroidManifest.xml for .70kshare -->
             <!-- See: src/mdfbands/AndroidManifest.xml for .mdfshare -->
+            <!-- See: src/mmfbands/AndroidManifest.xml for .mmfshare -->
         </activity>
         <activity
             android:name=".StartupDiagnosticsActivity"

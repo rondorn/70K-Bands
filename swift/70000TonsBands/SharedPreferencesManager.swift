@@ -19,8 +19,26 @@ struct SharedPreferenceSet: Codable {
     let eventYear: Int
     let priorities: [String: Int]  // bandName -> priority level
     let attendance: [String: Int]  // event index -> attendance status
-    let version: String = "1.0"
-    
+    let version: String
+
+    init(
+        senderUserId: String,
+        senderName: String,
+        shareDate: Date,
+        eventYear: Int,
+        priorities: [String: Int],
+        attendance: [String: Int],
+        version: String = "1.0"
+    ) {
+        self.senderUserId = senderUserId
+        self.senderName = senderName
+        self.shareDate = shareDate
+        self.eventYear = eventYear
+        self.priorities = priorities
+        self.attendance = attendance
+        self.version = version
+    }
+
     var id: String {
         return "\(senderUserId)_\(eventYear)"
     }
@@ -58,7 +76,7 @@ class SharedPreferencesManager {
     
     // File extension for shared preferences (app-specific)
     private var fileExtension: String {
-        return FestivalConfig.current.isMDF() ? "mdfshare" : "70kshare"
+        return FestivalConfig.current.shareFileExtension
     }
     
     // Public property for accessing current profile name
@@ -153,9 +171,10 @@ class SharedPreferencesManager {
         
         print("📤 [EXPORT] Exporting with UserID: \(senderUserId), Name: '\(name.isEmpty ? "(none provided)" : name)'")
         
-        // Encode to JSON (compact, no pretty printing to reduce size)
+        // Encode to JSON (epoch ms shareDate for cross-platform compatibility with Android)
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
+        encoder.dateEncodingStrategy = .millisecondsSince1970
         
         guard let jsonData = try? encoder.encode(preferenceSet) else {
             print("❌ Failed to encode preference set")
@@ -198,20 +217,74 @@ class SharedPreferencesManager {
     /// - Parameter url: URL of the imported file
     /// - Returns: SharedPreferenceSet if valid, nil otherwise
     func validateImportedFile(at url: URL) -> SharedPreferenceSet? {
-        guard url.pathExtension == fileExtension else {
-            print("❌ Invalid file extension: \(url.pathExtension)")
+        let config = FestivalConfig.current
+        guard config.hasValidShareFileExtension(
+            filename: url.lastPathComponent,
+            pathExtension: url.pathExtension,
+            lastPathComponent: url.lastPathComponent
+        ) else {
+            print("❌ Invalid file extension for \(config.appName): \(url.lastPathComponent)")
             return nil
         }
         
         do {
             let data = try Data(contentsOf: url)
-            let preferenceSet = try JSONDecoder().decode(SharedPreferenceSet.self, from: data)
+            let preferenceSet = try decodeShareFile(from: data)
             print("✅ Valid preference file: \(preferenceSet.senderName) (UserID: \(preferenceSet.senderUserId))")
             return preferenceSet
         } catch {
             print("❌ Failed to decode preference file: \(error)")
             return nil
         }
+    }
+
+    /// Decodes share JSON from any app version or platform (optional version, flexible shareDate).
+    private func decodeShareFile(from data: Data) throws -> SharedPreferenceSet {
+        struct ShareFilePayload: Decodable {
+            let senderUserId: String
+            let senderName: String
+            let eventYear: Int
+            let priorities: [String: Int]
+            let attendance: [String: Int]
+            let version: String?
+            let shareDate: FlexibleShareDate
+        }
+
+        struct FlexibleShareDate: Decodable {
+            let date: Date
+
+            init(from decoder: Decoder) throws {
+                let container = try decoder.singleValueContainer()
+                if let intValue = try? container.decode(Int64.self) {
+                    date = Self.date(from: Double(intValue))
+                    return
+                }
+                let doubleValue = try container.decode(Double.self)
+                date = Self.date(from: doubleValue)
+            }
+
+            static func date(from value: Double) -> Date {
+                if value > 1_000_000_000_000 {
+                    return Date(timeIntervalSince1970: value / 1000)
+                }
+                if value > 1_000_000_000 {
+                    return Date(timeIntervalSince1970: value)
+                }
+                // iOS JSONEncoder default before cross-platform fix: seconds since reference date
+                return Date(timeIntervalSinceReferenceDate: value)
+            }
+        }
+
+        let payload = try JSONDecoder().decode(ShareFilePayload.self, from: data)
+        return SharedPreferenceSet(
+            senderUserId: payload.senderUserId,
+            senderName: payload.senderName,
+            shareDate: payload.shareDate.date,
+            eventYear: payload.eventYear,
+            priorities: payload.priorities,
+            attendance: payload.attendance,
+            version: payload.version ?? "1.0"
+        )
     }
     
     /// Imports and saves a shared preference set with a custom name
@@ -605,7 +678,7 @@ class SharedPreferencesManager {
         
         do {
             let data = try Data(contentsOf: fileURL)
-            return try JSONDecoder().decode(SharedPreferenceSet.self, from: data)
+            return try decodeShareFile(from: data)
         } catch {
             print("❌ Failed to load preference set '\(name)': \(error)")
             return nil

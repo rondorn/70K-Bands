@@ -18,6 +18,7 @@ import java.util.Map;
  *    In app/build.gradle, productFlavors:
  *    - bands70k: default flavor (FESTIVAL_TYPE "70K") — 70K config lives in the else block.
  *    - mdfbands: FESTIVAL_TYPE "MDF".
+ *    - mmfbands: FESTIVAL_TYPE "MMF".
  *    - Future: add a new flavor (e.g. xyzbands) with buildConfigField "FESTIVAL_TYPE", '"XYZ"'.
  *
  * 2. DEFAULTS: Shared values live in the Defaults class below. Only add a value there
@@ -26,9 +27,10 @@ import java.util.Map;
  *
  * 3. FESTIVAL SECTION: Add a new "else if (FESTIVAL_XYZ.equals(festivalType))" block above
  *    the else. Copy the else (70K) block as a template, then set festival-specific
- *    properties and use Defaults.xxx for shared ones.
+ *    properties (including shareFileExtension) and use Defaults.xxx for shared ones.
+ *    Also add the new extension to ALL_SHARE_EXTENSIONS for cross-app file rejection.
  *
- * 4. ORDER: Check FESTIVAL_MDF first, then future festivals, then else (70K). The else
+ * 4. ORDER: Check FESTIVAL_MMF, then FESTIVAL_MDF, then else (70K). The else
  *    is 70K only (single definition).
  *
  * FILE STRUCTURE:
@@ -85,6 +87,9 @@ public class FestivalConfig {
     // Festival types
     public static final String FESTIVAL_70K = "70K";
     public static final String FESTIVAL_MDF = "MDF";
+    public static final String FESTIVAL_MMF = "MMF";
+
+    private static final String[] ALL_SHARE_EXTENSIONS = {"70kshare", "mdfshare", "mmfshare"};
     
     // Singleton instance
     private static FestivalConfig instance;
@@ -116,6 +121,9 @@ public class FestivalConfig {
     public final String notificationChannelDescription;
     
     public final String shareUrl;
+
+    /** Profile-share file extension without leading dot (e.g. "mmfshare"). Set per festival in constructor. */
+    public final String shareFileExtension;
     
     // Configurable graphic elements (same abstraction as Swift; 70K and MDF use same assets, future festivals can override)
     /** Must/Might/Wont priority icons (small, for swipe actions and menus). Drawable resource names. */
@@ -183,8 +191,21 @@ public class FestivalConfig {
         static final String PREFERENCES_ICON = "icon_gear";
         static final String SHARE_ICON = "icon_share";
         static final String STATS_ICON = "stats_icon";
+        static final String GENERIC_GOING_ICON = "Royal-Theater-Going-wBox";
         static final String MISC_GENERIC_GOING_ICON = "Unknown-Going-wBox";
         static final String MISC_GENERIC_NOT_GOING_ICON = "Unknown-NotGoing-wBox";
+    }
+
+    /** MMF: slots 1–3 sponsor stages (CSV order); slots 4–6 unofficial / overflow. Matches iOS. */
+    private static List<GenericVenueSlot> mmfGenericVenueSlots() {
+        return Arrays.asList(
+            new GenericVenueSlot("991B1B", Defaults.GENERIC_GOING_ICON, Defaults.MISC_GENERIC_NOT_GOING_ICON),
+            new GenericVenueSlot("1D4ED8", Defaults.GENERIC_GOING_ICON, Defaults.MISC_GENERIC_NOT_GOING_ICON),
+            new GenericVenueSlot("047857", Defaults.GENERIC_GOING_ICON, Defaults.MISC_GENERIC_NOT_GOING_ICON),
+            new GenericVenueSlot("0F766E", Defaults.MISC_GENERIC_GOING_ICON, Defaults.MISC_GENERIC_NOT_GOING_ICON),
+            new GenericVenueSlot("5B21B6", Defaults.MISC_GENERIC_GOING_ICON, Defaults.MISC_GENERIC_NOT_GOING_ICON),
+            new GenericVenueSlot("44403C", Defaults.MISC_GENERIC_GOING_ICON, Defaults.MISC_GENERIC_NOT_GOING_ICON)
+        );
     }
 
     private static List<GenericVenueSlot> defaultMiscGenericVenueSlots() {
@@ -205,7 +226,64 @@ public class FestivalConfig {
         String festivalType = getFestivalTypeFromBuild();
         Log.d("FestivalConfig", "Initializing configuration for festival: " + festivalType);
         
-        if (FESTIVAL_MDF.equals(festivalType)) {
+        if (FESTIVAL_MMF.equals(festivalType)) {
+            // ---- FESTIVAL: Milwaukee Metal Fest (MMF) ----
+            this.festivalName = "Milwaukee Metal Fest";
+            this.festivalShortName = "MMF";
+            this.appName = "MMF Bands";
+            this.packageName = "com.rdorn.mmfbands";
+
+            this.defaultStorageUrl = "https://www.dropbox.com/scl/fi/2tq5t3ahvv6iz1h3qw7mu/mmf_productionPointer.txt?rlkey=zbzlo8xuhw8zi4xb6ubf0hus1&raw=1";
+            this.defaultStorageUrlTest = "https://www.dropbox.com/scl/fi/sw7ksivafzhqlwmrbejfi/mmf_productionPointer_test.txt?rlkey=51h881e7wcfvpeh3cuq30sten&raw=1";
+
+            this.firebaseConfigFile = "google-services-mmf.json";
+            this.subscriptionTopic = Defaults.SUBSCRIPTION_TOPIC;
+            this.subscriptionTopicTest = Defaults.SUBSCRIPTION_TOPIC_TEST;
+            this.subscriptionUnofficalTopic = Defaults.SUBSCRIPTION_UNOFFICAL_TOPIC;
+            this.artistUrlDefault = Defaults.ARTIST_URL_DEFAULT;
+            this.scheduleUrlDefault = Defaults.SCHEDULE_URL_DEFAULT;
+
+            this.logoResourceName = "mmf_logo";
+            this.logoResourceId = R.drawable.mmf_logo;
+            this.appIconResourceId = R.drawable.mmf_bands_icon;
+
+            this.notificationChannelId = "MMFBandsCustomSound1";
+            this.notificationChannelName = "MMFBandsCustomSound1";
+            this.notificationChannelDescription = "Channel for the MMF Bands local show alerts with custom sound";
+
+            this.shareUrl = "https://www.facebook.com/profile.php?id=61580889273388";
+            this.shareFileExtension = "mmfshare";
+            this.mustSeeIconSmall = Defaults.MUST_SEE_ICON_SMALL;
+            this.mightSeeIconSmall = Defaults.MIGHT_SEE_ICON_SMALL;
+            this.wontSeeIconSmall = Defaults.WONT_SEE_ICON_SMALL;
+            this.unknownIconSmall = Defaults.UNKNOWN_ICON_SMALL;
+            this.mustSeeIcon = Defaults.MUST_SEE_ICON;
+            this.mustSeeIconAlt = Defaults.MUST_SEE_ICON_ALT;
+            this.mightSeeIcon = Defaults.MIGHT_SEE_ICON;
+            this.mightSeeIconAlt = Defaults.MIGHT_SEE_ICON_ALT;
+            this.wontSeeIcon = Defaults.WONT_SEE_ICON;
+            this.wontSeeIconAlt = Defaults.WONT_SEE_ICON_ALT;
+            this.unknownIcon = Defaults.UNKNOWN_ICON;
+            this.unknownIconAlt = Defaults.UNKNOWN_ICON_ALT;
+            this.preferencesIcon = Defaults.PREFERENCES_ICON;
+            this.shareIcon = Defaults.SHARE_ICON;
+            this.statsIcon = Defaults.STATS_ICON;
+
+            this.venues = new ArrayList<>();
+            this.genericVenueSlots = mmfGenericVenueSlots();
+
+            this.meetAndGreetsEnabledDefault = true;
+            this.specialEventsEnabledDefault = true;
+            this.unofficalEventsEnabledDefault = true;
+            this.eventTypeDisplayNames = buildEventTypeDisplayNamesForMdf();
+            this.eventTypeFilterDisplayNames = buildEventTypeFilterDisplayNamesForMdf();
+
+            this.commentsNotAvailableStringResourceId = R.string.DefaultDescriptionMDF;
+
+            this.aiSchedule = true;
+            this.scheduleQRShareEnabled = false;
+
+        } else if (FESTIVAL_MDF.equals(festivalType)) {
             // ---- FESTIVAL: Maryland Deathfest (MDF) ----
             this.festivalName = "Maryland Deathfest";
             this.festivalShortName = "MDF";
@@ -231,6 +309,7 @@ public class FestivalConfig {
             this.notificationChannelDescription = "Channel for the MDF Bands local show alerts with custom sound";
             
             this.shareUrl = "https://www.facebook.com/profile.php?id=61580889273388";
+            this.shareFileExtension = "mdfshare";
             this.mustSeeIconSmall = Defaults.MUST_SEE_ICON_SMALL;
             this.mightSeeIconSmall = Defaults.MIGHT_SEE_ICON_SMALL;
             this.wontSeeIconSmall = Defaults.WONT_SEE_ICON_SMALL;
@@ -299,6 +378,7 @@ public class FestivalConfig {
             this.notificationChannelDescription = "Channel for the " + BuildConfig.FESTIVAL_TYPE + " Bands local show alerts with custom sound1";
             
             this.shareUrl = "http://www.facebook.com/70kBands";
+            this.shareFileExtension = "70kshare";
             this.mustSeeIconSmall = Defaults.MUST_SEE_ICON_SMALL;
             this.mightSeeIconSmall = Defaults.MIGHT_SEE_ICON_SMALL;
             this.wontSeeIconSmall = Defaults.WONT_SEE_ICON_SMALL;
@@ -387,7 +467,10 @@ public class FestivalConfig {
      * Gets the current festival type
      */
     public String getFestivalType() {
-        if (this.festivalShortName.equals("MDF")) {
+        if (FESTIVAL_MMF.equals(this.festivalShortName)) {
+            return FESTIVAL_MMF;
+        }
+        if (FESTIVAL_MDF.equals(this.festivalShortName)) {
             return FESTIVAL_MDF;
         }
         return FESTIVAL_70K;
@@ -406,6 +489,60 @@ public class FestivalConfig {
     public boolean isMDF() {
         return FESTIVAL_MDF.equals(getFestivalType());
     }
+
+    /**
+     * Convenience method to check if this is the MMF festival
+     */
+    public boolean isMMF() {
+        return FESTIVAL_MMF.equals(getFestivalType());
+    }
+
+    /** Share-file extension with leading dot, e.g. ".mmfshare". */
+    public String getShareFileExtensionWithDot() {
+        return "." + shareFileExtension;
+    }
+
+    /** True when {@code pathExtension} matches this app's share format (no leading dot). */
+    public boolean isValidShareFileExtension(String pathExtension) {
+        return pathExtension != null && shareFileExtension.equalsIgnoreCase(pathExtension);
+    }
+
+    /**
+     * True when the URI/filename uses this app's share extension (case-insensitive).
+     * Accepts extension from display name, last path segment, or explicit path extension.
+     */
+    public boolean hasValidShareFileExtension(String filename, String pathExtension, String lastPathSegment) {
+        String expectedSuffix = getShareFileExtensionWithDot().toLowerCase();
+        if (filename != null && filename.toLowerCase().endsWith(expectedSuffix)) {
+            return true;
+        }
+        if (isValidShareFileExtension(pathExtension)) {
+            return true;
+        }
+        if (lastPathSegment != null) {
+            int dot = lastPathSegment.lastIndexOf('.');
+            if (dot >= 0 && dot < lastPathSegment.length() - 1) {
+                return isValidShareFileExtension(lastPathSegment.substring(dot + 1));
+            }
+        }
+        return false;
+    }
+
+    /**
+     * True when {@code filename} uses another festival's share extension.
+     */
+    public boolean isOtherFestivalShareFile(String filename) {
+        if (filename == null || filename.isEmpty()) {
+            return false;
+        }
+        String lower = filename.toLowerCase();
+        for (String ext : ALL_SHARE_EXTENSIONS) {
+            if (!ext.equals(shareFileExtension) && lower.endsWith("." + ext.toLowerCase())) {
+                return true;
+            }
+        }
+        return false;
+    }
     
     /**
      * Returns the appropriate default description text based on the current festival
@@ -415,7 +552,7 @@ public class FestivalConfig {
     public String getDefaultDescriptionText(android.content.Context context) {
         String festivalType = getFestivalTypeFromBuild();
         
-        if (FESTIVAL_MDF.equals(festivalType)) {
+        if (FESTIVAL_MMF.equals(festivalType) || FESTIVAL_MDF.equals(festivalType)) {
             return context.getString(R.string.DefaultDescriptionMDF);
         } else {
             return context.getString(R.string.DefaultDescription70K);

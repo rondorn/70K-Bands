@@ -86,6 +86,11 @@
 
 "Share Type" = "Share Type"; // Share action sheet title
 "Share Importable Band/Event Data" = "Share Importable Band/Event Data"; // Share option: export profile file
+"%@ Shared Preferences: %@" = "%@ Shared Preferences: %@";
+"Failed to export preferences. Please try again." = "Failed to export preferences. Please try again.";
+"This file is not a valid %@ share file." = "This file is not a valid %@ share file.";
+"This file is not compatible with %@. Please use the correct app to open this file." = "This file is not compatible with %@. Please use the correct app to open this file.";
+"Import Failed" = "Import Failed";
 "Share Band Report" = "Share Band Report"; // Share option: Must/Might report as text
 "Share Event Report" = "Share Event Report"; // Share option: attended events as text
 "Back" = "Back"; // Wizard / navigation back button

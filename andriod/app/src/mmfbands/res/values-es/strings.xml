@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MMF Bands</string>
+    <string name="PreferenceHeader">MMF Bands Preferencias</string>
+    <string name="importMessage">Este cambio requiere resetear la aplicación.\nMMF Bands se cerrará ahora. Reinicie la aplicación para ver los nuevos datos</string>
+</resources>
+
+

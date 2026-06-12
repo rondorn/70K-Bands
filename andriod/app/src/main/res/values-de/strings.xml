@@ -373,7 +373,8 @@
     <string name="import_button">Import</string>
     <string name="updated">Aktualisiert</string>
     <string name="with_new_data">mit neuen Daten!</string>
-    <string name="invalid_share_file">Diese Datei ist keine gültige 70K Bands-Freigabedatei.</string>
+    <string name="invalid_share_file">Diese Datei ist keine gültige %1$s-Freigabedatei.</string>
+    <string name="incompatible_share_file">Diese Datei ist nicht mit %1$s kompatibel. Bitte verwenden Sie die richtige App, um diese Datei zu öffnen.</string>
     <string name="failed_to_import">Import fehlgeschlagen. Bitte versuchen Sie es erneut.</string>
     <string name="import_failed">Import Fehlgeschlagen</string>
     <string name="profile_updated">Profil Aktualisiert</string>

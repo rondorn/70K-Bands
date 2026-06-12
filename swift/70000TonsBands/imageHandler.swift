@@ -117,6 +117,17 @@ open class imageHandler {
             print("❌ Failed to write image URL sidecar at \(sidecar.path): \(error)")
         }
     }
+
+    /// Whether an on-disk PNG cache matches the current data URL (Android `needsImageUpdate` parity).
+    /// Missing sidecar or URL mismatch returns false so callers re-download when online.
+    func isCachedImageCurrent(cachePNGFile: URL, expectedUrl: String) -> Bool {
+        let normalizedExpected = normalizeImageURL(expectedUrl)
+        guard FileManager.default.fileExists(atPath: cachePNGFile.path) else { return false }
+        guard let storedUrl = readStoredImageUrlFromSidecar(imagePngURL: cachePNGFile) else {
+            return false
+        }
+        return storedUrl == normalizedExpected
+    }
     
     /// Downloads an image from URL and caches it with proper inversion analysis
     /// - Parameters:

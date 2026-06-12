@@ -221,7 +221,9 @@
 "Give this share a name so the recipient can identify you." = "Giv denne deling et navn, så modtageren kan identificere dig.";
 
 // Import Feature
-"This file is not a valid 70K Bands share file." = "Denne fil er ikke en gyldig 70K Bands delingsfil.";
+"%@ Shared Preferences: %@" = "%@ Delte præferencer: %@";
+"This file is not a valid %@ share file." = "Denne fil er ikke en gyldig %@ delingsfil.";
+"This file is not compatible with %@. Please use the correct app to open this file." = "Denne fil er ikke kompatibel med %@. Brug den rigtige app til at åbne denne fil.";
 "Import Shared Preferences" = "Importér Delte Præferencer";
 
 // Share Schedule via QR Code – button and menu strings

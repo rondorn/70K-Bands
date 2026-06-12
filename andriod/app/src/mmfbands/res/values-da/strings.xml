@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MMF Bands</string>
+    <string name="PreferenceHeader">MMF Bands Præferencer</string>
+    <string name="importMessage">Denne ændring kræver genstart af programmet.\nMMF Bands vil nu holde op. Genstart for at se den nye data</string>
+</resources>
+
+

@@ -143,8 +143,13 @@ struct ActivityViewController: UIViewControllerRepresentable {
         
         // Add descriptive text first (helps Messages understand this is a file share)
         let appName = FestivalConfig.current.appName
-        let cleanFileName = fileName.replacingOccurrences(of: ".70kshare", with: "").replacingOccurrences(of: ".mdfshare", with: "")
-        let shareText = "\(appName) Shared Preferences: \(cleanFileName)"
+        let shareExt = FestivalConfig.current.shareFileExtension
+        let cleanFileName = fileName.replacingOccurrences(of: ".\(shareExt)", with: "")
+        let shareText = String(
+            format: NSLocalizedString("%@ Shared Preferences: %@", comment: "Share sheet description"),
+            appName,
+            cleanFileName
+        )
         items.append(shareText)
         
         // Add file URL(s) with custom item source
@@ -212,7 +217,11 @@ class FileActivityItemSource: NSObject, UIActivityItemSource {
     func activityViewController(_ activityViewController: UIActivityViewController, subjectForActivityType activityType: UIActivity.ActivityType?) -> String {
         // Provide a subject line for email/messages
         let fileName = fileURL.deletingPathExtension().lastPathComponent
-        return "70K Bands Shared Preferences: \(fileName)"
+        return String(
+            format: NSLocalizedString("%@ Shared Preferences: %@", comment: "Share sheet subject"),
+            FestivalConfig.current.appName,
+            fileName
+        )
     }
     
     func activityViewController(_ activityViewController: UIActivityViewController, dataTypeIdentifierForActivityType activityType: UIActivity.ActivityType?) -> String {

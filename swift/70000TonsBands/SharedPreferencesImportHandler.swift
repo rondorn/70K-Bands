@@ -69,7 +69,11 @@ class SharedPreferencesImportHandler {
         
         // Validate and parse the file
         guard let preferenceSet = sharingManager.validateImportedFile(at: fileToRead) else {
-            showErrorAlert(message: NSLocalizedString("This file is not a valid 70K Bands share file.", comment: "Invalid file error"))
+            let message = String(
+                format: NSLocalizedString("This file is not a valid %@ share file.", comment: "Invalid file error"),
+                FestivalConfig.current.appName
+            )
+            showErrorAlert(message: message)
             
             // Clean up temp file
             if let tempFile = tempFile {

@@ -365,7 +365,8 @@
     <string name="name_share_message">Give this share a name so the recipient can identify you.</string>
     
     <!-- Import Feature -->
-    <string name="invalid_share_file">This file is not a valid 70K Bands share file.</string>
+    <string name="invalid_share_file">This file is not a valid %1$s share file.</string>
+    <string name="incompatible_share_file">This file is not compatible with %1$s. Please use the correct app to open this file.</string>
     <string name="import_shared_preferences">Import Shared Preferences</string>
     <string name="new_profile_received">New profile received!</string>
     <string name="band_priorities">band priorities</string>

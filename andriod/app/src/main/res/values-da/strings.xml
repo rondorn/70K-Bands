@@ -372,7 +372,8 @@
     <string name="import_button">Import</string>
     <string name="updated">Opdateret</string>
     <string name="with_new_data">med nye data!</string>
-    <string name="invalid_share_file">Denne fil er ikke en gyldig 70K Bands delingsfil.</string>
+    <string name="invalid_share_file">Denne fil er ikke en gyldig %1$s delingsfil.</string>
+    <string name="incompatible_share_file">Denne fil er ikke kompatibel med %1$s. Brug den rigtige app til at åbne denne fil.</string>
     <string name="failed_to_import">Kunne ikke importere. Prøv venligst igen.</string>
     <string name="import_failed">Import Mislykkedes</string>
     <string name="profile_updated">Profil Opdateret</string>

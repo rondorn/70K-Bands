@@ -1,5 +1,5 @@
-// Note: To build mdfbands variant, you need to add com.rdorn.mdfbands to your google-services.json
-// or create a separate Firebase project for MDF bands
+// Note: Festival flavors need a google-services.json in src/<flavor>/ (gitignored).
+// MDF: com.rdorn.mdfbands | MMF: com.rdorn.mmfbands | 70K: com.Bands70k
 
 apply plugin: 'com.android.application'
 
@@ -15,8 +15,8 @@ android {
         targetSdkVersion 35
         // Android versionCode 2026060701must fit in signed 32-bit int.
         //noinspection HighAppVersionCode
-        versionCode 2026060701
-        versionName "2026060701"
+        versionCode 2026061201
+        versionName "2026061201"
         android.compileOptions.incremental = false
         multiDexEnabled false
     }
@@ -49,9 +49,25 @@ android {
             resValue "string", "notification_publisher", "com.rdorn.mdfbands.NotificationPublisher"
             resValue "string", "default_description", "No notes are available, right now, feel free to add your own."
         }
+
+        mmfbands {
+            dimension "festival"
+            applicationId "com.rdorn.mmfbands"
+            versionNameSuffix "-mmf"
+            buildConfigField "String", "FESTIVAL_TYPE", '"MMF"'
+            resValue "string", "app_name", "MMF Bands"
+            resValue "string", "app_icon", "@mipmap/logo_mmf_bands"
+            resValue "string", "notification_icon", "@drawable/mmf_bands_icon"
+            resValue "string", "authorities", "com.rdorn.mmfbands"
+            resValue "string", "notification_publisher", "com.rdorn.mmfbands.NotificationPublisher"
+            resValue "string", "default_description", "No notes are available, right now, feel free to add your own."
+        }
     }
 
     buildTypes {
+        debug {
+            debuggable true
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'

@@ -375,7 +375,8 @@
     <string name="import_button">Tuo</string>
     <string name="updated">Päivitetty</string>
     <string name="with_new_data">uusilla tiedoilla!</string>
-    <string name="invalid_share_file">Tämä tiedosto ei ole kelvollinen 70K Bands -jakotiedosto.</string>
+    <string name="invalid_share_file">Tämä tiedosto ei ole kelvollinen %1$s -jakotiedosto.</string>
+    <string name="incompatible_share_file">Tämä tiedosto ei ole yhteensopiva sovelluksen %1$s kanssa. Avaa tiedosto oikealla sovelluksella.</string>
     <string name="failed_to_import">Tuonti epäonnistui. Yritä uudelleen.</string>
     <string name="import_failed">Tuonti Epäonnistui</string>
     <string name="profile_updated">Profiili Päivitetty</string>

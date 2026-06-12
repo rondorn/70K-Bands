@@ -21,7 +21,8 @@
 // 3. FESTIVAL SECTION: Add #elseif FESTIVAL_XYZ above the #else. Copy the #else (70K) block as a template. Then:
 //    - Set festival-specific required properties: festivalName, festivalShortName,
 //      appName, bundleIdentifier, defaultStorageUrl, defaultStorageUrlTest,
-//      firebaseConfigFile, logoUrl, shareUrl, venues.
+//      firebaseConfigFile, logoUrl, shareUrl, shareFileExtension, venues.
+//    - When adding a festival, also add its shareFileExtension to allShareFileExtensions below.
 //    - Set optional overrides: meetAndGreetsEnabledDefault, specialEventsEnabledDefault,
 //      unofficalEventsEnabledDefault, commentsNotAvailableTranslationKey, aiSchedule.
 //    - For any property that should match the default, assign Defaults.xxx so the
@@ -144,6 +145,8 @@ struct FestivalConfig {
     // App-specific branding
     let logoUrl: String
     let shareUrl: String
+    /// Profile-share file extension without leading dot (e.g. "mmfshare"). Set per festival in init.
+    let shareFileExtension: String
     
     // Configurable graphic elements (forward-looking for future festivals; 70K and MDF keep existing assets)
     /// Must/Might/Wont priority icons (small, for swipe actions and menus)
@@ -191,6 +194,9 @@ struct FestivalConfig {
     /// Values used when a festival does not override. Add here only settings that are
     /// the same for 70K and MDF (and likely future festivals). Per-festival sections
     /// assign Defaults.xxx for shared values and use literals for overrides.
+    /// All festival share extensions — update when adding a new festival (for cross-app rejection).
+    static let allShareFileExtensions = ["70kshare", "mdfshare", "mmfshare"]
+
     private struct Defaults {
         static let subscriptionTopic = "global"
         static let subscriptionTopicTest = "Testing20250824"
@@ -254,16 +260,17 @@ struct FestivalConfig {
         self.festivalShortName = "MMF"
         self.appName = "MMF Bands"
         self.bundleIdentifier = "com.rdorn.mmfbands"
-        self.defaultStorageUrl = "https://www.dropbox.com/scl/fi/placeholder/mmf_productionPointer.txt?rlkey=placeholder&raw=1"
-        self.defaultStorageUrlTest = "https://www.dropbox.com/scl/fi/placeholder/mmf_productionPointer_test.txt?rlkey=placeholder&raw=1"
+        self.defaultStorageUrl = "https://www.dropbox.com/scl/fi/2tq5t3ahvv6iz1h3qw7mu/mmf_productionPointer.txt?rlkey=zbzlo8xuhw8zi4xb6ubf0hus1&raw=1"
+        self.defaultStorageUrlTest = "https://www.dropbox.com/scl/fi/sw7ksivafzhqlwmrbejfi/mmf_productionPointer_test.txt?rlkey=51h881e7wcfvpeh3cuq30sten&raw=1"
         self.firebaseConfigFile = "GoogleService-Info-MMF"
         self.subscriptionTopic = Defaults.subscriptionTopic
         self.subscriptionTopicTest = Defaults.subscriptionTopicTest
         self.subscriptionUnofficalTopic = Defaults.subscriptionUnofficalTopic
         self.artistUrlDefault = Defaults.artistUrlDefault
         self.scheduleUrlDefault = Defaults.scheduleUrlDefault
-        self.logoUrl = "mdf_logo"
+        self.logoUrl = "mmf_logo"
         self.shareUrl = "https://www.facebook.com/profile.php?id=61580889273388"
+        self.shareFileExtension = "mmfshare"
         self.mustSeeIconSmall = Defaults.mustSeeIconSmall
         self.mightSeeIconSmall = Defaults.mightSeeIconSmall
         self.wontSeeIconSmall = Defaults.wontSeeIconSmall
@@ -307,6 +314,7 @@ struct FestivalConfig {
         self.scheduleUrlDefault = Defaults.scheduleUrlDefault
         self.logoUrl = "mdf_logo"
         self.shareUrl = "https://www.facebook.com/profile.php?id=61580889273388"
+        self.shareFileExtension = "mdfshare"
         self.mustSeeIconSmall = Defaults.mustSeeIconSmall
         self.mightSeeIconSmall = Defaults.mightSeeIconSmall
         self.wontSeeIconSmall = Defaults.wontSeeIconSmall
@@ -363,6 +371,7 @@ struct FestivalConfig {
         self.scheduleUrlDefault = Defaults.scheduleUrlDefault
         self.logoUrl = "70000TonsLogo"
         self.shareUrl = "http://www.facebook.com/70kBands"
+        self.shareFileExtension = "70kshare"
         self.mustSeeIconSmall = Defaults.mustSeeIconSmall
         self.mightSeeIconSmall = Defaults.mightSeeIconSmall
         self.wontSeeIconSmall = Defaults.wontSeeIconSmall
@@ -431,6 +440,40 @@ struct FestivalConfig {
     
     func is70K() -> Bool {
         return festivalShortName == "70K"
+    }
+
+    /// Leading-dot form for share filenames, e.g. ".mmfshare".
+    var shareFileExtensionWithDot: String {
+        return ".\(shareFileExtension)"
+    }
+
+    /// True when the path extension matches this app's share format.
+    func isValidShareFileExtension(pathExtension: String) -> Bool {
+        return pathExtension.lowercased() == shareFileExtension
+    }
+
+    /// True when a filename or URL path uses this app's share extension (case-insensitive).
+    func hasValidShareFileExtension(filename: String?, pathExtension: String?, lastPathComponent: String?) -> Bool {
+        let expectedSuffix = shareFileExtensionWithDot.lowercased()
+        if let filename = filename, filename.lowercased().hasSuffix(expectedSuffix) {
+            return true
+        }
+        if let pathExtension = pathExtension, isValidShareFileExtension(pathExtension: pathExtension) {
+            return true
+        }
+        if let lastPathComponent = lastPathComponent {
+            let ext = (lastPathComponent as NSString).pathExtension
+            if !ext.isEmpty, isValidShareFileExtension(pathExtension: ext) {
+                return true
+            }
+        }
+        return false
+    }
+
+    /// True when the path extension belongs to a different festival's share file.
+    func isOtherFestivalShareFile(pathExtension: String) -> Bool {
+        let ext = pathExtension.lowercased()
+        return FestivalConfig.allShareFileExtensions.contains(ext) && ext != shareFileExtension
     }
 
     func getEventTypeDisplayName(canonicalEventType: String, languageCode: String) -> String {

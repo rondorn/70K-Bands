@@ -1283,19 +1283,30 @@ class DetailViewModel: ObservableObject {
             print("📸 Using standard cache filename: \(bandName)_v2.png")
         }
         
-        // Check for new cache first
+        // Check for new cache first (must match current URL via sidecar — same as bulk loader / Android details)
         print("🔍 Checking if cache file exists at: \(newImageStore.path)")
         let cacheExists = FileManager.default.fileExists(atPath: newImageStore.path)
         print("🔍 Cache exists: \(cacheExists)")
         
-        if let newCachedImageData = UIImage(contentsOfFile: newImageStore.path) {
-            // New cache exists - use it immediately
-            print("✅ Using cached image for \(bandName) from: \(newImageStore.lastPathComponent)")
-            DispatchQueue.main.async {
-                self.isLoadingImage = false // Ensure loading state is cleared
-                self.bandImage = newCachedImageData
+        if cacheExists, let newCachedImageData = UIImage(contentsOfFile: newImageStore.path) {
+            if imageHandle.isCachedImageCurrent(cachePNGFile: newImageStore, expectedUrl: imageURL) {
+                print("✅ Using cached image for \(bandName) from: \(newImageStore.lastPathComponent)")
+                DispatchQueue.main.async {
+                    self.isLoadingImage = false
+                    self.bandImage = newCachedImageData
+                }
+                return
             }
-            return
+            if isInternetAvailable() {
+                print("🔄 Cached image for \(bandName) is stale (URL changed or missing sidecar) — will re-download")
+            } else {
+                print("📡 Offline: using cached image for \(bandName) despite possible stale URL")
+                DispatchQueue.main.async {
+                    self.isLoadingImage = false
+                    self.bandImage = newCachedImageData
+                }
+                return
+            }
         } else if scheduleImageDate != nil {
             // No cache with current date - clean up any old schedule images with different dates
             cleanupOldScheduleImages(bandName: bandName, currentDate: scheduleImageDate!, directoryPath: directoryPath)
