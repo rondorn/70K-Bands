@@ -283,64 +283,8 @@ public class VenueFilterHandler {
         return context.getResources().getString(R.string.show_venue_format, displayName);
     }
     
-    /** Generic venue icons in portrait filter (same assets as iOS: Location-Generic-Going-wBox / NotGoing-wBox). */
-    private static final int VENUE_FILTER_GENERIC_ICON = R.drawable.icon_location_generic;
-    private static final int VENUE_FILTER_GENERIC_ICON_ALT = R.drawable.icon_location_generic_alt;
-
     private Drawable getVenueDrawable(String venueName, boolean isEnabled) {
-        // Try to get icon from FestivalConfig first (uses exact/prefix match so Boleros Lounge ≠ Lounge)
-        String iconName = isEnabled ?
-            festivalConfig.getVenueGoingIcon(venueName) :
-            festivalConfig.getVenueNotGoingIcon(venueName);
-        // Generic unknown-venue: use same generic location icons as iOS (Going = colorful, NotGoing = muted)
-        if (isGenericVenueIconName(iconName)) {
-            return AppCompatResources.getDrawable(context,
-                isEnabled ? VENUE_FILTER_GENERIC_ICON : VENUE_FILTER_GENERIC_ICON_ALT);
-        }
-        // Try to get resource by name from FestivalConfig
-        int resourceId = getDrawableResourceByName(iconName);
-        if (resourceId != 0) {
-            return AppCompatResources.getDrawable(context, resourceId);
-        }
-        // Fall back to hardcoded icons (unknown venues get generic icon)
-        return getHardcodedVenueDrawable(venueName, isEnabled);
-    }
-
-    private boolean isGenericVenueIconName(String iconName) {
-        if (iconName == null) return true;
-        String lower = iconName.toLowerCase();
-        return "unknown-going-wbox".equals(lower) || "unknown-notgoing-wbox".equals(lower)
-            || "icon_unknown".equals(lower) || "icon_unknown_alt".equals(lower);
-    }
-
-    private Drawable getHardcodedVenueDrawable(String venueName, boolean isEnabled) {
-        switch (venueName) {
-            case "Lounge":
-                return AppCompatResources.getDrawable(context,
-                    isEnabled ? R.drawable.icon_lounge : R.drawable.icon_lounge_alt);
-            case "Pool":
-                return AppCompatResources.getDrawable(context,
-                    isEnabled ? R.drawable.icon_pool : R.drawable.icon_pool_alt);
-            case "Rink":
-                return AppCompatResources.getDrawable(context,
-                    isEnabled ? R.drawable.icon_rink : R.drawable.icon_rink_alt);
-            case "Theater":
-                return AppCompatResources.getDrawable(context,
-                    isEnabled ? R.drawable.icon_theater : R.drawable.icon_theater_alt);
-            case "Other":
-            default:
-                return AppCompatResources.getDrawable(context,
-                    isEnabled ? VENUE_FILTER_GENERIC_ICON : VENUE_FILTER_GENERIC_ICON_ALT);
-        }
-    }
-    
-    private int getDrawableResourceByName(String iconName) {
-        try {
-            return context.getResources().getIdentifier(iconName, "drawable", context.getPackageName());
-        } catch (Exception e) {
-            Log.w("VenueFilterHandler", "Could not find drawable resource: " + iconName, e);
-            return 0;
-        }
+        return VenueIconHelper.getFilterMenuVenueIcon(context, venueName, isEnabled);
     }
     
     private int getStringResourceByName(String stringName) {

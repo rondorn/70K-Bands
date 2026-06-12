@@ -397,4 +397,17 @@ extension UIImage {
         }
         return UIImage(ciImage: result)
     }
+
+    /// Fill the icon's alpha shape with a solid color (generic grey assets stay neutral on disk).
+    func tinted(with color: UIColor) -> UIImage {
+        UIGraphicsBeginImageContextWithOptions(size, false, scale)
+        defer { UIGraphicsEndImageContext() }
+        guard let context = UIGraphicsGetCurrentContext(), let cgImage = cgImage else { return self }
+        let rect = CGRect(origin: .zero, size: size)
+        color.setFill()
+        context.fill(rect)
+        context.setBlendMode(.destinationIn)
+        context.draw(cgImage, in: rect)
+        return UIGraphicsGetImageFromCurrentImageContext() ?? self
+    }
 }

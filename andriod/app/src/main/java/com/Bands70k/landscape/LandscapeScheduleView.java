@@ -34,6 +34,7 @@ import com.Bands70k.scheduleInfo;
 import com.Bands70k.rankStore;
 import com.Bands70k.LongPressMenuHelper;
 import com.Bands70k.Utilities;
+import com.Bands70k.VenueIconHelper;
 import androidx.appcompat.content.res.AppCompatResources;
 
 import java.text.SimpleDateFormat;
@@ -2444,6 +2445,16 @@ public class LandscapeScheduleView extends LinearLayout {
         }
         
         final String finalDayToRestore = dayToRestore;
+
+        final List<String> venueNamesForFilterMenu;
+        if (!days.isEmpty() && currentDayIndex >= 0 && currentDayIndex < days.size()) {
+            DayScheduleData filterDay = days.get(currentDayIndex);
+            venueNamesForFilterMenu = filterDay.allVenueNamesForDay != null
+                    ? new ArrayList<>(filterDay.allVenueNamesForDay)
+                    : null;
+        } else {
+            venueNamesForFilterMenu = null;
+        }
         
         // Use a final array to hold dialog reference so it can be accessed in inner class
         final Dialog[] dialogRef = new Dialog[1];
@@ -2452,6 +2463,7 @@ public class LandscapeScheduleView extends LinearLayout {
         dialogRef[0] = CommonFilterMenuBuilder.buildFilterMenu(
             context,
             CommonFilterMenuBuilder.MenuType.CALENDAR,
+            venueNamesForFilterMenu,
             new CommonFilterMenuBuilder.FilterMenuCallbacks() {
                 @Override
                 public void onFilterChanged() {
@@ -2486,7 +2498,9 @@ public class LandscapeScheduleView extends LinearLayout {
                     staticVariables.preferences.setShowRinkShows(true);
                     staticVariables.preferences.setShowTheaterShows(true);
                     staticVariables.preferences.setShowOtherShows(true);
-                    List<String> venueNames = staticVariables.getVenueNamesInUseForList();
+                    List<String> venueNames = venueNamesForFilterMenu != null
+                            ? venueNamesForFilterMenu
+                            : staticVariables.getVenueNamesInUseForList();
                     staticVariables.preferences.setVenueFilters(venueNames, true);
                     staticVariables.preferences.setShowWillAttend(false); // Turn off Show Flagged Events Only
                     // Hide Expired Events is a preference, not a filter — preserve it
@@ -2745,43 +2759,7 @@ public class LandscapeScheduleView extends LinearLayout {
      * Uses primary icon when enabled (on), alt icon when disabled (off).
      */
     private android.graphics.drawable.Drawable getVenueIconDrawable(String venueName, boolean isEnabled) {
-        FestivalConfig config = FestivalConfig.getInstance();
-        // Get icon name from FestivalConfig
-        String iconName = isEnabled ?
-            config.getVenueGoingIcon(venueName) :
-            config.getVenueNotGoingIcon(venueName);
-        
-        // Check if it's a generic/unknown venue icon
-        if (iconName == null || iconName.toLowerCase().contains("unknown")) {
-            return AppCompatResources.getDrawable(context,
-                isEnabled ? R.drawable.icon_location_generic : R.drawable.icon_location_generic_alt);
-        }
-        
-        // Try to get resource by name
-        int resourceId = context.getResources().getIdentifier(iconName, "drawable", context.getPackageName());
-        if (resourceId != 0) {
-            return AppCompatResources.getDrawable(context, resourceId);
-        }
-        
-        // Fall back to hardcoded venue icons
-        switch (venueName) {
-            case "Lounge":
-                return AppCompatResources.getDrawable(context,
-                    isEnabled ? R.drawable.icon_lounge : R.drawable.icon_lounge_alt);
-            case "Pool":
-                return AppCompatResources.getDrawable(context,
-                    isEnabled ? R.drawable.icon_pool : R.drawable.icon_pool_alt);
-            case "Rink":
-                return AppCompatResources.getDrawable(context,
-                    isEnabled ? R.drawable.icon_rink : R.drawable.icon_rink_alt);
-            case "Theater":
-                return AppCompatResources.getDrawable(context,
-                    isEnabled ? R.drawable.icon_theater : R.drawable.icon_theater_alt);
-            case "Other":
-            default:
-                return AppCompatResources.getDrawable(context,
-                    isEnabled ? R.drawable.icon_location_generic : R.drawable.icon_location_generic_alt);
-        }
+        return VenueIconHelper.getFilterMenuVenueIcon(context, venueName, isEnabled);
     }
     
     /**
@@ -2911,8 +2889,10 @@ public class LandscapeScheduleView extends LinearLayout {
             Collections.sort(dayEvents, (a, b) -> Double.compare(a.timeIndex, b.timeIndex));
             
             if (dayEvents.isEmpty()) continue;
-            
-            List<String> allVenueNamesForDay = getUniqueVenues(dayEvents);
+
+            List<ScheduleBlock> unfilteredForDay = unfilteredDayGroups.get(dayLabel);
+            List<String> allVenueNamesForDay = getUniqueVenues(
+                    unfilteredForDay != null ? unfilteredForDay : dayEvents);
             // LOG: venues derived for this day
             Log.d(TAG, "[VENUE_DEBUG] dayLabel='" + dayLabel + "' allVenueNamesForDay=" + allVenueNamesForDay);
             // Apply venue filter (same as list view): only show venues user has enabled

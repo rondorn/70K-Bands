@@ -50,6 +50,16 @@ public class CommonFilterMenuBuilder {
      * @return A Dialog containing the filter menu
      */
     public static android.app.Dialog buildFilterMenu(Context context, MenuType menuType, FilterMenuCallbacks callbacks) {
+        return buildFilterMenu(context, menuType, null, callbacks);
+    }
+
+    /**
+     * @param locationFilterVenueNames When non-null (calendar view), location filters list only these venues.
+     *                                 When null (portrait), uses all venues in the schedule.
+     */
+    public static android.app.Dialog buildFilterMenu(Context context, MenuType menuType,
+                                                     List<String> locationFilterVenueNames,
+                                                     FilterMenuCallbacks callbacks) {
         int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
         int screenHeight = context.getResources().getDisplayMetrics().heightPixels;
         
@@ -69,8 +79,10 @@ public class CommonFilterMenuBuilder {
         final Switch[] expiredSwitchRef = new Switch[1]; // Excluded from Clear All (preference, not filter)
         final TextView[] clearAllButtonRef = new TextView[1];
         
-        // Get venue names for location filters
-        final List<String> allVenueNames = staticVariables.getVenueNamesInUseForList();
+        // Location filters: full schedule (portrait) or current calendar day only
+        final List<String> allVenueNames = locationFilterVenueNames != null
+                ? new ArrayList<>(locationFilterVenueNames)
+                : staticVariables.getVenueNamesInUseForList();
         
         // Check if Show Flagged Events Only is enabled
         boolean isFlaggedFilterEnabled = staticVariables.preferences.getShowWillAttend();
@@ -620,7 +632,7 @@ public class CommonFilterMenuBuilder {
             row.setBackgroundColor(Color.TRANSPARENT);
             
             ImageView venueIcon = new ImageView(context);
-            venueIcon.setImageDrawable(getVenueIconDrawable(context, venueName, isVenueEnabled));
+            venueIcon.setImageDrawable(VenueIconHelper.getFilterMenuVenueIcon(context, venueName, isVenueEnabled));
             LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dpToPx(context, 24), dpToPx(context, 24));
             iconParams.setMargins(0, 0, dpToPx(context, 12), 0);
             venueIcon.setLayoutParams(iconParams);
@@ -645,7 +657,7 @@ public class CommonFilterMenuBuilder {
                     }
                     staticVariables.preferences.setShowVenueEvents(venueName, isChecked);
                     staticVariables.preferences.saveData();
-                    venueIcon.setImageDrawable(getVenueIconDrawable(context, venueName, isChecked));
+                    venueIcon.setImageDrawable(VenueIconHelper.getFilterMenuVenueIcon(context, venueName, isChecked));
                     callbacks.onFilterChanged();
                 }
             });
@@ -700,43 +712,6 @@ public class CommonFilterMenuBuilder {
         row.addView(sw);
         parent.addView(row);
         return row;
-    }
-    
-    private static android.graphics.drawable.Drawable getVenueIconDrawable(Context context, String venueName, boolean isEnabled) {
-        FestivalConfig config = FestivalConfig.getInstance();
-        String iconName = isEnabled ?
-            config.getVenueGoingIcon(venueName) :
-            config.getVenueNotGoingIcon(venueName);
-        
-        if (iconName == null || iconName.toLowerCase().contains("unknown")) {
-            return AppCompatResources.getDrawable(context,
-                isEnabled ? R.drawable.icon_location_generic : R.drawable.icon_location_generic_alt);
-        }
-        
-        int resourceId = context.getResources().getIdentifier(iconName, "drawable", context.getPackageName());
-        if (resourceId != 0) {
-            return AppCompatResources.getDrawable(context, resourceId);
-        }
-        
-        // Fall back to hardcoded venue icons
-        switch (venueName) {
-            case "Lounge":
-                return AppCompatResources.getDrawable(context,
-                    isEnabled ? R.drawable.icon_lounge : R.drawable.icon_lounge_alt);
-            case "Pool":
-                return AppCompatResources.getDrawable(context,
-                    isEnabled ? R.drawable.icon_pool : R.drawable.icon_pool_alt);
-            case "Rink":
-                return AppCompatResources.getDrawable(context,
-                    isEnabled ? R.drawable.icon_rink : R.drawable.icon_rink_alt);
-            case "Theater":
-                return AppCompatResources.getDrawable(context,
-                    isEnabled ? R.drawable.icon_theater : R.drawable.icon_theater_alt);
-            case "Other":
-            default:
-                return AppCompatResources.getDrawable(context,
-                    isEnabled ? R.drawable.icon_location_generic : R.drawable.icon_location_generic_alt);
-        }
     }
     
     private static void updateClearAllButtonState(TextView clearAllButton, List<String> venueNames,

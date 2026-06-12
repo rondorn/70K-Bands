@@ -254,6 +254,21 @@ func getVenueColor (venue: String)->UIColor{
     return venueColor
 }
 
+/// Filter menu location icon: custom venue art when configured, otherwise generic house asset tinted with venue color.
+func venueFilterLocationIcon(venueName: String, isShown: Bool) -> UIImage {
+    let config = FestivalConfig.current
+    if let venue = config.getVenue(named: venueName),
+       !venue.goingIcon.lowercased().contains("unknown") {
+        let iconName = isShown ? venue.goingIcon : venue.notGoingIcon
+        return UIImage(named: iconName) ?? UIImage()
+    }
+
+    let genericName = isShown ? "Location-Generic-Going-wBox" : "Location-Generic-NotGoing-wBox"
+    guard let base = UIImage(named: genericName) else { return UIImage() }
+    guard isShown else { return base }
+    return base.tinted(with: config.getVenueColor(for: venueName))
+}
+
 func getVenuIcon(_ venue: String)->String {
     
     switch venue {

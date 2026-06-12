@@ -19,8 +19,14 @@ swift/translate_libre.py
 swift/translate_release_notes.py
 
 # Swift — Firebase client configs (contain API keys; download from Firebase console per machine)
-swift/GoogleService-Info-70K.plist
-swift/GoogleService-Info-MDF.plist
+swift/GoogleService-Info*
+swift/**/GoogleService-Info*
+
+# Android — Firebase client configs (download from Firebase console per flavor)
+andriod/**/google-services*.json
+
+# Android — Google Play Console API (service account JSON for release/check-in)
+andriod/fastlane/google-play-api-key.json
 
 # Android — local SDK paths & build artifacts (must not be committed)
 andriod/local.properties

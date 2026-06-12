@@ -231,12 +231,16 @@ struct FestivalConfig {
         ]
     }
 
-    /// MMF sponsor stages: colors only; venue names come from the schedule CSV.
+    /// MMF: slots 1–3 sponsor stages (CSV order); slots 4–6 unofficial / pre-parties / overflow.
     private static func mmfGenericVenueSlots() -> [GenericVenueSlot] {
         [
-            GenericVenueSlot(color: "991B1B", goingIcon: Defaults.genericGoingIcon, notGoingIcon: Defaults.genericNotGoingIcon),
-            GenericVenueSlot(color: "1D4ED8", goingIcon: Defaults.genericGoingIcon, notGoingIcon: Defaults.genericNotGoingIcon),
-            GenericVenueSlot(color: "047857", goingIcon: Defaults.genericGoingIcon, notGoingIcon: Defaults.genericNotGoingIcon)
+            GenericVenueSlot(color: "991B1B", goingIcon: Defaults.genericGoingIcon, notGoingIcon: Defaults.miscGenericNotGoingIcon),
+            GenericVenueSlot(color: "1D4ED8", goingIcon: Defaults.genericGoingIcon, notGoingIcon: Defaults.miscGenericNotGoingIcon),
+            GenericVenueSlot(color: "047857", goingIcon: Defaults.genericGoingIcon, notGoingIcon: Defaults.miscGenericNotGoingIcon),
+            // Overflow — unofficial events, pre-parties, etc. (CSV row order after named sponsor stages)
+            GenericVenueSlot(color: "0F766E", goingIcon: Defaults.miscGenericGoingIcon, notGoingIcon: Defaults.miscGenericNotGoingIcon),
+            GenericVenueSlot(color: "5B21B6", goingIcon: Defaults.miscGenericGoingIcon, notGoingIcon: Defaults.miscGenericNotGoingIcon),
+            GenericVenueSlot(color: "44403C", goingIcon: Defaults.miscGenericGoingIcon, notGoingIcon: Defaults.miscGenericNotGoingIcon)
         ]
     }
     

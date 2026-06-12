@@ -578,16 +578,9 @@ struct CommonFilterSheetView: View {
     @ViewBuilder
     private func locationRow(venueName: String) -> some View {
         HStack(spacing: 12) {
-            let venueConfig = FestivalConfig.current.getVenue(named: venueName)
-            let hasEstablishedIcon = venueConfig.map { !$0.goingIcon.lowercased().contains("unknown") } ?? false
-            let genericLocationIconShown = "Location-Generic-Going-wBox"
-            let genericLocationIconHidden = "Location-Generic-NotGoing-wBox"
             let isVenueShown = getShowVenueEvents(venueName: venueName)
-            let iconName = isVenueShown
-                ? ((hasEstablishedIcon ? venueConfig?.goingIcon : nil) ?? genericLocationIconShown)
-                : ((hasEstablishedIcon ? venueConfig?.notGoingIcon : nil) ?? genericLocationIconHidden)
-            
-            Image(uiImage: UIImage(named: iconName) ?? UIImage())
+
+            Image(uiImage: venueFilterLocationIcon(venueName: venueName, isShown: isVenueShown))
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 24, height: 24)
