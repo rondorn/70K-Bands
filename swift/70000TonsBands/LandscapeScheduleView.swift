@@ -280,6 +280,18 @@ private struct ApplyScrollOffsetOnce: UIViewRepresentable {
     }
 }
 
+// MARK: - Calendar event block icons (landscape schedule only)
+
+enum LandscapeScheduleCalendarIconMetrics {
+    /// Calendar-only: priority/attended icons at 75% of list size (25% smaller than 18/14pt).
+    private static let scale: CGFloat = 0.75
+
+    static let priorityCircleSize: CGFloat = 18 * scale
+    static let priorityIconSize: CGFloat = 14 * scale
+    static let attendedIconSize: CGFloat = 14 * scale
+    static let priorityCircleShadowRadius: CGFloat = 1.5 * scale
+}
+
 // MARK: - Models
 
 struct DayScheduleData: Identifiable {
@@ -1117,13 +1129,24 @@ struct LandscapeScheduleView: View {
                                     ZStack {
                                         Circle()
                                             .fill(priority1 == 3 ? Color(white: 0.75) : Color(white: 0.2))
-                                            .frame(width: 18, height: 18)
-                                            .shadow(color: Color.black.opacity(0.2), radius: 1.5, x: 0, y: 0.5)
+                                            .frame(
+                                                width: LandscapeScheduleCalendarIconMetrics.priorityCircleSize,
+                                                height: LandscapeScheduleCalendarIconMetrics.priorityCircleSize
+                                            )
+                                            .shadow(
+                                                color: Color.black.opacity(0.2),
+                                                radius: LandscapeScheduleCalendarIconMetrics.priorityCircleShadowRadius,
+                                                x: 0,
+                                                y: 0.3
+                                            )
                                         
                                         Image(getPriorityIconName(priority1))
                                             .resizable()
                                             .aspectRatio(contentMode: .fit)
-                                            .frame(width: 14, height: 14)
+                                            .frame(
+                                                width: LandscapeScheduleCalendarIconMetrics.priorityIconSize,
+                                                height: LandscapeScheduleCalendarIconMetrics.priorityIconSize
+                                            )
                                             .opacity(event.isExpired ? 0.4 : 1.0)
                                     }
                                 }
@@ -1141,13 +1164,24 @@ struct LandscapeScheduleView: View {
                                     ZStack {
                                         Circle()
                                             .fill(priority2 == 3 ? Color(white: 0.75) : Color(white: 0.2))
-                                            .frame(width: 18, height: 18)
-                                            .shadow(color: Color.black.opacity(0.2), radius: 1.5, x: 0, y: 0.5)
+                                            .frame(
+                                                width: LandscapeScheduleCalendarIconMetrics.priorityCircleSize,
+                                                height: LandscapeScheduleCalendarIconMetrics.priorityCircleSize
+                                            )
+                                            .shadow(
+                                                color: Color.black.opacity(0.2),
+                                                radius: LandscapeScheduleCalendarIconMetrics.priorityCircleShadowRadius,
+                                                x: 0,
+                                                y: 0.3
+                                            )
                                         
                                         Image(getPriorityIconName(priority2))
                                             .resizable()
                                             .aspectRatio(contentMode: .fit)
-                                            .frame(width: 14, height: 14)
+                                            .frame(
+                                                width: LandscapeScheduleCalendarIconMetrics.priorityIconSize,
+                                                height: LandscapeScheduleCalendarIconMetrics.priorityIconSize
+                                            )
                                             .opacity(event.isExpired ? 0.4 : 1.0)
                                     }
                                 }
@@ -1163,7 +1197,10 @@ struct LandscapeScheduleView: View {
                                     Image(getAttendedIconName(attended1))
                                         .resizable()
                                         .aspectRatio(contentMode: .fit)
-                                        .frame(width: 14, height: 14)
+                                        .frame(
+                                            width: LandscapeScheduleCalendarIconMetrics.attendedIconSize,
+                                            height: LandscapeScheduleCalendarIconMetrics.attendedIconSize
+                                        )
                                         .opacity(event.isExpired ? 0.4 : 1.0)
                                 }
                                 
@@ -1180,7 +1217,10 @@ struct LandscapeScheduleView: View {
                                     Image(getAttendedIconName(attended2))
                                         .resizable()
                                         .aspectRatio(contentMode: .fit)
-                                        .frame(width: 14, height: 14)
+                                        .frame(
+                                            width: LandscapeScheduleCalendarIconMetrics.attendedIconSize,
+                                            height: LandscapeScheduleCalendarIconMetrics.attendedIconSize
+                                        )
                                         .opacity(event.isExpired ? 0.4 : 1.0)
                                 }
                             }
@@ -1213,14 +1253,25 @@ struct LandscapeScheduleView: View {
                                     // Use light grey for "won't" (priority 3) to better contrast with red "no" symbol
                                     Circle()
                                         .fill(event.priority == 3 ? Color(white: 0.75) : Color(white: 0.2))
-                                        .frame(width: 18, height: 18)
-                                        .shadow(color: Color.black.opacity(0.2), radius: 1.5, x: 0, y: 0.5)
+                                        .frame(
+                                            width: LandscapeScheduleCalendarIconMetrics.priorityCircleSize,
+                                            height: LandscapeScheduleCalendarIconMetrics.priorityCircleSize
+                                        )
+                                        .shadow(
+                                            color: Color.black.opacity(0.2),
+                                            radius: LandscapeScheduleCalendarIconMetrics.priorityCircleShadowRadius,
+                                            x: 0,
+                                            y: 0.3
+                                        )
                                     
                                     // Icon on top
                                     Image(getPriorityIconName(event.priority))
                                         .resizable()
                                         .aspectRatio(contentMode: .fit)
-                                        .frame(width: 14, height: 14)
+                                        .frame(
+                                            width: LandscapeScheduleCalendarIconMetrics.priorityIconSize,
+                                            height: LandscapeScheduleCalendarIconMetrics.priorityIconSize
+                                        )
                                         .opacity(event.isExpired ? 0.4 : 1.0)
                                 }
                             }
@@ -1230,7 +1281,10 @@ struct LandscapeScheduleView: View {
                                 Image(getAttendedIconName(event.attendedStatus))
                                     .resizable()
                                     .aspectRatio(contentMode: .fit)
-                                    .frame(width: 14, height: 14)
+                                    .frame(
+                                        width: LandscapeScheduleCalendarIconMetrics.attendedIconSize,
+                                        height: LandscapeScheduleCalendarIconMetrics.attendedIconSize
+                                    )
                                     .opacity(event.isExpired ? 0.4 : 1.0)
                             }
                         }
