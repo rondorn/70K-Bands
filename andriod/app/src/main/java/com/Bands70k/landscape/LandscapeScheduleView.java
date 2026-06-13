@@ -131,6 +131,16 @@ public class LandscapeScheduleView extends LinearLayout {
     /** Internal delimiter for combined (two-band) events. ASCII Record Separator - never in user-visible event names. */
     private static final String COMBINED_EVENT_DELIMITER = "\u001E";
 
+    /** Base calendar timeline: 120dp/hour, 30dp per 15-minute slot. */
+    private static final int TIMELINE_PIXELS_PER_HOUR_DP = 120;
+    private static final int TIMELINE_SLOT_HEIGHT_DP = 30;
+    /** Sets at or below this duration get extra vertical timeline spacing. */
+    private static final int SHORT_SET_MAX_DURATION_SECONDS = 35 * 60;
+    /** +33% timeline (~20dp extra on a 30-min block) for a priority/attended icon row. */
+    private static final float TIMELINE_SCALE_SHORT_SET_DAY = 4f / 3f;
+    /** Combined short sets need two icon rows + two band name lines. */
+    private static final float TIMELINE_SCALE_SHORT_COMBINED_DAY = 1.5f;
+
     private static boolean isCombinedEventName(String bandName) {
         return bandName != null && bandName.contains(COMBINED_EVENT_DELIMITER);
     }
@@ -140,6 +150,53 @@ public class LandscapeScheduleView extends LinearLayout {
         if (bandName == null || !bandName.contains(COMBINED_EVENT_DELIMITER)) return null;
         String[] parts = bandName.split(Pattern.quote(COMBINED_EVENT_DELIMITER), -1);
         return (parts.length >= 2) ? parts : null;
+    }
+
+    private double getEventDurationSeconds(ScheduleBlock event) {
+        if (event != null && event.startTime != null && event.endTime != null) {
+            long diffMs = event.endTime.getTime() - event.startTime.getTime();
+            if (diffMs > 0) {
+                return diffMs / 1000.0;
+            }
+        }
+        return 3600;
+    }
+
+    /** Widen time-index spacing on days with ≤35min sets so icon rows are not clipped. */
+    private float computeTimelineScaleForDay(List<VenueColumn> venueColumns) {
+        float scale = 1f;
+        if (venueColumns == null) {
+            return scale;
+        }
+        for (VenueColumn venue : venueColumns) {
+            if (venue == null || venue.events == null) {
+                continue;
+            }
+            for (ScheduleBlock event : venue.events) {
+                double duration = getEventDurationSeconds(event);
+                if (duration > 0 && duration <= SHORT_SET_MAX_DURATION_SECONDS) {
+                    if (isCombinedEventName(event.bandName)) {
+                        return TIMELINE_SCALE_SHORT_COMBINED_DAY;
+                    }
+                    scale = Math.max(scale, TIMELINE_SCALE_SHORT_SET_DAY);
+                }
+            }
+        }
+        return scale;
+    }
+
+    private int slotHeightPx(DayScheduleData dayData) {
+        float scale = dayData != null ? dayData.timelineScale : 1f;
+        return Math.round(dpToPx(TIMELINE_SLOT_HEIGHT_DP) * scale);
+    }
+
+    private int halfSlotPx(DayScheduleData dayData) {
+        return slotHeightPx(dayData) / 2;
+    }
+
+    private double pixelsPerSecond(DayScheduleData dayData) {
+        float scale = dayData != null ? dayData.timelineScale : 1f;
+        return dpToPx(TIMELINE_PIXELS_PER_HOUR_DP) * scale / 3600.0;
     }
     
     // Simple UI components
@@ -1524,7 +1581,7 @@ public class LandscapeScheduleView extends LinearLayout {
             // Remove extra font padding to ensure text aligns at the very top
             timeText.setIncludeFontPadding(false);
             timeText.setLayoutParams(new LinearLayout.LayoutParams(
-                LayoutParams.MATCH_PARENT, dpToPx(30)
+                LayoutParams.MATCH_PARENT, slotHeightPx(dayData)
             ));
             timeText.setBackgroundColor(Color.BLACK);
             timeColumn.addView(timeText);
@@ -1560,21 +1617,21 @@ public class LandscapeScheduleView extends LinearLayout {
 
         // Content area with events positioned by time
         RelativeLayout contentArea = new RelativeLayout(context);
-        int contentHeight = dayData.timeSlots.size() * dpToPx(30);
+        int contentHeight = dayData.timeSlots.size() * slotHeightPx(dayData);
         contentArea.setLayoutParams(new LinearLayout.LayoutParams(
             LayoutParams.MATCH_PARENT, contentHeight
         ));
 
         // Horizontal grid lines at vertical center of each time row (match iOS: middle of "7:00pm" text)
         // Use 1px height so lines remain visible; 0.5px scaled lines disappear on many devices
-        int halfSlotPx = dpToPx(15);
+        int halfSlot = halfSlotPx(dayData);
         for (TimeSlot slot : dayData.timeSlots) {
             View gridLine = new View(context);
             gridLine.setBackgroundColor(gridLineColor);
             RelativeLayout.LayoutParams gridParams = new RelativeLayout.LayoutParams(
                 LayoutParams.MATCH_PARENT, 1
             );
-            int yPos = calculateYPosition(slot.time, dayData) + halfSlotPx;
+            int yPos = calculateYPosition(slot.time, dayData) + halfSlot;
             gridParams.topMargin = yPos;
             gridLine.setLayoutParams(gridParams);
             contentArea.addView(gridLine);
@@ -1641,10 +1698,10 @@ public class LandscapeScheduleView extends LinearLayout {
             }
         }
         
-        double pixelsPerSecond = dpToPx(120) / 3600.0;
-        int blockHeight = Math.max((int)(durationSeconds * pixelsPerSecond), dpToPx(30));
+        double pixelsPerSecond = pixelsPerSecond(dayData);
+        int blockHeight = Math.max((int)(durationSeconds * pixelsPerSecond), slotHeightPx(dayData));
         // Use date-based positioning; add half-slot so event start aligns with grid line at center of time label
-        int yPosition = calculateYPosition(eventStartTime, dayData) + dpToPx(15);
+        int yPosition = calculateYPosition(eventStartTime, dayData) + halfSlotPx(dayData);
         
         RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
             columnWidth - dpToPx(4), blockHeight
@@ -2282,8 +2339,8 @@ public class LandscapeScheduleView extends LinearLayout {
         double offsetFromBase = eventTimeIndex - dayData.baseTimeIndex;
         double totalOffsetSeconds = offsetFromBase + gridStartSeconds;
 
-        // 30dp per 15 minutes => 120dp per hour.
-        double pixelsPerSecond = dpToPx(120) / 3600.0;
+        // 30dp per 15 minutes (scaled on days with short sets) => 120dp per hour baseline.
+        double pixelsPerSecond = pixelsPerSecond(dayData);
         int y = (int) Math.round(totalOffsetSeconds * pixelsPerSecond);
         return Math.max(0, y);
     }
@@ -2322,9 +2379,9 @@ public class LandscapeScheduleView extends LinearLayout {
             timeDiff = maxDuration;
         }
         
-        // Convert to minutes and then to pixels (30px per 15-minute slot)
+        // Convert to minutes and then to pixels (30dp per 15-minute slot, scaled for short-set days)
         long minutesDiff = timeDiff / (1000 * 60);
-        return (int)(minutesDiff / 15.0 * dpToPx(30));
+        return (int)(minutesDiff / 15.0 * slotHeightPx(dayData));
     }
     
     public void setBandTappedListener(OnBandTappedListener listener) {
@@ -3164,6 +3221,7 @@ public class LandscapeScheduleView extends LinearLayout {
             dayData.endTime = endTime;
             // Store first event's timeIndex for sorting days chronologically
             dayData.baseTimeIndex = firstEventTimeIndex;
+            dayData.timelineScale = computeTimelineScaleForDay(venueColumns);
             
             result.add(dayData);
         }
@@ -3714,6 +3772,8 @@ public class LandscapeScheduleView extends LinearLayout {
         Date startTime;
         Date endTime;
         double baseTimeIndex;
+        /** >1 when day has ≤35min sets so time-index rows are taller and icon rows fit. */
+        float timelineScale = 1f;
     }
     
     static class VenueColumn {
