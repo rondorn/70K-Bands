@@ -19,7 +19,7 @@
       "flavor": "mmfbands",
       "package_name": "com.rdorn.mmfbands",
       "play_store_track": "production",
-      "enabled": false
+      "enabled": true
     }
   ],
   "supported_languages": [

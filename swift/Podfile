@@ -8,7 +8,8 @@ install! 'cocoapods', :warn_for_unused_master_specs_repo => false
 
 target '70K Bands' do
 	# Firebase 10.22.0+ includes privacy manifests (required for App Store)
-	pod 'Firebase/Core', '~> 10.22.0'
+	# CoreOnly (not Firebase/Core) — Messaging + Database only; no Firebase Analytics SDK
+	pod 'Firebase/CoreOnly', '~> 10.22.0'
 	pod 'Firebase/Messaging', '~> 10.22.0'
 	pod 'Firebase/Database', '~> 10.22.0'
         pod 'Bolts'
@@ -17,7 +18,7 @@ end
 
 target 'MDF Bands' do
 	# Firebase 10.22.0+ includes privacy manifests (required for App Store)
-	pod 'Firebase/Core', '~> 10.22.0'
+	pod 'Firebase/CoreOnly', '~> 10.22.0'
 	pod 'Firebase/Messaging', '~> 10.22.0'
 	pod 'Firebase/Database', '~> 10.22.0'
         pod 'Bolts'
@@ -26,7 +27,7 @@ end
 
 target 'MMF Bands' do
 	# Firebase 10.22.0+ includes privacy manifests (required for App Store)
-	pod 'Firebase/Core', '~> 10.22.0'
+	pod 'Firebase/CoreOnly', '~> 10.22.0'
 	pod 'Firebase/Messaging', '~> 10.22.0'
 	pod 'Firebase/Database', '~> 10.22.0'
         pod 'Bolts'
@@ -35,7 +36,7 @@ end
 
 target '70K BandsTests' do
         # Firebase 10.22.0+ includes privacy manifests (required for App Store)
-        pod 'Firebase/Core', '~> 10.22.0'
+        pod 'Firebase/CoreOnly', '~> 10.22.0'
         pod 'Firebase/Messaging', '~> 10.22.0'
 	pod 'Firebase/Database', '~> 10.22.0'
         pod 'Bolts'

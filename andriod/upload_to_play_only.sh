@@ -10,11 +10,9 @@
 #
 # Usage:
 #   ./upload_to_play_only.sh VERSION_CODE [track] [rollout]
+#   ./upload_to_play_only.sh -70k -mdf 2026061301 production 1.0
 #
-# Examples:
-#   ./upload_to_play_only.sh 302603500
-#   ./upload_to_play_only.sh 302603500 internal 1.0
-#   ./upload_to_play_only.sh 302603500 production 1.0
+# Festival flags (optional): -70k -mdf -mmf — default is all enabled apps.
 #
 # release_notes.json in this directory is used if present; otherwise a minimal en-US stub is written.
 #
@@ -23,10 +21,46 @@
 
 set -e
 
+DO_70K=false
+DO_MDF=false
+DO_MMF=false
+FESTIVAL_FILTER=false
+
+selected_apps_label() {
+    local labels=()
+    [ "$DO_70K" = true ] && labels+=("70K Bands")
+    [ "$DO_MDF" = true ] && labels+=("MDF Bands")
+    [ "$DO_MMF" = true ] && labels+=("MMF Bands")
+    local result=""
+    for label in "${labels[@]}"; do
+        [ -n "$result" ] && result+=", "
+        result+="$label"
+    done
+    echo "$result"
+}
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-VERSION_CODE="${1:?Usage: $0 VERSION_CODE [track] [rollout — default internal / 1.0]}"
+while [ $# -gt 0 ] && [[ "$1" == -* ]]; do
+    case "$1" in
+        -70k) DO_70K=true; FESTIVAL_FILTER=true ;;
+        -mdf) DO_MDF=true; FESTIVAL_FILTER=true ;;
+        -mmf) DO_MMF=true; FESTIVAL_FILTER=true ;;
+        *) echo "Unknown flag: $1"; exit 1 ;;
+    esac
+    shift
+done
+
+if [ "$FESTIVAL_FILTER" = false ]; then
+    DO_70K=true
+    DO_MDF=true
+    DO_MMF=true
+fi
+
+APP_NAMES_FOR_FASTLANE="$(selected_apps_label)"
+
+VERSION_CODE="${1:?Usage: $0 [-70k] [-mdf] [-mmf] VERSION_CODE [track] [rollout]}"
 TRACK="${2:-internal}"
 ROLLOUT="${3:-1.0}"
 
@@ -59,7 +93,7 @@ else
     FASTLANE=(fastlane)
 fi
 
-echo "Upload only — versionCode ${VERSION_CODE}, track ${TRACK}, rollout ${ROLLOUT}"
+echo "Upload only — versionCode ${VERSION_CODE}, track ${TRACK}, rollout ${ROLLOUT}, apps: ${APP_NAMES_FOR_FASTLANE}"
 echo "AABs expected under app/build/outputs/bundle/"
 echo ""
 
@@ -67,4 +101,5 @@ echo ""
     version_code:"$VERSION_CODE" \
     release_notes_json:"$RELEASE_NOTES_JSON" \
     track:"$TRACK" \
-    rollout:"$ROLLOUT"
+    rollout:"$ROLLOUT" \
+    app_names:"$APP_NAMES_FOR_FASTLANE"

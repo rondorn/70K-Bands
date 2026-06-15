@@ -3,6 +3,13 @@
 # After binaries are in App Store Connect: translate “What’s New”, attach builds to the
 # version, update metadata, optionally submit for review (fastlane deliver).
 #
+# Usage:
+#   ./ios_release_submit.sh                  # all apps (70K, MDF, MMF)
+#   ./ios_release_submit.sh -70k             # only 70K Bands
+#   ./ios_release_submit.sh -mdf             # only MDF Bands
+#   ./ios_release_submit.sh -mmf             # only MMF Bands
+#   ./ios_release_submit.sh -70k -mdf        # 70K + MDF (exclude MMF while ASC setup pending)
+#
 # Run ./ios_archive_upload.sh first (or upload via Xcode). Wait until builds are “Complete”.
 
 set -e
@@ -13,12 +20,95 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
+DO_70K=false
+DO_MDF=false
+DO_MMF=false
+FESTIVAL_FILTER=false
+
+usage() {
+    echo "Update App Store Connect metadata and optionally submit for review."
+    echo ""
+    echo "Options:"
+    echo "  (none)           Process all apps (70K Bands, MDF Bands, MMF Bands)."
+    echo "  -70k              Only 70K Bands."
+    echo "  -mdf              Only MDF Bands."
+    echo "  -mmf              Only MMF Bands."
+    echo "  -70k -mdf -mmf    Combine festival flags to limit which apps run."
+    echo "  --help, -h       Show this help."
+    echo ""
+    echo "Run ./ios_archive_upload.sh first with matching flags, then this script."
+    echo ""
+}
+
+selected_apps_label() {
+    local labels=()
+    if [ "$DO_70K" = true ]; then
+        labels+=("70K Bands")
+    fi
+    if [ "$DO_MDF" = true ]; then
+        labels+=("MDF Bands")
+    fi
+    if [ "$DO_MMF" = true ]; then
+        labels+=("MMF Bands")
+    fi
+    local result=""
+    for label in "${labels[@]}"; do
+        if [ -n "$result" ]; then
+            result+=", "
+        fi
+        result+="$label"
+    done
+    echo "$result"
+}
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --help | -h)
+            usage
+            exit 0
+            ;;
+        -70k)
+            DO_70K=true
+            FESTIVAL_FILTER=true
+            ;;
+        -mdf)
+            DO_MDF=true
+            FESTIVAL_FILTER=true
+            ;;
+        -mmf)
+            DO_MMF=true
+            FESTIVAL_FILTER=true
+            ;;
+        *)
+            echo -e "${RED}Unknown option: $1${NC}"
+            usage
+            exit 1
+            ;;
+    esac
+    shift
+done
+
+if [ "$FESTIVAL_FILTER" = false ]; then
+    DO_70K=true
+    DO_MDF=true
+    DO_MMF=true
+fi
+
+if [ "$DO_70K" = false ] && [ "$DO_MDF" = false ] && [ "$DO_MMF" = false ]; then
+    echo -e "${RED}Error: no apps selected. Use -70k, -mdf, and/or -mmf, or omit flags for all apps.${NC}"
+    usage
+    exit 1
+fi
+
+SELECTED_APPS="$(selected_apps_label)"
+APP_NAMES_FOR_FASTLANE="$(selected_apps_label)"
+
 echo ""
 echo "══════════════════════════════════════════════════════════"
-echo "  iOS — Release metadata & submit for review"
+echo "  iOS — Release metadata & submit ($SELECTED_APPS)"
 echo "══════════════════════════════════════════════════════════"
 echo ""
 
@@ -52,21 +142,27 @@ if [ ! -f "apps_config.json" ]; then
     exit 1
 fi
 
-ENABLED_APPS=$(python3 -c "
+APP_COUNT=0
+APP_LIST=""
+while IFS= read -r line; do
+    if [ "$APP_COUNT" -eq 0 ]; then
+        APP_COUNT="$line"
+    else
+        APP_LIST="${APP_LIST}${line}"$'\n'
+    fi
+done < <(python3 -c "
 import json
+selected = [s.strip() for s in '''$SELECTED_APPS'''.split(',') if s.strip()]
 with open('apps_config.json', 'r') as f:
     config = json.load(f)
-enabled = [app for app in config['apps'] if app.get('enabled', True)]
-print(len(enabled))
-for app in enabled:
+apps = [app for app in config['apps'] if app.get('enabled', True) and app['name'] in selected]
+print(len(apps))
+for app in apps:
     print(f\"  • {app['name']}\")
 ")
 
-APP_COUNT=$(echo "$ENABLED_APPS" | head -n 1)
-APP_LIST=$(echo "$ENABLED_APPS" | tail -n +2)
-
 echo -e "${BLUE}Apps:${NC}"
-echo "$APP_LIST"
+printf "%s" "$APP_LIST"
 echo ""
 
 PREV_VALUES_FILE=".release_previous_values"
@@ -143,7 +239,7 @@ echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━�
 echo -e "${BLUE}Submission${NC}"
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-read -r -p "Submit all enabled apps for review after metadata update? (y/n): " SUBMIT_CHOICE
+read -r -p "Submit selected apps for review after metadata update? (y/n): " SUBMIT_CHOICE
 
 SUBMIT_FOR_REVIEW=false
 if [[ "$SUBMIT_CHOICE" =~ ^[Yy]$ ]]; then
@@ -177,9 +273,9 @@ echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━�
 echo -e "${BLUE}Confirm uploads${NC}"
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-echo "Both apps must show in App Store Connect → Activity for version ${VERSION} (processing complete)."
+echo "Selected apps must show in App Store Connect → Activity for version ${VERSION} (processing complete)."
 echo ""
-read -r -p "Are both builds uploaded and processed? (y/n): " UPLOADED
+read -r -p "Are the selected builds uploaded and processed? (y/n): " UPLOADED
 
 if [[ ! "$UPLOADED" =~ ^[Yy]$ ]]; then
     echo -e "${YELLOW}Run ios_archive_upload.sh (or upload in Xcode), wait for processing, then run this script again.${NC}"
@@ -193,7 +289,7 @@ echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━�
 echo ""
 echo -e "${BLUE}Version:${NC}  $VERSION"
 echo -e "${BLUE}Build:${NC}    $BUILD_NUMBER"
-echo -e "${BLUE}Apps:${NC}     $APP_COUNT"
+echo -e "${BLUE}Apps:${NC}     $SELECTED_APPS"
 echo -e "${BLUE}Submit:${NC}   $SUBMIT_FOR_REVIEW"
 echo -e "${BLUE}Notes:${NC}"
 echo "$RELEASE_NOTES"
@@ -223,7 +319,8 @@ fastlane release_all_apps \
     build_number:"$BUILD_NUMBER" \
     release_notes_json:"$RELEASE_NOTES_JSON" \
     submit_for_review:"$SUBMIT_FOR_REVIEW" \
-    automatic_release:"true"
+    automatic_release:"true" \
+    app_names:"$APP_NAMES_FOR_FASTLANE"
 
 if [ -f "fastlane/Fastfile.backup" ]; then
     mv fastlane/Fastfile.backup fastlane/Fastfile
