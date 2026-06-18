@@ -368,46 +368,55 @@ public class WebViewActivity extends Activity {
                     }
                 });
                 
-                // Start background refresh for fresh content
-                downloadFreshStatsInBackground();
+                // Refresh in background; keep showing cache if download fails
+                downloadFreshStatsInBackground(true);
             } else {
                 Log.d("WebViewActivity", "No cached stats page, downloading fresh content");
-                downloadFreshStatsInBackground();
+                downloadFreshStatsInBackground(false);
             }
         } catch (Exception e) {
             Log.e("WebViewActivity", "Error in independent stats loader: " + e.getMessage());
-            downloadFreshStatsInBackground();
+            downloadFreshStatsInBackground(false);
         }
     }
     
     /**
      * Downloads fresh stats content using independent network calls.
+     *
+     * @param backgroundRefresh when true, cached content is already on screen — do not hide
+     *                          the WebView or show errors if the download fails
      */
-    private void downloadFreshStatsInBackground() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                webView.setVisibility(View.GONE);
-                waitingMessage.setVisibility(View.VISIBLE);
-            }
-        });
-        
-        // Use a dedicated thread for network operations
+    private void downloadFreshStatsInBackground(final boolean backgroundRefresh) {
+        if (!backgroundRefresh) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    webView.setVisibility(View.GONE);
+                    waitingMessage.setVisibility(View.VISIBLE);
+                }
+            });
+        }
+
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    // Get report URL independently
                     String reportUrl = getReportUrlIndependent();
                     if (reportUrl != null && !reportUrl.isEmpty()) {
-                        downloadStatsContentIndependent(reportUrl);
+                        downloadStatsContentIndependent(reportUrl, backgroundRefresh);
+                    } else if (backgroundRefresh) {
+                        Log.d("WebViewActivity", "Stats background refresh: no report URL (offline?)");
                     } else {
                         Log.e("WebViewActivity", "Failed to get report URL");
-                        showErrorOnUiThread("Failed to get report URL");
+                        showStatsErrorOnUiThread("Failed to get report URL");
                     }
                 } catch (Exception e) {
-                    Log.e("WebViewActivity", "Error downloading stats: " + e.getMessage());
-                    showErrorOnUiThread("Error downloading stats: " + e.getMessage());
+                    if (backgroundRefresh) {
+                        Log.d("WebViewActivity", "Stats background refresh failed: " + e.getMessage());
+                    } else {
+                        Log.e("WebViewActivity", "Error downloading stats: " + e.getMessage());
+                        showStatsErrorOnUiThread("Error downloading stats: " + e.getMessage());
+                    }
                 }
             }
         }).start();
@@ -469,7 +478,7 @@ public class WebViewActivity extends Activity {
     /**
      * Downloads stats content independently.
      */
-    private void downloadStatsContentIndependent(String reportUrl) {
+    private void downloadStatsContentIndependent(String reportUrl, final boolean backgroundRefresh) {
         try {
             URL url = new URL(reportUrl);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -485,13 +494,11 @@ public class WebViewActivity extends Activity {
             reader.close();
             connection.disconnect();
             
-            // Save to cache
             String cachedFilePath = getCacheDir().getAbsolutePath() + "/stats_report.html";
             FileOutputStream fos = new FileOutputStream(cachedFilePath);
             fos.write(content.toString().getBytes("UTF-8"));
             fos.close();
             
-            // Load in WebView
             final String htmlContent = content.toString();
             runOnUiThread(new Runnable() {
                 @Override
@@ -503,20 +510,24 @@ public class WebViewActivity extends Activity {
             });
             
         } catch (Exception e) {
-            Log.e("WebViewActivity", "Error downloading stats content: " + e.getMessage());
-            showErrorOnUiThread("Error downloading stats content: " + e.getMessage());
+            if (backgroundRefresh) {
+                Log.d("WebViewActivity", "Stats background refresh download failed: " + e.getMessage());
+            } else {
+                Log.e("WebViewActivity", "Error downloading stats content: " + e.getMessage());
+                showStatsErrorOnUiThread("Error downloading stats content: " + e.getMessage());
+            }
         }
     }
     
     /**
-     * Shows error on UI thread.
+     * Shows a stats download error when no cached content is available to display.
      */
-    private void showErrorOnUiThread(final String error) {
+    private void showStatsErrorOnUiThread(final String error) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                webView.setVisibility(View.VISIBLE);
-                waitingMessage.setVisibility(View.GONE);
+                waitingMessage.setVisibility(View.VISIBLE);
+                webView.setVisibility(View.GONE);
                 Toast.makeText(WebViewActivity.this, error, Toast.LENGTH_SHORT).show();
             }
         });
