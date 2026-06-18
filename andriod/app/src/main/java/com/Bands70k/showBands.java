@@ -4505,6 +4505,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         }
         Log.d(TAG, notificationTag + " In onResume - 1");
         super.onResume();
+
+        // FCM topic subscribe must run every resume — independent of band data loading.
+        // (Early returns below for FRESH_INSTALL skip refresh only; they used to skip this too.)
+        subscribeToAlerts();
         
         // Invalidate options menu and header calendar button for tablets/foldables
         invalidateOptionsMenu();
@@ -4676,8 +4680,6 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
         Log.d(TAG, notificationTag + " calling showNotification");
         showNotification();
-
-        subscribeToAlerts();
 
         Log.d(TAG, notificationTag + " In onResume - 7");
         // ERRATIC JUMPING FIX: Remove duplicate position restoration from onResume
@@ -4916,15 +4918,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     }
 
     private void subscribeToAlerts() {
-        FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.getMainAlertChannel());
-        FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.getTestAlertChannel());
-        if (staticVariables.preferences.getAlertForUnofficalEvents() == true) {
-            //FirebaseMessaging.getInstance().subscribeToTopic("topic/" + staticVariables.getUnofficialAlertChannel());
-            FirebaseMessaging.getInstance().subscribeToTopic(staticVariables.getUnofficialAlertChannel());
-        } else {
-            //FirebaseMessaging.getInstance().unsubscribeFromTopic("topic/" + staticVariables.getUnofficialAlertChannel());
-            FirebaseMessaging.getInstance().unsubscribeFromTopic(staticVariables.getUnofficialAlertChannel());
-        }
+        FcmTopicSubscription.subscribeToAlertTopics();
     }
 
     @Override

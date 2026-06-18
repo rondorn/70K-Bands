@@ -171,7 +171,7 @@ public class FestivalConfig {
      *  the same for 70K and MDF (and likely future festivals). */
     private static final class Defaults {
         static final String SUBSCRIPTION_TOPIC = "global";
-        static final String SUBSCRIPTION_TOPIC_TEST = "Testing2026042802";
+        static final String SUBSCRIPTION_TOPIC_TEST = "Testing20260618";
         static final String SUBSCRIPTION_UNOFFICAL_TOPIC = "unofficalEvents";
         static final String ARTIST_URL_DEFAULT = "";
         static final String SCHEDULE_URL_DEFAULT = "";
@@ -437,6 +437,7 @@ public class FestivalConfig {
         Log.d("FestivalConfig", "  Package: " + this.packageName);
         Log.d("FestivalConfig", "  Default Storage URL: " + this.defaultStorageUrl);
         Log.d("FestivalConfig", "  Subscription Topic: " + this.subscriptionTopic);
+        Log.d("FestivalConfig", "  Subscription Topic (test): " + this.subscriptionTopicTest);
     }
     
     /**

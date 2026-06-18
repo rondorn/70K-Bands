@@ -20,13 +20,20 @@ import com.google.firebase.messaging.RemoteMessage;
 
 import java.util.Map;
 
-import static android.content.ContentValues.TAG;
-
 
 public class MyFcmListenerService extends FirebaseMessagingService {
 
     public static String messageString;
     private static final String FCM_TAG = "MyFcmListenerService";
+
+    @Override
+    public void onNewToken(String token) {
+        super.onNewToken(token);
+        String preview = token == null ? "null"
+                : token.substring(0, Math.min(12, token.length())) + "…";
+        Log.i(FCM_TAG, "FCM token refreshed: " + preview);
+        FcmTopicSubscription.subscribeToAlertTopics();
+    }
 
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
