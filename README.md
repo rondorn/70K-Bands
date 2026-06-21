@@ -55,8 +55,6 @@ Rank artists using:
 
 - Must See
 - Might See
-- Neutral
-- Probably Not
 - Won't See
 
 ### Schedule Management
