@@ -264,9 +264,11 @@
 		1172EE582E5A292E006E3596 /* preferenceDefault.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1172EE552E5A292E006E3596 /* preferenceDefault.swift */; };
 		1172EE592E5A292E006E3596 /* ConfigurationTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1172EE512E5A292E006E3596 /* ConfigurationTest.swift */; };
 		1172EE5A2E5A292E006E3596 /* FestivalConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1172EE522E5A292E006E3596 /* FestivalConfig.swift */; };
+		F1E2A0022E5A292E006E3596 /* FestivalConfigLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E2A0012E5A292E006E3596 /* FestivalConfigLoader.swift */; };
 		1172EE5B2E5A292E006E3596 /* preferenceDefault.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1172EE552E5A292E006E3596 /* preferenceDefault.swift */; };
 		1172EE5C2E5A292E006E3596 /* ConfigurationTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1172EE512E5A292E006E3596 /* ConfigurationTest.swift */; };
 		1172EE5D2E5A292E006E3596 /* FestivalConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1172EE522E5A292E006E3596 /* FestivalConfig.swift */; };
+		F1E2A0032E5A292E006E3596 /* FestivalConfigLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E2A0012E5A292E006E3596 /* FestivalConfigLoader.swift */; };
 		1172EE5E2E5A292E006E3596 /* Info-MDF.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1172EE542E5A292E006E3596 /* Info-MDF.plist */; };
 		1172EE5F2E5A292E006E3596 /* Info-70K.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1172EE532E5A292E006E3596 /* Info-70K.plist */; };
 		1172EE602E5A292E006E3596 /* Info-MDF.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1172EE542E5A292E006E3596 /* Info-MDF.plist */; };
@@ -274,6 +276,7 @@
 		1172EE622E5A292E006E3596 /* preferenceDefault.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1172EE552E5A292E006E3596 /* preferenceDefault.swift */; };
 		1172EE632E5A292E006E3596 /* ConfigurationTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1172EE512E5A292E006E3596 /* ConfigurationTest.swift */; };
 		1172EE642E5A292E006E3596 /* FestivalConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1172EE522E5A292E006E3596 /* FestivalConfig.swift */; };
+		F1E2A0042E5A292E006E3596 /* FestivalConfigLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E2A0012E5A292E006E3596 /* FestivalConfigLoader.swift */; };
 		1172EE672E5A3486006E3596 /* UILaunchScreen-MDF.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1172EE652E5A3486006E3596 /* UILaunchScreen-MDF.xib */; };
 		1172EE682E5A3486006E3596 /* UILaunchScreen-MDF.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1172EE652E5A3486006E3596 /* UILaunchScreen-MDF.xib */; };
 		1172EE692E5A44F4006E3596 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1154F6171A575893003F4764 /* Images.xcassets */; };
@@ -494,6 +497,7 @@
 		9155EC7CABABF9E75B7F23B1 /* ConfigurationTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1172EE512E5A292E006E3596 /* ConfigurationTest.swift */; };
 		91B534441B04A7B6A718CAA5 /* ScheduleBinaryQRScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E8A0512EE8A10008472A3 /* ScheduleBinaryQRScannerView.swift */; };
 		91DE0309F4D48DE27B165510 /* FestivalConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1172EE522E5A292E006E3596 /* FestivalConfig.swift */; };
+		F1E2A0052E5A292E006E3596 /* FestivalConfigLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E2A0012E5A292E006E3596 /* FestivalConfigLoader.swift */; };
 		9938B9E1542EB92612852BC9 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DD4175EFC5176744994D3FE6 /* Foundation.framework */; };
 		9DE58C80B71FF2933BD45C36 /* BuildFile in Frameworks */ = {isa = PBXBuildFile; };
 		9FC5D12656BBD42B6539A941 /* DetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1175C9392E4D2C5A0074E2F2 /* DetailView.swift */; };
@@ -688,6 +692,7 @@
 		1172EE4B2E5A26C9006E3596 /* GoogleService-Info-70K.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info-70K.plist"; sourceTree = "<group>"; };
 		1172EE512E5A292E006E3596 /* ConfigurationTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigurationTest.swift; sourceTree = "<group>"; };
 		1172EE522E5A292E006E3596 /* FestivalConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FestivalConfig.swift; sourceTree = "<group>"; };
+		F1E2A0012E5A292E006E3596 /* FestivalConfigLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FestivalConfigLoader.swift; sourceTree = "<group>"; };
 		1172EE532E5A292E006E3596 /* Info-70K.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info-70K.plist"; sourceTree = "<group>"; };
 		1172EE542E5A292E006E3596 /* Info-MDF.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info-MDF.plist"; sourceTree = "<group>"; };
 		1172EE552E5A292E006E3596 /* preferenceDefault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = preferenceDefault.swift; sourceTree = "<group>"; };
@@ -970,6 +975,7 @@
 				11C62E872E6661C9000D9AF2 /* EventManager.swift */,
 				116C9D7B2F415D370036743C /* EventTypes.swift */,
 				1172EE522E5A292E006E3596 /* FestivalConfig.swift */,
+				F1E2A0012E5A292E006E3596 /* FestivalConfigLoader.swift */,
 				116C9D7C2F415D370036743C /* FilePaths.swift */,
 				11D4844A2241DA0C00910878 /* firebaseBandDataWrite.swift */,
 				11D4844D2241DED700910878 /* firebaseEventDataWrite.swift */,
@@ -1716,6 +1722,7 @@
 				1172EE592E5A292E006E3596 /* ConfigurationTest.swift in Sources */,
 				11895B982EE4C8EB008CC4A9 /* DataManager.swift in Sources */,
 				1172EE5A2E5A292E006E3596 /* FestivalConfig.swift in Sources */,
+				F1E2A0022E5A292E006E3596 /* FestivalConfigLoader.swift in Sources */,
 				111A936E2E4F8FAB00EA4ABD /* SwiftUITranslationHelper.swift in Sources */,
 				119C80462F4CF06500304A1D /* CommonFilterSheetView.swift in Sources */,
 				11ABAA60222C7F0000A04397 /* userDataHandler.swift in Sources */,
@@ -1835,6 +1842,7 @@
 				11895B992EE4C8EB008CC4A9 /* DataManager.swift in Sources */,
 				112913A42EE7D8C3008472A3 /* ProfilePickerViewController.swift in Sources */,
 				1172EE642E5A292E006E3596 /* FestivalConfig.swift in Sources */,
+				F1E2A0042E5A292E006E3596 /* FestivalConfigLoader.swift in Sources */,
 				119C80452F4CF06500304A1D /* CommonFilterSheetView.swift in Sources */,
 				111A936D2E4F8FAB00EA4ABD /* SwiftUITranslationHelper.swift in Sources */,
 				1154F6271A575893003F4764 /* _0000TonsBandsTests.swift in Sources */,
@@ -1954,6 +1962,7 @@
 				11895B972EE4C8EB008CC4A9 /* DataManager.swift in Sources */,
 				112913A52EE7D8C3008472A3 /* ProfilePickerViewController.swift in Sources */,
 				1172EE5D2E5A292E006E3596 /* FestivalConfig.swift in Sources */,
+				F1E2A0032E5A292E006E3596 /* FestivalConfigLoader.swift in Sources */,
 				119C80442F4CF06500304A1D /* CommonFilterSheetView.swift in Sources */,
 				1172EDFB2E5A1C4D006E3596 /* SwiftUITranslationHelper.swift in Sources */,
 				1172EDFC2E5A1C4D006E3596 /* userDataHandler.swift in Sources */,
@@ -2072,6 +2081,7 @@
 				6FCE71239F3F64BF35D0D6BC /* DataManager.swift in Sources */,
 				BF2968695C767E893A6BD50A /* ProfilePickerViewController.swift in Sources */,
 				91DE0309F4D48DE27B165510 /* FestivalConfig.swift in Sources */,
+				F1E2A0052E5A292E006E3596 /* FestivalConfigLoader.swift in Sources */,
 				0360BE3DD2798D47140DF2BE /* CommonFilterSheetView.swift in Sources */,
 				B1C7AD7374833933703C378E /* SwiftUITranslationHelper.swift in Sources */,
 				6EA7DF275C4D59602480C9C4 /* userDataHandler.swift in Sources */,

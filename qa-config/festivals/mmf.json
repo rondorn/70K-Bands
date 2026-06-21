@@ -1,0 +1,266 @@
+{
+  "festivalShortName": "MMF",
+  "festivalName": "Milwaukee Metal Fest",
+  "appName": "MMF Bands",
+  "packageName": "com.rdorn.mmfbands",
+  "bundleIdentifier": "com.rdorn.mmfbands",
+  "defaultStorageUrl": "https://www.dropbox.com/scl/fi/2tq5t3ahvv6iz1h3qw7mu/mmf_productionPointer.txt?rlkey=zbzlo8xuhw8zi4xb6ubf0hus1&raw=1",
+  "defaultStorageUrlTest": "https://www.dropbox.com/scl/fi/sw7ksivafzhqlwmrbejfi/mmf_productionPointer_test.txt?rlkey=51h881e7wcfvpeh3cuq30sten&raw=1",
+  "firebaseConfigFile": {
+    "android": "google-services-mmf.json",
+    "ios": "GoogleService-Info-MMF"
+  },
+  "artistUrlDefault": "",
+  "scheduleUrlDefault": "",
+  "logo": {
+    "android": "mmf_logo",
+    "ios": "mmf_logo"
+  },
+  "appIconDrawable": {
+    "android": "mmf_bands_icon"
+  },
+  "shareUrl": "https://www.facebook.com/profile.php?id=61580889273388",
+  "shareFileExtension": "mmfshare",
+  "notificationChannelId": "MMFBandsCustomSound1",
+  "notificationChannelName": "MMFBandsCustomSound1",
+  "notificationChannelDescription": "Channel for the MMF Bands local show alerts with custom sound",
+  "graphics": {
+    "mustSeeIconSmall": {
+      "android": "icon_going_yes_small",
+      "ios": "icon-going-yes"
+    },
+    "mightSeeIconSmall": {
+      "android": "icon_going_maybe_small",
+      "ios": "icon-going-maybe"
+    },
+    "wontSeeIconSmall": {
+      "android": "icon_going_no_small",
+      "ios": "icon-going-no"
+    },
+    "unknownIconSmall": {
+      "android": "icon_unknown_small",
+      "ios": "icon-unknown"
+    },
+    "mustSeeIcon": {
+      "android": "icon_going_yes",
+      "ios": "Going-Devil-Yeah-rev1-Select-wBox"
+    },
+    "mustSeeIconAlt": {
+      "android": "icon_going_yes_alt",
+      "ios": "Going-Devil-Yeah-rev1-DeSelect-wBox"
+    },
+    "mightSeeIcon": {
+      "android": "icon_going_maybe",
+      "ios": "Maybe-Devil-Meh-rev1-Select-wBox"
+    },
+    "mightSeeIconAlt": {
+      "android": "icon_going_maybe_alt",
+      "ios": "Maybe-Devil-Meh-rev1-DeSelect-wBox"
+    },
+    "wontSeeIcon": {
+      "android": "icon_going_no",
+      "ios": "No-way-Devil-Bah-rev2-Select-wBox"
+    },
+    "wontSeeIconAlt": {
+      "android": "icon_going_no_alt",
+      "ios": "No-way-Devil-Bah-rev2-DeSelect-wBox"
+    },
+    "unknownIcon": {
+      "android": "icon_unknown",
+      "ios": "Unknown-v2-Select-wBox"
+    },
+    "unknownIconAlt": {
+      "android": "icon_unknown_alt",
+      "ios": "Unknown-v2-DeSelect-wBox"
+    },
+    "preferencesIcon": {
+      "android": "icon_gear",
+      "ios": "icon-gear-alt-Raw"
+    },
+    "shareIcon": {
+      "android": "icon_share",
+      "ios": "icon-share"
+    },
+    "statsIcon": {
+      "android": "stats_icon",
+      "ios": "Stats v 4On Black"
+    },
+    "fallbackMiscGenericGoingIcon": {
+      "android": "Unknown-Going-wBox",
+      "ios": "Unknown-Going-wBox"
+    },
+    "fallbackMiscGenericNotGoingIcon": {
+      "android": "Unknown-NotGoing-wBox",
+      "ios": "Unknown-NotGoing-wBox"
+    }
+  },
+  "venues": [],
+  "genericVenueSlots": [
+    {
+      "color": "991B1B",
+      "goingIcon": {
+        "android": "Royal-Theater-Going-wBox",
+        "ios": "Royal-Theater-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "Unknown-NotGoing-wBox",
+        "ios": "Unknown-NotGoing-wBox"
+      }
+    },
+    {
+      "color": "1D4ED8",
+      "goingIcon": {
+        "android": "Royal-Theater-Going-wBox",
+        "ios": "Royal-Theater-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "Unknown-NotGoing-wBox",
+        "ios": "Unknown-NotGoing-wBox"
+      }
+    },
+    {
+      "color": "047857",
+      "goingIcon": {
+        "android": "Royal-Theater-Going-wBox",
+        "ios": "Royal-Theater-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "Unknown-NotGoing-wBox",
+        "ios": "Unknown-NotGoing-wBox"
+      }
+    },
+    {
+      "color": "0F766E",
+      "goingIcon": {
+        "android": "Unknown-Going-wBox",
+        "ios": "Unknown-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "Unknown-NotGoing-wBox",
+        "ios": "Unknown-NotGoing-wBox"
+      }
+    },
+    {
+      "color": "5B21B6",
+      "goingIcon": {
+        "android": "Unknown-Going-wBox",
+        "ios": "Unknown-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "Unknown-NotGoing-wBox",
+        "ios": "Unknown-NotGoing-wBox"
+      }
+    },
+    {
+      "color": "44403C",
+      "goingIcon": {
+        "android": "Unknown-Going-wBox",
+        "ios": "Unknown-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "Unknown-NotGoing-wBox",
+        "ios": "Unknown-NotGoing-wBox"
+      }
+    }
+  ],
+  "meetAndGreetsEnabledDefault": true,
+  "specialEventsEnabledDefault": true,
+  "unofficalEventsEnabledDefault": true,
+  "eventTypeDisplayNames": {
+    "Show": {
+      "en": "Show",
+      "de": "Show",
+      "es": "Show",
+      "fr": "Show",
+      "pt": "Show",
+      "da": "Show",
+      "fi": "Show"
+    },
+    "Unofficial Event": {
+      "en": "Attendee Organized Event",
+      "de": "Von Teilnehmenden organisiertes Event",
+      "es": "Evento Organizado por Asistentes",
+      "fr": "Evenement Organise par les Participants",
+      "pt": "Evento Organizado por Participantes",
+      "da": "Deltagerorganiseret Event",
+      "fi": "Osallistujien jarjestama tapahtuma"
+    },
+    "Special Event": {
+      "en": "Special Event",
+      "de": "Spezialevent",
+      "es": "Evento Especial",
+      "fr": "Evenement Special",
+      "pt": "Evento Especial",
+      "da": "Sarlig Begivenhed",
+      "fi": "Erikoistapahtuma"
+    },
+    "Meet and Greet": {
+      "en": "Signing Session",
+      "de": "Autogrammstunde",
+      "es": "Sesion de Firmas",
+      "fr": "Session de Dedicaces",
+      "pt": "Sessao de Autografos",
+      "da": "Autografsession",
+      "fi": "Nimmarointitilaisuus"
+    },
+    "Clinic": {
+      "en": "Clinic",
+      "de": "Klinik",
+      "es": "Clinica",
+      "fr": "Clinique",
+      "pt": "Clinica",
+      "da": "Klinik",
+      "fi": "Klinikka"
+    }
+  },
+  "eventTypeFilterDisplayNames": {
+    "Show": {
+      "en": "Show Shows",
+      "de": "Zeige Shows",
+      "es": "Mostrar Shows",
+      "fr": "Afficher Shows",
+      "pt": "Mostrar Shows",
+      "da": "Vis Shows",
+      "fi": "Nayta Show't"
+    },
+    "Special Event": {
+      "en": "Show Special Events",
+      "de": "Zeige Spezialevents",
+      "es": "Mostrar Eventos Especiales",
+      "fr": "Afficher Evenements Speciaux",
+      "pt": "Mostrar Eventos Especiais",
+      "da": "Vis Sarlige Begivenheder",
+      "fi": "Nayta Erikoistapahtumat"
+    },
+    "Meet and Greet": {
+      "en": "Show Signing Sessions",
+      "de": "Zeige Autogrammstunden",
+      "es": "Mostrar Sesiones de Firmas",
+      "fr": "Afficher Sessions de Dedicaces",
+      "pt": "Mostrar Sessoes de Autografos",
+      "da": "Vis Autografsessioner",
+      "fi": "Nayta Nimmarointitilaisuudet"
+    },
+    "Clinic": {
+      "en": "Show Clinics",
+      "de": "Zeige Kliniken",
+      "es": "Mostrar Clinicas",
+      "fr": "Afficher Cliniques",
+      "pt": "Mostrar Clinicas",
+      "da": "Vis Klinikker",
+      "fi": "Nayta Klinikat"
+    },
+    "Unofficial Event": {
+      "en": "Show Attendee Organized Events",
+      "de": "Zeige von Teilnehmenden organisierte Events",
+      "es": "Mostrar Eventos Organizados por Asistentes",
+      "fr": "Afficher Evenements Organises par les Participants",
+      "pt": "Mostrar Eventos Organizados por Participantes",
+      "da": "Vis Deltagerorganiserede Events",
+      "fi": "Nayta Osallistujien jarjestamat tapahtumat"
+    }
+  },
+  "commentsNotAvailableTranslationKey": "DefaultDescriptionMDF",
+  "aiSchedule": true,
+  "scheduleQRShareEnabled": false
+}

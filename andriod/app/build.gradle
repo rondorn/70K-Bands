@@ -83,6 +83,37 @@ android {
     namespace 'com.Bands70k'
 }
 
+def festivalsRoot = file("${rootDir}/../qa-config/festivals")
+def festivalFlavorMap = [
+        bands70k : '70k',
+        mdfbands : 'mdf',
+        mmfbands : 'mmf',
+]
+
+festivalFlavorMap.each { flavorName, festivalKey ->
+    def genDir = layout.buildDirectory.dir("generated/festivalAssets/${flavorName}")
+    def packTask = tasks.register("packFestivalAssets${flavorName}") {
+        doLast {
+            def outDir = genDir.get().asFile
+            outDir.mkdirs()
+            copy {
+                from festivalsRoot
+                include "${festivalKey}.json"
+                into outDir
+                rename { 'festival.json' }
+            }
+            copy {
+                from festivalsRoot
+                include 'registry.json'
+                into outDir
+                rename { 'festival_registry.json' }
+            }
+        }
+    }
+    android.sourceSets."$flavorName".assets.srcDir genDir
+    tasks.named('preBuild').configure { dependsOn packTask }
+}
+
 repositories {
     google()
     mavenCentral()

@@ -1,0 +1,364 @@
+{
+  "festivalShortName": "MDF",
+  "festivalName": "Maryland Deathfest",
+  "appName": "MDF Bands",
+  "packageName": "com.rdorn.mdfbands",
+  "bundleIdentifier": "com.rdorn.mdfbands",
+  "defaultStorageUrl": "https://www.dropbox.com/scl/fi/39jr2f37rhrdk14koj0pz/mdf_productionPointer.txt?rlkey=ij3llf5y1mxwpq2pmwbj03e6t&raw=1",
+  "defaultStorageUrlTest": "https://www.dropbox.com/scl/fi/erdm6rrda8kku1svq8jwk/mdf_productionPointer_test.txt?rlkey=fhjftwb1uakiy83axcpfwrh1e&raw=1",
+  "firebaseConfigFile": {
+    "android": "google-services-mdf.json",
+    "ios": "GoogleService-Info-MDF"
+  },
+  "artistUrlDefault": "https://www.dropbox.com/scl/fi/6eg74y11n070airoewsfz/mdf_artistLineup_2026.csv?rlkey=35i20kxtc6pc6v673dnmp1465&raw=1",
+  "scheduleUrlDefault": "https://www.dropbox.com/scl/fi/3u1sr1312az0wd3dcpbfe/mdf_artistsSchedule2026_test.csv?rlkey=t96hj530o46q9fzz83ei7fllj&raw=1",
+  "logo": {
+    "android": "mdf_logo",
+    "ios": "mdf_logo"
+  },
+  "appIconDrawable": {
+    "android": "mdf_bands_icon_old"
+  },
+  "shareUrl": "https://www.facebook.com/profile.php?id=61580889273388",
+  "shareFileExtension": "mdfshare",
+  "notificationChannelId": "MDFBandsCustomSound1",
+  "notificationChannelName": "MDFBandsCustomSound1",
+  "notificationChannelDescription": "Channel for the MDF Bands local show alerts with custom sound",
+  "graphics": {
+    "mustSeeIconSmall": {
+      "android": "icon_going_yes_small",
+      "ios": "icon-going-yes"
+    },
+    "mightSeeIconSmall": {
+      "android": "icon_going_maybe_small",
+      "ios": "icon-going-maybe"
+    },
+    "wontSeeIconSmall": {
+      "android": "icon_going_no_small",
+      "ios": "icon-going-no"
+    },
+    "unknownIconSmall": {
+      "android": "icon_unknown_small",
+      "ios": "icon-unknown"
+    },
+    "mustSeeIcon": {
+      "android": "icon_going_yes",
+      "ios": "Going-Devil-Yeah-rev1-Select-wBox"
+    },
+    "mustSeeIconAlt": {
+      "android": "icon_going_yes_alt",
+      "ios": "Going-Devil-Yeah-rev1-DeSelect-wBox"
+    },
+    "mightSeeIcon": {
+      "android": "icon_going_maybe",
+      "ios": "Maybe-Devil-Meh-rev1-Select-wBox"
+    },
+    "mightSeeIconAlt": {
+      "android": "icon_going_maybe_alt",
+      "ios": "Maybe-Devil-Meh-rev1-DeSelect-wBox"
+    },
+    "wontSeeIcon": {
+      "android": "icon_going_no",
+      "ios": "No-way-Devil-Bah-rev2-Select-wBox"
+    },
+    "wontSeeIconAlt": {
+      "android": "icon_going_no_alt",
+      "ios": "No-way-Devil-Bah-rev2-DeSelect-wBox"
+    },
+    "unknownIcon": {
+      "android": "icon_unknown",
+      "ios": "Unknown-v2-Select-wBox"
+    },
+    "unknownIconAlt": {
+      "android": "icon_unknown_alt",
+      "ios": "Unknown-v2-DeSelect-wBox"
+    },
+    "preferencesIcon": {
+      "android": "icon_gear",
+      "ios": "icon-gear-alt-Raw"
+    },
+    "shareIcon": {
+      "android": "icon_share",
+      "ios": "icon-share"
+    },
+    "statsIcon": {
+      "android": "stats_icon",
+      "ios": "Stats v 4On Black"
+    },
+    "fallbackMiscGenericGoingIcon": {
+      "android": "Unknown-Going-wBox",
+      "ios": "Unknown-Going-wBox"
+    },
+    "fallbackMiscGenericNotGoingIcon": {
+      "android": "Unknown-NotGoing-wBox",
+      "ios": "Unknown-NotGoing-wBox"
+    }
+  },
+  "venues": [
+    {
+      "name": "Market Place",
+      "color": "047857",
+      "location": "121 Market",
+      "goingIcon": {
+        "android": "icon_theater",
+        "ios": "Royal-Theater-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "icon_theater_alt",
+        "ios": "Royal-Theater-NotGoing-wBox"
+      }
+    },
+    {
+      "name": "Power Plant",
+      "color": "1D4ED8",
+      "location": "34 Market",
+      "goingIcon": {
+        "android": "icon_theater",
+        "ios": "Royal-Theater-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "icon_theater_alt",
+        "ios": "Royal-Theater-NotGoing-wBox"
+      }
+    },
+    {
+      "name": "Rams Head",
+      "color": "EA580C",
+      "location": "20 Market",
+      "goingIcon": {
+        "android": "icon_theater",
+        "ios": "Royal-Theater-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "icon_theater_alt",
+        "ios": "Royal-Theater-NotGoing-wBox"
+      }
+    },
+    {
+      "name": "Market",
+      "color": "047857",
+      "location": "121 Market",
+      "goingIcon": {
+        "android": "icon_theater",
+        "ios": "Royal-Theater-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "icon_theater_alt",
+        "ios": "Royal-Theater-NotGoing-wBox"
+      }
+    },
+    {
+      "name": "Nevermore",
+      "color": "0891B2",
+      "location": "20 Market",
+      "goingIcon": {
+        "android": "icon_theater",
+        "ios": "Royal-Theater-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "icon_theater_alt",
+        "ios": "Royal-Theater-NotGoing-wBox"
+      }
+    },
+    {
+      "name": "Nevermore Hall",
+      "color": "0891B2",
+      "location": "20 Market",
+      "goingIcon": {
+        "android": "icon_theater",
+        "ios": "Royal-Theater-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "icon_theater_alt",
+        "ios": "Royal-Theater-NotGoing-wBox"
+      }
+    },
+    {
+      "name": "Soundstage",
+      "color": "991B1B",
+      "location": "124 Market",
+      "goingIcon": {
+        "android": "icon_theater",
+        "ios": "Royal-Theater-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "icon_theater_alt",
+        "ios": "Royal-Theater-NotGoing-wBox"
+      }
+    },
+    {
+      "name": "Angels Rock",
+      "color": "A16207",
+      "location": "10 Market",
+      "goingIcon": {
+        "android": "icon_theater",
+        "ios": "Royal-Theater-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "icon_theater_alt",
+        "ios": "Royal-Theater-NotGoing-wBox"
+      }
+    },
+    {
+      "name": "Angels Rock Bar",
+      "color": "A16207",
+      "location": "10 Market",
+      "goingIcon": {
+        "android": "icon_theater",
+        "ios": "Royal-Theater-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "icon_theater_alt",
+        "ios": "Royal-Theater-NotGoing-wBox"
+      }
+    },
+    {
+      "name": "Mosaic Nightclub",
+      "color": "5E4FA8",
+      "location": "34 Market Pl",
+      "goingIcon": {
+        "android": "icon_theater",
+        "ios": "Royal-Theater-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "icon_theater_alt",
+        "ios": "Royal-Theater-NotGoing-wBox"
+      }
+    }
+  ],
+  "genericVenueSlots": [
+    {
+      "color": "0F766E",
+      "goingIcon": {
+        "android": "Unknown-Going-wBox",
+        "ios": "Unknown-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "Unknown-NotGoing-wBox",
+        "ios": "Unknown-NotGoing-wBox"
+      }
+    },
+    {
+      "color": "5B21B6",
+      "goingIcon": {
+        "android": "Unknown-Going-wBox",
+        "ios": "Unknown-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "Unknown-NotGoing-wBox",
+        "ios": "Unknown-NotGoing-wBox"
+      }
+    },
+    {
+      "color": "44403C",
+      "goingIcon": {
+        "android": "Unknown-Going-wBox",
+        "ios": "Unknown-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "Unknown-NotGoing-wBox",
+        "ios": "Unknown-NotGoing-wBox"
+      }
+    }
+  ],
+  "meetAndGreetsEnabledDefault": false,
+  "specialEventsEnabledDefault": false,
+  "unofficalEventsEnabledDefault": false,
+  "eventTypeDisplayNames": {
+    "Show": {
+      "en": "Show",
+      "de": "Show",
+      "es": "Show",
+      "fr": "Show",
+      "pt": "Show",
+      "da": "Show",
+      "fi": "Show"
+    },
+    "Unofficial Event": {
+      "en": "Attendee Organized Event",
+      "de": "Von Teilnehmenden organisiertes Event",
+      "es": "Evento Organizado por Asistentes",
+      "fr": "Evenement Organise par les Participants",
+      "pt": "Evento Organizado por Participantes",
+      "da": "Deltagerorganiseret Event",
+      "fi": "Osallistujien jarjestama tapahtuma"
+    },
+    "Special Event": {
+      "en": "Special Event",
+      "de": "Spezialevent",
+      "es": "Evento Especial",
+      "fr": "Evenement Special",
+      "pt": "Evento Especial",
+      "da": "Sarlig Begivenhed",
+      "fi": "Erikoistapahtuma"
+    },
+    "Meet and Greet": {
+      "en": "Signing Session",
+      "de": "Autogrammstunde",
+      "es": "Sesion de Firmas",
+      "fr": "Session de Dedicaces",
+      "pt": "Sessao de Autografos",
+      "da": "Autografsession",
+      "fi": "Nimmarointitilaisuus"
+    },
+    "Clinic": {
+      "en": "Clinic",
+      "de": "Klinik",
+      "es": "Clinica",
+      "fr": "Clinique",
+      "pt": "Clinica",
+      "da": "Klinik",
+      "fi": "Klinikka"
+    }
+  },
+  "eventTypeFilterDisplayNames": {
+    "Show": {
+      "en": "Show Shows",
+      "de": "Zeige Shows",
+      "es": "Mostrar Shows",
+      "fr": "Afficher Shows",
+      "pt": "Mostrar Shows",
+      "da": "Vis Shows",
+      "fi": "Nayta Show't"
+    },
+    "Special Event": {
+      "en": "Show Special Events",
+      "de": "Zeige Spezialevents",
+      "es": "Mostrar Eventos Especiales",
+      "fr": "Afficher Evenements Speciaux",
+      "pt": "Mostrar Eventos Especiais",
+      "da": "Vis Sarlige Begivenheder",
+      "fi": "Nayta Erikoistapahtumat"
+    },
+    "Meet and Greet": {
+      "en": "Show Signing Sessions",
+      "de": "Zeige Autogrammstunden",
+      "es": "Mostrar Sesiones de Firmas",
+      "fr": "Afficher Sessions de Dedicaces",
+      "pt": "Mostrar Sessoes de Autografos",
+      "da": "Vis Autografsessioner",
+      "fi": "Nayta Nimmarointitilaisuudet"
+    },
+    "Clinic": {
+      "en": "Show Clinics",
+      "de": "Zeige Kliniken",
+      "es": "Mostrar Clinicas",
+      "fr": "Afficher Cliniques",
+      "pt": "Mostrar Clinicas",
+      "da": "Vis Klinikker",
+      "fi": "Nayta Klinikat"
+    },
+    "Unofficial Event": {
+      "en": "Show Attendee Organized Events",
+      "de": "Zeige von Teilnehmenden organisierte Events",
+      "es": "Mostrar Eventos Organizados por Asistentes",
+      "fr": "Afficher Evenements Organises par les Participants",
+      "pt": "Mostrar Eventos Organizados por Participantes",
+      "da": "Vis Deltagerorganiserede Events",
+      "fi": "Nayta Osallistujien jarjestamat tapahtumat"
+    }
+  },
+  "commentsNotAvailableTranslationKey": "DefaultDescriptionMDF",
+  "aiSchedule": true,
+  "scheduleQRShareEnabled": false
+}

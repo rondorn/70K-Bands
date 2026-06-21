@@ -1,0 +1,416 @@
+{
+  "festivalShortName": "70K",
+  "festivalName": "70,000 Tons Of Metal",
+  "appName": "70K Bands",
+  "packageName": "com.Bands70k",
+  "bundleIdentifier": "com.rdorn.-0000TonsBands",
+  "defaultStorageUrl": "https://www.dropbox.com/scl/fi/kd5gzo06yrrafgz81y0ao/productionPointer.txt?rlkey=gt1lpaf11nay0skb6fe5zv17g&raw=1",
+  "defaultStorageUrlTest": "https://www.dropbox.com/s/f3raj8hkfbd81mp/productionPointer2024-Test.txt?raw=1",
+  "firebaseConfigFile": {
+    "android": "google-services-70k.json",
+    "ios": "GoogleService-Info-70K"
+  },
+  "artistUrlDefault": "",
+  "scheduleUrlDefault": "",
+  "logo": {
+    "android": "bands_70k_icon",
+    "ios": "70000TonsLogo"
+  },
+  "appIconDrawable": {
+    "android": "ic_launcher"
+  },
+  "shareUrl": "http://www.facebook.com/70kBands",
+  "shareFileExtension": "70kshare",
+  "notificationChannelId": "70KBandsCustomSound1",
+  "notificationChannelName": "70KBandsCustomSound1",
+  "notificationChannelDescription": "Channel for the 70K Bands local show alerts with custom sound1",
+  "graphics": {
+    "mustSeeIconSmall": {
+      "android": "icon_going_yes_small",
+      "ios": "icon-going-yes"
+    },
+    "mightSeeIconSmall": {
+      "android": "icon_going_maybe_small",
+      "ios": "icon-going-maybe"
+    },
+    "wontSeeIconSmall": {
+      "android": "icon_going_no_small",
+      "ios": "icon-going-no"
+    },
+    "unknownIconSmall": {
+      "android": "icon_unknown_small",
+      "ios": "icon-unknown"
+    },
+    "mustSeeIcon": {
+      "android": "icon_going_yes",
+      "ios": "Going-Devil-Yeah-rev1-Select-wBox"
+    },
+    "mustSeeIconAlt": {
+      "android": "icon_going_yes_alt",
+      "ios": "Going-Devil-Yeah-rev1-DeSelect-wBox"
+    },
+    "mightSeeIcon": {
+      "android": "icon_going_maybe",
+      "ios": "Maybe-Devil-Meh-rev1-Select-wBox"
+    },
+    "mightSeeIconAlt": {
+      "android": "icon_going_maybe_alt",
+      "ios": "Maybe-Devil-Meh-rev1-DeSelect-wBox"
+    },
+    "wontSeeIcon": {
+      "android": "icon_going_no",
+      "ios": "No-way-Devil-Bah-rev2-Select-wBox"
+    },
+    "wontSeeIconAlt": {
+      "android": "icon_going_no_alt",
+      "ios": "No-way-Devil-Bah-rev2-DeSelect-wBox"
+    },
+    "unknownIcon": {
+      "android": "icon_unknown",
+      "ios": "Unknown-v2-Select-wBox"
+    },
+    "unknownIconAlt": {
+      "android": "icon_unknown_alt",
+      "ios": "Unknown-v2-DeSelect-wBox"
+    },
+    "preferencesIcon": {
+      "android": "icon_gear",
+      "ios": "icon-gear-alt-Raw"
+    },
+    "shareIcon": {
+      "android": "icon_share",
+      "ios": "icon-share"
+    },
+    "statsIcon": {
+      "android": "stats_icon",
+      "ios": "Stats v 4On Black"
+    },
+    "fallbackMiscGenericGoingIcon": {
+      "android": "Unknown-Going-wBox",
+      "ios": "Unknown-Going-wBox"
+    },
+    "fallbackMiscGenericNotGoingIcon": {
+      "android": "Unknown-NotGoing-wBox",
+      "ios": "Unknown-NotGoing-wBox"
+    }
+  },
+  "venues": [
+    {
+      "name": "Pool",
+      "color": "1D4ED8",
+      "location": "Deck 11",
+      "goingIcon": {
+        "android": "icon_pool",
+        "ios": "Pool-Deck-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "icon_pool_alt",
+        "ios": "Pool-Deck-NotGoing-wBox"
+      }
+    },
+    {
+      "name": "Lounge",
+      "color": "047857",
+      "location": "Deck 5",
+      "goingIcon": {
+        "android": "icon_lounge",
+        "ios": "Lounge-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "icon_lounge_alt",
+        "ios": "Lounge-NotGoing-wBox"
+      }
+    },
+    {
+      "name": "Theater",
+      "color": "B45309",
+      "location": "Deck 3/4",
+      "goingIcon": {
+        "android": "icon_theater",
+        "ios": "Royal-Theater-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "icon_theater_alt",
+        "ios": "Royal-Theater-NotGoing-wBox"
+      }
+    },
+    {
+      "name": "Rink",
+      "color": "C026D3",
+      "location": "Deck 3",
+      "goingIcon": {
+        "android": "ice_rink",
+        "ios": "Ice-Rink-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "ice_rink_alt",
+        "ios": "Ice-Rink-NotGoing-wBox"
+      }
+    },
+    {
+      "name": "Schooner Pub",
+      "color": "C2185B",
+      "location": "Deck 4",
+      "goingIcon": {
+        "android": "icon_unknown",
+        "ios": "Unknown-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "icon_unknown_alt",
+        "ios": "Unknown-NotGoing-wBox"
+      }
+    },
+    {
+      "name": "Arcade",
+      "color": "334155",
+      "location": "Deck 12",
+      "goingIcon": {
+        "android": "icon_unknown",
+        "ios": "Unknown-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "icon_unknown_alt",
+        "ios": "Unknown-NotGoing-wBox"
+      }
+    },
+    {
+      "name": "Sports Bar",
+      "color": "EA580C",
+      "location": "Deck 5",
+      "goingIcon": {
+        "android": "icon_unknown",
+        "ios": "Unknown-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "icon_unknown_alt",
+        "ios": "Unknown-NotGoing-wBox"
+      }
+    },
+    {
+      "name": "Viking Crown",
+      "color": "7C3AED",
+      "location": "Deck 14",
+      "goingIcon": {
+        "android": "icon_unknown",
+        "ios": "Unknown-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "icon_unknown_alt",
+        "ios": "Unknown-NotGoing-wBox"
+      }
+    },
+    {
+      "name": "Boleros Lounge",
+      "color": "92400E",
+      "location": "Deck 4",
+      "goingIcon": {
+        "android": "icon_unknown",
+        "ios": "Unknown-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "icon_unknown_alt",
+        "ios": "Unknown-NotGoing-wBox"
+      }
+    },
+    {
+      "name": "Solarium",
+      "color": "0891B2",
+      "location": "Deck 11",
+      "goingIcon": {
+        "android": "icon_unknown",
+        "ios": "Unknown-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "icon_unknown_alt",
+        "ios": "Unknown-NotGoing-wBox"
+      }
+    },
+    {
+      "name": "Ale And Anchor Pub",
+      "color": "A16207",
+      "location": "Deck 5",
+      "goingIcon": {
+        "android": "icon_unknown",
+        "ios": "Unknown-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "icon_unknown_alt",
+        "ios": "Unknown-NotGoing-wBox"
+      }
+    },
+    {
+      "name": "Ale & Anchor Pub",
+      "color": "A16207",
+      "location": "Deck 5",
+      "goingIcon": {
+        "android": "icon_unknown",
+        "ios": "Unknown-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "icon_unknown_alt",
+        "ios": "Unknown-NotGoing-wBox"
+      }
+    },
+    {
+      "name": "Bull And Bear Pub",
+      "color": "991B1B",
+      "location": "Deck 5",
+      "goingIcon": {
+        "android": "icon_unknown",
+        "ios": "Unknown-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "icon_unknown_alt",
+        "ios": "Unknown-NotGoing-wBox"
+      }
+    },
+    {
+      "name": "Bull & Bear Pub",
+      "color": "991B1B",
+      "location": "Deck 5",
+      "goingIcon": {
+        "android": "icon_unknown",
+        "ios": "Unknown-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "icon_unknown_alt",
+        "ios": "Unknown-NotGoing-wBox"
+      }
+    }
+  ],
+  "genericVenueSlots": [
+    {
+      "color": "0F766E",
+      "goingIcon": {
+        "android": "Unknown-Going-wBox",
+        "ios": "Unknown-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "Unknown-NotGoing-wBox",
+        "ios": "Unknown-NotGoing-wBox"
+      }
+    },
+    {
+      "color": "5B21B6",
+      "goingIcon": {
+        "android": "Unknown-Going-wBox",
+        "ios": "Unknown-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "Unknown-NotGoing-wBox",
+        "ios": "Unknown-NotGoing-wBox"
+      }
+    },
+    {
+      "color": "44403C",
+      "goingIcon": {
+        "android": "Unknown-Going-wBox",
+        "ios": "Unknown-Going-wBox"
+      },
+      "notGoingIcon": {
+        "android": "Unknown-NotGoing-wBox",
+        "ios": "Unknown-NotGoing-wBox"
+      }
+    }
+  ],
+  "meetAndGreetsEnabledDefault": true,
+  "specialEventsEnabledDefault": true,
+  "unofficalEventsEnabledDefault": true,
+  "eventTypeDisplayNames": {
+    "Show": {
+      "en": "Show",
+      "de": "Show",
+      "es": "Show",
+      "fr": "Show",
+      "pt": "Show",
+      "da": "Show",
+      "fi": "Show"
+    },
+    "Unofficial Event": {
+      "en": "Cruiser Organized Event",
+      "de": "Von Kreuzfahrern organisiertes Event",
+      "es": "Evento Organizado por Cruceristas",
+      "fr": "Evenement Organise par les Croisieristes",
+      "pt": "Evento Organizado por Cruzeiristas",
+      "da": "Cruiser-organiseret Event",
+      "fi": "Risteilijoiden jarjestama tapahtuma"
+    },
+    "Special Event": {
+      "en": "Special Event",
+      "de": "Spezialevent",
+      "es": "Evento Especial",
+      "fr": "Evenement Special",
+      "pt": "Evento Especial",
+      "da": "Sarlig Begivenhed",
+      "fi": "Erikoistapahtuma"
+    },
+    "Meet and Greet": {
+      "en": "Meet and Greet",
+      "de": "Meet and Greet",
+      "es": "Meet and Greet",
+      "fr": "Meet and Greet",
+      "pt": "Meet and Greet",
+      "da": "Meet and Greet",
+      "fi": "Meet and Greet"
+    },
+    "Clinic": {
+      "en": "Clinic",
+      "de": "Klinik",
+      "es": "Clinica",
+      "fr": "Clinique",
+      "pt": "Clinica",
+      "da": "Klinik",
+      "fi": "Klinikka"
+    }
+  },
+  "eventTypeFilterDisplayNames": {
+    "Show": {
+      "en": "Show Shows",
+      "de": "Zeige Shows",
+      "es": "Mostrar Shows",
+      "fr": "Afficher Shows",
+      "pt": "Mostrar Shows",
+      "da": "Vis Shows",
+      "fi": "Nayta Show't"
+    },
+    "Special Event": {
+      "en": "Show Special Events",
+      "de": "Zeige Spezialevents",
+      "es": "Mostrar Eventos Especiales",
+      "fr": "Afficher Evenements Speciaux",
+      "pt": "Mostrar Eventos Especiais",
+      "da": "Vis Sarlige Begivenheder",
+      "fi": "Nayta Erikoistapahtumat"
+    },
+    "Meet and Greet": {
+      "en": "Show Meet and Greets",
+      "de": "Show Meet and Greets",
+      "es": "Show Meet and Greets",
+      "fr": "Show Meet and Greets",
+      "pt": "Show Meet and Greets",
+      "da": "Show Meet and Greets",
+      "fi": "Show Meet and Greets"
+    },
+    "Clinic": {
+      "en": "Show Clinics",
+      "de": "Zeige Kliniken",
+      "es": "Mostrar Clinicas",
+      "fr": "Afficher Cliniques",
+      "pt": "Mostrar Clinicas",
+      "da": "Vis Klinikker",
+      "fi": "Nayta Klinikat"
+    },
+    "Unofficial Event": {
+      "en": "Show Cruiser Organized Events",
+      "de": "Zeige von Kreuzfahrern organisierte Events",
+      "es": "Mostrar Eventos Organizados por Cruceristas",
+      "fr": "Afficher Evenements Organises par les Croisieristes",
+      "pt": "Mostrar Eventos Organizados por Cruzeiristas",
+      "da": "Vis Cruiser-organiserede Events",
+      "fi": "Nayta Risteilijoiden jarjestamat tapahtumat"
+    }
+  },
+  "commentsNotAvailableTranslationKey": "DefaultDescription70K",
+  "aiSchedule": true,
+  "scheduleQRShareEnabled": true
+}

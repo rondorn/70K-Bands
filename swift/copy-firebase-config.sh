@@ -63,3 +63,6 @@ else
 fi
 
 echo "🔥 Firebase Config Script: Completed successfully"
+
+# Bundle shared festival JSON (qa-config/festivals)
+"${SRCROOT}/copy-festival-config.sh"
