@@ -36,7 +36,6 @@ Built on the same Open Metal Fest Suite platform while providing festival-specif
 Open Metal Fest Suite exists to:
 
 - Provide festival attendees with better planning tools
-- Reduce development effort for festival organizers
 - Encourage community-driven content creation
 - Keep festival software open and portable
 - Enable multiple festivals to share a common technology platform
