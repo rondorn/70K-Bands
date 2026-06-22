@@ -87,6 +87,7 @@ Current translations include:
 
 - English
 - Danish
+- Finnish
 - French
 - German
 - Portuguese
