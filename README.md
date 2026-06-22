@@ -57,6 +57,8 @@ Rank artists using:
 - Might See
 - Won't See
 
+These rankings are used to personalize notifications, schedule recommendations, and community statistics.
+
 ### Schedule Management
 
 - Daily schedule views
@@ -115,12 +117,16 @@ Open Metal Fest Suite is released under the GPL license.
 
 Developers are encouraged to:
 
-- Fork the project
 - Contribute improvements
-- Build festival-specific implementations
 - Submit bug fixes and enhancements
+- Help support existing festivals
+- Work with the project to add support for new festivals
 
-If you are developing a festival application based on Open Metal Fest Suite, please reach out. Collaboration is encouraged and helps strengthen the ecosystem for the entire metal festival community.
+While independent forks are permitted under the GPL license, collaboration through the primary Open Metal Fest Suite repository is strongly encouraged.
+
+The platform is under active development, and maintaining a shared codebase helps ensure that improvements, bug fixes, and new features benefit the entire metal festival community.
+
+If you are interested in supporting a new festival, please reach out before creating a separate implementation. In most cases, adding support through the main project will result in less duplicated effort and a better experience for festival organizers and attendees alike.
 
 ---
 
