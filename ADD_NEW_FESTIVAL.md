@@ -10,7 +10,7 @@ High-level guide for standing up a **new festival app** on the shared Android + 
 
 Open Metal Fest Suite is released under the **GPL**. Independent forks are permitted, but **collaboration through this repository is strongly encouraged**.
 
-The platform is under active development. A shared codebase means bug fixes, improvements, and new features benefit the **entire** metal festival community — every app that ships from the suite, not just one fork.
+The platform is under active development. A shared codebase means bug fixes, improvements, and new features benefit the **entire** metal festival community
 
 **Please reach out before creating a separate implementation.** In most cases, adding your festival here (config JSON, assets, Firebase, store listings) is less duplicated effort and a better experience for organizers and attendees. The main obstacle is **lineup and schedule data**, not the application code.
 
