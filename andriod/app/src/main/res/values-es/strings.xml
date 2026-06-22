@@ -392,17 +392,15 @@
     
     <!-- About Screen -->
     <string name="about">Acerca de</string>
-    <string name="about_description1">Esta es una aplicación no oficial y de código abierto diseñada para ayudar a los usuarios a descubrir bandas que aparecen en !FESTIVALE_NAME!, y ver horarios de eventos, horas y lugares en un solo lugar.</string>
-    <string name="about_description3">Esta aplicación no está afiliada, respaldada ni oficialmente conectada con ningún festival, organizador de eventos, promotor o artista. Todos los nombres de artistas, nombres de eventos e información relacionada siguen siendo propiedad de sus respectivos propietarios y se utilizan únicamente con fines informativos.</string>
-    <string name="about_description4">El código fuente de esta aplicación es de código abierto y está licenciado bajo la Licencia Pública General de GNU, versión 2 (GPL-2.0).</string>
     <string name="about_copyright">Copyright © 2015–presente</string>
     <string name="about_the_team">El Equipo</string>
-    <string name="about_team_ron_dorn">Ron Dorn</string>
-    <string name="about_role_lead_developer">Desarrollador principal y creador (centro)</string>
-    <string name="about_team_robert_jan">Robert Jan de Vries</string>
-    <string name="about_role_ui_designer">Diseñador de interfaz de usuario (derecha)</string>
-    <string name="about_team_aaron">Aaron Copeland</string>
-    <string name="about_role_curator">Curador de resúmenes de 70K Bands (izquierda)</string>
+    <string name="AboutRoleLeadDeveloper">Desarrollador principal y creador</string>
+    <string name="AboutRoleUIDesigner">Diseñador de interfaz de usuario</string>
+    <string name="AboutRoleCurator">Curador de resúmenes de 70K Bands</string>
+    <string name="AboutRoleMdfCurator">Curador de contenido MDF</string>
+    <string name="AboutPositionCenter">centro</string>
+    <string name="AboutPositionRight">derecha</string>
+    <string name="AboutPositionLeft">izquierda</string>
     <string name="about_team_photo">Foto del Equipo</string>
 
     <!-- Schedule QR -->

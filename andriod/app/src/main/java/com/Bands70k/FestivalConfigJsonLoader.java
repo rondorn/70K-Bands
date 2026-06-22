@@ -18,6 +18,36 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
+ * About-screen team member (name + localized role keys from festival.json).
+ */
+class AboutTeamMember {
+    public final String name;
+    public final String roleTranslationKey;
+    public final String photoPositionTranslationKey;
+    /** Android drawable resource names; empty when this member has no photo(s). */
+    public final List<String> photoDrawableNames;
+
+    AboutTeamMember(String name, String roleTranslationKey, String photoPositionTranslationKey,
+                    List<String> photoDrawableNames) {
+        this.name = name;
+        this.roleTranslationKey = roleTranslationKey;
+        this.photoPositionTranslationKey = photoPositionTranslationKey;
+        this.photoDrawableNames = photoDrawableNames;
+    }
+}
+
+/**
+ * About-screen team section from festival.json.
+ */
+class AboutTeamConfig {
+    public final List<AboutTeamMember> members;
+
+    AboutTeamConfig(List<AboutTeamMember> members) {
+        this.members = members;
+    }
+}
+
+/**
  * Loads {@link FestivalConfig} fields from bundled assets/festival.json and registry.json.
  */
 final class FestivalConfigJsonLoader {
@@ -121,7 +151,38 @@ final class FestivalConfigJsonLoader {
         c.genericVenueSlots = parseGenericSlots(root.getJSONArray("genericVenueSlots"));
         c.eventTypeDisplayNames = parseLocalizedEventMap(root.getJSONObject("eventTypeDisplayNames"));
         c.eventTypeFilterDisplayNames = parseLocalizedEventMap(root.getJSONObject("eventTypeFilterDisplayNames"));
+        c.aboutTeam = parseAboutTeam(root.getJSONObject("about"));
         return c;
+    }
+
+    private static AboutTeamConfig parseAboutTeam(JSONObject about) throws Exception {
+        JSONArray membersArr = about.getJSONArray("members");
+        List<AboutTeamMember> members = new ArrayList<>();
+        for (int i = 0; i < membersArr.length(); i++) {
+            JSONObject m = membersArr.getJSONObject(i);
+            String positionKey = m.has("photoPositionTranslationKey") && !m.isNull("photoPositionTranslationKey")
+                    ? m.getString("photoPositionTranslationKey") : null;
+            members.add(new AboutTeamMember(
+                    m.getString("name"),
+                    m.getString("roleTranslationKey"),
+                    positionKey,
+                    parseMemberPhotos(m)
+            ));
+        }
+        return new AboutTeamConfig(members);
+    }
+
+    private static List<String> parseMemberPhotos(JSONObject member) throws Exception {
+        List<String> photoNames = new ArrayList<>();
+        if (member.has("photos") && !member.isNull("photos")) {
+            JSONArray photosArr = member.getJSONArray("photos");
+            for (int j = 0; j < photosArr.length(); j++) {
+                photoNames.add(platformString(photosArr.getJSONObject(j), "android"));
+            }
+        } else if (member.has("photo") && !member.isNull("photo")) {
+            photoNames.add(platformString(member.getJSONObject("photo"), "android"));
+        }
+        return photoNames;
     }
 
     private static List<Venue> parseVenues(JSONArray arr) throws Exception {
@@ -243,5 +304,6 @@ final class FestivalConfigJsonLoader {
         int commentsNotAvailableStringResourceId;
         boolean aiSchedule;
         boolean scheduleQRShareEnabled;
+        AboutTeamConfig aboutTeam;
     }
 }

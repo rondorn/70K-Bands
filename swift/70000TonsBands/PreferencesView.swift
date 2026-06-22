@@ -260,6 +260,9 @@ struct PreferencesView: View {
     
     private var informationSection: some View {
         Section(NSLocalizedString("Information", comment: "")) {
+            Text(DataIntegrityTag.suiteDisplayLabel())
+                .font(.footnote)
+                .foregroundColor(.secondary)
             NavigationLink(destination: AboutView()) {
                 Text("About")
                     .font(.body)

@@ -418,17 +418,20 @@
     
     <!-- About Screen -->
     <string name="about">About</string>
-    <string name="about_description1">This is an unofficial, open-source application designed to help users discover bands appearing at !FESTIVALE_NAME!, and to view event schedules, times, and venues in one place.</string>
-    <string name="about_description3">This application is not affiliated with, endorsed by, or officially connected to any festival, event organizer, promoter, or performing artist. All artist names, event names, and related information remain the property of their respective owners and are used for informational purposes only.</string>
-    <string name="about_description4">The source code for this application is open-sourced and licensed under the GNU General Public License, version 2 (GPL-2.0).</string>
+    <string name="about_description1">This is an unofficial, open-source application for !FESTIVAL_NAME! and part of the Open Metal Fest Suite project. The app helps attendees discover bands, build schedules, track performances, receive notifications, and access festival information in one place.</string>
+    <string name="about_description2">This application is not affiliated with, endorsed by, or officially connected to any festival, event organizer, promoter, or performing artist. All artist names, event names, logos, and related information remain the property of their respective owners and are used for informational purposes only.</string>
+    <string name="about_description3">!APP_NAME! is built on Open Metal Fest Suite, an open-source platform for metal festival applications. The platform provides shared functionality for artist discovery, schedule management, notifications, rankings, statistics, and community-driven content while remaining free and open source.</string>
+    <string name="about_description4">Developers, festival organizers, and community contributors interested in supporting additional festivals are encouraged to collaborate through the Open Metal Fest Suite project. Maintaining a shared codebase helps ensure that improvements, bug fixes, and new features benefit the entire metal festival community.</string>
+    <string name="about_description5">The source code for this application is open source and licensed under the GNU General Public License, Version 2 (GPL-2.0).</string>
     <string name="about_copyright">Copyright © 2015–present</string>
     <string name="about_the_team">The Team</string>
-    <string name="about_team_ron_dorn">Ron Dorn</string>
-    <string name="about_role_lead_developer">Lead developer and creator (center)</string>
-    <string name="about_team_robert_jan">Robert Jan de Vries</string>
-    <string name="about_role_ui_designer">UI Designer (right)</string>
-    <string name="about_team_aaron">Aaron Copeland</string>
-    <string name="about_role_curator">70K Bands Summary Curator (left)</string>
+    <string name="AboutRoleLeadDeveloper">Lead developer and creator</string>
+    <string name="AboutRoleUIDesigner">UI Designer</string>
+    <string name="AboutRoleCurator">70K Bands Summary Curator</string>
+    <string name="AboutRoleMdfCurator">MDF Content Curator</string>
+    <string name="AboutPositionCenter">center</string>
+    <string name="AboutPositionRight">right</string>
+    <string name="AboutPositionLeft">left</string>
     <string name="about_team_photo">Team Photo</string>
 
     <!-- Schedule QR (match iOS keys where applicable) -->

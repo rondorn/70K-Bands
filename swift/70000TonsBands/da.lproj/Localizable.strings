@@ -318,14 +318,12 @@
 
 // About Screen
 "About" = "Om";
-"AboutDescription1" = "Dette er en uofficiel open-source-applikation designet til at hjælpe brugere med at opdage bands, der optræder på !FESTIVALE_NAME!, og se begivenhedsprogrammer, tidspunkter og steder på ét sted.";
-"AboutDescription3" = "Denne applikation er ikke tilknyttet, godkendt af eller officielt forbundet med nogen festival, begivenhedsarrangør, promoter eller kunstner. Alle kunstnernavne, begivenhedsnavne og relaterede oplysninger forbliver ejendommen til deres respektive ejere og bruges kun til informationsformål.";
-"AboutDescription4" = "Kildekoden til denne applikation er open-source og licenseret under GNU General Public License, version 2 (GPL-2.0).";
 "AboutCopyright" = "Copyright © 2015–nu";
 "AboutTheTeam" = "Holdet";
 "AboutRoleLeadDeveloper" = "Hovedudvikler og skaber";
 "AboutRoleUIDesigner" = "UI-designer";
 "AboutRoleCurator" = "70K Bands Resume-kurator";
+"AboutRoleMdfCurator" = "MDF-indholdskurator";
 "AboutPositionCenter" = "center";
 "AboutPositionRight" = "højre";
 "AboutPositionLeft" = "venstre";

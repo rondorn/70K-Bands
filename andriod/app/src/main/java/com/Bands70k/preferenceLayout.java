@@ -129,6 +129,11 @@ public class preferenceLayout  extends Activity {
         headerText.setText(appName + " " + preferencesText);
 
         // Set up About button click listener
+        TextView suiteRegistryLabel = findViewById(R.id.suite_registry_label);
+        if (suiteRegistryLabel != null) {
+            suiteRegistryLabel.setText(DataIntegrityTag.suiteDisplayLabel());
+        }
+
         LinearLayout aboutButton = findViewById(R.id.aboutButton);
         if (aboutButton != null) {
             aboutButton.setOnClickListener(new View.OnClickListener() {

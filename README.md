@@ -126,7 +126,9 @@ While independent forks are permitted under the GPL license, collaboration throu
 
 The platform is under active development, and maintaining a shared codebase helps ensure that improvements, bug fixes, and new features benefit the entire metal festival community.
 
-If you are interested in supporting a new festival, please reach out before creating a separate implementation. In most cases, adding support through the main project will result in less duplicated effort and a better experience for festival organizers and attendees alike. The main obstacle to supporting new festivals is lineup and schedule data, not the actual code
+If you are interested in supporting a new festival, please reach out before creating a separate implementation. In most cases, adding support through the main project will result in less duplicated effort and a better experience for festival organizers and attendees alike. The main obstacle to supporting new festivals is lineup and schedule data, not the actual code.
+
+See **[ADD_NEW_FESTIVAL.md](ADD_NEW_FESTIVAL.md)** for the full onboarding guide (data ownership, multi-year commitment, Firebase, store listings).
 
 ---
 

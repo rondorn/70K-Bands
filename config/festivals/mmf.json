@@ -260,6 +260,30 @@
       "fi": "Nayta Osallistujien jarjestamat tapahtumat"
     }
   },
+  "about": {
+    "members": [
+      {
+        "name": "Ron Dorn",
+        "roleTranslationKey": "AboutRoleLeadDeveloper",
+        "photos": [
+          {
+            "android": "about_festival_photo",
+            "ios": "about-festival-photo"
+          }
+        ]
+      },
+      {
+        "name": "Robert Jan de Vries",
+        "roleTranslationKey": "AboutRoleUIDesigner",
+        "photos": [
+          {
+            "android": "about_robert_photo",
+            "ios": "about-robert-photo"
+          }
+        ]
+      }
+    ]
+  },
   "commentsNotAvailableTranslationKey": "DefaultDescriptionMDF",
   "aiSchedule": true,
   "scheduleQRShareEnabled": false

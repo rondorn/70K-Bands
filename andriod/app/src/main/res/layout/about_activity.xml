@@ -12,6 +12,15 @@
         android:orientation="vertical"
         android:padding="20dp">
 
+        <!-- Suite attribution (populated at runtime) -->
+        <TextView
+            android:id="@+id/suite_registry_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="13sp"
+            android:textColor="#8E8E93"
+            android:paddingBottom="12dp" />
+
         <!-- About Header -->
         <TextView
             android:layout_width="match_parent"
@@ -22,30 +31,47 @@
             android:textColor="#FFFFFF"
             android:paddingBottom="20dp" />
 
-        <!-- Main Description -->
+        <!-- Main Description (festival/app names injected from festival.json) -->
         <TextView
             android:id="@+id/about_description1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/about_description1"
             android:textSize="17sp"
             android:textColor="#FFFFFF"
             android:lineSpacingMultiplier="1.4"
             android:paddingBottom="16dp" />
 
         <TextView
+            android:id="@+id/about_description2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/about_description3"
             android:textSize="17sp"
             android:textColor="#FFFFFF"
             android:lineSpacingMultiplier="1.4"
             android:paddingBottom="16dp" />
 
         <TextView
+            android:id="@+id/about_description3"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/about_description4"
+            android:textSize="17sp"
+            android:textColor="#FFFFFF"
+            android:lineSpacingMultiplier="1.4"
+            android:paddingBottom="16dp" />
+
+        <TextView
+            android:id="@+id/about_description4"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="17sp"
+            android:textColor="#FFFFFF"
+            android:lineSpacingMultiplier="1.4"
+            android:paddingBottom="16dp" />
+
+        <TextView
+            android:id="@+id/about_description5"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:textSize="17sp"
             android:textColor="#FFFFFF"
             android:lineSpacingMultiplier="1.4"
@@ -79,73 +105,13 @@
             android:textColor="#FFFFFF"
             android:paddingBottom="16dp" />
 
-        <!-- Team Members -->
+        <!-- Team Members (populated from festival.json) -->
         <LinearLayout
+            android:id="@+id/about_team_members"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingBottom="20dp">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/about_team_ron_dorn"
-                android:textSize="17sp"
-                android:textStyle="bold"
-                android:textColor="#FFFFFF"
-                android:paddingBottom="2dp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/about_role_lead_developer"
-                android:textSize="13sp"
-                android:textColor="#8E8E93"
-                android:paddingBottom="12dp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/about_team_robert_jan"
-                android:textSize="17sp"
-                android:textStyle="bold"
-                android:textColor="#FFFFFF"
-                android:paddingBottom="2dp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/about_role_ui_designer"
-                android:textSize="13sp"
-                android:textColor="#8E8E93"
-                android:paddingBottom="12dp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/about_team_aaron"
-                android:textSize="17sp"
-                android:textStyle="bold"
-                android:textColor="#FFFFFF"
-                android:paddingBottom="2dp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/about_role_curator"
-                android:textSize="13sp"
-                android:textColor="#8E8E93"
-                android:paddingBottom="20dp" />
-        </LinearLayout>
-
-        <!-- Team Photo -->
-        <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:src="@drawable/about_team"
-            android:adjustViewBounds="true"
-            android:scaleType="fitCenter"
-            android:contentDescription="@string/about_team_photo" />
+            android:paddingBottom="20dp" />
 
         <!-- Bottom Spacing -->
         <View

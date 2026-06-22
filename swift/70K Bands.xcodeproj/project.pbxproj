@@ -264,11 +264,9 @@
 		1172EE582E5A292E006E3596 /* preferenceDefault.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1172EE552E5A292E006E3596 /* preferenceDefault.swift */; };
 		1172EE592E5A292E006E3596 /* ConfigurationTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1172EE512E5A292E006E3596 /* ConfigurationTest.swift */; };
 		1172EE5A2E5A292E006E3596 /* FestivalConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1172EE522E5A292E006E3596 /* FestivalConfig.swift */; };
-		F1E2A0022E5A292E006E3596 /* FestivalConfigLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E2A0012E5A292E006E3596 /* FestivalConfigLoader.swift */; };
 		1172EE5B2E5A292E006E3596 /* preferenceDefault.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1172EE552E5A292E006E3596 /* preferenceDefault.swift */; };
 		1172EE5C2E5A292E006E3596 /* ConfigurationTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1172EE512E5A292E006E3596 /* ConfigurationTest.swift */; };
 		1172EE5D2E5A292E006E3596 /* FestivalConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1172EE522E5A292E006E3596 /* FestivalConfig.swift */; };
-		F1E2A0032E5A292E006E3596 /* FestivalConfigLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E2A0012E5A292E006E3596 /* FestivalConfigLoader.swift */; };
 		1172EE5E2E5A292E006E3596 /* Info-MDF.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1172EE542E5A292E006E3596 /* Info-MDF.plist */; };
 		1172EE5F2E5A292E006E3596 /* Info-70K.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1172EE532E5A292E006E3596 /* Info-70K.plist */; };
 		1172EE602E5A292E006E3596 /* Info-MDF.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1172EE542E5A292E006E3596 /* Info-MDF.plist */; };
@@ -276,7 +274,6 @@
 		1172EE622E5A292E006E3596 /* preferenceDefault.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1172EE552E5A292E006E3596 /* preferenceDefault.swift */; };
 		1172EE632E5A292E006E3596 /* ConfigurationTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1172EE512E5A292E006E3596 /* ConfigurationTest.swift */; };
 		1172EE642E5A292E006E3596 /* FestivalConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1172EE522E5A292E006E3596 /* FestivalConfig.swift */; };
-		F1E2A0042E5A292E006E3596 /* FestivalConfigLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E2A0012E5A292E006E3596 /* FestivalConfigLoader.swift */; };
 		1172EE672E5A3486006E3596 /* UILaunchScreen-MDF.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1172EE652E5A3486006E3596 /* UILaunchScreen-MDF.xib */; };
 		1172EE682E5A3486006E3596 /* UILaunchScreen-MDF.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1172EE652E5A3486006E3596 /* UILaunchScreen-MDF.xib */; };
 		1172EE692E5A44F4006E3596 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1154F6171A575893003F4764 /* Images.xcassets */; };
@@ -404,6 +401,18 @@
 		11EB86B52F353C56007D5AD0 /* LandscapeScheduleViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DDB7E0B0AC440BA94B56DBD /* LandscapeScheduleViewModel.swift */; };
 		11EB86B62F353C56007D5AD0 /* LandscapeScheduleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA018E4476A45C994ED91C0 /* LandscapeScheduleView.swift */; };
 		11EB86B72F353C56007D5AD0 /* LandscapeScheduleViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DDB7E0B0AC440BA94B56DBD /* LandscapeScheduleViewModel.swift */; };
+		11EB86C12F364000007D5AD0 /* about-festival-photo.png in Resources */ = {isa = PBXBuildFile; fileRef = 11EB86C02F364000007D5AD0 /* about-festival-photo.png */; };
+		11EB86C22F364000007D5AD0 /* about-festival-photo.png in Resources */ = {isa = PBXBuildFile; fileRef = 11EB86C02F364000007D5AD0 /* about-festival-photo.png */; };
+		11EB86C32F364000007D5AD0 /* about-festival-photo.png in Resources */ = {isa = PBXBuildFile; fileRef = 11EB86C02F364000007D5AD0 /* about-festival-photo.png */; };
+		11EB86C42F364000007D5AD0 /* about-festival-photo.png in Resources */ = {isa = PBXBuildFile; fileRef = 11EB86C02F364000007D5AD0 /* about-festival-photo.png */; };
+		11EB86D12F364100007D5AD0 /* about-robert-photo.png in Resources */ = {isa = PBXBuildFile; fileRef = 11EB86D02F364100007D5AD0 /* about-robert-photo.png */; };
+		11EB86D22F364100007D5AD0 /* about-robert-photo.png in Resources */ = {isa = PBXBuildFile; fileRef = 11EB86D02F364100007D5AD0 /* about-robert-photo.png */; };
+		11EB86D32F364100007D5AD0 /* about-robert-photo.png in Resources */ = {isa = PBXBuildFile; fileRef = 11EB86D02F364100007D5AD0 /* about-robert-photo.png */; };
+		11EB86D42F364100007D5AD0 /* about-robert-photo.png in Resources */ = {isa = PBXBuildFile; fileRef = 11EB86D02F364100007D5AD0 /* about-robert-photo.png */; };
+		11EB86E12F364200007D5AD0 /* about-leah-photo.png in Resources */ = {isa = PBXBuildFile; fileRef = 11EB86E02F364200007D5AD0 /* about-leah-photo.png */; };
+		11EB86E22F364200007D5AD0 /* about-leah-photo.png in Resources */ = {isa = PBXBuildFile; fileRef = 11EB86E02F364200007D5AD0 /* about-leah-photo.png */; };
+		11EB86E32F364200007D5AD0 /* about-leah-photo.png in Resources */ = {isa = PBXBuildFile; fileRef = 11EB86E02F364200007D5AD0 /* about-leah-photo.png */; };
+		11EB86E42F364200007D5AD0 /* about-leah-photo.png in Resources */ = {isa = PBXBuildFile; fileRef = 11EB86E02F364200007D5AD0 /* about-leah-photo.png */; };
 		11ED61811A9103C100D29A5B /* UtilityHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ED61801A9103C100D29A5B /* UtilityHandler.swift */; };
 		11ED61821A91105000D29A5B /* UtilityHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ED61801A9103C100D29A5B /* UtilityHandler.swift */; };
 		11F0333E1AB3B26D00AA29B8 /* scheduleHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C8BDC51A7D25E700037F2B /* scheduleHandler.swift */; };
@@ -476,7 +485,7 @@
 		6CE34996204CCBD7380D814B /* CustomBandDescription.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110924351F748601002237AB /* CustomBandDescription.swift */; };
 		6EA7DF275C4D59602480C9C4 /* userDataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ABAA5F222C7EFF00A04397 /* userDataHandler.swift */; };
 		6FCE71239F3F64BF35D0D6BC /* DataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11895B962EE4C8EB008CC4A9 /* DataManager.swift */; };
-		729ECFBC3A7715C5224D9F56 /* UILaunchScreen-MMF.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1463329C2FDC27932432B73F /* UILaunchScreen-MMF.xib */; };
+		729ECFBC3A7715C5224D9F56 /* Base.lproj/UILaunchScreen-MMF.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1463329C2FDC27932432B73F /* Base.lproj/UILaunchScreen-MMF.xib */; };
 		75412DD8446520A4ED4D7EB7 /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D661A6827FC00267A8F /* CFNetwork.framework */; };
 		75419F402F47B68D1313D12C /* about-team.png in Resources */ = {isa = PBXBuildFile; fileRef = 11EB86AE2F353160007D5AD0 /* about-team.png */; };
 		767199D3B512AFCE2A8ACCBA /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1172A2251B5AADC900C28AB3 /* Localizable.strings */; };
@@ -497,9 +506,8 @@
 		9155EC7CABABF9E75B7F23B1 /* ConfigurationTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1172EE512E5A292E006E3596 /* ConfigurationTest.swift */; };
 		91B534441B04A7B6A718CAA5 /* ScheduleBinaryQRScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E8A0512EE8A10008472A3 /* ScheduleBinaryQRScannerView.swift */; };
 		91DE0309F4D48DE27B165510 /* FestivalConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1172EE522E5A292E006E3596 /* FestivalConfig.swift */; };
-		F1E2A0052E5A292E006E3596 /* FestivalConfigLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E2A0012E5A292E006E3596 /* FestivalConfigLoader.swift */; };
 		9938B9E1542EB92612852BC9 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DD4175EFC5176744994D3FE6 /* Foundation.framework */; };
-		9DE58C80B71FF2933BD45C36 /* BuildFile in Frameworks */ = {isa = PBXBuildFile; };
+		9DE58C80B71FF2933BD45C36 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
 		9FC5D12656BBD42B6539A941 /* DetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1175C9392E4D2C5A0074E2F2 /* DetailView.swift */; };
 		A0E332C6C3514EE2A65FF3DC /* LandscapeScheduleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA018E4476A45C994ED91C0 /* LandscapeScheduleView.swift */; };
 		A0FBB98EFDE4176062616331 /* CloudKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11FD1F1D20E006C100BE0141 /* CloudKit.framework */; };
@@ -559,6 +567,14 @@
 		EB402D9184899A5694160154 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D641A6827F300267A8F /* AudioToolbox.framework */; };
 		ED6F1604983D1101C412897C /* _0000TonsBands.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 1154F60D1A575893003F4764 /* _0000TonsBands.xcdatamodeld */; };
 		F0B408B39F1B6C54AD16CCE7 /* countryHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D05AAC291C545000D5B002 /* countryHandler.swift */; };
+		F1E2A0022E5A292E006E3596 /* FestivalConfigLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E2A0012E5A292E006E3596 /* FestivalConfigLoader.swift */; };
+		F1E2A0032E5A292E006E3596 /* FestivalConfigLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E2A0012E5A292E006E3596 /* FestivalConfigLoader.swift */; };
+		F1E2A0042E5A292E006E3596 /* FestivalConfigLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E2A0012E5A292E006E3596 /* FestivalConfigLoader.swift */; };
+		F1E2A0052E5A292E006E3596 /* FestivalConfigLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E2A0012E5A292E006E3596 /* FestivalConfigLoader.swift */; };
+		F1E2B0122E5A292E006E3596 /* DataIntegrityTag.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E2B0112E5A292E006E3596 /* DataIntegrityTag.swift */; };
+		F1E2B0132E5A292E006E3596 /* DataIntegrityTag.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E2B0112E5A292E006E3596 /* DataIntegrityTag.swift */; };
+		F1E2B0142E5A292E006E3596 /* DataIntegrityTag.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E2B0112E5A292E006E3596 /* DataIntegrityTag.swift */; };
+		F1E2B0152E5A292E006E3596 /* DataIntegrityTag.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E2B0112E5A292E006E3596 /* DataIntegrityTag.swift */; };
 		F2EF5FCC2A774600FD4827EF /* Settings70k.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E4EDA92ACBAE5E0036D002 /* Settings70k.swift */; };
 		F4041B7229C6CDF1BDE208A2 /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11B20C431ECDE4ED0031FD3A /* UserNotifications.framework */; };
 		F5E3DD40F40436DDFF677745 /* iCloudDataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119A867322D12FA700D23233 /* iCloudDataHandler.swift */; };
@@ -692,7 +708,6 @@
 		1172EE4B2E5A26C9006E3596 /* GoogleService-Info-70K.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info-70K.plist"; sourceTree = "<group>"; };
 		1172EE512E5A292E006E3596 /* ConfigurationTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigurationTest.swift; sourceTree = "<group>"; };
 		1172EE522E5A292E006E3596 /* FestivalConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FestivalConfig.swift; sourceTree = "<group>"; };
-		F1E2A0012E5A292E006E3596 /* FestivalConfigLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FestivalConfigLoader.swift; sourceTree = "<group>"; };
 		1172EE532E5A292E006E3596 /* Info-70K.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info-70K.plist"; sourceTree = "<group>"; };
 		1172EE542E5A292E006E3596 /* Info-MDF.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info-MDF.plist"; sourceTree = "<group>"; };
 		1172EE552E5A292E006E3596 /* preferenceDefault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = preferenceDefault.swift; sourceTree = "<group>"; };
@@ -760,12 +775,15 @@
 		11E8A0512EE8A10008472A3 /* ScheduleBinaryQRScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleBinaryQRScannerView.swift; sourceTree = "<group>"; };
 		11EB86AA2F3530C8007D5AD0 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		11EB86AE2F353160007D5AD0 /* about-team.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "about-team.png"; sourceTree = "<group>"; };
+		11EB86C02F364000007D5AD0 /* about-festival-photo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "about-festival-photo.png"; sourceTree = "<group>"; };
+		11EB86D02F364100007D5AD0 /* about-robert-photo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "about-robert-photo.png"; sourceTree = "<group>"; };
+		11EB86E02F364200007D5AD0 /* about-leah-photo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "about-leah-photo.png"; sourceTree = "<group>"; };
 		11ED61801A9103C100D29A5B /* UtilityHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UtilityHandler.swift; sourceTree = "<group>"; };
 		11F4AB231B61673000C52BE0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Base; path = Base.lproj/Localizable.strings; sourceTree = "<group>"; };
 		11FAC0012FEF20260507A001 /* DetailProfileBypassBandNames.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailProfileBypassBandNames.swift; sourceTree = "<group>"; };
 		11FBBE1D232F26E000109035 /* NotificationPayload.apns */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = NotificationPayload.apns; sourceTree = "<group>"; };
 		11FD1F1D20E006C100BE0141 /* CloudKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CloudKit.framework; path = System/Library/Frameworks/CloudKit.framework; sourceTree = SDKROOT; };
-		1463329C2FDC27932432B73F /* UILaunchScreen-MMF.xib */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = file.xib; path = "Base.lproj/UILaunchScreen-MMF.xib"; sourceTree = "<group>"; };
+		1463329C2FDC27932432B73F /* Base.lproj/UILaunchScreen-MMF.xib */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = file.xib; path = "Base.lproj/UILaunchScreen-MMF.xib"; sourceTree = "<group>"; };
 		14677FEA3EAA1BFCE25B34E5 /* Pods-MDF Bands.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MDF Bands.debug.xcconfig"; path = "Target Support Files/Pods-MDF Bands/Pods-MDF Bands.debug.xcconfig"; sourceTree = "<group>"; };
 		1530C58547653A0C1AAAA76C /* ProfileTutorialOverlay.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProfileTutorialOverlay.swift; sourceTree = "<group>"; };
 		258A83DBED7249498300F870 /* Info-MMF.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "Info-MMF.plist"; sourceTree = "<group>"; };
@@ -787,6 +805,8 @@
 		D403DF7988D03A46BFEB31DF /* Pods_MMF_Bands.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MMF_Bands.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		DD4175EFC5176744994D3FE6 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		E5280282B2B9A8824CA090AF /* Pods-MDF Bands.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MDF Bands.release.xcconfig"; path = "Target Support Files/Pods-MDF Bands/Pods-MDF Bands.release.xcconfig"; sourceTree = "<group>"; };
+		F1E2A0012E5A292E006E3596 /* FestivalConfigLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FestivalConfigLoader.swift; sourceTree = "<group>"; };
+		F1E2B0112E5A292E006E3596 /* DataIntegrityTag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataIntegrityTag.swift; sourceTree = "<group>"; };
 		FE3B5991B589286B7C27B395 /* Pods_70K_Bands.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_70K_Bands.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -837,7 +857,7 @@
 				1172EE302E5A1C4D006E3596 /* CloudKit.framework in Frameworks */,
 				1172EE312E5A1C4D006E3596 /* CFNetwork.framework in Frameworks */,
 				1172EE322E5A1C4D006E3596 /* AudioToolbox.framework in Frameworks */,
-				9DE58C80B71FF2933BD45C36 /* BuildFile in Frameworks */,
+				9DE58C80B71FF2933BD45C36 /* (null) in Frameworks */,
 				D67556AA85D008863B7F901C /* Pods_MDF_Bands.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -926,6 +946,9 @@
 				1154F60D1A575893003F4764 /* _0000TonsBands.xcdatamodeld */,
 				113C3B9C1A62CBDA000E8D9A /* 70000TonsBands.entitlements */,
 				11EB86AE2F353160007D5AD0 /* about-team.png */,
+				11EB86C02F364000007D5AD0 /* about-festival-photo.png */,
+				11EB86D02F364100007D5AD0 /* about-robert-photo.png */,
+				11EB86E02F364200007D5AD0 /* about-leah-photo.png */,
 				11EB86AA2F3530C8007D5AD0 /* AboutView.swift */,
 				115F0DCA2F551A76003CD82C /* AIScheduleBuilder.swift */,
 				115F0DD22F551DE7003CD82C /* AIScheduleStorage.swift */,
@@ -976,6 +999,7 @@
 				116C9D7B2F415D370036743C /* EventTypes.swift */,
 				1172EE522E5A292E006E3596 /* FestivalConfig.swift */,
 				F1E2A0012E5A292E006E3596 /* FestivalConfigLoader.swift */,
+				F1E2B0112E5A292E006E3596 /* DataIntegrityTag.swift */,
 				116C9D7C2F415D370036743C /* FilePaths.swift */,
 				11D4844A2241DA0C00910878 /* firebaseBandDataWrite.swift */,
 				11D4844D2241DED700910878 /* firebaseEventDataWrite.swift */,
@@ -1043,7 +1067,7 @@
 				116C9D7E2F415D370036743C /* UIConstants.swift */,
 				1154F6191A575893003F4764 /* UILaunchScreen.xib */,
 				1172EE652E5A3486006E3596 /* UILaunchScreen-MDF.xib */,
-				1463329C2FDC27932432B73F /* UILaunchScreen-MMF.xib */,
+				1463329C2FDC27932432B73F /* Base.lproj/UILaunchScreen-MMF.xib */,
 				1156B4F41A6613E700D48D12 /* urlStorage.swift */,
 				11ABAA5F222C7EFF00A04397 /* userDataHandler.swift */,
 				11ED61801A9103C100D29A5B /* UtilityHandler.swift */,
@@ -1306,6 +1330,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				11EB86B12F353160007D5AD0 /* about-team.png in Resources */,
+				11EB86C12F364000007D5AD0 /* about-festival-photo.png in Resources */,
+				11EB86D12F364100007D5AD0 /* about-robert-photo.png in Resources */,
+				11EB86E12F364200007D5AD0 /* about-leah-photo.png in Resources */,
 				117BAADD2DC1315900A2830A /* SNL-More_Cowbell.mov in Resources */,
 				1172EE562E5A292E006E3596 /* Info-MDF.plist in Resources */,
 				1172EE572E5A292E006E3596 /* Info-70K.plist in Resources */,
@@ -1336,6 +1363,9 @@
 				1172A2391B5AC7DC00C28AB3 /* Localizable.strings in Resources */,
 				117BAADC2DC1315900A2830A /* SNL-More_Cowbell.mov in Resources */,
 				11EB86AF2F353160007D5AD0 /* about-team.png in Resources */,
+				11EB86C22F364000007D5AD0 /* about-festival-photo.png in Resources */,
+				11EB86D22F364100007D5AD0 /* about-robert-photo.png in Resources */,
+				11EB86E22F364200007D5AD0 /* about-leah-photo.png in Resources */,
 				1172EE602E5A292E006E3596 /* Info-MDF.plist in Resources */,
 				1172EE612E5A292E006E3596 /* Info-70K.plist in Resources */,
 				11D05AB0291C571D00D5B002 /* countries.txt in Resources */,
@@ -1363,6 +1393,9 @@
 				1172EE3D2E5A1C4D006E3596 /* DropDownCell.xib in Resources */,
 				1172EE3E2E5A1C4D006E3596 /* countries.txt in Resources */,
 				11EB86B02F353160007D5AD0 /* about-team.png in Resources */,
+				11EB86C32F364000007D5AD0 /* about-festival-photo.png in Resources */,
+				11EB86D32F364100007D5AD0 /* about-robert-photo.png in Resources */,
+				11EB86E32F364200007D5AD0 /* about-leah-photo.png in Resources */,
 				1172EE4A2E5A2604006E3596 /* GoogleService-Info-MDF.plist in Resources */,
 				1172EE3F2E5A1C4D006E3596 /* Localizable.strings in Resources */,
 				1172EE402E5A1C4D006E3596 /* Settings.bundle in Resources */,
@@ -1386,12 +1419,15 @@
 				4393BD5C39EA966A0F837176 /* DropDownCell.xib in Resources */,
 				39C00A3B9AA43F6055793948 /* countries.txt in Resources */,
 				75419F402F47B68D1313D12C /* about-team.png in Resources */,
+				11EB86C42F364000007D5AD0 /* about-festival-photo.png in Resources */,
+				11EB86D42F364100007D5AD0 /* about-robert-photo.png in Resources */,
+				11EB86E42F364200007D5AD0 /* about-leah-photo.png in Resources */,
 				767199D3B512AFCE2A8ACCBA /* Localizable.strings in Resources */,
 				2938654C4337C091D7DFEA70 /* Settings.bundle in Resources */,
 				34C09F702DCA028E120D3BA8 /* NotificationPayload.apns in Resources */,
 				2EF13079D62489398791AF32 /* GoogleService-Info-MMF.plist in Resources */,
 				E9CF01F4CBB9E6C220BD3539 /* Info-MMF.plist in Resources */,
-				729ECFBC3A7715C5224D9F56 /* UILaunchScreen-MMF.xib in Resources */,
+				729ECFBC3A7715C5224D9F56 /* Base.lproj/UILaunchScreen-MMF.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1723,6 +1759,7 @@
 				11895B982EE4C8EB008CC4A9 /* DataManager.swift in Sources */,
 				1172EE5A2E5A292E006E3596 /* FestivalConfig.swift in Sources */,
 				F1E2A0022E5A292E006E3596 /* FestivalConfigLoader.swift in Sources */,
+				F1E2B0122E5A292E006E3596 /* DataIntegrityTag.swift in Sources */,
 				111A936E2E4F8FAB00EA4ABD /* SwiftUITranslationHelper.swift in Sources */,
 				119C80462F4CF06500304A1D /* CommonFilterSheetView.swift in Sources */,
 				11ABAA60222C7F0000A04397 /* userDataHandler.swift in Sources */,
@@ -1843,6 +1880,7 @@
 				112913A42EE7D8C3008472A3 /* ProfilePickerViewController.swift in Sources */,
 				1172EE642E5A292E006E3596 /* FestivalConfig.swift in Sources */,
 				F1E2A0042E5A292E006E3596 /* FestivalConfigLoader.swift in Sources */,
+				F1E2B0142E5A292E006E3596 /* DataIntegrityTag.swift in Sources */,
 				119C80452F4CF06500304A1D /* CommonFilterSheetView.swift in Sources */,
 				111A936D2E4F8FAB00EA4ABD /* SwiftUITranslationHelper.swift in Sources */,
 				1154F6271A575893003F4764 /* _0000TonsBandsTests.swift in Sources */,
@@ -1963,6 +2001,7 @@
 				112913A52EE7D8C3008472A3 /* ProfilePickerViewController.swift in Sources */,
 				1172EE5D2E5A292E006E3596 /* FestivalConfig.swift in Sources */,
 				F1E2A0032E5A292E006E3596 /* FestivalConfigLoader.swift in Sources */,
+				F1E2B0132E5A292E006E3596 /* DataIntegrityTag.swift in Sources */,
 				119C80442F4CF06500304A1D /* CommonFilterSheetView.swift in Sources */,
 				1172EDFB2E5A1C4D006E3596 /* SwiftUITranslationHelper.swift in Sources */,
 				1172EDFC2E5A1C4D006E3596 /* userDataHandler.swift in Sources */,
@@ -2082,6 +2121,7 @@
 				BF2968695C767E893A6BD50A /* ProfilePickerViewController.swift in Sources */,
 				91DE0309F4D48DE27B165510 /* FestivalConfig.swift in Sources */,
 				F1E2A0052E5A292E006E3596 /* FestivalConfigLoader.swift in Sources */,
+				F1E2B0152E5A292E006E3596 /* DataIntegrityTag.swift in Sources */,
 				0360BE3DD2798D47140DF2BE /* CommonFilterSheetView.swift in Sources */,
 				B1C7AD7374833933703C378E /* SwiftUITranslationHelper.swift in Sources */,
 				6EA7DF275C4D59602480C9C4 /* userDataHandler.swift in Sources */,
@@ -2405,7 +2445,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260613002;
+				CURRENT_PROJECT_VERSION = 20260621001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -2433,7 +2473,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260613002;
+				MARKETING_VERSION = 20260621001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -2489,7 +2529,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260613002;
+				CURRENT_PROJECT_VERSION = 20260621001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -2514,7 +2554,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260613002;
+				MARKETING_VERSION = 20260621001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -2711,7 +2751,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260613002;
+				CURRENT_PROJECT_VERSION = 20260621001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -2732,7 +2772,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260613002;
+				MARKETING_VERSION = 20260621001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -2788,7 +2828,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260613002;
+				CURRENT_PROJECT_VERSION = 20260621001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -2813,7 +2853,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260613002;
+				MARKETING_VERSION = 20260621001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -2871,7 +2911,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260613002;
+				CURRENT_PROJECT_VERSION = 20260621001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -2892,7 +2932,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260613002;
+				MARKETING_VERSION = 20260621001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -2951,7 +2991,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260613002;
+				CURRENT_PROJECT_VERSION = 20260621001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -2976,7 +3016,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260613002;
+				MARKETING_VERSION = 20260621001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",

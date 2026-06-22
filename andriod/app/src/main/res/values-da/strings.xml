@@ -401,17 +401,15 @@
     
     <!-- About Screen -->
     <string name="about">Om</string>
-    <string name="about_description1">Dette er en uofficiel open-source-applikation designet til at hjælpe brugere med at opdage bands, der optræder på !FESTIVALE_NAME!, og se begivenhedsprogrammer, tidspunkter og steder på ét sted.</string>
-    <string name="about_description3">Denne applikation er ikke tilknyttet, godkendt af eller officielt forbundet med nogen festival, begivenhedsarrangør, promoter eller kunstner. Alle kunstnernavne, begivenhedsnavne og relaterede oplysninger forbliver ejendommen til deres respektive ejere og bruges kun til informationsformål.</string>
-    <string name="about_description4">Kildekoden til denne applikation er open-source og licenseret under GNU General Public License, version 2 (GPL-2.0).</string>
     <string name="about_copyright">Copyright © 2015–nu</string>
     <string name="about_the_team">Holdet</string>
-    <string name="about_team_ron_dorn">Ron Dorn</string>
-    <string name="about_role_lead_developer">Hovedudvikler og skaber (center)</string>
-    <string name="about_team_robert_jan">Robert Jan de Vries</string>
-    <string name="about_role_ui_designer">UI-designer (højre)</string>
-    <string name="about_team_aaron">Aaron Copeland</string>
-    <string name="about_role_curator">70K Bands Resume-kurator (venstre)</string>
+    <string name="AboutRoleLeadDeveloper">Hovedudvikler og skaber</string>
+    <string name="AboutRoleUIDesigner">UI-designer</string>
+    <string name="AboutRoleCurator">70K Bands Resume-kurator</string>
+    <string name="AboutRoleMdfCurator">MDF-indholdskurator</string>
+    <string name="AboutPositionCenter">center</string>
+    <string name="AboutPositionRight">højre</string>
+    <string name="AboutPositionLeft">venstre</string>
     <string name="about_team_photo">Holdbillede</string>
 
     <!-- Schedule QR -->

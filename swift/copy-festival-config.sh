@@ -4,7 +4,7 @@
 
 set -e
 
-FESTIVALS_DIR="${SRCROOT}/../qa-config/festivals"
+FESTIVALS_DIR="${SRCROOT}/../config/festivals"
 APP_DIR="${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app"
 
 if [[ "${PRODUCT_NAME}" == *"MMF"* ]] || [[ "${TARGET_NAME}" == *"MMF"* ]] || [[ "${CONFIGURATION}" == *"MMF"* ]]; then

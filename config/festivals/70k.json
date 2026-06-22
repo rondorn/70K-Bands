@@ -410,6 +410,31 @@
       "fi": "Nayta Risteilijoiden jarjestamat tapahtumat"
     }
   },
+  "about": {
+    "members": [
+      {
+        "name": "Ron Dorn",
+        "roleTranslationKey": "AboutRoleLeadDeveloper",
+        "photoPositionTranslationKey": "AboutPositionCenter"
+      },
+      {
+        "name": "Robert Jan de Vries",
+        "roleTranslationKey": "AboutRoleUIDesigner",
+        "photoPositionTranslationKey": "AboutPositionRight"
+      },
+      {
+        "name": "Aaron Copeland",
+        "roleTranslationKey": "AboutRoleCurator",
+        "photoPositionTranslationKey": "AboutPositionLeft",
+        "photos": [
+          {
+            "android": "about_team",
+            "ios": "about-team"
+          }
+        ]
+      }
+    ]
+  },
   "commentsNotAvailableTranslationKey": "DefaultDescription70K",
   "aiSchedule": true,
   "scheduleQRShareEnabled": true

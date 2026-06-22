@@ -14,12 +14,12 @@ import java.util.Map;
  * =============================================================================
  *
  * DATA: Each festival is defined in a self-contained JSON file under
- *       qa-config/festivals/{id}.json (copied into the app bundle at build time).
+ *       config/festivals/{id}.json (copied into the app bundle at build time).
  *       Copy an existing JSON, modify all fields, add the share extension to
- *       qa-config/festivals/registry.json.
+ *       config/festivals/registry.json.
  *
  * ADDING A NEW FESTIVAL:
- *   1. Copy qa-config/festivals/mdf.json → xyz.json and edit every field.
+ *   1. Copy config/festivals/mdf.json → xyz.json and edit every field.
  *   2. Add xyzshare to registry.json shareFileExtensions.
  *   3. Android: productFlavors block in app/build.gradle (see festivalFlavorMap).
  *   4. iOS: target/scheme + SWIFT_ACTIVE_COMPILATION_CONDITIONS if needed.
@@ -35,7 +35,7 @@ import java.util.Map;
  *   - Localized app display name if overridden (strings.xml / InfoPlist.strings)
  *   - Play Store / App Store listings, fastlane, release scripts
  *
- * BUILD: Gradle packs qa-config/festivals/&lt;id&gt;.json → assets/festival.json per flavor.
+ * BUILD: Gradle packs config/festivals/&lt;id&gt;.json → assets/festival.json per flavor.
  *        iOS copy-festival-config.sh copies the matching JSON into the app bundle.
  * =============================================================================
  */
@@ -167,6 +167,9 @@ public class FestivalConfig {
     /** Whether schedule share/scan via QR code is enabled. 70K: on; MDF: off. */
     public final boolean scheduleQRShareEnabled;
 
+    /** About-screen team members and optional team photo from festival.json. */
+    public final AboutTeamConfig aboutTeam;
+
     private FestivalConfig(FestivalConfigJsonLoader.LoadedFestivalConfig loaded) {
         this.allShareExtensions = loaded.shareExtensions;
         this.festivalName = loaded.festivalName;
@@ -216,6 +219,7 @@ public class FestivalConfig {
         this.commentsNotAvailableStringResourceId = loaded.commentsNotAvailableStringResourceId;
         this.aiSchedule = loaded.aiSchedule;
         this.scheduleQRShareEnabled = loaded.scheduleQRShareEnabled;
+        this.aboutTeam = loaded.aboutTeam;
 
         Log.d("FestivalConfig", "Loaded from festival.json for: " + this.festivalShortName);
         Log.d("FestivalConfig", "  App Name: " + this.appName);

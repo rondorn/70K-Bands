@@ -794,6 +794,18 @@
                 android:layout_marginRight="16dp"
                 android:elevation="1dp">
 
+                <!-- Suite attribution (populated at runtime) -->
+                <TextView
+                    android:id="@+id/suite_registry_label"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingLeft="16dp"
+                    android:paddingRight="16dp"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="4dp"
+                    android:textSize="13sp"
+                    android:textColor="#8E8E93" />
+
                 <!-- About Button -->
                 <LinearLayout
                     android:id="@+id/aboutButton"

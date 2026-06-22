@@ -8,8 +8,8 @@
 
 // MARK: - Festival configuration
 //
-// Data loads from bundled festival.json (source: qa-config/festivals/*.json).
-// See qa-config/festivals/README.md for adding a festival and what must exist
+// Data loads from bundled festival.json (source: config/festivals/*.json).
+// See config/festivals/README.md for adding a festival and what must exist
 // outside JSON (icons, Firebase plist/json, bundle IDs, store listings).
 //
 
@@ -165,6 +165,9 @@ struct FestivalConfig {
     // Comments not available message configuration
     let commentsNotAvailableTranslationKey: String
 
+    /// About-screen team members and optional team photo from festival.json.
+    let aboutTeam: AboutTeamConfig
+
     private let peerShareFileExtensions: [String]
     private let fallbackMiscGenericGoingIcon: String
     private let fallbackMiscGenericNotGoingIcon: String
@@ -215,6 +218,7 @@ struct FestivalConfig {
         self.commentsNotAvailableTranslationKey = p.commentsNotAvailableTranslationKey
         self.aiSchedule = p.aiSchedule
         self.scheduleQRShareEnabled = p.scheduleQRShareEnabled
+        self.aboutTeam = p.aboutTeam
 
         print("🏛️ FestivalConfig loaded from festival.json: \(self.festivalShortName)")
     }

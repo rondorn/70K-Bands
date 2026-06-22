@@ -1,6 +1,6 @@
 //
 //  FestivalConfigLoader.swift
-//  Loads qa-config/festivals/*.json (bundled as festival.json at build time).
+//  Loads config/festivals/*.json (bundled as festival.json at build time).
 //
 
 import Foundation
@@ -31,6 +31,41 @@ private struct GenericVenueSlotJson: Codable {
     let color: String
     let goingIcon: PlatformAsset
     let notGoingIcon: PlatformAsset
+}
+
+private struct AboutTeamMemberJson: Codable {
+    let name: String
+    let roleTranslationKey: String
+    let photoPositionTranslationKey: String?
+    let photo: PlatformAsset?
+    let photos: [PlatformAsset]?
+
+    func resolvedPhotoAssets(platform: String) -> [String] {
+        let assets: [PlatformAsset]
+        if let photos = photos, !photos.isEmpty {
+            assets = photos
+        } else if let photo = photo {
+            assets = [photo]
+        } else {
+            return []
+        }
+        return assets.map { $0.resolved(platform: platform) }.filter { !$0.isEmpty }
+    }
+}
+
+private struct AboutTeamJson: Codable {
+    let members: [AboutTeamMemberJson]
+}
+
+struct AboutTeamMember {
+    let name: String
+    let roleTranslationKey: String
+    let photoPositionTranslationKey: String?
+    let photoAssetNames: [String]
+}
+
+struct AboutTeamConfig {
+    let members: [AboutTeamMember]
 }
 
 private struct FestivalConfigJson: Codable {
@@ -64,6 +99,7 @@ private struct FestivalConfigJson: Codable {
     let commentsNotAvailableTranslationKey: String
     let aiSchedule: Bool
     let scheduleQRShareEnabled: Bool
+    let about: AboutTeamJson
 
     struct GraphicsJson: Codable {
         let mustSeeIconSmall: PlatformAsset
@@ -138,6 +174,7 @@ struct FestivalConfigPayload {
     let peerShareFileExtensions: [String]
     let fallbackMiscGenericGoingIcon: String
     let fallbackMiscGenericNotGoingIcon: String
+    let aboutTeam: AboutTeamConfig
 }
 
 enum FestivalConfigLoader {
@@ -219,7 +256,17 @@ enum FestivalConfigLoader {
             scheduleQRShareEnabled: json.scheduleQRShareEnabled,
             peerShareFileExtensions: shareExtensions,
             fallbackMiscGenericGoingIcon: r(g.fallbackMiscGenericGoingIcon),
-            fallbackMiscGenericNotGoingIcon: r(g.fallbackMiscGenericNotGoingIcon)
+            fallbackMiscGenericNotGoingIcon: r(g.fallbackMiscGenericNotGoingIcon),
+            aboutTeam: AboutTeamConfig(
+                members: json.about.members.map {
+                    AboutTeamMember(
+                        name: $0.name,
+                        roleTranslationKey: $0.roleTranslationKey,
+                        photoPositionTranslationKey: $0.photoPositionTranslationKey,
+                        photoAssetNames: $0.resolvedPhotoAssets(platform: platform)
+                    )
+                }
+            )
         )
     }
 }

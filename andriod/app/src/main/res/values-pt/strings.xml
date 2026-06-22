@@ -402,17 +402,15 @@
     
     <!-- About Screen -->
     <string name="about">Sobre</string>
-    <string name="about_description1">Este é um aplicativo não oficial e de código aberto projetado para ajudar os usuários a descobrir bandas que aparecem em !FESTIVALE_NAME!, e visualizar horários de eventos, horários e locais em um só lugar.</string>
-    <string name="about_description3">Este aplicativo não está afiliado, endossado ou oficialmente conectado a nenhum festival, organizador de eventos, promotor ou artista. Todos os nomes de artistas, nomes de eventos e informações relacionadas permanecem propriedade de seus respectivos proprietários e são usados apenas para fins informativos.</string>
-    <string name="about_description4">O código-fonte deste aplicativo é de código aberto e licenciado sob a Licença Pública Geral GNU, versão 2 (GPL-2.0).</string>
     <string name="about_copyright">Copyright © 2015–presente</string>
     <string name="about_the_team">A Equipe</string>
-    <string name="about_team_ron_dorn">Ron Dorn</string>
-    <string name="about_role_lead_developer">Desenvolvedor principal e criador (centro)</string>
-    <string name="about_team_robert_jan">Robert Jan de Vries</string>
-    <string name="about_role_ui_designer">Designer de interface do usuário (direita)</string>
-    <string name="about_team_aaron">Aaron Copeland</string>
-    <string name="about_role_curator">Curador de resumo 70K Bands (esquerda)</string>
+    <string name="AboutRoleLeadDeveloper">Desenvolvedor principal e criador</string>
+    <string name="AboutRoleUIDesigner">Designer de interface do usuário</string>
+    <string name="AboutRoleCurator">Curador de resumo 70K Bands</string>
+    <string name="AboutRoleMdfCurator">Curador de conteúdo MDF</string>
+    <string name="AboutPositionCenter">centro</string>
+    <string name="AboutPositionRight">direita</string>
+    <string name="AboutPositionLeft">esquerda</string>
     <string name="about_team_photo">Foto da Equipe</string>
 
     <!-- Schedule QR -->

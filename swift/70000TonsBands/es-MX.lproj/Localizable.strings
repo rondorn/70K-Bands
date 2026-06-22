@@ -330,14 +330,12 @@
 
 // About Screen
 "About" = "Acerca de";
-"AboutDescription1" = "Esta es una aplicación no oficial y de código abierto diseñada para ayudar a los usuarios a descubrir bandas que aparecen en !FESTIVALE_NAME!, y ver horarios de eventos, horas y lugares en un solo lugar.";
-"AboutDescription3" = "Esta aplicación no está afiliada, respaldada ni oficialmente conectada con ningún festival, organizador de eventos, promotor o artista. Todos los nombres de artistas, nombres de eventos e información relacionada siguen siendo propiedad de sus respectivos propietarios y se utilizan únicamente con fines informativos.";
-"AboutDescription4" = "El código fuente de esta aplicación es de código abierto y está licenciado bajo la Licencia Pública General de GNU, versión 2 (GPL-2.0).";
 "AboutCopyright" = "Copyright © 2015–presente";
 "AboutTheTeam" = "El Equipo";
 "AboutRoleLeadDeveloper" = "Desarrollador principal y creador";
 "AboutRoleUIDesigner" = "Diseñador de interfaz de usuario";
 "AboutRoleCurator" = "Curador de resúmenes de 70K Bands";
+"AboutRoleMdfCurator" = "Curador de contenido MDF";
 "AboutPositionCenter" = "centro";
 "AboutPositionRight" = "derecha";
 "AboutPositionLeft" = "izquierda";

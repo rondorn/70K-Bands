@@ -324,14 +324,12 @@
 
 // About Screen
 "About" = "Tietoja";
-"AboutDescription1" = "Tämä on epävirallinen avoimen lähdekoodin sovellus, joka on suunniteltu auttamaan käyttäjiä löytämään !FESTIVALE_NAME! -tapahtumassa esiintyviä bändejä ja tarkastelemaan tapahtuma-aikatauluja, aikoja ja paikkoja yhdessä paikassa.";
-"AboutDescription3" = "Tämä sovellus ei ole yhteydessä, hyväksytty tai virallisesti yhdistetty mihinkään festivaaliin, tapahtuman järjestäjään, promoottoriin tai esiintyjään. Kaikki artistinimet, tapahtumanimet ja siihen liittyvät tiedot pysyvät niiden omistajien omaisuutena ja niitä käytetään vain tiedotustarkoituksiin.";
-"AboutDescription4" = "Tämän sovelluksen lähdekoodi on avoimen lähdekoodin ja se on lisensoitu GNU General Public License -lisenssillä, versio 2 (GPL-2.0).";
 "AboutCopyright" = "Copyright © 2015–nykyhetki";
 "AboutTheTeam" = "Tiimi";
 "AboutRoleLeadDeveloper" = "Pääkehittäjä ja luoja";
 "AboutRoleUIDesigner" = "Käyttöliittymäsuunnittelija";
 "AboutRoleCurator" = "70K Bands Yhteenvedon kuraattori";
+"AboutRoleMdfCurator" = "MDF-sisällön kuraattori";
 "AboutPositionCenter" = "keskellä";
 "AboutPositionRight" = "oikealla";
 "AboutPositionLeft" = "vasemmalla";

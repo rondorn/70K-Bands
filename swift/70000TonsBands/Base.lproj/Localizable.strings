@@ -284,14 +284,17 @@
 
 // About Screen
 "About" = "About";
-"AboutDescription1" = "This is an unofficial, open-source application designed to help users discover bands appearing at !FESTIVALE_NAME!, and to view event schedules, times, and venues in one place.";
-"AboutDescription3" = "This application is not affiliated with, endorsed by, or officially connected to any festival, event organizer, promoter, or performing artist. All artist names, event names, and related information remain the property of their respective owners and are used for informational purposes only.";
-"AboutDescription4" = "The source code for this application is open-sourced and licensed under the GNU General Public License, version 2 (GPL-2.0).";
+"AboutDescription1" = "This is an unofficial, open-source application for !FESTIVAL_NAME! and part of the Open Metal Fest Suite project. The app helps attendees discover bands, build schedules, track performances, receive notifications, and access festival information in one place.";
+"AboutDescription2" = "This application is not affiliated with, endorsed by, or officially connected to any festival, event organizer, promoter, or performing artist. All artist names, event names, logos, and related information remain the property of their respective owners and are used for informational purposes only.";
+"AboutDescription3" = "!APP_NAME! is built on Open Metal Fest Suite, an open-source platform for metal festival applications. The platform provides shared functionality for artist discovery, schedule management, notifications, rankings, statistics, and community-driven content while remaining free and open source.";
+"AboutDescription4" = "Developers, festival organizers, and community contributors interested in supporting additional festivals are encouraged to collaborate through the Open Metal Fest Suite project. Maintaining a shared codebase helps ensure that improvements, bug fixes, and new features benefit the entire metal festival community.";
+"AboutDescription5" = "The source code for this application is open source and licensed under the GNU General Public License, Version 2 (GPL-2.0).";
 "AboutCopyright" = "Copyright © 2015–present";
 "AboutTheTeam" = "The Team";
 "AboutRoleLeadDeveloper" = "Lead developer and creator";
 "AboutRoleUIDesigner" = "UI Designer";
 "AboutRoleCurator" = "70K Bands Summary Curator";
+"AboutRoleMdfCurator" = "MDF Content Curator";
 "AboutPositionCenter" = "center";
 "AboutPositionRight" = "right";
 "AboutPositionLeft" = "left";
