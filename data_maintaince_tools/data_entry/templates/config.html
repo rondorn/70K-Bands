@@ -1,0 +1,192 @@
+{% extends "layout.html" %}
+{% block title %}Configuration — {{ festival_name }}{% endblock %}
+{% block heading %}Festival Configuration{% endblock %}
+{% block subheading %}Pointer URL, destination files, venues, and dates{% endblock %}
+
+{% block content %}
+{% if message %}
+<div class="message success">{{ message }}</div>
+{% endif %}
+{% if error %}
+<div class="message error">{{ error }}</div>
+{% endif %}
+<div id="loadFeedback" class="message info" style="display:none" role="status" aria-live="polite"></div>
+
+<div class="panel">
+  <p class="hint">
+    Point at your festival's production pointer file to pre-fill band URLs from Current and venues, dates, and days from the prior year's schedule.
+    Destination files are where new band and schedule rows are written.
+  </p>
+
+  <form id="configForm" method="post">
+    <div class="form-row">
+      <div class="form-label">Festival name</div>
+      <div class="form-input"><input type="text" name="festival_name" value="{{ cfg.festival_name }}"></div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-label">Pointer URL</div>
+      <div class="form-input">
+        <input type="url" id="pointerUrl" name="pointer_url" value="{{ cfg.pointer_url }}" placeholder="https://.../productionPointer.txt">
+        <div class="hint">Optional. Band list URL comes from Current; venues and dates come from the schedule year below Current (e.g. 2026 when Current is 2027).</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-label">Event year</div>
+      <div class="form-input"><input type="text" id="eventYear" name="event_year" value="{{ cfg.event_year }}" placeholder="2027"></div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-label">Lineup file</div>
+      <div class="form-input">
+        <input type="text" name="lineup_file" value="{{ cfg.lineup_file }}">
+        <div class="hint">Destination CSV for Add Band (relative to config file or absolute path).</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-label">Schedule file</div>
+      <div class="form-input">
+        <input type="text" name="schedule_file" value="{{ cfg.schedule_file }}">
+        <div class="hint">Destination CSV for schedule entry.</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-label">Band list URL</div>
+      <div class="form-input">
+        <input type="url" id="bandListUrl" name="band_list_url" value="{{ cfg.band_list_url }}">
+        <div class="hint">Optional override for the schedule band dropdown. Defaults from pointer Current::artistUrl.</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-label">Prior years column</div>
+      <div class="form-input">
+        <label><input type="checkbox" name="include_prior_years_field" {% if cfg.include_prior_years_field %}checked{% endif %}> Include priorYears column in lineup CSV</label>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-label">Venues</div>
+      <div class="form-input">
+        <textarea id="venuesText" name="venues_text">{{ venues_text }}</textarea>
+        <div class="hint">One venue per line, for all event types. Use a blank first line or literal space for the empty dropdown option.</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-label">Dates</div>
+      <div class="form-input">
+        <textarea id="datesText" name="dates_text">{{ dates_text }}</textarea>
+        <div class="hint">One date per line, e.g. 05/23/2027</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-label">Days</div>
+      <div class="form-input">
+        <textarea id="daysText" name="days_text">{{ days_text }}</textarea>
+        <div class="hint">One day label per line. Populated from the prior year schedule when loading pointer.</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-label">Event types</div>
+      <div class="form-input">
+        <textarea name="event_types_text">{{ event_types_text }}</textarea>
+        <div class="hint">One event type per line, for the schedule entry dropdown.</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-label"></div>
+      <div class="form-input">
+        <button type="button" id="loadPointerBtn" disabled>Load from pointer</button>
+        <button type="submit" id="saveConfigBtn">Save configuration</button>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const pointerInput = document.getElementById('pointerUrl');
+  const loadBtn = document.getElementById('loadPointerBtn');
+  const loadFeedback = document.getElementById('loadFeedback');
+
+  function listToTextarea(values) {
+    return (values || []).map(v => String(v)).join('\n');
+  }
+
+  function showLoadFeedback(text, kind) {
+    loadFeedback.textContent = text;
+    loadFeedback.style.display = text ? 'block' : 'none';
+    loadFeedback.className = 'message ' + (kind || 'info');
+  }
+
+  function updateLoadButton() {
+    loadBtn.disabled = pointerInput.value.trim().length === 0;
+  }
+
+  pointerInput.addEventListener('input', updateLoadButton);
+  pointerInput.addEventListener('change', updateLoadButton);
+  updateLoadButton();
+
+  loadBtn.addEventListener('click', async () => {
+    const url = pointerInput.value.trim();
+    if (!url) {
+      showLoadFeedback('Pointer URL is required.', 'error');
+      return;
+    }
+
+    showLoadFeedback('Loading data from pointer file…', 'info');
+    loadBtn.disabled = true;
+    loadBtn.textContent = 'Loading…';
+
+    try {
+      const resp = await fetch(
+        '{{ url_for("api_introspect") }}?pointer_url=' + encodeURIComponent(url)
+      );
+      const payload = await resp.json();
+      if (!payload.ok) {
+        showLoadFeedback('Error encountered: ' + (payload.error || 'Could not load pointer data.'), 'error');
+        return;
+      }
+
+      const hints = payload.hints || {};
+      const sourceYear = hints.schedule_source_year || 'prior year';
+
+      document.getElementById('eventYear').value = hints.event_year || '';
+      document.getElementById('bandListUrl').value = hints.band_list_url || '';
+      document.getElementById('venuesText').value = listToTextarea(hints.venues);
+      document.getElementById('datesText').value = listToTextarea(hints.dates);
+      document.getElementById('daysText').value = listToTextarea(hints.days);
+
+      const venueCount = (hints.venues || []).filter(v => String(v).trim()).length;
+      const dateCount = (hints.dates || []).filter(v => String(v).trim()).length;
+      const dayCount = (hints.days || []).filter(v => String(v).trim()).length;
+
+      if (!venueCount && !dateCount && !dayCount) {
+        showLoadFeedback('Error encountered: pointer loaded but no venues, dates, or days were found.', 'error');
+        return;
+      }
+
+      showLoadFeedback(
+        'Data loaded from Current (bands, event year) and ' + sourceYear + ' schedule (' +
+        venueCount + ' venues, ' + dateCount + ' dates, ' + dayCount + ' days). ' +
+        'Review the fields below, then click Save configuration.',
+        'success'
+      );
+      loadFeedback.className = 'message success';
+    } catch (err) {
+      showLoadFeedback('Error encountered: ' + err, 'error');
+    } finally {
+      loadBtn.textContent = 'Load from pointer';
+      updateLoadButton();
+    }
+  });
+</script>
+{% endblock %}
