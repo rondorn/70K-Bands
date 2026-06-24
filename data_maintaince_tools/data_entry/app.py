@@ -35,6 +35,7 @@ from data_entry.config_store import (
 )
 from data_entry.directory_picker import choose_directory
 from data_entry.description_notes import save_description_note
+from data_entry.discover import discover_band
 from data_entry.pointer import introspect_pointer
 from data_entry.schedule_logic import (
     EVENT_LENGTH_ARRAY,

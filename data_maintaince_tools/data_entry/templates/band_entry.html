@@ -133,6 +133,11 @@
     const params = new URLSearchParams({ metalArchives: ma, musicBrainz: mb, bandName: band });
     try {
       const resp = await fetch('{{ url_for("band_discover") }}?' + params.toString());
+      const contentType = resp.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        status.textContent = 'Discovery failed: server returned an unexpected response (HTTP ' + resp.status + ').';
+        return;
+      }
       const payload = await resp.json();
       if (!payload.ok) {
         status.textContent = payload.error || 'Discovery failed.';
