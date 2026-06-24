@@ -27,6 +27,31 @@ HOUR_ARRAY = [f"{h:02d}" for h in range(24)]
 MIN_ARRAY = [f"{m:02d}" for m in range(0, 60, 5)]
 EVENT_LENGTH_ARRAY = ["45", "60", "90", " "]
 
+NON_BAND_EVENT_TYPES = frozenset({"Special Event", "Unofficial Event"})
+
+
+def _time_part_int(value: str) -> int:
+    v = (value or "").strip()
+    return int(v) if v.isdigit() else 0
+
+
+def _format_time_part(value: str) -> str:
+    v = (value or "").strip()
+    if not v:
+        return "00"
+    if v.isdigit():
+        return f"{int(v):02d}"
+    return v
+
+
+def _format_time_part_or_blank(value: str) -> str:
+    v = (value or "").strip()
+    if not v:
+        return " "
+    if v.isdigit():
+        return f"{int(v):02d}"
+    return v
+
 
 @dataclass
 class ScheduleEvent:
@@ -150,12 +175,13 @@ def calculate_end_time(
 ) -> tuple[str, str]:
     length = (event_length or "").strip()
     if length and length != " " and length.isdigit():
-        start_h, start_m = int(start_hour), int(start_min)
+        start_h = _time_part_int(start_hour)
+        start_m = _time_part_int(start_min)
         total = start_h * 60 + start_m + int(length)
         end_h = (total // 60) % 24
         end_m = total % 60
         return f"{end_h:02d}", f"{end_m:02d}"
-    return end_hour.zfill(2), end_min.zfill(2)
+    return _format_time_part(end_hour), _format_time_part(end_min)
 
 
 def value_cleanup(value: str) -> str:
@@ -171,19 +197,23 @@ def build_event_from_form(form: dict[str, str], cfg: dict[str, Any]) -> Schedule
     band = (form.get("BandName") or "").strip()
     event_type = (form.get("EventType") or "").strip()
     notes = value_cleanup(form.get("Notes", ""))
-    if event_type == "Special Event":
+    if event_type in NON_BAND_EVENT_TYPES:
         band = notes
         notes = " "
 
+    image_url = value_cleanup(form.get("ImageURL", ""))
+    if event_type not in NON_BAND_EVENT_TYPES:
+        image_url = " "
+
     end_h, end_m = calculate_end_time(
-        form.get("StartHour", "00"),
-        form.get("StartMin", "00"),
-        form.get("EndHour", "00"),
-        form.get("EndMin", "00"),
+        form.get("StartHour", ""),
+        form.get("StartMin", ""),
+        form.get("EndHour", ""),
+        form.get("EndMin", ""),
         form.get("EventLength", ""),
     )
-    start_h = form.get("StartHour", "00").zfill(2)
-    start_m = form.get("StartMin", "00").zfill(2)
+    start_h = _format_time_part_or_blank(form.get("StartHour", ""))
+    start_m = _format_time_part_or_blank(form.get("StartMin", ""))
 
     return ScheduleEvent(
         band=band,
@@ -193,9 +223,9 @@ def build_event_from_form(form: dict[str, str], cfg: dict[str, Any]) -> Schedule
         start_time=f"{start_h}:{start_m}",
         end_time=f"{end_h}:{end_m}",
         event_type=event_type,
-        description_url=value_cleanup(form.get("DescriptionURL", "")),
+        description_url=" ",
         notes=notes,
-        image_url=value_cleanup(form.get("ImageURL", "")),
+        image_url=image_url,
     )
 
 

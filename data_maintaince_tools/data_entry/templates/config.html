@@ -19,9 +19,28 @@
   </p>
 
   <form id="configForm" method="post">
+    <input type="hidden" name="festival_id" id="festivalId" value="{{ active_festival_id }}">
+
+    {% if multiple_festivals %}
+    <div class="form-row">
+      <div class="form-label">Saved festivals</div>
+      <div class="form-input">
+        <select id="festivalSwitch">
+          {% for fid, fname in festivals %}
+          <option value="{{ fid }}" {% if fid == active_festival_id %}selected{% endif %}>{{ fname }}</option>
+          {% endfor %}
+        </select>
+        <div class="hint">Switch between saved festival configurations. Save before switching if you have unsaved edits.</div>
+      </div>
+    </div>
+    {% endif %}
+
     <div class="form-row">
       <div class="form-label">Festival name</div>
-      <div class="form-input"><input type="text" name="festival_name" value="{{ cfg.festival_name }}"></div>
+      <div class="form-input">
+        <input type="text" name="festival_name" value="{{ cfg.festival_name }}" placeholder="e.g. 70K Tons of Metal">
+        <div class="hint">Identifies this festival configuration. Use separate lineup and schedule file paths for each festival.</div>
+      </div>
     </div>
 
     <div class="form-row">
@@ -58,6 +77,25 @@
       <div class="form-input">
         <input type="url" id="bandListUrl" name="band_list_url" value="{{ cfg.band_list_url }}">
         <div class="hint">Optional override for the schedule band dropdown. Defaults from pointer Current::artistUrl.</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-label">Description map URL</div>
+      <div class="form-input">
+        <input type="url" id="descriptionMapUrl" name="description_map_url" value="{{ cfg.description_map_url }}">
+        <div class="hint">From pointer Current::descriptionMap. CSV maps band/event names to Dropbox URLs of plain-text description files.</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-label">Notes directory</div>
+      <div class="form-input">
+        <div class="path-picker">
+          <input type="text" id="notesDirectory" name="notes_directory" value="{{ cfg.notes_directory }}" placeholder="Choose a Dropbox-synced folder…">
+          <button type="button" class="secondary" id="chooseNotesDirBtn">Choose folder…</button>
+        </div>
+        <div class="hint">Local folder for plain-text description files. Use Choose folder to open a directory picker.</div>
       </div>
     </div>
 
@@ -102,12 +140,42 @@
 
     <div class="form-row">
       <div class="form-label"></div>
-      <div class="form-input">
+      <div class="form-input config-actions">
         <button type="button" id="loadPointerBtn" disabled>Load from pointer</button>
-        <button type="submit" id="saveConfigBtn">Save configuration</button>
+        <button type="submit" name="config_action" value="save" id="saveConfigBtn">Save configuration</button>
+        <button type="submit" name="config_action" value="new" class="secondary" id="newFestivalBtn">New festival</button>
       </div>
     </div>
   </form>
+</div>
+
+<div class="panel">
+  <h3 style="margin-top:0;color:#ff6b35;">Write description note</h3>
+  <p class="hint">
+    The description map does not store note text directly — it stores a URL to a plain-text file.
+    Write the note here; it is saved into the notes directory above. Share the file from Dropbox,
+    then add that URL to the description map CSV. You may not have write access to the description map itself.
+  </p>
+  <div id="noteFeedback" class="message info" style="display:none" role="status" aria-live="polite"></div>
+  <div class="form-row">
+    <div class="form-label">Band / event name</div>
+    <div class="form-input">
+      <input type="text" id="noteLabel" placeholder="e.g. Beast In Black or Best Tattoo Contest">
+      <div class="hint">Used for the text file name and as the Band column value in the description map.</div>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-label">Note text</div>
+    <div class="form-input">
+      <textarea id="noteText" rows="8" placeholder="Plain-text description shown in the app…"></textarea>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-label"></div>
+    <div class="form-input">
+      <button type="button" id="saveNoteBtn">Save note file</button>
+    </div>
+  </div>
 </div>
 {% endblock %}
 
@@ -116,6 +184,42 @@
   const pointerInput = document.getElementById('pointerUrl');
   const loadBtn = document.getElementById('loadPointerBtn');
   const loadFeedback = document.getElementById('loadFeedback');
+  const chooseNotesDirBtn = document.getElementById('chooseNotesDirBtn');
+  const notesDirectoryInput = document.getElementById('notesDirectory');
+
+  async function chooseDirectory(targetInput, title) {
+    const body = new URLSearchParams({
+      initial_dir: targetInput.value.trim(),
+      title: title,
+    });
+    const resp = await fetch('{{ url_for("api_choose_directory") }}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString(),
+    });
+    const payload = await resp.json();
+    if (payload.ok && payload.path) {
+      targetInput.value = payload.path;
+      return payload.path;
+    }
+    if (payload.cancelled) {
+      return '';
+    }
+    throw new Error(payload.error || 'Could not choose folder.');
+  }
+
+  chooseNotesDirBtn.addEventListener('click', async () => {
+    chooseNotesDirBtn.disabled = true;
+    chooseNotesDirBtn.textContent = 'Choose folder…';
+    try {
+      await chooseDirectory(notesDirectoryInput, 'Choose notes directory');
+    } catch (err) {
+      showLoadFeedback('Error: ' + err, 'error');
+    } finally {
+      chooseNotesDirBtn.disabled = false;
+      chooseNotesDirBtn.textContent = 'Choose folder…';
+    }
+  });
 
   function listToTextarea(values) {
     return (values || []).map(v => String(v)).join('\n');
@@ -134,6 +238,30 @@
   pointerInput.addEventListener('input', updateLoadButton);
   pointerInput.addEventListener('change', updateLoadButton);
   updateLoadButton();
+
+  const festivalSwitch = document.getElementById('festivalSwitch');
+  if (festivalSwitch) {
+    festivalSwitch.addEventListener('change', () => {
+      const target = festivalSwitch.value;
+      if (target === '{{ active_festival_id }}') {
+        return;
+      }
+      if (window.confirm('Switch festival? Unsaved changes on this page will be lost.')) {
+        window.location.href = '{{ url_for("config_page") }}?switch=' + encodeURIComponent(target);
+      } else {
+        festivalSwitch.value = '{{ active_festival_id }}';
+      }
+    });
+  }
+
+  const newFestivalBtn = document.getElementById('newFestivalBtn');
+  if (newFestivalBtn) {
+    newFestivalBtn.addEventListener('click', (e) => {
+      if (!window.confirm('Create a new festival configuration? The current form will be saved first.')) {
+        e.preventDefault();
+      }
+    });
+  }
 
   loadBtn.addEventListener('click', async () => {
     const url = pointerInput.value.trim();
@@ -161,6 +289,7 @@
 
       document.getElementById('eventYear').value = hints.event_year || '';
       document.getElementById('bandListUrl').value = hints.band_list_url || '';
+      document.getElementById('descriptionMapUrl').value = hints.description_map_url || '';
       document.getElementById('venuesText').value = listToTextarea(hints.venues);
       document.getElementById('datesText').value = listToTextarea(hints.dates);
       document.getElementById('daysText').value = listToTextarea(hints.days);
@@ -186,6 +315,61 @@
     } finally {
       loadBtn.textContent = 'Load from pointer';
       updateLoadButton();
+    }
+  });
+
+  const noteFeedback = document.getElementById('noteFeedback');
+  const saveNoteBtn = document.getElementById('saveNoteBtn');
+
+  function showNoteFeedback(text, kind) {
+    noteFeedback.textContent = text;
+    noteFeedback.style.display = text ? 'block' : 'none';
+    noteFeedback.className = 'message ' + (kind || 'info');
+  }
+
+  saveNoteBtn.addEventListener('click', async () => {
+    const notesDir = document.getElementById('notesDirectory').value.trim();
+    if (!notesDir) {
+      showNoteFeedback('Notes directory is required.', 'error');
+      return;
+    }
+
+    const label = document.getElementById('noteLabel').value.trim();
+    const text = document.getElementById('noteText').value;
+    if (!label) {
+      showNoteFeedback('Band / event name is required.', 'error');
+      return;
+    }
+    if (!text.trim()) {
+      showNoteFeedback('Note text is required.', 'error');
+      return;
+    }
+
+    showNoteFeedback('Saving note file…', 'info');
+    saveNoteBtn.disabled = true;
+
+    try {
+      const body = new URLSearchParams({
+        note_label: label,
+        note_text: text,
+        notes_directory: notesDir,
+      });
+      const resp = await fetch('{{ url_for("api_save_description_note") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body.toString(),
+      });
+      const payload = await resp.json();
+      if (!payload.ok) {
+        showNoteFeedback('Error: ' + (payload.error || 'Could not save note.'), 'error');
+        return;
+      }
+      showNoteFeedback((payload.message || 'Note saved.') + ' Path: ' + payload.path, 'success');
+      noteFeedback.className = 'message success';
+    } catch (err) {
+      showNoteFeedback('Error: ' + err, 'error');
+    } finally {
+      saveNoteBtn.disabled = false;
     }
   });
 </script>

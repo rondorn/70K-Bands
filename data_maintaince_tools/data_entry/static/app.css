@@ -98,6 +98,33 @@ body {
   background: #666;
 }
 
+.config-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.config-actions button {
+  margin: 0;
+}
+
+.path-picker {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.path-picker input {
+  flex: 1;
+  min-width: 0;
+}
+
+.path-picker button {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 .target-file {
   margin: 8px 0 0;
   color: #7a7a7a;
@@ -230,6 +257,24 @@ input[type="submit"]:disabled:hover {
 .hint.loading {
   color: #ff6b35;
   font-weight: 500;
+}
+
+.hint.special-event-help {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: #2a2a3d;
+  border: 1px solid #6b8cff;
+  border-radius: 8px;
+  color: #b8c9ff;
+}
+
+.hint.special-event-help code {
+  color: #d4deff;
+  font-size: 0.9em;
+}
+
+.hint.special-event-help a {
+  color: #ff9f6b;
 }
 
 .message {

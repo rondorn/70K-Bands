@@ -159,6 +159,7 @@ def introspect_pointer(pointer_url: str, _max_years: int = 8) -> dict[str, Any]:
     return {
         "event_year": event_year,
         "band_list_url": current.get("artistUrl", ""),
+        "description_map_url": current.get("descriptionMap", ""),
         "lineup_url": current.get("artistUrl", ""),
         "schedule_url": current.get("scheduleUrl", ""),
         "venues": [" "] + sorted(v for v in venues if v),
