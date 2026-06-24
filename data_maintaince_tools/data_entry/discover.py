@@ -105,6 +105,8 @@ def discover_band(
             "warnings": warnings,
         }
 
+    data.pop("noteworthy", None)
+
     return {
         "ok": True,
         "data": data,

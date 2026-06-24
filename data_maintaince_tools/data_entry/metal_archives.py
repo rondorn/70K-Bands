@@ -190,7 +190,6 @@ def discover_from_metal_archives(
         "wikipedia": "",
         "country": "",
         "genre": "",
-        "noteworthy": "",
     }
 
     try:

@@ -11,6 +11,7 @@ from urllib.request import Request, urlopen
 
 from bs4 import BeautifulSoup
 
+from data_entry.country_names import expand_country_code
 from data_entry.http_util import USER_AGENT, fetch_url
 
 MB_BASE = "https://musicbrainz.org/ws/2"
@@ -136,7 +137,7 @@ def _discover_from_artist_detail(
     data: dict[str, str] = {
         "bandName": band_name,
         "musicBrainz": musicbrainz_artist_url(mbid),
-        "country": (detail.get("country") or "").upper(),
+        "country": expand_country_code(detail.get("country") or ""),
         "genre": _format_genre(detail),
         "officalSite": _normalize_site_url(official_site),
         "wikipedia": wikipedia,
@@ -144,7 +145,6 @@ def _discover_from_artist_detail(
         "metalArchives": metal_archives,
         "imageUrl": _normalize_site_url(image_url),
         "latestAlbum": latest_album,
-        "noteworthy": _format_noteworthy(detail),
     }
 
     if not data["country"]:
@@ -161,28 +161,41 @@ def _discover_from_artist_detail(
     return data, warnings
 
 
+def _capitalize_genre_label(value: str) -> str:
+    value = (value or "").strip()
+    if not value:
+        return ""
+
+    def title_word(word: str) -> str:
+        word = word.strip()
+        if not word:
+            return word
+        return word[:1].upper() + word[1:].lower()
+
+    parts: list[str] = []
+    for slash_segment in value.split("/"):
+        parts.append(" ".join(title_word(word) for word in slash_segment.split() if word))
+    return "/".join(parts)
+
+
 def _format_genre(detail: dict[str, Any]) -> str:
     genres = detail.get("genres") or []
     if genres:
         ranked = sorted(genres, key=lambda g: g.get("count", 0), reverse=True)
-        return ", ".join(g["name"] for g in ranked[:3] if g.get("name"))
+        return ", ".join(
+            _capitalize_genre_label(g["name"])
+            for g in ranked[:3]
+            if g.get("name")
+        )
     tags = detail.get("tags") or []
     if tags:
         ranked = sorted(tags, key=lambda t: t.get("count", 0), reverse=True)
-        return ", ".join(t["name"] for t in ranked[:3] if t.get("name"))
+        return ", ".join(
+            _capitalize_genre_label(t["name"])
+            for t in ranked[:3]
+            if t.get("name")
+        )
     return ""
-
-
-def _format_noteworthy(detail: dict[str, Any]) -> str:
-    parts: list[str] = []
-    if detail.get("ended"):
-        end = detail.get("life-span", {}).get("end") or ""
-        if end:
-            parts.append(f"Ended {end}")
-    disambiguation = (detail.get("disambiguation") or "").strip()
-    if disambiguation:
-        parts.append(disambiguation)
-    return "; ".join(parts)
 
 
 def _url_for_types(detail: dict[str, Any], preferred_types: tuple[str, ...]) -> str:

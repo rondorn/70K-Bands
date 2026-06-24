@@ -7,11 +7,11 @@
 <div class="target-file">Writing to: <code>{{ lineup_file }}</code></div>
 
 {% if success %}
-<div class="message success">Band successfully added to the lineup.</div>
+<div class="message success page-message">Band successfully added to the lineup.</div>
 {% endif %}
 
 {% if errors %}
-<div class="message error">
+<div class="message error page-message">
   {% for err in errors %}{{ err }}<br>{% endfor %}
 </div>
 {% endif %}
@@ -87,7 +87,10 @@
 
     <div class="form-row">
       <div class="form-label">Noteworthy</div>
-      <div class="form-input"><input type="text" id="noteworthy" name="noteworthy" value="{{ form_data.noteworthy }}"></div>
+      <div class="form-input">
+        <input type="text" id="noteworthy" name="noteworthy" value="{{ form_data.noteworthy }}">
+        <div class="hint">Promoter notes only — not filled by Discover.</div>
+      </div>
     </div>
 
     {% if include_prior_years %}
@@ -110,7 +113,17 @@
 
 {% block scripts %}
 <script>
-  const fields = ['bandName','metalArchives','musicBrainz','latestAlbum','officalSite','imageUrl','youtube','wikipedia','country','genre','noteworthy','priorYears'].filter(id => document.getElementById(id));
+  function clearPageMessages() {
+    document.querySelectorAll('.page-message').forEach(el => el.remove());
+  }
+
+  document.querySelector('form').addEventListener('click', e => {
+    if (e.target.closest('button, input[type="submit"]')) {
+      clearPageMessages();
+    }
+  });
+
+  const fields = ['bandName','metalArchives','musicBrainz','latestAlbum','officalSite','imageUrl','youtube','wikipedia','country','genre','priorYears'].filter(id => document.getElementById(id));
 
   document.getElementById('discoverBtn').addEventListener('click', async () => {
     const status = document.getElementById('discoverStatus');
