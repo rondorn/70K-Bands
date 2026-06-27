@@ -149,33 +149,6 @@ def create_app() -> Flask:
         except Exception as exc:
             return jsonify({"ok": False, "error": str(exc)}), 400
 
-    @app.post("/api/save-description-note")
-    def api_save_description_note():
-        paths = resolved_paths(load_config())
-        notes_dir_input = request.form.get("notes_directory", "").strip()
-        notes_dir = (
-            resolve_path(notes_dir_input, config_path().parent)
-            if notes_dir_input
-            else paths.get("notes_directory", "")
-        )
-        label = request.form.get("note_label", "").strip()
-        content = request.form.get("note_text", "")
-        try:
-            saved_path = save_description_note(notes_dir, label, content)
-            return jsonify(
-                {
-                    "ok": True,
-                    "path": str(saved_path),
-                    "filename": saved_path.name,
-                    "message": (
-                        f"Saved {saved_path.name}. Add a Dropbox share link for this file to the "
-                        "description map CSV (Band, URL, Date) when you have access."
-                    ),
-                }
-            )
-        except Exception as exc:
-            return jsonify({"ok": False, "error": str(exc)}), 400
-
     @app.post("/api/choose-directory")
     def api_choose_directory():
         initial_dir = request.form.get("initial_dir", "").strip()

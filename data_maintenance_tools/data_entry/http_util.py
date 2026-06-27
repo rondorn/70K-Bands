@@ -12,6 +12,14 @@ USER_AGENT = "FestivalDataEntry/1.0 (+https://github.com/festival-data-entry)"
 DEFAULT_TIMEOUT = 45
 
 
+def normalize_dropbox_url(url: str) -> str:
+    """Use Dropbox raw download when a share link has dl=0."""
+    url = (url or "").strip()
+    if "dl=0" in url:
+        return url.replace("dl=0", "raw=1")
+    return url
+
+
 def fetch_url(url: str, timeout_s: float = DEFAULT_TIMEOUT) -> str:
     """Fetch URL text; tries urllib, then curl when available."""
     url = (url or "").strip()

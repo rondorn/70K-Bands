@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import Any
 from urllib.parse import unquote, urlparse
 
-from data_entry.http_util import fetch_url
+from data_entry.http_util import fetch_url, normalize_dropbox_url
 
 DATE_RE = re.compile(r"^(\d{1,2})/(\d{1,2})/(\d{4})$")
 
@@ -26,7 +26,7 @@ def parse_pointer_text(text: str) -> dict[str, dict[str, str]]:
 
 
 def fetch_pointer(url: str) -> dict[str, dict[str, str]]:
-    return parse_pointer_text(fetch_url(url))
+    return parse_pointer_text(fetch_url(normalize_dropbox_url(url)))
 
 
 def _sort_dates(values: set[str]) -> list[str]:

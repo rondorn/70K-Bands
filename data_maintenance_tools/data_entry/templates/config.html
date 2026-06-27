@@ -101,7 +101,7 @@
           <input type="text" id="notesDirectory" name="notes_directory" value="{{ cfg.notes_directory }}" placeholder="Choose a Dropbox-synced folder…">
           <button type="button" class="secondary" id="chooseNotesDirBtn">Choose folder…</button>
         </div>
-        <div class="hint">Local folder for plain-text description files. Use Choose folder to open a directory picker.</div>
+        <div class="hint">Local folder where Schedule Entry saves description text files for Special/Unofficial events.</div>
       </div>
     </div>
 
@@ -153,35 +153,6 @@
       </div>
     </div>
   </form>
-</div>
-
-<div class="panel">
-  <h3 style="margin-top:0;color:#ff6b35;">Write description note</h3>
-  <p class="hint">
-    The description map does not store note text directly — it stores a URL to a plain-text file.
-    Write the note here; it is saved into the notes directory above. Share the file from Dropbox,
-    then add that URL to the description map CSV. You may not have write access to the description map itself.
-  </p>
-  <div id="noteFeedback" class="message info" style="display:none" role="status" aria-live="polite"></div>
-  <div class="form-row">
-    <div class="form-label">Band / event name</div>
-    <div class="form-input">
-      <input type="text" id="noteLabel" placeholder="e.g. Beast In Black or Best Tattoo Contest">
-      <div class="hint">Used for the text file name and as the Band column value in the description map.</div>
-    </div>
-  </div>
-  <div class="form-row">
-    <div class="form-label">Note text</div>
-    <div class="form-input">
-      <textarea id="noteText" rows="8" placeholder="Plain-text description shown in the app…"></textarea>
-    </div>
-  </div>
-  <div class="form-row">
-    <div class="form-label"></div>
-    <div class="form-input">
-      <button type="button" id="saveNoteBtn">Save note file</button>
-    </div>
-  </div>
 </div>
 {% endblock %}
 
@@ -365,61 +336,6 @@
     } finally {
       loadBtn.textContent = 'Load from pointer';
       updateLoadButton();
-    }
-  });
-
-  const noteFeedback = document.getElementById('noteFeedback');
-  const saveNoteBtn = document.getElementById('saveNoteBtn');
-
-  function showNoteFeedback(text, kind) {
-    noteFeedback.textContent = text;
-    noteFeedback.style.display = text ? 'block' : 'none';
-    noteFeedback.className = 'message ' + (kind || 'info');
-  }
-
-  saveNoteBtn.addEventListener('click', async () => {
-    const notesDir = document.getElementById('notesDirectory').value.trim();
-    if (!notesDir) {
-      showNoteFeedback('Notes directory is required.', 'error');
-      return;
-    }
-
-    const label = document.getElementById('noteLabel').value.trim();
-    const text = document.getElementById('noteText').value;
-    if (!label) {
-      showNoteFeedback('Band / event name is required.', 'error');
-      return;
-    }
-    if (!text.trim()) {
-      showNoteFeedback('Note text is required.', 'error');
-      return;
-    }
-
-    showNoteFeedback('Saving note file…', 'info');
-    saveNoteBtn.disabled = true;
-
-    try {
-      const body = new URLSearchParams({
-        note_label: label,
-        note_text: text,
-        notes_directory: notesDir,
-      });
-      const resp = await fetch('{{ url_for("api_save_description_note") }}', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: body.toString(),
-      });
-      const payload = await resp.json();
-      if (!payload.ok) {
-        showNoteFeedback('Error: ' + (payload.error || 'Could not save note.'), 'error');
-        return;
-      }
-      showNoteFeedback((payload.message || 'Note saved.') + ' Path: ' + payload.path, 'success');
-      noteFeedback.className = 'message success';
-    } catch (err) {
-      showNoteFeedback('Error: ' + err, 'error');
-    } finally {
-      saveNoteBtn.disabled = false;
     }
   });
 </script>
