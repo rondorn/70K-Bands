@@ -234,9 +234,23 @@ def validate_event(
     existing: list[ScheduleEvent],
     cfg: dict[str, Any],
     verify_bypass: bool = False,
+    exclude: tuple[str, str, str, str] | None = None,
 ) -> list[str]:
     if verify_bypass:
         return []
+
+    if exclude:
+        orig_band, orig_location, orig_date, orig_start = exclude
+        existing = [
+            row
+            for row in existing
+            if not (
+                row.band == orig_band
+                and row.location == orig_location
+                and row.date == orig_date
+                and row.start_time == orig_start
+            )
+        ]
 
     errors: list[str] = []
     empty_checks = [
@@ -334,6 +348,80 @@ def remove_matching_event(
             continue
         kept.append(event)
     return kept
+
+
+def replace_matching_event(
+    events: list[ScheduleEvent],
+    band: str,
+    location: str,
+    date: str,
+    start_time: str,
+    replacement: ScheduleEvent,
+) -> list[ScheduleEvent]:
+    updated: list[ScheduleEvent] = []
+    replaced = False
+    for event in events:
+        if (
+            not replaced
+            and event.band == band
+            and event.location == location
+            and event.date == date
+            and event.start_time == start_time
+        ):
+            updated.append(replacement)
+            replaced = True
+        else:
+            updated.append(event)
+    return updated
+
+
+def _split_time_for_form(time_str: str) -> tuple[str, str]:
+    match = re.match(r"(\S+):(\S+)", (time_str or "").strip())
+    if not match:
+        return " ", "  "
+    hour = match.group(1).strip()
+    minute = match.group(2).strip()
+    if not hour or hour == " ":
+        return " ", "  "
+    hour_val = f"{int(hour):02d}" if hour.isdigit() else hour
+    if not minute or minute == " ":
+        return hour_val, "  "
+    minute_val = f"{int(minute):02d}" if minute.isdigit() else minute
+    return hour_val, minute_val
+
+
+def event_to_form(event: ScheduleEvent) -> dict[str, str]:
+    start_h, start_m = _split_time_for_form(event.start_time)
+    end_h, end_m = _split_time_for_form(event.end_time)
+
+    band_name = event.band
+    notes = event.notes
+    if event.event_type in NON_BAND_EVENT_TYPES:
+        band_name = " "
+        notes = event.band if event.band.strip() and event.band != " " else ""
+
+    image_url = event.image_url if event.image_url.strip() and event.image_url != " " else ""
+    notes_display = notes if notes.strip() and notes != " " else ""
+
+    return {
+        "BandName": band_name,
+        "EventType": event.event_type,
+        "Venue": event.location,
+        "Date": event.date,
+        "Day": event.day,
+        "StartHour": start_h,
+        "StartMin": start_m,
+        "EndHour": end_h,
+        "EndMin": end_m,
+        "EventLength": " ",
+        "Notes": notes_display,
+        "DescriptionText": "",
+        "ImageURL": image_url,
+        "OrigBand": event.band,
+        "OrigVenue": event.location,
+        "OrigDate": event.date,
+        "OrigStartTime": event.start_time,
+    }
 
 
 def band_name_options(cfg: dict[str, Any], paths: dict[str, str]) -> list[str]:

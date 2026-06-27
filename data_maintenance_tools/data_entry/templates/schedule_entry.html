@@ -24,6 +24,12 @@
 
 <div class="form-section">
   <form method="post" id="scheduleForm">
+    {% if modify_mode %}
+    <input type="hidden" name="OrigBand" value="{{ form.OrigBand }}">
+    <input type="hidden" name="OrigVenue" value="{{ form.OrigVenue }}">
+    <input type="hidden" name="OrigDate" value="{{ form.OrigDate }}">
+    <input type="hidden" name="OrigStartTime" value="{{ form.OrigStartTime }}">
+    {% endif %}
     <div class="form-row">
       <div class="form-label">Band Name <span class="required">*</span></div>
       <div class="form-input">
@@ -156,7 +162,12 @@
 
     <div class="form-row">
       <div class="form-label"></div>
-      <div class="form-input"><input type="submit" name="Submit" value="Submit (Ctrl+Enter)"></div>
+      <div class="form-input">
+        <input type="submit" name="Submit" value="{% if modify_mode %}Update entry (Ctrl+Enter){% else %}Submit (Ctrl+Enter){% endif %}">
+        {% if modify_mode %}
+        <a class="btn secondary" href="{{ url_for('schedule_entry') }}" style="margin-left:8px;">Cancel edit</a>
+        {% endif %}
+      </div>
     </div>
   </form>
 </div>
@@ -209,6 +220,15 @@
     }
   }
 
+  function ensureTimeOption(select, timeValue) {
+    if (selectTimeOption(select, timeValue)) return;
+    const opt = document.createElement('option');
+    opt.value = timeValue;
+    opt.textContent = timeValue;
+    opt.selected = true;
+    select.appendChild(opt);
+  }
+
   function setEndTime() {
     if (!eventLengthActive()) return;
     const sh = parseInt(startHour.value, 10) || 0;
@@ -217,8 +237,8 @@
     const total = sh * 60 + sm + len;
     const eh = Math.floor(total / 60) % 24;
     const em = total % 60;
-    endHour.innerHTML = `<option>${String(eh).padStart(2, '0')}</option>`;
-    endMin.innerHTML = `<option>${String(em).padStart(2, '0')}</option>`;
+    ensureTimeOption(endHour, String(eh).padStart(2, '0'));
+    ensureTimeOption(endMin, String(em).padStart(2, '0'));
   }
 
   function onStartHourChange() {

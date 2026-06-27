@@ -325,6 +325,25 @@ table.data-table td {
   border-bottom: 1px solid #3a3a3a;
 }
 
+table.data-table td.row-actions {
+  white-space: nowrap;
+}
+
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+form.inline-form {
+  display: inline;
+  margin: 0;
+}
+
+form.inline-form button {
+  margin: 0;
+}
+
 @media (max-width: 768px) {
   .container {
     padding: 10px 12px 20px;

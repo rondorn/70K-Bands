@@ -46,8 +46,10 @@ from data_entry.schedule_logic import (
     append_schedule_event,
     band_name_options,
     build_event_from_form,
+    event_to_form,
     read_schedule,
     remove_matching_event,
+    replace_matching_event,
     validate_event,
     write_schedule,
 )
@@ -203,7 +205,19 @@ def create_app() -> Flask:
             "Notes": request.values.get("Notes", ""),
             "DescriptionText": request.values.get("DescriptionText", ""),
             "ImageURL": request.values.get("ImageURL", ""),
+            "OrigBand": request.values.get("OrigBand", ""),
+            "OrigVenue": request.values.get("OrigVenue", ""),
+            "OrigDate": request.values.get("OrigDate", ""),
+            "OrigStartTime": request.values.get("OrigStartTime", ""),
         }
+
+        edit_index = request.values.get("editIndex", "")
+        if request.method == "GET" and edit_index.isdigit():
+            idx = int(edit_index)
+            if 0 <= idx < len(existing):
+                form = event_to_form(existing[idx])
+
+        modify_mode = bool(form.get("OrigBand") or request.values.get("modifyMode"))
 
         confirm = ""
         confirm_message = request.values.get("confirmMessage", "")
@@ -213,10 +227,30 @@ def create_app() -> Flask:
         if request.method == "POST" and request.form.get("Submit"):
             event = build_event_from_form(request.form, cfg)
             verify_bypass = bool(request.form.get("verifyBypass"))
-            errors = validate_event(event, existing, cfg, verify_bypass=verify_bypass)
+            orig_band = request.form.get("OrigBand", "").strip()
+            orig_venue = request.form.get("OrigVenue", "").strip()
+            orig_date = request.form.get("OrigDate", "").strip()
+            orig_start = request.form.get("OrigStartTime", "").strip()
+            is_update = bool(orig_band and orig_venue and orig_date and orig_start)
+            exclude = (orig_band, orig_venue, orig_date, orig_start) if is_update else None
+            errors = validate_event(
+                event, existing, cfg, verify_bypass=verify_bypass, exclude=exclude
+            )
             if not errors:
-                append_schedule_event(schedule_path, event)
-                confirm_message = f"{event.band} has been added"
+                if is_update:
+                    updated = replace_matching_event(
+                        existing,
+                        orig_band,
+                        orig_venue,
+                        orig_date,
+                        orig_start,
+                        event,
+                    )
+                    write_schedule(schedule_path, updated)
+                    confirm_message = f"{event.band} has been updated"
+                else:
+                    append_schedule_event(schedule_path, event)
+                    confirm_message = f"{event.band} has been added"
                 description_note_message = ""
                 if event.event_type in NON_BAND_EVENT_TYPES:
                     description_text = request.form.get("DescriptionText", "")
@@ -249,9 +283,11 @@ def create_app() -> Flask:
                     f"ImageURL={html.escape(event.image_url)}<br>"
                 )
                 form = _preserve_schedule_defaults(request.form)
+                modify_mode = False
             else:
                 confirm_message = "<br>".join(errors)
                 form = dict(request.form)
+                modify_mode = is_update
 
         bands = band_name_options(cfg, paths)
         return render_template(
@@ -270,28 +306,36 @@ def create_app() -> Flask:
             confirm=confirm_html,
             confirm_message=confirm_message,
             errors=errors,
-            modify_mode=bool(request.values.get("modifyMode")),
+            modify_mode=modify_mode,
         )
 
     @app.post("/schedule/remove")
     def schedule_remove():
         cfg = load_config()
         paths = resolved_paths(cfg)
-        confirm = request.form.get("confirm", "")
-        band = venue = date = start_time = ""
-        for line in confirm.split("<br>"):
-            if line.startswith("Band="):
-                band = line[5:]
-            elif line.startswith("Venue="):
-                venue = line[6:]
-            elif line.startswith("Date="):
-                date = line[5:]
-            elif line.startswith("Start Time="):
-                start_time = line[11:]
+        band = request.form.get("band", "").strip()
+        venue = request.form.get("venue", "").strip()
+        date = request.form.get("date", "").strip()
+        start_time = request.form.get("start_time", "").strip()
+        return_to = request.form.get("return_to", "schedule_entry")
+
+        if not all([band, venue, date, start_time]):
+            confirm = request.form.get("confirm", "")
+            for line in confirm.split("<br>"):
+                if line.startswith("Band="):
+                    band = line[5:]
+                elif line.startswith("Venue="):
+                    venue = line[6:]
+                elif line.startswith("Date="):
+                    date = line[5:]
+                elif line.startswith("Start Time="):
+                    start_time = line[11:]
 
         events = read_schedule(paths["schedule_file"])
         updated = remove_matching_event(events, band, venue, date, start_time)
         write_schedule(paths["schedule_file"], updated)
+        if return_to == "schedule_view":
+            return redirect(url_for("schedule_view", message="Entry removed"))
         return redirect(url_for("schedule_entry"))
 
     @app.get("/schedule/view")
@@ -299,7 +343,11 @@ def create_app() -> Flask:
         cfg = load_config()
         paths = resolved_paths(cfg)
         events = read_schedule(paths["schedule_file"])
-        return render_template("schedule_view.html", events=events)
+        return render_template(
+            "schedule_view.html",
+            events=events,
+            message=request.args.get("message", ""),
+        )
 
     @app.get("/schedule/stats")
     def schedule_stats():
