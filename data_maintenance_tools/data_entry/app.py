@@ -15,6 +15,7 @@ from data_entry.band_logic import (
     build_wikipedia_search_url,
     build_youtube_search_url,
     check_duplicate,
+    lineup_rows_for_display,
     normalize_https_prefix,
     read_lineup,
     remove_band_at_index,
@@ -38,6 +39,13 @@ from data_entry.config_store import (
     textarea_from_list,
 )
 from data_entry.directory_picker import choose_directory, choose_file
+from data_entry.description_map import (
+    cache_date_today,
+    description_label_options,
+    read_description_map,
+    remove_map_entry_at_index,
+    upsert_map_entry,
+)
 from data_entry.description_notes import save_description_note
 from data_entry.discover import discover_band
 from data_entry.pointer import introspect_pointer
@@ -356,7 +364,20 @@ def create_app() -> Flask:
             total_events=len(events),
         )
 
-    @app.route("/bands", methods=["GET", "POST"])
+    @app.get("/bands")
+    def bands():
+        cfg = load_config()
+        paths = resolved_paths(cfg)
+        rows = read_lineup(paths["lineup_file"], cfg)
+        return render_template(
+            "band_view.html",
+            bands=lineup_rows_for_display(rows),
+            lineup_file=paths["lineup_file"],
+            include_prior_years=bool(cfg.get("include_prior_years_field")),
+            message=request.args.get("message", ""),
+        )
+
+    @app.route("/bands/entry", methods=["GET", "POST"])
     def band_entry():
         cfg = load_config()
         paths = resolved_paths(cfg)
@@ -381,8 +402,6 @@ def create_app() -> Flask:
 
         modify_mode = form_data.get("OrigBandIndex", "").isdigit()
         errors: list[str] = []
-        success = False
-        success_message = ""
 
         if request.method == "POST" and request.form.get("action") == "submit":
             csv_data = {k: request.form.get(k, "").strip() for k in _band_form_fields(cfg)}
@@ -415,16 +434,11 @@ def create_app() -> Flask:
                 if is_update and orig_index is not None and 0 <= orig_index < len(existing):
                     updated = replace_band_at_index(existing, orig_index, csv_data)
                     write_lineup(lineup_path, updated, cfg)
-                    success_message = f"{band_name} has been updated"
+                    message = f"{band_name} has been updated"
                 else:
                     append_band(csv_data, lineup_path, cfg)
-                    success_message = "Band successfully added to the lineup."
-                success = True
-                form_data = {k: "" for k in form_data}
-                form_data["latestAlbum"] = ""
-                form_data["musicBrainz"] = ""
-                form_data["OrigBandIndex"] = ""
-                modify_mode = False
+                    message = "Band successfully added to the lineup."
+                return redirect(url_for("bands", message=message))
             else:
                 form_data = {
                     **csv_data,
@@ -439,8 +453,6 @@ def create_app() -> Flask:
             form_data=form_data,
             include_prior_years=bool(cfg.get("include_prior_years_field")),
             errors=errors,
-            success=success,
-            success_message=success_message,
             modify_mode=modify_mode,
         )
 
@@ -449,7 +461,6 @@ def create_app() -> Flask:
         cfg = load_config()
         paths = resolved_paths(cfg)
         index_str = request.form.get("index", "").strip()
-        return_to = request.form.get("return_to", "band_entry")
 
         if index_str.isdigit():
             idx = int(index_str)
@@ -458,21 +469,168 @@ def create_app() -> Flask:
                 updated = remove_band_at_index(rows, idx)
                 write_lineup(paths["lineup_file"], updated, cfg)
 
-        if return_to == "band_view":
-            return redirect(url_for("band_view", message="Band removed"))
-        return redirect(url_for("band_entry"))
+        return redirect(url_for("bands", message="Band removed"))
 
     @app.get("/bands/view")
     def band_view():
+        return redirect(url_for("bands", message=request.args.get("message", "")))
+
+    @app.route("/descriptions/write", methods=["GET", "POST"])
+    def descriptions_write():
         cfg = load_config()
         paths = resolved_paths(cfg)
-        bands = read_lineup(paths["lineup_file"], cfg)
+        notes_dir = paths.get("notes_directory", "")
+        label_names = description_label_options(cfg, paths)
+        form = {
+            "labelName": request.values.get("labelName", ""),
+            "descriptionText": request.values.get("descriptionText", ""),
+        }
+        errors: list[str] = []
+        success = False
+        success_message = ""
+
+        if request.method == "POST":
+            label = request.form.get("labelName", "").strip()
+            text = request.form.get("descriptionText", "")
+            form = {"labelName": label, "descriptionText": text}
+            if not notes_dir:
+                errors.append("Notes directory is not configured.")
+            elif not label:
+                errors.append("Band or event name is required.")
+            else:
+                try:
+                    saved = save_description_note(notes_dir, label, text)
+                    success = True
+                    success_message = (
+                        f"Saved {saved.name}. Share the Dropbox link with the map maintainer "
+                        "or add it under Descriptions → Map."
+                    )
+                    form = {"labelName": "", "descriptionText": ""}
+                except Exception as exc:
+                    errors.append(str(exc))
+
         return render_template(
-            "band_view.html",
-            bands=bands,
-            include_prior_years=bool(cfg.get("include_prior_years_field")),
+            "descriptions_write.html",
+            form=form,
+            label_names=label_names,
+            notes_directory=notes_dir,
+            errors=errors,
+            success=success,
+            success_message=success_message,
+        )
+
+    @app.get("/descriptions/map")
+    def descriptions_map():
+        cfg = load_config()
+        paths = resolved_paths(cfg)
+        map_path = paths.get("description_map_file", "")
+        entries = read_description_map(map_path) if map_path else []
+        return render_template(
+            "descriptions_view.html",
+            entries=entries,
+            description_map_file=map_path,
             message=request.args.get("message", ""),
         )
+
+    @app.route("/descriptions/map/entry", methods=["GET", "POST"])
+    def descriptions_map_entry():
+        cfg = load_config()
+        paths = resolved_paths(cfg)
+        map_path = paths.get("description_map_file", "")
+        label_names = description_label_options(cfg, paths)
+        form = {
+            "bandName": request.values.get("bandName", ""),
+            "mapUrl": request.values.get("mapUrl", ""),
+            "cacheDate": request.values.get("cacheDate", "") or cache_date_today(),
+            "OrigMapIndex": request.values.get("OrigMapIndex", ""),
+        }
+        errors: list[str] = []
+        success = False
+        success_message = ""
+        confirm_prompt = ""
+        pending_confirm = False
+        modify_mode = False
+
+        edit_index = request.values.get("editIndex", "")
+        if request.method == "GET" and edit_index.isdigit() and map_path:
+            rows = read_description_map(map_path)
+            idx = int(edit_index)
+            if 0 <= idx < len(rows):
+                row = rows[idx]
+                form = {
+                    "bandName": row["Band"],
+                    "mapUrl": row["URL"],
+                    "cacheDate": row["Date"] or cache_date_today(),
+                    "OrigMapIndex": str(idx),
+                }
+                modify_mode = True
+
+        if form.get("OrigMapIndex", "").isdigit():
+            modify_mode = True
+
+        if request.method == "POST":
+            form = {
+                "bandName": request.form.get("bandName", "").strip(),
+                "mapUrl": request.form.get("mapUrl", "").strip(),
+                "cacheDate": request.form.get("cacheDate", "").strip() or cache_date_today(),
+                "OrigMapIndex": request.form.get("OrigMapIndex", "").strip(),
+            }
+            modify_mode = form["OrigMapIndex"].isdigit()
+            confirm_update = request.form.get("confirm_update") == "1"
+            pending_confirm = confirm_update
+
+            if not map_path:
+                errors.append("Description map file is not configured.")
+            else:
+                edit_idx = (
+                    int(form["OrigMapIndex"]) if form["OrigMapIndex"].isdigit() else None
+                )
+                status, msg = upsert_map_entry(
+                    map_path,
+                    form["bandName"],
+                    form["mapUrl"],
+                    form["cacheDate"],
+                    confirm_update=confirm_update or modify_mode,
+                    edit_index=edit_idx if modify_mode else None,
+                )
+                if status == "needs_confirm":
+                    confirm_prompt = (
+                        f"{msg} Update the Dropbox URL and cache date?"
+                    )
+                    pending_confirm = True
+                elif status in ("added", "updated"):
+                    return redirect(
+                        url_for("descriptions_map", message=msg or "Map entry saved.")
+                    )
+                elif msg:
+                    errors.append(msg)
+
+        return render_template(
+            "descriptions_map.html",
+            form=form,
+            label_names=label_names,
+            description_map_file=map_path,
+            errors=errors,
+            success=success,
+            success_message=success_message,
+            confirm_prompt=confirm_prompt,
+            pending_confirm=pending_confirm,
+            modify_mode=modify_mode,
+        )
+
+    @app.post("/descriptions/map/remove")
+    def descriptions_map_remove():
+        cfg = load_config()
+        paths = resolved_paths(cfg)
+        map_path = paths.get("description_map_file", "")
+        index_str = request.form.get("index", "").strip()
+        if map_path and index_str.isdigit():
+            remove_map_entry_at_index(map_path, int(index_str))
+        return redirect(url_for("descriptions_map", message="Map entry removed"))
+
+    @app.get("/descriptions/view")
+    def descriptions_view():
+        return redirect(url_for("descriptions_map", message=request.args.get("message", "")))
 
     @app.get("/bands/discover")
     def band_discover():
@@ -497,6 +655,7 @@ def _config_from_form(form) -> dict[str, Any]:
         "schedule_file": form.get("schedule_file", "").strip(),
         "band_list_url": form.get("band_list_url", "").strip(),
         "description_map_url": form.get("description_map_url", "").strip(),
+        "description_map_file": form.get("description_map_file", "").strip(),
         "notes_directory": form.get("notes_directory", "").strip(),
         "include_prior_years_field": bool(form.get("include_prior_years_field")),
         "venues": list_from_textarea(form.get("venues_text", "")),

@@ -20,6 +20,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "schedule_file": "./artistSchedule.csv",
     "band_list_url": "",
     "description_map_url": "",
+    "description_map_file": "",
     "notes_directory": "",
     "venues": [" "],
     "dates": [" "],
@@ -270,6 +271,7 @@ def resolved_paths(cfg: dict[str, Any] | None = None) -> dict[str, str]:
         "band_list_url": str(cfg.get("band_list_url", "") or "").strip(),
         "pointer_url": str(cfg.get("pointer_url", "") or "").strip(),
         "notes_directory": resolve_path(str(cfg.get("notes_directory", "")), base),
+        "description_map_file": resolve_path(str(cfg.get("description_map_file", "")), base),
     }
 
 

@@ -1,0 +1,64 @@
+{% extends "layout.html" %}
+{% block title %}Write Description — {{ festival_name }}{% endblock %}
+{% block heading %}Write Description{% endblock %}
+{% block subheading %}Save plain-text description files for bands and events{% endblock %}
+
+{% block content %}
+<div class="target-file">Notes directory: <code>{{ notes_directory or '(not configured)' }}</code></div>
+
+{% if success %}
+<div class="message success page-message">{{ success_message }}</div>
+{% endif %}
+
+{% if errors %}
+<div class="message error page-message">
+  {% for err in errors %}{{ err }}<br>{% endfor %}
+</div>
+{% endif %}
+
+{% if not notes_directory %}
+<div class="message error">Set Notes directory on the Config screen before writing descriptions.</div>
+{% endif %}
+
+<div class="form-section">
+  <form method="post">
+    <div class="form-row">
+      <div class="form-label">Band / event name <span class="required">*</span></div>
+      <div class="form-input">
+        <select id="labelName" name="labelName" required>
+          <option value="">— select —</option>
+          {% for name in label_names %}
+          <option {% if name == form.labelName %}selected{% endif %}>{{ name }}</option>
+          {% endfor %}
+        </select>
+        <div class="hint">Lineup bands plus Special/Unofficial event titles from the schedule (no duplicates).</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-label">Description text <span class="required">*</span></div>
+      <div class="form-input">
+        <textarea id="descriptionText" name="descriptionText" rows="12" placeholder="Plain-text description for the app…">{{ form.descriptionText }}</textarea>
+        <div class="hint">Saved as a .txt file in the notes directory. Share the Dropbox link with whoever maintains the description map.</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-label"></div>
+      <div class="form-input">
+        <input type="submit" value="Save description file" {% if not notes_directory %}disabled{% endif %}>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.querySelector('form').addEventListener('click', e => {
+    if (e.target.closest('button, input[type="submit"]')) {
+      document.querySelectorAll('.page-message').forEach(el => el.remove());
+    }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,88 @@
+{% extends "layout.html" %}
+{% block title %}{% if modify_mode %}Edit{% else %}Add{% endif %} Map Entry — {{ festival_name }}{% endblock %}
+{% block heading %}{% if modify_mode %}Edit Map Entry{% else %}Add Map Entry{% endif %}{% endblock %}
+{% block subheading %}Link band and event names to Dropbox description files{% endblock %}
+
+{% block content %}
+<div class="target-file">Map file: <code>{{ description_map_file or '(not configured)' }}</code></div>
+
+{% if success %}
+<div class="message success page-message">{{ success_message }}</div>
+{% endif %}
+
+{% if confirm_prompt %}
+<div class="message error page-message">{{ confirm_prompt }}</div>
+{% endif %}
+
+{% if errors %}
+<div class="message error page-message">
+  {% for err in errors %}{{ err }}<br>{% endfor %}
+</div>
+{% endif %}
+
+{% if not description_map_file %}
+<div class="message error">Set Description map file on the Config screen before updating the map.</div>
+{% endif %}
+
+<div class="form-section">
+  <form method="post" id="mapForm">
+    {% if modify_mode %}
+    <input type="hidden" name="OrigMapIndex" value="{{ form.OrigMapIndex }}">
+    {% endif %}
+    {% if pending_confirm %}
+    <input type="hidden" name="confirm_update" value="1">
+    {% endif %}
+
+    <div class="form-row">
+      <div class="form-label">Band / event name <span class="required">*</span></div>
+      <div class="form-input">
+        <select id="bandName" name="bandName" required>
+          <option value="">— select —</option>
+          {% for name in label_names %}
+          <option {% if name == form.bandName %}selected{% endif %}>{{ name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-label">Dropbox URL <span class="required">*</span></div>
+      <div class="form-input">
+        <input type="url" id="mapUrl" name="mapUrl" value="{{ form.mapUrl }}" placeholder="https://www.dropbox.com/...">
+        <div class="hint"><code>dl=0</code> is replaced with <code>raw=1</code> automatically on save.</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-label">Cache date</div>
+      <div class="form-input">
+        <input type="text" id="cacheDate" name="cacheDate" value="{{ form.cacheDate }}" placeholder="MM-DD-YYYY">
+        <div class="hint">Defaults to today. Updated on every map change so the app knows content may have changed.</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-label"></div>
+      <div class="form-input">
+        {% if pending_confirm %}
+        <input type="submit" value="Yes, update map entry" {% if not description_map_file %}disabled{% endif %}>
+        <a class="btn secondary" href="{{ url_for('descriptions_map') }}" style="margin-left:8px;">Cancel</a>
+        {% else %}
+        <input type="submit" value="Save" {% if not description_map_file %}disabled{% endif %}>
+        <a class="btn secondary" href="{{ url_for('descriptions_map') }}" style="margin-left:8px;">Cancel</a>
+        {% endif %}
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.getElementById('mapForm').addEventListener('click', e => {
+    if (e.target.closest('button, input[type="submit"]') && !e.target.closest('a')) {
+      document.querySelectorAll('.page-message').forEach(el => el.remove());
+    }
+  });
+</script>
+{% endblock %}

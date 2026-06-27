@@ -1,0 +1,48 @@
+{% extends "layout.html" %}
+{% block title %}View Description Map — {{ festival_name }}{% endblock %}
+{% block heading %}Description Map{% endblock %}
+{% block subheading %}{{ entries|length }} entr{{ 'y' if entries|length == 1 else 'ies' }}{% endblock %}
+
+{% block content %}
+<div class="target-file">Map file: <code>{{ description_map_file or '(not configured)' }}</code></div>
+
+{% if message %}
+<div class="message success page-message">{{ message }}</div>
+{% endif %}
+
+<div class="panel">
+  <div class="panel-toolbar">
+    <a class="btn" href="{{ url_for('descriptions_map_entry') }}">Add</a>
+  </div>
+  {% if entries %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Band / event</th>
+        <th>URL</th>
+        <th>Cache date</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in entries %}
+      <tr>
+        <td>{{ row.Band }}</td>
+        <td class="url-cell"><a href="{{ row.URL }}" target="_blank" rel="noopener">{{ row.URL[:60] }}{% if row.URL|length > 60 %}…{% endif %}</a></td>
+        <td>{{ row.Date }}</td>
+        <td class="row-actions">
+          <a class="btn secondary" href="{{ url_for('descriptions_map_entry', editIndex=loop.index0) }}">Edit</a>
+          <form method="post" action="{{ url_for('descriptions_map_remove') }}" class="inline-form" onsubmit="return confirm('Remove this map entry?');">
+            <input type="hidden" name="index" value="{{ loop.index0 }}">
+            <button type="submit" class="secondary">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No description map entries yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

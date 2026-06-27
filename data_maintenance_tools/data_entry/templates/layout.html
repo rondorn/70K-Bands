@@ -10,7 +10,8 @@
 <body>
   <div class="container">
     <div class="header-section">
-      <h1>{% block heading %}{{ festival_name }}{% endblock %}</h1>
+      <h1>{{ festival_name }}</h1>
+      <h2 class="page-heading">{% block heading %}Festival Data Entry{% endblock %}</h2>
       <p>{% block subheading %}Local festival lineup and schedule data entry{% endblock %}</p>
       <div class="target-file">Config: <code>{{ config_file }}</code></div>
     </div>
@@ -23,18 +24,24 @@
         </div>
       </div>
       <div class="nav-section">
+        <span class="nav-section-label">Band</span>
+        <div class="nav-section-links">
+          <a href="{{ url_for('bands') }}">Bands</a>
+        </div>
+      </div>
+      <div class="nav-section">
+        <span class="nav-section-label">Descriptions</span>
+        <div class="nav-section-links">
+          <a href="{{ url_for('descriptions_write') }}">Write</a>
+          <a href="{{ url_for('descriptions_map') }}" class="secondary">Map</a>
+        </div>
+      </div>
+      <div class="nav-section">
         <span class="nav-section-label">Schedule</span>
         <div class="nav-section-links">
           <a href="{{ url_for('schedule_entry') }}">Entry</a>
           <a href="{{ url_for('schedule_view') }}" class="secondary">View</a>
           <a href="{{ url_for('schedule_stats') }}" class="secondary">Stats</a>
-        </div>
-      </div>
-      <div class="nav-section">
-        <span class="nav-section-label">Band</span>
-        <div class="nav-section-links">
-          <a href="{{ url_for('band_entry') }}">Add Band</a>
-          <a href="{{ url_for('band_view') }}" class="secondary">View</a>
         </div>
       </div>
     </div>

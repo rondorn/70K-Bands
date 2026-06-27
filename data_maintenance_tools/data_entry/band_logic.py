@@ -153,6 +153,12 @@ def read_lineup(csv_file: str, cfg: dict[str, Any]) -> list[dict[str, str]]:
     return rows
 
 
+def lineup_rows_for_display(rows: list[dict[str, str]]) -> list[dict[str, str]]:
+    indexed = [{"source_index": i, **row} for i, row in enumerate(rows)]
+    indexed.sort(key=lambda row: (row.get("bandName") or "").casefold())
+    return indexed
+
+
 def write_lineup(
     csv_file: str, rows: list[dict[str, str]], cfg: dict[str, Any]
 ) -> None:

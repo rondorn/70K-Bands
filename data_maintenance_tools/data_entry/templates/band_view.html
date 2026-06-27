@@ -11,6 +11,9 @@
 {% endif %}
 
 <div class="panel">
+  <div class="panel-toolbar">
+    <a class="btn" href="{{ url_for('band_entry') }}">Add</a>
+  </div>
   {% if bands %}
   <table class="data-table">
     <thead>
@@ -32,10 +35,9 @@
         {% if include_prior_years %}<td>{{ b.priorYears }}</td>{% endif %}
         <td>{{ b.noteworthy }}</td>
         <td class="row-actions">
-          <a class="btn secondary" href="{{ url_for('band_entry', editIndex=loop.index0) }}">Edit</a>
+          <a class="btn secondary" href="{{ url_for('band_entry', editIndex=b.source_index) }}">Edit</a>
           <form method="post" action="{{ url_for('band_remove') }}" class="inline-form" onsubmit="return confirm('Remove {{ b.bandName }} from the lineup?');">
-            <input type="hidden" name="index" value="{{ loop.index0 }}">
-            <input type="hidden" name="return_to" value="band_view">
+            <input type="hidden" name="index" value="{{ b.source_index }}">
             <button type="submit" class="secondary">Delete</button>
           </form>
         </td>

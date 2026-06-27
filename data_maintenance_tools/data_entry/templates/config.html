@@ -87,10 +87,21 @@
     </div>
 
     <div class="form-row">
+      <div class="form-label">Description map file</div>
+      <div class="form-input">
+        <div class="path-picker">
+          <input type="text" id="descriptionMapFile" name="description_map_file" value="{{ cfg.description_map_file }}">
+          <button type="button" class="secondary" id="chooseDescriptionMapFileBtn">Choose file…</button>
+        </div>
+        <div class="hint">Local CSV (Band, URL, Date) maintained in Descriptions → Map. Use a Dropbox-synced path if the app loads it from there.</div>
+      </div>
+    </div>
+
+    <div class="form-row">
       <div class="form-label">Description map URL</div>
       <div class="form-input">
-        <input type="url" id="descriptionMapUrl" name="description_map_url" value="{{ cfg.description_map_url }}">
-        <div class="hint">From pointer Current::descriptionMap. CSV maps band/event names to Dropbox URLs of plain-text description files.</div>
+        <input type="url" id="descriptionMapUrl" name="description_map_url" value="{{ cfg.description_map_url }}" readonly>
+        <div class="hint">Read-only reference from pointer Current::descriptionMap (populated by Load from pointer). The pointer file itself is maintained separately.</div>
       </div>
     </div>
 
@@ -101,7 +112,7 @@
           <input type="text" id="notesDirectory" name="notes_directory" value="{{ cfg.notes_directory }}" placeholder="Choose a Dropbox-synced folder…">
           <button type="button" class="secondary" id="chooseNotesDirBtn">Choose folder…</button>
         </div>
-        <div class="hint">Local folder where Schedule Entry saves description text files for Special/Unofficial events.</div>
+        <div class="hint">Local folder where description text files are saved (Descriptions → Write and Schedule Entry for Special/Unofficial events).</div>
       </div>
     </div>
 
@@ -167,6 +178,8 @@
   const lineupFileInput = document.getElementById('lineupFile');
   const chooseScheduleFileBtn = document.getElementById('chooseScheduleFileBtn');
   const scheduleFileInput = document.getElementById('scheduleFile');
+  const chooseDescriptionMapFileBtn = document.getElementById('chooseDescriptionMapFileBtn');
+  const descriptionMapFileInput = document.getElementById('descriptionMapFile');
 
   async function chooseDirectory(targetInput, title) {
     const body = new URLSearchParams({
@@ -228,6 +241,7 @@
 
   bindFilePicker(chooseLineupFileBtn, lineupFileInput, 'Choose lineup CSV file');
   bindFilePicker(chooseScheduleFileBtn, scheduleFileInput, 'Choose schedule CSV file');
+  bindFilePicker(chooseDescriptionMapFileBtn, descriptionMapFileInput, 'Choose description map CSV file');
 
   chooseNotesDirBtn.addEventListener('click', async () => {
     chooseNotesDirBtn.disabled = true;

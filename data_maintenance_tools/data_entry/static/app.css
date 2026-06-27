@@ -24,10 +24,17 @@ body {
 }
 
 .header-section h1 {
-  margin: 0 0 4px 0;
-  font-size: 1.35rem;
-  font-weight: 600;
+  margin: 0 0 2px 0;
+  font-size: 1.5rem;
+  font-weight: 700;
   color: #ff6b35;
+}
+
+.header-section h2.page-heading {
+  margin: 0 0 4px 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #e8e8e8;
 }
 
 .header-section p {
@@ -38,9 +45,11 @@ body {
 
 .nav-bar {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: stretch;
+  justify-content: space-between;
   gap: 12px;
+  width: 100%;
   margin: 12px 0 14px;
 }
 
@@ -52,8 +61,9 @@ body {
   border: 1px solid #3a3a3a;
   border-radius: 8px;
   padding: 8px 12px;
-  flex: 1;
-  min-width: 0;
+  flex: 0 0 auto;
+  width: fit-content;
+  max-width: 100%;
 }
 
 .nav-section-label {
@@ -68,10 +78,9 @@ body {
 
 .nav-section-links {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 8px;
-  min-width: 0;
 }
 
 .nav-section-links a {
@@ -307,6 +316,14 @@ input[type="submit"]:disabled:hover {
   margin-top: 6px;
 }
 
+.panel-toolbar {
+  margin-bottom: 12px;
+}
+
+.panel-toolbar .btn {
+  margin: 0;
+}
+
 table.data-table {
   width: 100%;
   border-collapse: collapse;
@@ -344,6 +361,22 @@ form.inline-form button {
   margin: 0;
 }
 
+table.data-table td.url-cell {
+  max-width: 280px;
+  word-break: break-all;
+  font-size: 13px;
+}
+
+table.data-table td.url-cell a {
+  color: #8ab4f8;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+table.data-table td.url-cell a:hover {
+  color: #c5dcff;
+}
+
 @media (max-width: 768px) {
   .container {
     padding: 10px 12px 20px;
@@ -355,6 +388,7 @@ form.inline-form button {
 
   .nav-section {
     flex: 1 1 100%;
+    width: auto;
   }
 
   .form-row {
