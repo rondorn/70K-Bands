@@ -16,8 +16,12 @@ from data_entry.band_logic import (
     build_youtube_search_url,
     check_duplicate,
     normalize_https_prefix,
+    read_lineup,
+    remove_band_at_index,
+    replace_band_at_index,
     strip_image_url_numeric_query,
     validate_band_data,
+    write_lineup,
 )
 from data_entry.config_store import (
     active_festival_id,
@@ -33,7 +37,7 @@ from data_entry.config_store import (
     set_active_festival,
     textarea_from_list,
 )
-from data_entry.directory_picker import choose_directory
+from data_entry.directory_picker import choose_directory, choose_file
 from data_entry.description_notes import save_description_note
 from data_entry.discover import discover_band
 from data_entry.pointer import introspect_pointer
@@ -178,6 +182,18 @@ def create_app() -> Flask:
         title = request.form.get("title", "Choose a folder").strip() or "Choose a folder"
         try:
             path = choose_directory(initial_dir, title)
+            if not path:
+                return jsonify({"ok": False, "cancelled": True})
+            return jsonify({"ok": True, "path": path})
+        except Exception as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
+
+    @app.post("/api/choose-file")
+    def api_choose_file():
+        initial_path = request.form.get("initial_path", "").strip()
+        title = request.form.get("title", "Choose a file").strip() or "Choose a file"
+        try:
+            path = choose_file(initial_path, title)
             if not path:
                 return jsonify({"ok": False, "cancelled": True})
             return jsonify({"ok": True, "path": path})
@@ -371,11 +387,29 @@ def create_app() -> Flask:
     def band_entry():
         cfg = load_config()
         paths = resolved_paths(cfg)
+        lineup_path = paths["lineup_file"]
+        existing = read_lineup(lineup_path, cfg)
+
         form_data = {key: request.values.get(key, "") for key in _band_form_fields(cfg)}
         form_data["latestAlbum"] = request.values.get("latestAlbum", "")
         form_data["musicBrainz"] = request.values.get("musicBrainz", "")
+        form_data["OrigBandIndex"] = request.values.get("OrigBandIndex", "")
+
+        edit_index = request.values.get("editIndex", "")
+        if request.method == "GET" and edit_index.isdigit():
+            idx = int(edit_index)
+            if 0 <= idx < len(existing):
+                form_data = {
+                    **existing[idx],
+                    "latestAlbum": "",
+                    "musicBrainz": "",
+                    "OrigBandIndex": str(idx),
+                }
+
+        modify_mode = form_data.get("OrigBandIndex", "").isdigit()
         errors: list[str] = []
         success = False
+        success_message = ""
 
         if request.method == "POST" and request.form.get("action") == "submit":
             csv_data = {k: request.form.get(k, "").strip() for k in _band_form_fields(cfg)}
@@ -392,17 +426,40 @@ def create_app() -> Flask:
                 if not csv_data.get("metalArchives"):
                     csv_data["metalArchives"] = build_metal_archives_search_url(band_name)
 
+            orig_index_str = request.form.get("OrigBandIndex", "").strip()
+            is_update = orig_index_str.isdigit()
+            orig_index = int(orig_index_str) if is_update else None
+            exclude_index = orig_index if is_update and orig_index < len(existing) else None
+
             ok, errors = validate_band_data(csv_data)
-            if ok and check_duplicate(band_name, paths["lineup_file"]):
+            if ok and check_duplicate(
+                band_name, lineup_path, cfg, exclude_index=exclude_index
+            ):
                 ok = False
                 errors.append(f"Band '{band_name}' already exists in the lineup file")
 
             if ok:
-                append_band(csv_data, paths["lineup_file"], cfg)
+                if is_update and orig_index is not None and 0 <= orig_index < len(existing):
+                    updated = replace_band_at_index(existing, orig_index, csv_data)
+                    write_lineup(lineup_path, updated, cfg)
+                    success_message = f"{band_name} has been updated"
+                else:
+                    append_band(csv_data, lineup_path, cfg)
+                    success_message = "Band successfully added to the lineup."
                 success = True
                 form_data = {k: "" for k in form_data}
+                form_data["latestAlbum"] = ""
+                form_data["musicBrainz"] = ""
+                form_data["OrigBandIndex"] = ""
+                modify_mode = False
             else:
-                form_data = {**csv_data, "latestAlbum": latest_album}
+                form_data = {
+                    **csv_data,
+                    "latestAlbum": latest_album,
+                    "musicBrainz": request.form.get("musicBrainz", "").strip(),
+                    "OrigBandIndex": orig_index_str,
+                }
+                modify_mode = is_update
 
         return render_template(
             "band_entry.html",
@@ -410,6 +467,38 @@ def create_app() -> Flask:
             include_prior_years=bool(cfg.get("include_prior_years_field")),
             errors=errors,
             success=success,
+            success_message=success_message,
+            modify_mode=modify_mode,
+        )
+
+    @app.post("/bands/remove")
+    def band_remove():
+        cfg = load_config()
+        paths = resolved_paths(cfg)
+        index_str = request.form.get("index", "").strip()
+        return_to = request.form.get("return_to", "band_entry")
+
+        if index_str.isdigit():
+            idx = int(index_str)
+            rows = read_lineup(paths["lineup_file"], cfg)
+            if 0 <= idx < len(rows):
+                updated = remove_band_at_index(rows, idx)
+                write_lineup(paths["lineup_file"], updated, cfg)
+
+        if return_to == "band_view":
+            return redirect(url_for("band_view", message="Band removed"))
+        return redirect(url_for("band_entry"))
+
+    @app.get("/bands/view")
+    def band_view():
+        cfg = load_config()
+        paths = resolved_paths(cfg)
+        bands = read_lineup(paths["lineup_file"], cfg)
+        return render_template(
+            "band_view.html",
+            bands=bands,
+            include_prior_years=bool(cfg.get("include_prior_years_field")),
+            message=request.args.get("message", ""),
         )
 
     @app.get("/bands/discover")

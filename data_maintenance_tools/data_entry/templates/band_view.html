@@ -1,0 +1,50 @@
+{% extends "layout.html" %}
+{% block title %}View Lineup — {{ festival_name }}{% endblock %}
+{% block heading %}Band Lineup{% endblock %}
+{% block subheading %}{{ bands|length }} band(s){% endblock %}
+
+{% block content %}
+<div class="target-file">Source: <code>{{ lineup_file }}</code></div>
+
+{% if message %}
+<div class="message success page-message">{{ message }}</div>
+{% endif %}
+
+<div class="panel">
+  {% if bands %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Band</th>
+        <th>Country</th>
+        <th>Genre</th>
+        {% if include_prior_years %}<th>Prior years</th>{% endif %}
+        <th>Noteworthy</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for b in bands %}
+      <tr>
+        <td>{{ b.bandName }}</td>
+        <td>{{ b.country }}</td>
+        <td>{{ b.genre }}</td>
+        {% if include_prior_years %}<td>{{ b.priorYears }}</td>{% endif %}
+        <td>{{ b.noteworthy }}</td>
+        <td class="row-actions">
+          <a class="btn secondary" href="{{ url_for('band_entry', editIndex=loop.index0) }}">Edit</a>
+          <form method="post" action="{{ url_for('band_remove') }}" class="inline-form" onsubmit="return confirm('Remove {{ b.bandName }} from the lineup?');">
+            <input type="hidden" name="index" value="{{ loop.index0 }}">
+            <input type="hidden" name="return_to" value="band_view">
+            <button type="submit" class="secondary">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No bands in the lineup yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

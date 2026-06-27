@@ -122,16 +122,61 @@ def load_band_names(band_list_url: str, lineup_file: str) -> list[str]:
     return names
 
 
-def check_duplicate(band_name: str, csv_file: str) -> bool:
+def check_duplicate(
+    band_name: str,
+    csv_file: str,
+    cfg: dict[str, Any],
+    exclude_index: int | None = None,
+) -> bool:
+    rows = read_lineup(csv_file, cfg)
+    for idx, row in enumerate(rows):
+        if exclude_index is not None and idx == exclude_index:
+            continue
+        if row.get("bandName", "").strip().lower() == band_name.strip().lower():
+            return True
+    return False
+
+
+def read_lineup(csv_file: str, cfg: dict[str, Any]) -> list[dict[str, str]]:
+    fields = lineup_fields(bool(cfg.get("include_prior_years_field")))
     path = Path(csv_file)
     if not path.is_file():
-        return False
+        return []
+    rows: list[dict[str, str]] = []
     with path.open(encoding="utf-8", newline="") as handle:
         reader = csv.DictReader(handle)
         for row in reader:
-            if (row.get("bandName") or "").strip().lower() == band_name.strip().lower():
-                return True
-    return False
+            name = (row.get("bandName") or "").strip()
+            if not name or name.lower() == "bandname":
+                continue
+            rows.append({field: (row.get(field) or "").strip() for field in fields})
+    return rows
+
+
+def write_lineup(
+    csv_file: str, rows: list[dict[str, str]], cfg: dict[str, Any]
+) -> None:
+    fields = lineup_fields(bool(cfg.get("include_prior_years_field")))
+    path = Path(csv_file)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fields)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow({field: row.get(field, "") for field in fields})
+
+
+def remove_band_at_index(rows: list[dict[str, str]], index: int) -> list[dict[str, str]]:
+    return [row for i, row in enumerate(rows) if i != index]
+
+
+def replace_band_at_index(
+    rows: list[dict[str, str]], index: int, replacement: dict[str, str]
+) -> list[dict[str, str]]:
+    updated = list(rows)
+    if 0 <= index < len(updated):
+        updated[index] = replacement
+    return updated
 
 
 def append_band(data: dict[str, str], csv_file: str, cfg: dict[str, Any]) -> None:

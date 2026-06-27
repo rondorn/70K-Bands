@@ -59,7 +59,10 @@
     <div class="form-row">
       <div class="form-label">Lineup file</div>
       <div class="form-input">
-        <input type="text" name="lineup_file" value="{{ cfg.lineup_file }}">
+        <div class="path-picker">
+          <input type="text" id="lineupFile" name="lineup_file" value="{{ cfg.lineup_file }}">
+          <button type="button" class="secondary" id="chooseLineupFileBtn">Choose file…</button>
+        </div>
         <div class="hint">Destination CSV for Add Band (relative to config file or absolute path).</div>
       </div>
     </div>
@@ -67,7 +70,10 @@
     <div class="form-row">
       <div class="form-label">Schedule file</div>
       <div class="form-input">
-        <input type="text" name="schedule_file" value="{{ cfg.schedule_file }}">
+        <div class="path-picker">
+          <input type="text" id="scheduleFile" name="schedule_file" value="{{ cfg.schedule_file }}">
+          <button type="button" class="secondary" id="chooseScheduleFileBtn">Choose file…</button>
+        </div>
         <div class="hint">Destination CSV for schedule entry.</div>
       </div>
     </div>
@@ -186,6 +192,10 @@
   const loadFeedback = document.getElementById('loadFeedback');
   const chooseNotesDirBtn = document.getElementById('chooseNotesDirBtn');
   const notesDirectoryInput = document.getElementById('notesDirectory');
+  const chooseLineupFileBtn = document.getElementById('chooseLineupFileBtn');
+  const lineupFileInput = document.getElementById('lineupFile');
+  const chooseScheduleFileBtn = document.getElementById('chooseScheduleFileBtn');
+  const scheduleFileInput = document.getElementById('scheduleFile');
 
   async function chooseDirectory(targetInput, title) {
     const body = new URLSearchParams({
@@ -207,6 +217,46 @@
     }
     throw new Error(payload.error || 'Could not choose folder.');
   }
+
+  async function chooseFile(targetInput, title) {
+    const body = new URLSearchParams({
+      initial_path: targetInput.value.trim(),
+      title: title,
+    });
+    const resp = await fetch('{{ url_for("api_choose_file") }}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString(),
+    });
+    const payload = await resp.json();
+    if (payload.ok && payload.path) {
+      targetInput.value = payload.path;
+      return payload.path;
+    }
+    if (payload.cancelled) {
+      return '';
+    }
+    throw new Error(payload.error || 'Could not choose file.');
+  }
+
+  async function bindFilePicker(button, input, title) {
+    button.addEventListener('click', async () => {
+      const label = button.textContent;
+      button.disabled = true;
+      button.textContent = 'Choose file…';
+      try {
+        await chooseFile(input, title);
+      } catch (err) {
+        showLoadFeedback('Error: ' + err, 'error');
+      } finally {
+        button.disabled = false;
+        button.textContent = label;
+      }
+    });
+  }
+
+  bindFilePicker(chooseLineupFileBtn, lineupFileInput, 'Choose lineup CSV file');
+  bindFilePicker(chooseScheduleFileBtn, scheduleFileInput, 'Choose schedule CSV file');
 
   chooseNotesDirBtn.addEventListener('click', async () => {
     chooseNotesDirBtn.disabled = true;

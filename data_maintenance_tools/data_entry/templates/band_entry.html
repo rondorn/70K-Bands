@@ -1,13 +1,17 @@
 {% extends "layout.html" %}
 {% block title %}Add Band — {{ festival_name }}{% endblock %}
-{% block heading %}Add Band to Lineup{% endblock %}
+{% block heading %}{% if modify_mode %}Edit Band{% else %}Add Band to Lineup{% endif %}{% endblock %}
 {% block subheading %}Discover from Metal Archives or MusicBrainz{% endblock %}
 
 {% block content %}
 <div class="target-file">Writing to: <code>{{ lineup_file }}</code></div>
 
 {% if success %}
-<div class="message success page-message">Band successfully added to the lineup.</div>
+<div class="message success page-message">{{ success_message or 'Band successfully added to the lineup.' }}</div>
+{% endif %}
+
+{% if modify_mode %}
+<div class="message error page-message">Modify mode: update the band and submit to save changes.</div>
 {% endif %}
 
 {% if errors %}
@@ -19,6 +23,9 @@
 <div class="form-section">
   <form method="post">
     <input type="hidden" name="action" value="submit">
+    {% if modify_mode %}
+    <input type="hidden" name="OrigBandIndex" value="{{ form_data.OrigBandIndex }}">
+    {% endif %}
 
     <div class="form-row">
       <div class="form-label">Band name <span class="required">*</span></div>
@@ -103,8 +110,12 @@
     <div class="form-row">
       <div class="form-label"></div>
       <div class="form-input">
-        <input type="submit" value="Add band to lineup">
+        <input type="submit" value="{% if modify_mode %}Update band{% else %}Add band to lineup{% endif %}">
+        {% if modify_mode %}
+        <a class="btn secondary" href="{{ url_for('band_entry') }}" style="margin-left:8px;">Cancel edit</a>
+        {% else %}
         <button type="reset" class="secondary">Clear</button>
+        {% endif %}
       </div>
     </div>
   </form>
