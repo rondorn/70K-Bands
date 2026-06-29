@@ -32,3 +32,8 @@ andriod/fastlane/google-play-api-key.json
 andriod/local.properties
 andriod/app/local.properties
 andriod/app/app-release.apk
+
+# Markdown: ignore all except README.md (also see ~/.gitignore_global)
+*.md
+!README.md
+!**/README.md
