@@ -16,6 +16,7 @@ from data_entry.band_logic import (
     build_youtube_search_url,
     check_duplicate,
     lineup_rows_for_display,
+    normalize_genre_for_csv,
     normalize_https_prefix,
     read_lineup,
     remove_band_at_index,
@@ -410,6 +411,7 @@ def create_app() -> Flask:
             csv_data["imageUrl"] = normalize_https_prefix(
                 strip_image_url_numeric_query(csv_data.get("imageUrl", ""))
             )
+            csv_data["genre"] = normalize_genre_for_csv(csv_data.get("genre", ""))
             band_name = csv_data.get("bandName", "").strip()
             if band_name:
                 if not csv_data.get("wikipedia"):

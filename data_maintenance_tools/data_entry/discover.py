@@ -5,7 +5,11 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from data_entry.band_logic import build_wikipedia_search_url, build_youtube_search_url
+from data_entry.band_logic import (
+    build_wikipedia_search_url,
+    build_youtube_search_url,
+    normalize_genre_for_csv,
+)
 from data_entry.metal_archives import (
     MetalArchivesDiscoverError,
     discover_from_metal_archives,
@@ -106,6 +110,9 @@ def discover_band(
         }
 
     data.pop("noteworthy", None)
+
+    if data.get("genre"):
+        data["genre"] = normalize_genre_for_csv(data["genre"])
 
     return {
         "ok": True,

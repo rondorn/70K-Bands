@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import hashlib
+import re
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote, urlparse
@@ -46,6 +47,18 @@ def strip_image_url_numeric_query(url: str) -> str:
     import re
 
     return re.sub(r"\?\d+$", "", (url or "").strip())
+
+
+def normalize_genre_for_csv(genre: str) -> str:
+    """Replace commas with slashes so genre fits unquoted CSV cells."""
+    return re.sub(r",\s*", "/", (genre or "").strip())
+
+
+def normalize_band_row_for_csv(row: dict[str, str]) -> dict[str, str]:
+    normalized = dict(row)
+    if "genre" in normalized:
+        normalized["genre"] = normalize_genre_for_csv(normalized.get("genre", ""))
+    return normalized
 
 
 def validate_url(url: str, expected_domain: str | None = None) -> tuple[bool, str]:
@@ -169,7 +182,8 @@ def write_lineup(
         writer = csv.DictWriter(handle, fieldnames=fields)
         writer.writeheader()
         for row in rows:
-            writer.writerow({field: row.get(field, "") for field in fields})
+            normalized = normalize_band_row_for_csv(row)
+            writer.writerow({field: normalized.get(field, "") for field in fields})
 
 
 def remove_band_at_index(rows: list[dict[str, str]], index: int) -> list[dict[str, str]]:
@@ -194,4 +208,5 @@ def append_band(data: dict[str, str], csv_file: str, cfg: dict[str, Any]) -> Non
         writer = csv.DictWriter(handle, fieldnames=fields)
         if write_header:
             writer.writeheader()
-        writer.writerow({field: data.get(field, "") for field in fields})
+        normalized = normalize_band_row_for_csv(data)
+        writer.writerow({field: normalized.get(field, "") for field in fields})

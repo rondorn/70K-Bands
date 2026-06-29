@@ -182,7 +182,7 @@ def _format_genre(detail: dict[str, Any]) -> str:
     genres = detail.get("genres") or []
     if genres:
         ranked = sorted(genres, key=lambda g: g.get("count", 0), reverse=True)
-        return ", ".join(
+        return " / ".join(
             _capitalize_genre_label(g["name"])
             for g in ranked[:3]
             if g.get("name")
@@ -190,7 +190,7 @@ def _format_genre(detail: dict[str, Any]) -> str:
     tags = detail.get("tags") or []
     if tags:
         ranked = sorted(tags, key=lambda t: t.get("count", 0), reverse=True)
-        return ", ".join(
+        return " / ".join(
             _capitalize_genre_label(t["name"])
             for t in ranked[:3]
             if t.get("name")
