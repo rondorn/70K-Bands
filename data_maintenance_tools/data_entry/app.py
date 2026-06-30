@@ -10,18 +10,14 @@ from urllib.parse import quote
 from flask import Flask, jsonify, redirect, render_template, request, url_for
 
 from data_entry.band_logic import (
+    apply_band_url_defaults,
     append_band,
-    build_metal_archives_search_url,
-    build_wikipedia_search_url,
-    build_youtube_search_url,
-    check_duplicate,
     lineup_rows_for_display,
+    normalize_band_url_fields,
     normalize_genre_for_csv,
-    normalize_https_prefix,
     read_lineup,
     remove_band_at_index,
     replace_band_at_index,
-    strip_image_url_numeric_query,
     validate_band_data,
     write_lineup,
 )
@@ -407,30 +403,23 @@ def create_app() -> Flask:
         if request.method == "POST" and request.form.get("action") == "submit":
             csv_data = {k: request.form.get(k, "").strip() for k in _band_form_fields(cfg)}
             latest_album = request.form.get("latestAlbum", "").strip()
-            csv_data["officalSite"] = normalize_https_prefix(csv_data.get("officalSite", ""))
-            csv_data["imageUrl"] = normalize_https_prefix(
-                strip_image_url_numeric_query(csv_data.get("imageUrl", ""))
-            )
+            csv_data = normalize_band_url_fields(csv_data)
             csv_data["genre"] = normalize_genre_for_csv(csv_data.get("genre", ""))
+            csv_data = apply_band_url_defaults(
+                csv_data,
+                csv_data.get("bandName", ""),
+                latest_album,
+            )
             band_name = csv_data.get("bandName", "").strip()
-            if band_name:
-                if not csv_data.get("wikipedia"):
-                    csv_data["wikipedia"] = build_wikipedia_search_url(band_name)
-                csv_data["youtube"] = build_youtube_search_url(band_name, latest_album)
-                if not csv_data.get("metalArchives"):
-                    csv_data["metalArchives"] = build_metal_archives_search_url(band_name)
 
             orig_index_str = request.form.get("OrigBandIndex", "").strip()
             is_update = orig_index_str.isdigit()
             orig_index = int(orig_index_str) if is_update else None
             exclude_index = orig_index if is_update and orig_index < len(existing) else None
 
-            ok, errors = validate_band_data(csv_data)
-            if ok and check_duplicate(
-                band_name, lineup_path, cfg, exclude_index=exclude_index
-            ):
-                ok = False
-                errors.append(f"Band '{band_name}' already exists in the lineup file")
+            ok, errors = validate_band_data(
+                csv_data, cfg, lineup_path, exclude_index=exclude_index
+            )
 
             if ok:
                 if is_update and orig_index is not None and 0 <= orig_index < len(existing):

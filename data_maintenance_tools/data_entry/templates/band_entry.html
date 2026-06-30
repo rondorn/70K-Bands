@@ -28,7 +28,7 @@
       <div class="form-label">Metal Archives</div>
       <div class="form-input">
         <input type="url" id="metalArchives" name="metalArchives" value="{{ form_data.metalArchives }}" placeholder="https://www.metal-archives.com/bands/...">
-        <div class="hint">Band page URL. Discover uses this when provided.</div>
+        <div class="hint">Optional. Band page URL; stored with <code>https://</code>. Discover uses this when provided.</div>
       </div>
     </div>
 
@@ -47,31 +47,40 @@
       <div class="form-label">Latest album</div>
       <div class="form-input">
         <input type="text" id="latestAlbum" name="latestAlbum" value="{{ form_data.latestAlbum }}">
-        <div class="hint">From discography; used for YouTube search only (not saved to CSV).</div>
+        <div class="hint">Optional. From discography; used for YouTube search only (not saved to CSV).</div>
       </div>
     </div>
 
     <div class="form-row">
-      <div class="form-label">Official site</div>
-      <div class="form-input"><input type="text" id="officalSite" name="officalSite" value="{{ form_data.officalSite }}"></div>
+      <div class="form-label">Official site <span class="required">*</span></div>
+      <div class="form-input">
+        <input type="text" id="officalSite" name="officalSite" value="{{ form_data.officalSite }}">
+        <div class="hint">Stored without <code>https://</code>.</div>
+      </div>
     </div>
 
     <div class="form-row">
-      <div class="form-label">Image URL</div>
-      <div class="form-input"><input type="text" id="imageUrl" name="imageUrl" value="{{ form_data.imageUrl }}"></div>
+      <div class="form-label">Image URL <span class="required">*</span></div>
+      <div class="form-input">
+        <input type="text" id="imageUrl" name="imageUrl" value="{{ form_data.imageUrl }}">
+        <div class="hint">Stored without <code>https://</code>.</div>
+      </div>
     </div>
 
     <div class="form-row">
-      <div class="form-label">YouTube</div>
+      <div class="form-label">YouTube <span class="required">*</span></div>
       <div class="form-input">
         <input type="text" id="youtube" name="youtube" value="{{ form_data.youtube }}">
-        <div class="hint">Always a search URL: official music video + band name + latest album (filled by Discover or on save).</div>
+        <div class="hint">Search URL; stored with <code>https://</code>. Filled by Discover or on save if empty.</div>
       </div>
     </div>
 
     <div class="form-row">
       <div class="form-label">Wikipedia</div>
-      <div class="form-input"><input type="text" id="wikipedia" name="wikipedia" value="{{ form_data.wikipedia }}"></div>
+      <div class="form-input">
+        <input type="text" id="wikipedia" name="wikipedia" value="{{ form_data.wikipedia }}">
+        <div class="hint">Optional. Stored with <code>https://</code>.</div>
+      </div>
     </div>
 
     <div class="form-row">

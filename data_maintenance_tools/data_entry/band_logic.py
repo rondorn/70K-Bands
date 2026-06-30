@@ -35,12 +35,25 @@ def build_metal_archives_search_url(band_name: str) -> str:
 
 
 def normalize_https_prefix(url: str) -> str:
+    """Strip scheme for officalSite and imageUrl CSV storage."""
     value = (url or "").strip()
     if value.lower().startswith("https://"):
         return value[8:]
     if value.lower().startswith("http://"):
         return value[7:]
     return value
+
+
+def ensure_https_prefix(url: str) -> str:
+    """Ensure scheme for youtube, wikipedia, and metalArchives CSV storage."""
+    value = (url or "").strip()
+    if not value:
+        return value
+    if value.lower().startswith("https://"):
+        return value
+    if value.lower().startswith("http://"):
+        return "https://" + value[7:]
+    return f"https://{value}"
 
 
 def strip_image_url_numeric_query(url: str) -> str:
@@ -62,11 +75,12 @@ def normalize_band_row_for_csv(row: dict[str, str]) -> dict[str, str]:
 
 
 def validate_url(url: str, expected_domain: str | None = None) -> tuple[bool, str]:
+    """Validate a URL; values stored without https:// are accepted (scheme added for parsing only)."""
     if not (url or "").strip():
         return True, ""
     try:
         parsed = urlparse(url if "://" in url else f"https://{url}")
-        if not parsed.scheme or not parsed.netloc:
+        if not parsed.netloc:
             return False, f"Invalid URL format: {url}"
         if expected_domain and expected_domain not in parsed.netloc.lower():
             return False, f"URL should be from {expected_domain}: {url}"
@@ -75,29 +89,105 @@ def validate_url(url: str, expected_domain: str | None = None) -> tuple[bool, st
         return False, f"URL validation error: {exc}"
 
 
-def validate_band_data(data: dict[str, str]) -> tuple[bool, list[str]]:
+def normalize_band_url_fields(data: dict[str, str]) -> dict[str, str]:
+    """Apply per-field URL storage rules for lineup CSV."""
+    out = dict(data)
+
+    offical = (out.get("officalSite") or "").strip()
+    if offical:
+        out["officalSite"] = normalize_https_prefix(offical)
+
+    image = (out.get("imageUrl") or "").strip()
+    if image:
+        out["imageUrl"] = normalize_https_prefix(strip_image_url_numeric_query(image))
+
+    for field in ("youtube", "metalArchives", "wikipedia"):
+        value = (out.get(field) or "").strip()
+        if value:
+            out[field] = ensure_https_prefix(value)
+
+    return out
+
+
+def apply_band_url_defaults(
+    data: dict[str, str],
+    band_name: str = "",
+    latest_album: str = "",
+) -> dict[str, str]:
+    """Fill empty URL fields only; never overwrite values the user entered."""
+    out = dict(data)
+    name = (band_name or out.get("bandName") or "").strip()
+    if not name:
+        return out
+    if not (out.get("youtube") or "").strip():
+        out["youtube"] = build_youtube_search_url(name, latest_album)
+    if not (out.get("wikipedia") or "").strip():
+        out["wikipedia"] = build_wikipedia_search_url(name)
+    if not (out.get("metalArchives") or "").strip():
+        out["metalArchives"] = build_metal_archives_search_url(name)
+    return out
+
+
+def validate_band_data(
+    data: dict[str, str],
+    cfg: dict[str, Any] | None = None,
+    lineup_file: str = "",
+    exclude_index: int | None = None,
+) -> tuple[bool, list[str]]:
     errors: list[str] = []
-    if not data.get("bandName", "").strip():
-        errors.append("Band name is required")
+    cfg = cfg or {}
+
+    field_labels = {
+        "bandName": "Band name",
+        "officalSite": "Official site",
+        "imageUrl": "Image URL",
+        "youtube": "YouTube",
+        "country": "Country",
+        "genre": "Genre",
+        "priorYears": "Prior years",
+        "metalArchives": "Metal Archives",
+        "wikipedia": "Wikipedia",
+    }
+    required = ["bandName", "officalSite", "imageUrl", "youtube", "country", "genre"]
+    if cfg.get("include_prior_years_field"):
+        required.append("priorYears")
+
+    for field in required:
+        if not (data.get(field) or "").strip():
+            errors.append(f"{field_labels[field]} is required")
+
+    band_name = (data.get("bandName") or "").strip()
+    if band_name and lineup_file:
+        for idx, row in enumerate(read_lineup(lineup_file, cfg)):
+            if exclude_index is not None and idx == exclude_index:
+                continue
+            if row.get("bandName", "").strip() == band_name:
+                errors.append(f"Band '{band_name}' already exists in the lineup file")
+                break
+
+    for field in ("officalSite", "imageUrl"):
+        value = (data.get(field) or "").strip()
+        if value:
+            ok, msg = validate_url(value)
+            if not ok:
+                errors.append(f"{field_labels[field]}: {msg}")
+
+    youtube = (data.get("youtube") or "").strip()
+    if youtube:
+        ok, msg = validate_url(youtube, "youtube.com")
+        if not ok:
+            errors.append(f"YouTube: {msg}")
+
     for field, domain in (
-        ("youtube", "youtube.com"),
         ("metalArchives", "metal-archives.com"),
         ("wikipedia", "wikipedia.org"),
     ):
-        if data.get(field):
-            ok, msg = validate_url(
-                data[field] if "://" in data[field] else f"https://{data[field]}",
-                domain,
-            )
+        value = (data.get(field) or "").strip()
+        if value:
+            ok, msg = validate_url(value, domain)
             if not ok:
-                errors.append(msg)
-    for field in ("officalSite", "imageUrl"):
-        if data.get(field):
-            ok, msg = validate_url(
-                data[field] if "://" in data[field] else f"https://{data[field]}"
-            )
-            if not ok:
-                errors.append(msg)
+                errors.append(f"{field_labels[field]}: {msg}")
+
     return len(errors) == 0, errors
 
 
@@ -145,7 +235,7 @@ def check_duplicate(
     for idx, row in enumerate(rows):
         if exclude_index is not None and idx == exclude_index:
             continue
-        if row.get("bandName", "").strip().lower() == band_name.strip().lower():
+        if row.get("bandName", "").strip() == band_name.strip():
             return True
     return False
 
