@@ -433,6 +433,10 @@
     <string name="schedule_qr_scan_first">Ersten QR-Code scannen</string>
     <string name="schedule_qr_scan_second">Zweiten QR-Code scannen</string>
     <string name="schedule_qr_import_success">Zeitplan erfolgreich importiert.</string>
+    <string name="schedule_qr_events_added">%1$d Veranstaltungen hinzugefügt</string>
+    <string name="schedule_qr_events_updated">%1$d Veranstaltungen aktualisiert</string>
+    <string name="schedule_qr_events_removed">%1$d Veranstaltungen entfernt</string>
+    <string name="schedule_qr_no_new_events">Keine Programmänderungen.</string>
     <string name="schedule_qr_import_failed">Zeitplan-Import fehlgeschlagen.</string>
     <string name="schedule_qr_invalid_payload">Ungültiger QR-Inhalt.</string>
     <string name="schedule_qr_empty_schedule">Kein Zeitplan zum Teilen. Zuerst Zeitplan laden.</string>

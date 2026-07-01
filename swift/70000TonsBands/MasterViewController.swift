@@ -4054,9 +4054,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
 
     private func proceedShowScheduleQRCode() {
-        // Prefer raw cached schedule CSV (same source as Android). Fall back to CSV built from current events when cache is missing (e.g. schedule from SQLite only).
-        let csvString: String? = rawScheduleCSVFromCache().flatMap { $0.isEmpty ? nil : $0 }
-            ?? exportScheduleCSV(eventYear: eventYear)
+        // Always export from SQLite (current schedule), refresh scheduleFile.txt, then encode for QR.
+        let csvString: String? = scheduleCSVForQRExport(eventYear: eventYear)
         guard let csv = csvString, !csv.isEmpty else {
             let alert = UIAlertController(title: NSLocalizedString("Share Schedule via QR Code", comment: ""), message: NSLocalizedString("No schedule events to share.", comment: "QR schedule empty"), preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: ""), style: .default))

@@ -481,25 +481,16 @@ public class bandListView extends ArrayAdapter<bandListItem> {
                 }
             }
 
-            if (previousBandName.equals(currentBandName) == true  && scrollingDirection == "Down" && position != 0){
-                // PERFORMANCE FIX: Reduce logging in getView()
-                // Log.d("bandListViewSortName", "1 partial current band is " + currentBandName + " = " + previousBandName + " position is " + String.valueOf(position) + " direction is " + scrollingDirection);
+            // Match iOS: collapse repeated band names only when sorted by name, not by time.
+            if (staticVariables.preferences.getSortByTime()) {
+                getCellScheduleValueFullInfo(viewHolder, bandData);
+            } else if (previousBandName.equals(currentBandName) == true  && scrollingDirection == "Down" && position != 0){
                 getCellScheduleValuePartialInfo(viewHolder, bandData, locationColorChoice);
-
             } else if (scrollingDirection == "Down") {
-
-                // PERFORMANCE FIX: Reduce logging in getView()
-                // Log.d("bandListViewSortName", "2 full current band is " + currentBandName + " = " + previousBandName + " position is " + String.valueOf(position) + " direction is " + scrollingDirection);
                 getCellScheduleValueFullInfo(viewHolder, bandData);
-
             } else if (nextBand.equals(currentBandName) == false  || position == 0) {
-                // PERFORMANCE FIX: Reduce logging in getView()
-                // Log.d("bandListViewSortName", "3 full current band is " + currentBandName + " = " + nextBand + " position is " + String.valueOf(position) + " direction is " + scrollingDirection);
                 getCellScheduleValueFullInfo(viewHolder, bandData);
-
             } else {
-                // PERFORMANCE FIX: Reduce logging in getView()
-                // Log.d("bandListViewSortName", "4 partial current band is " + currentBandName + " = " + previousBandName + " position is " + String.valueOf(position) + " direction is " + scrollingDirection);
                 getCellScheduleValuePartialInfo(viewHolder, bandData, locationColorChoice);
             }
 

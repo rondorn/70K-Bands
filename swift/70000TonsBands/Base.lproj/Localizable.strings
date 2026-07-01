@@ -268,6 +268,10 @@
 "Camera Unavailable" = "Camera Unavailable";
 "Could not access the camera." = "Could not access the camera.";
 "Scan 1 or 2 schedule QR codes (binary), or 8/16/24 (plain)." = "Scan 1 or 2 schedule QR codes (binary), or 8/16/24 (plain).";
+"schedule_qr_events_added" = "%d events added";
+"schedule_qr_events_updated" = "%d events updated";
+"schedule_qr_events_removed" = "%d events removed";
+"schedule_qr_no_new_events" = "No schedule changes.";
 
 "AdvancedPreferences" = "ADVANCED PREFERENCE.";
 "AdvancedPreferencesWarning" = "DO NOT MODIFY UNLESS YOU KNOW WHAT YOUR DOING!";

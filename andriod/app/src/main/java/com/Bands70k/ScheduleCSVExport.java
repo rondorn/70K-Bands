@@ -17,8 +17,7 @@ import java.util.TreeSet;
  * and staticVariables maps. Used for QR share export.
  * Column order: Band, Location, Date, Day, Start Time, End Time, Type, Description URL, Notes, ImageURL, ImageDate.
  *
- * For QR payload parity with iOS: use raw cached schedule CSV with Unofficial/Cruiser rows stripped for export;
- * import adds those events back from the device cache before overwriting.
+ * For QR share: build CSV from the in-memory schedule (current data), refresh the cached schedule file, then encode.
  */
 public final class ScheduleCSVExport {
 
@@ -49,14 +48,38 @@ public final class ScheduleCSVExport {
     }
 
     /**
-     * Read cached schedule CSV for QR export: same source as iOS, but with Unofficial Event and
-     * Cruiser Organized rows removed to reduce payload size. Import adds them back from device cache.
-     * Returns null if no cached file or invalid.
+     * CSV for QR export: built from the in-memory schedule (current data), unofficial/cruiser rows stripped,
+     * then written to the cached schedule file so the file stays in sync.
      */
     public static String readScheduleCsvForQRExport() {
-        String raw = readRawScheduleCsvFromCache();
-        if (raw == null || raw.isEmpty()) return null;
-        return stripUnofficialCruiserRows(raw);
+        String csv = buildFullCSVFromSchedule();
+        if (csv == null || csv.isEmpty()) return null;
+        csv = stripUnofficialCruiserRows(csv);
+        if (csv == null || countDataRows(csv) == 0) return null;
+        writeScheduleCsvCache(csv);
+        return csv;
+    }
+
+    /** Refresh the cached schedule download file from the given CSV (e.g. after QR share export). */
+    public static void writeScheduleCsvCache(String csv) {
+        if (csv == null || csv.trim().isEmpty()) return;
+        try {
+            Files.write(FileHandler70k.schedule.toPath(), csv.getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            android.util.Log.w("ScheduleCSVExport", "Could not write schedule CSV cache: " + e.getMessage());
+        }
+    }
+
+    private static int countDataRows(String csv) {
+        if (csv == null || csv.isEmpty()) return 0;
+        String[] lines = csv.split("\n", -1);
+        int count = 0;
+        for (int i = 1; i < lines.length; i++) {
+            if (lines[i] != null && !lines[i].trim().isEmpty()) {
+                count++;
+            }
+        }
+        return count;
     }
 
     /**
@@ -118,10 +141,14 @@ public final class ScheduleCSVExport {
                 String type = sh.getShowType() != null ? sh.getShowType() : "";
                 String notes = sh.getShowNotes() != null ? sh.getShowNotes() : "";
 
-                String dateStr = "";
-                Date startTime = sh.getStartTime();
-                if (startTime != null) {
-                    dateStr = DATE_FORMAT.format(startTime);
+                String dateStr = sh.getShowDate();
+                if (dateStr == null || dateStr.isEmpty()) {
+                    Date startTime = sh.getStartTime();
+                    if (startTime != null) {
+                        dateStr = DATE_FORMAT.format(startTime);
+                    } else {
+                        dateStr = "";
+                    }
                 }
 
                 String descUrl = "";

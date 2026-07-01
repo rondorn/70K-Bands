@@ -260,6 +260,10 @@
 "Camera Unavailable" = "Kamera ei käytettävissä";
 "Could not access the camera." = "Kameraan ei saatu yhteyttä.";
 "Scan 1 or 2 schedule QR codes (binary), or 8/16/24 (plain)." = "Skannaa 1 tai 2 aikataulu-QR-koodia (binääri) tai 8/16/24 (teksti).";
+"schedule_qr_events_added" = "%d tapahtumaa lisätty";
+"schedule_qr_events_updated" = "%d tapahtumaa päivitetty";
+"schedule_qr_events_removed" = "%d tapahtumaa poistettu";
+"schedule_qr_no_new_events" = "Ei aikataulumuutoksia.";
 "New profile received!" = "Uusi profiili vastaanotettu!";
 "band priorities" = "bändin prioriteetit";
 "scheduled events" = "aikataulutetut tapahtumat";

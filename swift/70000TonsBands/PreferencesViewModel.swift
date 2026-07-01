@@ -1362,6 +1362,12 @@ class PreferencesViewModel: ObservableObject {
                 return
             }
 
+            let beforeSnapshot = captureScheduleQRImportSnapshot(
+                events: DataManager.shared.fetchEvents(forYear: year)
+            )
+            let incomingSnapshot = captureScheduleQRImportSnapshotFromCSV(csvString)
+                ?? ScheduleQRImportSnapshot(nameVenueCounts: [:], rows: [])
+
             // Preserve Unofficial Event and Cruiser Organized from existing schedule (QR payload excludes them to reduce size)
             let preserved = DataManager.shared.fetchEvents(forYear: year).filter { event in
                 let t = event.eventType ?? ""
@@ -1391,11 +1397,16 @@ class PreferencesViewModel: ObservableObject {
                 // So populateSchedule(forceDownload: true) won’t skip import when network file later differs
                 masterView.schedule.updateStoredScheduleChecksum(toMatchCSV: csvString)
             }
-            scheduleQRImportResult = (
-                ok,
-                ok ? NSLocalizedString("Schedule imported successfully.", comment: "QR schedule import success")
-                   : NSLocalizedString("Schedule import failed.", comment: "QR schedule import failure")
-            )
+            let summaryMessage: String
+            if ok {
+                let summary = compareScheduleQRImportSnapshots(before: beforeSnapshot, incoming: incomingSnapshot)
+                summaryMessage = formatScheduleQRImportSummaryMessage(
+                    added: summary.added, updated: summary.updated, removed: summary.removed
+                )
+            } else {
+                summaryMessage = NSLocalizedString("Schedule import failed.", comment: "QR schedule import failure")
+            }
+            scheduleQRImportResult = (ok, summaryMessage)
             if ok {
                 masterView.refreshBandList(reason: "Schedule imported from QR", skipDataLoading: true)
             }

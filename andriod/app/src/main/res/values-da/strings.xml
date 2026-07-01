@@ -432,6 +432,10 @@
     <string name="schedule_qr_scan_first">Scan første QR-kode</string>
     <string name="schedule_qr_scan_second">Scan anden QR-kode</string>
     <string name="schedule_qr_import_success">Program importeret.</string>
+    <string name="schedule_qr_events_added">%1$d begivenheder tilføjet</string>
+    <string name="schedule_qr_events_updated">%1$d begivenheder opdateret</string>
+    <string name="schedule_qr_events_removed">%1$d begivenheder fjernet</string>
+    <string name="schedule_qr_no_new_events">Ingen programændringer.</string>
     <string name="schedule_qr_import_failed">Kunne ikke importere program.</string>
     <string name="schedule_qr_invalid_payload">Ugyldigt QR-indhold.</string>
     <string name="schedule_qr_empty_schedule">Intet program at dele. Indlæs programmet først.</string>

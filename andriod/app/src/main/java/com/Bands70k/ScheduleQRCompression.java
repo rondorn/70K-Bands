@@ -147,6 +147,18 @@ public final class ScheduleQRCompression {
         if (date == null) return "";
         String d = date.trim();
         if (d.isEmpty()) return date;
+        String[] isoParts = d.split("-");
+        if (isoParts.length == 3) {
+            try {
+                int y = Integer.parseInt(isoParts[0].trim());
+                int m = Integer.parseInt(isoParts[1].trim());
+                int day = Integer.parseInt(isoParts[2].trim());
+                if (y >= 2000 && y <= 2099 && m >= 1 && m <= 12 && day >= 1 && day <= 31) {
+                    return m + "/" + day + "/" + (y % 100);
+                }
+            } catch (NumberFormatException ignored) {
+            }
+        }
         String[] parts = d.split("/");
         if (parts.length != 3) return date;
         try {
@@ -165,6 +177,19 @@ public final class ScheduleQRCompression {
         if (date == null) return "";
         String d = date.trim();
         if (d.isEmpty()) return date;
+        // iOS SQLite canonical dates (yyyy-MM-dd) pass through shortenDateForQR unchanged.
+        String[] isoParts = d.split("-");
+        if (isoParts.length == 3) {
+            try {
+                int y = Integer.parseInt(isoParts[0].trim());
+                int m = Integer.parseInt(isoParts[1].trim());
+                int day = Integer.parseInt(isoParts[2].trim());
+                if (y >= 2000 && y <= 2099 && m >= 1 && m <= 12 && day >= 1 && day <= 31) {
+                    return String.format("%02d/%02d/%04d", m, day, y);
+                }
+            } catch (NumberFormatException ignored) {
+            }
+        }
         String[] parts = d.split("/");
         if (parts.length != 3) return date;
         try {

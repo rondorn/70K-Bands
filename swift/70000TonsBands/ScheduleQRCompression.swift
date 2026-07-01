@@ -1183,6 +1183,24 @@ func rawScheduleCSVFromCache() -> String? {
     return csv
 }
 
+/// Write schedule CSV to the cached download file (parity with Android QR import and network download).
+func writeScheduleCSVCache(_ csvString: String) {
+    guard !csvString.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+    do {
+        try csvString.write(toFile: FilePaths.scheduleFile, atomically: true, encoding: .utf8)
+        print("✅ [QR_CACHE] Wrote schedule CSV cache (\(csvString.count) chars)")
+    } catch {
+        print("⚠️ [QR_CACHE] Could not write schedule CSV to cache: \(error)")
+    }
+}
+
+/// CSV for QR share: always built from current SQLite events (what the UI shows), then written to the schedule cache file.
+func scheduleCSVForQRExport(eventYear: Int) -> String? {
+    guard let csv = exportScheduleCSV(eventYear: eventYear), !csv.isEmpty else { return nil }
+    writeScheduleCSVCache(csv)
+    return csv
+}
+
 // MARK: - Export schedule to CSV (from SQLite events)
 
 /// Build full schedule CSV string from current year's events (for host to compress and show as QR).
@@ -1212,4 +1230,249 @@ func exportScheduleCSV(eventYear: Int) -> String? {
         lines.append(row)
     }
     return lines.joined(separator: "\n")
+}
+
+// MARK: - QR import added/updated summary
+
+struct ScheduleQREventRow {
+    let stableKey: String
+    let identityKey: String
+    let signature: String
+}
+
+struct ScheduleQRImportSnapshot {
+    let nameVenueCounts: [String: Int]
+    let rows: [ScheduleQREventRow]
+
+    var totalCount: Int { rows.count }
+}
+
+private func scheduleQRSanitizeField(_ value: String) -> String {
+    value.replacingOccurrences(of: "\n", with: " ")
+        .replacingOccurrences(of: "\r", with: " ")
+        .trimmingCharacters(in: .whitespacesAndNewlines)
+}
+
+private func scheduleQRNameVenueKey(bandName: String, location: String) -> String {
+    "\(scheduleQRSanitizeField(bandName))-\(scheduleQRSanitizeField(location))"
+}
+
+/// Same band/day/time slot without venue — matches an existing event when venue (or other identity field) moves.
+private func scheduleQREventStableKey(
+    bandName: String,
+    date: String,
+    day: String,
+    startTime: String,
+    eventType: String
+) -> String {
+    [
+        scheduleQRSanitizeField(bandName),
+        scheduleQRSanitizeField(date),
+        scheduleQRSanitizeField(day),
+        scheduleQRSanitizeField(startTime),
+        scheduleQRSanitizeField(eventType)
+    ].joined(separator: "|")
+}
+
+/// Full identity: band, venue, calendar date, festival day, start time, and type.
+private func scheduleQREventIdentityKey(
+    bandName: String,
+    location: String,
+    date: String,
+    day: String,
+    startTime: String,
+    eventType: String
+) -> String {
+    [
+        scheduleQRSanitizeField(bandName),
+        scheduleQRSanitizeField(location),
+        scheduleQRSanitizeField(date),
+        scheduleQRSanitizeField(day),
+        scheduleQRSanitizeField(startTime),
+        scheduleQRSanitizeField(eventType)
+    ].joined(separator: "|")
+}
+
+private func scheduleQREventSignature(
+    endTime: String,
+    eventType: String,
+    day: String,
+    startTime: String,
+    notes: String,
+    date: String,
+    descriptionUrl: String = "",
+    imageUrl: String = ""
+) -> String {
+    "\(scheduleQRSanitizeField(endTime))|\(scheduleQRSanitizeField(eventType))|\(scheduleQRSanitizeField(day))|\(scheduleQRSanitizeField(startTime))|\(scheduleQRSanitizeField(notes))|\(scheduleQRSanitizeField(date))|\(scheduleQRSanitizeField(descriptionUrl))|\(scheduleQRSanitizeField(imageUrl))"
+}
+
+private func scheduleQREventSignature(_ event: EventData) -> String {
+    scheduleQREventSignature(
+        endTime: event.endTime ?? "",
+        eventType: event.eventType ?? "",
+        day: event.day ?? "",
+        startTime: event.startTime ?? "",
+        notes: event.notes ?? "",
+        date: event.date ?? "",
+        descriptionUrl: event.descriptionUrl ?? "",
+        imageUrl: event.eventImageUrl ?? ""
+    )
+}
+
+private func ingestScheduleQRRow(
+    bandName: String,
+    location: String,
+    date: String,
+    day: String,
+    startTime: String,
+    endTime: String,
+    eventType: String,
+    notes: String,
+    descriptionUrl: String,
+    imageUrl: String,
+    nameVenueCounts: inout [String: Int],
+    rows: inout [ScheduleQREventRow]
+) {
+    let nvKey = scheduleQRNameVenueKey(bandName: bandName, location: location)
+    nameVenueCounts[nvKey, default: 0] += 1
+    let identityKey = scheduleQREventIdentityKey(
+        bandName: bandName,
+        location: location,
+        date: date,
+        day: day,
+        startTime: startTime,
+        eventType: eventType
+    )
+    let stableKey = scheduleQREventStableKey(
+        bandName: bandName,
+        date: date,
+        day: day,
+        startTime: startTime,
+        eventType: eventType
+    )
+    let signature = scheduleQREventSignature(
+        endTime: endTime,
+        eventType: eventType,
+        day: day,
+        startTime: startTime,
+        notes: notes,
+        date: date,
+        descriptionUrl: descriptionUrl,
+        imageUrl: imageUrl
+    )
+    rows.append(ScheduleQREventRow(stableKey: stableKey, identityKey: identityKey, signature: signature))
+}
+
+func captureScheduleQRImportSnapshot(events: [EventData]) -> ScheduleQRImportSnapshot {
+    var nameVenueCounts: [String: Int] = [:]
+    var rows: [ScheduleQREventRow] = []
+    for event in events {
+        ingestScheduleQRRow(
+            bandName: event.bandName,
+            location: event.location,
+            date: event.date ?? "",
+            day: event.day ?? "",
+            startTime: event.startTime ?? "",
+            endTime: event.endTime ?? "",
+            eventType: event.eventType ?? "",
+            notes: event.notes ?? "",
+            descriptionUrl: event.descriptionUrl ?? "",
+            imageUrl: event.eventImageUrl ?? "",
+            nameVenueCounts: &nameVenueCounts,
+            rows: &rows
+        )
+    }
+    return ScheduleQRImportSnapshot(nameVenueCounts: nameVenueCounts, rows: rows)
+}
+
+/// Snapshot rows from decompressed QR CSV before import (what the QR actually carries).
+func captureScheduleQRImportSnapshotFromCSV(_ csvString: String) -> ScheduleQRImportSnapshot? {
+    guard let csvData = try? CSV(csvStringToParse: csvString) else { return nil }
+    var nameVenueCounts: [String: Int] = [:]
+    var rows: [ScheduleQREventRow] = []
+    for lineData in csvData.rows {
+        guard let bandName = lineData[bandField],
+              let location = lineData[locationField],
+              let date = lineData[dateField],
+              let day = lineData[dayField],
+              let startTime = lineData[startTimeField],
+              let endTime = lineData[endTimeField],
+              let eventType = lineData[typeField] else { continue }
+        ingestScheduleQRRow(
+            bandName: bandName,
+            location: location,
+            date: date,
+            day: day,
+            startTime: startTime,
+            endTime: endTime,
+            eventType: eventType,
+            notes: lineData[notesField] ?? "",
+            descriptionUrl: lineData[descriptionUrlField] ?? "",
+            imageUrl: lineData[imageUrlField] ?? "",
+            nameVenueCounts: &nameVenueCounts,
+            rows: &rows
+        )
+    }
+    return ScheduleQRImportSnapshot(nameVenueCounts: nameVenueCounts, rows: rows)
+}
+
+func compareScheduleQRImportSnapshots(before: ScheduleQRImportSnapshot, incoming: ScheduleQRImportSnapshot) -> (added: Int, updated: Int, removed: Int) {
+    let beforeTotal = before.totalCount
+    let incomingTotal = incoming.totalCount
+    let added = max(0, incomingTotal - beforeTotal)
+    let removed = max(0, beforeTotal - incomingTotal)
+
+    var beforeLeft = before.rows
+    var incomingLeft = incoming.rows
+    var updated = 0
+
+    // Same full identity, different details (time, notes, etc.)
+    var i = 0
+    while i < incomingLeft.count {
+        let inc = incomingLeft[i]
+        if let j = beforeLeft.firstIndex(where: { $0.identityKey == inc.identityKey }) {
+            if beforeLeft[j].signature != inc.signature {
+                updated += 1
+            }
+            beforeLeft.remove(at: j)
+            incomingLeft.remove(at: i)
+        } else {
+            i += 1
+        }
+    }
+
+    // Same band/day/time slot, different identity (e.g. venue move) — counts as updated, not removed+added
+    i = 0
+    while i < incomingLeft.count {
+        let inc = incomingLeft[i]
+        if let j = beforeLeft.firstIndex(where: { $0.stableKey == inc.stableKey }) {
+            updated += 1
+            beforeLeft.remove(at: j)
+            incomingLeft.remove(at: i)
+        } else {
+            i += 1
+        }
+    }
+
+    return (added, updated, removed)
+}
+
+func formatScheduleQRImportSummaryMessage(added: Int, updated: Int, removed: Int) -> String {
+    if added == 0 && updated == 0 && removed == 0 {
+        return NSLocalizedString("schedule_qr_no_new_events", comment: "QR import: no schedule changes")
+    }
+    var parts: [String] = []
+    if added > 0 {
+        let format = NSLocalizedString("schedule_qr_events_added", comment: "QR import: events added count")
+        parts.append(String(format: format, added))
+    }
+    if updated > 0 {
+        let format = NSLocalizedString("schedule_qr_events_updated", comment: "QR import: events updated count")
+        parts.append(String(format: format, updated))
+    }
+    if removed > 0 {
+        let format = NSLocalizedString("schedule_qr_events_removed", comment: "QR import: events removed count")
+        parts.append(String(format: format, removed))
+    }
+    return parts.joined(separator: ", ")
 }

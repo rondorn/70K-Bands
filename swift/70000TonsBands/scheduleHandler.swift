@@ -1020,6 +1020,7 @@ open class scheduleHandler {
         let capturedEventYear = eventYear
         let (ok, _) = csvImporter.importEventsFromCSVString(csvString)
         if ok {
+            writeScheduleCSVCache(csvString)
             cacheLoaded = false
             loadCacheFromCoreDataInternal(useYear: capturedEventYear)
             dictionaryQueue.sync {

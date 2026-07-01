@@ -387,6 +387,8 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
 
             scheduleInfo parser = new scheduleInfo();
             Map<String, scheduleTimeTracker> currentMap = parser.ParseScheduleCSV();
+            ScheduleQRImportSummary.Snapshot beforeSnapshot = ScheduleQRImportSummary.captureFromSchedule(currentMap);
+            ScheduleQRImportSummary.Snapshot incomingSnapshot = ScheduleQRImportSummary.captureFromCSV(csv);
             writeScheduleFileSafe(csv);
             updateScheduleCacheHashAfterWrite();
             Map<String, scheduleTimeTracker> importedMap = parser.ParseScheduleCSV();
@@ -399,7 +401,11 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
             }
             Intent refresh = new Intent("RefreshLandscapeSchedule");
             androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(this).sendBroadcast(refresh);
-            Toast.makeText(this, R.string.schedule_qr_import_success, Toast.LENGTH_LONG).show();
+            ScheduleQRImportSummary.Result importSummary = ScheduleQRImportSummary.compare(
+                    beforeSnapshot, incomingSnapshot);
+            String successMessage = ScheduleQRImportSummary.formatMessage(
+                    this, importSummary.added, importSummary.updated, importSummary.removed);
+            Toast.makeText(this, successMessage, Toast.LENGTH_LONG).show();
             Intent main = new Intent(this, showBands.class);
             main.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(main);

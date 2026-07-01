@@ -24,7 +24,7 @@
     <thead>
       <tr>
         <th>Band</th><th>Venue</th><th>Day</th><th>Date</th><th>Start</th><th>End</th><th>Type</th><th>Notes</th>
-        {% if read_local %}<th></th>{% endif %}
+        {% if read_local %}<th>Actions</th>{% endif %}
       </tr>
     </thead>
     <tbody>
@@ -39,7 +39,17 @@
         <td>{{ e.event_type }}</td>
         <td>{{ e.notes }}</td>
         {% if read_local %}
-        <td><a href="{{ url_for('schedule_entry', editIndex=loop.index0) }}">Edit</a></td>
+        <td class="row-actions">
+          <a class="btn secondary" href="{{ url_for('schedule_entry', editIndex=loop.index0) }}">Edit</a>
+          <form method="post" action="{{ url_for('schedule_remove') }}" class="inline-form" onsubmit="return confirm('Remove {{ e.band }} at {{ e.location }} on {{ e.date }}?');">
+            <input type="hidden" name="band" value="{{ e.band }}">
+            <input type="hidden" name="venue" value="{{ e.location }}">
+            <input type="hidden" name="date" value="{{ e.date }}">
+            <input type="hidden" name="start_time" value="{{ e.start_time }}">
+            <input type="hidden" name="return_to" value="schedule_view">
+            <button type="submit" class="secondary">Delete</button>
+          </form>
+        </td>
         {% endif %}
       </tr>
       {% endfor %}

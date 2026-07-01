@@ -279,6 +279,10 @@
 "Camera Unavailable" = "Cámara no disponible";
 "Could not access the camera." = "No se pudo acceder a la cámara.";
 "Scan 1 or 2 schedule QR codes (binary), or 8/16/24 (plain)." = "Escanee 1 o 2 códigos QR del horario (binario), u 8/16/24 (texto).";
+"schedule_qr_events_added" = "%d eventos añadidos";
+"schedule_qr_events_updated" = "%d eventos actualizados";
+"schedule_qr_events_removed" = "%d eventos eliminados";
+"schedule_qr_no_new_events" = "Sin cambios en el horario.";
 "New profile received!" = "¡Nuevo perfil recibido!";
 "band priorities" = "prioridades de bandas";
 "scheduled events" = "eventos programados";

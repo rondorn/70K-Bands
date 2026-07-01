@@ -436,6 +436,10 @@
     <string name="schedule_qr_scan_first">Skannaa ensimmäinen QR-koodi</string>
     <string name="schedule_qr_scan_second">Skannaa toinen QR-koodi</string>
     <string name="schedule_qr_import_success">Aikataulu tuotu onnistuneesti.</string>
+    <string name="schedule_qr_events_added">%1$d tapahtumaa lisätty</string>
+    <string name="schedule_qr_events_updated">%1$d tapahtumaa päivitetty</string>
+    <string name="schedule_qr_events_removed">%1$d tapahtumaa poistettu</string>
+    <string name="schedule_qr_no_new_events">Ei aikataulumuutoksia.</string>
     <string name="schedule_qr_import_failed">Aikataulun tuonti epäonnistui.</string>
     <string name="schedule_qr_invalid_payload">Virheellinen QR-sisältö.</string>
     <string name="schedule_qr_empty_schedule">Ei aikataulua jaettavaksi. Lataa aikataulu ensin.</string>

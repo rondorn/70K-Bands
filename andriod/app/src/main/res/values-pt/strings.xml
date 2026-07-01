@@ -433,6 +433,10 @@
     <string name="schedule_qr_scan_first">Escanear primeiro código QR</string>
     <string name="schedule_qr_scan_second">Escanear segundo código QR</string>
     <string name="schedule_qr_import_success">Horário importado com sucesso.</string>
+    <string name="schedule_qr_events_added">%1$d eventos adicionados</string>
+    <string name="schedule_qr_events_updated">%1$d eventos atualizados</string>
+    <string name="schedule_qr_events_removed">%1$d eventos removidos</string>
+    <string name="schedule_qr_no_new_events">Nenhuma alteração no horário.</string>
     <string name="schedule_qr_import_failed">Falha ao importar horário.</string>
     <string name="schedule_qr_invalid_payload">Conteúdo QR inválido.</string>
     <string name="schedule_qr_empty_schedule">Nenhum horário para partilhar. Carregue o horário primeiro.</string>

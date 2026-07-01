@@ -5,14 +5,37 @@ import android.util.Log;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Locale;
 
 /**
  * Represents a scheduled event for a band, including location, time, and type.
  * Created by rdorn on 8/19/15.
  */
 public class scheduleHandler {
+
+    /** Match iOS ScheduleCSVImporter.calculateTimeIndex date/time patterns. */
+    private static final String[] SCHEDULE_DATE_TIME_PATTERNS = {
+            "yyyy-MM-dd HH:mm",
+            "yyyy-MM-dd H:mm",
+            "yyyy-M-d HH:mm",
+            "yyyy-M-d H:mm",
+            "yyyy-MM-dd HH:mm:ss",
+            "yyyy-MM-dd H:mm:ss",
+            "M/d/yyyy HH:mm",
+            "MM/dd/yyyy HH:mm",
+            "M/d/yyyy H:mm",
+            "MM/dd/yyyy H:mm",
+            "M/d/yyyy h:mm a",
+            "MM/dd/yyyy h:mm a",
+            "MM/dd/yyyy HH:mm:ss",
+            "MM/dd/yyyy H:mm:ss",
+            "M/d/yyyy HH:mm:ss",
+            "M/d/yyyy H:mm:ss",
+            "MM/dd/yy HH:mm",
+            "MM/dd/yy H:mm",
+            "M/d/yy HH:mm",
+            "M/d/yy H:mm",
+    };
 
     private String showLocation;
     private String showDay;
@@ -21,6 +44,8 @@ public class scheduleHandler {
     private String showType;
     private String startTimeString;
     private String endTimeString;
+    /** Raw Date column from CSV (may be MM/dd/yyyy or yyyy-MM-dd). Preserved for export round-trips. */
+    private String showDate;
     private Date startTime = new Date();
     private Date endTime = new Date();
 
@@ -54,6 +79,15 @@ public class scheduleHandler {
      */
     public void setEndTimeString(String endTimeString) {
         this.endTimeString = endTimeString;
+    }
+
+    /** Raw calendar date string from the schedule CSV Date column. */
+    public String getShowDate() {
+        return showDate;
+    }
+
+    public void setShowDate(String value) {
+        showDate = value != null ? value.trim() : null;
     }
 
     /**
@@ -159,13 +193,13 @@ public class scheduleHandler {
      * @param startTimeValue The start time string.
      */
     public void setStartTime(String dateValue, String startTimeValue){
-
-        SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yy HH:mm");
-        try {
-            startTime = dateFormat.parse(dateValue + ' ' + startTimeValue);
+        if (dateValue != null && !dateValue.trim().isEmpty()) {
+            setShowDate(dateValue);
+        }
+        Date parsed = parseScheduleDateTime(dateValue, startTimeValue);
+        if (parsed != null) {
+            startTime = parsed;
             Log.d("startTime", "starttime is " + startTime + " " + dateValue + " " + startTimeValue);
-        } catch (ParseException e) {
-            Log.d("ParseException", "Unable to parse start time. " + e.getStackTrace());
         }
     }
     /**
@@ -182,13 +216,33 @@ public class scheduleHandler {
      * @param endTimeValue The end time string.
      */
     public void setEndTime(String dateValue, String endTimeValue){
-
-        SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yy HH:mm");
-        try {
-            endTime = dateFormat.parse(dateValue + ' ' + endTimeValue);
-        } catch (ParseException e) {
-            Log.d("ParseException", "Unable to parse end time. " + e.getStackTrace());
+        Date parsed = parseScheduleDateTime(dateValue, endTimeValue);
+        if (parsed != null) {
+            endTime = parsed;
         }
+    }
+
+    /** Parses a schedule date/time pair. Package-visible for unit tests. */
+    static Date parseScheduleDateTime(String dateValue, String timeValue) {
+        if (dateValue == null || timeValue == null) {
+            return null;
+        }
+        String date = dateValue.trim();
+        String time = timeValue.trim();
+        if (date.isEmpty() || time.isEmpty()) {
+            return null;
+        }
+        String dateTime = date + ' ' + time;
+        for (String pattern : SCHEDULE_DATE_TIME_PATTERNS) {
+            try {
+                SimpleDateFormat dateFormat = new SimpleDateFormat(pattern, Locale.US);
+                dateFormat.setLenient(false);
+                return dateFormat.parse(dateTime);
+            } catch (ParseException ignored) {
+            }
+        }
+        Log.w("scheduleHandler", "Unable to parse schedule date/time: '" + dateTime + "'");
+        return null;
     }
     /**
      * Gets the end time as a Date object.

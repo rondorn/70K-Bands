@@ -455,6 +455,10 @@
     <string name="schedule_qr_scan_first">Scan first QR code</string>
     <string name="schedule_qr_scan_second">Scan second QR code</string>
     <string name="schedule_qr_import_success">Schedule imported successfully.</string>
+    <string name="schedule_qr_events_added">%1$d events added</string>
+    <string name="schedule_qr_events_updated">%1$d events updated</string>
+    <string name="schedule_qr_events_removed">%1$d events removed</string>
+    <string name="schedule_qr_no_new_events">No schedule changes.</string>
     <string name="schedule_qr_import_failed">Schedule import failed.</string>
     <string name="schedule_qr_invalid_payload">Invalid QR payload.</string>
     <string name="schedule_qr_empty_schedule">No schedule to share. Load schedule first.</string>

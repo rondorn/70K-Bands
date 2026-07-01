@@ -128,6 +128,43 @@ public class scheduleInfo {
         return bandSchedule;
     }
 
+    /** Normalize CSV header labels and map common aliases to canonical column names. */
+    private static String normalizeScheduleHeader(String header) {
+        if (header == null) return "";
+        String h = header.trim();
+        if (!h.isEmpty() && h.charAt(0) == '\uFEFF') {
+            h = h.substring(1).trim();
+        }
+        if ("Venue".equalsIgnoreCase(h)) {
+            return staticVariables.schedLocationRow;
+        }
+        if ("Start".equalsIgnoreCase(h)) {
+            return staticVariables.schedStartTimeRow;
+        }
+        if ("End".equalsIgnoreCase(h)) {
+            return staticVariables.schedEndTimeRow;
+        }
+        return h;
+    }
+
+    private static String getScheduleField(List<String> row, Map<String, Integer> labelKeys, String column) {
+        Integer idx = labelKeys.get(column);
+        if (idx == null || idx < 0 || idx >= row.size()) {
+            return "";
+        }
+        String value = row.get(idx);
+        return value != null ? value : "";
+    }
+
+    private static boolean hasScheduleColumn(Map<String, Integer> labelKeys, String... columns) {
+        for (String column : columns) {
+            if (labelKeys.containsKey(column)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public Map <String, scheduleTimeTracker> ParseScheduleCSV(){
 
         Map<String, scheduleTimeTracker> bandSchedule = new HashMap<>();
@@ -155,12 +192,14 @@ public class scheduleInfo {
             while ((line = br.readLine()) != null) {
                 lineCount++;
                 try {
-                    Log.d("ParseScheduleCSV", "ParseScheduleCSV - 3");
-                    String[] RowData = line.split(",");
+                    List<String> rowFields = ScheduleQRCompression.parseCSVLine(line.trim());
+                    if (rowFields.isEmpty()) {
+                        continue;
+                    }
                     if (labelRow == true){
                         Integer subCounter = 0;
-                        for (String row : RowData){
-                            labelKeys.put(row,subCounter);
+                        for (String row : rowFields){
+                            labelKeys.put(normalizeScheduleHeader(row), subCounter);
                             subCounter = subCounter + 1;
                         }
                         labelRow = false;
@@ -169,53 +208,67 @@ public class scheduleInfo {
 
                         if (labelKeys.containsKey(staticVariables.schedLocationRow)) {
                             int locIdx = labelKeys.get(staticVariables.schedLocationRow);
-                            if (RowData.length > locIdx) {
-                                String location = RowData[locIdx];
+                            if (locIdx < rowFields.size()) {
+                                String location = rowFields.get(locIdx);
                                 if (location != null && !location.isEmpty()) {
                                     locationsInCSVOrder.add(location);
                                 }
                             }
                         }
 
-                        String bandName = RowData[labelKeys.get(staticVariables.schedBandRow)];
-
-                        if (labelKeys.containsKey(staticVariables.schedStartTimeRow)) {
-                            staticVariables.schedulePresent = true;
-                            scheduleLine.setBandName(RowData[labelKeys.get(staticVariables.schedBandRow)]);
-                            scheduleLine.setShowLocation(RowData[labelKeys.get(staticVariables.schedLocationRow)]);
-                            scheduleLine.setShowDay(RowData[labelKeys.get(staticVariables.schedDayRow)]);
-                            scheduleLine.setShowType(RowData[labelKeys.get(staticVariables.schedTypeRow)]);
-
-                            scheduleLine.setStartTimeString(RowData[labelKeys.get(staticVariables.schedStartTimeRow)]);
-                            scheduleLine.setEndTimeString(RowData[labelKeys.get(staticVariables.schedEndTimeRow)]);
-
-                            scheduleLine.setStartTime(RowData[labelKeys.get(staticVariables.schedDateRow)],
-                                    RowData[labelKeys.get(staticVariables.schedStartTimeRow)]);
-                            scheduleLine.setEndTime(RowData[labelKeys.get(staticVariables.schedDateRow)],
-                                    RowData[labelKeys.get(staticVariables.schedEndTimeRow)]);
+                        if (!labelKeys.containsKey(staticVariables.schedBandRow)) {
+                            continue;
+                        }
+                        String bandName = getScheduleField(rowFields, labelKeys, staticVariables.schedBandRow);
+                        if (bandName.isEmpty()) {
+                            continue;
                         }
 
-                        if (RowData.length > labelKeys.get(staticVariables.schedDescriptionURLRow)) {
-                            if (RowData[labelKeys.get(staticVariables.schedDescriptionURLRow)].length() > 5) {
-                                staticVariables.showNotesMap.put(bandName, RowData[labelKeys.get(staticVariables.schedDescriptionURLRow)]);
+                        if (hasScheduleColumn(labelKeys, staticVariables.schedStartTimeRow)) {
+                            staticVariables.schedulePresent = true;
+                            scheduleLine.setBandName(bandName);
+                            scheduleLine.setShowLocation(getScheduleField(rowFields, labelKeys, staticVariables.schedLocationRow));
+                            scheduleLine.setShowDay(getScheduleField(rowFields, labelKeys, staticVariables.schedDayRow));
+                            scheduleLine.setShowType(getScheduleField(rowFields, labelKeys, staticVariables.schedTypeRow));
+
+                            String dateValue = getScheduleField(rowFields, labelKeys, staticVariables.schedDateRow);
+                            String startTimeValue = getScheduleField(rowFields, labelKeys, staticVariables.schedStartTimeRow);
+                            String endTimeValue = getScheduleField(rowFields, labelKeys, staticVariables.schedEndTimeRow);
+
+                            scheduleLine.setStartTimeString(startTimeValue);
+                            scheduleLine.setEndTimeString(endTimeValue);
+
+                            scheduleLine.setStartTime(dateValue, startTimeValue);
+                            scheduleLine.setEndTime(dateValue, endTimeValue);
+                        }
+
+                        if (labelKeys.containsKey(staticVariables.schedDescriptionURLRow)) {
+                            int descIdx = labelKeys.get(staticVariables.schedDescriptionURLRow);
+                            if (descIdx < rowFields.size()) {
+                                String descUrl = rowFields.get(descIdx);
+                                if (descUrl != null && descUrl.length() > 5) {
+                                    staticVariables.showNotesMap.put(bandName, descUrl);
+                                }
                             }
                         }
 
-                        if (RowData.length > labelKeys.get(staticVariables.schedNotesRow)) {
-                            scheduleLine.setShowNotes(RowData[labelKeys.get(staticVariables.schedNotesRow)]);
+                        if (labelKeys.containsKey(staticVariables.schedNotesRow)) {
+                            scheduleLine.setShowNotes(getScheduleField(rowFields, labelKeys, staticVariables.schedNotesRow));
                         }
 
-                        if (RowData.length > labelKeys.get(staticVariables.schedImageURLRow)) {
-                            if (RowData[labelKeys.get(staticVariables.schedImageURLRow)].length() > 5) {
-                                staticVariables.imageUrlMap.put(bandName, RowData[labelKeys.get(staticVariables.schedImageURLRow)]);
-                                
-                                // Parse and store ImageDate if available (for cache invalidation)
-                                if (labelKeys.containsKey(staticVariables.schedImageDateRow) && 
-                                    RowData.length > labelKeys.get(staticVariables.schedImageDateRow)) {
-                                    String imageDate = RowData[labelKeys.get(staticVariables.schedImageDateRow)];
-                                    if (imageDate != null && !imageDate.trim().isEmpty()) {
-                                        staticVariables.imageDateMap.put(bandName, imageDate.trim());
-                                        Log.d("ScheduleImageDate", "Parsed ImageDate '" + imageDate.trim() + "' for band '" + bandName + "'");
+                        if (labelKeys.containsKey(staticVariables.schedImageURLRow)) {
+                            int imageIdx = labelKeys.get(staticVariables.schedImageURLRow);
+                            if (imageIdx < rowFields.size()) {
+                                String imageUrl = rowFields.get(imageIdx);
+                                if (imageUrl != null && imageUrl.length() > 5) {
+                                    staticVariables.imageUrlMap.put(bandName, imageUrl);
+
+                                    if (labelKeys.containsKey(staticVariables.schedImageDateRow)) {
+                                        String imageDate = getScheduleField(rowFields, labelKeys, staticVariables.schedImageDateRow);
+                                        if (!imageDate.isEmpty()) {
+                                            staticVariables.imageDateMap.put(bandName, imageDate.trim());
+                                            Log.d("ScheduleImageDate", "Parsed ImageDate '" + imageDate.trim() + "' for band '" + bandName + "'");
+                                        }
                                     }
                                 }
                             }
@@ -226,7 +279,6 @@ public class scheduleInfo {
                             timeTrack.addToscheduleByTime(scheduleLine.getEpochStart(), scheduleLine);
                             bandSchedule.put(bandName, timeTrack);
                         } else {
-                            //Log.d("ScheduleLine 3", "Appending:" + RowData[0]);
                             bandSchedule.get(bandName).addToscheduleByTime(scheduleLine.getEpochStart(), scheduleLine);
                         }
 
@@ -234,7 +286,7 @@ public class scheduleInfo {
                     }
 
                 } catch (Exception error) {
-                    Log.d("ParseScheduleCSV", "ParseScheduleCSV - 5");
+                    Log.d("ParseScheduleCSV", "ParseScheduleCSV - 5 line=" + lineCount);
                     Log.d("ScheduleLine", "Error" + error.toString() + "-" + error.getMessage());
                     //just keep going
                 }

@@ -436,6 +436,10 @@
     <string name="schedule_qr_scan_first">Scanner le premier code QR</string>
     <string name="schedule_qr_scan_second">Scanner le deuxième code QR</string>
     <string name="schedule_qr_import_success">Emploi du temps importé avec succès.</string>
+    <string name="schedule_qr_events_added">%1$d événements ajoutés</string>
+    <string name="schedule_qr_events_updated">%1$d événements mis à jour</string>
+    <string name="schedule_qr_events_removed">%1$d événements supprimés</string>
+    <string name="schedule_qr_no_new_events">Aucun changement d\'emploi du temps.</string>
     <string name="schedule_qr_import_failed">Échec de l\'import de l\'emploi du temps.</string>
     <string name="schedule_qr_invalid_payload">Contenu QR invalide.</string>
     <string name="schedule_qr_empty_schedule">Aucun emploi du temps à partager. Chargez d\'abord l\'emploi du temps.</string>
