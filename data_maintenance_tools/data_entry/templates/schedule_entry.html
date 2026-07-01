@@ -45,17 +45,7 @@
           <option {% if band == form.BandName %}selected{% endif %}>{{ band }}</option>
           {% endfor %}
         </select>
-        {% if band_list_source_local %}
-        <div class="hint">Band list from your local lineup file (always current).</div>
-        {% elif band_list_cache %}
-        <div class="hint">
-          Band list from published URL
-          {% if band_list_cache.from_cache %} (cached {{ band_list_cache.age_label }}){% endif %}.
-          <form method="post" action="{{ url_for('schedule_refresh_band_list') }}" class="inline-form">
-            <button type="submit" class="secondary">Refresh</button>
-          </form>
-        </div>
-        {% endif %}
+        {% include "_band_list_name_hint.html" %}
       </div>
     </div>
 

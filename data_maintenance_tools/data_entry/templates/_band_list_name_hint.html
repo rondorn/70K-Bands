@@ -1,0 +1,14 @@
+{% if band_list_source_local %}
+<div class="hint">Band list from your local lineup file (always current).</div>
+{% elif band_list_cache %}
+<div class="hint">
+  Band list from published URL
+  {% if band_list_cache.from_cache %} (cached {{ band_list_cache.age_label }}){% endif %}.
+  <form method="post" action="{{ band_list_refresh_url }}" class="inline-form">
+    {% if band_list_refresh_return_to %}
+    <input type="hidden" name="return_to" value="{{ band_list_refresh_return_to }}">
+    {% endif %}
+    <button type="submit" class="secondary">Refresh</button>
+  </form>
+</div>
+{% endif %}

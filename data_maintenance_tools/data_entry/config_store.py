@@ -39,6 +39,7 @@ ENDPOINT_ROLES: dict[str, frozenset[str]] = {
     "descriptions_map_entry": frozenset({ROLE_DESCRIPTION}),
     "descriptions_map_remove": frozenset({ROLE_DESCRIPTION}),
     "descriptions_view": frozenset({ROLE_DESCRIPTION}),
+    "descriptions_refresh_label_names": frozenset({ROLE_DESCRIPTION}),
 }
 
 ROLE_EXEMPT_ENDPOINTS = frozenset(

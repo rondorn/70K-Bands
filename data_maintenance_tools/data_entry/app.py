@@ -495,6 +495,8 @@ def create_app() -> Flask:
             bands=bands,
             band_list_source_local=band_list_source_local,
             band_list_cache=band_list_cache,
+            band_list_refresh_url=url_for("schedule_refresh_band_list"),
+            band_list_refresh_return_to="",
             cache_message=cache_message,
             venues=cfg.get("venues", []),
             dates=cfg.get("dates", []),
@@ -750,7 +752,16 @@ def create_app() -> Flask:
         cfg = load_config()
         paths = resolved_paths(cfg)
         notes_dir = paths.get("notes_directory", "")
-        label_names = description_label_options(cfg, paths)
+        force_refresh = request.args.get("label_names_refreshed") == "1"
+        label_names, band_list_cache = description_label_options(
+            cfg, paths, force_refresh=force_refresh
+        )
+        band_list_source_local = band_list_reads_local(cfg)
+        cache_message = (
+            "Band list refreshed from published URL."
+            if force_refresh
+            else ""
+        )
         form = {
             "labelName": request.values.get("labelName", ""),
             "descriptionText": request.values.get("descriptionText", ""),
@@ -783,11 +794,27 @@ def create_app() -> Flask:
             "descriptions_write.html",
             form=form,
             label_names=label_names,
+            band_list_cache=band_list_cache,
+            band_list_source_local=band_list_source_local,
+            band_list_refresh_url=url_for("descriptions_refresh_label_names"),
+            band_list_refresh_return_to="write",
+            cache_message=cache_message,
             notes_directory=notes_dir,
             errors=errors,
             success=success,
             success_message=success_message,
         )
+
+    @app.post("/descriptions/refresh-label-names")
+    def descriptions_refresh_label_names():
+        cfg = load_config()
+        paths = resolved_paths(cfg)
+        invalidate_cached_url(paths.get("band_list_url", ""), paths)
+        invalidate_cached_url(paths.get("schedule_url", ""), paths)
+        return_to = request.form.get("return_to", "write").strip()
+        if return_to == "map_entry":
+            return redirect(url_for("descriptions_map_entry", label_names_refreshed=1))
+        return redirect(url_for("descriptions_write", label_names_refreshed=1))
 
     @app.get("/descriptions/map")
     def descriptions_map():
@@ -830,7 +857,17 @@ def create_app() -> Flask:
                 if map_url
                 else (read_description_map(map_path) if map_path else [])
             )
-        label_names = description_label_options(cfg, paths)
+        label_names, band_list_cache = description_label_options(
+            cfg,
+            paths,
+            force_refresh=request.args.get("label_names_refreshed") == "1",
+        )
+        band_list_source_local = band_list_reads_local(cfg)
+        cache_message = (
+            "Band list refreshed from published URL."
+            if request.args.get("label_names_refreshed") == "1"
+            else ""
+        )
         form = {
             "bandName": request.values.get("bandName", ""),
             "mapUrl": request.values.get("mapUrl", ""),
@@ -902,6 +939,11 @@ def create_app() -> Flask:
             "descriptions_map.html",
             form=form,
             label_names=label_names,
+            band_list_cache=band_list_cache,
+            band_list_source_local=band_list_source_local,
+            band_list_refresh_url=url_for("descriptions_refresh_label_names"),
+            band_list_refresh_return_to="map_entry",
+            cache_message=cache_message,
             description_map_file=map_path,
             errors=errors,
             success=success,

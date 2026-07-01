@@ -6,6 +6,10 @@
 {% block content %}
 <div class="target-file">Map file: <code>{{ description_map_file or '(not configured)' }}</code></div>
 
+{% if cache_message %}
+<div class="message success page-message">{{ cache_message }}</div>
+{% endif %}
+
 {% if success %}
 <div class="message success page-message">{{ success_message }}</div>
 {% endif %}
@@ -42,6 +46,8 @@
           <option {% if name == form.bandName %}selected{% endif %}>{{ name }}</option>
           {% endfor %}
         </select>
+        {% include "_band_list_name_hint.html" %}
+        <div class="hint">Also includes Special/Unofficial event titles from the schedule and existing map entries.</div>
       </div>
     </div>
 

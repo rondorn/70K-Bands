@@ -47,10 +47,19 @@ body {
   display: flex;
   flex-wrap: wrap;
   align-items: stretch;
-  justify-content: space-between;
   gap: 12px;
   width: 100%;
   margin: 12px 0 14px;
+}
+
+/* Config + Band + Descriptions + Schedule — spread like the original full layout */
+.nav-bar--count-4 {
+  justify-content: space-between;
+}
+
+/* Fewer role sections — keep nav grouped in the center */
+.nav-bar:not(.nav-bar--count-4) {
+  justify-content: center;
 }
 
 .nav-section {
@@ -471,6 +480,7 @@ table.data-table td.url-cell a:hover {
 
   .nav-bar {
     flex-wrap: wrap;
+    justify-content: center;
   }
 
   .nav-section {

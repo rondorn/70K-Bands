@@ -7,9 +7,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from data_entry.band_logic import read_lineup_from_url
+from data_entry.band_logic import lineup_band_names
+from data_entry.config_store import description_map_reads_local
 from data_entry.http_util import normalize_dropbox_url
-from data_entry.network_cache import invalidate_festival_network_cache
+from data_entry.network_cache import CacheMeta, invalidate_festival_network_cache
 from data_entry.schedule_logic import NON_BAND_EVENT_TYPES, read_schedule_from_url
 
 MAP_COLUMNS = ["Band", "URL", "Date"]
@@ -108,32 +109,49 @@ def find_band_index(rows: list[dict[str, str]], band: str) -> int | None:
     return None
 
 
-def description_label_options(cfg: dict[str, Any], paths: dict[str, str]) -> list[str]:
+def description_label_options(
+    cfg: dict[str, Any],
+    paths: dict[str, str],
+    *,
+    force_refresh: bool = False,
+) -> tuple[list[str], CacheMeta | None]:
+    """
+    Band/event names for description Write and Map entry dropdowns.
+
+    Band names use the same local-vs-cached published logic as the schedule dropdown.
+    Schedule special events and map entries are merged in (also TTL-cached when online).
+    """
     names: set[str] = set()
 
-    band_list_url = paths.get("band_list_url", "")
-    if band_list_url:
-        for row in read_lineup_from_url(band_list_url, cfg):
-            name = (row.get("bandName") or "").strip()
-            if name:
-                names.add(name)
+    band_names, band_cache = lineup_band_names(cfg, paths, force_refresh=force_refresh)
+    names.update(band_names)
 
     schedule_url = paths.get("schedule_url", "")
     if schedule_url:
-        for event in read_schedule_from_url(schedule_url, cfg):
+        for event in read_schedule_from_url(
+            schedule_url, cfg, force_refresh=force_refresh
+        ):
             if event.event_type in NON_BAND_EVENT_TYPES:
                 name = (event.band or "").strip()
                 if name and name != " ":
                     names.add(name)
 
+    map_path = paths.get("description_map_file", "")
     map_url = paths.get("description_map_url", "")
-    if map_url:
-        for row in read_description_map_from_url(map_url, cfg):
+    if description_map_reads_local(cfg) and map_path:
+        for row in read_description_map(map_path):
+            name = (row.get("Band") or "").strip()
+            if name:
+                names.add(name)
+    elif map_url:
+        for row in read_description_map_from_url(
+            map_url, cfg, force_refresh=force_refresh
+        ):
             name = (row.get("Band") or "").strip()
             if name:
                 names.add(name)
 
-    return sorted(names, key=str.casefold)
+    return sorted(names, key=str.casefold), band_cache
 
 
 def upsert_map_entry(

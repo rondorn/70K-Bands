@@ -16,7 +16,8 @@
       <div class="target-file">Config: <code>{{ config_file }}</code></div>
     </div>
 
-    <div class="nav-bar">
+    {% set nav_section_count = 1 + (1 if role_band_list else 0) + (1 if role_description else 0) + (1 if role_schedule else 0) %}
+    <div class="nav-bar nav-bar--count-{{ nav_section_count }}">
       <div class="nav-section">
         <span class="nav-section-label">Configuration</span>
         <div class="nav-section-links">
