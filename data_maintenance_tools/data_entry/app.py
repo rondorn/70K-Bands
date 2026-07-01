@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import html
+import os
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote
@@ -16,35 +17,56 @@ from data_entry.band_logic import (
     normalize_band_url_fields,
     normalize_genre_for_csv,
     read_lineup,
+    read_lineup_from_url,
     remove_band_at_index,
     replace_band_at_index,
     validate_band_data,
     write_lineup,
 )
 from data_entry.config_store import (
+    ROLE_BAND_LIST,
+    ROLE_DESCRIPTION,
+    ROLE_LABELS,
+    ROLE_SCHEDULE,
     active_festival_id,
+    band_list_reads_local,
     config_path,
     create_new_festival,
+    default_landing_endpoint,
+    description_map_reads_local,
+    effective_roles,
     ensure_data_files,
+    endpoint_allowed_for_roles,
+    fields_required_for_roles,
     list_festivals,
     list_from_textarea,
+    get_last_browse_directory,
     load_config,
+    needs_setup,
+    normalize_roles,
     resolve_path,
     resolved_paths,
+    role_nav_flags,
+    roles_from_form,
     save_config,
+    schedule_reads_local,
     set_active_festival,
+    set_last_browse_directory,
     textarea_from_list,
+    validate_config_for_roles,
 )
 from data_entry.directory_picker import choose_directory, choose_file
 from data_entry.description_map import (
     cache_date_today,
     description_label_options,
     read_description_map,
+    read_description_map_from_url,
     remove_map_entry_at_index,
     upsert_map_entry,
 )
 from data_entry.description_notes import save_description_note
 from data_entry.discover import discover_band
+from data_entry.network_cache import invalidate_cached_url
 from data_entry.pointer import introspect_pointer
 from data_entry.schedule_logic import (
     EVENT_LENGTH_ARRAY,
@@ -57,6 +79,7 @@ from data_entry.schedule_logic import (
     build_event_from_form,
     event_to_form,
     read_schedule,
+    read_schedule_from_url,
     remove_matching_event,
     replace_matching_event,
     validate_event,
@@ -69,6 +92,46 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 def create_app() -> Flask:
     app = Flask(__name__, template_folder=str(TEMPLATE_DIR), static_folder=str(STATIC_DIR))
+    app.secret_key = os.environ.get("FESTIVAL_DATA_ENTRY_SECRET", "festival-data-entry-local")
+
+    _SETUP_EXEMPT_ENDPOINTS = frozenset(
+        {
+            "static",
+            "setup_wizard",
+            "api_introspect",
+            "api_choose_directory",
+            "api_choose_file",
+        }
+    )
+
+    @app.before_request
+    def require_setup_when_unconfigured():
+        if request.endpoint in _SETUP_EXEMPT_ENDPOINTS:
+            return None
+        if needs_setup():
+            return redirect(url_for("setup_wizard"))
+        return None
+
+    @app.before_request
+    def require_role_for_endpoint():
+        endpoint = request.endpoint
+        if endpoint in _SETUP_EXEMPT_ENDPOINTS or endpoint in {
+            "config_page",
+            "home",
+        }:
+            return None
+        if needs_setup():
+            return None
+        cfg = load_config()
+        if endpoint_allowed_for_roles(endpoint, cfg):
+            return None
+        landing = default_landing_endpoint(cfg)
+        return redirect(
+            url_for(
+                landing,
+                message="That page is not available for your selected role(s).",
+            )
+        )
 
     @app.context_processor
     def inject_globals() -> dict[str, Any]:
@@ -79,11 +142,105 @@ def create_app() -> Flask:
             "config_file": str(config_path()),
             "lineup_file": paths.get("lineup_file", ""),
             "schedule_file": paths.get("schedule_file", ""),
+            **role_nav_flags(cfg),
         }
 
     @app.get("/")
     def home():
-        return redirect(url_for("schedule_entry"))
+        return redirect(url_for(default_landing_endpoint(load_config())))
+
+    @app.route("/setup", methods=["GET", "POST"])
+    def setup_wizard():
+        rerun = request.args.get("rerun") == "1" or request.form.get("wizard_rerun") == "1"
+        if (
+            not needs_setup()
+            and request.method == "GET"
+            and not request.args.get("step")
+            and not rerun
+        ):
+            return redirect(url_for("config_page"))
+
+        step = 1
+        error = ""
+        draft: dict[str, Any] = {}
+
+        if request.method == "POST":
+            wizard_step = int(request.form.get("wizard_step", "1") or "1")
+            draft = _wizard_draft_from_form(request.form)
+
+            if wizard_step == 1:
+                roles = roles_from_form(request.form.getlist("roles"))
+                if not roles:
+                    error = "Select at least one admin role."
+                    step = 1
+                else:
+                    draft["roles"] = roles
+                    step = 2
+            elif wizard_step == 2:
+                cfg_check = _wizard_to_config(draft)
+                errors = validate_config_for_roles(cfg_check, require_local_paths=False)
+                if ROLE_SCHEDULE in draft.get("roles", []) and not str(
+                    draft.get("pointer_url", "")
+                ).strip():
+                    errors.append("Pointer URL is required for Schedule Admin.")
+                if ROLE_DESCRIPTION in draft.get("roles", []) and not str(
+                    draft.get("description_map_url", "")
+                ).strip():
+                    errors.append(
+                        "Use Load from pointer to populate network read URLs before continuing."
+                    )
+                if errors:
+                    error = " ".join(errors)
+                    step = 2
+                else:
+                    step = 3
+            elif wizard_step == 3:
+                cfg = _wizard_to_config(draft)
+                cfg["setup_complete"] = True
+                errors = validate_config_for_roles(cfg)
+                if errors:
+                    error = " ".join(errors)
+                    step = 3
+                else:
+                    save_config(cfg)
+                    ensure_data_files(cfg)
+                    roles = normalize_roles(cfg.get("roles"))
+                    if ROLE_SCHEDULE in roles:
+                        return redirect(url_for("schedule_entry"))
+                    if ROLE_BAND_LIST in roles:
+                        return redirect(url_for("bands"))
+                    if ROLE_DESCRIPTION in roles:
+                        return redirect(url_for("descriptions_write"))
+                    return redirect(url_for("config_page"))
+        else:
+            step = int(request.args.get("step", "1") or "1")
+            step = max(1, min(step, 3))
+            if rerun:
+                draft = _config_to_wizard_draft(load_config())
+
+        defaults = load_config()
+        if not draft.get("event_types"):
+            draft["event_types"] = defaults.get("event_types", [])
+
+        roles = normalize_roles(draft.get("roles"))
+        return render_template(
+            "setup_wizard.html",
+            step=step,
+            total_steps=3,
+            draft=draft,
+            error=error,
+            wizard_rerun=rerun,
+            role_choices=list(ROLE_LABELS.items()),
+            role_band_list=ROLE_BAND_LIST in roles,
+            role_schedule=ROLE_SCHEDULE in roles,
+            role_description=ROLE_DESCRIPTION in roles,
+            venues_text=textarea_from_list(draft.get("venues", [])),
+            dates_text=textarea_from_list(draft.get("dates", [])),
+            days_text=textarea_from_list(draft.get("days", [])),
+            event_types_text=textarea_from_list(
+                draft.get("event_types") or load_config().get("event_types", [])
+            ),
+        )
 
     @app.route("/config", methods=["GET", "POST"])
     def config_page():
@@ -98,6 +255,8 @@ def create_app() -> Flask:
                     active_festival_id=active_festival_id(),
                     festivals=list_festivals(),
                     multiple_festivals=False,
+                    role_choices=list(ROLE_LABELS.items()),
+                    role_requirements=fields_required_for_roles([]),
                     venues_text="",
                     dates_text="",
                     days_text="",
@@ -121,20 +280,29 @@ def create_app() -> Flask:
                 return redirect(url_for("config_page"))
 
             cfg = _config_from_form(request.form)
-            current_festival_id = save_config(
-                cfg, festival_id=request.form.get("festival_id", "").strip() or None
-            )
-            ensure_data_files(cfg)
-            message = "Configuration saved."
-            cfg = load_config()
+            validation_errors = validate_config_for_roles(cfg)
+            if validation_errors:
+                error = " ".join(validation_errors)
+                cfg = load_config()
+                cfg.update(_config_from_form(request.form))
+            else:
+                current_festival_id = save_config(
+                    cfg, festival_id=request.form.get("festival_id", "").strip() or None
+                )
+                ensure_data_files(cfg)
+                message = "Configuration saved."
+                cfg = load_config()
 
         festivals = list_festivals()
+        role_requirements = fields_required_for_roles(cfg.get("roles", []))
         return render_template(
             "config.html",
             cfg=cfg,
             active_festival_id=current_festival_id or active_festival_id(),
             festivals=festivals,
             multiple_festivals=len(festivals) > 1,
+            role_choices=list(ROLE_LABELS.items()),
+            role_requirements=role_requirements,
             venues_text=textarea_from_list(cfg.get("venues", [])),
             dates_text=textarea_from_list(cfg.get("dates", [])),
             days_text=textarea_from_list(cfg.get("days", [])),
@@ -158,10 +326,14 @@ def create_app() -> Flask:
     def api_choose_directory():
         initial_dir = request.form.get("initial_dir", "").strip()
         title = request.form.get("title", "Choose a folder").strip() or "Choose a folder"
+        last_browse = get_last_browse_directory()
         try:
-            path = choose_directory(initial_dir, title)
+            path = choose_directory(
+                initial_dir, title, fallback_dir=last_browse
+            )
             if not path:
                 return jsonify({"ok": False, "cancelled": True})
+            set_last_browse_directory(path)
             return jsonify({"ok": True, "path": path})
         except Exception as exc:
             return jsonify({"ok": False, "error": str(exc)}), 400
@@ -170,10 +342,12 @@ def create_app() -> Flask:
     def api_choose_file():
         initial_path = request.form.get("initial_path", "").strip()
         title = request.form.get("title", "Choose a file").strip() or "Choose a file"
+        last_browse = get_last_browse_directory()
         try:
-            path = choose_file(initial_path, title)
+            path = choose_file(initial_path, title, fallback_dir=last_browse)
             if not path:
                 return jsonify({"ok": False, "cancelled": True})
+            set_last_browse_directory(path)
             return jsonify({"ok": True, "path": path})
         except Exception as exc:
             return jsonify({"ok": False, "error": str(exc)}), 400
@@ -183,7 +357,18 @@ def create_app() -> Flask:
         cfg = load_config()
         paths = resolved_paths(cfg)
         schedule_path = paths["schedule_file"]
-        existing = read_schedule(schedule_path)
+        schedule_url = paths.get("schedule_url", "")
+        read_local = schedule_reads_local(cfg)
+        if read_local:
+            existing = read_schedule(schedule_path)
+            schedule_read_url = schedule_path
+        else:
+            existing = (
+                read_schedule_from_url(schedule_url, cfg)
+                if schedule_url
+                else read_schedule(schedule_path)
+            )
+            schedule_read_url = schedule_url or schedule_path
 
         form = {
             "BandName": request.values.get("BandName", ""),
@@ -232,18 +417,29 @@ def create_app() -> Flask:
             )
             if not errors:
                 if is_update:
-                    updated = replace_matching_event(
-                        existing,
-                        orig_band,
-                        orig_venue,
-                        orig_date,
-                        orig_start,
-                        event,
-                    )
-                    write_schedule(schedule_path, updated)
+                    if read_local:
+                        local_rows = read_schedule(schedule_path)
+                        updated = replace_matching_event(
+                            local_rows,
+                            orig_band,
+                            orig_venue,
+                            orig_date,
+                            orig_start,
+                            event,
+                        )
+                    else:
+                        updated = replace_matching_event(
+                            existing,
+                            orig_band,
+                            orig_venue,
+                            orig_date,
+                            orig_start,
+                            event,
+                        )
+                    write_schedule(schedule_path, updated, cfg)
                     confirm_message = f"{event.band} has been updated"
                 else:
-                    append_schedule_event(schedule_path, event)
+                    append_schedule_event(schedule_path, event, cfg)
                     confirm_message = f"{event.band} has been added"
                 description_note_message = ""
                 if event.event_type in NON_BAND_EVENT_TYPES:
@@ -283,16 +479,30 @@ def create_app() -> Flask:
                 form = dict(request.form)
                 modify_mode = is_update
 
-        bands = band_name_options(cfg, paths)
+        force_band_refresh = request.args.get("band_list_refreshed") == "1"
+        bands, band_list_cache = band_name_options(
+            cfg, paths, force_refresh=force_band_refresh
+        )
+        band_list_source_local = band_list_reads_local(cfg)
+        cache_message = (
+            "Band list refreshed from published URL."
+            if force_band_refresh
+            else ""
+        )
         return render_template(
             "schedule_entry.html",
             form=form,
             bands=bands,
+            band_list_source_local=band_list_source_local,
+            band_list_cache=band_list_cache,
+            cache_message=cache_message,
             venues=cfg.get("venues", []),
             dates=cfg.get("dates", []),
             days=cfg.get("days", []),
             event_types=cfg.get("event_types", []),
             description_map_url=cfg.get("description_map_url", ""),
+            schedule_read_url=schedule_read_url,
+            read_local=read_local,
             notes_directory=paths.get("notes_directory", ""),
             hour_array=[" ", *HOUR_ARRAY],
             min_array=["  ", *MIN_ARRAY],
@@ -327,19 +537,40 @@ def create_app() -> Flask:
 
         events = read_schedule(paths["schedule_file"])
         updated = remove_matching_event(events, band, venue, date, start_time)
-        write_schedule(paths["schedule_file"], updated)
+        write_schedule(paths["schedule_file"], updated, cfg)
         if return_to == "schedule_view":
             return redirect(url_for("schedule_view", message="Entry removed"))
         return redirect(url_for("schedule_entry"))
+
+    @app.post("/schedule/refresh-band-list")
+    def schedule_refresh_band_list():
+        cfg = load_config()
+        paths = resolved_paths(cfg)
+        invalidate_cached_url(paths.get("band_list_url", ""), paths)
+        return redirect(url_for("schedule_entry", band_list_refreshed=1))
 
     @app.get("/schedule/view")
     def schedule_view():
         cfg = load_config()
         paths = resolved_paths(cfg)
-        events = read_schedule(paths["schedule_file"])
+        schedule_url = paths.get("schedule_url", "")
+        read_local = schedule_reads_local(cfg)
+        if read_local:
+            events = read_schedule(paths["schedule_file"])
+            schedule_read_url = paths["schedule_file"]
+        else:
+            events = (
+                read_schedule_from_url(schedule_url, cfg)
+                if schedule_url
+                else read_schedule(paths["schedule_file"])
+            )
+            schedule_read_url = schedule_url or paths.get("schedule_file", "")
         return render_template(
             "schedule_view.html",
             events=events,
+            schedule_read_url=schedule_read_url,
+            read_local=read_local,
+            write_file=paths.get("schedule_file", ""),
             message=request.args.get("message", ""),
         )
 
@@ -347,8 +578,17 @@ def create_app() -> Flask:
     def schedule_stats():
         cfg = load_config()
         paths = resolved_paths(cfg)
-        events = read_schedule(paths["schedule_file"])
-        bands = band_name_options(cfg, paths)
+        schedule_url = paths.get("schedule_url", "")
+        read_local = schedule_reads_local(cfg)
+        if read_local:
+            events = read_schedule(paths["schedule_file"])
+        else:
+            events = (
+                read_schedule_from_url(schedule_url, cfg)
+                if schedule_url
+                else read_schedule(paths["schedule_file"])
+            )
+        bands, _band_cache = band_name_options(cfg, paths)
         stats: dict[str, dict[str, int]] = {}
         for event in events:
             stats.setdefault(event.band, {})
@@ -365,12 +605,20 @@ def create_app() -> Flask:
     def bands():
         cfg = load_config()
         paths = resolved_paths(cfg)
-        rows = read_lineup(paths["lineup_file"], cfg)
+        band_list_url = paths.get("band_list_url", "")
+        read_local = band_list_reads_local(cfg)
+        if read_local:
+            rows = read_lineup(paths["lineup_file"], cfg)
+            lineup_read_url = paths["lineup_file"]
+        else:
+            rows = read_lineup_from_url(band_list_url, cfg) if band_list_url else []
+            lineup_read_url = band_list_url or "(not configured)"
         return render_template(
             "band_view.html",
             bands=lineup_rows_for_display(rows),
-            lineup_file=paths["lineup_file"],
-            include_prior_years=bool(cfg.get("include_prior_years_field")),
+            lineup_read_url=lineup_read_url,
+            read_local=read_local,
+            write_file=paths.get("lineup_file", ""),
             message=request.args.get("message", ""),
         )
 
@@ -379,7 +627,13 @@ def create_app() -> Flask:
         cfg = load_config()
         paths = resolved_paths(cfg)
         lineup_path = paths["lineup_file"]
-        existing = read_lineup(lineup_path, cfg)
+        band_list_url = paths.get("band_list_url", "")
+        read_local = band_list_reads_local(cfg)
+        existing_local = read_lineup(lineup_path, cfg)
+        existing_network = (
+            read_lineup_from_url(band_list_url, cfg) if band_list_url else []
+        )
+        existing_for_display = existing_local if read_local else existing_network
 
         form_data = {key: request.values.get(key, "") for key in _band_form_fields(cfg)}
         form_data["latestAlbum"] = request.values.get("latestAlbum", "")
@@ -389,15 +643,19 @@ def create_app() -> Flask:
         edit_index = request.values.get("editIndex", "")
         if request.method == "GET" and edit_index.isdigit():
             idx = int(edit_index)
-            if 0 <= idx < len(existing):
+            if 0 <= idx < len(existing_for_display):
                 form_data = {
-                    **existing[idx],
+                    **existing_for_display[idx],
                     "latestAlbum": "",
                     "musicBrainz": "",
                     "OrigBandIndex": str(idx),
                 }
 
         modify_mode = form_data.get("OrigBandIndex", "").isdigit()
+        show_prior_years_edit = modify_mode and bool(
+            (form_data.get("priorYears") or "").strip()
+            or request.values.get("edit_prior_years") == "1"
+        )
         errors: list[str] = []
 
         if request.method == "POST" and request.form.get("action") == "submit":
@@ -415,15 +673,32 @@ def create_app() -> Flask:
             orig_index_str = request.form.get("OrigBandIndex", "").strip()
             is_update = orig_index_str.isdigit()
             orig_index = int(orig_index_str) if is_update else None
-            exclude_index = orig_index if is_update and orig_index < len(existing) else None
+            if request.form.get("edit_prior_years") == "1":
+                csv_data["priorYears"] = request.form.get("priorYears", "").strip()
+            else:
+                csv_data["priorYears"] = ""
+                if (
+                    is_update
+                    and orig_index is not None
+                    and 0 <= orig_index < len(existing_local)
+                ):
+                    csv_data["priorYears"] = existing_local[orig_index].get("priorYears", "")
+            source_for_exclude = existing_for_display
+            exclude_index = (
+                orig_index if is_update and orig_index < len(source_for_exclude) else None
+            )
 
             ok, errors = validate_band_data(
-                csv_data, cfg, lineup_path, exclude_index=exclude_index
+                csv_data,
+                cfg,
+                lineup_path,
+                band_list_url="" if read_local else band_list_url,
+                exclude_index=exclude_index,
             )
 
             if ok:
-                if is_update and orig_index is not None and 0 <= orig_index < len(existing):
-                    updated = replace_band_at_index(existing, orig_index, csv_data)
+                if is_update and orig_index is not None and 0 <= orig_index < len(existing_local):
+                    updated = replace_band_at_index(existing_local, orig_index, csv_data)
                     write_lineup(lineup_path, updated, cfg)
                     message = f"{band_name} has been updated"
                 else:
@@ -437,12 +712,16 @@ def create_app() -> Flask:
                     "musicBrainz": request.form.get("musicBrainz", "").strip(),
                     "OrigBandIndex": orig_index_str,
                 }
+                if request.form.get("edit_prior_years") == "1":
+                    form_data["priorYears"] = request.form.get("priorYears", "").strip()
                 modify_mode = is_update
+                show_prior_years_edit = request.form.get("edit_prior_years") == "1"
 
         return render_template(
             "band_entry.html",
             form_data=form_data,
-            include_prior_years=bool(cfg.get("include_prior_years_field")),
+            write_file=lineup_path,
+            show_prior_years_edit=show_prior_years_edit,
             errors=errors,
             modify_mode=modify_mode,
         )
@@ -515,11 +794,24 @@ def create_app() -> Flask:
         cfg = load_config()
         paths = resolved_paths(cfg)
         map_path = paths.get("description_map_file", "")
-        entries = read_description_map(map_path) if map_path else []
+        map_url = paths.get("description_map_url", "")
+        read_local = description_map_reads_local(cfg)
+        if read_local:
+            entries = read_description_map(map_path) if map_path else []
+            description_map_read_url = map_path
+        else:
+            entries = (
+                read_description_map_from_url(map_url, cfg)
+                if map_url
+                else (read_description_map(map_path) if map_path else [])
+            )
+            description_map_read_url = map_url or map_path
         return render_template(
             "descriptions_view.html",
             entries=entries,
-            description_map_file=map_path,
+            description_map_read_url=description_map_read_url,
+            read_local=read_local,
+            write_file=map_path,
             message=request.args.get("message", ""),
         )
 
@@ -528,6 +820,16 @@ def create_app() -> Flask:
         cfg = load_config()
         paths = resolved_paths(cfg)
         map_path = paths.get("description_map_file", "")
+        map_url = paths.get("description_map_url", "")
+        read_local = description_map_reads_local(cfg)
+        if read_local:
+            map_rows = read_description_map(map_path) if map_path else []
+        else:
+            map_rows = (
+                read_description_map_from_url(map_url, cfg)
+                if map_url
+                else (read_description_map(map_path) if map_path else [])
+            )
         label_names = description_label_options(cfg, paths)
         form = {
             "bandName": request.values.get("bandName", ""),
@@ -543,11 +845,10 @@ def create_app() -> Flask:
         modify_mode = False
 
         edit_index = request.values.get("editIndex", "")
-        if request.method == "GET" and edit_index.isdigit() and map_path:
-            rows = read_description_map(map_path)
+        if request.method == "GET" and edit_index.isdigit():
             idx = int(edit_index)
-            if 0 <= idx < len(rows):
-                row = rows[idx]
+            if 0 <= idx < len(map_rows):
+                row = map_rows[idx]
                 form = {
                     "bandName": row["Band"],
                     "mapUrl": row["URL"],
@@ -583,6 +884,7 @@ def create_app() -> Flask:
                     form["cacheDate"],
                     confirm_update=confirm_update or modify_mode,
                     edit_index=edit_idx if modify_mode else None,
+                    cfg=cfg,
                 )
                 if status == "needs_confirm":
                     confirm_prompt = (
@@ -642,18 +944,53 @@ def _config_from_form(form) -> dict[str, Any]:
         "festival_name": form.get("festival_name", "").strip(),
         "pointer_url": form.get("pointer_url", "").strip(),
         "event_year": form.get("event_year", "").strip(),
+        "roles": roles_from_form(form.getlist("roles")),
+        "setup_complete": True,
         "lineup_file": form.get("lineup_file", "").strip(),
         "schedule_file": form.get("schedule_file", "").strip(),
         "band_list_url": form.get("band_list_url", "").strip(),
+        "schedule_url": form.get("schedule_url", "").strip(),
         "description_map_url": form.get("description_map_url", "").strip(),
         "description_map_file": form.get("description_map_file", "").strip(),
         "notes_directory": form.get("notes_directory", "").strip(),
-        "include_prior_years_field": bool(form.get("include_prior_years_field")),
         "venues": list_from_textarea(form.get("venues_text", "")),
         "dates": list_from_textarea(form.get("dates_text", "")),
         "days": list_from_textarea(form.get("days_text", "")),
         "event_types": list_from_textarea(form.get("event_types_text", "")),
     }
+
+
+def _config_to_wizard_draft(cfg: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "festival_name": str(cfg.get("festival_name", "") or ""),
+        "pointer_url": str(cfg.get("pointer_url", "") or ""),
+        "event_year": str(cfg.get("event_year", "") or ""),
+        "roles": normalize_roles(cfg.get("roles")),
+        "band_list_url": str(cfg.get("band_list_url", "") or ""),
+        "schedule_url": str(cfg.get("schedule_url", "") or ""),
+        "description_map_url": str(cfg.get("description_map_url", "") or ""),
+        "lineup_file": str(cfg.get("lineup_file", "") or ""),
+        "schedule_file": str(cfg.get("schedule_file", "") or ""),
+        "description_map_file": str(cfg.get("description_map_file", "") or ""),
+        "notes_directory": str(cfg.get("notes_directory", "") or ""),
+        "venues": list(cfg.get("venues") or []),
+        "dates": list(cfg.get("dates") or []),
+        "days": list(cfg.get("days") or []),
+        "event_types": list(cfg.get("event_types") or []),
+        "setup_complete": False,
+    }
+
+
+def _wizard_draft_from_form(form) -> dict[str, Any]:
+    draft = _config_from_form(form)
+    draft["setup_complete"] = False
+    return draft
+
+
+def _wizard_to_config(draft: dict[str, Any]) -> dict[str, Any]:
+    cfg = dict(draft)
+    cfg["roles"] = normalize_roles(cfg.get("roles"))
+    return cfg
 
 
 def _band_form_fields(cfg: dict[str, Any]) -> list[str]:
@@ -668,8 +1005,6 @@ def _band_form_fields(cfg: dict[str, Any]) -> list[str]:
         "genre",
         "noteworthy",
     ]
-    if cfg.get("include_prior_years_field"):
-        fields.append("priorYears")
     return fields
 
 

@@ -3,14 +3,17 @@
 from __future__ import annotations
 
 import csv
-import hashlib
 import re
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote, urlparse
 
 from data_entry.config_store import lineup_fields
-from data_entry.http_util import fetch_url
+from data_entry.network_cache import (
+    CacheMeta,
+    fetch_cached_text_or_empty,
+    invalidate_festival_network_cache,
+)
 
 
 def build_wikipedia_search_url(band_name: str) -> str:
@@ -132,6 +135,7 @@ def validate_band_data(
     data: dict[str, str],
     cfg: dict[str, Any] | None = None,
     lineup_file: str = "",
+    band_list_url: str = "",
     exclude_index: int | None = None,
 ) -> tuple[bool, list[str]]:
     errors: list[str] = []
@@ -144,20 +148,27 @@ def validate_band_data(
         "youtube": "YouTube",
         "country": "Country",
         "genre": "Genre",
-        "priorYears": "Prior years",
         "metalArchives": "Metal Archives",
         "wikipedia": "Wikipedia",
     }
     required = ["bandName", "officalSite", "imageUrl", "youtube", "country", "genre"]
-    if cfg.get("include_prior_years_field"):
-        required.append("priorYears")
 
     for field in required:
         if not (data.get(field) or "").strip():
             errors.append(f"{field_labels[field]} is required")
 
     band_name = (data.get("bandName") or "").strip()
-    if band_name and lineup_file:
+    read_url = (band_list_url or "").strip()
+    if band_name and read_url:
+        for idx, row in enumerate(read_lineup_from_url(read_url, cfg)):
+            if exclude_index is not None and idx == exclude_index:
+                continue
+            if row.get("bandName", "").strip() == band_name:
+                errors.append(
+                    f"Band '{band_name}' already exists in the published lineup"
+                )
+                break
+    elif band_name and lineup_file:
         for idx, row in enumerate(read_lineup(lineup_file, cfg)):
             if exclude_index is not None and idx == exclude_index:
                 continue
@@ -191,37 +202,66 @@ def validate_band_data(
     return len(errors) == 0, errors
 
 
-def load_band_names(band_list_url: str, lineup_file: str) -> list[str]:
-    cache_key = hashlib.md5(f"{band_list_url}|{lineup_file}".encode()).hexdigest()
-    cache_dir = Path(lineup_file).parent / ".cache" if lineup_file else Path(".cache")
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    cache_file = cache_dir / f"band_names_{cache_key}.txt"
+def _invalidate_published_cache(cfg: dict[str, Any]) -> None:
+    from data_entry.config_store import resolved_paths
 
-    source_mtime = 0.0
-    if lineup_file and Path(lineup_file).is_file():
-        source_mtime = Path(lineup_file).stat().st_mtime
-    if cache_file.is_file() and cache_file.stat().st_mtime >= source_mtime:
-        return cache_file.read_text(encoding="utf-8").splitlines()
+    invalidate_festival_network_cache(resolved_paths(cfg))
 
-    names: list[str] = []
-    csv_text = ""
-    if band_list_url:
-        try:
-            csv_text = fetch_url(band_list_url)
-        except Exception:
-            csv_text = ""
-    if not csv_text and lineup_file and Path(lineup_file).is_file():
-        csv_text = Path(lineup_file).read_text(encoding="utf-8")
 
-    if csv_text:
-        reader = csv.DictReader(csv_text.splitlines())
-        for row in reader:
-            name = (row.get("bandName") or row.get("Band") or "").strip()
-            if name and name.lower() != "bandname":
-                names.append(name)
+def lineup_band_names(
+    cfg: dict[str, Any],
+    paths: dict[str, str],
+    *,
+    force_refresh: bool = False,
+) -> tuple[list[str], CacheMeta | None]:
+    """
+    Band names for schedule dropdowns and similar UI.
 
-    names = sorted(set(names))
-    cache_file.write_text("\n".join(names), encoding="utf-8")
+    Band List Admin reads the local lineup file so new bands appear immediately.
+    Everyone else reads the published URL through the TTL network cache.
+    """
+    from data_entry.config_store import band_list_reads_local
+
+    if band_list_reads_local(cfg):
+        rows = read_lineup(paths.get("lineup_file", ""), cfg)
+        names = [
+            row.get("bandName", "").strip()
+            for row in rows
+            if row.get("bandName", "").strip()
+        ]
+        return names, None
+
+    url = (paths.get("band_list_url", "") or "").strip()
+    if url:
+        csv_text, meta = fetch_cached_text_or_empty(
+            url, paths, force_refresh=force_refresh
+        )
+        rows = (
+            _parse_lineup_csv(csv_text, lineup_fields()) if csv_text else []
+        )
+        names = [
+            row.get("bandName", "").strip()
+            for row in rows
+            if row.get("bandName", "").strip()
+        ]
+        return names, meta
+
+    if paths.get("lineup_file"):
+        rows = read_lineup(paths.get("lineup_file", ""), cfg)
+        names = [
+            row.get("bandName", "").strip()
+            for row in rows
+            if row.get("bandName", "").strip()
+        ]
+        return names, None
+
+    return [], None
+
+
+def load_band_names(band_list_url: str, lineup_file: str = "") -> list[str]:
+    """Load band names using path arguments only (no role-aware local read)."""
+    paths = {"band_list_url": band_list_url, "lineup_file": lineup_file}
+    names, _meta = lineup_band_names({}, paths)
     return names
 
 
@@ -241,18 +281,44 @@ def check_duplicate(
 
 
 def read_lineup(csv_file: str, cfg: dict[str, Any]) -> list[dict[str, str]]:
-    fields = lineup_fields(bool(cfg.get("include_prior_years_field")))
+    """Read lineup rows from a local CSV file (write target only)."""
+    fields = lineup_fields()
     path = Path(csv_file)
     if not path.is_file():
         return []
+    return _parse_lineup_csv(path.read_text(encoding="utf-8"), fields)
+
+
+def read_lineup_from_url(
+    url: str,
+    cfg: dict[str, Any],
+    *,
+    force_refresh: bool = False,
+) -> list[dict[str, str]]:
+    """Read lineup rows from the published network URL (TTL-cached)."""
+    fields = lineup_fields()
+    url = (url or "").strip()
+    if not url:
+        return []
+    from data_entry.config_store import resolved_paths
+
+    paths = resolved_paths(cfg)
+    csv_text, _meta = fetch_cached_text_or_empty(
+        url, paths, force_refresh=force_refresh
+    )
+    if not csv_text:
+        return []
+    return _parse_lineup_csv(csv_text, fields)
+
+
+def _parse_lineup_csv(csv_text: str, fields: list[str]) -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
-    with path.open(encoding="utf-8", newline="") as handle:
-        reader = csv.DictReader(handle)
-        for row in reader:
-            name = (row.get("bandName") or "").strip()
-            if not name or name.lower() == "bandname":
-                continue
-            rows.append({field: (row.get(field) or "").strip() for field in fields})
+    reader = csv.DictReader(csv_text.splitlines())
+    for row in reader:
+        name = (row.get("bandName") or "").strip()
+        if not name or name.lower() == "bandname":
+            continue
+        rows.append({field: (row.get(field) or "").strip() for field in fields})
     return rows
 
 
@@ -265,7 +331,7 @@ def lineup_rows_for_display(rows: list[dict[str, str]]) -> list[dict[str, str]]:
 def write_lineup(
     csv_file: str, rows: list[dict[str, str]], cfg: dict[str, Any]
 ) -> None:
-    fields = lineup_fields(bool(cfg.get("include_prior_years_field")))
+    fields = lineup_fields()
     path = Path(csv_file)
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="") as handle:
@@ -274,6 +340,7 @@ def write_lineup(
         for row in rows:
             normalized = normalize_band_row_for_csv(row)
             writer.writerow({field: normalized.get(field, "") for field in fields})
+    _invalidate_published_cache(cfg)
 
 
 def remove_band_at_index(rows: list[dict[str, str]], index: int) -> list[dict[str, str]]:
@@ -290,7 +357,7 @@ def replace_band_at_index(
 
 
 def append_band(data: dict[str, str], csv_file: str, cfg: dict[str, Any]) -> None:
-    fields = lineup_fields(bool(cfg.get("include_prior_years_field")))
+    fields = lineup_fields()
     path = Path(csv_file)
     path.parent.mkdir(parents=True, exist_ok=True)
     write_header = not path.is_file() or path.stat().st_size == 0
@@ -300,3 +367,4 @@ def append_band(data: dict[str, str], csv_file: str, cfg: dict[str, Any]) -> Non
             writer.writeheader()
         normalized = normalize_band_row_for_csv(data)
         writer.writerow({field: normalized.get(field, "") for field in fields})
+    _invalidate_published_cache(cfg)

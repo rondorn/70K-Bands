@@ -4,16 +4,21 @@
 {% block subheading %}{{ bands|length }} band(s){% endblock %}
 
 {% block content %}
-<div class="target-file">Source: <code>{{ lineup_file }}</code></div>
+<div class="target-file">Reading from: <code>{{ lineup_read_url }}</code>{% if read_local %} (local write file){% else %} (published){% endif %}</div>
+{% if write_file %}
+<div class="target-file">Writing to: <code>{{ write_file }}</code></div>
+{% endif %}
 
 {% if message %}
 <div class="message success page-message">{{ message }}</div>
 {% endif %}
 
 <div class="panel">
+  {% if role_band_list %}
   <div class="panel-toolbar">
     <a class="btn" href="{{ url_for('band_entry') }}">Add</a>
   </div>
+  {% endif %}
   {% if bands %}
   <table class="data-table">
     <thead>
@@ -21,9 +26,8 @@
         <th>Band</th>
         <th>Country</th>
         <th>Genre</th>
-        {% if include_prior_years %}<th>Prior years</th>{% endif %}
         <th>Noteworthy</th>
-        <th>Actions</th>
+        {% if read_local %}<th>Actions</th>{% endif %}
       </tr>
     </thead>
     <tbody>
@@ -32,8 +36,8 @@
         <td>{{ b.bandName }}</td>
         <td>{{ b.country }}</td>
         <td>{{ b.genre }}</td>
-        {% if include_prior_years %}<td>{{ b.priorYears }}</td>{% endif %}
         <td>{{ b.noteworthy }}</td>
+        {% if read_local %}
         <td class="row-actions">
           <a class="btn secondary" href="{{ url_for('band_entry', editIndex=b.source_index) }}">Edit</a>
           <form method="post" action="{{ url_for('band_remove') }}" class="inline-form" onsubmit="return confirm('Remove {{ b.bandName }} from the lineup?');">
@@ -41,6 +45,7 @@
             <button type="submit" class="secondary">Delete</button>
           </form>
         </td>
+        {% endif %}
       </tr>
       {% endfor %}
     </tbody>

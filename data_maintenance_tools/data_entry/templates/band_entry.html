@@ -21,7 +21,13 @@
 
     <div class="form-row">
       <div class="form-label">Band name <span class="required">*</span></div>
-      <div class="form-input"><input type="text" id="bandName" name="bandName" value="{{ form_data.bandName }}"></div>
+      <div class="form-input">
+        <input type="text" id="bandName" name="bandName" value="{{ form_data.bandName }}">
+        <button type="button" class="secondary" id="discoverBtn" style="margin-top:8px;">Discover</button>
+        <div id="discoverStatus" class="hint"></div>
+        <div id="discoverWarnings" class="hint"></div>
+        <div class="hint">Discover fills fields from Metal Archives or MusicBrainz using the band name and/or URLs below.</div>
+      </div>
     </div>
 
     <div class="form-row">
@@ -37,9 +43,6 @@
       <div class="form-input">
         <input type="url" id="musicBrainz" name="musicBrainz" value="{{ form_data.musicBrainz }}" placeholder="https://musicbrainz.org/artist/...">
         <div class="hint">Artist page URL (not saved to CSV). Used when Metal Archives is unavailable.</div>
-        <button type="button" class="secondary" id="discoverBtn" style="margin-top:8px;">Discover</button>
-        <div id="discoverStatus" class="hint"></div>
-        <div id="discoverWarnings" class="hint"></div>
       </div>
     </div>
 
@@ -101,10 +104,14 @@
       </div>
     </div>
 
-    {% if include_prior_years %}
+    {% if show_prior_years_edit %}
+    <input type="hidden" name="edit_prior_years" value="1">
     <div class="form-row">
       <div class="form-label">Prior years</div>
-      <div class="form-input"><input type="text" id="priorYears" name="priorYears" value="{{ form_data.priorYears }}"></div>
+      <div class="form-input">
+        <input type="text" id="priorYears" name="priorYears" value="{{ form_data.priorYears }}">
+        <div class="hint">From automated lineup data — edit only when correcting existing values.</div>
+      </div>
     </div>
     {% endif %}
 
@@ -131,9 +138,10 @@
     }
   });
 
-  const fields = ['bandName','metalArchives','musicBrainz','latestAlbum','officalSite','imageUrl','youtube','wikipedia','country','genre','priorYears'].filter(id => document.getElementById(id));
+  const fields = ['bandName','metalArchives','musicBrainz','latestAlbum','officalSite','imageUrl','youtube','wikipedia','country','genre','noteworthy','priorYears'].filter(id => document.getElementById(id));
 
-  document.getElementById('discoverBtn').addEventListener('click', async () => {
+  const discoverBtn = document.getElementById('discoverBtn');
+  if (discoverBtn) discoverBtn.addEventListener('click', async () => {
     const status = document.getElementById('discoverStatus');
     const warnings = document.getElementById('discoverWarnings');
     const ma = document.getElementById('metalArchives').value.trim();

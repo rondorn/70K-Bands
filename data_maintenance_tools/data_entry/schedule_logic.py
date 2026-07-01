@@ -10,6 +10,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from data_entry.network_cache import CacheMeta
+
 SCHEDULE_COLUMNS = [
     "Band",
     "Location",
@@ -82,33 +84,59 @@ class ScheduleEvent:
 
 
 def read_schedule(path: str | Path) -> list[ScheduleEvent]:
+    """Read schedule from a local CSV file (write target only)."""
     path = Path(path)
     if not path.is_file():
         return []
+    return _parse_schedule_csv(path.read_text(encoding="utf-8"))
+
+
+def read_schedule_from_url(
+    url: str,
+    cfg: dict[str, Any] | None = None,
+    *,
+    force_refresh: bool = False,
+) -> list[ScheduleEvent]:
+    """Read schedule from the published network URL (TTL-cached)."""
+    url = (url or "").strip()
+    if not url:
+        return []
+    from data_entry.config_store import resolved_paths
+    from data_entry.network_cache import fetch_cached_text_or_empty
+
+    paths = resolved_paths(cfg)
+    csv_text, _meta = fetch_cached_text_or_empty(
+        url, paths, force_refresh=force_refresh
+    )
+    if not csv_text:
+        return []
+    return _parse_schedule_csv(csv_text)
+
+
+def _parse_schedule_csv(csv_text: str) -> list[ScheduleEvent]:
     events: list[ScheduleEvent] = []
-    with path.open(encoding="utf-8", newline="") as handle:
-        reader = csv.DictReader(handle)
-        for row in reader:
-            if not (row.get("Band") or "").strip():
-                continue
-            events.append(
-                ScheduleEvent(
-                    band=(row.get("Band") or "").strip(),
-                    location=(row.get("Location") or "").strip(),
-                    date=(row.get("Date") or "").strip(),
-                    day=(row.get("Day") or "").strip(),
-                    start_time=(row.get("Start Time") or "").strip(),
-                    end_time=(row.get("End Time") or "").strip(),
-                    event_type=(row.get("Type") or "").strip(),
-                    description_url=(row.get("Description URL") or " ").strip() or " ",
-                    notes=(row.get("Notes") or " ").strip() or " ",
-                    image_url=(row.get("ImageURL") or " ").strip() or " ",
-                )
+    reader = csv.DictReader(csv_text.splitlines())
+    for row in reader:
+        if not (row.get("Band") or "").strip():
+            continue
+        events.append(
+            ScheduleEvent(
+                band=(row.get("Band") or "").strip(),
+                location=(row.get("Location") or "").strip(),
+                date=(row.get("Date") or "").strip(),
+                day=(row.get("Day") or "").strip(),
+                start_time=(row.get("Start Time") or "").strip(),
+                end_time=(row.get("End Time") or "").strip(),
+                event_type=(row.get("Type") or "").strip(),
+                description_url=(row.get("Description URL") or " ").strip() or " ",
+                notes=(row.get("Notes") or " ").strip() or " ",
+                image_url=(row.get("ImageURL") or " ").strip() or " ",
             )
+        )
     return events
 
 
-def write_schedule(path: str | Path, events: list[ScheduleEvent]) -> None:
+def write_schedule(path: str | Path, events: list[ScheduleEvent], cfg: dict[str, Any] | None = None) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="") as handle:
@@ -116,9 +144,13 @@ def write_schedule(path: str | Path, events: list[ScheduleEvent]) -> None:
         writer.writeheader()
         for event in events:
             writer.writerow(event.as_row())
+    if cfg is not None:
+        _invalidate_published_cache(cfg)
 
 
-def append_schedule_event(path: str | Path, event: ScheduleEvent) -> None:
+def append_schedule_event(
+    path: str | Path, event: ScheduleEvent, cfg: dict[str, Any] | None = None
+) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     write_header = not path.is_file() or path.stat().st_size == 0
@@ -127,6 +159,8 @@ def append_schedule_event(path: str | Path, event: ScheduleEvent) -> None:
         if write_header:
             writer.writeheader()
         writer.writerow(event.as_row())
+    if cfg is not None:
+        _invalidate_published_cache(cfg)
 
 
 def _parse_date(date_str: str) -> tuple[int, int, int]:
@@ -424,8 +458,20 @@ def event_to_form(event: ScheduleEvent) -> dict[str, str]:
     }
 
 
-def band_name_options(cfg: dict[str, Any], paths: dict[str, str]) -> list[str]:
-    from data_entry.band_logic import load_band_names
+def _invalidate_published_cache(cfg: dict[str, Any]) -> None:
+    from data_entry.config_store import resolved_paths
+    from data_entry.network_cache import invalidate_festival_network_cache
 
-    names = load_band_names(paths.get("band_list_url", ""), paths.get("lineup_file", ""))
-    return [" ", *sorted(set(names))]
+    invalidate_festival_network_cache(resolved_paths(cfg))
+
+
+def band_name_options(
+    cfg: dict[str, Any],
+    paths: dict[str, str],
+    *,
+    force_refresh: bool = False,
+) -> tuple[list[str], CacheMeta | None]:
+    from data_entry.band_logic import lineup_band_names
+
+    names, meta = lineup_band_names(cfg, paths, force_refresh=force_refresh)
+    return [" ", *sorted(set(names))], meta

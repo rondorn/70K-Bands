@@ -12,13 +12,57 @@ from typing import Any
 CONFIG_FILENAME = "festival_data_entry.json"
 REGISTRY_VERSION = 1
 
+ROLE_BAND_LIST = "band_list_admin"
+ROLE_SCHEDULE = "schedule_admin"
+ROLE_DESCRIPTION = "description_admin"
+
+ROLE_LABELS: dict[str, str] = {
+    ROLE_BAND_LIST: "Band List Admin",
+    ROLE_SCHEDULE: "Schedule Admin",
+    ROLE_DESCRIPTION: "Description Admin",
+}
+
+# Flask endpoint -> roles that may access it (union when user has multiple roles).
+ENDPOINT_ROLES: dict[str, frozenset[str]] = {
+    "bands": frozenset({ROLE_BAND_LIST}),
+    "band_entry": frozenset({ROLE_BAND_LIST}),
+    "band_remove": frozenset({ROLE_BAND_LIST}),
+    "band_view": frozenset({ROLE_BAND_LIST}),
+    "band_discover": frozenset({ROLE_BAND_LIST}),
+    "schedule_entry": frozenset({ROLE_SCHEDULE}),
+    "schedule_remove": frozenset({ROLE_SCHEDULE}),
+    "schedule_view": frozenset({ROLE_SCHEDULE}),
+    "schedule_stats": frozenset({ROLE_SCHEDULE}),
+    "schedule_refresh_band_list": frozenset({ROLE_SCHEDULE}),
+    "descriptions_write": frozenset({ROLE_DESCRIPTION}),
+    "descriptions_map": frozenset({ROLE_DESCRIPTION}),
+    "descriptions_map_entry": frozenset({ROLE_DESCRIPTION}),
+    "descriptions_map_remove": frozenset({ROLE_DESCRIPTION}),
+    "descriptions_view": frozenset({ROLE_DESCRIPTION}),
+}
+
+ROLE_EXEMPT_ENDPOINTS = frozenset(
+    {
+        "static",
+        "home",
+        "config_page",
+        "setup_wizard",
+        "api_introspect",
+        "api_choose_directory",
+        "api_choose_file",
+    }
+)
+
 DEFAULT_CONFIG: dict[str, Any] = {
     "festival_name": "",
     "pointer_url": "",
     "event_year": "",
-    "lineup_file": "./artistLineup.csv",
-    "schedule_file": "./artistSchedule.csv",
+    "roles": [],
+    "setup_complete": False,
+    "lineup_file": "",
+    "schedule_file": "",
     "band_list_url": "",
+    "schedule_url": "",
     "description_map_url": "",
     "description_map_file": "",
     "notes_directory": "",
@@ -33,7 +77,6 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "Special Event",
         "Unofficial Event",
     ],
-    "include_prior_years_field": False,
 }
 
 SCHEDULE_HEADER = (
@@ -77,6 +120,7 @@ def _normalize_festival_config(data: dict[str, Any]) -> dict[str, Any]:
     merged = deepcopy(DEFAULT_CONFIG)
     merged.update({k: v for k, v in data.items() if k in _FESTIVAL_CONFIG_KEYS})
     merged.pop("show_venues", None)
+    merged.pop("include_prior_years_field", None)
     return merged
 
 
@@ -110,20 +154,22 @@ def _allocate_new_festival_id(existing: set[str]) -> str:
 def load_registry() -> dict[str, Any]:
     path = config_path()
     if not path.is_file():
-        return {"version": REGISTRY_VERSION, "active_festival_id": "", "festivals": {}}
+        return {
+            "version": REGISTRY_VERSION,
+            "active_festival_id": "",
+            "festivals": {},
+            "last_browse_directory": "",
+        }
 
     data = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(data, dict):
         raise ValueError(f"{path} must contain a JSON object")
 
     if _is_legacy_config(data):
-        festival_id = _unique_festival_id(str(data.get("festival_name", "")), set())
-        normalized = _normalize_festival_config(data)
-        return {
-            "version": REGISTRY_VERSION,
-            "active_festival_id": festival_id,
-            "festivals": {festival_id: normalized},
-        }
+        raise ValueError(
+            f"{path} uses an outdated flat configuration format. "
+            "Delete or rename the file and run /setup to configure again."
+        )
 
     if not _is_registry(data):
         raise ValueError(f"{path} is not a recognized festival configuration format")
@@ -140,6 +186,7 @@ def load_registry() -> dict[str, Any]:
         "version": REGISTRY_VERSION,
         "active_festival_id": active,
         "festivals": festivals,
+        "last_browse_directory": str(data.get("last_browse_directory", "") or ""),
     }
 
 
@@ -156,7 +203,29 @@ def save_registry(registry: dict[str, Any]) -> None:
         "active_festival_id": active,
         "festivals": festivals,
     }
+    last_browse = str(registry.get("last_browse_directory", "") or "").strip()
+    if last_browse:
+        payload["last_browse_directory"] = last_browse
     path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def get_last_browse_directory() -> str:
+    return str(load_registry().get("last_browse_directory", "") or "").strip()
+
+
+def set_last_browse_directory(path: str) -> None:
+    """Remember the last folder used in a file/directory picker."""
+    raw = (path or "").strip()
+    if not raw:
+        return
+    candidate = Path(raw).expanduser()
+    if candidate.is_file():
+        candidate = candidate.parent
+    if not candidate.is_dir():
+        return
+    registry = load_registry()
+    registry["last_browse_directory"] = str(candidate.resolve())
+    save_registry(registry)
 
 
 def list_festivals(registry: dict[str, Any] | None = None) -> list[tuple[str, str]]:
@@ -245,8 +314,8 @@ def save_config(data: dict[str, Any], festival_id: str | None = None) -> str:
     return selected
 
 
-def lineup_fields(include_prior: bool) -> list[str]:
-    base = [
+def lineup_fields() -> list[str]:
+    return [
         "bandName",
         "officalSite",
         "imageUrl",
@@ -256,10 +325,8 @@ def lineup_fields(include_prior: bool) -> list[str]:
         "country",
         "genre",
         "noteworthy",
+        "priorYears",
     ]
-    if include_prior:
-        base.append("priorYears")
-    return base
 
 
 def resolved_paths(cfg: dict[str, Any] | None = None) -> dict[str, str]:
@@ -269,19 +336,192 @@ def resolved_paths(cfg: dict[str, Any] | None = None) -> dict[str, str]:
         "lineup_file": resolve_path(str(cfg.get("lineup_file", "")), base),
         "schedule_file": resolve_path(str(cfg.get("schedule_file", "")), base),
         "band_list_url": str(cfg.get("band_list_url", "") or "").strip(),
+        "schedule_url": str(cfg.get("schedule_url", "") or "").strip(),
         "pointer_url": str(cfg.get("pointer_url", "") or "").strip(),
         "notes_directory": resolve_path(str(cfg.get("notes_directory", "")), base),
         "description_map_file": resolve_path(str(cfg.get("description_map_file", "")), base),
+        "description_map_url": str(cfg.get("description_map_url", "") or "").strip(),
     }
+
+
+def read_sources(cfg: dict[str, Any] | None = None) -> dict[str, str]:
+    """Network URLs used for read operations that are not served from a local write file."""
+    paths = resolved_paths(cfg)
+    return {
+        "band_list_url": paths.get("band_list_url", ""),
+        "schedule_url": paths.get("schedule_url", ""),
+        "description_map_url": paths.get("description_map_url", ""),
+    }
+
+
+def band_list_reads_local(cfg: dict[str, Any] | None = None) -> bool:
+    """
+    Band List Admin with a local lineup path reads the band list from that file
+    so new entries appear before the published URL is updated.
+    """
+    cfg = cfg or load_config()
+    if ROLE_BAND_LIST not in normalize_roles(cfg.get("roles")):
+        return False
+    return bool(str(cfg.get("lineup_file", "") or "").strip())
+
+
+def schedule_reads_local(cfg: dict[str, Any] | None = None) -> bool:
+    """
+    Schedule Admin with a local schedule path reads the schedule from that file
+    so new entries appear before the published URL is updated.
+    """
+    cfg = cfg or load_config()
+    if ROLE_SCHEDULE not in normalize_roles(cfg.get("roles")):
+        return False
+    return bool(str(cfg.get("schedule_file", "") or "").strip())
+
+
+def description_map_reads_local(cfg: dict[str, Any] | None = None) -> bool:
+    """
+    Description Admin with a local map path reads the map from that file
+    so new entries appear before the published URL is updated.
+    """
+    cfg = cfg or load_config()
+    if ROLE_DESCRIPTION not in normalize_roles(cfg.get("roles")):
+        return False
+    return bool(str(cfg.get("description_map_file", "") or "").strip())
+
+
+def needs_setup(registry: dict[str, Any] | None = None) -> bool:
+    """True when no saved festival configuration exists yet or roles are not set."""
+    path = config_path()
+    if not path.is_file():
+        return True
+    registry = registry or load_registry()
+    if not registry.get("festivals"):
+        return True
+    festivals = registry.get("festivals", {})
+    active = str(registry.get("active_festival_id", "") or "")
+    if active not in festivals and festivals:
+        active = next(iter(festivals))
+    if active not in festivals:
+        return True
+    return not normalize_roles(festivals[active].get("roles"))
+
+
+def normalize_roles(roles: list[str] | None) -> list[str]:
+    valid = {ROLE_BAND_LIST, ROLE_SCHEDULE, ROLE_DESCRIPTION}
+    seen: list[str] = []
+    for role in roles or []:
+        value = str(role).strip()
+        if value in valid and value not in seen:
+            seen.append(value)
+    return seen
+
+
+def effective_roles(cfg: dict[str, Any] | None = None) -> set[str]:
+    """Roles used for nav and access control."""
+    cfg = cfg or load_config()
+    return set(normalize_roles(cfg.get("roles")))
+
+
+def role_nav_flags(cfg: dict[str, Any] | None = None) -> dict[str, bool]:
+    roles = effective_roles(cfg)
+    return {
+        "role_band_list": ROLE_BAND_LIST in roles,
+        "role_schedule": ROLE_SCHEDULE in roles,
+        "role_description": ROLE_DESCRIPTION in roles,
+    }
+
+
+def default_landing_endpoint(cfg: dict[str, Any] | None = None) -> str:
+    roles = effective_roles(cfg)
+    if ROLE_SCHEDULE in roles:
+        return "schedule_entry"
+    if ROLE_BAND_LIST in roles:
+        return "bands"
+    if ROLE_DESCRIPTION in roles:
+        return "descriptions_write"
+    return "config_page"
+
+
+def endpoint_allowed_for_roles(endpoint: str | None, cfg: dict[str, Any] | None = None) -> bool:
+    if not endpoint or endpoint in ROLE_EXEMPT_ENDPOINTS:
+        return True
+    required = ENDPOINT_ROLES.get(endpoint)
+    if required is None:
+        return True
+    return bool(effective_roles(cfg) & required)
+
+
+def roles_from_form(form_roles: list[str] | None) -> list[str]:
+    return normalize_roles(form_roles)
+
+
+def fields_required_for_roles(roles: list[str]) -> dict[str, bool]:
+    """Which config fields are required for the selected admin roles."""
+    roles = normalize_roles(roles)
+    return {
+        "lineup_file": ROLE_BAND_LIST in roles,
+        "schedule_file": ROLE_SCHEDULE in roles,
+        "description_map_file": ROLE_DESCRIPTION in roles,
+        "notes_directory": ROLE_DESCRIPTION in roles or ROLE_SCHEDULE in roles,
+        "pointer_url": ROLE_SCHEDULE in roles,
+        "venues": ROLE_SCHEDULE in roles,
+        "dates": ROLE_SCHEDULE in roles,
+        "days": ROLE_SCHEDULE in roles,
+        "event_types": ROLE_SCHEDULE in roles,
+    }
+
+
+def validate_config_for_roles(
+    cfg: dict[str, Any], *, require_local_paths: bool = True
+) -> list[str]:
+    """Return human-readable validation errors for role-specific requirements."""
+    roles = normalize_roles(cfg.get("roles"))
+    if not roles:
+        return ["Select at least one admin role."]
+
+    required = fields_required_for_roles(roles)
+    errors: list[str] = []
+
+    def _missing_text(field: str, label: str) -> None:
+        value = cfg.get(field)
+        if isinstance(value, list):
+            non_blank = [str(v).strip() for v in value if str(v).strip() and str(v).strip() != " "]
+            if not non_blank:
+                errors.append(f"{label} is required for your selected role(s).")
+            return
+        if not str(value or "").strip():
+            errors.append(f"{label} is required for your selected role(s).")
+
+    if require_local_paths:
+        if required["lineup_file"]:
+            _missing_text("lineup_file", "Lineup file (local write path)")
+        if required["schedule_file"]:
+            _missing_text("schedule_file", "Schedule file (local write path)")
+        if required["description_map_file"]:
+            _missing_text("description_map_file", "Description map file (local write path)")
+        if required["notes_directory"]:
+            _missing_text("notes_directory", "Notes directory (local write path)")
+    if required["pointer_url"]:
+        _missing_text("pointer_url", "Pointer URL")
+    if required["venues"]:
+        _missing_text("venues", "Venues")
+    if required["dates"]:
+        _missing_text("dates", "Dates")
+    if required["days"]:
+        _missing_text("days", "Days")
+    if required["event_types"]:
+        _missing_text("event_types", "Event types")
+
+    if not str(cfg.get("festival_name", "")).strip():
+        errors.append("Festival name is required.")
+
+    return errors
 
 
 def ensure_data_files(cfg: dict[str, Any] | None = None) -> None:
     cfg = cfg or load_config()
     paths = resolved_paths(cfg)
-    include_prior = bool(cfg.get("include_prior_years_field"))
 
     for key, header in (
-        ("lineup_file", LINEUP_HEADER_WITH_PRIOR if include_prior else LINEUP_HEADER),
+        ("lineup_file", LINEUP_HEADER_WITH_PRIOR),
         ("schedule_file", SCHEDULE_HEADER),
     ):
         path_str = paths.get(key, "")
@@ -313,6 +553,12 @@ def merge_pointer_hints(cfg: dict[str, Any], hints: dict[str, Any]) -> dict[str,
         merged["event_year"] = hints["event_year"]
     if hints.get("band_list_url") and not str(merged.get("band_list_url", "")).strip():
         merged["band_list_url"] = hints["band_list_url"]
+    if hints.get("schedule_url") and not str(merged.get("schedule_url", "")).strip():
+        merged["schedule_url"] = hints["schedule_url"]
+    if hints.get("description_map_url") and not str(
+        merged.get("description_map_url", "")
+    ).strip():
+        merged["description_map_url"] = hints["description_map_url"]
 
     for key in ("venues", "dates", "days"):
         existing = merged.get(key) or []
@@ -327,4 +573,15 @@ def merge_pointer_hints(cfg: dict[str, Any], hints: dict[str, Any]) -> dict[str,
         if key in ("venues", "dates", "days") and " " not in combined:
             combined.insert(0, " ")
         merged[key] = combined or existing
+
+    existing_types = merged.get("event_types") or []
+    discovered_types = hints.get("event_types") or []
+    if discovered_types:
+        combined_types: list[str] = []
+        for value in existing_types + discovered_types:
+            v = str(value).strip()
+            if v and v not in combined_types:
+                combined_types.append(v)
+        merged["event_types"] = combined_types or existing_types
+
     return merged

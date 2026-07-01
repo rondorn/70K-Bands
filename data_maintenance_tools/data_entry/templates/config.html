@@ -12,11 +12,27 @@
 {% endif %}
 <div id="loadFeedback" class="message info" style="display:none" role="status" aria-live="polite"></div>
 
+<div class="message info dropbox-notice">
+  <strong>Reads use network URLs; writes use local paths.</strong>
+  All views and validation load from the network links below. New data is written to local CSV
+  paths inside your Dropbox-synced folder. Install the Dropbox desktop app so those paths exist
+  on your machine and sync to the shared festival folder.
+</div>
+
 <div class="panel">
   <p class="hint">
-    Point at your festival's production pointer file to pre-fill band URLs from Current and venues, dates, and days from the prior year's schedule.
-    Destination files are where new band and schedule rows are written.
+    Choose your admin role(s), then set network read URLs (from the pointer) and local write paths.
+    Use <strong>Load from pointer</strong> after entering the pointer URL to import read URLs
+    and schedule metadata. To walk through setup again with your current values pre-filled,
+    use <strong>Re-run setup wizard</strong>.
   </p>
+
+  <div class="form-row">
+    <div class="form-label"></div>
+    <div class="form-input config-actions" style="margin-bottom:1rem;">
+      <a class="btn secondary" href="{{ url_for('setup_wizard', rerun=1) }}">Re-run setup wizard</a>
+    </div>
+  </div>
 
   <form id="configForm" method="post">
     <input type="hidden" name="festival_id" id="festivalId" value="{{ active_festival_id }}">
@@ -36,6 +52,21 @@
     {% endif %}
 
     <div class="form-row">
+      <div class="form-label">Your role</div>
+      <div class="form-input">
+        <fieldset class="role-checkboxes">
+          {% for role_id, role_label in role_choices %}
+          <label class="role-option">
+            <input type="checkbox" name="roles" value="{{ role_id }}"
+              {% if role_id in (cfg.roles or []) %}checked{% endif %}>
+            <span>{{ role_label }}</span>
+          </label>
+          {% endfor %}
+        </fieldset>
+      </div>
+    </div>
+
+    <div class="form-row">
       <div class="form-label">Festival name</div>
       <div class="form-input">
         <input type="text" name="festival_name" value="{{ cfg.festival_name }}" placeholder="e.g. 70K Tons of Metal">
@@ -44,10 +75,11 @@
     </div>
 
     <div class="form-row">
-      <div class="form-label">Pointer URL</div>
+      <div class="form-label">Pointer URL {% if role_requirements.pointer_url %}<span class="required">*</span>{% endif %}</div>
       <div class="form-input">
         <input type="url" id="pointerUrl" name="pointer_url" value="{{ cfg.pointer_url }}" placeholder="https://.../productionPointer.txt">
-        <div class="hint">Optional. Band list URL comes from Current; venues and dates come from the schedule year below Current (e.g. 2026 when Current is 2027).</div>
+        <div class="hint">Production pointer on Dropbox. Use <strong>Load from pointer</strong> below to import network read URLs and schedule fields.</div>
+        <button type="button" id="loadPointerBtn" class="secondary" style="margin-top:10px" disabled>Load from pointer</button>
       </div>
     </div>
 
@@ -56,109 +88,153 @@
       <div class="form-input"><input type="text" id="eventYear" name="event_year" value="{{ cfg.event_year }}" placeholder="2027"></div>
     </div>
 
+    {% if role_requirements.lineup_file %}
     <div class="form-row">
-      <div class="form-label">Lineup file</div>
+      <div class="form-label">Lineup file <span class="required">*</span></div>
       <div class="form-input">
         <div class="path-picker">
           <input type="text" id="lineupFile" name="lineup_file" value="{{ cfg.lineup_file }}">
           <button type="button" class="secondary" id="chooseLineupFileBtn">Choose file…</button>
         </div>
-        <div class="hint">Destination CSV for Add Band (relative to config file or absolute path).</div>
+        <div class="hint">Local write path for Add Band (Band List Admin). Not used for reading the lineup.</div>
       </div>
     </div>
+    {% else %}
+    <input type="hidden" name="lineup_file" value="{{ cfg.lineup_file }}">
+    {% endif %}
 
+    {% if role_requirements.schedule_file %}
     <div class="form-row">
-      <div class="form-label">Schedule file</div>
+      <div class="form-label">Schedule file <span class="required">*</span></div>
       <div class="form-input">
         <div class="path-picker">
           <input type="text" id="scheduleFile" name="schedule_file" value="{{ cfg.schedule_file }}">
           <button type="button" class="secondary" id="chooseScheduleFileBtn">Choose file…</button>
         </div>
-        <div class="hint">Destination CSV for schedule entry.</div>
+        <div class="hint">Local write path for schedule entry (Schedule Admin). Views read from Schedule URL below.</div>
       </div>
     </div>
+    {% else %}
+    <input type="hidden" name="schedule_file" value="{{ cfg.schedule_file }}">
+    {% endif %}
 
+    {% if role_band_list or role_description %}
     <div class="form-row">
       <div class="form-label">Band list URL</div>
       <div class="form-input">
-        <input type="url" id="bandListUrl" name="band_list_url" value="{{ cfg.band_list_url }}">
-        <div class="hint">Optional override for the schedule band dropdown. Defaults from pointer Current::artistUrl.</div>
+        <input type="url" id="bandListUrl" name="band_list_url" value="{{ cfg.band_list_url }}" readonly>
+        <div class="hint">Network read URL for band dropdowns and lineup view (from pointer Current::artistUrl).</div>
       </div>
     </div>
+    {% else %}
+    <input type="hidden" name="band_list_url" value="{{ cfg.band_list_url }}">
+    {% endif %}
 
+    {% if role_schedule or role_description %}
     <div class="form-row">
-      <div class="form-label">Description map file</div>
+      <div class="form-label">Schedule URL</div>
+      <div class="form-input">
+        <input type="url" id="scheduleUrl" name="schedule_url" value="{{ cfg.schedule_url }}" readonly>
+        <div class="hint">Network read URL for schedule view, stats, and validation (from pointer Current::scheduleUrl).</div>
+      </div>
+    </div>
+    {% else %}
+    <input type="hidden" name="schedule_url" value="{{ cfg.schedule_url }}">
+    {% endif %}
+
+    {% if role_requirements.description_map_file %}
+    <div class="form-row">
+      <div class="form-label">Description map file <span class="required">*</span></div>
       <div class="form-input">
         <div class="path-picker">
           <input type="text" id="descriptionMapFile" name="description_map_file" value="{{ cfg.description_map_file }}">
           <button type="button" class="secondary" id="chooseDescriptionMapFileBtn">Choose file…</button>
         </div>
-        <div class="hint">Local CSV (Band, URL, Date) maintained in Descriptions → Map. Use a Dropbox-synced path if the app loads it from there.</div>
+        <div class="hint">Local write path for map entries (Description Admin).</div>
       </div>
     </div>
+    {% else %}
+    <input type="hidden" name="description_map_file" value="{{ cfg.description_map_file }}">
+    {% endif %}
 
+    {% if role_description %}
     <div class="form-row">
       <div class="form-label">Description map URL</div>
       <div class="form-input">
         <input type="url" id="descriptionMapUrl" name="description_map_url" value="{{ cfg.description_map_url }}" readonly>
-        <div class="hint">Read-only reference from pointer Current::descriptionMap (populated by Load from pointer). The pointer file itself is maintained separately.</div>
+        <div class="hint">Network read URL for map view (from pointer Current::descriptionMap).</div>
       </div>
     </div>
+    {% else %}
+    <input type="hidden" name="description_map_url" value="{{ cfg.description_map_url }}">
+    {% endif %}
 
+    {% if role_requirements.notes_directory %}
     <div class="form-row">
-      <div class="form-label">Notes directory</div>
+      <div class="form-label">Notes directory <span class="required">*</span></div>
       <div class="form-input">
         <div class="path-picker">
           <input type="text" id="notesDirectory" name="notes_directory" value="{{ cfg.notes_directory }}" placeholder="Choose a Dropbox-synced folder…">
           <button type="button" class="secondary" id="chooseNotesDirBtn">Choose folder…</button>
         </div>
-        <div class="hint">Local folder where description text files are saved (Descriptions → Write and Schedule Entry for Special/Unofficial events).</div>
+        <div class="hint">Local folder for description text files (Schedule and Description Admin).</div>
       </div>
     </div>
+    {% else %}
+    <input type="hidden" name="notes_directory" value="{{ cfg.notes_directory }}">
+    {% endif %}
 
+    {% if role_requirements.venues %}
     <div class="form-row">
-      <div class="form-label">Prior years column</div>
-      <div class="form-input">
-        <label><input type="checkbox" name="include_prior_years_field" {% if cfg.include_prior_years_field %}checked{% endif %}> Include priorYears column in lineup CSV</label>
-      </div>
-    </div>
-
-    <div class="form-row">
-      <div class="form-label">Venues</div>
+      <div class="form-label">Venues <span class="required">*</span></div>
       <div class="form-input">
         <textarea id="venuesText" name="venues_text">{{ venues_text }}</textarea>
         <div class="hint">One venue per line, for all event types. Use a blank first line or literal space for the empty dropdown option.</div>
       </div>
     </div>
+    {% else %}
+    <input type="hidden" name="venues_text" value="{{ venues_text }}">
+    {% endif %}
 
+    {% if role_requirements.dates %}
     <div class="form-row">
-      <div class="form-label">Dates</div>
+      <div class="form-label">Dates <span class="required">*</span></div>
       <div class="form-input">
         <textarea id="datesText" name="dates_text">{{ dates_text }}</textarea>
         <div class="hint">One date per line, e.g. 05/23/2027</div>
       </div>
     </div>
+    {% else %}
+    <input type="hidden" name="dates_text" value="{{ dates_text }}">
+    {% endif %}
 
+    {% if role_requirements.days %}
     <div class="form-row">
-      <div class="form-label">Days</div>
+      <div class="form-label">Days <span class="required">*</span></div>
       <div class="form-input">
         <textarea id="daysText" name="days_text">{{ days_text }}</textarea>
         <div class="hint">One day label per line. Populated from the prior year schedule when loading pointer.</div>
       </div>
     </div>
+    {% else %}
+    <input type="hidden" name="days_text" value="{{ days_text }}">
+    {% endif %}
 
+    {% if role_requirements.event_types %}
     <div class="form-row">
-      <div class="form-label">Event types</div>
+      <div class="form-label">Event types <span class="required">*</span></div>
       <div class="form-input">
-        <textarea name="event_types_text">{{ event_types_text }}</textarea>
-        <div class="hint">One event type per line, for the schedule entry dropdown.</div>
+        <textarea id="eventTypesText" name="event_types_text">{{ event_types_text }}</textarea>
+        <div class="hint">One event type per line. Populated from the prior year schedule when loading pointer.</div>
       </div>
     </div>
+    {% else %}
+    <input type="hidden" name="event_types_text" value="{{ event_types_text }}">
+    {% endif %}
 
     <div class="form-row">
       <div class="form-label"></div>
       <div class="form-input config-actions">
-        <button type="button" id="loadPointerBtn" disabled>Load from pointer</button>
         <button type="submit" name="config_action" value="save" id="saveConfigBtn">Save configuration</button>
         <button type="submit" name="config_action" value="new" class="secondary" id="newFestivalBtn">New festival</button>
       </div>
@@ -324,24 +400,27 @@
 
       document.getElementById('eventYear').value = hints.event_year || '';
       document.getElementById('bandListUrl').value = hints.band_list_url || '';
+      document.getElementById('scheduleUrl').value = hints.schedule_url || '';
       document.getElementById('descriptionMapUrl').value = hints.description_map_url || '';
       document.getElementById('venuesText').value = listToTextarea(hints.venues);
       document.getElementById('datesText').value = listToTextarea(hints.dates);
       document.getElementById('daysText').value = listToTextarea(hints.days);
+      document.getElementById('eventTypesText').value = listToTextarea(hints.event_types);
 
       const venueCount = (hints.venues || []).filter(v => String(v).trim()).length;
       const dateCount = (hints.dates || []).filter(v => String(v).trim()).length;
       const dayCount = (hints.days || []).filter(v => String(v).trim()).length;
+      const typeCount = (hints.event_types || []).filter(v => String(v).trim()).length;
 
-      if (!venueCount && !dateCount && !dayCount) {
-        showLoadFeedback('Error encountered: pointer loaded but no venues, dates, or days were found.', 'error');
+      if (!venueCount && !dateCount && !dayCount && !typeCount) {
+        showLoadFeedback('Error encountered: pointer loaded but no venues, dates, days, or event types were found.', 'error');
         return;
       }
 
       showLoadFeedback(
         'Data loaded from Current (bands, event year) and ' + sourceYear + ' schedule (' +
-        venueCount + ' venues, ' + dateCount + ' dates, ' + dayCount + ' days). ' +
-        'Review the fields below, then click Save configuration.',
+        venueCount + ' venues, ' + dateCount + ' dates, ' + dayCount + ' days, ' +
+        typeCount + ' event types). Review the fields below, then click Save configuration.',
         'success'
       );
       loadFeedback.className = 'message success';

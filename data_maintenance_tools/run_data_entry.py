@@ -47,7 +47,7 @@ def main() -> None:
         )
 
     try:
-        from data_entry.config_store import config_path, ensure_data_files, load_config
+        from data_entry.config_store import config_path, ensure_data_files, load_config, needs_setup
         from data_entry.port_util import release_port
         from data_entry.app import create_app
     except ImportError as exc:
@@ -68,12 +68,16 @@ def main() -> None:
     release_port(port)
 
     app = create_app()
-    url = f"http://{host}:{port}/config"
+    setup_path = "/setup" if needs_setup() else "/config"
+    url = f"http://{host}:{port}{setup_path}"
 
     print(f"Serving on http://{host}:{port}")
     print(f"Config file: {config_path()}")
+    if needs_setup():
+        print("No festival configuration found — open /setup to run the wizard.")
     print("Pages:")
     print(f"  - Configuration:  http://{host}:{port}/config")
+    print(f"  - Setup wizard:   http://{host}:{port}/setup")
     print(f"  - Schedule entry: http://{host}:{port}/schedule")
     print(f"  - Add band:       http://{host}:{port}/bands")
     print("")

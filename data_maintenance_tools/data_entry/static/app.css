@@ -377,6 +377,93 @@ table.data-table td.url-cell a:hover {
   color: #c5dcff;
 }
 
+.wizard-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 18px;
+}
+
+.wizard-step {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.875rem;
+  background: #3a3a3a;
+  color: #aaa;
+  border: 2px solid #555;
+}
+
+.wizard-step.active {
+  background: #ff6b35;
+  color: #fff;
+  border-color: #ff6b35;
+}
+
+.wizard-step.done {
+  background: #1f3d1f;
+  color: #99ff99;
+  border-color: #33cc33;
+}
+
+.wizard-connector {
+  width: 2.5rem;
+  height: 2px;
+  background: #555;
+}
+
+.wizard-lead {
+  margin-bottom: 1rem;
+  font-size: 0.9375rem;
+}
+
+.dropbox-notice {
+  margin-bottom: 16px;
+}
+
+.role-checkboxes {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.role-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background: #1e1e1e;
+  border: 1px solid #4a4a4a;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.role-option input {
+  width: auto;
+  min-height: auto;
+}
+
+.role-option span {
+  font-size: 1rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
 @media (max-width: 768px) {
   .container {
     padding: 10px 12px 20px;

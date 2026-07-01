@@ -4,16 +4,26 @@
 {% block subheading %}{{ entries|length }} entr{{ 'y' if entries|length == 1 else 'ies' }}{% endblock %}
 
 {% block content %}
-<div class="target-file">Map file: <code>{{ description_map_file or '(not configured)' }}</code></div>
+<div class="target-file">Reading from: <code>{{ description_map_read_url or '(not configured)' }}</code>{% if read_local %} (local write file){% else %} (published){% endif %}</div>
+{% if write_file %}
+<div class="target-file">Writing to: <code>{{ write_file }}</code></div>
+{% endif %}
+{% if read_local %}
+<p class="hint">Local description map — new and edited entries appear here immediately.</p>
+{% else %}
+<p class="hint">Published map (read-only). Use Add to write entries to your local map file.</p>
+{% endif %}
 
 {% if message %}
 <div class="message success page-message">{{ message }}</div>
 {% endif %}
 
 <div class="panel">
+  {% if role_description %}
   <div class="panel-toolbar">
     <a class="btn" href="{{ url_for('descriptions_map_entry') }}">Add</a>
   </div>
+  {% endif %}
   {% if entries %}
   <table class="data-table">
     <thead>
@@ -21,7 +31,7 @@
         <th>Band / event</th>
         <th>URL</th>
         <th>Cache date</th>
-        <th>Actions</th>
+        {% if read_local %}<th></th>{% endif %}
       </tr>
     </thead>
     <tbody>
@@ -30,13 +40,9 @@
         <td>{{ row.Band }}</td>
         <td class="url-cell"><a href="{{ row.URL }}" target="_blank" rel="noopener">{{ row.URL[:60] }}{% if row.URL|length > 60 %}…{% endif %}</a></td>
         <td>{{ row.Date }}</td>
-        <td class="row-actions">
-          <a class="btn secondary" href="{{ url_for('descriptions_map_entry', editIndex=loop.index0) }}">Edit</a>
-          <form method="post" action="{{ url_for('descriptions_map_remove') }}" class="inline-form" onsubmit="return confirm('Remove this map entry?');">
-            <input type="hidden" name="index" value="{{ loop.index0 }}">
-            <button type="submit" class="secondary">Delete</button>
-          </form>
-        </td>
+        {% if read_local %}
+        <td><a href="{{ url_for('descriptions_map_entry', editIndex=loop.index0) }}">Edit</a></td>
+        {% endif %}
       </tr>
       {% endfor %}
     </tbody>

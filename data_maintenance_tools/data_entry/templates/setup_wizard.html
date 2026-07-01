@@ -1,0 +1,395 @@
+{% extends "layout.html" %}
+{% block title %}Setup — Festival Data Entry{% endblock %}
+{% block heading %}Configuration Wizard{% endblock %}
+{% block subheading %}Step {{ step }} of {{ total_steps }}{% endblock %}
+
+{% block content %}
+{% if error %}
+<div class="message error">{{ error }}</div>
+{% endif %}
+{% if wizard_rerun %}
+<div class="message info">Updating your configuration. Existing values are pre-filled — adjust roles or paths, then finish.</div>
+{% endif %}
+<div id="loadFeedback" class="message info" style="display:none" role="status" aria-live="polite"></div>
+
+<div class="wizard-progress">
+  {% for n in range(1, total_steps + 1) %}
+  <span class="wizard-step {% if n == step %}active{% elif n < step %}done{% endif %}">{{ n }}</span>
+  {% if not loop.last %}<span class="wizard-connector"></span>{% endif %}
+  {% endfor %}
+</div>
+
+<div class="panel">
+  {% if step == 1 %}
+  <p class="hint wizard-lead">
+    Welcome. This tool reads published festival data from network URLs and writes your changes to
+    local files. To write, you need both network access and a local copy of the Dropbox folder.
+  </p>
+  <div class="message info dropbox-notice">
+    <strong>Dropbox required for writing.</strong>
+    Install the Dropbox desktop app and sign in so festival files sync to a folder on your machine.
+    Choose local write paths inside that synced folder. Reads always use the network link so you
+  can work even when someone else owns the local copy.
+  </div>
+
+  <form method="post">
+    <input type="hidden" name="wizard_step" value="1">
+    {% if wizard_rerun %}<input type="hidden" name="wizard_rerun" value="1">{% endif %}
+
+    <div class="form-row wizard-roles">
+      <div class="form-label">Your role <span class="required">*</span></div>
+      <div class="form-input">
+        <fieldset class="role-checkboxes">
+          <legend class="sr-only">Select one or more admin roles</legend>
+          {% for role_id, role_label in role_choices %}
+          <label class="role-option">
+            <input type="checkbox" name="roles" value="{{ role_id }}"
+              {% if role_id in draft.roles %}checked{% endif %}>
+            <span>{{ role_label }}</span>
+          </label>
+          {% endfor %}
+        </fieldset>
+        <div class="hint">Select every area you will maintain. Fields on later steps depend on your choices.</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-label"></div>
+      <div class="form-input">
+        <button type="submit">Continue</button>
+      </div>
+    </div>
+  </form>
+
+  {% elif step == 2 %}
+  <p class="hint wizard-lead">
+    Name your festival and enter the production pointer URL, then use
+    <strong>Load from pointer</strong> to fill network read URLs
+    {% if role_schedule %}and schedule metadata (venues, dates, days, event types){% endif %}.
+  </p>
+
+  <form id="wizardForm" method="post">
+    <input type="hidden" name="wizard_step" value="2">
+    {% if wizard_rerun %}<input type="hidden" name="wizard_rerun" value="1">{% endif %}
+    {% for role in draft.roles %}
+    <input type="hidden" name="roles" value="{{ role }}">
+    {% endfor %}
+
+    <div class="form-row">
+      <div class="form-label">Festival name <span class="required">*</span></div>
+      <div class="form-input">
+        <input type="text" name="festival_name" value="{{ draft.festival_name }}" required
+          placeholder="e.g. 70K Tons of Metal">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-label">Pointer URL {% if role_schedule or role_description or role_band_list %}<span class="required">*</span>{% endif %}</div>
+      <div class="form-input">
+        <input type="url" id="pointerUrl" name="pointer_url" value="{{ draft.pointer_url }}"
+          placeholder="https://.../productionPointer.txt">
+        <div class="hint">Production pointer on Dropbox. Use <strong>Load from pointer</strong> below to import read URLs{% if role_schedule %} and schedule fields{% endif %}.</div>
+        <button type="button" id="loadPointerBtn" class="secondary" style="margin-top:10px" disabled>Load from pointer</button>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-label">Event year</div>
+      <div class="form-input">
+        <input type="text" id="eventYear" name="event_year" value="{{ draft.event_year }}" placeholder="2027">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-label">Network reads</div>
+      <div class="form-input">
+        <label>Band list URL (read-only)</label>
+        <input type="url" id="bandListUrl" name="band_list_url" value="{{ draft.band_list_url }}" readonly>
+        <label style="margin-top:10px;display:block">Schedule URL (read-only)</label>
+        <input type="url" id="scheduleUrl" name="schedule_url" value="{{ draft.schedule_url }}" readonly>
+        <label style="margin-top:10px;display:block">Description map URL (read-only)</label>
+        <input type="url" id="descriptionMapUrl" name="description_map_url" value="{{ draft.description_map_url }}" readonly>
+        <div class="hint">Populated from the pointer. All views and validation read from these URLs, not local files.</div>
+      </div>
+    </div>
+
+    {% if role_schedule %}
+    <div class="form-row">
+      <div class="form-label">Venues <span class="required">*</span></div>
+      <div class="form-input">
+        <textarea id="venuesText" name="venues_text">{{ venues_text }}</textarea>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Dates <span class="required">*</span></div>
+      <div class="form-input">
+        <textarea id="datesText" name="dates_text">{{ dates_text }}</textarea>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Days <span class="required">*</span></div>
+      <div class="form-input">
+        <textarea id="daysText" name="days_text">{{ days_text }}</textarea>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-label">Event types <span class="required">*</span></div>
+      <div class="form-input">
+        <textarea id="eventTypesText" name="event_types_text">{{ event_types_text }}</textarea>
+      </div>
+    </div>
+    {% else %}
+    <input type="hidden" name="venues_text" value="{{ venues_text }}">
+    <input type="hidden" name="dates_text" value="{{ dates_text }}">
+    <input type="hidden" name="days_text" value="{{ days_text }}">
+    <input type="hidden" name="event_types_text" value="{{ event_types_text }}">
+    {% endif %}
+
+    <div class="form-row">
+      <div class="form-label"></div>
+      <div class="form-input config-actions">
+        <a class="btn secondary" href="{{ url_for('setup_wizard', step=1) }}">Back</a>
+        <button type="submit">Continue</button>
+      </div>
+    </div>
+  </form>
+
+  {% elif step == 3 %}
+  <p class="hint wizard-lead">
+    Choose local write destinations inside your Dropbox-synced folder. These paths are used only when
+    you save new bands, schedule rows, description notes, or map entries.
+  </p>
+
+  <form method="post">
+    <input type="hidden" name="wizard_step" value="3">
+    {% if wizard_rerun %}<input type="hidden" name="wizard_rerun" value="1">{% endif %}
+    {% for role in draft.roles %}
+    <input type="hidden" name="roles" value="{{ role }}">
+    {% endfor %}
+    <input type="hidden" name="festival_name" value="{{ draft.festival_name }}">
+    <input type="hidden" name="pointer_url" value="{{ draft.pointer_url }}">
+    <input type="hidden" name="event_year" value="{{ draft.event_year }}">
+    <input type="hidden" name="band_list_url" value="{{ draft.band_list_url }}">
+    <input type="hidden" name="schedule_url" value="{{ draft.schedule_url }}">
+    <input type="hidden" name="description_map_url" value="{{ draft.description_map_url }}">
+    <input type="hidden" name="venues_text" value="{{ venues_text }}">
+    <input type="hidden" name="dates_text" value="{{ dates_text }}">
+    <input type="hidden" name="days_text" value="{{ days_text }}">
+    <input type="hidden" name="event_types_text" value="{{ event_types_text }}">
+
+    {% if role_band_list %}
+    <div class="form-row">
+      <div class="form-label">Lineup file <span class="required">*</span></div>
+      <div class="form-input">
+        <div class="path-picker">
+          <input type="text" id="lineupFile" name="lineup_file" value="{{ draft.lineup_file }}" required>
+          <button type="button" class="secondary" id="chooseLineupFileBtn">Choose file…</button>
+        </div>
+        <div class="hint">Local CSV where new bands are appended (Band List Admin).</div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if role_schedule %}
+    <div class="form-row">
+      <div class="form-label">Schedule file <span class="required">*</span></div>
+      <div class="form-input">
+        <div class="path-picker">
+          <input type="text" id="scheduleFile" name="schedule_file" value="{{ draft.schedule_file }}" required>
+          <button type="button" class="secondary" id="chooseScheduleFileBtn">Choose file…</button>
+        </div>
+        <div class="hint">Local CSV where new schedule rows are written (Schedule Admin).</div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if role_description %}
+    <div class="form-row">
+      <div class="form-label">Description map file <span class="required">*</span></div>
+      <div class="form-input">
+        <div class="path-picker">
+          <input type="text" id="descriptionMapFile" name="description_map_file" value="{{ draft.description_map_file }}" required>
+          <button type="button" class="secondary" id="chooseDescriptionMapFileBtn">Choose file…</button>
+        </div>
+        <div class="hint">Local CSV for map entries (Description Admin).</div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if role_schedule or role_description %}
+    <div class="form-row">
+      <div class="form-label">Notes directory <span class="required">*</span></div>
+      <div class="form-input">
+        <div class="path-picker">
+          <input type="text" id="notesDirectory" name="notes_directory" value="{{ draft.notes_directory }}" required
+            placeholder="Choose a Dropbox-synced folder…">
+          <button type="button" class="secondary" id="chooseNotesDirBtn">Choose folder…</button>
+        </div>
+        <div class="hint">Folder for description text files (Schedule and Description Admin).</div>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="form-row">
+      <div class="form-label"></div>
+      <div class="form-input config-actions">
+        <a class="btn secondary" href="{{ url_for('setup_wizard', step=2) }}">Back</a>
+        <button type="submit">Finish setup</button>
+      </div>
+    </div>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const loadFeedback = document.getElementById('loadFeedback');
+
+  function showLoadFeedback(text, kind) {
+    if (!loadFeedback) return;
+    loadFeedback.textContent = text;
+    loadFeedback.style.display = text ? 'block' : 'none';
+    loadFeedback.className = 'message ' + (kind || 'info');
+  }
+
+  function listToTextarea(values) {
+    return (values || []).map(v => String(v)).join('\n');
+  }
+
+  async function chooseDirectory(targetInput, title) {
+    const body = new URLSearchParams({
+      initial_dir: targetInput.value.trim(),
+      title: title,
+    });
+    const resp = await fetch('{{ url_for("api_choose_directory") }}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString(),
+    });
+    const payload = await resp.json();
+    if (payload.ok && payload.path) {
+      targetInput.value = payload.path;
+      return payload.path;
+    }
+    if (payload.cancelled) return '';
+    throw new Error(payload.error || 'Could not choose folder.');
+  }
+
+  async function chooseFile(targetInput, title) {
+    const body = new URLSearchParams({
+      initial_path: targetInput.value.trim(),
+      title: title,
+    });
+    const resp = await fetch('{{ url_for("api_choose_file") }}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString(),
+    });
+    const payload = await resp.json();
+    if (payload.ok && payload.path) {
+      targetInput.value = payload.path;
+      return payload.path;
+    }
+    if (payload.cancelled) return '';
+    throw new Error(payload.error || 'Could not choose file.');
+  }
+
+  async function bindFilePicker(button, input, title) {
+    if (!button || !input) return;
+    button.addEventListener('click', async () => {
+      const label = button.textContent;
+      button.disabled = true;
+      try {
+        await chooseFile(input, title);
+      } catch (err) {
+        showLoadFeedback('Error: ' + err, 'error');
+      } finally {
+        button.disabled = false;
+        button.textContent = label;
+      }
+    });
+  }
+
+  bindFilePicker(document.getElementById('chooseLineupFileBtn'), document.getElementById('lineupFile'), 'Choose lineup CSV file');
+  bindFilePicker(document.getElementById('chooseScheduleFileBtn'), document.getElementById('scheduleFile'), 'Choose schedule CSV file');
+  bindFilePicker(document.getElementById('chooseDescriptionMapFileBtn'), document.getElementById('descriptionMapFile'), 'Choose description map CSV file');
+
+  const chooseNotesDirBtn = document.getElementById('chooseNotesDirBtn');
+  const notesDirectoryInput = document.getElementById('notesDirectory');
+  if (chooseNotesDirBtn && notesDirectoryInput) {
+    chooseNotesDirBtn.addEventListener('click', async () => {
+      chooseNotesDirBtn.disabled = true;
+      try {
+        await chooseDirectory(notesDirectoryInput, 'Choose notes directory');
+      } catch (err) {
+        showLoadFeedback('Error: ' + err, 'error');
+      } finally {
+        chooseNotesDirBtn.disabled = false;
+      }
+    });
+  }
+
+  const pointerInput = document.getElementById('pointerUrl');
+  const loadBtn = document.getElementById('loadPointerBtn');
+  if (pointerInput && loadBtn) {
+    function updateLoadButton() {
+      loadBtn.disabled = pointerInput.value.trim().length === 0;
+    }
+    pointerInput.addEventListener('input', updateLoadButton);
+    pointerInput.addEventListener('change', updateLoadButton);
+    updateLoadButton();
+
+    loadBtn.addEventListener('click', async () => {
+      const url = pointerInput.value.trim();
+      if (!url) {
+        showLoadFeedback('Pointer URL is required.', 'error');
+        return;
+      }
+      showLoadFeedback('Loading data from pointer file…', 'info');
+      loadBtn.disabled = true;
+      loadBtn.textContent = 'Loading…';
+      try {
+        const resp = await fetch(
+          '{{ url_for("api_introspect") }}?pointer_url=' + encodeURIComponent(url)
+        );
+        const payload = await resp.json();
+        if (!payload.ok) {
+          showLoadFeedback('Error: ' + (payload.error || 'Could not load pointer data.'), 'error');
+          return;
+        }
+        const hints = payload.hints || {};
+        document.getElementById('eventYear').value = hints.event_year || '';
+        document.getElementById('bandListUrl').value = hints.band_list_url || '';
+        document.getElementById('scheduleUrl').value = hints.schedule_url || '';
+        document.getElementById('descriptionMapUrl').value = hints.description_map_url || '';
+        const venuesEl = document.getElementById('venuesText');
+        const datesEl = document.getElementById('datesText');
+        const daysEl = document.getElementById('daysText');
+        if (venuesEl) venuesEl.value = listToTextarea(hints.venues);
+        if (datesEl) datesEl.value = listToTextarea(hints.dates);
+        if (daysEl) daysEl.value = listToTextarea(hints.days);
+        const eventTypesEl = document.getElementById('eventTypesText');
+        if (eventTypesEl) eventTypesEl.value = listToTextarea(hints.event_types);
+        const typeCount = (hints.event_types || []).filter(v => String(v).trim()).length;
+        const urlCount = ['band_list_url', 'schedule_url', 'description_map_url']
+          .filter(k => (hints[k] || '').trim()).length;
+        let message = 'Loaded from pointer';
+        if (urlCount) {
+          message += ' (' + urlCount + ' network read URL' + (urlCount === 1 ? '' : 's') + ')';
+        }
+        if (typeCount) {
+          message += (urlCount ? '; ' : ' (') + typeCount + ' event type' + (typeCount === 1 ? '' : 's') + (urlCount ? '' : ')');
+        }
+        message += '. Review fields, then click Continue.';
+        showLoadFeedback(message, 'success');
+      } catch (err) {
+        showLoadFeedback('Error: ' + err, 'error');
+      } finally {
+        loadBtn.textContent = 'Load from pointer';
+        updateLoadButton();
+      }
+    });
+  }
+</script>
+{% endblock %}

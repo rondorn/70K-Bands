@@ -23,12 +23,15 @@
           <a href="{{ url_for('config_page') }}">Settings</a>
         </div>
       </div>
+      {% if role_band_list %}
       <div class="nav-section">
         <span class="nav-section-label">Band</span>
         <div class="nav-section-links">
           <a href="{{ url_for('bands') }}">Bands</a>
         </div>
       </div>
+      {% endif %}
+      {% if role_description %}
       <div class="nav-section">
         <span class="nav-section-label">Descriptions</span>
         <div class="nav-section-links">
@@ -36,6 +39,8 @@
           <a href="{{ url_for('descriptions_map') }}" class="secondary">Map</a>
         </div>
       </div>
+      {% endif %}
+      {% if role_schedule %}
       <div class="nav-section">
         <span class="nav-section-label">Schedule</span>
         <div class="nav-section-links">
@@ -44,6 +49,7 @@
           <a href="{{ url_for('schedule_stats') }}" class="secondary">Stats</a>
         </div>
       </div>
+      {% endif %}
     </div>
 
     {% block content %}{% endblock %}

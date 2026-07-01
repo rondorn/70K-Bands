@@ -5,6 +5,13 @@
 
 {% block content %}
 <div class="target-file">Writing to: <code>{{ schedule_file }}</code></div>
+{% if schedule_read_url %}
+<div class="target-file">Validating against: <code>{{ schedule_read_url }}</code>{% if read_local %} (local write file){% else %} (published){% endif %}</div>
+{% endif %}
+
+{% if cache_message %}
+<div class="message success page-message">{{ cache_message }}</div>
+{% endif %}
 
 {% if modify_mode %}
 <div class="message error">Modify mode: update the event and submit to save changes.</div>
@@ -38,6 +45,17 @@
           <option {% if band == form.BandName %}selected{% endif %}>{{ band }}</option>
           {% endfor %}
         </select>
+        {% if band_list_source_local %}
+        <div class="hint">Band list from your local lineup file (always current).</div>
+        {% elif band_list_cache %}
+        <div class="hint">
+          Band list from published URL
+          {% if band_list_cache.from_cache %} (cached {{ band_list_cache.age_label }}){% endif %}.
+          <form method="post" action="{{ url_for('schedule_refresh_band_list') }}" class="inline-form">
+            <button type="submit" class="secondary">Refresh</button>
+          </form>
+        </div>
+        {% endif %}
       </div>
     </div>
 

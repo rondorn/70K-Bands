@@ -8,6 +8,33 @@ import sys
 from pathlib import Path
 
 
+def resolve_picker_initial_dir(path_hint: str = "", fallback_dir: str = "") -> str:
+    """
+    Pick a starting directory for native file/folder dialogs.
+
+    Prefers an existing directory derived from path_hint, then fallback_dir
+    (last browse location), then the user's home directory.
+    """
+    hint = (path_hint or "").strip()
+    if hint:
+        candidate = Path(hint).expanduser()
+        if candidate.is_dir():
+            return str(candidate.resolve())
+        if candidate.is_file():
+            return str(candidate.parent.resolve())
+        parent = candidate.parent
+        if parent.is_dir():
+            return str(parent.resolve())
+
+    fallback = (fallback_dir or "").strip()
+    if fallback:
+        fb = Path(fallback).expanduser()
+        if fb.is_dir():
+            return str(fb.resolve())
+
+    return str(Path.home())
+
+
 def _choose_directory_macos(initial_dir: str, title: str) -> str:
     safe_title = title.replace("\\", "\\\\").replace('"', '\\"')
     initial = Path(initial_dir).expanduser()
@@ -60,34 +87,18 @@ root.destroy()
     return (result.stdout or "").strip()
 
 
-def choose_directory(initial_dir: str = "", title: str = "Choose a folder") -> str:
+def choose_directory(
+    initial_dir: str = "",
+    title: str = "Choose a folder",
+    *,
+    fallback_dir: str = "",
+) -> str:
     """Open a native folder picker. Returns '' if the user cancels."""
-    initial = ""
-    if initial_dir:
-        candidate = Path(initial_dir).expanduser()
-        if candidate.is_dir():
-            initial = str(candidate.resolve())
-    if not initial:
-        initial = str(Path.home())
-
+    initial = resolve_picker_initial_dir(initial_dir, fallback_dir)
     system = platform.system()
     if system == "Darwin":
         return _choose_directory_macos(initial, title)
     return _choose_directory_tkinter(initial, title)
-
-
-def _initial_dir_for_path(path_str: str) -> str:
-    if not path_str:
-        return str(Path.home())
-    candidate = Path(path_str).expanduser()
-    if candidate.is_file():
-        return str(candidate.parent.resolve())
-    if candidate.is_dir():
-        return str(candidate.resolve())
-    parent = candidate.parent
-    if parent.exists():
-        return str(parent.resolve())
-    return str(Path.home())
 
 
 def _choose_file_macos(initial_dir: str, title: str) -> str:
@@ -146,9 +157,14 @@ root.destroy()
     return (result.stdout or "").strip()
 
 
-def choose_file(initial_path: str = "", title: str = "Choose a file") -> str:
+def choose_file(
+    initial_path: str = "",
+    title: str = "Choose a file",
+    *,
+    fallback_dir: str = "",
+) -> str:
     """Open a native file picker. Returns '' if the user cancels."""
-    initial = _initial_dir_for_path(initial_path)
+    initial = resolve_picker_initial_dir(initial_path, fallback_dir)
     system = platform.system()
     if system == "Darwin":
         return _choose_file_macos(initial, title)
