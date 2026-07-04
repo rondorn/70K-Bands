@@ -7,7 +7,8 @@ Compression mirrors ScheduleQRCompression.java (and iOS parity per app comments)
   - Dropbox URL → !DB!, strip trailing commas
   - 8-column shortened CSV (band/venue/type codes, date/day/time shortening)
   - UTF-8 → 4-byte LE uncompressed size + raw DEFLATE only (Java Deflater NOWRAP; not zlib wrapper)
-  - QR: Nayuki binary encode + ECC MEDIUM (same as ScheduleQRShareActivity), via Python qrcodegen
+  - QR: Nayuki binary encode + ECC LOW (same as ScheduleQRShareActivity), via Python qrcodegen
+  - Optional guide text QR (scheduleQRGuideURL from config/festivals/70k.json), ECC LOW
   - Split into 2 QRs if payload > 2953 bytes (type 1 + type 2 chunks)
 
 Band canonical order: artist CSV data rows in file order (bandName column or col 0),
@@ -15,9 +16,13 @@ matching in-app band import / QR lineIndex order.
 
 Venues and event types are hard-coded to match FestivalConfig (70K) and the shared type list.
 
-Usage (from repo root):
+Usage:
+  cd data_maintenance_tools/poster_generation
   pip3 install -r requirements-poster.txt
   python3 build_70k_schedule_poster_pdf.py -o ~/Desktop/70k_schedule_poster.pdf
+
+Or from repo root:
+  python3 data_maintenance_tools/poster_generation/build_70k_schedule_poster_pdf.py -o ~/Desktop/70k_schedule_poster.pdf
 
 Requires network to fetch pointer + CSVs (override with --artist-csv / --schedule-csv paths).
 """
@@ -27,6 +32,7 @@ from __future__ import annotations
 import argparse
 import csv
 import io
+import json
 import re
 import struct
 import sys
@@ -102,8 +108,11 @@ TRAILING_COMMAS = re.compile(r",+$")
 
 # In-app QR share: ~720 px symbol target, 4-module quiet zone, ≥6 px per module
 QR_TARGET_PX = 720
+GUIDE_QR_TARGET_PX = 200
 QUIET_ZONE_MODULES = 4
 MIN_PIXELS_PER_MODULE = 6
+# On-poster guide QR width (pt); schedule QRs scale larger in remaining space
+GUIDE_QR_POSTER_WIDTH_PT = 1.05 * inch
 
 
 def compress_for_qr(source: bytes) -> bytes:
@@ -396,14 +405,10 @@ def compress_schedule_one_or_two_qrs(
     return [out1, out2]
 
 
-def encode_qr_payload_image(payload: bytes) -> Image.Image:
-    """
-    Nayuki QrCode.encodeBinary(payload, Ecc.MEDIUM) and rasterize like ScheduleQRShareActivity:
-    integer module scale, 4-module quiet zone, min 6 px per module, ~720 px symbol target.
-    """
-    qr = qrcodegen.QrCode.encode_binary(payload, qrcodegen.QrCode.Ecc.MEDIUM)
+def encode_qr_raster(qr: qrcodegen.QrCode, target_px: int) -> Image.Image:
+    """Rasterize Nayuki QR with quiet zone (matches ScheduleQRShareActivity)."""
     n = qr.get_size()
-    scale = max(MIN_PIXELS_PER_MODULE, max(1, QR_TARGET_PX // n))
+    scale = max(MIN_PIXELS_PER_MODULE, max(1, target_px // n))
     symbol_px = n * scale
     border_px = QUIET_ZONE_MODULES * scale
     total = symbol_px + 2 * border_px
@@ -422,11 +427,45 @@ def encode_qr_payload_image(payload: bytes) -> Image.Image:
     return img
 
 
+def encode_qr_payload_image(payload: bytes) -> Image.Image:
+    """Schedule binary QR — Nayuki encodeBinary + ECC LOW (in-app share parity)."""
+    qr = qrcodegen.QrCode.encode_binary(payload, qrcodegen.QrCode.Ecc.LOW)
+    return encode_qr_raster(qr, QR_TARGET_PX)
+
+
+def encode_guide_qr_image(guide_url: str) -> Image.Image:
+    """Text/URL guide QR for the system Camera app (opens in-app schedule scanner)."""
+    qr = qrcodegen.QrCode.encode_text(guide_url, qrcodegen.QrCode.Ecc.LOW)
+    return encode_qr_raster(qr, GUIDE_QR_TARGET_PX)
+
+
+def repo_root_from_script() -> Path:
+    # .../data_maintenance_tools/poster_generation/build_70k_schedule_poster_pdf.py → repo root
+    return Path(__file__).resolve().parents[2]
+
+
+def load_schedule_qr_guide_url(root: Path) -> str | None:
+    """Read scheduleQRGuideURL when schedule QR share is enabled (70k festival config)."""
+    cfg_path = root / "config" / "festivals" / "70k.json"
+    if not cfg_path.is_file():
+        return None
+    try:
+        data = json.loads(cfg_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as e:
+        print(f"Could not read festival config ({e}).", file=sys.stderr)
+        return None
+    if not data.get("scheduleQRShareEnabled"):
+        return None
+    url = (data.get("scheduleQRGuideURL") or "").strip()
+    return url or None
+
+
 def draw_poster_pdf(
     out_path: Path,
     qr_images: Sequence[Image.Image],
     schedule_change_title: str,
     print_dpi: int = 300,
+    guide_qr_image: Image.Image | None = None,
 ) -> None:
     """
     Letter PDF optimized for ship-hallway viewing: large type, centered copy,
@@ -483,8 +522,14 @@ def draw_poster_pdf(
         "Launch the 70K Bands App",
         "Click on the Gear icon to get to Preferences",
         'Click on the button "Scan QR Code Schedule"',
-        "Scan the QR Code below",
     )
+    if guide_qr_image is not None:
+        bullets += (
+            "Optional: scan the small Camera app QR with your phone's Camera app to open the scanner",
+            "Scan the larger schedule QR below",
+        )
+    else:
+        bullets += ("Scan the QR Code below",)
     for b in bullets:
         c.drawCentredString(w_pt / 2, y, "•  " + b)
         y -= bullet_leading
@@ -501,36 +546,59 @@ def draw_poster_pdf(
     if available_h < 100:
         max_h = max(80.0, available_h * 0.85)
 
-    labels = (
-        ("Scan this QR code.",)
+    schedule_labels = (
+        ("Schedule data — scan this QR code.",)
         if len(qr_images) == 1
-        else ("Scan first QR code (chunk 1).", "Scan second QR code (chunk 2).")
+        else (
+            "Schedule data — scan first QR code (chunk 1).",
+            "Schedule data — scan second QR code (chunk 2).",
+        )
     )
+    if guide_qr_image is None:
+        schedule_labels = (
+            ("Scan this QR code.",)
+            if len(qr_images) == 1
+            else ("Scan first QR code (chunk 1).", "Scan second QR code (chunk 2).")
+        )
 
     label_gap = 11
     stack_gap = 24
+    guide_section_gap = 20
 
     def physical_size(im: Image.Image) -> tuple[float, float]:
         iw, ih = im.size
         return (iw * 72.0 / print_dpi, ih * 72.0 / print_dpi)
 
-    # Stack (top → bottom on page): [label + QR] per chunk; center stack in remaining band
+    guide_rw = guide_rh = 0.0
+    if guide_qr_image is not None:
+        _, guide_base_h = physical_size(guide_qr_image)
+        guide_rw = GUIDE_QR_POSTER_WIDTH_PT
+        guide_rh = guide_base_h * (guide_rw / physical_size(guide_qr_image)[0])
+
+    # Stack (top → bottom on page): optional guide, then [label + schedule QR] per chunk
     n = len(qr_images)
     base_rw = [physical_size(im)[0] for im in qr_images]
     base_rh = [physical_size(im)[1] for im in qr_images]
 
-    def stack_height(s: float) -> float:
+    def stack_height(schedule_scale: float) -> float:
         h = 0.0
+        if guide_qr_image is not None:
+            h += label_pt * 1.12 + label_gap + guide_rh + guide_section_gap
+        elif n > 1:
+            h += label_pt * 1.12 + label_gap
         for i in range(n):
-            if n > 1:
+            if n > 1 or guide_qr_image is not None:
                 h += label_pt * 1.12 + label_gap
-            h += base_rh[i] * s
+            h += base_rh[i] * schedule_scale
             if i < n - 1:
                 h += stack_gap
         return h
 
-    def stack_width(s: float) -> float:
-        return max(rw * s for rw in base_rw)
+    def stack_width(schedule_scale: float) -> float:
+        widths = [rw * schedule_scale for rw in base_rw]
+        if guide_qr_image is not None:
+            widths.append(guide_rw)
+        return max(widths) if widths else 0.0
 
     lo, hi = 0.01, 2.5
     scale_fit = 0.5
@@ -548,10 +616,30 @@ def draw_poster_pdf(
 
     y_cursor = stack_top_y
     c.setFont("Helvetica-Bold", label_pt)
+
+    if guide_qr_image is not None:
+        y_cursor -= label_pt * 1.12
+        c.drawCentredString(w_pt / 2, y_cursor, "Camera app")
+        y_cursor -= label_gap
+        y_cursor -= guide_rh
+        x0 = (w_pt - guide_rw) / 2
+        buf = io.BytesIO()
+        guide_qr_image.save(buf, format="PNG")
+        buf.seek(0)
+        c.drawImage(
+            ImageReader(buf),
+            x0,
+            y_cursor,
+            width=guide_rw,
+            height=guide_rh,
+            mask="auto",
+        )
+        y_cursor -= guide_section_gap
+
     for idx, im in enumerate(qr_images):
-        if n > 1:
+        if n > 1 or guide_qr_image is not None:
             y_cursor -= label_pt * 1.12
-            c.drawCentredString(w_pt / 2, y_cursor, labels[idx])
+            c.drawCentredString(w_pt / 2, y_cursor, schedule_labels[idx])
             y_cursor -= label_gap
         y_cursor -= base_rh[idx] * scale_fit
         rw = base_rw[idx] * scale_fit
@@ -610,6 +698,17 @@ def main() -> int:
         default=None,
         help="Short title describing what changed (e.g., Meet and Greet, Clinic, Storm Schedule)",
     )
+    parser.add_argument(
+        "--guide-url",
+        type=str,
+        default=None,
+        help="Guide QR URL (default: scheduleQRGuideURL from config/festivals/70k.json when enabled)",
+    )
+    parser.add_argument(
+        "--no-guide",
+        action="store_true",
+        help="Omit the Camera app guide QR even if configured in festival JSON",
+    )
     args = parser.parse_args()
 
     schedule_change_title = args.schedule_change_title
@@ -659,11 +758,24 @@ def main() -> int:
     )
 
     qr_images = [encode_qr_payload_image(p) for p in payloads]
+
+    guide_qr_image: Image.Image | None = None
+    if not args.no_guide:
+        guide_url = (args.guide_url or "").strip() or load_schedule_qr_guide_url(
+            repo_root_from_script()
+        )
+        if guide_url:
+            guide_qr_image = encode_guide_qr_image(guide_url)
+            print(f"Guide QR: {guide_url!r}", file=sys.stderr)
+        else:
+            print("No guide QR URL configured; poster will show schedule QR only.", file=sys.stderr)
+
     draw_poster_pdf(
         args.output,
         qr_images,
         schedule_change_title=schedule_change_title,
         print_dpi=args.print_dpi,
+        guide_qr_image=guide_qr_image,
     )
     print(f"Wrote {args.output.resolve()}", file=sys.stderr)
     return 0
