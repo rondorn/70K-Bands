@@ -238,14 +238,17 @@
 "QRCodeImportSection" = "QR-koodin tuonti";
 
 // Share Schedule via QR Code – instructions
-"QRShareInstructionsIntro" = "Tätä QR-koodia on tarkoitettu jaettavaksi seuraavissa olosuhteissa.";
-"QRShareCondition1" = "Käyttäjällä on internetyhteys ja uudet aikataulutiedot";
-"QRShareCondition2" = "Toinen käyttäjä tarvitsee aikataulutiedot, mutta ei ole internetyhteyttä";
-"QRShareInstructionsHow" = "Tämä QR-koodi mahdollistaa aikataulutietojen jakamisen. Käyttääkseen tietoja internettiin pääsemätön käyttäjä voi:";
-"QRShareStep1" = "Siirry Asetukset-kohtaan";
-"QRShareStep2" = "Valitse \"Skannaa aikataulu QR-koodilla\"";
-"QRShareStep3" = "Skannaa tämän näytön koodi";
-"QRShareStep4" = "Saada sama aikataulu kuin tässä puhelimessa";
+"QRShareInstructions" = "Jaa aikataulu jollekin ilman internetiä. Toisella puhelimella: Asetukset → Skannaa aikataulu QR-koodilla, sitten skannaa alla oleva koodi.";
+"QRShareGuideLabel" = "Kamera-sovellus";
+"QRShareScheduleLabel" = "Aikataulu";
+"QRScanPartialReadHint" = "Osittainen luku — kallista vähentääksesi heijastuksia tai varjosta näyttö ylävaloilta. Pidä paikallaan.";
+"QRScanGuideQRHint" = "Väärä QR — skannaa suurempi aikataulu-QR alempana toisesta puhelimesta.";
+"QRShareGuideAccessibility" = "Avaa aikatauluskannerin";
+"QRDeleteSchedule" = "Poista aikataulu";
+"QRDeleteScheduleConfirmTitle" = "Poista aikataulu?";
+"QRDeleteScheduleConfirmMessage" = "Poistaa kaikki tapahtumat paitsi epäviralliset ja Cruiser Organized. QR-tuontitestaukseen.";
+"QRDeleteScheduleSuccess" = "Aikataulu poistettu. Epäviralliset ja Cruiser Organized -tapahtumat säilytettiin.";
+"QRDeleteScheduleFailed" = "Aikataulua ei voitu poistaa.";
 "Preparing camera…" = "Valmistellaan kameraa…";
 "No schedule events to share." = "Ei aikataulutapahtumia jaettavaksi.";
 "Scan schedule QR code" = "Skannaa aikataulun QR-koodi";

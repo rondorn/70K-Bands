@@ -167,6 +167,12 @@ public class FestivalConfig {
     /** Whether schedule share/scan via QR code is enabled. 70K: on; MDF: off. */
     public final boolean scheduleQRShareEnabled;
 
+    /**
+     * Custom URL encoded in the guide QR on the share screen (e.g. {@code bands70k://schedule-scan}).
+     * Camera apps open this app to the schedule scanner. Empty when not configured.
+     */
+    public final String scheduleQRGuideURL;
+
     /** About-screen team members and optional team photo from festival.json. */
     public final AboutTeamConfig aboutTeam;
 
@@ -219,6 +225,7 @@ public class FestivalConfig {
         this.commentsNotAvailableStringResourceId = loaded.commentsNotAvailableStringResourceId;
         this.aiSchedule = loaded.aiSchedule;
         this.scheduleQRShareEnabled = loaded.scheduleQRShareEnabled;
+        this.scheduleQRGuideURL = loaded.scheduleQRGuideURL != null ? loaded.scheduleQRGuideURL : "";
         this.aboutTeam = loaded.aboutTeam;
 
         Log.d("FestivalConfig", "Loaded from festival.json for: " + this.festivalShortName);

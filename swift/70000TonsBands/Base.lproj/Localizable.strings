@@ -238,14 +238,17 @@
 "QRCodeImportSection" = "QR Code Import";
 
 // Share Schedule via QR Code – instructions on QR screen
-"QRShareInstructionsIntro" = "This QR code is meant to be shared under the following conditions.";
-"QRShareCondition1" = "A user has internet access and has new schedule data";
-"QRShareCondition2" = "Another user needs the schedule data, but has no internet";
-"QRShareInstructionsHow" = "This QR code allows for the sharing of schedule data. To use this data the user with no internet can:";
-"QRShareStep1" = "Go to Preferences";
-"QRShareStep2" = "Select \"Scan QR Code Schedule\"";
-"QRShareStep3" = "Scan the code on this screen";
-"QRShareStep4" = "Get the same schedule available on this phone";
+"QRShareInstructions" = "Share your schedule with someone who has no internet. On their phone: Preferences → Scan QR Code Schedule, then scan the code(s) below.";
+"QRShareGuideLabel" = "Camera app";
+"QRShareScheduleLabel" = "Schedule data";
+"QRShareGuideAccessibility" = "Opens schedule scanner";
+"QRScanGuideQRHint" = "Wrong QR — scan the larger schedule QR below on the other phone.";
+"QRScanPartialReadHint" = "Partial read — tilt to reduce glare, or shade the screen from overhead lights. Keep holding steady.";
+"QRDeleteSchedule" = "Delete Schedule";
+"QRDeleteScheduleConfirmTitle" = "Delete Schedule?";
+"QRDeleteScheduleConfirmMessage" = "Removes all schedule events except Unofficial Event and Cruiser Organized. For QR import testing.";
+"QRDeleteScheduleSuccess" = "Schedule deleted. Unofficial and Cruiser Organized events were kept.";
+"QRDeleteScheduleFailed" = "Could not delete schedule.";
 "Preparing camera…" = "Preparing camera…";
 
 // Band file required for schedule QR (share/scan)

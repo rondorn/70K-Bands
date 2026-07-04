@@ -461,6 +461,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // When venue filters change (e.g. from calendar filter sheet), refresh list so it uses same persistence
         NotificationCenter.default.addObserver(self, selector: #selector(handleVenueFiltersDidChange), name: Notification.Name("VenueFiltersDidChange"), object: nil)
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleOpenScheduleQRScannerFromGuide),
+            name: ScheduleQRGuideLink.openScannerNotification,
+            object: nil
+        )
         
         
         // Legacy initialization code removed - now handled by optimized launch methods in performOptimizedFirstLaunch() and performOptimizedSubsequentLaunch()
@@ -1564,6 +1571,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        ScheduleQRGuideLink.deliverPendingOpenScannerIfNeeded()
         
         // Ensure UI elements are visible when view appears (especially after rotation)
         print("🔄 [VIEW_LIFECYCLE] viewDidAppear called")
@@ -4076,6 +4084,96 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             alert.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: ""), style: .default))
             present(alert, animated: true)
         }
+    }
+
+    // MARK: - Schedule QR guide deep link (Camera app → in-app scanner)
+
+    @objc private func handleOpenScheduleQRScannerFromGuide() {
+        guard FestivalConfig.current.scheduleQRShareEnabled else { return }
+        presentScheduleQRScannerFromGuideIfReady()
+    }
+
+    private func presentScheduleQRScannerFromGuideIfReady() {
+        if !isBandFileAvailableForQR(eventYear: eventYear) {
+            guard NetworkTesting.isNetworkAvailable() else {
+                let alert = UIAlertController(
+                    title: NSLocalizedString("Scan QR Code Schedule", comment: "Preferences button to scan schedule QR"),
+                    message: bandFileRequiredMessageNoNetwork(),
+                    preferredStyle: .alert
+                )
+                alert.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: ""), style: .default))
+                topMostViewController().present(alert, animated: true)
+                return
+            }
+            let loadingAlert = UIAlertController(
+                title: NSLocalizedString("Scan QR Code Schedule", comment: "Preferences button to scan schedule QR"),
+                message: NSLocalizedString("QR downloading band list", comment: "Downloading band list..."),
+                preferredStyle: .alert
+            )
+            topMostViewController().present(loadingAlert, animated: true)
+            BandCSVImporter().downloadAndImportBands(forceDownload: true) { [weak self] success in
+                guard let self = self else { return }
+                DispatchQueue.main.async {
+                    loadingAlert.dismiss(animated: true) {
+                        if success, isBandFileAvailableForQR(eventYear: eventYear) {
+                            self.presentScheduleQRScannerFromGuide()
+                        } else {
+                            let failAlert = UIAlertController(
+                                title: NSLocalizedString("Scan QR Code Schedule", comment: "Preferences button to scan schedule QR"),
+                                message: NSLocalizedString("QR band file download failed", comment: "Could not download band list"),
+                                preferredStyle: .alert
+                            )
+                            failAlert.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: ""), style: .default))
+                            self.topMostViewController().present(failAlert, animated: true)
+                        }
+                    }
+                }
+            }
+            return
+        }
+        presentScheduleQRScannerFromGuide()
+    }
+
+    private func presentScheduleQRScannerFromGuide() {
+        let viewModel = PreferencesViewModel()
+        var scannerVC: UIHostingController<ScheduleBinaryQRScannerView>!
+        scannerVC = UIHostingController(rootView: ScheduleBinaryQRScannerView(
+            onScan: { [weak self] payloads in
+                guard let self = self else { return false }
+                let done = viewModel.handleScannedPayload(payloads)
+                if done {
+                    scannerVC.dismiss(animated: true) {
+                        if let result = viewModel.scheduleQRImportResult {
+                            self.showScheduleQRImportResultAlert(success: result.success, message: result.message)
+                        }
+                    }
+                }
+                return done
+            },
+            onCancel: {
+                scannerVC.dismiss(animated: true)
+            }
+        ))
+        scannerVC.modalPresentationStyle = .pageSheet
+        topMostViewController().present(scannerVC, animated: true)
+    }
+
+    private func showScheduleQRImportResultAlert(success: Bool, message: String) {
+        let title = NSLocalizedString("Schedule from QR", comment: "QR import result title")
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: ""), style: .default))
+        topMostViewController().present(alert, animated: true)
+    }
+
+    private func topMostViewController() -> UIViewController {
+        var vc: UIViewController = self
+        if let split = splitViewController {
+            vc = split
+        }
+        while let presented = vc.presentedViewController {
+            vc = presented
+        }
+        return vc
     }
 
     func showSharingView() {

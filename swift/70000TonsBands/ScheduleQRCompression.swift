@@ -642,6 +642,38 @@ func scheduleQRBinaryPayloadType(_ payload: Data) -> (type: UInt8, body: Data)? 
     return (t, payload.subdata(in: 1..<payload.count))
 }
 
+/// True when the scanner found our type header but payload is too short (common under glare / partial Vision reads).
+func isScheduleQRBinaryPayloadIncomplete(_ payload: Data) -> Bool {
+    guard let (type, body) = scheduleQRBinaryPayloadType(payload) else { return false }
+    guard body.count >= 4 else { return true }
+    let declaredSize = UInt32(body[0])
+        | (UInt32(body[1]) << 8)
+        | (UInt32(body[2]) << 16)
+        | (UInt32(body[3]) << 24)
+    if declaredSize >= 500 && payload.count < 200 { return true }
+    if declaredSize >= 100 && body.count <= 6 { return true }
+    if type == scheduleQRTypeFull && payload.count < 200 { return true }
+    if (type == scheduleQRTypeChunk1 || type == scheduleQRTypeChunk2) && payload.count < 100 { return true }
+    return false
+}
+
+/// Short binary reads while scanning a schedule QR (Vision often returns ~24 bytes of a ~1600-byte payload).
+func isLikelyPartialScheduleQRScan(_ payload: Data) -> Bool {
+    if ScheduleQRGuideLink.matchesGuidePayloadExact(payload) { return false }
+    guard payload.count >= 6 else { return false }
+    let t = payload[0]
+    if t == scheduleQRTypeFull || t == scheduleQRTypeChunk1 || t == scheduleQRTypeChunk2 {
+        return payload.count < 200 || isScheduleQRBinaryPayloadIncomplete(payload)
+    }
+    if isScheduleQRBinaryPayloadIncomplete(payload) { return true }
+    if let stripped = normalizedScheduleQRPayload(fromScanned: payload),
+       isScheduleQRBinaryPayloadIncomplete(stripped) {
+        return true
+    }
+    if payload.count < 200 { return true }
+    return false
+}
+
 /// Extract raw message from Vision-style payloadData (QR segment structure: mode 4 = BYTE, then count, then bytes). Vision can return segment headers; this strips them to get the actual payload. Returns nil if parsing fails or result is empty.
 func extractVisionQRByteModePayload(_ payload: Data) -> Data? {
     guard payload.count >= 2 else { return nil }
@@ -1203,33 +1235,51 @@ func scheduleCSVForQRExport(eventYear: Int) -> String? {
 
 // MARK: - Export schedule to CSV (from SQLite events)
 
+private func isUnofficialOrCruiserOrganizedEventType(_ type: String) -> Bool {
+    type == EventTypes.unofficialEventOld || type == EventTypes.unofficialEvent
+}
+
+private func exportScheduleCSVFromEvents(_ events: [EventData]) -> String {
+    var lines: [String] = [scheduleCSVHeader]
+    for event in events {
+        let row = buildCSVLine([
+            event.bandName,
+            event.location ?? "",
+            event.date ?? "",
+            event.day ?? "",
+            event.startTime ?? "",
+            event.endTime ?? "",
+            event.eventType ?? "",
+            event.descriptionUrl ?? "",
+            event.notes ?? "",
+            event.eventImageUrl ?? "",
+            ""
+        ])
+        lines.append(row)
+    }
+    return lines.joined(separator: "\n")
+}
+
+/// QA helper: delete all schedule events except Unofficial Event / Cruiser Organized (QR import testing).
+func deleteScheduleExceptUnofficialEvents(forYear year: Int) -> Bool {
+    let allEvents = DataManager.shared.fetchEvents(forYear: year)
+    let preserved = allEvents.filter { isUnofficialOrCruiserOrganizedEventType($0.eventType ?? "") }
+    guard DataManager.shared.replaceEvents(forYear: year, events: preserved) else { return false }
+    let csv = exportScheduleCSVFromEvents(preserved)
+    writeScheduleCSVCache(csv)
+    masterView.schedule.updateStoredScheduleChecksum(toMatchCSV: csv)
+    masterView.schedule.clearCache()
+    masterView.schedule.getCachedData()
+    return true
+}
+
 /// Build full schedule CSV string from current year's events (for host to compress and show as QR).
 /// Excludes Unofficial Event and Cruiser Organized to reduce payload size; scanner merges those from existing data.
 func exportScheduleCSV(eventYear: Int) -> String? {
     let allEvents = DataManager.shared.fetchEvents(forYear: eventYear)
-    let events = allEvents.filter { event in
-        let t = event.eventType ?? ""
-        return t != "Unofficial Event" && t != "Cruiser Organized"
-    }
+    let events = allEvents.filter { !isUnofficialOrCruiserOrganizedEventType($0.eventType ?? "") }
     if events.isEmpty { return nil }
-
-    var lines: [String] = [scheduleCSVHeader]
-    for event in events {
-        let band = event.bandName
-        let location = event.location ?? ""
-        let date = event.date ?? ""
-        let day = event.day ?? ""
-        let startTime = event.startTime ?? ""
-        let endTime = event.endTime ?? ""
-        let type = event.eventType ?? ""
-        let descUrl = event.descriptionUrl ?? ""
-        let notes = event.notes ?? ""
-        let imageUrl = event.eventImageUrl ?? ""
-        let imageDate = ""
-        let row = buildCSVLine([band, location, date, day, startTime, endTime, type, descUrl, notes, imageUrl, imageDate])
-        lines.append(row)
-    }
-    return lines.joined(separator: "\n")
+    return exportScheduleCSVFromEvents(events)
 }
 
 // MARK: - QR import added/updated summary
@@ -1367,6 +1417,7 @@ func captureScheduleQRImportSnapshot(events: [EventData]) -> ScheduleQRImportSna
     var nameVenueCounts: [String: Int] = [:]
     var rows: [ScheduleQREventRow] = []
     for event in events {
+        if isUnofficialOrCruiserOrganizedEventType(event.eventType ?? "") { continue }
         ingestScheduleQRRow(
             bandName: event.bandName,
             location: event.location,
@@ -1398,6 +1449,7 @@ func captureScheduleQRImportSnapshotFromCSV(_ csvString: String) -> ScheduleQRIm
               let startTime = lineData[startTimeField],
               let endTime = lineData[endTimeField],
               let eventType = lineData[typeField] else { continue }
+        if isUnofficialOrCruiserOrganizedEventType(eventType) { continue }
         ingestScheduleQRRow(
             bandName: bandName,
             location: location,

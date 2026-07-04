@@ -43,6 +43,13 @@
                 <data android:mimeType="*/*" />
                 <data android:pathPattern=".*\\.70kshare" />
             </intent-filter>
+            <!-- Guide QR deep link (Camera app → in-app schedule scanner). 70K only. -->
+            <intent-filter android:label="@string/app_name">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="bands70k" android:host="schedule-scan" />
+            </intent-filter>
         </activity>
     </application>
 </manifest>

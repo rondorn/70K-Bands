@@ -36,7 +36,49 @@
             android:textColor="#FFFFFF"
             android:lineSpacingMultiplier="1.2"
             android:paddingTop="4dp"
-            android:paddingBottom="28dp" />
+            android:paddingBottom="12dp" />
+
+        <LinearLayout
+            android:id="@+id/schedule_qr_guide_section"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:visibility="gone"
+            android:paddingBottom="8dp">
+
+            <TextView
+                android:id="@+id/schedule_qr_guide_label"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/QRShareGuideLabel"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:gravity="center"
+                android:paddingBottom="6dp" />
+
+            <ImageView
+                android:id="@+id/schedule_qr_guide_image"
+                android:layout_width="88dp"
+                android:layout_height="88dp"
+                android:scaleType="fitCenter"
+                android:background="#FFFFFF"
+                android:contentDescription="@string/QRShareGuideAccessibility" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/schedule_qr_schedule_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/QRShareScheduleLabel"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:gravity="center"
+            android:visibility="gone"
+            android:paddingTop="4dp"
+            android:paddingBottom="8dp" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/schedule_qr_share_qr_container"

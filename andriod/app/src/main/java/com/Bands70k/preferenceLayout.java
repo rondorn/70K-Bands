@@ -160,6 +160,45 @@ public class preferenceLayout  extends Activity {
                 scheduleQrImportSection.setVisibility(View.GONE);
             }
         }
+        // Delete Schedule — Advanced Preferences (70K QR testing only)
+        View deleteScheduleDivider = findViewById(R.id.delete_schedule_qr_divider);
+        View deleteScheduleRow = findViewById(R.id.delete_schedule_qr_row);
+        if (deleteScheduleDivider != null && deleteScheduleRow != null) {
+            if (FestivalConfig.getInstance().scheduleQRShareEnabled) {
+                deleteScheduleDivider.setVisibility(View.VISIBLE);
+                deleteScheduleRow.setVisibility(View.VISIBLE);
+                deleteScheduleRow.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        AlertDialog dialog = new AlertDialog.Builder(preferenceLayout.this)
+                                .setTitle(R.string.QRDeleteScheduleConfirmTitle)
+                                .setMessage(R.string.QRDeleteScheduleConfirmMessage)
+                                .setNegativeButton(R.string.No, null)
+                                .setPositiveButton(R.string.Yes, new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface d, int which) {
+                                        if (ScheduleCSVExport.deleteScheduleExceptUnofficialCruiser(preferenceLayout.this)) {
+                                            Toast.makeText(preferenceLayout.this,
+                                                    R.string.QRDeleteScheduleSuccess, Toast.LENGTH_LONG).show();
+                                            Intent main = new Intent(preferenceLayout.this, showBands.class);
+                                            main.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                            startActivity(main);
+                                        } else {
+                                            Toast.makeText(preferenceLayout.this,
+                                                    R.string.QRDeleteScheduleFailed, Toast.LENGTH_LONG).show();
+                                        }
+                                    }
+                                })
+                                .create();
+                        dialog.show();
+                        AutoScheduleWizardManager.applyDarkDialogStyle(dialog, preferenceLayout.this);
+                    }
+                });
+            } else {
+                deleteScheduleDivider.setVisibility(View.GONE);
+                deleteScheduleRow.setVisibility(View.GONE);
+            }
+        }
         View planScheduleSection = findViewById(R.id.plan_schedule_section);
         if (FestivalConfig.getInstance().aiSchedule && planScheduleSection != null) {
             planScheduleSection.setVisibility(View.VISIBLE);

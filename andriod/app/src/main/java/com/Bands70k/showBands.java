@@ -4410,9 +4410,15 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             Log.d(TAG, "🔥 Intent is NULL");
             return;
         }
+
+        android.net.Uri data = intent.getData();
+        if (data != null && ScheduleQRGuideLink.handleIncomingUri(data)) {
+            Log.d(TAG, "[QRGuide] Guide URL intent handled");
+            setIntent(new Intent());
+            return;
+        }
         
         String action = intent.getAction();
-        Uri data = intent.getData();
         
         if (!Intent.ACTION_VIEW.equals(action) || data == null) {
             Log.d(TAG, "🔥 Not ACTION_VIEW or data is null - Action:" + action + ", Data:" + data);
@@ -4517,6 +4523,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         // Check for incoming file share intent (for API 35 emulator compatibility)
         Log.d(TAG, "🔥🔥🔥 onResume - checking for file share intent 🔥🔥🔥");
         handleIncomingIntent(getIntent());
+
+        ScheduleQRGuideLink.deliverPendingOpenScannerIfNeeded(this);
 
         Log.d("DisplayListData", "On Resume refreshNewData");
         

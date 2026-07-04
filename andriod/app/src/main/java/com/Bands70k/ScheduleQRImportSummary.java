@@ -108,6 +108,10 @@ public final class ScheduleQRImportSummary {
                 String startTime = h.getStartTimeString() != null ? h.getStartTimeString() : "";
                 String endTime = h.getEndTimeString() != null ? h.getEndTimeString() : "";
                 String eventType = h.getShowType() != null ? h.getShowType() : "";
+                if (staticVariables.unofficalEvent.equals(eventType)
+                        || staticVariables.unofficalEventOld.equals(eventType)) {
+                    continue;
+                }
                 String notes = h.getShowNotes() != null ? h.getShowNotes() : "";
                 String dateStr = "";
                 Date startDate = h.getStartTime();
@@ -141,8 +145,13 @@ public final class ScheduleQRImportSummary {
                 }
             }
             if (fields.size() < 7) continue;
+            String eventType = fields.get(6);
+            if (staticVariables.unofficalEvent.equals(eventType)
+                    || staticVariables.unofficalEventOld.equals(eventType)) {
+                continue;
+            }
             ingestRow(fields.get(0), fields.get(1), fields.get(2), fields.get(3),
-                    fields.get(4), fields.get(5), fields.get(6),
+                    fields.get(4), fields.get(5), eventType,
                     fields.size() > 8 ? fields.get(8) : "",
                     nameVenueCounts, rows);
         }

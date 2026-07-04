@@ -281,14 +281,17 @@
 "QRCodeImportSection" = "QR-Code-Import";
 
 // Share Schedule via QR Code – instructions
-"QRShareInstructionsIntro" = "Dieser QR-Code ist für die Weitergabe unter folgenden Bedingungen gedacht.";
-"QRShareCondition1" = "Ein Nutzer hat Internetzugang und hat neue Zeitplandaten";
-"QRShareCondition2" = "Ein anderer Nutzer braucht die Zeitplandaten, hat aber kein Internet";
-"QRShareInstructionsHow" = "Dieser QR-Code ermöglicht das Teilen von Zeitplandaten. Um diese Daten zu nutzen, kann der Nutzer ohne Internet:";
-"QRShareStep1" = "Zu Einstellungen gehen";
-"QRShareStep2" = "\"Zeitplan per QR-Code scannen\" auswählen";
-"QRShareStep3" = "Den Code auf diesem Bildschirm scannen";
-"QRShareStep4" = "Den gleichen Zeitplan wie auf diesem Gerät erhalten";
+"QRShareInstructions" = "Teilen Sie Ihren Zeitplan mit jemandem ohne Internet. Auf dem anderen Gerät: Einstellungen → Zeitplan per QR-Code scannen, dann den Code unten scannen.";
+"QRShareGuideLabel" = "Kamera-App";
+"QRShareScheduleLabel" = "Zeitplan";
+"QRScanPartialReadHint" = "Unvollständig gelesen — Neigen, um Blendung zu reduzieren, oder Bildschirm vor Deckenlichtern abschatten. Ruhig halten.";
+"QRScanGuideQRHint" = "Falscher QR — scannen Sie den größeren Zeitplan-QR unten auf dem anderen Telefon.";
+"QRShareGuideAccessibility" = "Öffnet den Zeitplan-Scanner";
+"QRDeleteSchedule" = "Zeitplan löschen";
+"QRDeleteScheduleConfirmTitle" = "Zeitplan löschen?";
+"QRDeleteScheduleConfirmMessage" = "Entfernt alle Termine außer inoffiziellen und Cruiser-Organized-Events. Für QR-Import-Tests.";
+"QRDeleteScheduleSuccess" = "Zeitplan gelöscht. Inoffizielle und Cruiser-Organized-Events wurden behalten.";
+"QRDeleteScheduleFailed" = "Zeitplan konnte nicht gelöscht werden.";
 "Preparing camera…" = "Kamera wird vorbereitet…";
 "No schedule events to share." = "Keine Zeitplan-Events zum Teilen.";
 "Scan schedule QR code" = "Zeitplan-QR-Code scannen";

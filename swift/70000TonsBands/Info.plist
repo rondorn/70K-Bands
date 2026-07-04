@@ -91,6 +91,17 @@
 		<key>NSUbiquitousContainerSupportedFolderLevels</key>
 		<string>One</string>
 	</dict>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.rdorn.schedule-qr-guide</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>bands70k</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>

@@ -1,5 +1,6 @@
 package com.Bands70k;
 
+import android.content.Intent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -110,6 +111,50 @@ public final class ScheduleCSVExport {
             out.add(line);
         }
         return String.join("\n", out);
+    }
+
+    /**
+     * Keep only rows where Type is Unofficial Event or Cruiser Organized (inverse of stripUnofficialCruiserRows).
+     */
+    public static String keepOnlyUnofficialCruiserRows(String csv) {
+        if (csv == null) return CSV_HEADER;
+        String[] lines = csv.split("\n", -1);
+        if (lines.length == 0) return CSV_HEADER;
+        List<String> out = new ArrayList<>();
+        out.add(lines[0]); // header
+        for (int i = 1; i < lines.length; i++) {
+            String line = lines[i];
+            if (line == null || line.trim().isEmpty()) continue;
+            List<String> fields = ScheduleQRCompression.parseCSVLine(line.trim());
+            if (fields.size() <= TYPE_COLUMN_INDEX) continue;
+            String type = fields.get(TYPE_COLUMN_INDEX).trim();
+            if (staticVariables.unofficalEventOld.equals(type) || staticVariables.unofficalEvent.equals(type)) {
+                out.add(line);
+            }
+        }
+        return String.join("\n", out);
+    }
+
+    /**
+     * QA helper: delete all schedule events except Unofficial Event / Cruiser Organized (QR import testing).
+     * @return true if schedule file and in-memory cache were updated
+     */
+    public static boolean deleteScheduleExceptUnofficialCruiser(android.content.Context context) {
+        String full = buildFullCSVFromSchedule();
+        String kept = (full != null) ? keepOnlyUnofficialCruiserRows(full) : CSV_HEADER;
+        writeScheduleCsvCache(kept);
+        scheduleInfo schedule = new scheduleInfo();
+        BandInfo.scheduleRecords = schedule.ParseScheduleCSV();
+        CacheHashManager cacheManager = CacheHashManager.getInstance();
+        String hash = cacheManager.calculateFileHash(FileHandler70k.schedule);
+        if (hash != null) {
+            cacheManager.saveCachedHash("scheduleInfo", hash);
+        }
+        if (context != null) {
+            Intent refresh = new Intent("RefreshLandscapeSchedule");
+            androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(context).sendBroadcast(refresh);
+        }
+        return true;
     }
 
     /**

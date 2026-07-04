@@ -232,14 +232,17 @@
 "QRCodeImportSection" = "Import med QR-kode";
 
 // Share Schedule via QR Code – instructions
-"QRShareInstructionsIntro" = "Denne QR-kode er beregnet til deling under følgende betingelser.";
-"QRShareCondition1" = "En bruger har internetadgang og har nye programdata";
-"QRShareCondition2" = "En anden bruger har brug for programdataene, men har ikke internet";
-"QRShareInstructionsHow" = "Denne QR-kode gør det muligt at dele programdata. For at bruge dataene kan brugeren uden internet:";
-"QRShareStep1" = "Gå til Præferencer";
-"QRShareStep2" = "Vælg \"Scan QR-kode program\"";
-"QRShareStep3" = "Scan koden på denne skærm";
-"QRShareStep4" = "Få det samme program som på denne telefon";
+"QRShareInstructions" = "Del dit program med nogen uden internet. På deres telefon: Præferencer → Scan QR-kode program, derefter scan koden nedenfor.";
+"QRShareGuideLabel" = "Kamera-app";
+"QRShareScheduleLabel" = "Program";
+"QRScanPartialReadHint" = "Delvis læsning — vip for at mindske genskin, eller skyg for skærmen mod overhead-lys. Hold stille.";
+"QRScanGuideQRHint" = "Forkert QR — scan det større program-QR-kode nedenfor på den anden telefon.";
+"QRShareGuideAccessibility" = "Åbner programscanner";
+"QRDeleteSchedule" = "Slet program";
+"QRDeleteScheduleConfirmTitle" = "Slet program?";
+"QRDeleteScheduleConfirmMessage" = "Fjerner alle begivenheder undtagen uofficielle og Cruiser Organized. Til QR-importtest.";
+"QRDeleteScheduleSuccess" = "Program slettet. Uofficielle og Cruiser Organized-begivenheder blev beholdt.";
+"QRDeleteScheduleFailed" = "Kunne ikke slette program.";
 "Preparing camera…" = "Forbereder kamera…";
 "No schedule events to share." = "Ingen programbegivenheder at dele.";
 "Scan schedule QR code" = "Scan program QR-kode";

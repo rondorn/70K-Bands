@@ -76,6 +76,19 @@ struct PreferencesView: View {
             }
         }
         .overlay {
+            if viewModel.showDeleteScheduleConfirmation {
+                darkConfirmOverlay(
+                    title: NSLocalizedString("QRDeleteScheduleConfirmTitle", comment: ""),
+                    message: NSLocalizedString("QRDeleteScheduleConfirmMessage", comment: ""),
+                    noAction: { viewModel.showDeleteScheduleConfirmation = false },
+                    yesAction: {
+                        viewModel.showDeleteScheduleConfirmation = false
+                        viewModel.confirmDeleteScheduleForQRTesting()
+                    }
+                )
+            }
+        }
+        .overlay {
             if viewModel.showClearAllConfirmation {
                 darkConfirmOverlay(
                     title: NSLocalizedString("AutoChooseAttendanceClearAllTitle", comment: ""),
@@ -383,6 +396,15 @@ struct PreferencesView: View {
                     .keyboardType(.URL)
             }
             .padding(.vertical, 4)
+
+            if FestivalConfig.current.scheduleQRShareEnabled {
+                Button(role: .destructive) {
+                    viewModel.showDeleteScheduleConfirmation = true
+                } label: {
+                    Text(NSLocalizedString("QRDeleteSchedule", comment: "Advanced pref: delete schedule for QR testing"))
+                }
+                .padding(.vertical, 4)
+            }
         } header: {
             Text(NSLocalizedString("AdvancedPreferences", comment: ""))
         }

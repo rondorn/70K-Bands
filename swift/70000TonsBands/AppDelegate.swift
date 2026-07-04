@@ -1329,15 +1329,21 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         }
     }
     
-    /// Handles opening share files (iOS 9+) - app-specific extension only
+    /// Handles opening share files and schedule QR guide deep links.
     func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
         print("📥 AppDelegate: Opening URL (iOS 9+): \(url)")
+        if ScheduleQRGuideLink.handleIncomingURL(url) {
+            return true
+        }
         return handleIncomingShareFile(url: url)
     }
     
     /// Legacy method for opening URLs (iOS 4.2-9.0, still called by some apps)
     func application(_ application: UIApplication, open url: URL, sourceApplication: String?, annotation: Any) -> Bool {
         print("📥 AppDelegate: Opening URL (Legacy): \(url)")
+        if ScheduleQRGuideLink.handleIncomingURL(url) {
+            return true
+        }
         return handleIncomingShareFile(url: url)
     }
     
@@ -1347,6 +1353,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
         if let url = launchOptions?[.url] as? URL {
             print("📥 Launched with URL: \(url)")
+            if ScheduleQRGuideLink.handleIncomingURL(url) {
+                return true
+            }
             _ = handleIncomingShareFile(url: url, delay: 1.0)
         }
         

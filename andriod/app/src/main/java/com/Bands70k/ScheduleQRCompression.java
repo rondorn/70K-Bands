@@ -599,6 +599,35 @@ public final class ScheduleQRCompression {
         return new PayloadTypeResult(t, body);
     }
 
+    /** True when type header looks valid but payload is truncated (common under glare / partial reads). */
+    public static boolean isScheduleQRBinaryPayloadIncomplete(byte[] payload) {
+        PayloadTypeResult result = scheduleQRBinaryPayloadType(payload);
+        if (result == null) return false;
+        byte[] body = result.body;
+        if (body.length < 4) return true;
+        int declaredSize = (body[0] & 0xFF) | ((body[1] & 0xFF) << 8) | ((body[2] & 0xFF) << 16) | ((body[3] & 0xFF) << 24);
+        if (declaredSize >= 500 && payload.length < 200) return true;
+        if (declaredSize >= 100 && body.length <= 6) return true;
+        if (result.type == SCHEDULE_QR_TYPE_FULL && payload.length < 200) return true;
+        if ((result.type == SCHEDULE_QR_TYPE_CHUNK1 || result.type == SCHEDULE_QR_TYPE_CHUNK2) && payload.length < 100) {
+            return true;
+        }
+        return false;
+    }
+
+    /** Short binary reads while scanning a schedule QR (partial decode under glare). */
+    public static boolean isLikelyPartialScheduleQRScan(byte[] payload) {
+        if (ScheduleQRGuideLink.matchesGuidePayloadExact(payload)) return false;
+        if (payload == null || payload.length < 6) return false;
+        byte t = payload[0];
+        if (t == SCHEDULE_QR_TYPE_FULL || t == SCHEDULE_QR_TYPE_CHUNK1 || t == SCHEDULE_QR_TYPE_CHUNK2) {
+            return payload.length < 200 || isScheduleQRBinaryPayloadIncomplete(payload);
+        }
+        if (isScheduleQRBinaryPayloadIncomplete(payload)) return true;
+        if (payload.length < 200) return true;
+        return false;
+    }
+
     /**
      * Decompress one or two payloads (type + 4-byte size + zlib) and merge into one CSV string.
      */

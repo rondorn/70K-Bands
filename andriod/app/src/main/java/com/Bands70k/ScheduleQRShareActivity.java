@@ -14,9 +14,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import io.nayuki.qrcodegen.QrCode;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -32,6 +30,8 @@ public class ScheduleQRShareActivity extends AppCompatActivity {
     private static final int QR_SIZE = 720;
     /** ISO 18004: quiet zone = 4 modules on all sides. Required for reliable scanning. */
     private static final int QUIET_ZONE_MODULES = 4;
+    /** Render size for guide QR bitmap (text segment). */
+    private static final int GUIDE_QR_RENDER_SIZE = 200;
     /** Minimum pixels per module so cameras can resolve the symbol (avoid too-dense QRs). */
     private static final int MIN_PIXELS_PER_MODULE = 6;
 
@@ -44,6 +44,11 @@ public class ScheduleQRShareActivity extends AppCompatActivity {
 
         TextView instructions = findViewById(R.id.schedule_qr_share_instructions);
         instructions.setText(buildInstructionsText());
+
+        View guideSection = findViewById(R.id.schedule_qr_guide_section);
+        TextView scheduleLabel = findViewById(R.id.schedule_qr_schedule_label);
+        ImageView guideQR = findViewById(R.id.schedule_qr_guide_image);
+        setupGuideQRIfConfigured(guideSection, scheduleLabel, guideQR);
 
         ImageView qr1 = findViewById(R.id.schedule_qr_image_1);
         ImageView qr2 = findViewById(R.id.schedule_qr_image_2);
@@ -134,27 +139,63 @@ public class ScheduleQRShareActivity extends AppCompatActivity {
         done.setOnClickListener(v -> finish());
     }
 
+    private void setupGuideQRIfConfigured(View guideSection, TextView scheduleLabel, ImageView guideQR) {
+        String guideURL = ScheduleQRGuideLink.getConfiguredGuideURLString();
+        if (guideURL == null) {
+            guideSection.setVisibility(View.GONE);
+            scheduleLabel.setVisibility(View.GONE);
+            return;
+        }
+        guideSection.setVisibility(View.VISIBLE);
+        scheduleLabel.setVisibility(View.VISIBLE);
+        Bitmap bmp = encodeTextToQR(guideURL);
+        if (bmp != null) {
+            guideQR.setImageBitmap(bmp);
+        }
+    }
+
     private String buildInstructionsText() {
-        return getString(R.string.QRShareInstructionsIntro) + "\n"
-                + getString(R.string.QRShareCondition1) + "\n"
-                + getString(R.string.QRShareCondition2) + "\n\n"
-                + getString(R.string.QRShareInstructionsHow) + "\n"
-                + getString(R.string.QRShareStep1) + "\n"
-                + getString(R.string.QRShareStep2) + "\n"
-                + getString(R.string.QRShareStep3) + "\n"
-                + getString(R.string.QRShareStep4);
+        return getString(R.string.QRShareInstructions);
+    }
+
+    /** Text/URL QR for the system Camera app (guide link). */
+    private Bitmap encodeTextToQR(String text) {
+        if (text == null || text.isEmpty()) return null;
+        try {
+            QrCode qr = QrCode.encodeText(text, QrCode.Ecc.LOW);
+            int moduleSize = qr.size;
+            int scale = Math.max(4, Math.max(1, GUIDE_QR_RENDER_SIZE / moduleSize));
+            int symbolPx = moduleSize * scale;
+            int borderPx = QUIET_ZONE_MODULES * scale;
+            int bitmapSize = symbolPx + 2 * borderPx;
+            int[] pixels = new int[bitmapSize * bitmapSize];
+            Arrays.fill(pixels, 0xFFFFFFFF);
+            for (int y = 0; y < symbolPx; y++) {
+                for (int x = 0; x < symbolPx; x++) {
+                    boolean dark = qr.getModule(x / scale, y / scale);
+                    int px = (borderPx + y) * bitmapSize + (borderPx + x);
+                    pixels[px] = dark ? 0xFF000000 : 0xFFFFFFFF;
+                }
+            }
+            Bitmap bitmap = Bitmap.createBitmap(bitmapSize, bitmapSize, Bitmap.Config.ARGB_8888);
+            bitmap.setPixels(pixels, 0, bitmapSize, 0, 0, bitmapSize, bitmapSize);
+            return bitmap;
+        } catch (Exception e) {
+            Log.e(TAG, "[QRCreate] guide text encode failed: " + e.getMessage(), e);
+            return null;
+        }
     }
 
     /**
      * Encode binary payload to QR using Nayuki: single Byte-mode segment (like iOS CIFilter),
-     * so iOS Vision may return the full payload instead of truncating at first segment.
+     * EC level L (matches iOS inputCorrectionLevel) for a less dense symbol and easier cross-device scans.
      * Adds 4-module quiet zone (ISO 18004) and enforces minimum pixels per module for scannability.
      */
     private Bitmap encodePayloadToQR(byte[] payload) {
         if (payload == null || payload.length == 0) return null;
         Log.d(TAG, "[QRCreate] encodePayloadToQR: payloadLength=" + payload.length);
         try {
-            QrCode qr = QrCode.encodeBinary(payload, QrCode.Ecc.MEDIUM);
+            QrCode qr = QrCode.encodeBinary(payload, QrCode.Ecc.LOW);
             int moduleSize = qr.size;
             int scale = Math.max(MIN_PIXELS_PER_MODULE, Math.max(1, QR_SIZE / moduleSize));
             int symbolPx = moduleSize * scale;

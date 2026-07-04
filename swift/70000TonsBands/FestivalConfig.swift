@@ -162,6 +162,9 @@ struct FestivalConfig {
     /// When true, schedule share/scan via QR code is available. 70K Bands: true. MDF Bands: false.
     let scheduleQRShareEnabled: Bool
 
+    /// Custom URL for guide QR on the share screen (e.g. bands70k://schedule-scan). Empty when not configured.
+    let scheduleQRGuideURL: String
+
     // Comments not available message configuration
     let commentsNotAvailableTranslationKey: String
 
@@ -218,6 +221,7 @@ struct FestivalConfig {
         self.commentsNotAvailableTranslationKey = p.commentsNotAvailableTranslationKey
         self.aiSchedule = p.aiSchedule
         self.scheduleQRShareEnabled = p.scheduleQRShareEnabled
+        self.scheduleQRGuideURL = p.scheduleQRGuideURL
         self.aboutTeam = p.aboutTeam
 
         print("🏛️ FestivalConfig loaded from festival.json: \(self.festivalShortName)")

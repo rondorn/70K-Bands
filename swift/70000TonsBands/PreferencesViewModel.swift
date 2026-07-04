@@ -149,6 +149,7 @@ class PreferencesViewModel: ObservableObject {
     @Published var scheduleQRScannerSheetItem: ScheduleQRScannerSheetItem? = nil
     /// When non-nil, show an alert with the message (success or failure of QR schedule import).
     @Published var scheduleQRImportResult: (success: Bool, message: String)? = nil
+    @Published var showDeleteScheduleConfirmation = false
     @Published var scheduleQRBandFileDownloading = false
     @Published var scheduleQRScanReadyAfterDownload = false
 
@@ -1323,6 +1324,19 @@ class PreferencesViewModel: ObservableObject {
         NotificationCenter.default.post(name: Notification.Name(rawValue: "DismissPreferencesScreenAfterYearChange"), object: nil)
     }
     
+    /// Removes all schedule events except Unofficial Event / Cruiser Organized (QR import QA).
+    func confirmDeleteScheduleForQRTesting() {
+        let year = selectedYearAsInt
+        let ok = deleteScheduleExceptUnofficialEvents(forYear: year)
+        if ok {
+            masterView.refreshBandList(reason: "Delete schedule for QR testing", skipDataLoading: true)
+            NotificationCenter.default.post(name: Notification.Name("RefreshLandscapeSchedule"), object: nil)
+            scheduleQRImportResult = (true, NSLocalizedString("QRDeleteScheduleSuccess", comment: "Schedule deleted for QR testing"))
+        } else {
+            scheduleQRImportResult = (false, NSLocalizedString("QRDeleteScheduleFailed", comment: "Schedule delete failed"))
+        }
+    }
+
     /// Handles scanned QR payload(s) from Vision (one or two QRs; two = top first, bottom second). Returns true to dismiss the scanner.
     func handleScannedPayload(_ payloads: [Data]) -> Bool {
         print("[QRScanner] ViewModel: handleScannedPayload called with \(payloads.count) payload(s)")

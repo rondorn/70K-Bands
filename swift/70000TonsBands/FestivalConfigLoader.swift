@@ -99,6 +99,8 @@ private struct FestivalConfigJson: Codable {
     let commentsNotAvailableTranslationKey: String
     let aiSchedule: Bool
     let scheduleQRShareEnabled: Bool
+    /// Custom URL for guide QR (camera app opens in-app schedule scanner). Omitted when not configured.
+    let scheduleQRGuideURL: String?
     let about: AboutTeamJson
 
     struct GraphicsJson: Codable {
@@ -171,6 +173,7 @@ struct FestivalConfigPayload {
     let commentsNotAvailableTranslationKey: String
     let aiSchedule: Bool
     let scheduleQRShareEnabled: Bool
+    let scheduleQRGuideURL: String
     let peerShareFileExtensions: [String]
     let fallbackMiscGenericGoingIcon: String
     let fallbackMiscGenericNotGoingIcon: String
@@ -254,6 +257,7 @@ enum FestivalConfigLoader {
             commentsNotAvailableTranslationKey: json.commentsNotAvailableTranslationKey,
             aiSchedule: json.aiSchedule,
             scheduleQRShareEnabled: json.scheduleQRShareEnabled,
+            scheduleQRGuideURL: json.scheduleQRGuideURL?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "",
             peerShareFileExtensions: shareExtensions,
             fallbackMiscGenericGoingIcon: r(g.fallbackMiscGenericGoingIcon),
             fallbackMiscGenericNotGoingIcon: r(g.fallbackMiscGenericNotGoingIcon),

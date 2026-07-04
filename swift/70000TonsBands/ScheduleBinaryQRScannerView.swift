@@ -18,26 +18,38 @@ struct ScheduleBinaryQRScannerView: View {
     @State private var hintText = NSLocalizedString("Scan schedule QR code", comment: "Binary QR scanner hint")
     /// Delay before showing camera so the sheet is fully presented; avoids first-present dismiss when camera starts.
     @State private var cameraReady = false
+    @State private var lastPartialHintTime: Date?
 
+    private static let partialHintThrottleSeconds: TimeInterval = 2.5
+    private static let defaultHintText = NSLocalizedString("Scan schedule QR code", comment: "Binary QR scanner hint")
     private static var scannerPresentCount = 0
 
     var body: some View {
         let _ = { Self.scannerPresentCount += 1; print("[QRScanner] View body evaluated (present #\(Self.scannerPresentCount))") }()
         NavigationStack {
-            VStack(spacing: 16) {
-                Text(hintText)
-                    .multilineTextAlignment(.center)
-                    .padding()
+            Group {
                 if cameraReady {
-                    BinaryQRScanner.View(
-                        mode: .binary,
-                        completion: handleScan,
-                        dismiss: {
-                            print("[QRScanner] dismiss closure called (BinaryQRScanner requested dismiss)")
-                            onCancel()
-                        },
-                        subview: (UILabel(), BinaryQRScanner.View.SubviewPosition.top, 20)
-                    )
+                    ZStack(alignment: .bottom) {
+                        BinaryQRScanner.View(
+                            mode: .binary,
+                            completion: handleScan,
+                            dismiss: {
+                                print("[QRScanner] dismiss closure called (BinaryQRScanner requested dismiss)")
+                                onCancel()
+                            },
+                            subview: (UILabel(), BinaryQRScanner.View.SubviewPosition.top, 20)
+                        )
+                        Text(hintText)
+                            .font(.subheadline.weight(.medium))
+                            .multilineTextAlignment(.center)
+                            .foregroundColor(.white)
+                            .padding(12)
+                            .frame(maxWidth: .infinity)
+                            .background(Color.black.opacity(0.65))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                            .padding(.horizontal, 24)
+                            .padding(.bottom, 32)
+                    }
                 } else {
                     ProgressView(NSLocalizedString("Preparing camera…", comment: "QR scanner loading"))
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -81,6 +93,29 @@ struct ScheduleBinaryQRScannerView: View {
         return payload.count > show ? hex + " ..." : hex
     }
 
+    private func setHintText(_ text: String) {
+        DispatchQueue.main.async {
+            hintText = text
+        }
+    }
+
+    private func showGuideQRHint() {
+        DispatchQueue.main.async {
+            hintText = NSLocalizedString("QRScanGuideQRHint", comment: "In-app scanner saw guide QR; scan schedule QR")
+            print("[QRScanner] showing guide QR hint")
+        }
+    }
+
+    private func showPartialReadHintIfNeeded() {
+        DispatchQueue.main.async {
+            let now = Date()
+            if let last = lastPartialHintTime, now.timeIntervalSince(last) < Self.partialHintThrottleSeconds { return }
+            lastPartialHintTime = now
+            hintText = NSLocalizedString("QRScanPartialReadHint", comment: "Scanner got truncated QR payload; reduce glare")
+            print("[QRScanner] showing partial read hint")
+        }
+    }
+
     private func handleScan(
         result: Result<BinaryQRScanner.ScanResult, BinaryQRScanner.ScanError>,
         dismissScanner: @escaping () -> Void,
@@ -89,6 +124,11 @@ struct ScheduleBinaryQRScannerView: View {
         switch result {
         case .success(let scanResult):
             print("[QRScanner] handleScan called: success \(scanResult)")
+            if case .text(let s) = scanResult, ScheduleQRGuideLink.matchesGuideURLString(s) {
+                showGuideQRHint()
+                continueScanning()
+                return
+            }
             let data: Data?
             if case .binary(let d) = scanResult {
                 data = d
@@ -98,6 +138,17 @@ struct ScheduleBinaryQRScannerView: View {
                 data = nil
             }
             guard let payload = data, payload.count > 5 else {
+                continueScanning()
+                return
+            }
+            if ScheduleQRGuideLink.matchesGuidePayloadExact(payload) {
+                showGuideQRHint()
+                continueScanning()
+                return
+            }
+            if isLikelyPartialScheduleQRScan(payload) {
+                print("[QRScan] likely partial read length=\(payload.count) firstBytesHex=\(bytesToHex(payload, 12))")
+                showPartialReadHintIfNeeded()
                 continueScanning()
                 return
             }
@@ -116,6 +167,12 @@ struct ScheduleBinaryQRScannerView: View {
                 continueScanning()
                 return
             }
+            if isScheduleQRBinaryPayloadIncomplete(normalized) {
+                print("[QRScan] partial payload length=\(normalized.count) typeByte=\(type)")
+                showPartialReadHintIfNeeded()
+                continueScanning()
+                return
+            }
             if type == scheduleQRTypeFull {
                 let done = onScan([normalized])
                 if done { dismissScanner() }
@@ -123,8 +180,8 @@ struct ScheduleBinaryQRScannerView: View {
                 return
             }
             if type == scheduleQRTypeChunk1 {
-                chunk1 = normalized
-                hintText = NSLocalizedString("Scan second QR code", comment: "Binary QR scanner second")
+                DispatchQueue.main.async { chunk1 = normalized }
+                setHintText(NSLocalizedString("Scan second QR code", comment: "Binary QR scanner second"))
                 if let c2 = chunk2 {
                     let done = onScan([normalized, c2])
                     if done { dismissScanner() }
@@ -135,13 +192,13 @@ struct ScheduleBinaryQRScannerView: View {
                 return
             }
             if type == scheduleQRTypeChunk2 {
-                chunk2 = normalized
+                DispatchQueue.main.async { chunk2 = normalized }
                 if let c1 = chunk1 {
                     let done = onScan([c1, normalized])
                     if done { dismissScanner() }
                     else { continueScanning() }
                 } else {
-                    hintText = NSLocalizedString("Scan first QR code", comment: "Binary QR scanner first")
+                    setHintText(NSLocalizedString("Scan first QR code", comment: "Binary QR scanner first"))
                     continueScanning()
                 }
                 return

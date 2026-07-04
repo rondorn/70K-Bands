@@ -125,6 +125,7 @@ final class FestivalConfigJsonLoader {
         c.unofficalEventsEnabledDefault = root.getBoolean("unofficalEventsEnabledDefault");
         c.aiSchedule = root.getBoolean("aiSchedule");
         c.scheduleQRShareEnabled = root.getBoolean("scheduleQRShareEnabled");
+        c.scheduleQRGuideURL = root.optString("scheduleQRGuideURL", "").trim();
         c.commentsNotAvailableTranslationKey = root.getString("commentsNotAvailableTranslationKey");
         c.commentsNotAvailableStringResourceId = resolveStringResourceId(context, c.commentsNotAvailableTranslationKey);
 
@@ -304,6 +305,8 @@ final class FestivalConfigJsonLoader {
         int commentsNotAvailableStringResourceId;
         boolean aiSchedule;
         boolean scheduleQRShareEnabled;
+        /** Custom URL for guide QR (camera app opens in-app schedule scanner). Empty when not configured. */
+        String scheduleQRGuideURL;
         AboutTeamConfig aboutTeam;
     }
 }

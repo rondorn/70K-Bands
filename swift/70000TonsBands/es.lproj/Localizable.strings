@@ -284,14 +284,17 @@
 "QRCodeImportSection" = "Importación por código QR";
 
 // Share Schedule via QR Code – instructions
-"QRShareInstructionsIntro" = "Este código QR está pensado para compartirse en las siguientes condiciones.";
-"QRShareCondition1" = "Un usuario tiene acceso a internet y tiene datos del horario nuevos";
-"QRShareCondition2" = "Otro usuario necesita los datos del horario, pero no tiene internet";
-"QRShareInstructionsHow" = "Este código QR permite compartir los datos del horario. Para usar estos datos, el usuario sin internet puede:";
-"QRShareStep1" = "Ir a Preferencias";
-"QRShareStep2" = "Seleccionar \"Escanear horario por código QR\"";
-"QRShareStep3" = "Escanear el código de esta pantalla";
-"QRShareStep4" = "Obtener el mismo horario disponible en este teléfono";
+"QRShareInstructions" = "Comparta su horario con alguien sin internet. En su teléfono: Preferencias → Escanear horario por código QR, luego escanee el código de abajo.";
+"QRShareGuideLabel" = "App Cámara";
+"QRShareScheduleLabel" = "Horario";
+"QRScanPartialReadHint" = "Lectura parcial — incline para reducir el brillo o sombreé la pantalla de las luces superiores. Mantenga firme.";
+"QRScanGuideQRHint" = "QR incorrecto — escanee el código QR más grande del horario abajo en el otro teléfono.";
+"QRShareGuideAccessibility" = "Abre el escáner de horario";
+"QRDeleteSchedule" = "Eliminar horario";
+"QRDeleteScheduleConfirmTitle" = "¿Eliminar horario?";
+"QRDeleteScheduleConfirmMessage" = "Elimina todos los eventos excepto no oficiales y Cruiser Organized. Para pruebas de importación QR.";
+"QRDeleteScheduleSuccess" = "Horario eliminado. Se conservaron eventos no oficiales y Cruiser Organized.";
+"QRDeleteScheduleFailed" = "No se pudo eliminar el horario.";
 "Preparing camera…" = "Preparando cámara…";
 "No schedule events to share." = "No hay eventos del horario para compartir.";
 "Scan schedule QR code" = "Escanear código QR del horario";

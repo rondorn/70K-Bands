@@ -8,23 +8,18 @@
 import UIKit
 import CoreImage.CIFilterBuiltins
 
-/// Grid width for iPhone SE (320pt): 288pt leaves 16pt margin. 16pt spacing for quiet zone.
-private let scheduleQRGridWidth: CGFloat = 288
+/// Horizontal spacing between QR cells in a grid row.
 private let scheduleQRSpacing: CGFloat = 16
 /// White border (quiet zone) around single QR image in points. Smaller = larger QR on screen for easier Android scan.
 private let scheduleQRImageWhiteBorder: CGFloat = 16
+/// Horizontal inset for scroll content (both sides). On 320pt SE: 320 − 2×16 = 288pt max QR width.
+private let scheduleQRHorizontalInset: CGFloat = 16
+/// On-screen size for the text/URL guide QR (camera app); schedule QRs stay full width.
+private let scheduleQRGuideDisplaySize: CGFloat = 88
 
-/// Localized instructions for sharing schedule via QR (conditions + steps). Built from Localizable.strings.
+/// Localized instructions for the schedule QR share screen.
 private func qrShareInstructionsText() -> String {
-    let intro = NSLocalizedString("QRShareInstructionsIntro", comment: "QR share screen: intro sentence")
-    let cond1 = NSLocalizedString("QRShareCondition1", comment: "QR share: user with internet")
-    let cond2 = NSLocalizedString("QRShareCondition2", comment: "QR share: user without internet")
-    let how = NSLocalizedString("QRShareInstructionsHow", comment: "QR share: how to use intro")
-    let step1 = NSLocalizedString("QRShareStep1", comment: "QR share step: go to Preferences")
-    let step2 = NSLocalizedString("QRShareStep2", comment: "QR share step: select Scan QR")
-    let step3 = NSLocalizedString("QRShareStep3", comment: "QR share step: scan this code")
-    let step4 = NSLocalizedString("QRShareStep4", comment: "QR share step: get same schedule")
-    return [intro, cond1, cond2, "", how, step1, step2, step3, step4].joined(separator: "\n")
+    NSLocalizedString("QRShareInstructions", comment: "QR share screen: how to share offline")
 }
 
 /// Presents one, three, eight, or sixteen QR codes for schedule share. 16-QR: 4×4, low density for scannability.
@@ -84,6 +79,19 @@ final class ScheduleQRCodeViewController: UIViewController {
         instructionsLabel.setContentHuggingPriority(.required, for: .vertical)
         instructionsLabelForLayout = instructionsLabel
 
+        var scrollSections: [UIView] = [instructionsLabel]
+        let showsGuideQR = ScheduleQRGuideLink.configuredGuideURLString != nil
+
+        if let guideURL = ScheduleQRGuideLink.configuredGuideURLString {
+            scrollSections.append(makeGuideSection(guideURL: guideURL))
+        }
+
+        if showsGuideQR {
+            scrollSections.append(makeSectionLabel(
+                text: NSLocalizedString("QRShareScheduleLabel", comment: "Label above schedule QR code(s)")
+            ))
+        }
+
         let doneButton = UIButton(type: .system)
         doneButton.translatesAutoresizingMaskIntoConstraints = false
         doneButton.setTitle(NSLocalizedString("Done", comment: ""), for: .normal)
@@ -96,8 +104,8 @@ final class ScheduleQRCodeViewController: UIViewController {
         stack.axis = .vertical
         let isGrid = payloads.count == 8 || payloads.count == 16 || payloads.count == 24
         stack.spacing = isGrid ? scheduleQRSpacing : 12
-        stack.alignment = .center
-        stack.distribution = (payloads.count == 2 || payloads.count == 3 || isGrid) ? .fillEqually : .fill
+        stack.alignment = .fill
+        stack.distribution = isGrid ? .fillEqually : .fill
 
         if payloads.count == 24 {
             let cols = 4
@@ -141,7 +149,9 @@ final class ScheduleQRCodeViewController: UIViewController {
         qrContainer.translatesAutoresizingMaskIntoConstraints = false
         qrContainer.addSubview(stack)
 
-        let scrollStack = UIStackView(arrangedSubviews: [instructionsLabel, qrContainer])
+        scrollSections.append(qrContainer)
+
+        let scrollStack = UIStackView(arrangedSubviews: scrollSections)
         scrollStack.translatesAutoresizingMaskIntoConstraints = false
         scrollStack.axis = .vertical
         scrollStack.spacing = 12
@@ -162,42 +172,32 @@ final class ScheduleQRCodeViewController: UIViewController {
             mainScroll.bottomAnchor.constraint(equalTo: doneButton.topAnchor, constant: -16),
 
             scrollStack.topAnchor.constraint(equalTo: mainScroll.contentLayoutGuide.topAnchor),
-            scrollStack.leadingAnchor.constraint(equalTo: mainScroll.frameLayoutGuide.leadingAnchor, constant: 24),
-            scrollStack.trailingAnchor.constraint(equalTo: mainScroll.frameLayoutGuide.trailingAnchor, constant: -24),
+            scrollStack.leadingAnchor.constraint(equalTo: mainScroll.frameLayoutGuide.leadingAnchor, constant: scheduleQRHorizontalInset),
+            scrollStack.trailingAnchor.constraint(equalTo: mainScroll.frameLayoutGuide.trailingAnchor, constant: -scheduleQRHorizontalInset),
             scrollStack.bottomAnchor.constraint(equalTo: mainScroll.contentLayoutGuide.bottomAnchor, constant: -8),
+            scrollStack.widthAnchor.constraint(equalTo: mainScroll.frameLayoutGuide.widthAnchor, constant: -2 * scheduleQRHorizontalInset),
+
+            qrContainer.widthAnchor.constraint(equalTo: scrollStack.widthAnchor),
         ]
 
-        if payloads.count == 2 || payloads.count == 3 {
-            for sub in stack.arrangedSubviews {
-                guard let iv = sub as? UIImageView else { continue }
-                iv.widthAnchor.constraint(equalTo: iv.heightAnchor).isActive = true
-                iv.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-                iv.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
+        if isGrid {
+            for case let row as UIStackView in stack.arrangedSubviews {
+                for case let imageView as UIImageView in row.arrangedSubviews {
+                    imageView.widthAnchor.constraint(equalTo: imageView.heightAnchor).isActive = true
+                    imageView.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+                    imageView.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
+                }
             }
-        }
-
-        if payloads.count == 8 || payloads.count == 16 || payloads.count == 24 {
-            stack.widthAnchor.constraint(equalToConstant: scheduleQRGridWidth).isActive = true
-            constraints += [
-                stack.topAnchor.constraint(equalTo: qrContainer.topAnchor),
-                stack.bottomAnchor.constraint(equalTo: qrContainer.bottomAnchor),
-                stack.centerXAnchor.constraint(equalTo: qrContainer.centerXAnchor),
-            ]
         } else {
-            constraints += [
-                stack.topAnchor.constraint(equalTo: qrContainer.topAnchor),
-                stack.bottomAnchor.constraint(equalTo: qrContainer.bottomAnchor),
-                stack.leadingAnchor.constraint(equalTo: qrContainer.leadingAnchor),
-                stack.trailingAnchor.constraint(equalTo: qrContainer.trailingAnchor),
-            ]
+            bindSquareQRViews(in: stack, toContainerWidth: qrContainer)
         }
 
-        if payloads.count == 1, let qrView = stack.arrangedSubviews.first {
-            constraints += [
-                qrView.widthAnchor.constraint(equalTo: qrContainer.widthAnchor, constant: -32),
-                qrView.heightAnchor.constraint(equalTo: qrView.widthAnchor),
-            ]
-        }
+        constraints += [
+            stack.topAnchor.constraint(equalTo: qrContainer.topAnchor),
+            stack.bottomAnchor.constraint(equalTo: qrContainer.bottomAnchor),
+            stack.leadingAnchor.constraint(equalTo: qrContainer.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: qrContainer.trailingAnchor),
+        ]
 
         NSLayoutConstraint.activate(constraints)
 
@@ -233,6 +233,48 @@ final class ScheduleQRCodeViewController: UIViewController {
         )
     }
 
+    /// Guide QR block: short label + small text QR for the system Camera app.
+    private func makeGuideSection(guideURL: String) -> UIView {
+        let section = UIStackView()
+        section.translatesAutoresizingMaskIntoConstraints = false
+        section.axis = .vertical
+        section.spacing = 6
+        section.alignment = .center
+
+        section.addArrangedSubview(makeSectionLabel(
+            text: NSLocalizedString("QRShareGuideLabel", comment: "Label above guide QR for camera app")
+        ))
+
+        let guideQR = guideQRImageView(for: guideURL)
+        guideQR.isAccessibilityElement = true
+        guideQR.accessibilityLabel = NSLocalizedString("QRShareGuideAccessibility", comment: "VoiceOver label for guide QR")
+        section.addArrangedSubview(guideQR)
+
+        return section
+    }
+
+    private func makeSectionLabel(text: String) -> UILabel {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.text = text
+        label.textColor = .white
+        label.font = .systemFont(ofSize: 14, weight: .semibold)
+        label.textAlignment = .center
+        label.numberOfLines = 0
+        label.setContentCompressionResistancePriority(.required, for: .vertical)
+        return label
+    }
+
+    /// Pins 1–3 full-width schedule QRs to the container so they never overflow on 320pt phones.
+    private func bindSquareQRViews(in stack: UIStackView, toContainerWidth container: UIView) {
+        for case let imageView as UIImageView in stack.arrangedSubviews {
+            imageView.widthAnchor.constraint(equalTo: container.widthAnchor).isActive = true
+            imageView.heightAnchor.constraint(equalTo: imageView.widthAnchor).isActive = true
+            imageView.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+            imageView.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
+        }
+    }
+
     /// One row of N square QR image views for the schedule grid.
     private func rowStack(for payloads: [Data], columns: Int) -> UIStackView {
         let row = UIStackView()
@@ -243,10 +285,23 @@ final class ScheduleQRCodeViewController: UIViewController {
         for payload in payloads {
             let iv = qrImageView(for: payload, size: nil)
             iv.contentMode = .scaleAspectFit
-            iv.widthAnchor.constraint(equalTo: iv.heightAnchor, multiplier: 1).isActive = true
             row.addArrangedSubview(iv)
         }
         return row
+    }
+
+    private func guideQRImageView(for urlString: String) -> UIImageView {
+        let imageView = UIImageView()
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.contentMode = .scaleAspectFit
+        imageView.backgroundColor = .white
+        if let img = generateTextQRImage(from: urlString) {
+            imageView.image = img
+        }
+        let size = scheduleQRGuideDisplaySize
+        imageView.widthAnchor.constraint(equalToConstant: size).isActive = true
+        imageView.heightAnchor.constraint(equalToConstant: size).isActive = true
+        return imageView
     }
 
     private func qrImageView(for data: Data, size: CGFloat? = 280) -> UIImageView {
@@ -269,29 +324,31 @@ final class ScheduleQRCodeViewController: UIViewController {
         dismiss(animated: true)
     }
 
+    private func generateTextQRImage(from string: String) -> UIImage? {
+        guard let data = string.data(using: .utf8) else { return nil }
+        return generateQRImage(from: data, renderSize: 200, whiteBorder: 6)
+    }
+
     /// Generate QR from raw binary payload with white border (quiet zone). Use EC "L" so symbol is less dense and Android (ZXing) can recognize it; larger render size improves scan reliability.
-    private func generateQRImage(from data: Data) -> UIImage? {
+    private func generateQRImage(from data: Data, renderSize: CGFloat = 640, whiteBorder: CGFloat = scheduleQRImageWhiteBorder) -> UIImage? {
         guard !data.isEmpty else { return nil }
         let filter = CIFilter.qrCodeGenerator()
         filter.setValue(data, forKey: "inputMessage")
         filter.setValue("L", forKey: "inputCorrectionLevel")
         guard let output = filter.outputImage,
               output.extent.width > 0, output.extent.height > 0 else { return nil }
-        /// Render at high resolution so when scaled to fill screen the modules stay sharp for Android scanning.
-        let qrSize: CGFloat = 640
-        let scale = qrSize / min(output.extent.width, output.extent.height)
+        let scale = renderSize / min(output.extent.width, output.extent.height)
         let scaled = output.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
         let bounds = scaled.extent.integral
         guard bounds.width > 0, bounds.height > 0 else { return nil }
         let context = CIContext(options: [.useSoftwareRenderer: true])
         guard let cgImage = context.createCGImage(scaled, from: bounds) else { return nil }
-        let border = scheduleQRImageWhiteBorder
-        let totalSize = qrSize + 2 * border
+        let totalSize = renderSize + 2 * whiteBorder
         let renderer = UIGraphicsImageRenderer(size: CGSize(width: totalSize, height: totalSize))
         let imageWithBorder = renderer.image { ctx in
             UIColor.white.setFill()
             ctx.fill(CGRect(origin: .zero, size: CGSize(width: totalSize, height: totalSize)))
-            UIImage(cgImage: cgImage).draw(in: CGRect(x: border, y: border, width: qrSize, height: qrSize))
+            UIImage(cgImage: cgImage).draw(in: CGRect(x: whiteBorder, y: whiteBorder, width: renderSize, height: renderSize))
         }
         return imageWithBorder
     }

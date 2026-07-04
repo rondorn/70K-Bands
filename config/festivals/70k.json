@@ -437,5 +437,6 @@
   },
   "commentsNotAvailableTranslationKey": "DefaultDescription70K",
   "aiSchedule": true,
-  "scheduleQRShareEnabled": true
+  "scheduleQRShareEnabled": true,
+  "scheduleQRGuideURL": "bands70k://schedule-scan"
 }

@@ -78,6 +78,8 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
     private int frameCount;
     /** Consecutive analyses that did not yield a decoded QR; reset when a QR is decoded. */
     private int noDecodeCount;
+    private long lastPartialHintTimeMs;
+    private static final long PARTIAL_HINT_THROTTLE_MS = 2500;
     private final ExecutorService analysisExecutor = Executors.newSingleThreadExecutor();
 
     @Override
@@ -209,9 +211,26 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
             byte[] payload = decodeQRFromImage(image);
             if (payload != null && payload.length > 5) {
                 noDecodeCount = 0;
+                if (ScheduleQRGuideLink.matchesGuidePayloadExact(payload)) {
+                    runOnUiThread(() -> {
+                        hintText.setText(R.string.QRScanGuideQRHint);
+                        Log.d(TAG, "[QRScanner] showing guide QR hint");
+                    });
+                    return;
+                }
+                if (ScheduleQRCompression.isLikelyPartialScheduleQRScan(payload)) {
+                    Log.d(TAG, "[QRScan] likely partial read length=" + payload.length + " firstBytesHex=" + bytesToHex(payload, 12));
+                    runOnUiThread(this::showPartialReadHintIfNeeded);
+                    return;
+                }
                 logScanPayloadReceived(payload);
                 ScheduleQRCompression.PayloadTypeResult result = ScheduleQRCompression.scheduleQRBinaryPayloadType(payload);
                 if (result != null) {
+                    if (ScheduleQRCompression.isScheduleQRBinaryPayloadIncomplete(payload)) {
+                        Log.d(TAG, "[QRScan] partial payload length=" + payload.length + " type=" + (result.type & 0xFF));
+                        runOnUiThread(this::showPartialReadHintIfNeeded);
+                        return;
+                    }
                     Log.d(TAG, "[QRScan] valid payload type=" + (result.type & 0xFF) + " length=" + payload.length + " -> handlePayload");
                     runOnUiThread(() -> handlePayload(payload, result));
                 } else {
@@ -242,6 +261,10 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
             List<Barcode> barcodes = Tasks.await(barcodeScanner.process(inputImage));
             if (barcodes == null || barcodes.isEmpty()) return null;
             for (Barcode barcode : barcodes) {
+                String rawValue = barcode.getRawValue();
+                if (rawValue != null && ScheduleQRGuideLink.matchesGuideURLString(rawValue.trim())) {
+                    return rawValue.getBytes(StandardCharsets.UTF_8);
+                }
                 byte[] raw = barcode.getRawBytes();
                 if (raw != null && raw.length > 0) {
                     logPayloadFirstBytes(TAG, "[QRScan] decoded", raw);
@@ -285,6 +308,14 @@ public class ScheduleQRScanActivity extends AppCompatActivity {
         for (int i = 0; i < show; i++) hex.append(String.format("%02X ", payload[i] & 0xFF));
         if (payload.length > show) hex.append("...");
         return hex.toString().trim();
+    }
+
+    private void showPartialReadHintIfNeeded() {
+        long now = System.currentTimeMillis();
+        if (now - lastPartialHintTimeMs < PARTIAL_HINT_THROTTLE_MS) return;
+        lastPartialHintTimeMs = now;
+        hintText.setText(R.string.QRScanPartialReadHint);
+        Log.d(TAG, "[QRScanner] showing partial read hint");
     }
 
     private void handlePayload(byte[] payload, ScheduleQRCompression.PayloadTypeResult result) {

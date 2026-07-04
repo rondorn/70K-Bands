@@ -391,6 +391,10 @@
 		11E8A0522EE8A10008472A3 /* ScheduleBinaryQRScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E8A0512EE8A10008472A3 /* ScheduleBinaryQRScannerView.swift */; };
 		11E8A0532EE8A10008472A3 /* ScheduleBinaryQRScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E8A0512EE8A10008472A3 /* ScheduleBinaryQRScannerView.swift */; };
 		11E8A0542EE8A10008472A3 /* ScheduleBinaryQRScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E8A0512EE8A10008472A3 /* ScheduleBinaryQRScannerView.swift */; };
+		11E8A0722EE8A10008472A3 /* ScheduleQRGuideLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E8A0712EE8A10008472A3 /* ScheduleQRGuideLink.swift */; };
+		11E8A0732EE8A10008472A3 /* ScheduleQRGuideLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E8A0712EE8A10008472A3 /* ScheduleQRGuideLink.swift */; };
+		11E8A0742EE8A10008472A3 /* ScheduleQRGuideLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E8A0712EE8A10008472A3 /* ScheduleQRGuideLink.swift */; };
+		11E8A0752EE8A10008472A3 /* ScheduleQRGuideLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E8A0712EE8A10008472A3 /* ScheduleQRGuideLink.swift */; };
 		11EB86AB2F3530C8007D5AD0 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11EB86AA2F3530C8007D5AD0 /* AboutView.swift */; };
 		11EB86AC2F3530C8007D5AD0 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11EB86AA2F3530C8007D5AD0 /* AboutView.swift */; };
 		11EB86AD2F3530C8007D5AD0 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11EB86AA2F3530C8007D5AD0 /* AboutView.swift */; };
@@ -773,6 +777,7 @@
 		11E8A0412EE8A10008472A3 /* qr_middle.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = qr_middle.bin; sourceTree = "<group>"; };
 		11E8A0422EE8A10008472A3 /* qr_bottom.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = qr_bottom.bin; sourceTree = "<group>"; };
 		11E8A0512EE8A10008472A3 /* ScheduleBinaryQRScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleBinaryQRScannerView.swift; sourceTree = "<group>"; };
+		11E8A0712EE8A10008472A3 /* ScheduleQRGuideLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleQRGuideLink.swift; sourceTree = "<group>"; };
 		11EB86AA2F3530C8007D5AD0 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		11EB86AE2F353160007D5AD0 /* about-team.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "about-team.png"; sourceTree = "<group>"; };
 		11EB86C02F364000007D5AD0 /* about-festival-photo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "about-festival-photo.png"; sourceTree = "<group>"; };
@@ -1042,6 +1047,7 @@
 				1530C58547653A0C1AAAA76C /* ProfileTutorialOverlay.swift */,
 				1169374420F555CD00038DA5 /* Reachability.swift */,
 				11E8A0512EE8A10008472A3 /* ScheduleBinaryQRScannerView.swift */,
+				11E8A0712EE8A10008472A3 /* ScheduleQRGuideLink.swift */,
 				11C62E7C2E64B9EE000D9AF2 /* ScheduleCSVImporter.swift */,
 				11C8BDC51A7D25E700037F2B /* scheduleHandler.swift */,
 				11E8A0112EE8A10008472A3 /* ScheduleQRCodeViewController.swift */,
@@ -1858,6 +1864,7 @@
 				11E8A0122EE8A10008472A3 /* ScheduleQRCodeViewController.swift in Sources */,
 				11E8A0222EE8A10008472A3 /* ScheduleQRScannerViewController.swift in Sources */,
 				11E8A0522EE8A10008472A3 /* ScheduleBinaryQRScannerView.swift in Sources */,
+				11E8A0722EE8A10008472A3 /* ScheduleQRGuideLink.swift in Sources */,
 				11C8BDC61A7D25E700037F2B /* scheduleHandler.swift in Sources */,
 				29EC6AF2BCA8A12239CBE201 /* ProfilePickerViewController.swift in Sources */,
 				31BA99733FDAE4BB78AD4B5F /* ProfileTutorialOverlay.swift in Sources */,
@@ -1981,6 +1988,7 @@
 				11E8A0132EE8A10008472A3 /* ScheduleQRCodeViewController.swift in Sources */,
 				11E8A0232EE8A10008472A3 /* ScheduleQRScannerViewController.swift in Sources */,
 				11E8A0532EE8A10008472A3 /* ScheduleBinaryQRScannerView.swift in Sources */,
+				11E8A0732EE8A10008472A3 /* ScheduleQRGuideLink.swift in Sources */,
 				112913A22EE7D8B2008472A3 /* ProfileTutorialOverlay.swift in Sources */,
 				11F0333E1AB3B26D00AA29B8 /* scheduleHandler.swift in Sources */,
 			);
@@ -2100,6 +2108,7 @@
 				11E8A0142EE8A10008472A3 /* ScheduleQRCodeViewController.swift in Sources */,
 				11E8A0242EE8A10008472A3 /* ScheduleQRScannerViewController.swift in Sources */,
 				11E8A0542EE8A10008472A3 /* ScheduleBinaryQRScannerView.swift in Sources */,
+				11E8A0742EE8A10008472A3 /* ScheduleQRGuideLink.swift in Sources */,
 				112913A32EE7D8B2008472A3 /* ProfileTutorialOverlay.swift in Sources */,
 				1172EE262E5A1C4D006E3596 /* scheduleHandler.swift in Sources */,
 				11D5EA132F74C58400F498DE /* FirebaseWriteMonitor.swift in Sources */,
@@ -2220,6 +2229,7 @@
 				B3B9B6A68244159AB74975A3 /* ScheduleQRCodeViewController.swift in Sources */,
 				4199404285C5934DC9178566 /* ScheduleQRScannerViewController.swift in Sources */,
 				91B534441B04A7B6A718CAA5 /* ScheduleBinaryQRScannerView.swift in Sources */,
+				11E8A0752EE8A10008472A3 /* ScheduleQRGuideLink.swift in Sources */,
 				192CBA22FFE55769F02A2F5C /* ProfileTutorialOverlay.swift in Sources */,
 				D72549891EDE231CD5683190 /* scheduleHandler.swift in Sources */,
 				B3C642CB9EC6C01E105300CA /* FirebaseWriteMonitor.swift in Sources */,
@@ -2450,6 +2460,7 @@
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
 				ENABLE_BITCODE = NO;
+				ENABLE_DEBUG_DYLIB = NO;
 				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -2756,6 +2767,7 @@
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
 				ENABLE_BITCODE = NO;
+				ENABLE_DEBUG_DYLIB = NO;
 				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = "70000TonsBands/Info-MDF.plist";
@@ -2916,6 +2928,7 @@
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
 				ENABLE_BITCODE = NO;
+				ENABLE_DEBUG_DYLIB = NO;
 				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = "70000TonsBands/Info-MMF.plist";
