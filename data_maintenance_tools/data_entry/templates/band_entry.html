@@ -91,11 +91,12 @@
       <div class="form-input"><input type="text" id="country" name="country" value="{{ form_data.country }}"></div>
     </div>
 
+    {% if use_city_state %}
     <div class="form-row">
       <div class="form-label">City</div>
       <div class="form-input">
         <input type="text" id="city" name="city" value="{{ form_data.city }}">
-        <div class="hint">Optional. Shown with country on the band detail screen.</div>
+        <div class="hint">Optional. Shown with country on the band detail screen. Filled by Discover when available.</div>
       </div>
     </div>
 
@@ -103,9 +104,10 @@
       <div class="form-label">State</div>
       <div class="form-input">
         <input type="text" id="state" name="state" value="{{ form_data.state }}" maxlength="2" style="width:4em;">
-        <div class="hint">Optional. Two-letter state code (e.g. CA). Not filled by Discover.</div>
+        <div class="hint">Optional. Two-letter US state code (e.g. CA). Filled by Discover for US bands when available.</div>
       </div>
     </div>
+    {% endif %}
 
     <div class="form-row">
       <div class="form-label">Genre</div>
@@ -154,7 +156,7 @@
     }
   });
 
-  const fields = ['bandName','metalArchives','musicBrainz','latestAlbum','officalSite','imageUrl','youtube','wikipedia','country','genre','noteworthy','priorYears'].filter(id => document.getElementById(id));
+  const fields = ['bandName','metalArchives','musicBrainz','latestAlbum','officalSite','imageUrl','youtube','wikipedia','country','genre','noteworthy','priorYears'{% if use_city_state %},'city','state'{% endif %}].filter(id => document.getElementById(id));
 
   const discoverBtn = document.getElementById('discoverBtn');
   if (discoverBtn) discoverBtn.addEventListener('click', async () => {

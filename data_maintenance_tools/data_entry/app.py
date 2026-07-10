@@ -724,6 +724,7 @@ def create_app() -> Flask:
             form_data=form_data,
             write_file=lineup_path,
             show_prior_years_edit=show_prior_years_edit,
+            use_city_state=bool(cfg.get("use_city_state_field")),
             errors=errors,
             modify_mode=modify_mode,
         )
@@ -999,6 +1000,7 @@ def _config_from_form(form) -> dict[str, Any]:
         "dates": list_from_textarea(form.get("dates_text", "")),
         "days": list_from_textarea(form.get("days_text", "")),
         "event_types": list_from_textarea(form.get("event_types_text", "")),
+        "use_city_state_field": bool(form.get("use_city_state_field")),
     }
 
 
@@ -1044,11 +1046,11 @@ def _band_form_fields(cfg: dict[str, Any]) -> list[str]:
         "youtube",
         "wikipedia",
         "country",
-        "city",
-        "state",
         "genre",
         "noteworthy",
     ]
+    if cfg.get("use_city_state_field"):
+        fields.extend(["city", "state"])
     return fields
 
 

@@ -12,6 +12,7 @@ from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup
 
 from data_entry.country_names import expand_country_code
+from data_entry.location_parse import parse_musicbrainz_location, state_name_to_code
 from data_entry.http_util import USER_AGENT, fetch_url
 
 MB_BASE = "https://musicbrainz.org/ws/2"
@@ -134,10 +135,18 @@ def _discover_from_artist_detail(
     image_url, image_warnings = _resolve_artist_image(detail)
     warnings.extend(image_warnings)
 
+    city, state = parse_musicbrainz_location(detail)
+    if not state and (detail.get("country") or "").strip().upper() == "US":
+        begin_area_id = (detail.get("begin-area") or {}).get("id")
+        if begin_area_id:
+            state = _state_from_area_hierarchy(begin_area_id)
+
     data: dict[str, str] = {
         "bandName": band_name,
         "musicBrainz": musicbrainz_artist_url(mbid),
         "country": expand_country_code(detail.get("country") or ""),
+        "city": city,
+        "state": state,
         "genre": _format_genre(detail),
         "officalSite": _normalize_site_url(official_site),
         "wikipedia": wikipedia,
@@ -159,6 +168,58 @@ def _discover_from_artist_detail(
         warnings.append("No Metal Archives link on MusicBrainz.")
 
     return data, warnings
+
+
+def _state_from_area_hierarchy(area_id: str, max_depth: int = 6) -> str:
+    """Walk MusicBrainz area parents to find a US state subdivision."""
+    queue: list[str] = [area_id]
+    seen: set[str] = set()
+
+    while queue and len(seen) < max_depth:
+        current_id = queue.pop(0)
+        if not current_id or current_id in seen:
+            continue
+        seen.add(current_id)
+
+        area = _mb_get(f"/area/{current_id}?inc=area-rels&fmt=json")
+        area_type = (area.get("type") or "").strip().lower()
+        area_name = (area.get("name") or "").strip()
+
+        if area_type == "subdivision":
+            code = state_name_to_code(area_name)
+            if code:
+                return code
+
+        for iso_code in area.get("iso-3166-2-codes") or []:
+            if isinstance(iso_code, str) and iso_code.upper().startswith("US-"):
+                suffix = iso_code.split("-", 1)[-1].strip().upper()
+                if len(suffix) == 2:
+                    return suffix
+
+        next_ids: list[str] = []
+        for rel in area.get("relations") or []:
+            if rel.get("type") != "part of":
+                continue
+            parent = rel.get("area") or {}
+            parent_id = parent.get("id")
+            if not parent_id:
+                continue
+            parent_type = (parent.get("type") or "").strip().lower()
+            parent_name = (parent.get("name") or "").strip()
+            if parent_type == "subdivision":
+                code = state_name_to_code(parent_name)
+                if code:
+                    return code
+            for iso_code in parent.get("iso-3166-2-codes") or []:
+                if isinstance(iso_code, str) and iso_code.upper().startswith("US-"):
+                    suffix = iso_code.split("-", 1)[-1].strip().upper()
+                    if len(suffix) == 2:
+                        return suffix
+            next_ids.append(parent_id)
+
+        queue.extend(next_ids)
+
+    return ""
 
 
 def _capitalize_genre_label(value: str) -> str:

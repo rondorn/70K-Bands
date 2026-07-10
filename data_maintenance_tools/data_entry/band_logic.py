@@ -9,6 +9,7 @@ from typing import Any
 from urllib.parse import quote, urlparse
 
 from data_entry.config_store import lineup_fields
+from data_entry.http_util import normalize_dropbox_url
 from data_entry.network_cache import (
     CacheMeta,
     fetch_cached_text_or_empty,
@@ -123,7 +124,9 @@ def normalize_band_url_fields(data: dict[str, str]) -> dict[str, str]:
 
     image = (out.get("imageUrl") or "").strip()
     if image:
-        out["imageUrl"] = normalize_https_prefix(strip_image_url_numeric_query(image))
+        out["imageUrl"] = normalize_https_prefix(
+            strip_image_url_numeric_query(normalize_dropbox_url(image))
+        )
 
     for field in ("youtube", "metalArchives", "wikipedia"):
         value = (out.get(field) or "").strip()
@@ -258,7 +261,7 @@ def lineup_band_names(
             url, paths, force_refresh=force_refresh
         )
         rows = (
-            _parse_lineup_csv(csv_text, lineup_fields()) if csv_text else []
+            _parse_lineup_csv(csv_text, lineup_fields(cfg)) if csv_text else []
         )
         names = [
             row.get("bandName", "").strip()
@@ -303,7 +306,7 @@ def check_duplicate(
 
 def read_lineup(csv_file: str, cfg: dict[str, Any]) -> list[dict[str, str]]:
     """Read lineup rows from a local CSV file (write target only)."""
-    fields = lineup_fields()
+    fields = lineup_fields(cfg)
     path = Path(csv_file)
     if not path.is_file():
         return []
@@ -317,7 +320,7 @@ def read_lineup_from_url(
     force_refresh: bool = False,
 ) -> list[dict[str, str]]:
     """Read lineup rows from the published network URL (TTL-cached)."""
-    fields = lineup_fields()
+    fields = lineup_fields(cfg)
     url = (url or "").strip()
     if not url:
         return []
@@ -352,7 +355,7 @@ def lineup_rows_for_display(rows: list[dict[str, str]]) -> list[dict[str, str]]:
 def write_lineup(
     csv_file: str, rows: list[dict[str, str]], cfg: dict[str, Any]
 ) -> None:
-    fields = lineup_fields()
+    fields = lineup_fields(cfg)
     path = Path(csv_file)
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="") as handle:
@@ -378,7 +381,7 @@ def replace_band_at_index(
 
 
 def append_band(data: dict[str, str], csv_file: str, cfg: dict[str, Any]) -> None:
-    fields = lineup_fields()
+    fields = lineup_fields(cfg)
     path = Path(csv_file)
     path.parent.mkdir(parents=True, exist_ok=True)
     write_header = not path.is_file() or path.stat().st_size == 0

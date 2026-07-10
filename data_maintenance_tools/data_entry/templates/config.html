@@ -97,10 +97,16 @@
           <button type="button" class="secondary" id="chooseLineupFileBtn">Choose file…</button>
         </div>
         <div class="hint">Local write path for Add Band (Band List Admin). Not used for reading the lineup.</div>
+        <label style="display:block;margin-top:10px;">
+          <input type="checkbox" name="use_city_state_field" {% if cfg.use_city_state_field %}checked{% endif %}>
+          Use city/state fields in lineup CSV
+        </label>
+        <div class="hint">When enabled, band entry shows city and state columns and Discover can populate them from Metal Archives or MusicBrainz.</div>
       </div>
     </div>
     {% else %}
     <input type="hidden" name="lineup_file" value="{{ cfg.lineup_file }}">
+    {% if cfg.use_city_state_field %}<input type="hidden" name="use_city_state_field" value="on">{% endif %}
     {% endif %}
 
     {% if role_requirements.schedule_file %}

@@ -11,6 +11,7 @@ from typing import Any
 from bs4 import BeautifulSoup
 
 from data_entry.http_util import USER_AGENT, fetch_url
+from data_entry.location_parse import parse_ma_location
 
 BAND_URL_RE = re.compile(
     r"https?://(?:www\.)?metal-archives\.com/bands/[^/]+/(\d+)",
@@ -86,7 +87,9 @@ def _parse_band_page(html: str, band_url: str) -> dict[str, str]:
             band_name = script_match.group(1)
 
     country = _dd_text_for_label(soup, "Country of origin")
+    location = _dd_text_for_label(soup, "Location")
     genre = _dd_text_for_label(soup, "Genre")
+    city, state = parse_ma_location(location, country)
 
     image_url = ""
     logo = soup.find("a", id="logo")
@@ -99,6 +102,8 @@ def _parse_band_page(html: str, band_url: str) -> dict[str, str]:
     return {
         "bandName": band_name,
         "country": country,
+        "city": city,
+        "state": state,
         "genre": genre,
         "imageUrl": image_url,
         "metalArchives": band_url.strip(),
@@ -189,6 +194,8 @@ def discover_from_metal_archives(
         "youtube": "",
         "wikipedia": "",
         "country": "",
+        "city": "",
+        "state": "",
         "genre": "",
     }
 

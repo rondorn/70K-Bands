@@ -10,6 +10,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from data_entry.http_util import normalize_dropbox_url
 from data_entry.network_cache import CacheMeta
 
 SCHEDULE_COLUMNS = [
@@ -238,6 +239,8 @@ def build_event_from_form(form: dict[str, str], cfg: dict[str, Any]) -> Schedule
     image_url = value_cleanup(form.get("ImageURL", ""))
     if event_type not in NON_BAND_EVENT_TYPES:
         image_url = " "
+    elif image_url.strip() and image_url != " ":
+        image_url = normalize_dropbox_url(image_url)
 
     end_h, end_m = calculate_end_time(
         form.get("StartHour", ""),

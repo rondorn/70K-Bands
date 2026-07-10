@@ -264,15 +264,41 @@ upload_app() {
     local label="$1"
     local archive_path="$2"
     local export_path="$3"
+    local tmp_log
+    tmp_log=$(mktemp)
 
+    mkdir -p "$export_path"
     echo -e "${BLUE}Uploading ${label}…${NC}"
+
+    set +e
     xcodebuild -exportArchive \
         -archivePath "$archive_path" \
         -exportPath "$export_path" \
         -exportOptionsPlist "./exportOptions.plist" \
         -authenticationKeyPath "$AUTH_KEY_PATH" \
         -authenticationKeyID "$FASTLANE_APP_STORE_CONNECT_API_KEY_ID" \
-        -authenticationKeyIssuerID "$FASTLANE_APP_STORE_CONNECT_API_ISSUER_ID"
+        -authenticationKeyIssuerID "$FASTLANE_APP_STORE_CONNECT_API_ISSUER_ID" \
+        >"$tmp_log" 2>&1
+    local status=$?
+    set -e
+
+    cat "$tmp_log"
+
+    local failed=0
+    if grep -q '\*\* EXPORT FAILED \*\*' "$tmp_log"; then
+        failed=1
+    elif [ "$status" -ne 0 ]; then
+        failed=1
+    elif ! grep -qE '\*\* EXPORT SUCCEEDED \*\*|Upload succeeded' "$tmp_log"; then
+        failed=1
+    fi
+
+    rm -f "$tmp_log"
+
+    if [ "$failed" -eq 1 ]; then
+        echo -e "${RED}✗ ${label} export failed${NC}"
+        return 1
+    fi
 
     echo -e "${GREEN}✓ ${label} uploaded${NC}"
     echo ""

@@ -78,6 +78,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "Special Event",
         "Unofficial Event",
     ],
+    "use_city_state_field": False,
 }
 
 SCHEDULE_HEADER = (
@@ -315,8 +316,8 @@ def save_config(data: dict[str, Any], festival_id: str | None = None) -> str:
     return selected
 
 
-def lineup_fields() -> list[str]:
-    return [
+def lineup_fields(cfg: dict[str, Any] | None = None) -> list[str]:
+    fields = [
         "bandName",
         "officalSite",
         "imageUrl",
@@ -327,9 +328,14 @@ def lineup_fields() -> list[str]:
         "genre",
         "noteworthy",
         "priorYears",
-        "city",
-        "state",
     ]
+    if cfg is not None and cfg.get("use_city_state_field"):
+        fields.extend(["city", "state"])
+    return fields
+
+
+def lineup_header(cfg: dict[str, Any] | None = None) -> str:
+    return ",".join(lineup_fields(cfg)) + "\n"
 
 
 def resolved_paths(cfg: dict[str, Any] | None = None) -> dict[str, str]:
@@ -524,7 +530,7 @@ def ensure_data_files(cfg: dict[str, Any] | None = None) -> None:
     paths = resolved_paths(cfg)
 
     for key, header in (
-        ("lineup_file", LINEUP_HEADER_WITH_PRIOR),
+        ("lineup_file", lineup_header(cfg)),
         ("schedule_file", SCHEDULE_HEADER),
     ):
         path_str = paths.get(key, "")
