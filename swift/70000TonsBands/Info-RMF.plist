@@ -48,15 +48,8 @@
 		<string>fetch</string>
 		<string>remote-notification</string>
 	</array>
-	<key>UILaunchScreen</key>
-	<dict>
-		<key>UIColorName</key>
-		<string>systemBackgroundColor</string>
-		<key>UIImageName</key>
-		<string>rmf_logo</string>
-	</dict>
 	<key>UILaunchStoryboardName</key>
-	<string>UILaunchScreen-MMF.xib</string>
+	<string>UILaunchScreen-RMF</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
 	<key>UIRequiredDeviceCapabilities</key>

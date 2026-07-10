@@ -29,10 +29,8 @@
                     <constraints>
                         <constraint firstAttribute="height" constant="78" id="35c-nz-E89"/>
                     </constraints>
-                    <string key="text">All Logos, Band Artwork, and Trademarks are owned by
-the respective bands and/or Redwood Metalfest.
-This is the official festival application.
-See you at the fest!</string>
+                    <string key="text">All logos, band artwork, and trademarks are owned by the respective rights holders.
+This application is a fan schedule tool and is not affiliated with any festival or promoter unless stated in the app.</string>
                     <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                     <fontDescription key="fontDescription" type="system" pointSize="9"/>
                     <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
@@ -54,7 +52,7 @@ See you at the fest!</string>
                         <constraint firstItem="kSr-6I-sdV" firstAttribute="leading" secondItem="Jal-53-Ql9" secondAttribute="trailing" constant="30.999999999999989" id="MRx-cZ-j1f"/>
                     </constraints>
                 </stackView>
-                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="RMF Bands!" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsLetterSpacingToFitWidth="YES" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="8IY-Mn-Ozm">
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Bands" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsLetterSpacingToFitWidth="YES" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="8IY-Mn-Ozm">
                     <rect key="frame" x="18" y="79" width="444" height="40.666666666666657"/>
                     <fontDescription key="fontDescription" type="boldSystem" pointSize="34"/>
                     <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
@@ -83,7 +81,7 @@ See you at the fest!</string>
     <resources>
         <image name="icon-going-maybe" width="26.666666030883789" height="28.666666030883789"/>
         <image name="icon-going-no" width="26.666666030883789" height="28.333333969116211"/>
-        <image name="icon-going-yes" width="26.666666030883789" height="28.666666030883789"/>
+        <image name="icon-going-yes" width="26.666666030883789" height="28.666666666666668"/>
         <systemColor name="darkTextColor">
             <color white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>

@@ -1642,7 +1642,7 @@
 				115C130A3000A5EF007EA9A1 /* NotificationPayload.apns in Resources */,
 				2EF13079D62489398791AF32 /* GoogleService-Info-MMF.plist in Resources */,
 				C7935F106EA845CE82868178 /* Info-RMF.plist in Resources */,
-				729ECFBC3A7715C5224D9F56 /* Base.lproj/UILaunchScreen-MMF.xib in Resources */,
+				F9C7936B23EB4C408395690C /* Base.lproj/UILaunchScreen-RMF.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3516,7 +3516,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 169B359C1A1245CFB995B24E /* Pods-RMF Bands.debug.xcconfig */;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = mmf_bands_logo;
+				ASSETCATALOG_COMPILER_APPICON_NAME = generic_bands_logo;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = NO;
@@ -3539,7 +3539,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "RMF Bands!";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				"INFOPLIST_KEY_UILaunchStoryboardName[sdk=*]" = LaunchScreen;
+				"INFOPLIST_KEY_UILaunchStoryboardName[sdk=*]" = UILaunchScreen-RMF;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -3598,7 +3598,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = C138463394BC47F493D68E8B /* Pods-RMF Bands.release.xcconfig */;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = mmf_bands_logo;
+				ASSETCATALOG_COMPILER_APPICON_NAME = generic_bands_logo;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = NO;
@@ -3623,7 +3623,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "RMF Bands!";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				"INFOPLIST_KEY_UILaunchStoryboardName[sdk=*]" = LaunchScreen;
+				"INFOPLIST_KEY_UILaunchStoryboardName[sdk=*]" = UILaunchScreen-RMF;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

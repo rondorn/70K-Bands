@@ -149,9 +149,6 @@
                                         <label opaque="NO" userInteractionEnabled="NO" tag="9" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" insetsLayoutMarginsFromSafeArea="NO" text="Day" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumScaleFactor="0.7" adjustsFontSizeToFitWidth="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gin-Bv-NjO" userLabel="Day Label">
                                             <rect key="frame" x="380" y="0.0" width="42" height="26"/>
                                             <color key="backgroundColor" white="0.33333333329999998" alpha="1" colorSpace="calibratedWhite"/>
-                                            <constraints>
-                                                <constraint firstAttribute="width" constant="42" id="Jqr-pz-zJ7"/>
-                                            </constraints>
                                             <edgeInsets key="layoutMargins" top="0.0" left="0.0" bottom="0.0" right="0.0"/>
                                             <fontDescription key="fontDescription" type="system" pointSize="8"/>
                                             <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -168,7 +165,7 @@
                                     </subviews>
                                     <constraints>
                                         <constraint firstItem="ciy-RN-FLS" firstAttribute="leading" secondItem="hHw-8X-kFT" secondAttribute="trailing" constant="3" id="1rP-hs-BCZ"/>
-                                        <constraint firstAttribute="trailingMargin" secondItem="gin-Bv-NjO" secondAttribute="trailing" constant="-16" id="3kA-lt-ixg"/>
+                                        <constraint firstItem="37f-cq-3Eg" firstAttribute="trailing" secondItem="gin-Bv-NjO" secondAttribute="trailing" id="3kA-lt-ixg"/>
                                         <constraint firstItem="DiJ-4V-0sN" firstAttribute="top" secondItem="lcn-Dy-3kK" secondAttribute="top" id="4fs-j8-aA5"/>
                                         <constraint firstItem="DFI-ck-Zrz" firstAttribute="trailing" secondItem="lcn-Dy-3kK" secondAttribute="trailing" id="6fX-ZP-3L1"/>
                                         <constraint firstItem="DFI-ck-Zrz" firstAttribute="baseline" secondItem="gin-Bv-NjO" secondAttribute="baseline" id="9LU-GX-scO"/>
