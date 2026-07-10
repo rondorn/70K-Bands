@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import sys
 from urllib.error import URLError
+from urllib.parse import unquote, urlparse
 from urllib.request import Request, urlopen
 
 USER_AGENT = "FestivalDataEntry/1.0 (+https://github.com/festival-data-entry)"
@@ -29,8 +30,13 @@ def fetch_url(url: str, timeout_s: float = DEFAULT_TIMEOUT) -> str:
     if url.startswith("file://"):
         from pathlib import Path
 
-        path = Path(url[7:])
-        return path.read_text(encoding="utf-8")
+        parsed = urlparse(url)
+        # Windows file URLs look like file:///C:/Users/... — naive [7:] breaks them.
+        path_str = unquote(parsed.path or "")
+        if len(path_str) >= 3 and path_str[0] == "/" and path_str[2] == ":":
+            path_str = path_str[1:]
+        path = Path(path_str)
+        return path.read_text(encoding="utf-8-sig")
 
     req = Request(url, headers={"User-Agent": USER_AGENT})
     try:

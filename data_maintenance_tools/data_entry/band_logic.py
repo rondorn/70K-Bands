@@ -306,9 +306,11 @@ def read_lineup(target: str, cfg: dict[str, Any]) -> list[dict[str, str]]:
     target_str = str(target or "").strip()
     if target_str.lower().startswith("http"):
         return read_lineup_from_url(target_str, cfg, force_refresh=False)
+    from data_entry.csv_file_io import read_csv_text
+
     path = Path(target_str)
     if path.is_file():
-        return _parse_lineup_csv(path.read_text(encoding="utf-8"), fields)
+        return _parse_lineup_csv(read_csv_text(path), fields)
     return []
 
 
@@ -356,7 +358,7 @@ def _lineup_csv_text(rows: list[dict[str, str]], cfg: dict[str, Any]) -> str:
 
     fields = lineup_fields(cfg)
     buffer = io.StringIO()
-    writer = csv.DictWriter(buffer, fieldnames=fields)
+    writer = csv.DictWriter(buffer, fieldnames=fields, lineterminator="\n")
     writer.writeheader()
     for row in rows:
         normalized = normalize_band_row_for_csv(row)
@@ -383,9 +385,10 @@ def write_lineup(
         _invalidate_published_cache(cfg)
         return
 
+    from data_entry.csv_file_io import write_csv_text
+
     path = Path(target_str)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text, encoding="utf-8")
+    write_csv_text(path, text)
     if uses_dropbox_api(cfg) and is_lineup_staging_path(path, cfg):
         mark_lineup_staging_pending(cfg)
     else:

@@ -89,9 +89,11 @@ def read_schedule(path: str | Path, cfg: dict[str, Any] | None = None) -> list[S
     target = str(path or "").strip()
     if target.lower().startswith("http"):
         return read_schedule_from_url(target, cfg, force_refresh=False)
+    from data_entry.csv_file_io import read_csv_text
+
     file_path = Path(target)
     if file_path.is_file():
-        return _parse_schedule_csv(file_path.read_text(encoding="utf-8"))
+        return _parse_schedule_csv(read_csv_text(file_path))
     return []
 
 
@@ -144,7 +146,7 @@ def _schedule_csv_text(events: list[ScheduleEvent]) -> str:
     import io
 
     buffer = io.StringIO()
-    writer = csv.DictWriter(buffer, fieldnames=SCHEDULE_COLUMNS)
+    writer = csv.DictWriter(buffer, fieldnames=SCHEDULE_COLUMNS, lineterminator="\n")
     writer.writeheader()
     for event in events:
         writer.writerow(event.as_row())
@@ -171,9 +173,10 @@ def write_schedule(
             _invalidate_published_cache(cfg)
         return
 
+    from data_entry.csv_file_io import write_csv_text
+
     path = Path(target_str)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text, encoding="utf-8")
+    write_csv_text(path, text)
     if cfg is not None and uses_dropbox_api(cfg) and is_staging_path(path, cfg):
         mark_staging_pending(cfg)
     elif cfg is not None:

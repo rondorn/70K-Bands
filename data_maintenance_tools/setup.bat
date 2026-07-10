@@ -25,7 +25,8 @@ if not exist festival_data_entry.json (
 
 if not exist data mkdir data
 
-echo.
 echo Setup complete.
+echo.
+echo Note: folder/file pickers need Python's tkinter (included with python.org installs).
 echo Start the app:  run.bat
 echo Or:             run.bat --open-browser

@@ -153,10 +153,12 @@ def ensure_lineup_staging(cfg: dict[str, Any], paths: dict[str, str]) -> Path:
     if path.is_file():
         return path
 
+    from data_entry.csv_file_io import write_csv_text
+
     path.parent.mkdir(parents=True, exist_ok=True)
     url = (paths.get("band_list_url") or "").strip()
     rows = read_lineup_from_url(url, cfg, force_refresh=True) if url else []
-    path.write_text(_lineup_csv_text(rows, cfg), encoding="utf-8")
+    write_csv_text(path, _lineup_csv_text(rows, cfg))
     mark_lineup_staging_synced(cfg)
     return path
 
@@ -182,7 +184,9 @@ def sync_lineup_to_dropbox(cfg: dict[str, Any], paths: dict[str, str]) -> Lineup
     if not url:
         raise ValueError("Band list URL is not configured.")
 
-    text = csv_path.read_text(encoding="utf-8")
+    from data_entry.csv_file_io import read_csv_text
+
+    text = read_csv_text(csv_path)
     try:
         upload_text(url, text, cfg)
     except DropboxStorageError as exc:
@@ -202,15 +206,18 @@ def reload_lineup_staging_from_published(cfg: dict[str, Any], paths: dict[str, s
         raise ValueError("Band list URL is not configured.")
 
     rows = read_lineup_from_url(url, cfg, force_refresh=True)
+    from data_entry.csv_file_io import write_csv_text
+
     path = staging_csv_path(cfg)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(_lineup_csv_text(rows, cfg), encoding="utf-8")
+    write_csv_text(path, _lineup_csv_text(rows, cfg))
     mark_lineup_staging_synced(cfg)
 
 
 def get_lineup_sync_status(cfg: dict[str, Any], paths: dict[str, str]) -> LineupSyncStatus:
     from data_entry.band_logic import _parse_lineup_csv
     from data_entry.config_store import lineup_fields, uses_dropbox_api
+    from data_entry.csv_file_io import read_csv_text
 
     published_url = (paths.get("band_list_url") or "").strip()
     if not uses_dropbox_api(cfg):
@@ -235,7 +242,7 @@ def get_lineup_sync_status(cfg: dict[str, Any], paths: dict[str, str]) -> Lineup
     if csv_path.is_file():
         try:
             band_count = len(
-                _parse_lineup_csv(csv_path.read_text(encoding="utf-8"), fields)
+                _parse_lineup_csv(read_csv_text(csv_path), fields)
             )
             pending_count = len(pending_band_names(csv_path, fields))
         except OSError:

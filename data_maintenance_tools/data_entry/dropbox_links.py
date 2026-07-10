@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import time
 from pathlib import Path
@@ -46,16 +47,58 @@ def dropbox_integration_ready() -> tuple[bool, str]:
     )
 
 
+def _dropbox_paths_from_info_json() -> list[Path]:
+    """Read Dropbox install paths from info.json (Windows and macOS)."""
+    paths: list[Path] = []
+    info_locations: list[Path] = []
+    for env_key in ("APPDATA", "LOCALAPPDATA"):
+        base = os.environ.get(env_key, "").strip()
+        if base:
+            info_locations.append(Path(base) / "Dropbox" / "info.json")
+    info_locations.append(Path.home() / ".dropbox" / "info.json")
+
+    for info_path in info_locations:
+        if not info_path.is_file():
+            continue
+        try:
+            data = json.loads(info_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        for key in ("path", "business_path"):
+            raw = data.get(key)
+            if isinstance(raw, str) and raw.strip():
+                paths.append(Path(raw.strip()))
+        for section in ("personal", "business"):
+            section_data = data.get(section)
+            if not isinstance(section_data, dict):
+                continue
+            for key in ("path", "root_path"):
+                raw = section_data.get(key)
+                if isinstance(raw, str) and raw.strip():
+                    paths.append(Path(raw.strip()))
+    return paths
+
+
 def detect_dropbox_root() -> Path | None:
     """Best-effort Dropbox folder location on the local machine."""
     home = Path.home()
-    candidates: list[Path] = [home / "Dropbox"]
+    candidates: list[Path] = []
+    candidates.extend(_dropbox_paths_from_info_json())
+    candidates.append(home / "Dropbox")
     cloud_storage = home / "Library" / "CloudStorage"
     if cloud_storage.is_dir():
         candidates.extend(sorted(cloud_storage.glob("Dropbox*")))
+    seen: set[Path] = set()
     for candidate in candidates:
-        if candidate.is_dir():
-            return candidate.resolve()
+        try:
+            resolved = candidate.expanduser().resolve()
+        except OSError:
+            continue
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        if resolved.is_dir():
+            return resolved
     return None
 
 

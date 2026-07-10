@@ -31,10 +31,12 @@ def read_description_map(path: str | Path, cfg: dict[str, Any] | None = None) ->
     target = str(path or "").strip()
     if uses_dropbox_api(cfg or {}) or target.lower().startswith("http"):
         return read_description_map_from_url(target, cfg, force_refresh=True)
+    from data_entry.csv_file_io import read_csv_text
+
     file_path = Path(path)
     if not file_path.is_file():
         return []
-    return _parse_description_map_csv(file_path.read_text(encoding="utf-8-sig"))
+    return _parse_description_map_csv(read_csv_text(file_path))
 
 
 def read_description_map_from_url(
@@ -80,7 +82,7 @@ def _description_map_csv_text(rows: list[dict[str, str]]) -> str:
     import io
 
     buffer = io.StringIO()
-    writer = csv.DictWriter(buffer, fieldnames=MAP_COLUMNS)
+    writer = csv.DictWriter(buffer, fieldnames=MAP_COLUMNS, lineterminator="\n")
     writer.writeheader()
     for row in rows:
         writer.writerow(
@@ -109,10 +111,10 @@ def write_description_map(
         except DropboxStorageError as exc:
             raise ValueError(str(exc)) from exc
     else:
+        from data_entry.csv_file_io import write_csv_text
+
         path = Path(target)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with path.open("w", encoding="utf-8", newline="") as handle:
-            handle.write(text)
+        write_csv_text(path, text)
     if cfg is not None:
         invalidate_festival_network_cache(resolved_paths(cfg))
 

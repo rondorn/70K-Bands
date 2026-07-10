@@ -7,6 +7,10 @@ import subprocess
 import sys
 from pathlib import Path
 
+_SUBPROCESS_FLAGS = 0
+if sys.platform == "win32":
+    _SUBPROCESS_FLAGS = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+
 
 def resolve_picker_initial_dir(path_hint: str = "", fallback_dir: str = "") -> str:
     """
@@ -63,7 +67,20 @@ def _choose_directory_macos(initial_dir: str, title: str) -> str:
     return (result.stdout or "").strip()
 
 
+def _tkinter_available() -> bool:
+    try:
+        import tkinter  # noqa: F401
+    except ImportError:
+        return False
+    return True
+
+
 def _choose_directory_tkinter(initial_dir: str, title: str) -> str:
+    if not _tkinter_available():
+        raise RuntimeError(
+            "Folder picker requires tkinter. Reinstall Python from python.org "
+            "(check 'tcl/tk and IDLE') or type the folder path manually."
+        )
     script = f"""
 import tkinter as tk
 from tkinter import filedialog
@@ -80,6 +97,7 @@ root.destroy()
         capture_output=True,
         text=True,
         check=False,
+        creationflags=_SUBPROCESS_FLAGS,
     )
     if result.returncode != 0:
         stderr = (result.stderr or "").strip()
@@ -130,6 +148,11 @@ def _choose_file_macos(initial_dir: str, title: str) -> str:
 
 
 def _choose_file_tkinter(initial_dir: str, title: str) -> str:
+    if not _tkinter_available():
+        raise RuntimeError(
+            "File picker requires tkinter. Reinstall Python from python.org "
+            "(check 'tcl/tk and IDLE') or type the file path manually."
+        )
     script = f"""
 import tkinter as tk
 from tkinter import filedialog
@@ -150,6 +173,7 @@ root.destroy()
         capture_output=True,
         text=True,
         check=False,
+        creationflags=_SUBPROCESS_FLAGS,
     )
     if result.returncode != 0:
         stderr = (result.stderr or "").strip()

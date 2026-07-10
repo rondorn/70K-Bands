@@ -156,10 +156,12 @@ def ensure_schedule_staging(
     if path.is_file():
         return path
 
+    from data_entry.csv_file_io import write_csv_text
+
     path.parent.mkdir(parents=True, exist_ok=True)
     url = (paths.get("schedule_url") or "").strip()
     events = read_schedule_from_url(url, cfg, force_refresh=True) if url else []
-    path.write_text(_schedule_csv_text(events), encoding="utf-8")
+    write_csv_text(path, _schedule_csv_text(events))
     mark_staging_synced(cfg)
     return path
 
@@ -195,7 +197,9 @@ def sync_schedule_to_dropbox(
     if not url:
         raise ValueError("Schedule URL is not configured.")
 
-    text = csv_path.read_text(encoding="utf-8")
+    from data_entry.csv_file_io import read_csv_text
+
+    text = read_csv_text(csv_path)
     try:
         upload_text(url, text, cfg)
     except DropboxStorageError as exc:
@@ -221,9 +225,11 @@ def reload_schedule_staging_from_published(
         raise ValueError("Schedule URL is not configured.")
 
     events = read_schedule_from_url(url, cfg, force_refresh=True)
+    from data_entry.csv_file_io import write_csv_text
+
     path = staging_csv_path(cfg)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(_schedule_csv_text(events), encoding="utf-8")
+    write_csv_text(path, _schedule_csv_text(events))
     mark_staging_synced(cfg)
 
 
@@ -231,6 +237,7 @@ def get_schedule_sync_status(
     cfg: dict[str, Any], paths: dict[str, str]
 ) -> ScheduleSyncStatus:
     from data_entry.config_store import uses_dropbox_api
+    from data_entry.csv_file_io import read_csv_text
     from data_entry.schedule_logic import _parse_schedule_csv
 
     published_url = (paths.get("schedule_url") or "").strip()
@@ -254,7 +261,7 @@ def get_schedule_sync_status(
     pending_count = 0
     if csv_path.is_file():
         try:
-            event_count = len(_parse_schedule_csv(csv_path.read_text(encoding="utf-8")))
+            event_count = len(_parse_schedule_csv(read_csv_text(csv_path)))
             pending_count = len(pending_schedule_keys(csv_path))
         except OSError:
             event_count = 0

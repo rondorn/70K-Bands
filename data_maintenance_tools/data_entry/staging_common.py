@@ -6,6 +6,8 @@ import time
 from pathlib import Path
 from typing import Any
 
+from data_entry.csv_file_io import read_csv_text, write_csv_text
+
 STAGING_DIR = ".staging"
 SYNC_STATE_SYNCED = "synced"
 SYNC_STATE_PENDING = "pending"
@@ -21,7 +23,7 @@ def write_synced_snapshot(staging_csv: Path) -> None:
     if staging_csv.is_file():
         snapshot = synced_snapshot_path(staging_csv)
         snapshot.parent.mkdir(parents=True, exist_ok=True)
-        snapshot.write_text(staging_csv.read_text(encoding="utf-8"), encoding="utf-8")
+        write_csv_text(snapshot, read_csv_text(staging_csv))
 
 
 def _age_label(timestamp: float) -> str:
@@ -67,11 +69,11 @@ def pending_band_names(staging_csv: Path, fields: list[str]) -> set[str]:
     if not staging_csv.is_file():
         return set()
 
-    staging_rows = _parse_lineup_csv(staging_csv.read_text(encoding="utf-8"), fields)
+    staging_rows = _parse_lineup_csv(read_csv_text(staging_csv), fields)
     synced_path = synced_snapshot_path(staging_csv)
     synced_rows: list[dict[str, str]] = []
     if synced_path.is_file():
-        synced_rows = _parse_lineup_csv(synced_path.read_text(encoding="utf-8"), fields)
+        synced_rows = _parse_lineup_csv(read_csv_text(synced_path), fields)
 
     synced_by_name = {
         (row.get("bandName") or "").strip(): band_row_fingerprint(row, fields)
@@ -118,11 +120,11 @@ def pending_schedule_keys(staging_csv: Path) -> set[str]:
     if not staging_csv.is_file():
         return set()
 
-    staging_events = _parse_schedule_csv(staging_csv.read_text(encoding="utf-8"))
+    staging_events = _parse_schedule_csv(read_csv_text(staging_csv))
     synced_path = synced_snapshot_path(staging_csv)
     synced_events: list = []
     if synced_path.is_file():
-        synced_events = _parse_schedule_csv(synced_path.read_text(encoding="utf-8"))
+        synced_events = _parse_schedule_csv(read_csv_text(synced_path))
 
     synced_by_key = {
         schedule_event_key(event.band, event.location, event.date, event.start_time): (
@@ -151,7 +153,7 @@ def staging_has_unsynced_changes(staging_csv: Path) -> bool:
     synced_path = synced_snapshot_path(staging_csv)
     if not synced_path.is_file():
         return True
-    return staging_csv.read_text(encoding="utf-8") != synced_path.read_text(encoding="utf-8")
+    return read_csv_text(staging_csv) != read_csv_text(synced_path)
 
 
 def float_or_none(value: Any) -> float | None:
