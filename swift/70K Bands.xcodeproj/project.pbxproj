@@ -130,6 +130,151 @@
 		1156B4F51A6613E700D48D12 /* urlStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1156B4F41A6613E700D48D12 /* urlStorage.swift */; };
 		115B64B3292AC95800DF2313 /* UILaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1154F6191A575893003F4764 /* UILaunchScreen.xib */; };
 		115B64B4292ACD6400DF2313 /* UILaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1154F6191A575893003F4764 /* UILaunchScreen.xib */; };
+		115C127A3000A5EF007EA9A1 /* EventManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C62E872E6661C9000D9AF2 /* EventManager.swift */; };
+		115C127B3000A5EF007EA9A1 /* UtilityHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ED61801A9103C100D29A5B /* UtilityHandler.swift */; };
+		115C127C3000A5EF007EA9A1 /* ToastMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1187BE1120D6AFC8002F070F /* ToastMessages.swift */; };
+		115C127D3000A5EF007EA9A1 /* BandDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D6E82E63C879000A98B0 /* BandDataManager.swift */; };
+		115C127E3000A5EF007EA9A1 /* imageHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1154F6301A5758BF003F4764 /* imageHandler.swift */; };
+		115C127F3000A5EF007EA9A1 /* preferenceDefault.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1172EE552E5A292E006E3596 /* preferenceDefault.swift */; };
+		115C12803000A5EF007EA9A1 /* ConfigurationTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1172EE512E5A292E006E3596 /* ConfigurationTest.swift */; };
+		115C12813000A5EF007EA9A1 /* DataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11895B962EE4C8EB008CC4A9 /* DataManager.swift */; };
+		115C12823000A5EF007EA9A1 /* ProfilePickerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 080FE1E959C6EBF8BA8E5265 /* ProfilePickerViewController.swift */; };
+		115C12833000A5EF007EA9A1 /* FestivalConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1172EE522E5A292E006E3596 /* FestivalConfig.swift */; };
+		115C12843000A5EF007EA9A1 /* FestivalConfigLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E2A0012E5A292E006E3596 /* FestivalConfigLoader.swift */; };
+		115C12853000A5EF007EA9A1 /* DataIntegrityTag.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E2B0112E5A292E006E3596 /* DataIntegrityTag.swift */; };
+		115C12863000A5EF007EA9A1 /* CommonFilterSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119C80432F4CF06500304A1D /* CommonFilterSheetView.swift */; };
+		115C12873000A5EF007EA9A1 /* SwiftUITranslationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111A936C2E4F8FAB00EA4ABD /* SwiftUITranslationHelper.swift */; };
+		115C12883000A5EF007EA9A1 /* userDataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ABAA5F222C7EFF00A04397 /* userDataHandler.swift */; };
+		115C12893000A5EF007EA9A1 /* firebaseBandDataWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D4844A2241DA0C00910878 /* firebaseBandDataWrite.swift */; };
+		115C128A3000A5EF007EA9A1 /* SortFilterMenuController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11942FD31D0CE33D0078A422 /* SortFilterMenuController.swift */; };
+		115C128B3000A5EF007EA9A1 /* ShowsAttended.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11AE985220CDFE890007C4E1 /* ShowsAttended.swift */; };
+		115C128C3000A5EF007EA9A1 /* DataModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11895BA22EE4F0DB008CC4A9 /* DataModels.swift */; };
+		115C128D3000A5EF007EA9A1 /* CustomListEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119434B32B1FCFA000DA3F87 /* CustomListEntry.swift */; };
+		115C128E3000A5EF007EA9A1 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11EB86AA2F3530C8007D5AD0 /* AboutView.swift */; };
+		115C128F3000A5EF007EA9A1 /* LaunchTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111608622F647C0D00B1B407 /* LaunchTiming.swift */; };
+		115C12903000A5EF007EA9A1 /* variableStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 115213282A69E23C0017DD9F /* variableStore.swift */; };
+		115C12913000A5EF007EA9A1 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DCE9BC1A86F9E000A25FB8 /* Constants.swift */; };
+		115C12923000A5EF007EA9A1 /* DropDownCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110E084D2AECB6E200075618 /* DropDownCell.swift */; };
+		115C12933000A5EF007EA9A1 /* AIScheduleStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 115F0DD22F551DE7003CD82C /* AIScheduleStorage.swift */; };
+		115C12943000A5EF007EA9A1 /* AttendanceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E2F2432E8D78530004D6F4 /* AttendanceManager.swift */; };
+		115C12953000A5EF007EA9A1 /* iCloudDataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119A867322D12FA700D23233 /* iCloudDataHandler.swift */; };
+		115C12963000A5EF007EA9A1 /* firebaseUserWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D4844422418A9E00910878 /* firebaseUserWrite.swift */; };
+		115C12973000A5EF007EA9A1 /* SQLiteDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11895B9B2EE4D4F1008CC4A9 /* SQLiteDataManager.swift */; };
+		115C12983000A5EF007EA9A1 /* firebaseEventDataWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D4844D2241DED700910878 /* firebaseEventDataWrite.swift */; };
+		115C12993000A5EF007EA9A1 /* webViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11BE68F41A59C45100602EC7 /* webViewController.swift */; };
+		115C129A3000A5EF007EA9A1 /* FilePaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D7C2F415D370036743C /* FilePaths.swift */; };
+		115C129B3000A5EF007EA9A1 /* CSVFields.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D7A2F415D370036743C /* CSVFields.swift */; };
+		115C129C3000A5EF007EA9A1 /* VenueConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D7F2F415D370036743C /* VenueConstants.swift */; };
+		115C129D3000A5EF007EA9A1 /* EventTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D7B2F415D370036743C /* EventTypes.swift */; };
+		115C129E3000A5EF007EA9A1 /* iCloudConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D7D2F415D370036743C /* iCloudConstants.swift */; };
+		115C129F3000A5EF007EA9A1 /* UIConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D7E2F415D370036743C /* UIConstants.swift */; };
+		115C12A03000A5EF007EA9A1 /* YearManagementService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D802F415D370036743D /* YearManagementService.swift */; };
+		115C12A13000A5EF007EA9A1 /* MasterViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D812F415D370036743E /* MasterViewModel.swift */; };
+		115C12A23000A5EF007EA9A1 /* MasterViewCacheManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D822F415D370036743F /* MasterViewCacheManager.swift */; };
+		115C12A33000A5EF007EA9A1 /* MasterViewUIManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D832F415D3700367440 /* MasterViewUIManager.swift */; };
+		115C12A43000A5EF007EA9A1 /* MasterViewYearChangeCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9DA42F415D3700367442 /* MasterViewYearChangeCoordinator.swift */; };
+		115C12A53000A5EF007EA9A1 /* MasterViewLandscapeScheduleCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9DB52F415D3700367447 /* MasterViewLandscapeScheduleCoordinator.swift */; };
+		115C12A63000A5EF007EA9A1 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D792F415D370036743C /* AppState.swift */; };
+		115C12A73000A5EF007EA9A1 /* CompactActionSheetViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11CC7FB82F3FD2CD005DF9CC /* CompactActionSheetViewController.swift */; };
+		115C12A83000A5EF007EA9A1 /* BandSelectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11CC7FBC2F3FD2CD005DF9CC /* BandSelectionViewController.swift */; };
+		115C12A93000A5EF007EA9A1 /* DropDown.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110E08482AECB6E100075618 /* DropDown.swift */; };
+		115C12AA3000A5EF007EA9A1 /* CSV.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C8BDC91A7D398400037F2B /* CSV.swift */; };
+		115C12AB3000A5EF007EA9A1 /* CombinedImageListHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110FA1602E3BAF7B003A0184 /* CombinedImageListHandler.swift */; };
+		115C12AC3000A5EF007EA9A1 /* dataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DAB49A1A5DDA9400A8B12E /* dataHandler.swift */; };
+		115C12AD3000A5EF007EA9A1 /* DPDKeyboardListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110E08492AECB6E100075618 /* DPDKeyboardListener.swift */; };
+		115C12AE3000A5EF007EA9A1 /* DPDConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110E084B2AECB6E100075618 /* DPDConstants.swift */; };
+		115C12AF3000A5EF007EA9A1 /* SQLiteProfileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1129139A2EE77A11008472A3 /* SQLiteProfileManager.swift */; };
+		115C12B03000A5EF007EA9A1 /* ShowAttendedReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11111FA620D03D77008E41F6 /* ShowAttendedReport.swift */; };
+		115C12B13000A5EF007EA9A1 /* _0000TonsBands.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 1154F60D1A575893003F4764 /* _0000TonsBands.xcdatamodeld */; };
+		115C12B23000A5EF007EA9A1 /* PortraitFilterSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119C803C2F4CEB5700304A1D /* PortraitFilterSheetView.swift */; };
+		115C12B33000A5EF007EA9A1 /* DataModel.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 1147D6D72E63A8C3000A98B0 /* DataModel.xcdatamodeld */; };
+		115C12B43000A5EF007EA9A1 /* DetailHostingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1175C9382E4D2C5A0074E2F2 /* DetailHostingController.swift */; };
+		115C12B53000A5EF007EA9A1 /* SQLiteAttendanceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 112913782EE618BE008472A3 /* SQLiteAttendanceManager.swift */; };
+		115C12B63000A5EF007EA9A1 /* SQLiteiCloudSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 112913792EE618BE008472A3 /* SQLiteiCloudSync.swift */; };
+		115C12B73000A5EF007EA9A1 /* DebugLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 113EB9292F243A4D00CE27BB /* DebugLogger.swift */; };
+		115C12B83000A5EF007EA9A1 /* SQLitePriorityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1129137A2EE618BE008472A3 /* SQLitePriorityManager.swift */; };
+		115C12B93000A5EF007EA9A1 /* DetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1175C9392E4D2C5A0074E2F2 /* DetailView.swift */; };
+		115C12BA3000A5EF007EA9A1 /* DetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1175C93A2E4D2C5A0074E2F2 /* DetailViewModel.swift */; };
+		115C12BB3000A5EF007EA9A1 /* DetailProfileBypassBandNames.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11FAC0012FEF20260507A001 /* DetailProfileBypassBandNames.swift */; };
+		115C12BC3000A5EF007EA9A1 /* DeviceSizeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1175C93A2E4D2C5A0074E2F3 /* DeviceSizeManager.swift */; };
+		115C12BD3000A5EF007EA9A1 /* LandscapeScheduleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA018E4476A45C994ED91C0 /* LandscapeScheduleView.swift */; };
+		115C12BE3000A5EF007EA9A1 /* LandscapeScheduleViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DDB7E0B0AC440BA94B56DBD /* LandscapeScheduleViewModel.swift */; };
+		115C12BF3000A5EF007EA9A1 /* BandDescriptionTranslator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114B5C082E468DCE0030CA9D /* BandDescriptionTranslator.swift */; };
+		115C12C03000A5EF007EA9A1 /* BandNamesHandlerProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D6FD2E63CF51000A98B0 /* BandNamesHandlerProtocol.swift */; };
+		115C12C13000A5EF007EA9A1 /* PreferencesHostingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11615BB02E4644ED007BD3D5 /* PreferencesHostingController.swift */; };
+		115C12C23000A5EF007EA9A1 /* BandCSVImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D6DC2E63C549000A98B0 /* BandCSVImporter.swift */; };
+		115C12C33000A5EF007EA9A1 /* AutoChooseAttendanceWizardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C061EC2F55FDAA0037A875 /* AutoChooseAttendanceWizardView.swift */; };
+		115C12C43000A5EF007EA9A1 /* PreferencesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11615BB22E4644ED007BD3D5 /* PreferencesViewModel.swift */; };
+		115C12C53000A5EF007EA9A1 /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11615BB12E4644ED007BD3D5 /* PreferencesView.swift */; };
+		115C12C63000A5EF007EA9A1 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1154F60B1A575893003F4764 /* AppDelegate.swift */; };
+		115C12C73000A5EF007EA9A1 /* Reachability.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1169374420F555CD00038DA5 /* Reachability.swift */; };
+		115C12C83000A5EF007EA9A1 /* ProfileColorManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 112913962EE77518008472A3 /* ProfileColorManager.swift */; };
+		115C12C93000A5EF007EA9A1 /* bandNamesHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1154F6321A5758D3003F4764 /* bandNamesHandler.swift */; };
+		115C12CA3000A5EF007EA9A1 /* SharedPreferencesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1129138B2EE74F7F008472A3 /* SharedPreferencesManager.swift */; };
+		115C12CB3000A5EF007EA9A1 /* SharedPreferencesImportHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1129138A2EE74F7F008472A3 /* SharedPreferencesImportHandler.swift */; };
+		115C12CC3000A5EF007EA9A1 /* SharingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1129138C2EE74F7F008472A3 /* SharingView.swift */; };
+		115C12CD3000A5EF007EA9A1 /* mainListController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DCE9B31A856EE600A25FB8 /* mainListController.swift */; };
+		115C12CE3000A5EF007EA9A1 /* localNotificationHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DCE9B51A85B9FF00A25FB8 /* localNotificationHandler.swift */; };
+		115C12CF3000A5EF007EA9A1 /* urlStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1156B4F41A6613E700D48D12 /* urlStorage.swift */; };
+		115C12D03000A5EF007EA9A1 /* EventCSVImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C62E8B2E6661F0000D9AF2 /* EventCSVImporter.swift */; };
+		115C12D13000A5EF007EA9A1 /* NetworkTesting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1122E3ED23DC8E38005EE50D /* NetworkTesting.swift */; };
+		115C12D23000A5EF007EA9A1 /* MasterViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1154F6101A575893003F4764 /* MasterViewController.swift */; };
+		115C12D33000A5EF007EA9A1 /* AIScheduleBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 115F0DCA2F551A76003CD82C /* AIScheduleBuilder.swift */; };
+		115C12D43000A5EF007EA9A1 /* CreateAIScheduleSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 115F0DCB2F551A76003CD82C /* CreateAIScheduleSheet.swift */; };
+		115C12D53000A5EF007EA9A1 /* AutoScheduleWizardManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5B /* AutoScheduleWizardManager.swift */; };
+		115C12D63000A5EF007EA9A1 /* MinimumVersionWarningManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0B1C2D3E4F5061728394A5B /* MinimumVersionWarningManager.swift */; };
+		115C12D73000A5EF007EA9A1 /* SharedCommentsSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C1C2D3E4F5061728394B0B /* SharedCommentsSettings.swift */; };
+		115C12D83000A5EF007EA9A1 /* firebaseSharedCommentsWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C1C2D3E4F5061728394B0C /* firebaseSharedCommentsWrite.swift */; };
+		115C12D93000A5EF007EA9A1 /* DropDown+Appearance.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110E084A2AECB6E100075618 /* DropDown+Appearance.swift */; };
+		115C12DA3000A5EF007EA9A1 /* httpHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C8BDC71A7D264F00037F2B /* httpHandler.swift */; };
+		115C12DB3000A5EF007EA9A1 /* DPDUIView+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110E084C2AECB6E200075618 /* DPDUIView+Extension.swift */; };
+		115C12DC3000A5EF007EA9A1 /* guiIcons.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1156B4F21A660BE500D48D12 /* guiIcons.swift */; };
+		115C12DD3000A5EF007EA9A1 /* Settings70k.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E4EDA92ACBAE5E0036D002 /* Settings70k.swift */; };
+		115C12DE3000A5EF007EA9A1 /* countryHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D05AAC291C545000D5B002 /* countryHandler.swift */; };
+		115C12DF3000A5EF007EA9A1 /* CustomBandDescription.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110924351F748601002237AB /* CustomBandDescription.swift */; };
+		115C12E03000A5EF007EA9A1 /* PriorityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D70C2E63E33C000A98B0 /* PriorityManager.swift */; };
+		115C12E13000A5EF007EA9A1 /* CellDataCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1145F0D42E69ED1A002B7511 /* CellDataCache.swift */; };
+		115C12E23000A5EF007EA9A1 /* DataCollectionCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C62E7B2E64B9EE000D9AF2 /* DataCollectionCoordinator.swift */; };
+		115C12E33000A5EF007EA9A1 /* ScheduleCSVImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C62E7C2E64B9EE000D9AF2 /* ScheduleCSVImporter.swift */; };
+		115C12E43000A5EF007EA9A1 /* ScheduleQRCompression.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E8A0012EE8A10008472A3 /* ScheduleQRCompression.swift */; };
+		115C12E53000A5EF007EA9A1 /* ScheduleQRCodeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E8A0112EE8A10008472A3 /* ScheduleQRCodeViewController.swift */; };
+		115C12E63000A5EF007EA9A1 /* ScheduleQRScannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E8A0212EE8A10008472A3 /* ScheduleQRScannerViewController.swift */; };
+		115C12E73000A5EF007EA9A1 /* ScheduleBinaryQRScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E8A0512EE8A10008472A3 /* ScheduleBinaryQRScannerView.swift */; };
+		115C12E83000A5EF007EA9A1 /* ScheduleQRGuideLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E8A0712EE8A10008472A3 /* ScheduleQRGuideLink.swift */; };
+		115C12E93000A5EF007EA9A1 /* ProfileTutorialOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1530C58547653A0C1AAAA76C /* ProfileTutorialOverlay.swift */; };
+		115C12EA3000A5EF007EA9A1 /* scheduleHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C8BDC51A7D25E700037F2B /* scheduleHandler.swift */; };
+		115C12EB3000A5EF007EA9A1 /* FirebaseWriteMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D5EA122F74C58400F498DE /* FirebaseWriteMonitor.swift */; };
+		115C12EC3000A5EF007EA9A1 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DD4175EFC5176744994D3FE6 /* Foundation.framework */; };
+		115C12ED3000A5EF007EA9A1 /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11B20C431ECDE4ED0031FD3A /* UserNotifications.framework */; };
+		115C12EE3000A5EF007EA9A1 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D741A68284A00267A8F /* SystemConfiguration.framework */; };
+		115C12EF3000A5EF007EA9A1 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11274945242D044800B8E1B8 /* WebKit.framework */; };
+		115C12F03000A5EF007EA9A1 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D701A68283600267A8F /* Security.framework */; };
+		115C12F13000A5EF007EA9A1 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D6E1A68282C00267A8F /* QuartzCore.framework */; };
+		115C12F23000A5EF007EA9A1 /* MobileCoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D6C1A68282100267A8F /* MobileCoreServices.framework */; };
+		115C12F33000A5EF007EA9A1 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D6A1A68281500267A8F /* CoreLocation.framework */; };
+		115C12F43000A5EF007EA9A1 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D681A68280A00267A8F /* CoreGraphics.framework */; };
+		115C12F53000A5EF007EA9A1 /* CloudKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11FD1F1D20E006C100BE0141 /* CloudKit.framework */; };
+		115C12F63000A5EF007EA9A1 /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D661A6827FC00267A8F /* CFNetwork.framework */; };
+		115C12F73000A5EF007EA9A1 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D641A6827F300267A8F /* AudioToolbox.framework */; };
+		115C12F93000A5EF007EA9A1 /* SNL-More_Cowbell.mov in Resources */ = {isa = PBXBuildFile; fileRef = 117BAADB2DC1315900A2830A /* SNL-More_Cowbell.mov */; };
+		115C12FA3000A5EF007EA9A1 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1154F6171A575893003F4764 /* Images.xcassets */; };
+		115C12FB3000A5EF007EA9A1 /* Info-70K.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1172EE532E5A292E006E3596 /* Info-70K.plist */; };
+		115C12FC3000A5EF007EA9A1 /* UILaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1154F6191A575893003F4764 /* UILaunchScreen.xib */; };
+		115C12FD3000A5EF007EA9A1 /* UILaunchScreen-MDF.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1172EE652E5A3486006E3596 /* UILaunchScreen-MDF.xib */; };
+		115C12FE3000A5EF007EA9A1 /* ApiKeys.plist in Resources */ = {isa = PBXBuildFile; fileRef = 11AC1D7C1A682AF100267A8F /* ApiKeys.plist */; };
+		115C12FF3000A5EF007EA9A1 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 114CC0701C79204100CF5BF1 /* Main.storyboard */; };
+		115C13003000A5EF007EA9A1 /* CustomListEntry.xib in Resources */ = {isa = PBXBuildFile; fileRef = 11E6F4142AEC6C47007C1387 /* CustomListEntry.xib */; };
+		115C13013000A5EF007EA9A1 /* OnMyWayToDeath.wav in Resources */ = {isa = PBXBuildFile; fileRef = 11DCE9BE1A87058000A25FB8 /* OnMyWayToDeath.wav */; };
+		115C13023000A5EF007EA9A1 /* DropDownCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 110E08472AECB6E100075618 /* DropDownCell.xib */; };
+		115C13033000A5EF007EA9A1 /* countries.txt in Resources */ = {isa = PBXBuildFile; fileRef = 11D05AAB291C505200D5B002 /* countries.txt */; };
+		115C13043000A5EF007EA9A1 /* about-team.png in Resources */ = {isa = PBXBuildFile; fileRef = 11EB86AE2F353160007D5AD0 /* about-team.png */; };
+		115C13053000A5EF007EA9A1 /* about-festival-photo.png in Resources */ = {isa = PBXBuildFile; fileRef = 11EB86C02F364000007D5AD0 /* about-festival-photo.png */; };
+		115C13063000A5EF007EA9A1 /* about-robert-photo.png in Resources */ = {isa = PBXBuildFile; fileRef = 11EB86D02F364100007D5AD0 /* about-robert-photo.png */; };
+		115C13073000A5EF007EA9A1 /* about-leah-photo.png in Resources */ = {isa = PBXBuildFile; fileRef = 11EB86E02F364200007D5AD0 /* about-leah-photo.png */; };
+		115C13083000A5EF007EA9A1 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1172A2251B5AADC900C28AB3 /* Localizable.strings */; };
+		115C13093000A5EF007EA9A1 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 114F63AB1A84678D00584AD0 /* Settings.bundle */; };
+		115C130A3000A5EF007EA9A1 /* NotificationPayload.apns in Resources */ = {isa = PBXBuildFile; fileRef = 11FBBE1D232F26E000109035 /* NotificationPayload.apns */; };
+		115C130B3000A5EF007EA9A1 /* BinaryQRScanner in Frameworks */ = {isa = PBXBuildFile; productRef = 11E8A0622EE8A10008472A3 /* BinaryQRScanner */; };
 		115F0DCC2F551A76003CD82C /* AIScheduleBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 115F0DCA2F551A76003CD82C /* AIScheduleBuilder.swift */; };
 		115F0DCD2F551A76003CD82C /* CreateAIScheduleSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 115F0DCB2F551A76003CD82C /* CreateAIScheduleSheet.swift */; };
 		115F0DCE2F551A76003CD82C /* AIScheduleBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 115F0DCA2F551A76003CD82C /* AIScheduleBuilder.swift */; };
@@ -451,6 +596,7 @@
 		35A9F66DA92B743D8A39E501 /* firebaseBandDataWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D4844A2241DA0C00910878 /* firebaseBandDataWrite.swift */; };
 		39C00A3B9AA43F6055793948 /* countries.txt in Resources */ = {isa = PBXBuildFile; fileRef = 11D05AAB291C505200D5B002 /* countries.txt */; };
 		3A77CC86891D43781090538C /* SharingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1129138C2EE74F7F008472A3 /* SharingView.swift */; };
+		3D70D6FFF0FC4B719F68D26A /* RMF in Resources */ = {isa = PBXBuildFile; fileRef = 001AC4D4D1FB48BCA6385B88 /* RMF */; };
 		3E84A8659301BF791B5C994D /* MasterViewYearChangeCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9DA42F415D3700367442 /* MasterViewYearChangeCoordinator.swift */; };
 		415C5D050350420AFB3905CE /* dataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DAB49A1A5DDA9400A8B12E /* dataHandler.swift */; };
 		4176FC5E07C7F7E6B101DA79 /* DropDown+Appearance.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110E084A2AECB6E100075618 /* DropDown+Appearance.swift */; };
@@ -511,7 +657,6 @@
 		91B534441B04A7B6A718CAA5 /* ScheduleBinaryQRScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E8A0512EE8A10008472A3 /* ScheduleBinaryQRScannerView.swift */; };
 		91DE0309F4D48DE27B165510 /* FestivalConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1172EE522E5A292E006E3596 /* FestivalConfig.swift */; };
 		9938B9E1542EB92612852BC9 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DD4175EFC5176744994D3FE6 /* Foundation.framework */; };
-		9DE58C80B71FF2933BD45C36 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
 		9FC5D12656BBD42B6539A941 /* DetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1175C9392E4D2C5A0074E2F2 /* DetailView.swift */; };
 		A0E332C6C3514EE2A65FF3DC /* LandscapeScheduleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA018E4476A45C994ED91C0 /* LandscapeScheduleView.swift */; };
 		A0FBB98EFDE4176062616331 /* CloudKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11FD1F1D20E006C100BE0141 /* CloudKit.framework */; };
@@ -536,6 +681,7 @@
 		B3B9B6A68244159AB74975A3 /* ScheduleQRCodeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E8A0112EE8A10008472A3 /* ScheduleQRCodeViewController.swift */; };
 		B3C642CB9EC6C01E105300CA /* FirebaseWriteMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D5EA122F74C58400F498DE /* FirebaseWriteMonitor.swift */; };
 		B6068448536BDC6C38AB3B70 /* UILaunchScreen-MDF.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1172EE652E5A3486006E3596 /* UILaunchScreen-MDF.xib */; };
+		B6872945622F442593B1EF82 /* GoogleService-Info-RMF.plist in Resources */ = {isa = PBXBuildFile; fileRef = 4C5AACFFF1F94E719B297DF0 /* GoogleService-Info-RMF.plist */; };
 		B7C547FDF6B7E8F410EBD7D8 /* PortraitFilterSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119C803C2F4CEB5700304A1D /* PortraitFilterSheetView.swift */; };
 		BDE31D9D2E7A29D6165DE1B3 /* ShowAttendedReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11111FA620D03D77008E41F6 /* ShowAttendedReport.swift */; };
 		BE635B27BE2B02D1591B5CBE /* CustomListEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119434B32B1FCFA000DA3F87 /* CustomListEntry.swift */; };
@@ -549,6 +695,7 @@
 		C0C1C2D3E4F5061728394B2E /* firebaseSharedCommentsWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C1C2D3E4F5061728394B0C /* firebaseSharedCommentsWrite.swift */; };
 		C35E54136ED3499D5AD15A2A /* Pods_70K_BandsTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7244FDFE5D87C624F0B9DB94 /* Pods_70K_BandsTests.framework */; };
 		C540B6AB7EC7E054D2133E81 /* FilePaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D7C2F415D370036743C /* FilePaths.swift */; };
+		C7935F106EA845CE82868178 /* Info-RMF.plist in Resources */ = {isa = PBXBuildFile; fileRef = B2419D6586AE49F081AAD3F8 /* Info-RMF.plist */; };
 		C7A7A7A9C001454C90C68720 /* CreateAIScheduleSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 115F0DCB2F551A76003CD82C /* CreateAIScheduleSheet.swift */; };
 		C7AFBDE09AA19D8DC132BD28 /* BandCSVImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D6DC2E63C549000A98B0 /* BandCSVImporter.swift */; };
 		CAE32FE480C62C140668DE21 /* AutoChooseAttendanceWizardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C061EC2F55FDAA0037A875 /* AutoChooseAttendanceWizardView.swift */; };
@@ -581,9 +728,11 @@
 		F1E2B0152E5A292E006E3596 /* DataIntegrityTag.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E2B0112E5A292E006E3596 /* DataIntegrityTag.swift */; };
 		F2EF5FCC2A774600FD4827EF /* Settings70k.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E4EDA92ACBAE5E0036D002 /* Settings70k.swift */; };
 		F4041B7229C6CDF1BDE208A2 /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11B20C431ECDE4ED0031FD3A /* UserNotifications.framework */; };
+		F4288A81F0924614BF0B4D24 /* Pods_RMF_Bands.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E49E36AB3BD44277AC9FF250 /* Pods_RMF_Bands.framework */; };
 		F5E3DD40F40436DDFF677745 /* iCloudDataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119A867322D12FA700D23233 /* iCloudDataHandler.swift */; };
 		F65703AB2ACFD227A41BE6C5 /* SharedPreferencesImportHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1129138A2EE74F7F008472A3 /* SharedPreferencesImportHandler.swift */; };
 		F6FEBFA8A63B0ED0EB73E621 /* UtilityHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ED61801A9103C100D29A5B /* UtilityHandler.swift */; };
+		F9C7936B23EB4C408395690C /* Base.lproj/UILaunchScreen-RMF.xib in Resources */ = {isa = PBXBuildFile; fileRef = 59A28A82395F4277BA2A3B6A /* Base.lproj/UILaunchScreen-RMF.xib */; };
 		FB06ED5C0AFE388FC871A6A5 /* CombinedImageListHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110FA1602E3BAF7B003A0184 /* CombinedImageListHandler.swift */; };
 		FC0A35D286FBDD09DA6EEEEC /* SharedPreferencesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1129138B2EE74F7F008472A3 /* SharedPreferencesManager.swift */; };
 /* End PBXBuildFile section */
@@ -622,6 +771,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		001AC4D4D1FB48BCA6385B88 /* RMF */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = RMF; path = RMF.lproj/Localizable.strings; sourceTree = "<group>"; };
 		080FE1E959C6EBF8BA8E5265 /* ProfilePickerViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProfilePickerViewController.swift; sourceTree = "<group>"; };
 		0D90F6D0C80F241C22A80FB4 /* Pods-70K BandsTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-70K BandsTests.debug.xcconfig"; path = "Target Support Files/Pods-70K BandsTests/Pods-70K BandsTests.debug.xcconfig"; sourceTree = "<group>"; };
 		110924351F748601002237AB /* CustomBandDescription.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomBandDescription.swift; sourceTree = "<group>"; };
@@ -791,8 +941,11 @@
 		1463329C2FDC27932432B73F /* Base.lproj/UILaunchScreen-MMF.xib */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = file.xib; path = "Base.lproj/UILaunchScreen-MMF.xib"; sourceTree = "<group>"; };
 		14677FEA3EAA1BFCE25B34E5 /* Pods-MDF Bands.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MDF Bands.debug.xcconfig"; path = "Target Support Files/Pods-MDF Bands/Pods-MDF Bands.debug.xcconfig"; sourceTree = "<group>"; };
 		1530C58547653A0C1AAAA76C /* ProfileTutorialOverlay.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProfileTutorialOverlay.swift; sourceTree = "<group>"; };
+		169B359C1A1245CFB995B24E /* Pods-RMF Bands.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RMF Bands.debug.xcconfig"; path = "Target Support Files/Pods-RMF Bands/Pods-RMF Bands.debug.xcconfig"; sourceTree = "<group>"; };
 		258A83DBED7249498300F870 /* Info-MMF.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "Info-MMF.plist"; sourceTree = "<group>"; };
 		2D55AA9C35482C2375F13C92 /* Pods-MMF Bands.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MMF Bands.release.xcconfig"; path = "Target Support Files/Pods-MMF Bands/Pods-MMF Bands.release.xcconfig"; sourceTree = "<group>"; };
+		4C5AACFFF1F94E719B297DF0 /* GoogleService-Info-RMF.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "GoogleService-Info-RMF.plist"; sourceTree = "<group>"; };
+		59A28A82395F4277BA2A3B6A /* Base.lproj/UILaunchScreen-RMF.xib */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = file.xib; path = "Base.lproj/UILaunchScreen-RMF.xib"; sourceTree = "<group>"; };
 		6194E18A4CBF0DA22A117157 /* Pods-70K Bands.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-70K Bands.release.xcconfig"; path = "Target Support Files/Pods-70K Bands/Pods-70K Bands.release.xcconfig"; sourceTree = "<group>"; };
 		623E8E20310107DE3AB5199E /* GoogleService-Info-MMF.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "GoogleService-Info-MMF.plist"; sourceTree = "<group>"; };
 		679FE8DFD3945D383A75E8F9 /* Pods_MDF_Bands.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MDF_Bands.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -800,15 +953,19 @@
 		7256E9D754DCD004377624E8 /* Pods-70K BandsTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-70K BandsTests.release.xcconfig"; path = "Target Support Files/Pods-70K BandsTests/Pods-70K BandsTests.release.xcconfig"; sourceTree = "<group>"; };
 		77777021F00AE7B5605B50B9 /* Pods-70K Bands.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-70K Bands.debug.xcconfig"; path = "Target Support Files/Pods-70K Bands/Pods-70K Bands.debug.xcconfig"; sourceTree = "<group>"; };
 		8A0E0A93C04D20A741A328BB /* Pods-MMF Bands.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MMF Bands.debug.xcconfig"; path = "Target Support Files/Pods-MMF Bands/Pods-MMF Bands.debug.xcconfig"; sourceTree = "<group>"; };
+		8AEB2FEBF9D14FAB916C3B56 /* RMF Bands.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "RMF Bands.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		8CA018E4476A45C994ED91C0 /* LandscapeScheduleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandscapeScheduleView.swift; sourceTree = "<group>"; };
 		8DDB7E0B0AC440BA94B56DBD /* LandscapeScheduleViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandscapeScheduleViewModel.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718293A4B5B /* AutoScheduleWizardManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoScheduleWizardManager.swift; sourceTree = "<group>"; };
 		B0B1C2D3E4F5061728394A5B /* MinimumVersionWarningManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MinimumVersionWarningManager.swift; sourceTree = "<group>"; };
+		B2419D6586AE49F081AAD3F8 /* Info-RMF.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "Info-RMF.plist"; sourceTree = "<group>"; };
 		C0C1C2D3E4F5061728394B0B /* SharedCommentsSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedCommentsSettings.swift; sourceTree = "<group>"; };
 		C0C1C2D3E4F5061728394B0C /* firebaseSharedCommentsWrite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = firebaseSharedCommentsWrite.swift; sourceTree = "<group>"; };
+		C138463394BC47F493D68E8B /* Pods-RMF Bands.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RMF Bands.release.xcconfig"; path = "Target Support Files/Pods-RMF Bands/Pods-RMF Bands.release.xcconfig"; sourceTree = "<group>"; };
 		D1872F46599AEEB5529AC99F /* MMF Bands.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "MMF Bands.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		D403DF7988D03A46BFEB31DF /* Pods_MMF_Bands.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MMF_Bands.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		DD4175EFC5176744994D3FE6 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		E49E36AB3BD44277AC9FF250 /* Pods_RMF_Bands.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RMF_Bands.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		E5280282B2B9A8824CA090AF /* Pods-MDF Bands.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MDF Bands.release.xcconfig"; path = "Target Support Files/Pods-MDF Bands/Pods-MDF Bands.release.xcconfig"; sourceTree = "<group>"; };
 		F1E2A0012E5A292E006E3596 /* FestivalConfigLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FestivalConfigLoader.swift; sourceTree = "<group>"; };
 		F1E2B0112E5A292E006E3596 /* DataIntegrityTag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataIntegrityTag.swift; sourceTree = "<group>"; };
@@ -862,8 +1019,28 @@
 				1172EE302E5A1C4D006E3596 /* CloudKit.framework in Frameworks */,
 				1172EE312E5A1C4D006E3596 /* CFNetwork.framework in Frameworks */,
 				1172EE322E5A1C4D006E3596 /* AudioToolbox.framework in Frameworks */,
-				9DE58C80B71FF2933BD45C36 /* (null) in Frameworks */,
 				D67556AA85D008863B7F901C /* Pods_MDF_Bands.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		521A15656F9D4AF98B79E338 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				115C12EC3000A5EF007EA9A1 /* Foundation.framework in Frameworks */,
+				115C12ED3000A5EF007EA9A1 /* UserNotifications.framework in Frameworks */,
+				115C12EE3000A5EF007EA9A1 /* SystemConfiguration.framework in Frameworks */,
+				115C12EF3000A5EF007EA9A1 /* WebKit.framework in Frameworks */,
+				115C12F03000A5EF007EA9A1 /* Security.framework in Frameworks */,
+				115C12F13000A5EF007EA9A1 /* QuartzCore.framework in Frameworks */,
+				115C12F23000A5EF007EA9A1 /* MobileCoreServices.framework in Frameworks */,
+				115C12F33000A5EF007EA9A1 /* CoreLocation.framework in Frameworks */,
+				115C12F43000A5EF007EA9A1 /* CoreGraphics.framework in Frameworks */,
+				115C12F53000A5EF007EA9A1 /* CloudKit.framework in Frameworks */,
+				115C12F63000A5EF007EA9A1 /* CFNetwork.framework in Frameworks */,
+				115C130B3000A5EF007EA9A1 /* BinaryQRScanner in Frameworks */,
+				115C12F73000A5EF007EA9A1 /* AudioToolbox.framework in Frameworks */,
+				F4288A81F0924614BF0B4D24 /* Pods_RMF_Bands.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -904,6 +1081,7 @@
 				7244FDFE5D87C624F0B9DB94 /* Pods_70K_BandsTests.framework */,
 				FF3385D373C8DCA3BFA74E7A /* iOS */,
 				D403DF7988D03A46BFEB31DF /* Pods_MMF_Bands.framework */,
+				E49E36AB3BD44277AC9FF250 /* Pods_RMF_Bands.framework */,
 				679FE8DFD3945D383A75E8F9 /* Pods_MDF_Bands.framework */,
 			);
 			name = Frameworks;
@@ -931,6 +1109,7 @@
 				112873C424A54F370036CC2A /* 70K Bands copy-Info.plist */,
 				1172EE482E5A1C4D006E3596 /* 70K Bands copy3-Info.plist */,
 				623E8E20310107DE3AB5199E /* GoogleService-Info-MMF.plist */,
+				4C5AACFFF1F94E719B297DF0 /* GoogleService-Info-RMF.plist */,
 			);
 			sourceTree = "<group>";
 		};
@@ -941,6 +1120,7 @@
 				1154F6201A575893003F4764 /* 70K BandsTests.xctest */,
 				1172EE472E5A1C4D006E3596 /* MDF Bands.app */,
 				D1872F46599AEEB5529AC99F /* MMF Bands.app */,
+				8AEB2FEBF9D14FAB916C3B56 /* RMF Bands.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1020,6 +1200,7 @@
 				1172EE532E5A292E006E3596 /* Info-70K.plist */,
 				1172EE542E5A292E006E3596 /* Info-MDF.plist */,
 				258A83DBED7249498300F870 /* Info-MMF.plist */,
+				B2419D6586AE49F081AAD3F8 /* Info-RMF.plist */,
 				8CA018E4476A45C994ED91C0 /* LandscapeScheduleView.swift */,
 				8DDB7E0B0AC440BA94B56DBD /* LandscapeScheduleViewModel.swift */,
 				111608622F647C0D00B1B407 /* LaunchTiming.swift */,
@@ -1074,6 +1255,7 @@
 				1154F6191A575893003F4764 /* UILaunchScreen.xib */,
 				1172EE652E5A3486006E3596 /* UILaunchScreen-MDF.xib */,
 				1463329C2FDC27932432B73F /* Base.lproj/UILaunchScreen-MMF.xib */,
+				59A28A82395F4277BA2A3B6A /* Base.lproj/UILaunchScreen-RMF.xib */,
 				1156B4F41A6613E700D48D12 /* urlStorage.swift */,
 				11ABAA5F222C7EFF00A04397 /* userDataHandler.swift */,
 				11ED61801A9103C100D29A5B /* UtilityHandler.swift */,
@@ -1139,7 +1321,9 @@
 				14677FEA3EAA1BFCE25B34E5 /* Pods-MDF Bands.debug.xcconfig */,
 				E5280282B2B9A8824CA090AF /* Pods-MDF Bands.release.xcconfig */,
 				2D55AA9C35482C2375F13C92 /* Pods-MMF Bands.release.xcconfig */,
+				C138463394BC47F493D68E8B /* Pods-RMF Bands.release.xcconfig */,
 				8A0E0A93C04D20A741A328BB /* Pods-MMF Bands.debug.xcconfig */,
+				169B359C1A1245CFB995B24E /* Pods-RMF Bands.debug.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -1155,6 +1339,29 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		038AF68AF6D3471B9C1F6316 /* RMF Bands */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 57F81EE724894AF387444057 /* Build configuration list for PBXNativeTarget "RMF Bands" */;
+			buildPhases = (
+				3C86DE6FA50942459DBCCD2A /* [CP] Check Pods Manifest.lock */,
+				EDBF05E778B24A2089F7CA5B /* Sources */,
+				521A15656F9D4AF98B79E338 /* Frameworks */,
+				C816D101592B4999BB334735 /* Resources */,
+				34E22E662E0240249C22FB79 /* Copy Firebase Config */,
+				45060451CA2840D4B1CF1EFF /* [CP] Embed Pods Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "RMF Bands";
+			packageProductDependencies = (
+				11E8A0622EE8A10008472A3 /* BinaryQRScanner */,
+			);
+			productName = "RMF Bands";
+			productReference = 8AEB2FEBF9D14FAB916C3B56 /* RMF Bands.app */;
+			productType = "com.apple.product-type.application";
+		};
 		1154F6051A575893003F4764 /* 70K Bands */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 1154F62A1A575893003F4764 /* Build configuration list for PBXNativeTarget "70K Bands" */;
@@ -1313,6 +1520,7 @@
 				pt,
 				ru,
 				cs,
+				rmf,
 			);
 			mainGroup = 1154F5FD1A575893003F4764;
 			packageReferences = (
@@ -1326,6 +1534,7 @@
 				1154F61F1A575893003F4764 /* 70K BandsTests */,
 				1172EDF52E5A1C4D006E3596 /* MDF Bands */,
 				FAEDF0D5A9652832BDED8171 /* MMF Bands */,
+				038AF68AF6D3471B9C1F6316 /* RMF Bands */,
 			);
 		};
 /* End PBXProject section */
@@ -1406,6 +1615,34 @@
 				1172EE3F2E5A1C4D006E3596 /* Localizable.strings in Resources */,
 				1172EE402E5A1C4D006E3596 /* Settings.bundle in Resources */,
 				1172EE422E5A1C4D006E3596 /* NotificationPayload.apns in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C816D101592B4999BB334735 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				115C12F93000A5EF007EA9A1 /* SNL-More_Cowbell.mov in Resources */,
+				115C12FA3000A5EF007EA9A1 /* Images.xcassets in Resources */,
+				115C12FB3000A5EF007EA9A1 /* Info-70K.plist in Resources */,
+				115C12FC3000A5EF007EA9A1 /* UILaunchScreen.xib in Resources */,
+				115C12FD3000A5EF007EA9A1 /* UILaunchScreen-MDF.xib in Resources */,
+				115C12FE3000A5EF007EA9A1 /* ApiKeys.plist in Resources */,
+				115C12FF3000A5EF007EA9A1 /* Main.storyboard in Resources */,
+				115C13003000A5EF007EA9A1 /* CustomListEntry.xib in Resources */,
+				115C13013000A5EF007EA9A1 /* OnMyWayToDeath.wav in Resources */,
+				115C13023000A5EF007EA9A1 /* DropDownCell.xib in Resources */,
+				115C13033000A5EF007EA9A1 /* countries.txt in Resources */,
+				115C13043000A5EF007EA9A1 /* about-team.png in Resources */,
+				115C13053000A5EF007EA9A1 /* about-festival-photo.png in Resources */,
+				115C13063000A5EF007EA9A1 /* about-robert-photo.png in Resources */,
+				115C13073000A5EF007EA9A1 /* about-leah-photo.png in Resources */,
+				115C13083000A5EF007EA9A1 /* Localizable.strings in Resources */,
+				115C13093000A5EF007EA9A1 /* Settings.bundle in Resources */,
+				115C130A3000A5EF007EA9A1 /* NotificationPayload.apns in Resources */,
+				2EF13079D62489398791AF32 /* GoogleService-Info-MMF.plist in Resources */,
+				C7935F106EA845CE82868178 /* Info-RMF.plist in Resources */,
+				729ECFBC3A7715C5224D9F56 /* Base.lproj/UILaunchScreen-MMF.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1576,6 +1813,86 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-MMF Bands/Pods-MMF Bands-frameworks.sh\"\n";
+		};
+		34E22E662E0240249C22FB79 /* Copy Firebase Config */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Copy Firebase Config";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "${SRCROOT}/copy-firebase-config.sh\n";
+		};
+		3C86DE6FA50942459DBCCD2A /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-RMF Bands-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+		};
+		45060451CA2840D4B1CF1EFF /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-RMF Bands/Pods-RMF Bands-frameworks.sh",
+				"${BUILT_PRODUCTS_DIR}/Bolts/Bolts.framework",
+				"${BUILT_PRODUCTS_DIR}/FirebaseCore/FirebaseCore.framework",
+				"${BUILT_PRODUCTS_DIR}/FirebaseCoreInternal/FirebaseCoreInternal.framework",
+				"${BUILT_PRODUCTS_DIR}/FirebaseDatabase/FirebaseDatabase.framework",
+				"${BUILT_PRODUCTS_DIR}/FirebaseInstallations/FirebaseInstallations.framework",
+				"${BUILT_PRODUCTS_DIR}/FirebaseMessaging/FirebaseMessaging.framework",
+				"${BUILT_PRODUCTS_DIR}/FirebaseSharedSwift/FirebaseSharedSwift.framework",
+				"${BUILT_PRODUCTS_DIR}/GoogleDataTransport/GoogleDataTransport.framework",
+				"${BUILT_PRODUCTS_DIR}/GoogleUtilities/GoogleUtilities.framework",
+				"${BUILT_PRODUCTS_DIR}/PromisesObjC/FBLPromises.framework",
+				"${BUILT_PRODUCTS_DIR}/SQLite.swift/SQLite.framework",
+				"${BUILT_PRODUCTS_DIR}/leveldb-library/leveldb.framework",
+				"${BUILT_PRODUCTS_DIR}/nanopb/nanopb.framework",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Bolts.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseCore.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseCoreInternal.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseDatabase.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseInstallations.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseMessaging.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FirebaseSharedSwift.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GoogleDataTransport.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GoogleUtilities.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FBLPromises.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/SQLite.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/leveldb.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/nanopb.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-RMF Bands/Pods-RMF Bands-frameworks.sh\"\n";
 		};
 		716395E5DAFB8CD768AFABDF /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -2233,6 +2550,127 @@
 				192CBA22FFE55769F02A2F5C /* ProfileTutorialOverlay.swift in Sources */,
 				D72549891EDE231CD5683190 /* scheduleHandler.swift in Sources */,
 				B3C642CB9EC6C01E105300CA /* FirebaseWriteMonitor.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EDBF05E778B24A2089F7CA5B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				115C127A3000A5EF007EA9A1 /* EventManager.swift in Sources */,
+				115C127B3000A5EF007EA9A1 /* UtilityHandler.swift in Sources */,
+				115C127C3000A5EF007EA9A1 /* ToastMessages.swift in Sources */,
+				115C127D3000A5EF007EA9A1 /* BandDataManager.swift in Sources */,
+				115C127E3000A5EF007EA9A1 /* imageHandler.swift in Sources */,
+				115C127F3000A5EF007EA9A1 /* preferenceDefault.swift in Sources */,
+				115C12803000A5EF007EA9A1 /* ConfigurationTest.swift in Sources */,
+				115C12813000A5EF007EA9A1 /* DataManager.swift in Sources */,
+				115C12823000A5EF007EA9A1 /* ProfilePickerViewController.swift in Sources */,
+				115C12833000A5EF007EA9A1 /* FestivalConfig.swift in Sources */,
+				115C12843000A5EF007EA9A1 /* FestivalConfigLoader.swift in Sources */,
+				115C12853000A5EF007EA9A1 /* DataIntegrityTag.swift in Sources */,
+				115C12863000A5EF007EA9A1 /* CommonFilterSheetView.swift in Sources */,
+				115C12873000A5EF007EA9A1 /* SwiftUITranslationHelper.swift in Sources */,
+				115C12883000A5EF007EA9A1 /* userDataHandler.swift in Sources */,
+				115C12893000A5EF007EA9A1 /* firebaseBandDataWrite.swift in Sources */,
+				115C128A3000A5EF007EA9A1 /* SortFilterMenuController.swift in Sources */,
+				115C128B3000A5EF007EA9A1 /* ShowsAttended.swift in Sources */,
+				115C128C3000A5EF007EA9A1 /* DataModels.swift in Sources */,
+				115C128D3000A5EF007EA9A1 /* CustomListEntry.swift in Sources */,
+				115C128E3000A5EF007EA9A1 /* AboutView.swift in Sources */,
+				115C128F3000A5EF007EA9A1 /* LaunchTiming.swift in Sources */,
+				115C12903000A5EF007EA9A1 /* variableStore.swift in Sources */,
+				115C12913000A5EF007EA9A1 /* Constants.swift in Sources */,
+				115C12923000A5EF007EA9A1 /* DropDownCell.swift in Sources */,
+				115C12933000A5EF007EA9A1 /* AIScheduleStorage.swift in Sources */,
+				115C12943000A5EF007EA9A1 /* AttendanceManager.swift in Sources */,
+				115C12953000A5EF007EA9A1 /* iCloudDataHandler.swift in Sources */,
+				115C12963000A5EF007EA9A1 /* firebaseUserWrite.swift in Sources */,
+				115C12973000A5EF007EA9A1 /* SQLiteDataManager.swift in Sources */,
+				115C12983000A5EF007EA9A1 /* firebaseEventDataWrite.swift in Sources */,
+				115C12993000A5EF007EA9A1 /* webViewController.swift in Sources */,
+				115C129A3000A5EF007EA9A1 /* FilePaths.swift in Sources */,
+				115C129B3000A5EF007EA9A1 /* CSVFields.swift in Sources */,
+				115C129C3000A5EF007EA9A1 /* VenueConstants.swift in Sources */,
+				115C129D3000A5EF007EA9A1 /* EventTypes.swift in Sources */,
+				115C129E3000A5EF007EA9A1 /* iCloudConstants.swift in Sources */,
+				115C129F3000A5EF007EA9A1 /* UIConstants.swift in Sources */,
+				115C12A03000A5EF007EA9A1 /* YearManagementService.swift in Sources */,
+				115C12A13000A5EF007EA9A1 /* MasterViewModel.swift in Sources */,
+				115C12A23000A5EF007EA9A1 /* MasterViewCacheManager.swift in Sources */,
+				115C12A33000A5EF007EA9A1 /* MasterViewUIManager.swift in Sources */,
+				115C12A43000A5EF007EA9A1 /* MasterViewYearChangeCoordinator.swift in Sources */,
+				115C12A53000A5EF007EA9A1 /* MasterViewLandscapeScheduleCoordinator.swift in Sources */,
+				115C12A63000A5EF007EA9A1 /* AppState.swift in Sources */,
+				115C12A73000A5EF007EA9A1 /* CompactActionSheetViewController.swift in Sources */,
+				115C12A83000A5EF007EA9A1 /* BandSelectionViewController.swift in Sources */,
+				115C12A93000A5EF007EA9A1 /* DropDown.swift in Sources */,
+				115C12AA3000A5EF007EA9A1 /* CSV.swift in Sources */,
+				115C12AB3000A5EF007EA9A1 /* CombinedImageListHandler.swift in Sources */,
+				115C12AC3000A5EF007EA9A1 /* dataHandler.swift in Sources */,
+				115C12AD3000A5EF007EA9A1 /* DPDKeyboardListener.swift in Sources */,
+				115C12AE3000A5EF007EA9A1 /* DPDConstants.swift in Sources */,
+				115C12AF3000A5EF007EA9A1 /* SQLiteProfileManager.swift in Sources */,
+				115C12B03000A5EF007EA9A1 /* ShowAttendedReport.swift in Sources */,
+				115C12B13000A5EF007EA9A1 /* _0000TonsBands.xcdatamodeld in Sources */,
+				115C12B23000A5EF007EA9A1 /* PortraitFilterSheetView.swift in Sources */,
+				115C12B33000A5EF007EA9A1 /* DataModel.xcdatamodeld in Sources */,
+				115C12B43000A5EF007EA9A1 /* DetailHostingController.swift in Sources */,
+				115C12B53000A5EF007EA9A1 /* SQLiteAttendanceManager.swift in Sources */,
+				115C12B63000A5EF007EA9A1 /* SQLiteiCloudSync.swift in Sources */,
+				115C12B73000A5EF007EA9A1 /* DebugLogger.swift in Sources */,
+				115C12B83000A5EF007EA9A1 /* SQLitePriorityManager.swift in Sources */,
+				115C12B93000A5EF007EA9A1 /* DetailView.swift in Sources */,
+				115C12BA3000A5EF007EA9A1 /* DetailViewModel.swift in Sources */,
+				115C12BB3000A5EF007EA9A1 /* DetailProfileBypassBandNames.swift in Sources */,
+				115C12BC3000A5EF007EA9A1 /* DeviceSizeManager.swift in Sources */,
+				115C12BD3000A5EF007EA9A1 /* LandscapeScheduleView.swift in Sources */,
+				115C12BE3000A5EF007EA9A1 /* LandscapeScheduleViewModel.swift in Sources */,
+				115C12BF3000A5EF007EA9A1 /* BandDescriptionTranslator.swift in Sources */,
+				115C12C03000A5EF007EA9A1 /* BandNamesHandlerProtocol.swift in Sources */,
+				115C12C13000A5EF007EA9A1 /* PreferencesHostingController.swift in Sources */,
+				115C12C23000A5EF007EA9A1 /* BandCSVImporter.swift in Sources */,
+				115C12C33000A5EF007EA9A1 /* AutoChooseAttendanceWizardView.swift in Sources */,
+				115C12C43000A5EF007EA9A1 /* PreferencesViewModel.swift in Sources */,
+				115C12C53000A5EF007EA9A1 /* PreferencesView.swift in Sources */,
+				115C12C63000A5EF007EA9A1 /* AppDelegate.swift in Sources */,
+				115C12C73000A5EF007EA9A1 /* Reachability.swift in Sources */,
+				115C12C83000A5EF007EA9A1 /* ProfileColorManager.swift in Sources */,
+				115C12C93000A5EF007EA9A1 /* bandNamesHandler.swift in Sources */,
+				115C12CA3000A5EF007EA9A1 /* SharedPreferencesManager.swift in Sources */,
+				115C12CB3000A5EF007EA9A1 /* SharedPreferencesImportHandler.swift in Sources */,
+				115C12CC3000A5EF007EA9A1 /* SharingView.swift in Sources */,
+				115C12CD3000A5EF007EA9A1 /* mainListController.swift in Sources */,
+				115C12CE3000A5EF007EA9A1 /* localNotificationHandler.swift in Sources */,
+				115C12CF3000A5EF007EA9A1 /* urlStorage.swift in Sources */,
+				115C12D03000A5EF007EA9A1 /* EventCSVImporter.swift in Sources */,
+				115C12D13000A5EF007EA9A1 /* NetworkTesting.swift in Sources */,
+				115C12D23000A5EF007EA9A1 /* MasterViewController.swift in Sources */,
+				115C12D33000A5EF007EA9A1 /* AIScheduleBuilder.swift in Sources */,
+				115C12D43000A5EF007EA9A1 /* CreateAIScheduleSheet.swift in Sources */,
+				115C12D53000A5EF007EA9A1 /* AutoScheduleWizardManager.swift in Sources */,
+				115C12D63000A5EF007EA9A1 /* MinimumVersionWarningManager.swift in Sources */,
+				115C12D73000A5EF007EA9A1 /* SharedCommentsSettings.swift in Sources */,
+				115C12D83000A5EF007EA9A1 /* firebaseSharedCommentsWrite.swift in Sources */,
+				115C12D93000A5EF007EA9A1 /* DropDown+Appearance.swift in Sources */,
+				115C12DA3000A5EF007EA9A1 /* httpHandler.swift in Sources */,
+				115C12DB3000A5EF007EA9A1 /* DPDUIView+Extension.swift in Sources */,
+				115C12DC3000A5EF007EA9A1 /* guiIcons.swift in Sources */,
+				115C12DD3000A5EF007EA9A1 /* Settings70k.swift in Sources */,
+				115C12DE3000A5EF007EA9A1 /* countryHandler.swift in Sources */,
+				115C12DF3000A5EF007EA9A1 /* CustomBandDescription.swift in Sources */,
+				115C12E03000A5EF007EA9A1 /* PriorityManager.swift in Sources */,
+				115C12E13000A5EF007EA9A1 /* CellDataCache.swift in Sources */,
+				115C12E23000A5EF007EA9A1 /* DataCollectionCoordinator.swift in Sources */,
+				115C12E33000A5EF007EA9A1 /* ScheduleCSVImporter.swift in Sources */,
+				115C12E43000A5EF007EA9A1 /* ScheduleQRCompression.swift in Sources */,
+				115C12E53000A5EF007EA9A1 /* ScheduleQRCodeViewController.swift in Sources */,
+				115C12E63000A5EF007EA9A1 /* ScheduleQRScannerViewController.swift in Sources */,
+				115C12E73000A5EF007EA9A1 /* ScheduleBinaryQRScannerView.swift in Sources */,
+				115C12E83000A5EF007EA9A1 /* ScheduleQRGuideLink.swift in Sources */,
+				115C12E93000A5EF007EA9A1 /* ProfileTutorialOverlay.swift in Sources */,
+				115C12EA3000A5EF007EA9A1 /* scheduleHandler.swift in Sources */,
+				115C12EB3000A5EF007EA9A1 /* FirebaseWriteMonitor.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3074,6 +3512,172 @@
 			};
 			name = Release;
 		};
+		95B51FBC36BA45C2890EA526 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 169B359C1A1245CFB995B24E /* Pods-RMF Bands.debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = mmf_bands_logo;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = 70000TonsBands/70000TonsBands.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				CONFIGURATION_TEMP_DIR = build/.build;
+				CURRENT_PROJECT_VERSION = 20260705001;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = RYVG8BC9NZ;
+				ENABLE_BITCODE = NO;
+				ENABLE_DEBUG_DYLIB = NO;
+				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
+				HEADER_SEARCH_PATHS = "$(inherited)";
+				INFOPLIST_FILE = "70000TonsBands/Info-RMF.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "RMF Bands!";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				"INFOPLIST_KEY_UILaunchStoryboardName[sdk=*]" = LaunchScreen;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
+				MARKETING_VERSION = 20260705001;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = (
+					"$(inherited)",
+					"-isystem",
+					"\"${PODS_ROOT}/Headers/Public\"",
+					"\"${PODS_ROOT}/Headers/Public/Bolts\"",
+					"-isystem",
+					"\"${PODS_ROOT}/Headers/Public/GGLInstanceID\"",
+					"-isystem",
+					"\"${PODS_ROOT}/Headers/Public/Google\"",
+					"-isystem",
+					"\"${PODS_ROOT}/Headers/Public/GoogleCloudMessaging\"",
+					"-isystem",
+					"\"${PODS_ROOT}/Headers/Public/GoogleIPhoneUtilities\"",
+					"-isystem",
+					"\"${PODS_ROOT}/Headers/Public/GoogleInterchangeUtilities\"",
+					"-isystem",
+					"\"${PODS_ROOT}/Headers/Public/GoogleNetworkingUtilities\"",
+					"-isystem",
+					"\"${PODS_ROOT}/Headers/Public/GoogleSymbolUtilities\"",
+					"-isystem",
+					"\"${PODS_ROOT}/Headers/Public/GoogleUtilities\"",
+				);
+				OTHER_LDFLAGS = "$(inherited)";
+				PODS_ROOT = "$(inherited)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.rdorn.rmfbands;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = FESTIVAL_RMF;
+				SWIFT_INSTALL_OBJC_HEADER = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/70K Bands-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_SUPPRESS_WARNINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				XROS_DEPLOYMENT_TARGET = 1.0;
+			};
+			name = Debug;
+		};
+		C4AD5A1AB4B149539729EDDD /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = C138463394BC47F493D68E8B /* Pods-RMF Bands.release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = mmf_bands_logo;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = 70000TonsBands/70000TonsBands.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Distribution";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CONFIGURATION_TEMP_DIR = build/.build;
+				CURRENT_PROJECT_VERSION = 20260705001;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = RYVG8BC9NZ;
+				ENABLE_BITCODE = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Pods/GoogleIPhoneUtilities/Frameworks",
+					"$(PROJECT_DIR)/Pods/GoogleUtilities/Frameworks",
+				);
+				HEADER_SEARCH_PATHS = "$(inherited)";
+				INFOPLIST_FILE = "70000TonsBands/Info-RMF.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "RMF Bands!";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				"INFOPLIST_KEY_UILaunchStoryboardName[sdk=*]" = LaunchScreen;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
+				MARKETING_VERSION = 20260705001;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = (
+					"$(inherited)",
+					"-isystem",
+					"\"${PODS_ROOT}/Headers/Public\"",
+					"\"${PODS_ROOT}/Headers/Public/Bolts\"",
+					"-isystem",
+					"\"${PODS_ROOT}/Headers/Public/GGLInstanceID\"",
+					"-isystem",
+					"\"${PODS_ROOT}/Headers/Public/Google\"",
+					"-isystem",
+					"\"${PODS_ROOT}/Headers/Public/GoogleCloudMessaging\"",
+					"-isystem",
+					"\"${PODS_ROOT}/Headers/Public/GoogleIPhoneUtilities\"",
+					"-isystem",
+					"\"${PODS_ROOT}/Headers/Public/GoogleInterchangeUtilities\"",
+					"-isystem",
+					"\"${PODS_ROOT}/Headers/Public/GoogleNetworkingUtilities\"",
+					"-isystem",
+					"\"${PODS_ROOT}/Headers/Public/GoogleSymbolUtilities\"",
+					"-isystem",
+					"\"${PODS_ROOT}/Headers/Public/GoogleUtilities\"",
+				);
+				OTHER_LDFLAGS = "$(inherited)";
+				PODS_ROOT = "$(inherited)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.rdorn.rmfbands;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = FESTIVAL_RMF;
+				SWIFT_INSTALL_OBJC_HEADER = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/70K Bands-Bridging-Header.h";
+				SWIFT_SUPPRESS_WARNINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+				XROS_DEPLOYMENT_TARGET = 1.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -3118,6 +3722,15 @@
 			buildConfigurations = (
 				8F8651A5284398C49E0F93B7 /* Release */,
 				43F8C2CF4AC0CD8BCBDFA4E3 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		57F81EE724894AF387444057 /* Build configuration list for PBXNativeTarget "RMF Bands" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				95B51FBC36BA45C2890EA526 /* Debug */,
+				C4AD5A1AB4B149539729EDDD /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

@@ -14,9 +14,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "1172EDF52E5A1C4D006E3596"
-               BuildableName = "MDF Bands.app"
-               BlueprintName = "MDF Bands"
+               BlueprintIdentifier = "038AF68AF6D3471B9C1F6316"
+               BuildableName = "RMF Bands.app"
+               BlueprintName = "RMF Bands"
                ReferencedContainer = "container:70K Bands.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -44,9 +44,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "1172EDF52E5A1C4D006E3596"
-            BuildableName = "MDF Bands.app"
-            BlueprintName = "MDF Bands"
+            BlueprintIdentifier = "038AF68AF6D3471B9C1F6316"
+            BuildableName = "RMF Bands.app"
+            BlueprintName = "RMF Bands"
             ReferencedContainer = "container:70K Bands.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -61,9 +61,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "1172EDF52E5A1C4D006E3596"
-            BuildableName = "MDF Bands.app"
-            BlueprintName = "MDF Bands"
+            BlueprintIdentifier = "038AF68AF6D3471B9C1F6316"
+            BuildableName = "RMF Bands.app"
+            BlueprintName = "RMF Bands"
             ReferencedContainer = "container:70K Bands.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

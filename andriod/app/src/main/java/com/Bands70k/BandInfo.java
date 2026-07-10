@@ -417,11 +417,36 @@ public class BandInfo {
      * @return The country or blank if not available.
      */
     public static String getCountry(String bandName){
-        if (getBandDetailsData(bandName, "country") != null) {
-            return getBandDetailsData(bandName, "country");
-        } else {
-            return " ";
+        String city = getBandDetailsData(bandName, "city");
+        String state = getBandDetailsData(bandName, "state");
+        String country = getBandDetailsData(bandName, "country");
+        return formatBandLocation(city, state, country);
+    }
+
+    /**
+     * Formats optional city, state, and country for display under the Country label.
+     */
+    static String formatBandLocation(String city, String state, String country) {
+        String cityValue = city != null ? city.trim() : "";
+        String stateValue = state != null ? state.trim() : "";
+        String countryValue = country != null ? country.trim() : "";
+
+        if (!cityValue.isEmpty() && !stateValue.isEmpty() && !countryValue.isEmpty()) {
+            return cityValue + ", " + stateValue + " " + countryValue;
         }
+        if (!cityValue.isEmpty() && !countryValue.isEmpty()) {
+            return cityValue + ", " + countryValue;
+        }
+        if (!countryValue.isEmpty()) {
+            return countryValue;
+        }
+        if (!cityValue.isEmpty() && !stateValue.isEmpty()) {
+            return cityValue + ", " + stateValue;
+        }
+        if (!cityValue.isEmpty()) {
+            return cityValue;
+        }
+        return "";
     }
 
     /**
@@ -644,6 +669,8 @@ public class BandInfo {
                         bandDetails = addToBandDetails("genre", RowData, 7, bandDetails);
                         bandDetails = addToBandDetails("note", RowData, 8, bandDetails);
                         bandDetails = addToBandDetails("priorYears", RowData, 9, bandDetails);
+                        bandDetails = addToBandDetails("city", RowData, 10, bandDetails);
+                        bandDetails = addToBandDetails("state", RowData, 11, bandDetails);
                         if (!RowData[0].contains("bandName")) {
                             bandData.put(RowData[0], bandDetails);
                             bandNames.add(RowData[0]);

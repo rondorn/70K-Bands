@@ -2,7 +2,8 @@
   "shareFileExtensions": [
     "70kshare",
     "mdfshare",
-    "mmfshare"
+    "mmfshare",
+    "rmfshare"
   ],
   "subscriptionTopic": "global",
   "subscriptionTopicTest": "Testing20260618",

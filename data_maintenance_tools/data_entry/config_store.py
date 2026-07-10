@@ -327,6 +327,8 @@ def lineup_fields() -> list[str]:
         "genre",
         "noteworthy",
         "priorYears",
+        "city",
+        "state",
     ]
 
 

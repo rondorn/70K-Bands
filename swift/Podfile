@@ -34,6 +34,15 @@ target 'MMF Bands' do
         pod 'SQLite.swift', '~> 0.15.3'
 end
 
+target 'RMF Bands' do
+	# Firebase 10.22.0+ includes privacy manifests (required for App Store)
+	pod 'Firebase/CoreOnly', '~> 10.22.0'
+	pod 'Firebase/Messaging', '~> 10.22.0'
+	pod 'Firebase/Database', '~> 10.22.0'
+        pod 'Bolts'
+        pod 'SQLite.swift', '~> 0.15.3'
+end
+
 target '70K BandsTests' do
         # Firebase 10.22.0+ includes privacy manifests (required for App Store)
         pod 'Firebase/CoreOnly', '~> 10.22.0'

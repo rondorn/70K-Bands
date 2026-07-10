@@ -1044,6 +1044,8 @@ def _band_form_fields(cfg: dict[str, Any]) -> list[str]:
         "youtube",
         "wikipedia",
         "country",
+        "city",
+        "state",
         "genre",
         "noteworthy",
     ]

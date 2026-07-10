@@ -134,8 +134,12 @@ public class LandscapeScheduleView extends LinearLayout {
     /** Base calendar timeline: 120dp/hour, 30dp per 15-minute slot. */
     private static final int TIMELINE_PIXELS_PER_HOUR_DP = 120;
     private static final int TIMELINE_SLOT_HEIGHT_DP = 30;
-    /** Sets at or below this duration get extra vertical timeline spacing. */
+    /** Sets at or below this duration get extra vertical timeline spacing (full-detail blocks only). */
     private static final int SHORT_SET_MAX_DURATION_SECONDS = 35 * 60;
+    /** Events shorter than this show title only; block height is at least {@link #COMPACT_EVENT_MIN_DISPLAY_SECONDS}. */
+    private static final int COMPACT_EVENT_MAX_DURATION_SECONDS = 20 * 60;
+    /** Minimum calendar block height for compact events (display only; actual slot time unchanged). */
+    private static final int COMPACT_EVENT_MIN_DISPLAY_SECONDS = 10 * 60;
     /** +33% timeline (~20dp extra on a 30-min block) for a priority/attended icon row. */
     private static final float TIMELINE_SCALE_SHORT_SET_DAY = 4f / 3f;
     /** Combined short sets need two icon rows + two band name lines. */
@@ -162,7 +166,16 @@ public class LandscapeScheduleView extends LinearLayout {
         return 3600;
     }
 
-    /** Widen time-index spacing on days with ≤35min sets so icon rows are not clipped. */
+    private int compactMinBlockHeightPx(DayScheduleData dayData) {
+        return Math.max((int) (COMPACT_EVENT_MIN_DISPLAY_SECONDS * pixelsPerSecond(dayData)), 1);
+    }
+
+    private boolean isCompactEvent(ScheduleBlock event) {
+        double duration = getEventDurationSeconds(event);
+        return duration > 0 && duration < COMPACT_EVENT_MAX_DURATION_SECONDS;
+    }
+
+    /** Widen time-index spacing on days with ≤35min full-detail sets so icon rows are not clipped. */
     private float computeTimelineScaleForDay(List<VenueColumn> venueColumns) {
         float scale = 1f;
         if (venueColumns == null) {
@@ -174,7 +187,10 @@ public class LandscapeScheduleView extends LinearLayout {
             }
             for (ScheduleBlock event : venue.events) {
                 double duration = getEventDurationSeconds(event);
-                if (duration > 0 && duration <= SHORT_SET_MAX_DURATION_SECONDS) {
+                if (duration <= 0 || duration < COMPACT_EVENT_MAX_DURATION_SECONDS) {
+                    continue;
+                }
+                if (duration <= SHORT_SET_MAX_DURATION_SECONDS) {
                     if (isCombinedEventName(event.bandName)) {
                         return TIMELINE_SCALE_SHORT_COMBINED_DAY;
                     }
@@ -1670,7 +1686,12 @@ public class LandscapeScheduleView extends LinearLayout {
     private View createEventBlock(ScheduleBlock event, int columnWidth, DayScheduleData dayData, boolean shouldDim) {
         LinearLayout eventBlock = new LinearLayout(context);
         eventBlock.setOrientation(LinearLayout.VERTICAL);
-        eventBlock.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
+        boolean compact = isCompactEvent(event);
+        if (compact) {
+            eventBlock.setPadding(dpToPx(2), dpToPx(1), dpToPx(2), dpToPx(1));
+        } else {
+            eventBlock.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
+        }
         // Use drawable with white border instead of solid color, darken only if shouldDim is true
         int fillColor = getEventBlockFillColor(event);
         eventBlock.setBackground(getEventBlockBackground(fillColor, shouldDim));
@@ -1699,7 +1720,12 @@ public class LandscapeScheduleView extends LinearLayout {
         }
         
         double pixelsPerSecond = pixelsPerSecond(dayData);
-        int blockHeight = Math.max((int)(durationSeconds * pixelsPerSecond), slotHeightPx(dayData));
+        int blockHeight;
+        if (compact) {
+            blockHeight = Math.max((int) (durationSeconds * pixelsPerSecond), compactMinBlockHeightPx(dayData));
+        } else {
+            blockHeight = Math.max((int) (durationSeconds * pixelsPerSecond), slotHeightPx(dayData));
+        }
         // Use date-based positioning; add half-slot so event start aligns with grid line at center of time label
         int yPosition = calculateYPosition(eventStartTime, dayData) + halfSlotPx(dayData);
         
@@ -1712,46 +1738,57 @@ public class LandscapeScheduleView extends LinearLayout {
         
         // Line 1: Band name (handle combined events)
         boolean isCombinedEvent = isCombinedEventName(event.bandName);
+        float titleTextSize = compact ? 9f : 11f;
         if (isCombinedEvent) {
-            // Split combined name and display on separate lines (display still uses " / ")
             String[] bandParts = getCombinedEventBandParts(event.bandName);
-            if (bandParts != null) {
+            if (compact && bandParts != null) {
+                TextView bandName = new TextView(context);
+                bandName.setText(bandParts[0] + " / " + bandParts[1]);
+                bandName.setTextColor(shouldDim ? Color.rgb(102, 102, 102) : Color.WHITE);
+                bandName.setTextSize(titleTextSize);
+                bandName.setTypeface(null, android.graphics.Typeface.BOLD);
+                bandName.setMaxLines(1);
+                bandName.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                eventBlock.addView(bandName);
+            } else if (bandParts != null) {
                 TextView bandName1 = new TextView(context);
                 bandName1.setText(bandParts[0] + "/");
                 bandName1.setTextColor(shouldDim ? Color.rgb(102, 102, 102) : Color.WHITE);
-                bandName1.setTextSize(11);
+                bandName1.setTextSize(titleTextSize);
                 bandName1.setTypeface(null, android.graphics.Typeface.BOLD);
                 bandName1.setMaxLines(1);
                 eventBlock.addView(bandName1);
-                
+
                 TextView bandName2 = new TextView(context);
                 bandName2.setText(bandParts[1]);
                 bandName2.setTextColor(shouldDim ? Color.rgb(102, 102, 102) : Color.WHITE);
-                bandName2.setTextSize(11);
+                bandName2.setTextSize(titleTextSize);
                 bandName2.setTypeface(null, android.graphics.Typeface.BOLD);
                 bandName2.setMaxLines(1);
                 eventBlock.addView(bandName2);
             } else {
-                // Fallback: show as single line
                 TextView bandName = new TextView(context);
                 bandName.setText(event.bandName);
                 bandName.setTextColor(shouldDim ? Color.rgb(102, 102, 102) : Color.WHITE);
-                bandName.setTextSize(11);
+                bandName.setTextSize(titleTextSize);
                 bandName.setTypeface(null, android.graphics.Typeface.BOLD);
                 bandName.setMaxLines(1);
                 eventBlock.addView(bandName);
             }
         } else {
-            // Single event: show normally
             TextView bandName = new TextView(context);
             bandName.setText(event.bandName);
             bandName.setTextColor(shouldDim ? Color.rgb(102, 102, 102) : Color.WHITE);
-            bandName.setTextSize(11);
+            bandName.setTextSize(titleTextSize);
             bandName.setTypeface(null, android.graphics.Typeface.BOLD);
             bandName.setMaxLines(1);
+            if (compact) {
+                bandName.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            }
             eventBlock.addView(bandName);
         }
-        
+
+        if (!compact) {
         // Line 2: Start (localized): start time (respect OS 24-hour setting like list view)
         TextView startTimeText = new TextView(context);
         java.text.DateFormat timeFormat = DateFormat.getTimeFormat(context);
@@ -1926,7 +1963,8 @@ public class LandscapeScheduleView extends LinearLayout {
                 eventBlock.addView(eventTypeRow);
             }
         }
-        
+        } // !compact
+
         // Simple click listener - handle combined events
         final ScheduleBlock eventData = event;
         final boolean finalIsCombinedEvent = isCombinedEvent;

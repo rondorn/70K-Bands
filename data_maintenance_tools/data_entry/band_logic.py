@@ -70,6 +70,27 @@ def normalize_genre_for_csv(genre: str) -> str:
     return re.sub(r",\s*", "/", (genre or "").strip())
 
 
+def format_band_location(
+    city: str = "", state: str = "", country: str = ""
+) -> str:
+    """Format optional city/state/country for band detail display."""
+    city_value = (city or "").strip()
+    state_value = (state or "").strip()
+    country_value = (country or "").strip()
+
+    if city_value and state_value and country_value:
+        return f"{city_value}, {state_value} {country_value}"
+    if city_value and country_value:
+        return f"{city_value}, {country_value}"
+    if country_value:
+        return country_value
+    if city_value and state_value:
+        return f"{city_value}, {state_value}"
+    if city_value:
+        return city_value
+    return ""
+
+
 def normalize_band_row_for_csv(row: dict[str, str]) -> dict[str, str]:
     normalized = dict(row)
     if "genre" in normalized:

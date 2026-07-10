@@ -92,6 +92,22 @@
     </div>
 
     <div class="form-row">
+      <div class="form-label">City</div>
+      <div class="form-input">
+        <input type="text" id="city" name="city" value="{{ form_data.city }}">
+        <div class="hint">Optional. Shown with country on the band detail screen.</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-label">State</div>
+      <div class="form-input">
+        <input type="text" id="state" name="state" value="{{ form_data.state }}" maxlength="2" style="width:4em;">
+        <div class="hint">Optional. Two-letter state code (e.g. CA). Not filled by Discover.</div>
+      </div>
+    </div>
+
+    <div class="form-row">
       <div class="form-label">Genre</div>
       <div class="form-input"><input type="text" id="genre" name="genre" value="{{ form_data.genre }}"></div>
     </div>

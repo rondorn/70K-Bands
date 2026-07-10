@@ -990,11 +990,33 @@ struct LandscapeScheduleView: View {
             return baseOffset + halfSlot
         }
         
+        private static let compactEventMaxDurationSeconds: TimeInterval = 20 * 60
+        /// Minimum calendar block height for compact events (display only; actual slot time unchanged).
+        private static let compactEventMinDisplaySeconds: TimeInterval = 10 * 60
+
+        private func eventDurationSeconds(_ event: ScheduleBlock) -> TimeInterval {
+            max(0, event.endTime.timeIntervalSince(event.startTime))
+        }
+
+        private func isCompactEvent(_ event: ScheduleBlock) -> Bool {
+            let duration = eventDurationSeconds(event)
+            return duration > 0 && duration < Self.compactEventMaxDurationSeconds
+        }
+
+        private func compactMinBlockHeight() -> CGFloat {
+            let pixelsPerSecond: CGFloat = 120.0 / 3600.0
+            return CGFloat(Self.compactEventMinDisplaySeconds) * pixelsPerSecond
+        }
+
         private func calculateBlockHeight(for event: ScheduleBlock) -> CGFloat {
-            let durationSeconds = event.endTime.timeIntervalSince(event.startTime)
+            let durationSeconds = eventDurationSeconds(event)
             // Each 15-minute slot is 30px tall, so 1 hour (4 slots) = 120px
             let pixelsPerSecond: CGFloat = 120.0 / 3600.0 // 120 pixels per hour
-            return max(CGFloat(durationSeconds) * pixelsPerSecond, 30)
+            let proportional = CGFloat(durationSeconds) * pixelsPerSecond
+            if isCompactEvent(event) {
+                return max(proportional, compactMinBlockHeight())
+            }
+            return max(proportional, 30)
         }
         
         private func formatTime(_ date: Date) -> String {
@@ -1029,6 +1051,8 @@ struct LandscapeScheduleView: View {
         private func eventBlockView(event: ScheduleBlock, dayData: DayScheduleData, columnWidth: CGFloat, priorityManager: SQLitePriorityManager, onAttendanceUpdate: @escaping (String, String, String, String, String, String) -> Void, onLongPress: ((String, String, String, String, String) -> Void)?, attendedHandle: ShowsAttended) -> some View {
             let yOffset = calculateYOffset(for: event, in: dayData)
             let blockHeight = calculateBlockHeight(for: event)
+            let compact = isCompactEvent(event)
+            let titleFontSize: CGFloat = compact ? 9 : 11
             let onBandTapped = self.onBandTapped
             let currentDay = dayData.dayLabel
             
@@ -1045,38 +1069,47 @@ struct LandscapeScheduleView: View {
                 }
             }()
             
-            return VStack(alignment: .leading, spacing: 1) {
+            return VStack(alignment: .leading, spacing: compact ? 0 : 1) {
                     // Combined event: display as "Band1 /" and "Band2" (internal storage uses delimiter)
                     if isCombinedEvent, let bandComponents = combinedEventBandParts(event.bandName), bandComponents.count == 2 {
+                            if compact {
+                                Text("\(bandComponents[0]) / \(bandComponents[1])")
+                                    .font(.system(size: titleFontSize, weight: .semibold))
+                                    .foregroundColor(event.isExpired ? .white.opacity(0.4) : .white)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.5)
+                            } else {
                             // Line 1: First band name with "/"
                             Text("\(bandComponents[0])/")
-                                .font(.system(size: 11, weight: .semibold))
+                                .font(.system(size: titleFontSize, weight: .semibold))
                                 .foregroundColor(event.isExpired ? .white.opacity(0.4) : .white)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.7)
                             
                             // Line 2: Second band name
                             Text(bandComponents[1])
-                                .font(.system(size: 11, weight: .semibold))
+                                .font(.system(size: titleFontSize, weight: .semibold))
                                 .foregroundColor(event.isExpired ? .white.opacity(0.4) : .white)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.7)
+                            }
                         } else if isCombinedEvent {
                             // Fallback: show combined name as-is if format is unexpected
                             Text(event.bandName)
-                                .font(.system(size: 11, weight: .semibold))
+                                .font(.system(size: titleFontSize, weight: .semibold))
                                 .foregroundColor(event.isExpired ? .white.opacity(0.4) : .white)
-                                .lineLimit(2)
-                                .minimumScaleFactor(0.7)
+                                .lineLimit(compact ? 1 : 2)
+                                .minimumScaleFactor(compact ? 0.5 : 0.7)
                         } else {
                             // Line 1: Single band name
                             Text(event.bandName)
-                                .font(.system(size: 11, weight: .semibold))
+                                .font(.system(size: titleFontSize, weight: .semibold))
                                 .foregroundColor(event.isExpired ? .white.opacity(0.4) : .white)
                                 .lineLimit(1)
-                                .minimumScaleFactor(0.7)
+                                .minimumScaleFactor(compact ? 0.5 : 0.7)
                         }
-                    
+
+                    if !compact {
                     // Line 2 (or 3 for combined): Start time with label
                     Text("Start: \(formatTime(event.startTime))")
                         .font(.system(size: 9))
@@ -1306,9 +1339,15 @@ struct LandscapeScheduleView: View {
                             }
                         }
                     }
+                    } // !compact
                 }
-                .frame(width: columnWidth - 6, height: max(blockHeight - 6, 50), alignment: .topLeading)
-                .padding(3)
+                .frame(
+                    width: columnWidth - 6,
+                    height: compact ? max(blockHeight - 6, 0) : max(blockHeight - 6, 50),
+                    alignment: .topLeading
+                )
+                .clipped()
+                .padding(compact ? 1 : 3)
                 .background(
                     RoundedRectangle(cornerRadius: 4)
                         .fill(FestivalConfig.current.getVenueSwiftUIColor(for: event.location).opacity(event.isExpired ? 0.3 : 0.8))

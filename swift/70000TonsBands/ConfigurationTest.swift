@@ -44,8 +44,17 @@ class ConfigurationTest {
             return false
         }
         
-        // Festival-specific validation (70K = default, MMF/MDF = compiler flags)
-        #if FESTIVAL_MMF
+        // Festival-specific validation (70K = default, MMF/MDF/RMF = compiler flags)
+        #if FESTIVAL_RMF
+        guard config.festivalShortName == "RMF" && !config.is70K() && !config.isMDF() else {
+            print("❌ Configuration validation failed: RMF flags incorrect")
+            return false
+        }
+        guard config.defaultStorageUrl.contains("rmf_productionPointer") || config.defaultStorageUrl.contains("PLACEHOLDER_DROPBOX_URL") else {
+            print("❌ Configuration validation failed: RMF should use RMF storage URL")
+            return false
+        }
+        #elseif FESTIVAL_MMF
         guard config.isMMF() && !config.is70K() && !config.isMDF() else {
             print("❌ Configuration validation failed: MMF flags incorrect")
             return false

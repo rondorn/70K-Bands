@@ -8,6 +8,33 @@
 
 import Foundation
 
+enum BandLocationFormatter {
+
+    /// Builds the location string shown under the Country label.
+    static func format(city: String?, state: String?, country: String?) -> String? {
+        let cityValue = (city ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let stateValue = (state ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let countryValue = (country ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if !cityValue.isEmpty && !stateValue.isEmpty && !countryValue.isEmpty {
+            return "\(cityValue), \(stateValue) \(countryValue)"
+        }
+        if !cityValue.isEmpty && !countryValue.isEmpty {
+            return "\(cityValue), \(countryValue)"
+        }
+        if !countryValue.isEmpty {
+            return countryValue
+        }
+        if !cityValue.isEmpty && !stateValue.isEmpty {
+            return "\(cityValue), \(stateValue)"
+        }
+        if !cityValue.isEmpty {
+            return cityValue
+        }
+        return nil
+    }
+}
+
 class BandCSVImporter {
     
     private let dataManager = DataManager.shared
@@ -226,6 +253,12 @@ extension BandCSVImporter {
             // Track this band as being in the CSV
             bandsInCSV.insert(bandName)
             
+            let displayCountry = BandLocationFormatter.format(
+                city: lineData["city"],
+                state: lineData["state"],
+                country: lineData["country"]
+            )
+
             bandsToInsert.append((
                 name: bandName,
                 eventYear: eventYear,
@@ -234,7 +267,7 @@ extension BandCSVImporter {
                 youtube: lineData["youtube"],
                 metalArchives: lineData["metalArchives"],
                 wikipedia: lineData["wikipedia"],
-                country: lineData["country"],
+                country: displayCountry,
                 genre: lineData["genre"],
                 noteworthy: lineData["noteworthy"],
                 priorYears: lineData["priorYears"],
