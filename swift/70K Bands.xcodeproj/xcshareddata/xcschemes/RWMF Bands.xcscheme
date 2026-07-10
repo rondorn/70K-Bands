@@ -15,8 +15,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "038AF68AF6D3471B9C1F6316"
-               BuildableName = "RMF Bands.app"
-               BlueprintName = "RMF Bands"
+               BuildableName = "RWMF Bands.app"
+               BlueprintName = "RWMF Bands"
                ReferencedContainer = "container:70K Bands.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -45,8 +45,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "038AF68AF6D3471B9C1F6316"
-            BuildableName = "RMF Bands.app"
-            BlueprintName = "RMF Bands"
+            BuildableName = "RWMF Bands.app"
+            BlueprintName = "RWMF Bands"
             ReferencedContainer = "container:70K Bands.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -62,8 +62,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "038AF68AF6D3471B9C1F6316"
-            BuildableName = "RMF Bands.app"
-            BlueprintName = "RMF Bands"
+            BuildableName = "RWMF Bands.app"
+            BlueprintName = "RWMF Bands"
             ReferencedContainer = "container:70K Bands.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

@@ -1,7 +1,7 @@
 {
   "festivalShortName": "RMF",
   "festivalName": "Redwood Metalfest",
-  "appName": "RMF Bands",
+  "appName": "RWMF Bands",
   "packageName": "com.rdorn.rmfbands",
   "bundleIdentifier": "com.rdorn.rmfbands",
   "defaultStorageUrl": "https://www.dropbox.com/scl/fi/zweop3qoygqg2l17178c0/rmf_productionPointer.txt?rlkey=0z92uh3ccpind2qzk9ek5eux2&raw=1",

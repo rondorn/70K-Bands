@@ -941,7 +941,7 @@
 		1463329C2FDC27932432B73F /* Base.lproj/UILaunchScreen-MMF.xib */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = file.xib; path = "Base.lproj/UILaunchScreen-MMF.xib"; sourceTree = "<group>"; };
 		14677FEA3EAA1BFCE25B34E5 /* Pods-MDF Bands.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MDF Bands.debug.xcconfig"; path = "Target Support Files/Pods-MDF Bands/Pods-MDF Bands.debug.xcconfig"; sourceTree = "<group>"; };
 		1530C58547653A0C1AAAA76C /* ProfileTutorialOverlay.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProfileTutorialOverlay.swift; sourceTree = "<group>"; };
-		169B359C1A1245CFB995B24E /* Pods-RMF Bands.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RMF Bands.debug.xcconfig"; path = "Target Support Files/Pods-RMF Bands/Pods-RMF Bands.debug.xcconfig"; sourceTree = "<group>"; };
+		169B359C1A1245CFB995B24E /* Pods-RWMF Bands.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RWMF Bands.debug.xcconfig"; path = "Target Support Files/Pods-RWMF Bands/Pods-RWMF Bands.debug.xcconfig"; sourceTree = "<group>"; };
 		258A83DBED7249498300F870 /* Info-MMF.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "Info-MMF.plist"; sourceTree = "<group>"; };
 		2D55AA9C35482C2375F13C92 /* Pods-MMF Bands.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MMF Bands.release.xcconfig"; path = "Target Support Files/Pods-MMF Bands/Pods-MMF Bands.release.xcconfig"; sourceTree = "<group>"; };
 		4C5AACFFF1F94E719B297DF0 /* GoogleService-Info-RMF.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "GoogleService-Info-RMF.plist"; sourceTree = "<group>"; };
@@ -953,7 +953,7 @@
 		7256E9D754DCD004377624E8 /* Pods-70K BandsTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-70K BandsTests.release.xcconfig"; path = "Target Support Files/Pods-70K BandsTests/Pods-70K BandsTests.release.xcconfig"; sourceTree = "<group>"; };
 		77777021F00AE7B5605B50B9 /* Pods-70K Bands.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-70K Bands.debug.xcconfig"; path = "Target Support Files/Pods-70K Bands/Pods-70K Bands.debug.xcconfig"; sourceTree = "<group>"; };
 		8A0E0A93C04D20A741A328BB /* Pods-MMF Bands.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MMF Bands.debug.xcconfig"; path = "Target Support Files/Pods-MMF Bands/Pods-MMF Bands.debug.xcconfig"; sourceTree = "<group>"; };
-		8AEB2FEBF9D14FAB916C3B56 /* RMF Bands.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "RMF Bands.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		8AEB2FEBF9D14FAB916C3B56 /* RWMF Bands.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "RWMF Bands.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		8CA018E4476A45C994ED91C0 /* LandscapeScheduleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandscapeScheduleView.swift; sourceTree = "<group>"; };
 		8DDB7E0B0AC440BA94B56DBD /* LandscapeScheduleViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandscapeScheduleViewModel.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718293A4B5B /* AutoScheduleWizardManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoScheduleWizardManager.swift; sourceTree = "<group>"; };
@@ -961,7 +961,7 @@
 		B2419D6586AE49F081AAD3F8 /* Info-RMF.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "Info-RMF.plist"; sourceTree = "<group>"; };
 		C0C1C2D3E4F5061728394B0B /* SharedCommentsSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedCommentsSettings.swift; sourceTree = "<group>"; };
 		C0C1C2D3E4F5061728394B0C /* firebaseSharedCommentsWrite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = firebaseSharedCommentsWrite.swift; sourceTree = "<group>"; };
-		C138463394BC47F493D68E8B /* Pods-RMF Bands.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RMF Bands.release.xcconfig"; path = "Target Support Files/Pods-RMF Bands/Pods-RMF Bands.release.xcconfig"; sourceTree = "<group>"; };
+		C138463394BC47F493D68E8B /* Pods-RWMF Bands.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RWMF Bands.release.xcconfig"; path = "Target Support Files/Pods-RWMF Bands/Pods-RWMF Bands.release.xcconfig"; sourceTree = "<group>"; };
 		D1872F46599AEEB5529AC99F /* MMF Bands.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "MMF Bands.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		D403DF7988D03A46BFEB31DF /* Pods_MMF_Bands.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MMF_Bands.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		DD4175EFC5176744994D3FE6 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
@@ -1120,7 +1120,7 @@
 				1154F6201A575893003F4764 /* 70K BandsTests.xctest */,
 				1172EE472E5A1C4D006E3596 /* MDF Bands.app */,
 				D1872F46599AEEB5529AC99F /* MMF Bands.app */,
-				8AEB2FEBF9D14FAB916C3B56 /* RMF Bands.app */,
+				8AEB2FEBF9D14FAB916C3B56 /* RWMF Bands.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1321,9 +1321,9 @@
 				14677FEA3EAA1BFCE25B34E5 /* Pods-MDF Bands.debug.xcconfig */,
 				E5280282B2B9A8824CA090AF /* Pods-MDF Bands.release.xcconfig */,
 				2D55AA9C35482C2375F13C92 /* Pods-MMF Bands.release.xcconfig */,
-				C138463394BC47F493D68E8B /* Pods-RMF Bands.release.xcconfig */,
+				C138463394BC47F493D68E8B /* Pods-RWMF Bands.release.xcconfig */,
 				8A0E0A93C04D20A741A328BB /* Pods-MMF Bands.debug.xcconfig */,
-				169B359C1A1245CFB995B24E /* Pods-RMF Bands.debug.xcconfig */,
+				169B359C1A1245CFB995B24E /* Pods-RWMF Bands.debug.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -1339,9 +1339,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		038AF68AF6D3471B9C1F6316 /* RMF Bands */ = {
+		038AF68AF6D3471B9C1F6316 /* RWMF Bands */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 57F81EE724894AF387444057 /* Build configuration list for PBXNativeTarget "RMF Bands" */;
+			buildConfigurationList = 57F81EE724894AF387444057 /* Build configuration list for PBXNativeTarget "RWMF Bands" */;
 			buildPhases = (
 				3C86DE6FA50942459DBCCD2A /* [CP] Check Pods Manifest.lock */,
 				EDBF05E778B24A2089F7CA5B /* Sources */,
@@ -1354,12 +1354,12 @@
 			);
 			dependencies = (
 			);
-			name = "RMF Bands";
+			name = "RWMF Bands";
 			packageProductDependencies = (
 				11E8A0622EE8A10008472A3 /* BinaryQRScanner */,
 			);
-			productName = "RMF Bands";
-			productReference = 8AEB2FEBF9D14FAB916C3B56 /* RMF Bands.app */;
+			productName = "RWMF Bands";
+			productReference = 8AEB2FEBF9D14FAB916C3B56 /* RWMF Bands.app */;
 			productType = "com.apple.product-type.application";
 		};
 		1154F6051A575893003F4764 /* 70K Bands */ = {
@@ -1534,7 +1534,7 @@
 				1154F61F1A575893003F4764 /* 70K BandsTests */,
 				1172EDF52E5A1C4D006E3596 /* MDF Bands */,
 				FAEDF0D5A9652832BDED8171 /* MMF Bands */,
-				038AF68AF6D3471B9C1F6316 /* RMF Bands */,
+				038AF68AF6D3471B9C1F6316 /* RWMF Bands */,
 			);
 		};
 /* End PBXProject section */
@@ -1847,7 +1847,7 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-RMF Bands-checkManifestLockResult.txt",
+				"$(DERIVED_FILE_DIR)/Pods-RWMF Bands-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -1859,7 +1859,7 @@
 			files = (
 			);
 			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-RMF Bands/Pods-RMF Bands-frameworks.sh",
+				"${PODS_ROOT}/Target Support Files/Pods-RWMF Bands/Pods-RWMF Bands-frameworks.sh",
 				"${BUILT_PRODUCTS_DIR}/Bolts/Bolts.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseCore/FirebaseCore.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseCoreInternal/FirebaseCoreInternal.framework",
@@ -1892,7 +1892,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-RMF Bands/Pods-RMF Bands-frameworks.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-RWMF Bands/Pods-RWMF Bands-frameworks.sh\"\n";
 		};
 		716395E5DAFB8CD768AFABDF /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -3514,7 +3514,7 @@
 		};
 		95B51FBC36BA45C2890EA526 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 169B359C1A1245CFB995B24E /* Pods-RMF Bands.debug.xcconfig */;
+			baseConfigurationReference = 169B359C1A1245CFB995B24E /* Pods-RWMF Bands.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = generic_bands_logo;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -3536,7 +3536,7 @@
 				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = "70000TonsBands/Info-RMF.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "RMF Bands!";
+				INFOPLIST_KEY_CFBundleDisplayName = "RWMF Bands!";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				"INFOPLIST_KEY_UILaunchStoryboardName[sdk=*]" = UILaunchScreen-RMF;
@@ -3596,7 +3596,7 @@
 		};
 		C4AD5A1AB4B149539729EDDD /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C138463394BC47F493D68E8B /* Pods-RMF Bands.release.xcconfig */;
+			baseConfigurationReference = C138463394BC47F493D68E8B /* Pods-RWMF Bands.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = generic_bands_logo;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -3620,7 +3620,7 @@
 				);
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = "70000TonsBands/Info-RMF.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "RMF Bands!";
+				INFOPLIST_KEY_CFBundleDisplayName = "RWMF Bands!";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				"INFOPLIST_KEY_UILaunchStoryboardName[sdk=*]" = UILaunchScreen-RMF;
@@ -3726,7 +3726,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		57F81EE724894AF387444057 /* Build configuration list for PBXNativeTarget "RMF Bands" */ = {
+		57F81EE724894AF387444057 /* Build configuration list for PBXNativeTarget "RWMF Bands" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				95B51FBC36BA45C2890EA526 /* Debug */,

@@ -7,7 +7,8 @@ set -e
 FESTIVALS_DIR="${SRCROOT}/../config/festivals"
 APP_DIR="${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app"
 
-if [[ "${PRODUCT_NAME}" == *"RMF"* ]] || [[ "${TARGET_NAME}" == *"RMF"* ]] || [[ "${CONFIGURATION}" == *"RMF"* ]]; then
+if [[ "${PRODUCT_NAME}" == *"RWMF"* ]] || [[ "${TARGET_NAME}" == *"RWMF"* ]] || [[ "${CONFIGURATION}" == *"RWMF"* ]] \
+    || [[ "${PRODUCT_NAME}" == *"RMF"* ]] || [[ "${TARGET_NAME}" == *"RMF"* ]] || [[ "${CONFIGURATION}" == *"RMF"* ]]; then
     FESTIVAL_KEY="rmf"
 elif [[ "${PRODUCT_NAME}" == *"MMF"* ]] || [[ "${TARGET_NAME}" == *"MMF"* ]] || [[ "${CONFIGURATION}" == *"MMF"* ]]; then
     FESTIVAL_KEY="mmf"

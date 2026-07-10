@@ -21,8 +21,9 @@ echo "🔥 Firebase Config Script: MMF file exists: $(test -f "$FIREBASE_MMF" &&
 echo "🔥 Firebase Config Script: RMF file exists: $(test -f "$FIREBASE_RMF" && echo "YES" || echo "NO")"
 
 # Determine which Firebase config to use based on build configuration or target name
-if [[ "${PRODUCT_NAME}" == *"RMF"* ]] || [[ "${TARGET_NAME}" == *"RMF"* ]] || [[ "${CONFIGURATION}" == *"RMF"* ]]; then
-    echo "🔥 Firebase Config Script: Detected RMF Bands build - using MMF Firebase config (placeholder)"
+if [[ "${PRODUCT_NAME}" == *"RWMF"* ]] || [[ "${TARGET_NAME}" == *"RWMF"* ]] || [[ "${CONFIGURATION}" == *"RWMF"* ]] \
+    || [[ "${PRODUCT_NAME}" == *"RMF"* ]] || [[ "${TARGET_NAME}" == *"RMF"* ]] || [[ "${CONFIGURATION}" == *"RMF"* ]]; then
+    echo "🔥 Firebase Config Script: Detected RWMF Bands build - using MMF Firebase config (placeholder)"
     SOURCE_FILE="$FIREBASE_MMF"
     FESTIVAL_TYPE="RMF (MMF Firebase placeholder)"
 elif [[ "${PRODUCT_NAME}" == *"MMF"* ]] || [[ "${TARGET_NAME}" == *"MMF"* ]] || [[ "${CONFIGURATION}" == *"MMF"* ]]; then
