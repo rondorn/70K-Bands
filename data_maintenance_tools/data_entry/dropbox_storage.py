@@ -136,8 +136,29 @@ def note_api_path(label: str, cfg: dict[str, Any] | None = None) -> str:
     return posixpath.join(directory, note_filename(label))
 
 
+def ensure_notes_directory(cfg: dict[str, Any] | None = None) -> str:
+    """Ensure the descriptions/ folder exists on Dropbox; return its API path."""
+    api_path = notes_directory_api_path(cfg)
+    from dropbox.exceptions import ApiError
+
+    try:
+        dbx = get_authenticated_client(cfg)
+    except DropboxOAuthError as exc:
+        raise DropboxStorageError(str(exc)) from exc
+
+    try:
+        dbx.files_create_folder_v2(api_path)
+    except ApiError as exc:
+        if "conflict" not in str(exc).lower():
+            raise DropboxStorageError(
+                f"Could not create descriptions folder at {api_path}: {exc}"
+            ) from exc
+    return api_path
+
+
 def upload_note(label: str, content: str, cfg: dict[str, Any] | None = None) -> str:
     """Upload a description note; returns its API path."""
+    ensure_notes_directory(cfg)
     api_path = note_api_path(label, cfg)
     from dropbox.files import WriteMode
     from dropbox.exceptions import ApiError, AuthError, BadInputError

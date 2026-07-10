@@ -173,9 +173,11 @@ def share_link_for_label(
     notes_dir: str | Path,
     label: str,
     cfg: dict[str, Any] | None = None,
+    *,
+    paths: dict[str, str] | None = None,
 ) -> str:
     """Return a share link for the description note file for a band/event label."""
-    from data_entry.config_store import uses_dropbox_api
+    from data_entry.config_store import resolved_paths, uses_dropbox_api
 
     if cfg is not None and uses_dropbox_api(cfg):
         from data_entry.dropbox_storage import note_api_path
@@ -183,8 +185,12 @@ def share_link_for_label(
         api_path = note_api_path(label, cfg)
         return share_link_for_api_path(api_path, cfg)
 
-    directory = Path(notes_dir).expanduser().resolve()
-    if not str(notes_dir or "").strip():
-        raise DropboxLinkError("Notes directory is not configured.")
+    from data_entry.description_notes import descriptions_directory
+
+    paths = paths or resolved_paths(cfg or {})
+    directory_str = (str(notes_dir or "").strip() or descriptions_directory(paths, cfg or {}))
+    directory = Path(directory_str).expanduser().resolve()
+    if not directory_str:
+        raise DropboxLinkError("Description map file is not configured.")
     note_path = directory / note_filename(label)
     return share_link_for_local_file(note_path, cfg)

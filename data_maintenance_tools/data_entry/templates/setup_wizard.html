@@ -260,14 +260,8 @@
 
     {% if role_schedule or role_description %}
     <div class="form-row">
-      <div class="form-label">Notes directory <span class="required">*</span></div>
       <div class="form-input">
-        <div class="path-picker">
-          <input type="text" id="notesDirectory" name="notes_directory" value="{{ draft.notes_directory }}" required
-            placeholder="Choose a Dropbox-synced folder…">
-          <button type="button" class="secondary" id="chooseNotesDirBtn">Choose folder…</button>
-        </div>
-        <div class="hint">Folder for description text files (Schedule and Description Admin).</div>
+        <div class="hint">Description text files are saved in a <code>descriptions/</code> folder beside the description map file (created automatically).</div>
       </div>
     </div>
     {% endif %}

@@ -55,6 +55,7 @@ ENDPOINT_ROLES: dict[str, frozenset[str]] = {
     "descriptions_map_remove": frozenset({ROLE_DESCRIPTION}),
     "descriptions_view": frozenset({ROLE_DESCRIPTION}),
     "descriptions_refresh_label_names": frozenset({ROLE_DESCRIPTION}),
+    "descriptions_refresh_map": frozenset({ROLE_DESCRIPTION}),
     "api_dropbox_share_link": frozenset({ROLE_DESCRIPTION}),
 }
 
@@ -551,8 +552,6 @@ def fields_required_for_roles(
         "lineup_file": local and ROLE_BAND_LIST in roles,
         "schedule_file": local and ROLE_SCHEDULE in roles,
         "description_map_file": local and ROLE_DESCRIPTION in roles,
-        "notes_directory": local
-        and (ROLE_DESCRIPTION in roles or ROLE_SCHEDULE in roles),
     }
     return required
 
@@ -585,8 +584,6 @@ def validate_config_for_roles(
             _missing_text("schedule_file", "Schedule file (local write path)")
         if required["description_map_file"]:
             _missing_text("description_map_file", "Description map file (local write path)")
-        if required["notes_directory"]:
-            _missing_text("notes_directory", "Notes directory (local write path)")
     if required["band_list_url"]:
         _missing_text("band_list_url", "Band list URL")
     if required["schedule_url"]:

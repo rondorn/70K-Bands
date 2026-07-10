@@ -273,7 +273,8 @@
   const imageUrlRow = document.getElementById('imageUrlRow');
   const imageUrlInput = document.getElementById('ImageURL');
   const descriptionMapUrl = {{ description_map_url|tojson }};
-  const notesDirectory = {{ notes_directory|tojson }};
+  const descriptionsDirectory = {{ descriptions_directory|tojson }};
+  const descriptionsConfigured = {{ descriptions_configured|tojson }};
 
   const nonBandEventTypes = new Set(['Special Event', 'Unofficial Event']);
   const nonBandHelpText = {
@@ -289,9 +290,9 @@
   function descriptionMapHelpHtml() {
     const accessNote =
       'You may not have write access to the description map CSV; ask whoever maintains the pointer data to add the Dropbox file URL.';
-    const notesNote = notesDirectory
-      ? ' The description is saved as a text file in your configured notes directory when you submit.'
-      : ' Set Notes directory on the Config screen to save description text files.';
+    const notesNote = descriptionsConfigured
+      ? ' The description is saved as a text file in the descriptions folder beside the map file when you submit.'
+      : ' Configure the description map on the Config screen to save description text files.';
     if (descriptionMapUrl) {
       return (
         'App descriptions use a text file linked from the ' +

@@ -71,7 +71,11 @@ from data_entry.description_map import (
     remove_map_entry_at_index,
     upsert_map_entry,
 )
-from data_entry.description_notes import save_description_note
+from data_entry.description_notes import (
+    descriptions_directory,
+    descriptions_directory_configured,
+    save_description_note,
+)
 from data_entry.dropbox_links import (
     DropboxLinkError,
     dropbox_integration_ready,
@@ -573,11 +577,16 @@ def create_app() -> Flask:
                     description_note_message = ""
                     if event.event_type in NON_BAND_EVENT_TYPES:
                         description_text = request.form.get("DescriptionText", "")
-                        notes_dir = paths.get("notes_directory", "")
-                        if description_text.strip() and (notes_dir or uses_dropbox_api(cfg)):
+                        if description_text.strip() and descriptions_directory_configured(
+                            paths, cfg
+                        ):
                             try:
                                 saved_note = save_description_note(
-                                    notes_dir, event.band, description_text, cfg=cfg
+                                    "",
+                                    event.band,
+                                    description_text,
+                                    cfg=cfg,
+                                    paths=paths,
                                 )
                                 description_note_message = (
                                     f" Description note saved as {saved_note.name}."
@@ -586,9 +595,11 @@ def create_app() -> Flask:
                                 description_note_message = (
                                     f" Description note not saved: {exc}"
                                 )
-                        elif description_text.strip() and not notes_dir and uses_local_files(cfg):
+                        elif description_text.strip() and not descriptions_directory_configured(
+                            paths, cfg
+                        ):
                             description_note_message = (
-                                " Description not saved: set Notes directory on the Config screen."
+                                " Description not saved: configure the description map on the Config screen."
                             )
                     confirm_message += description_note_message
                     confirm_html = (
@@ -640,7 +651,8 @@ def create_app() -> Flask:
             schedule_read_url=schedule_read_url,
             read_local=read_local,
             schedule_file=schedule_target,
-            notes_directory=paths.get("notes_directory", ""),
+            descriptions_directory=descriptions_directory(paths, cfg),
+            descriptions_configured=descriptions_directory_configured(paths, cfg),
             hour_array=[" ", *HOUR_ARRAY],
             min_array=["  ", *MIN_ARRAY],
             event_length_array=EVENT_LENGTH_ARRAY,
@@ -958,7 +970,8 @@ def create_app() -> Flask:
     def descriptions_write():
         cfg = load_config()
         paths = resolved_paths(cfg)
-        notes_dir = paths.get("notes_directory", "")
+        descriptions_dir = descriptions_directory(paths, cfg)
+        descriptions_ready = descriptions_directory_configured(paths, cfg)
         force_refresh = request.args.get("label_names_refreshed") == "1"
         label_names, band_list_cache = description_label_options(
             cfg, paths, force_refresh=force_refresh
@@ -982,19 +995,20 @@ def create_app() -> Flask:
         dropbox_state = _dropbox_ui_state(cfg)
 
         if request.method == "POST":
-            action = request.form.get("action", "save")
+            action = request.form.get("action", "save_and_map")
             label = request.form.get("labelName", "").strip()
             text = request.form.get("descriptionText", "")
             form = {"labelName": label, "descriptionText": text}
             map_target = description_map_write_target(paths, cfg)
-            needs_notes_dir = uses_local_files(cfg)
-            if needs_notes_dir and not notes_dir:
-                errors.append("Notes directory is not configured.")
+            if not descriptions_ready:
+                errors.append("Description map is not configured.")
             elif not label:
                 errors.append("Band or event name is required.")
             else:
                 try:
-                    saved = save_description_note(notes_dir, label, text, cfg=cfg)
+                    saved = save_description_note(
+                        "", label, text, cfg=cfg, paths=paths
+                    )
                     saved_label = label
                     saved_filename = saved.name
 
@@ -1003,7 +1017,9 @@ def create_app() -> Flask:
                             errors.append("Description map is not configured.")
                         else:
                             try:
-                                share_url = share_link_for_label(notes_dir, label, cfg)
+                                share_url = share_link_for_label(
+                                    "", label, cfg, paths=paths
+                                )
                                 status, msg = upsert_map_entry(
                                     map_target,
                                     label,
@@ -1019,6 +1035,7 @@ def create_app() -> Flask:
                                             message=(
                                                 f"Saved {saved.name} and updated the map for {label}."
                                             ),
+                                            map_refreshed=1,
                                         )
                                     )
                                 errors.append(
@@ -1031,14 +1048,14 @@ def create_app() -> Flask:
                     else:
                         success = True
                         success_message = f"Saved {saved.name}."
-                        if dropbox_state["dropbox_ready"]:
-                            success_message += (
-                                " Use Get Dropbox link below, or Save & add to map next time."
+                        try:
+                            share_url = share_link_for_label(
+                                "", label, cfg, paths=paths
                             )
-                        else:
-                            success_message += (
-                                " Share the Dropbox link manually, or connect Dropbox on the "
-                                "Config screen for automatic link discovery."
+                        except DropboxLinkError as exc:
+                            share_url = ""
+                            errors.append(
+                                f"Description saved, but could not get the map URL: {exc}"
                             )
                         form = {"labelName": "", "descriptionText": ""}
                 except Exception as exc:
@@ -1053,7 +1070,8 @@ def create_app() -> Flask:
             band_list_refresh_url=url_for("descriptions_refresh_label_names"),
             band_list_refresh_return_to="write",
             cache_message=cache_message,
-            notes_directory=notes_dir,
+            descriptions_directory=descriptions_dir,
+            descriptions_configured=descriptions_ready,
             errors=errors,
             success=success,
             success_message=success_message,
@@ -1074,6 +1092,13 @@ def create_app() -> Flask:
             return redirect(url_for("descriptions_map_entry", label_names_refreshed=1))
         return redirect(url_for("descriptions_write", label_names_refreshed=1))
 
+    @app.post("/descriptions/refresh-map")
+    def descriptions_refresh_map():
+        cfg = load_config()
+        paths = resolved_paths(cfg)
+        invalidate_cached_url(paths.get("description_map_url", ""), paths)
+        return redirect(url_for("descriptions_map", map_refreshed=1))
+
     @app.get("/descriptions/map")
     def descriptions_map():
         cfg = load_config()
@@ -1081,16 +1106,29 @@ def create_app() -> Flask:
         map_target = description_map_write_target(paths, cfg)
         map_url = paths.get("description_map_url", "")
         read_local = description_map_reads_local(cfg)
+        force_refresh = request.args.get("map_refreshed") == "1"
+        map_cache = None
         if read_local:
             entries = read_description_map(map_target, cfg) if map_target else []
             description_map_read_url = map_target
         else:
             entries = (
-                read_description_map_from_url(map_url, cfg)
+                read_description_map_from_url(
+                    map_url, cfg, force_refresh=force_refresh
+                )
                 if map_url
                 else (read_description_map(map_target, cfg) if map_target else [])
             )
             description_map_read_url = map_url or map_target
+            if map_url:
+                from data_entry.network_cache import get_cache_meta
+
+                map_cache = get_cache_meta(map_url, paths)
+        cache_message = (
+            "Description map refreshed from published URL."
+            if force_refresh
+            else ""
+        )
         return render_template(
             "descriptions_view.html",
             entries=entries,
@@ -1099,6 +1137,9 @@ def create_app() -> Flask:
             read_local=read_local,
             write_file=map_target,
             message=request.args.get("message", ""),
+            map_cache=map_cache,
+            cache_message=cache_message,
+            map_refresh_url=url_for("descriptions_refresh_map"),
         )
 
     @app.route("/descriptions/map/entry", methods=["GET", "POST"])
@@ -1189,7 +1230,7 @@ def create_app() -> Flask:
                     pending_confirm = True
                 elif status in ("added", "updated"):
                     return redirect(
-                        url_for("descriptions_map", message=msg or "Map entry saved.")
+                        url_for("descriptions_map", message=msg or "Map entry saved.", map_refreshed=1)
                     )
                 elif msg:
                     errors.append(msg)
@@ -1204,7 +1245,8 @@ def create_app() -> Flask:
             band_list_refresh_return_to="map_entry",
             cache_message=cache_message,
             description_map_file=map_target,
-            notes_directory=paths.get("notes_directory", ""),
+            descriptions_directory=descriptions_directory(paths, cfg),
+            descriptions_configured=descriptions_directory_configured(paths, cfg),
             errors=errors,
             success=success,
             success_message=success_message,
@@ -1222,7 +1264,7 @@ def create_app() -> Flask:
         index_str = request.form.get("index", "").strip()
         if map_target and index_str.isdigit():
             remove_map_entry_at_index(map_target, int(index_str), cfg)
-        return redirect(url_for("descriptions_map", message="Map entry removed"))
+        return redirect(url_for("descriptions_map", message="Map entry removed", map_refreshed=1))
 
     @app.get("/descriptions/view")
     def descriptions_view():
@@ -1232,14 +1274,15 @@ def create_app() -> Flask:
     def api_dropbox_share_link():
         cfg = load_config()
         paths = resolved_paths(cfg)
-        notes_dir = paths.get("notes_directory", "")
         label = request.args.get("label", "").strip()
         if not label:
             return jsonify({"ok": False, "error": "label is required"}), 400
-        if uses_local_files(cfg) and not notes_dir:
-            return jsonify({"ok": False, "error": "Notes directory is not configured."}), 400
+        if not descriptions_directory_configured(paths, cfg):
+            return jsonify(
+                {"ok": False, "error": "Description map is not configured."}
+            ), 400
         try:
-            url = share_link_for_label(notes_dir, label, cfg)
+            url = share_link_for_label("", label, cfg, paths=paths)
             return jsonify({"ok": True, "url": url})
         except DropboxLinkError as exc:
             return jsonify({"ok": False, "error": str(exc)}), 400

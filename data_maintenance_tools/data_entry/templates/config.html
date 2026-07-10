@@ -233,15 +233,20 @@
     <input type="hidden" name="description_map_url" value="{{ cfg.description_map_url }}">
     {% endif %}
 
+    {% if role_description and uses_dropbox_api %}
+    <div class="form-row">
+      <div class="form-label">Descriptions folder</div>
+      <div class="form-input">
+        <div class="hint"><code>descriptions/</code> beside the description map file on Dropbox (created automatically when you save a description).</div>
+      </div>
+    </div>
+    {% endif %}
+
     {% if role_schedule or role_description %}
     <div class="form-row storage-local-only"{% if uses_dropbox_api %} style="display:none"{% endif %}>
-      <div class="form-label">Notes directory {% if role_requirements.notes_directory %}<span class="required">*</span>{% endif %}</div>
+      <div class="form-label">Descriptions folder</div>
       <div class="form-input">
-        <div class="path-picker">
-          <input type="text" id="notesDirectory" name="notes_directory" value="{{ cfg.notes_directory }}" placeholder="Choose a Dropbox-synced folder…">
-          <button type="button" class="secondary" id="chooseNotesDirBtn">Choose folder…</button>
-        </div>
-        <div class="hint">Local folder for description text files (Schedule and Description Admin).</div>
+        <div class="hint">Description text files are saved automatically in a <code>descriptions/</code> folder beside the description map file.</div>
         <label style="display:block;margin-top:14px;">Dropbox connection (optional)</label>
         <p class="hint" style="margin-top:4px;">
           Sign in with your own Dropbox account so the app can publish share links

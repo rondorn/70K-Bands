@@ -5,9 +5,15 @@
 
 {% block content %}
 <div class="target-file">Reading from: <code>{{ description_map_read_url or '(not configured)' }}</code>{% if read_local %} (local write file){% else %} (published){% endif %}</div>
+{% if description_map_published_url and not read_local %}
+<div class="hint">
+  Map from published URL{% if map_cache and map_cache.from_cache %} (cached {{ map_cache.age_label }}){% endif %}.
+  Use Refresh to download the latest map from Dropbox.
+</div>
+{% endif %}
 {% if description_map_published_url %}
 <div class="target-file">Apps download map from: <a href="{{ description_map_published_url }}" target="_blank" rel="noopener"><code>{{ description_map_published_url }}</code></a></div>
-<p class="hint">Local map edits sync via Dropbox to this published URL. Cache dates on each row tell the app when description text may have changed.</p>
+<p class="hint">Map edits publish to Dropbox at this URL. Cache dates on each row tell the app when description text may have changed.</p>
 {% endif %}
 {% if write_file %}
 <div class="target-file">Writing to: <code>{{ write_file }}</code></div>
@@ -20,6 +26,10 @@
 <p class="hint">Published map (read-only). Configure description settings on the Config screen.</p>
 {% endif %}
 
+{% if cache_message %}
+<div class="message success page-message">{{ cache_message }}</div>
+{% endif %}
+
 {% if message %}
 <div class="message success page-message">{{ message }}</div>
 {% endif %}
@@ -28,6 +38,11 @@
   {% if role_description %}
   <div class="panel-toolbar">
     <a class="btn" href="{{ url_for('descriptions_map_entry') }}">Add</a>
+    {% if description_map_published_url and not read_local %}
+    <form method="post" action="{{ map_refresh_url }}" class="inline-form">
+      <button type="submit" class="secondary">Refresh</button>
+    </form>
+    {% endif %}
   </div>
   {% endif %}
   {% if entries %}
@@ -47,7 +62,9 @@
         <td class="url-cell"><a href="{{ row.URL }}" target="_blank" rel="noopener">{{ row.URL[:60] }}{% if row.URL|length > 60 %}…{% endif %}</a></td>
         <td>{{ row.Date }}</td>
         {% if write_file %}
-        <td><a href="{{ url_for('descriptions_map_entry', editIndex=loop.index0) }}">Edit</a></td>
+        <td class="row-actions">
+          <a class="btn secondary" href="{{ url_for('descriptions_map_entry', editIndex=loop.index0) }}">Edit</a>
+        </td>
         {% endif %}
       </tr>
       {% endfor %}
