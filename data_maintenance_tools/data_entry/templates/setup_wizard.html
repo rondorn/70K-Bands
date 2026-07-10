@@ -22,19 +22,39 @@
 <div class="panel">
   {% if step == 1 %}
   <p class="hint wizard-lead">
-    Welcome. This tool reads published festival data from network URLs and writes your changes to
-    local files. To write, you need both network access and a local copy of the Dropbox folder.
+    Welcome. Choose how festival files are stored, then pick the admin areas you will maintain.
   </p>
-  <div class="message info dropbox-notice">
-    <strong>Dropbox required for writing.</strong>
-    Install the Dropbox desktop app and sign in so festival files sync to a folder on your machine.
-    Choose local write paths inside that synced folder. Reads always use the network link so you
-  can work even when someone else owns the local copy.
-  </div>
 
   <form method="post">
     <input type="hidden" name="wizard_step" value="1">
     {% if wizard_rerun %}<input type="hidden" name="wizard_rerun" value="1">{% endif %}
+
+    <div class="form-row">
+      <div class="form-label">File storage <span class="required">*</span></div>
+      <div class="form-input">
+        <fieldset class="storage-mode-radios">
+          <label class="role-option">
+            <input type="radio" name="storage_mode" value="dropbox_api"
+              {% if draft.storage_mode != 'local_files' %}checked{% endif %}>
+            <span><strong>All files on Dropbox</strong> — Dropbox sign-in required; read and write via the API.</span>
+          </label>
+          <label class="role-option" style="margin-top:10px;">
+            <input type="radio" name="storage_mode" value="local_files"
+              {% if draft.storage_mode == 'local_files' %}checked{% endif %}>
+            <span><strong>Local files</strong> — Read network URLs; write local files (may sync via Dropbox desktop).</span>
+          </label>
+        </fieldset>
+      </div>
+    </div>
+
+    <div class="message info dropbox-notice wizard-local-notice" {% if draft.storage_mode != 'local_files' %}style="display:none"{% endif %}>
+      <strong>Local files mode.</strong>
+      Install the Dropbox desktop app if you want local writes to sync to a shared festival folder.
+    </div>
+    <div class="message info dropbox-notice wizard-dropbox-notice" {% if draft.storage_mode == 'local_files' %}style="display:none"{% endif %}>
+      <strong>All files on Dropbox.</strong>
+      You will connect your Dropbox account on the final step (or on the Config screen after setup).
+    </div>
 
     <div class="form-row wizard-roles">
       <div class="form-label">Your role <span class="required">*</span></div>
@@ -74,6 +94,7 @@
     {% for role in draft.roles %}
     <input type="hidden" name="roles" value="{{ role }}">
     {% endfor %}
+    <input type="hidden" name="storage_mode" value="{{ draft.storage_mode or 'dropbox_api' }}">
 
     <div class="form-row">
       <div class="form-label">Festival name <span class="required">*</span></div>
@@ -155,10 +176,17 @@
   </form>
 
   {% elif step == 3 %}
+  {% if draft.storage_mode != 'local_files' %}
+  <p class="hint wizard-lead">
+    All-files-on-Dropbox mode uses the network URLs from the pointer for reads and writes.
+    Connect Dropbox below, then finish setup.
+  </p>
+  {% else %}
   <p class="hint wizard-lead">
     Choose local write destinations inside your Dropbox-synced folder. These paths are used only when
     you save new bands, schedule rows, description notes, or map entries.
   </p>
+  {% endif %}
 
   <form method="post">
     <input type="hidden" name="wizard_step" value="3">
@@ -166,6 +194,7 @@
     {% for role in draft.roles %}
     <input type="hidden" name="roles" value="{{ role }}">
     {% endfor %}
+    <input type="hidden" name="storage_mode" value="{{ draft.storage_mode or 'dropbox_api' }}">
     <input type="hidden" name="festival_name" value="{{ draft.festival_name }}">
     <input type="hidden" name="pointer_url" value="{{ draft.pointer_url }}">
     <input type="hidden" name="event_year" value="{{ draft.event_year }}">
@@ -176,6 +205,19 @@
     <input type="hidden" name="dates_text" value="{{ dates_text }}">
     <input type="hidden" name="days_text" value="{{ days_text }}">
     <input type="hidden" name="event_types_text" value="{{ event_types_text }}">
+
+    {% if draft.storage_mode != 'local_files' %}
+    <div class="message info">
+      Connect your Dropbox account so the app can upload lineup, schedule, description map,
+      and note files. You can also connect later on the Config screen.
+    </div>
+    <div class="form-row">
+      <div class="form-label">Dropbox</div>
+      <div class="form-input">
+        <a class="btn" href="{{ url_for('dropbox_oauth_start') }}">Connect Dropbox</a>
+      </div>
+    </div>
+    {% else %}
 
     {% if role_band_list %}
     <div class="form-row">
@@ -228,6 +270,8 @@
         <div class="hint">Folder for description text files (Schedule and Description Admin).</div>
       </div>
     </div>
+    {% endif %}
+
     {% endif %}
 
     <div class="form-row">
@@ -391,5 +435,23 @@
       }
     });
   }
+
+  const storageModeRadios = document.querySelectorAll('input[name="storage_mode"]');
+  const wizardLocalNotice = document.querySelector('.wizard-local-notice');
+  const wizardDropboxNotice = document.querySelector('.wizard-dropbox-notice');
+  function updateWizardStorageNotices() {
+    const selected = document.querySelector('input[name="storage_mode"]:checked');
+    const dropboxMode = selected && selected.value === 'dropbox_api';
+    if (wizardLocalNotice) {
+      wizardLocalNotice.style.display = dropboxMode ? 'none' : '';
+    }
+    if (wizardDropboxNotice) {
+      wizardDropboxNotice.style.display = dropboxMode ? '' : 'none';
+    }
+  }
+  storageModeRadios.forEach((radio) => {
+    radio.addEventListener('change', updateWizardStorageNotices);
+  });
+  updateWizardStorageNotices();
 </script>
 {% endblock %}

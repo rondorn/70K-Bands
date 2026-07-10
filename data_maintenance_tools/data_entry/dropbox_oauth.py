@@ -17,6 +17,7 @@ DROPBOX_APP_KEY = "ug24jfmymp185wi"
 # Scopes must be enabled on the app Permissions tab in the Dropbox developer console.
 OAUTH_SCOPES = [
     "account_info.read",
+    "files.content.write",
     "files.metadata.read",
     "sharing.read",
     "sharing.write",
@@ -211,8 +212,7 @@ def dropbox_auth_status(cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     message = ""
     if not connected:
         message = (
-            "Click Connect Dropbox to sign in with your Dropbox account "
-            "and allow description link publishing."
+            "Click Connect Dropbox to sign in with your Dropbox account."
         )
 
     return {

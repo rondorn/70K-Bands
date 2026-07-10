@@ -22,11 +22,24 @@ ROLE_LABELS: dict[str, str] = {
     ROLE_DESCRIPTION: "Description Admin",
 }
 
+STORAGE_LOCAL = "local_files"
+STORAGE_DROPBOX = "dropbox_api"
+
+LOCAL_STORAGE_PATH_KEYS = (
+    "lineup_file",
+    "schedule_file",
+    "description_map_file",
+    "notes_directory",
+    "dropbox_root",
+)
+
 # Flask endpoint -> roles that may access it (union when user has multiple roles).
 ENDPOINT_ROLES: dict[str, frozenset[str]] = {
     "bands": frozenset({ROLE_BAND_LIST}),
     "band_entry": frozenset({ROLE_BAND_LIST}),
     "band_remove": frozenset({ROLE_BAND_LIST}),
+    "lineup_sync": frozenset({ROLE_BAND_LIST}),
+    "lineup_reload_staging": frozenset({ROLE_BAND_LIST}),
     "band_view": frozenset({ROLE_BAND_LIST}),
     "band_discover": frozenset({ROLE_BAND_LIST}),
     "schedule_entry": frozenset({ROLE_SCHEDULE}),
@@ -34,6 +47,8 @@ ENDPOINT_ROLES: dict[str, frozenset[str]] = {
     "schedule_view": frozenset({ROLE_SCHEDULE}),
     "schedule_stats": frozenset({ROLE_SCHEDULE}),
     "schedule_refresh_band_list": frozenset({ROLE_SCHEDULE}),
+    "schedule_sync": frozenset({ROLE_SCHEDULE}),
+    "schedule_reload_staging": frozenset({ROLE_SCHEDULE}),
     "descriptions_write": frozenset({ROLE_DESCRIPTION}),
     "descriptions_map": frozenset({ROLE_DESCRIPTION}),
     "descriptions_map_entry": frozenset({ROLE_DESCRIPTION}),
@@ -64,6 +79,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "event_year": "",
     "roles": [],
     "setup_complete": False,
+    "storage_mode": STORAGE_DROPBOX,
     "lineup_file": "",
     "schedule_file": "",
     "band_list_url": "",
@@ -128,6 +144,8 @@ def _normalize_festival_config(data: dict[str, Any]) -> dict[str, Any]:
     merged.update({k: v for k, v in data.items() if k in _FESTIVAL_CONFIG_KEYS})
     merged.pop("show_venues", None)
     merged.pop("include_prior_years_field", None)
+    merged["storage_mode"] = normalize_storage_mode(merged)
+    clear_local_storage_paths(merged)
     return merged
 
 
@@ -301,7 +319,7 @@ def load_config(festival_id: str | None = None) -> dict[str, Any]:
     selected = (festival_id or registry.get("active_festival_id") or "").strip()
     if selected not in festivals:
         selected = next(iter(festivals))
-    return deepcopy(festivals[selected])
+    return _normalize_festival_config(festivals[selected])
 
 
 def save_config(data: dict[str, Any], festival_id: str | None = None) -> str:
@@ -343,19 +361,73 @@ def lineup_header(cfg: dict[str, Any] | None = None) -> str:
     return ",".join(lineup_fields(cfg)) + "\n"
 
 
+def normalize_storage_mode(cfg: dict[str, Any] | None = None) -> str:
+    cfg = cfg or {}
+    mode = str(cfg.get("storage_mode", "") or "").strip()
+    if mode == STORAGE_LOCAL:
+        return STORAGE_LOCAL
+    return STORAGE_DROPBOX
+
+
+def clear_local_storage_paths(cfg: dict[str, Any]) -> None:
+    """Drop local path fields when using all-files-on-Dropbox mode."""
+    if not uses_dropbox_api(cfg):
+        return
+    for key in LOCAL_STORAGE_PATH_KEYS:
+        cfg[key] = ""
+
+
+def uses_dropbox_api(cfg: dict[str, Any] | None = None) -> bool:
+    return normalize_storage_mode(cfg) == STORAGE_DROPBOX
+
+
+def uses_local_files(cfg: dict[str, Any] | None = None) -> bool:
+    return not uses_dropbox_api(cfg)
+
+
+def lineup_write_target(paths: dict[str, str], cfg: dict[str, Any] | None = None) -> str:
+    cfg = cfg or {}
+    if uses_dropbox_api(cfg):
+        return (paths.get("band_list_url") or "").strip()
+    return (paths.get("lineup_file") or "").strip()
+
+
+def schedule_write_target(paths: dict[str, str], cfg: dict[str, Any] | None = None) -> str:
+    cfg = cfg or {}
+    if uses_dropbox_api(cfg):
+        return (paths.get("schedule_url") or "").strip()
+    return (paths.get("schedule_file") or "").strip()
+
+
+def description_map_write_target(paths: dict[str, str], cfg: dict[str, Any] | None = None) -> str:
+    cfg = cfg or {}
+    if uses_dropbox_api(cfg):
+        return (paths.get("description_map_url") or "").strip()
+    return (paths.get("description_map_file") or "").strip()
+
+
 def resolved_paths(cfg: dict[str, Any] | None = None) -> dict[str, str]:
     cfg = cfg or load_config()
     base = config_path().parent
-    return {
-        "lineup_file": resolve_path(str(cfg.get("lineup_file", "")), base),
-        "schedule_file": resolve_path(str(cfg.get("schedule_file", "")), base),
+    paths = {
         "band_list_url": str(cfg.get("band_list_url", "") or "").strip(),
         "schedule_url": str(cfg.get("schedule_url", "") or "").strip(),
         "pointer_url": str(cfg.get("pointer_url", "") or "").strip(),
-        "notes_directory": resolve_path(str(cfg.get("notes_directory", "")), base),
-        "description_map_file": resolve_path(str(cfg.get("description_map_file", "")), base),
         "description_map_url": str(cfg.get("description_map_url", "") or "").strip(),
     }
+    if uses_local_files(cfg):
+        paths.update(
+            {
+                "lineup_file": resolve_path(str(cfg.get("lineup_file", "")), base),
+                "schedule_file": resolve_path(str(cfg.get("schedule_file", "")), base),
+                "notes_directory": resolve_path(str(cfg.get("notes_directory", "")), base),
+                "description_map_file": resolve_path(
+                    str(cfg.get("description_map_file", "")), base
+                ),
+                "dropbox_root": resolve_path(str(cfg.get("dropbox_root", "")), base),
+            }
+        )
+    return paths
 
 
 def read_sources(cfg: dict[str, Any] | None = None) -> dict[str, str]:
@@ -369,33 +441,27 @@ def read_sources(cfg: dict[str, Any] | None = None) -> dict[str, str]:
 
 
 def band_list_reads_local(cfg: dict[str, Any] | None = None) -> bool:
-    """
-    Band List Admin with a local lineup path reads the band list from that file
-    so new entries appear before the published URL is updated.
-    """
     cfg = cfg or load_config()
+    if uses_dropbox_api(cfg):
+        return False
     if ROLE_BAND_LIST not in normalize_roles(cfg.get("roles")):
         return False
     return bool(str(cfg.get("lineup_file", "") or "").strip())
 
 
 def schedule_reads_local(cfg: dict[str, Any] | None = None) -> bool:
-    """
-    Schedule Admin with a local schedule path reads the schedule from that file
-    so new entries appear before the published URL is updated.
-    """
     cfg = cfg or load_config()
+    if uses_dropbox_api(cfg):
+        return False
     if ROLE_SCHEDULE not in normalize_roles(cfg.get("roles")):
         return False
     return bool(str(cfg.get("schedule_file", "") or "").strip())
 
 
 def description_map_reads_local(cfg: dict[str, Any] | None = None) -> bool:
-    """
-    Description Admin with a local map path reads the map from that file
-    so new entries appear before the published URL is updated.
-    """
     cfg = cfg or load_config()
+    if uses_dropbox_api(cfg):
+        return False
     if ROLE_DESCRIPTION not in normalize_roles(cfg.get("roles")):
         return False
     return bool(str(cfg.get("description_map_file", "") or "").strip())
@@ -467,20 +533,28 @@ def roles_from_form(form_roles: list[str] | None) -> list[str]:
     return normalize_roles(form_roles)
 
 
-def fields_required_for_roles(roles: list[str]) -> dict[str, bool]:
+def fields_required_for_roles(
+    roles: list[str], cfg: dict[str, Any] | None = None
+) -> dict[str, bool]:
     """Which config fields are required for the selected admin roles."""
     roles = normalize_roles(roles)
-    return {
-        "lineup_file": ROLE_BAND_LIST in roles,
-        "schedule_file": ROLE_SCHEDULE in roles,
-        "description_map_file": ROLE_DESCRIPTION in roles,
-        "notes_directory": ROLE_DESCRIPTION in roles or ROLE_SCHEDULE in roles,
+    local = cfg is None or uses_local_files(cfg)
+    required: dict[str, bool] = {
+        "band_list_url": ROLE_BAND_LIST in roles,
+        "schedule_url": ROLE_SCHEDULE in roles,
+        "description_map_url": ROLE_DESCRIPTION in roles,
         "pointer_url": ROLE_SCHEDULE in roles,
         "venues": ROLE_SCHEDULE in roles,
         "dates": ROLE_SCHEDULE in roles,
         "days": ROLE_SCHEDULE in roles,
         "event_types": ROLE_SCHEDULE in roles,
+        "lineup_file": local and ROLE_BAND_LIST in roles,
+        "schedule_file": local and ROLE_SCHEDULE in roles,
+        "description_map_file": local and ROLE_DESCRIPTION in roles,
+        "notes_directory": local
+        and (ROLE_DESCRIPTION in roles or ROLE_SCHEDULE in roles),
     }
+    return required
 
 
 def validate_config_for_roles(
@@ -491,7 +565,7 @@ def validate_config_for_roles(
     if not roles:
         return ["Select at least one admin role."]
 
-    required = fields_required_for_roles(roles)
+    required = fields_required_for_roles(roles, cfg)
     errors: list[str] = []
 
     def _missing_text(field: str, label: str) -> None:
@@ -504,7 +578,7 @@ def validate_config_for_roles(
         if not str(value or "").strip():
             errors.append(f"{label} is required for your selected role(s).")
 
-    if require_local_paths:
+    if uses_local_files(cfg) and require_local_paths:
         if required["lineup_file"]:
             _missing_text("lineup_file", "Lineup file (local write path)")
         if required["schedule_file"]:
@@ -513,6 +587,12 @@ def validate_config_for_roles(
             _missing_text("description_map_file", "Description map file (local write path)")
         if required["notes_directory"]:
             _missing_text("notes_directory", "Notes directory (local write path)")
+    if required["band_list_url"]:
+        _missing_text("band_list_url", "Band list URL")
+    if required["schedule_url"]:
+        _missing_text("schedule_url", "Schedule URL")
+    if required["description_map_url"]:
+        _missing_text("description_map_url", "Description map URL")
     if required["pointer_url"]:
         _missing_text("pointer_url", "Pointer URL")
     if required["venues"]:
@@ -527,10 +607,21 @@ def validate_config_for_roles(
     if not str(cfg.get("festival_name", "")).strip():
         errors.append("Festival name is required.")
 
+    if uses_dropbox_api(cfg):
+        from data_entry.dropbox_oauth import dropbox_auth_status
+
+        auth = dropbox_auth_status(cfg)
+        if not auth.get("dropbox_auth_connected"):
+            errors.append(
+                "Connect Dropbox on the Config screen to use all-files-on-Dropbox mode."
+            )
+
     return errors
 
 
 def ensure_data_files(cfg: dict[str, Any] | None = None) -> None:
+    if uses_dropbox_api(cfg):
+        return
     cfg = cfg or load_config()
     paths = resolved_paths(cfg)
 

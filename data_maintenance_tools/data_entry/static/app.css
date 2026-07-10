@@ -267,6 +267,17 @@ input[type="submit"]:disabled {
   opacity: 0.7;
 }
 
+form.form-is-submitting button[type="submit"],
+form.form-is-submitting input[type="submit"] {
+  pointer-events: none;
+  opacity: 0.75;
+}
+
+form.form-is-submitting .config-actions button[type="submit"]:not(.is-busy),
+form.form-is-submitting .config-actions input[type="submit"]:not(.is-busy) {
+  opacity: 0.55;
+}
+
 button:disabled:hover,
 input[type="submit"]:disabled:hover {
   background: #444;
@@ -368,6 +379,64 @@ form.inline-form {
 
 form.inline-form button {
   margin: 0;
+}
+
+.staging-list-toolbar {
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: rgba(138, 180, 248, 0.08);
+  border: 1px solid rgba(138, 180, 248, 0.2);
+}
+
+.staging-sync-status {
+  font-size: 14px;
+}
+
+.staging-sync-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.staging-refresh-form {
+  margin-left: auto;
+}
+
+button.link-button {
+  background: none;
+  border: none;
+  color: #9aa0a6;
+  font-size: 13px;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+button.link-button:hover {
+  color: #c4c7c5;
+}
+
+.sync-pending-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #f9ab00;
+  background: rgba(249, 171, 0, 0.12);
+  border: 1px solid rgba(249, 171, 0, 0.35);
+  vertical-align: middle;
+}
+
+tr.row-pending-sync td:first-child {
+  font-weight: 500;
 }
 
 table.data-table td.url-cell {

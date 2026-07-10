@@ -84,12 +84,15 @@ class ScheduleEvent:
         }
 
 
-def read_schedule(path: str | Path) -> list[ScheduleEvent]:
-    """Read schedule from a local CSV file (write target only)."""
-    path = Path(path)
-    if not path.is_file():
-        return []
-    return _parse_schedule_csv(path.read_text(encoding="utf-8"))
+def read_schedule(path: str | Path, cfg: dict[str, Any] | None = None) -> list[ScheduleEvent]:
+    """Read schedule from a local CSV path or a published URL."""
+    target = str(path or "").strip()
+    if target.lower().startswith("http"):
+        return read_schedule_from_url(target, cfg, force_refresh=False)
+    file_path = Path(target)
+    if file_path.is_file():
+        return _parse_schedule_csv(file_path.read_text(encoding="utf-8"))
+    return []
 
 
 def read_schedule_from_url(
@@ -137,31 +140,53 @@ def _parse_schedule_csv(csv_text: str) -> list[ScheduleEvent]:
     return events
 
 
-def write_schedule(path: str | Path, events: list[ScheduleEvent], cfg: dict[str, Any] | None = None) -> None:
-    path = Path(path)
+def _schedule_csv_text(events: list[ScheduleEvent]) -> str:
+    import io
+
+    buffer = io.StringIO()
+    writer = csv.DictWriter(buffer, fieldnames=SCHEDULE_COLUMNS)
+    writer.writeheader()
+    for event in events:
+        writer.writerow(event.as_row())
+    return buffer.getvalue()
+
+
+def write_schedule(
+    target: str | Path, events: list[ScheduleEvent], cfg: dict[str, Any] | None = None
+) -> None:
+    from data_entry.config_store import uses_dropbox_api
+    from data_entry.dropbox_storage import DropboxStorageError, upload_text
+    from data_entry.schedule_staging import is_staging_path, mark_staging_pending
+
+    text = _schedule_csv_text(events)
+    target_str = str(target or "").strip()
+    if target_str.lower().startswith("http"):
+        if not target_str:
+            raise ValueError("Schedule URL is not configured.")
+        try:
+            upload_text(target_str, text, cfg)
+        except DropboxStorageError as exc:
+            raise ValueError(str(exc)) from exc
+        if cfg is not None:
+            _invalidate_published_cache(cfg)
+        return
+
+    path = Path(target_str)
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=SCHEDULE_COLUMNS)
-        writer.writeheader()
-        for event in events:
-            writer.writerow(event.as_row())
-    if cfg is not None:
+    path.write_text(text, encoding="utf-8")
+    if cfg is not None and uses_dropbox_api(cfg) and is_staging_path(path, cfg):
+        mark_staging_pending(cfg)
+    elif cfg is not None:
         _invalidate_published_cache(cfg)
 
 
 def append_schedule_event(
-    path: str | Path, event: ScheduleEvent, cfg: dict[str, Any] | None = None
+    target: str | Path, event: ScheduleEvent, cfg: dict[str, Any] | None = None
 ) -> None:
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    write_header = not path.is_file() or path.stat().st_size == 0
-    with path.open("a", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=SCHEDULE_COLUMNS)
-        if write_header:
-            writer.writeheader()
-        writer.writerow(event.as_row())
-    if cfg is not None:
-        _invalidate_published_cache(cfg)
+    url_or_path = str(target or "").strip()
+    events = read_schedule(url_or_path, cfg)
+    events.append(event)
+    write_schedule(url_or_path, events, cfg)
 
 
 def _parse_date(date_str: str) -> tuple[int, int, int]:

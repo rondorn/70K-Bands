@@ -162,12 +162,27 @@ def share_link_for_local_file(local_path: Path, cfg: dict[str, Any] | None = Non
     return ensure_dropbox_raw_url(share_url)
 
 
+def share_link_for_api_path(api_path: str, cfg: dict[str, Any] | None = None) -> str:
+    """Return a public raw Dropbox URL for a file at a Dropbox API path."""
+    dbx = _get_dropbox_client(cfg)
+    share_url = get_or_create_shared_link(dbx, api_path)
+    return ensure_dropbox_raw_url(share_url)
+
+
 def share_link_for_label(
     notes_dir: str | Path,
     label: str,
     cfg: dict[str, Any] | None = None,
 ) -> str:
     """Return a share link for the description note file for a band/event label."""
+    from data_entry.config_store import uses_dropbox_api
+
+    if cfg is not None and uses_dropbox_api(cfg):
+        from data_entry.dropbox_storage import note_api_path
+
+        api_path = note_api_path(label, cfg)
+        return share_link_for_api_path(api_path, cfg)
+
     directory = Path(notes_dir).expanduser().resolve()
     if not str(notes_dir or "").strip():
         raise DropboxLinkError("Notes directory is not configured.")

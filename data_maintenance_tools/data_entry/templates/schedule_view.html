@@ -4,18 +4,30 @@
 {% block subheading %}{{ events|length }} event(s){% endblock %}
 
 {% block content %}
+{% include "_staging_list_toolbar.html" %}
+{% if data_sync.uses_staging %}
+<div class="target-file">Working copy: <code>{{ working_file }}</code> ({{ data_sync.event_count }} event{{ 's' if data_sync.event_count != 1 else '' }})</div>
+{% else %}
 <div class="target-file">Reading from: <code>{{ schedule_read_url }}</code>{% if read_local %} (local write file){% else %} (published){% endif %}</div>
-{% if write_file %}
+{% if write_file and not data_sync.uses_staging %}
 <div class="target-file">Writing to: <code>{{ write_file }}</code></div>
+{% endif %}
 {% endif %}
 {% if read_local %}
 <p class="hint">Local schedule — new and edited entries appear here immediately.</p>
+{% elif data_sync.uses_staging %}
+<p class="hint">Edits save locally immediately. Unsynced rows are marked Pending until published to Dropbox.</p>
+{% elif write_file %}
+<p class="hint">{% if uses_dropbox_api %}Dropbox schedule{% else %}Published schedule{% endif %} — use Schedule → Entry to add or edit events.</p>
 {% else %}
-<p class="hint">Published schedule (read-only). Use Schedule → Entry to add rows to your local write file.</p>
+<p class="hint">Published schedule (read-only). Configure schedule settings on the Config screen.</p>
 {% endif %}
 
 {% if message %}
 <div class="message success page-message">{{ message }}</div>
+{% endif %}
+{% if sync_error %}
+<div class="message error page-message">{{ sync_error }}</div>
 {% endif %}
 
 <div class="panel">
@@ -24,13 +36,14 @@
     <thead>
       <tr>
         <th>Band</th><th>Venue</th><th>Day</th><th>Date</th><th>Start</th><th>End</th><th>Type</th><th>Notes</th>
-        {% if read_local %}<th>Actions</th>{% endif %}
+        {% if write_file %}<th>Actions</th>{% endif %}
       </tr>
     </thead>
     <tbody>
       {% for e in events %}
-      <tr>
-        <td>{{ e.band }}</td>
+      {% set event_key = e.band ~ '|' ~ e.location ~ '|' ~ e.date ~ '|' ~ e.start_time %}
+      <tr{% if data_sync.uses_staging and event_key in pending_schedule_keys %} class="row-pending-sync"{% endif %}>
+        <td>{{ e.band }}{% if data_sync.uses_staging and event_key in pending_schedule_keys %} <span class="sync-pending-badge">Pending</span>{% endif %}</td>
         <td>{{ e.location }}</td>
         <td>{{ e.day }}</td>
         <td>{{ e.date }}</td>
@@ -38,7 +51,7 @@
         <td>{{ e.end_time }}</td>
         <td>{{ e.event_type }}</td>
         <td>{{ e.notes }}</td>
-        {% if read_local %}
+        {% if write_file %}
         <td class="row-actions">
           <a class="btn secondary" href="{{ url_for('schedule_entry', editIndex=loop.index0) }}">Edit</a>
           <form method="post" action="{{ url_for('schedule_remove') }}" class="inline-form" onsubmit="return confirm('Remove {{ e.band }} at {{ e.location }} on {{ e.date }}?');">
@@ -59,4 +72,10 @@
   <p>No schedule rows yet.</p>
   {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+{% if data_sync.uses_staging %}
+<script src="{{ url_for('static', filename='staging-sync.js') }}"></script>
+{% endif %}
 {% endblock %}

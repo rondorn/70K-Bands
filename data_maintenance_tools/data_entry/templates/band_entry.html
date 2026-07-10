@@ -4,7 +4,11 @@
 {% block subheading %}Discover from Metal Archives or MusicBrainz{% endblock %}
 
 {% block content %}
-<div class="target-file">Writing to: <code>{{ lineup_file }}</code></div>
+{% if uses_staging %}
+<div class="target-file">Writing to working copy (sync from lineup list)</div>
+{% else %}
+<div class="target-file">Writing to: <code>{{ write_file }}</code></div>
+{% endif %}
 
 {% if errors %}
 <div class="message error page-message">

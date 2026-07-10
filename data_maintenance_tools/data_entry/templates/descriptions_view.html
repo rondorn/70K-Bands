@@ -14,8 +14,10 @@
 {% endif %}
 {% if read_local %}
 <p class="hint">Local description map — new and edited entries appear here immediately.</p>
+{% elif write_file %}
+<p class="hint">{% if uses_dropbox_api %}Dropbox description map{% else %}Published map{% endif %} — use Add or Edit to update entries.</p>
 {% else %}
-<p class="hint">Published map (read-only). Use Add to write entries to your local map file.</p>
+<p class="hint">Published map (read-only). Configure description settings on the Config screen.</p>
 {% endif %}
 
 {% if message %}
@@ -35,7 +37,7 @@
         <th>Band / event</th>
         <th>URL</th>
         <th>Cache date</th>
-        {% if read_local %}<th></th>{% endif %}
+        {% if write_file %}<th></th>{% endif %}
       </tr>
     </thead>
     <tbody>
@@ -44,7 +46,7 @@
         <td>{{ row.Band }}</td>
         <td class="url-cell"><a href="{{ row.URL }}" target="_blank" rel="noopener">{{ row.URL[:60] }}{% if row.URL|length > 60 %}…{% endif %}</a></td>
         <td>{{ row.Date }}</td>
-        {% if read_local %}
+        {% if write_file %}
         <td><a href="{{ url_for('descriptions_map_entry', editIndex=loop.index0) }}">Edit</a></td>
         {% endif %}
       </tr>

@@ -8,10 +8,9 @@ from pathlib import Path
 from typing import Any
 
 from data_entry.band_logic import lineup_band_names
-from data_entry.config_store import description_map_reads_local
 from data_entry.http_util import normalize_dropbox_url
 from data_entry.network_cache import CacheMeta, invalidate_festival_network_cache
-from data_entry.schedule_logic import NON_BAND_EVENT_TYPES, read_schedule_from_url
+from data_entry.schedule_logic import NON_BAND_EVENT_TYPES
 
 MAP_COLUMNS = ["Band", "URL", "Date"]
 MAP_HEADER = "Band,URL,Date\n"
@@ -25,12 +24,17 @@ def normalize_map_url(url: str) -> str:
     return normalize_dropbox_url((url or "").strip())
 
 
-def read_description_map(path: str | Path) -> list[dict[str, str]]:
-    """Read description map from a local CSV file (write target only)."""
-    path = Path(path)
-    if not path.is_file():
+def read_description_map(path: str | Path, cfg: dict[str, Any] | None = None) -> list[dict[str, str]]:
+    """Read description map from local CSV or published URL depending on storage mode."""
+    from data_entry.config_store import uses_dropbox_api
+
+    target = str(path or "").strip()
+    if uses_dropbox_api(cfg or {}) or target.lower().startswith("http"):
+        return read_description_map_from_url(target, cfg, force_refresh=True)
+    file_path = Path(path)
+    if not file_path.is_file():
         return []
-    return _parse_description_map_csv(path.read_text(encoding="utf-8-sig"))
+    return _parse_description_map_csv(file_path.read_text(encoding="utf-8-sig"))
 
 
 def read_description_map_from_url(
@@ -72,30 +76,59 @@ def _parse_description_map_csv(csv_text: str) -> list[dict[str, str]]:
     return rows
 
 
-def write_description_map(
-    path: str | Path, rows: list[dict[str, str]], cfg: dict[str, Any] | None = None
-) -> None:
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=MAP_COLUMNS)
-        writer.writeheader()
-        for row in rows:
-            writer.writerow(
-                {
-                    "Band": row.get("Band", ""),
-                    "URL": row.get("URL", ""),
-                    "Date": row.get("Date", ""),
-                }
-            )
-    if cfg is not None:
-        from data_entry.config_store import resolved_paths
+def _description_map_csv_text(rows: list[dict[str, str]]) -> str:
+    import io
 
+    buffer = io.StringIO()
+    writer = csv.DictWriter(buffer, fieldnames=MAP_COLUMNS)
+    writer.writeheader()
+    for row in rows:
+        writer.writerow(
+            {
+                "Band": row.get("Band", ""),
+                "URL": row.get("URL", ""),
+                "Date": row.get("Date", ""),
+            }
+        )
+    return buffer.getvalue()
+
+
+def write_description_map(
+    target: str | Path, rows: list[dict[str, str]], cfg: dict[str, Any] | None = None
+) -> None:
+    from data_entry.config_store import resolved_paths, uses_dropbox_api
+    from data_entry.dropbox_storage import DropboxStorageError, upload_text
+
+    text = _description_map_csv_text(rows)
+    if uses_dropbox_api(cfg or {}):
+        url = str(target or "").strip()
+        if not url:
+            raise ValueError("Description map URL is not configured.")
+        try:
+            upload_text(url, text, cfg)
+        except DropboxStorageError as exc:
+            raise ValueError(str(exc)) from exc
+    else:
+        path = Path(target)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("w", encoding="utf-8", newline="") as handle:
+            handle.write(text)
+    if cfg is not None:
         invalidate_festival_network_cache(resolved_paths(cfg))
 
 
-def ensure_description_map_file(path: str | Path) -> None:
-    path = Path(path)
+def ensure_description_map_file(target: str | Path, cfg: dict[str, Any] | None = None) -> None:
+    from data_entry.config_store import uses_dropbox_api
+
+    if uses_dropbox_api(cfg or {}):
+        url = str(target or "").strip()
+        if not url:
+            return
+        rows = read_description_map_from_url(url, cfg, force_refresh=True)
+        if not rows:
+            write_description_map(url, [], cfg)
+        return
+    path = Path(target)
     if not path.is_file() or path.stat().st_size == 0:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(MAP_HEADER, encoding="utf-8")
@@ -127,9 +160,14 @@ def description_label_options(
     names.update(band_names)
 
     schedule_url = paths.get("schedule_url", "")
-    if schedule_url:
-        for event in read_schedule_from_url(
-            schedule_url, cfg, force_refresh=force_refresh
+    from data_entry.schedule_staging import schedule_working_target
+    from data_entry.schedule_logic import read_schedule
+
+    schedule_target = schedule_working_target(paths, cfg)
+    if schedule_target:
+        for event in read_schedule(
+            schedule_target,
+            cfg,
         ):
             if event.event_type in NON_BAND_EVENT_TYPES:
                 name = (event.band or "").strip()
@@ -138,8 +176,10 @@ def description_label_options(
 
     map_path = paths.get("description_map_file", "")
     map_url = paths.get("description_map_url", "")
+    from data_entry.config_store import description_map_reads_local
+
     if description_map_reads_local(cfg) and map_path:
-        for row in read_description_map(map_path):
+        for row in read_description_map(map_path, cfg):
             name = (row.get("Band") or "").strip()
             if name:
                 names.add(name)
@@ -179,16 +219,16 @@ def upsert_map_entry(
     if not url:
         return "error", "Dropbox URL is required."
 
-    map_path = Path(path)
-    ensure_description_map_file(map_path)
-    rows = read_description_map(map_path)
+    map_target = path
+    ensure_description_map_file(map_target, cfg)
+    rows = read_description_map(map_target, cfg)
 
     if edit_index is not None and 0 <= edit_index < len(rows):
         existing_at = find_band_index(rows, band)
         if existing_at is not None and existing_at != edit_index:
             return "error", f"'{band}' already exists in the description map."
         rows[edit_index] = {"Band": band, "URL": url, "Date": cache_date}
-        write_description_map(map_path, rows, cfg)
+        write_description_map(map_target, rows, cfg)
         return "updated", f"{band} has been updated in the description map."
 
     existing_idx = find_band_index(rows, band)
@@ -196,18 +236,20 @@ def upsert_map_entry(
         if not confirm_update:
             return "needs_confirm", f"'{band}' is already in the description map."
         rows[existing_idx] = {"Band": band, "URL": url, "Date": cache_date}
-        write_description_map(map_path, rows, cfg)
+        write_description_map(map_target, rows, cfg)
         return "updated", f"{band} has been updated in the description map."
 
     rows.append({"Band": band, "URL": url, "Date": cache_date})
-    write_description_map(map_path, rows, cfg)
+    write_description_map(map_target, rows, cfg)
     return "added", f"{band} has been added to the description map."
 
 
-def remove_map_entry_at_index(path: str | Path, index: int) -> bool:
-    rows = read_description_map(path)
+def remove_map_entry_at_index(
+    path: str | Path, index: int, cfg: dict[str, Any] | None = None
+) -> bool:
+    rows = read_description_map(path, cfg)
     if index < 0 or index >= len(rows):
         return False
     del rows[index]
-    write_description_map(path, rows)
+    write_description_map(path, rows, cfg)
     return True

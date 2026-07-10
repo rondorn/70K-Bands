@@ -4,8 +4,12 @@
 {% block subheading %}Add events to the festival schedule{% endblock %}
 
 {% block content %}
-<div class="target-file">Writing to: <code>{{ schedule_file }}</code></div>
-{% if schedule_read_url %}
+{% if uses_dropbox_api and not read_local %}
+<div class="target-file">Writing to working copy (sync from list view)</div>
+{% else %}
+<div class="target-file">Writing to: <code>{{ schedule_file }}</code>{% if uses_dropbox_api %} (Dropbox API){% endif %}</div>
+{% endif %}
+{% if schedule_read_url and not (uses_dropbox_api and not read_local) %}
 <div class="target-file">Validating against: <code>{{ schedule_read_url }}</code>{% if read_local %} (local write file){% else %} (published){% endif %}</div>
 {% endif %}
 

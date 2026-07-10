@@ -17,7 +17,6 @@ from data_entry.band_logic import (
     normalize_band_url_fields,
     normalize_genre_for_csv,
     read_lineup,
-    read_lineup_from_url,
     remove_band_at_index,
     replace_band_at_index,
     validate_band_data,
@@ -28,12 +27,15 @@ from data_entry.config_store import (
     ROLE_DESCRIPTION,
     ROLE_LABELS,
     ROLE_SCHEDULE,
+    STORAGE_DROPBOX,
+    STORAGE_LOCAL,
     active_festival_id,
     band_list_reads_local,
     config_path,
     create_new_festival,
     default_landing_endpoint,
     description_map_reads_local,
+    description_map_write_target,
     effective_roles,
     ensure_data_files,
     endpoint_allowed_for_roles,
@@ -44,6 +46,8 @@ from data_entry.config_store import (
     load_config,
     needs_setup,
     normalize_roles,
+    normalize_storage_mode,
+    clear_local_storage_paths,
     resolve_path,
     resolved_paths,
     role_nav_flags,
@@ -53,9 +57,12 @@ from data_entry.config_store import (
     set_active_festival,
     set_last_browse_directory,
     textarea_from_list,
+    uses_dropbox_api,
+    uses_local_files,
     validate_config_for_roles,
 )
 from data_entry.directory_picker import choose_directory, choose_file
+from data_entry.discover import discover_band
 from data_entry.description_map import (
     cache_date_today,
     description_label_options,
@@ -70,7 +77,6 @@ from data_entry.dropbox_links import (
     dropbox_integration_ready,
     resolve_dropbox_root,
     share_link_for_label,
-    share_link_for_local_file,
 )
 from data_entry.dropbox_oauth import (
     DropboxOAuthError,
@@ -80,9 +86,22 @@ from data_entry.dropbox_oauth import (
     start_oauth_flow,
     store_oauth_result,
 )
-from data_entry.discover import discover_band
+from data_entry.lineup_staging import (
+    get_lineup_sync_status,
+    get_pending_lineup_band_names,
+    lineup_working_target,
+    reload_lineup_staging_from_published,
+    sync_lineup_to_dropbox,
+)
 from data_entry.network_cache import invalidate_cached_url
 from data_entry.pointer import introspect_pointer
+from data_entry.schedule_staging import (
+    get_pending_schedule_event_keys,
+    get_schedule_sync_status,
+    reload_schedule_staging_from_published,
+    schedule_working_target,
+    sync_schedule_to_dropbox,
+)
 from data_entry.schedule_logic import (
     EVENT_LENGTH_ARRAY,
     HOUR_ARRAY,
@@ -94,7 +113,6 @@ from data_entry.schedule_logic import (
     build_event_from_form,
     event_to_form,
     read_schedule,
-    read_schedule_from_url,
     remove_matching_event,
     replace_matching_event,
     validate_event,
@@ -103,6 +121,56 @@ from data_entry.schedule_logic import (
 
 TEMPLATE_DIR = Path(__file__).resolve().parent / "templates"
 STATIC_DIR = Path(__file__).resolve().parent / "static"
+
+
+def _schedule_list_context(
+    cfg: dict[str, Any],
+    paths: dict[str, str],
+    *,
+    return_to: str,
+) -> dict[str, Any]:
+    sync = get_schedule_sync_status(cfg, paths)
+    return {
+        "data_sync": sync,
+        "sync_url": url_for("schedule_sync"),
+        "reload_url": url_for("schedule_reload_staging"),
+        "reload_return_to": return_to,
+        "pending_schedule_keys": get_pending_schedule_event_keys(cfg, paths),
+        "working_file": schedule_working_target(paths, cfg),
+        "published_url": sync.published_url if sync.uses_staging else "",
+        "item_label": "event",
+    }
+
+
+def _lineup_list_context(
+    cfg: dict[str, Any],
+    paths: dict[str, str],
+    *,
+    return_to: str,
+) -> dict[str, Any]:
+    sync = get_lineup_sync_status(cfg, paths)
+    return {
+        "data_sync": sync,
+        "sync_url": url_for("lineup_sync"),
+        "reload_url": url_for("lineup_reload_staging"),
+        "reload_return_to": return_to,
+        "pending_band_names": get_pending_lineup_band_names(cfg, paths),
+        "working_file": lineup_working_target(paths, cfg),
+        "published_url": sync.published_url if sync.uses_staging else "",
+        "item_label": "band",
+    }
+
+
+def _schedule_autosync_context(cfg: dict[str, Any], paths: dict[str, str]) -> dict[str, Any]:
+    sync = get_schedule_sync_status(cfg, paths)
+    if not sync.uses_staging or not sync.needs_auto_sync:
+        return {"trigger_autosync": False}
+    return {
+        "trigger_autosync": True,
+        "data_sync": sync,
+        "sync_url": url_for("schedule_sync"),
+        "autosync_debounce_seconds": 2,
+    }
 
 
 def create_app() -> Flask:
@@ -157,6 +225,9 @@ def create_app() -> Flask:
             "config_file": str(config_path()),
             "lineup_file": paths.get("lineup_file", ""),
             "schedule_file": paths.get("schedule_file", ""),
+            "storage_mode": normalize_storage_mode(cfg),
+            "uses_dropbox_api": uses_dropbox_api(cfg),
+            "uses_local_files": uses_local_files(cfg),
             **role_nav_flags(cfg),
         }
 
@@ -309,7 +380,7 @@ def create_app() -> Flask:
                 cfg = load_config()
 
         festivals = list_festivals()
-        role_requirements = fields_required_for_roles(cfg.get("roles", []))
+        role_requirements = fields_required_for_roles(cfg.get("roles", []), cfg)
         oauth_message = request.args.get("dropbox_message", "")
         oauth_error = request.args.get("dropbox_error", "")
         if oauth_message:
@@ -433,19 +504,10 @@ def create_app() -> Flask:
     def schedule_entry():
         cfg = load_config()
         paths = resolved_paths(cfg)
-        schedule_path = paths["schedule_file"]
-        schedule_url = paths.get("schedule_url", "")
+        schedule_target = schedule_working_target(paths, cfg)
         read_local = schedule_reads_local(cfg)
-        if read_local:
-            existing = read_schedule(schedule_path)
-            schedule_read_url = schedule_path
-        else:
-            existing = (
-                read_schedule_from_url(schedule_url, cfg)
-                if schedule_url
-                else read_schedule(schedule_path)
-            )
-            schedule_read_url = schedule_url or schedule_path
+        existing = read_schedule(schedule_target, cfg)
+        schedule_read_url = schedule_target
 
         form = {
             "BandName": request.values.get("BandName", ""),
@@ -480,7 +542,7 @@ def create_app() -> Flask:
         confirm_html = request.values.get("confirm", "")
         errors: list[str] = []
 
-        if request.method == "POST" and request.form.get("Submit"):
+        if request.method == "POST" and not request.form.get("band_list_refresh"):
             event = build_event_from_form(request.form, cfg)
             verify_bypass = bool(request.form.get("verifyBypass"))
             orig_band = request.form.get("OrigBand", "").strip()
@@ -493,18 +555,8 @@ def create_app() -> Flask:
                 event, existing, cfg, verify_bypass=verify_bypass, exclude=exclude
             )
             if not errors:
-                if is_update:
-                    if read_local:
-                        local_rows = read_schedule(schedule_path)
-                        updated = replace_matching_event(
-                            local_rows,
-                            orig_band,
-                            orig_venue,
-                            orig_date,
-                            orig_start,
-                            event,
-                        )
-                    else:
+                try:
+                    if is_update:
                         updated = replace_matching_event(
                             existing,
                             orig_band,
@@ -513,44 +565,49 @@ def create_app() -> Flask:
                             orig_start,
                             event,
                         )
-                    write_schedule(schedule_path, updated, cfg)
-                    confirm_message = f"{event.band} has been updated"
-                else:
-                    append_schedule_event(schedule_path, event, cfg)
-                    confirm_message = f"{event.band} has been added"
-                description_note_message = ""
-                if event.event_type in NON_BAND_EVENT_TYPES:
-                    description_text = request.form.get("DescriptionText", "")
-                    notes_dir = paths.get("notes_directory", "")
-                    if description_text.strip() and notes_dir:
-                        try:
-                            saved_note = save_description_note(
-                                notes_dir, event.band, description_text
-                            )
+                        write_schedule(schedule_target, updated, cfg)
+                        confirm_message = f"{event.band} has been updated"
+                    else:
+                        append_schedule_event(schedule_target, event, cfg)
+                        confirm_message = f"{event.band} has been added"
+                    description_note_message = ""
+                    if event.event_type in NON_BAND_EVENT_TYPES:
+                        description_text = request.form.get("DescriptionText", "")
+                        notes_dir = paths.get("notes_directory", "")
+                        if description_text.strip() and (notes_dir or uses_dropbox_api(cfg)):
+                            try:
+                                saved_note = save_description_note(
+                                    notes_dir, event.band, description_text, cfg=cfg
+                                )
+                                description_note_message = (
+                                    f" Description note saved as {saved_note.name}."
+                                )
+                            except Exception as exc:
+                                description_note_message = (
+                                    f" Description note not saved: {exc}"
+                                )
+                        elif description_text.strip() and not notes_dir and uses_local_files(cfg):
                             description_note_message = (
-                                f" Description note saved as {saved_note.name}."
+                                " Description not saved: set Notes directory on the Config screen."
                             )
-                        except Exception as exc:
-                            description_note_message = (
-                                f" Description note not saved: {exc}"
-                            )
-                    elif description_text.strip() and not notes_dir:
-                        description_note_message = (
-                            " Description not saved: set Notes directory on the Config screen."
-                        )
-                confirm_message += description_note_message
-                confirm_html = (
-                    f"Band={html.escape(event.band)}<br>"
-                    f"Venue={html.escape(event.location)}<br>"
-                    f"Day={html.escape(event.day)}<br>"
-                    f"Date={html.escape(event.date)}<br>"
-                    f"Start Time={html.escape(event.start_time)}<br>"
-                    f"End Time={html.escape(event.end_time)}<br>"
-                    f"Notes={html.escape(event.notes)}<br>"
-                    f"ImageURL={html.escape(event.image_url)}<br>"
-                )
-                form = _preserve_schedule_defaults(request.form)
-                modify_mode = False
+                    confirm_message += description_note_message
+                    confirm_html = (
+                        f"Band={html.escape(event.band)}<br>"
+                        f"Venue={html.escape(event.location)}<br>"
+                        f"Day={html.escape(event.day)}<br>"
+                        f"Date={html.escape(event.date)}<br>"
+                        f"Start Time={html.escape(event.start_time)}<br>"
+                        f"End Time={html.escape(event.end_time)}<br>"
+                        f"Notes={html.escape(event.notes)}<br>"
+                        f"ImageURL={html.escape(event.image_url)}<br>"
+                    )
+                    form = _preserve_schedule_defaults(request.form)
+                    modify_mode = False
+                except ValueError as exc:
+                    errors = [str(exc)]
+                    confirm_message = ""
+                    form = dict(request.form)
+                    modify_mode = is_update
             else:
                 confirm_message = "<br>".join(errors)
                 form = dict(request.form)
@@ -582,6 +639,7 @@ def create_app() -> Flask:
             description_map_url=cfg.get("description_map_url", ""),
             schedule_read_url=schedule_read_url,
             read_local=read_local,
+            schedule_file=schedule_target,
             notes_directory=paths.get("notes_directory", ""),
             hour_array=[" ", *HOUR_ARRAY],
             min_array=["  ", *MIN_ARRAY],
@@ -614,12 +672,56 @@ def create_app() -> Flask:
                 elif line.startswith("Start Time="):
                     start_time = line[11:]
 
-        events = read_schedule(paths["schedule_file"])
+        schedule_target = schedule_working_target(paths, cfg)
+        events = read_schedule(schedule_target, cfg)
         updated = remove_matching_event(events, band, venue, date, start_time)
-        write_schedule(paths["schedule_file"], updated, cfg)
+        write_schedule(schedule_target, updated, cfg)
         if return_to == "schedule_view":
-            return redirect(url_for("schedule_view", message="Entry removed"))
+            return redirect(
+                url_for("schedule_view", message="Entry removed", sync_pending=1)
+            )
         return redirect(url_for("schedule_entry"))
+
+    @app.post("/schedule/sync")
+    def schedule_sync():
+        cfg = load_config()
+        paths = resolved_paths(cfg)
+        wants_json = (
+            request.headers.get("X-Requested-With") == "XMLHttpRequest"
+            or "application/json" in (request.headers.get("Accept") or "")
+        )
+        try:
+            status = sync_schedule_to_dropbox(cfg, paths)
+            message = status.status_label
+            if wants_json:
+                return jsonify(
+                    {
+                        "ok": True,
+                        "message": message,
+                        "state": status.state,
+                        "pending_count": status.pending_count,
+                    }
+                )
+            return redirect(url_for("schedule_view", message=message))
+        except ValueError as exc:
+            if wants_json:
+                return jsonify({"ok": False, "error": str(exc)}), 400
+            return redirect(url_for("schedule_view", sync_error=str(exc)))
+
+    @app.post("/schedule/reload-staging")
+    def schedule_reload_staging():
+        cfg = load_config()
+        paths = resolved_paths(cfg)
+        return_to = request.form.get("return_to", "schedule_entry")
+        try:
+            reload_schedule_staging_from_published(cfg, paths)
+            invalidate_cached_url(paths.get("schedule_url", ""), paths)
+            message = "Working copy reloaded from published schedule."
+        except ValueError as exc:
+            message = str(exc)
+        if return_to == "schedule_view":
+            return redirect(url_for("schedule_view", message=message))
+        return redirect(url_for("schedule_entry", confirmMessage=message))
 
     @app.post("/schedule/refresh-band-list")
     def schedule_refresh_band_list():
@@ -632,41 +734,27 @@ def create_app() -> Flask:
     def schedule_view():
         cfg = load_config()
         paths = resolved_paths(cfg)
-        schedule_url = paths.get("schedule_url", "")
+        schedule_target = schedule_working_target(paths, cfg)
         read_local = schedule_reads_local(cfg)
-        if read_local:
-            events = read_schedule(paths["schedule_file"])
-            schedule_read_url = paths["schedule_file"]
-        else:
-            events = (
-                read_schedule_from_url(schedule_url, cfg)
-                if schedule_url
-                else read_schedule(paths["schedule_file"])
-            )
-            schedule_read_url = schedule_url or paths.get("schedule_file", "")
+        events = read_schedule(schedule_target, cfg)
+        list_ctx = _schedule_list_context(cfg, paths, return_to="schedule_view")
         return render_template(
             "schedule_view.html",
             events=events,
-            schedule_read_url=schedule_read_url,
+            schedule_read_url=schedule_target,
             read_local=read_local,
-            write_file=paths.get("schedule_file", ""),
+            write_file=schedule_target,
             message=request.args.get("message", ""),
+            sync_error=request.args.get("sync_error", ""),
+            **list_ctx,
         )
 
     @app.get("/schedule/stats")
     def schedule_stats():
         cfg = load_config()
         paths = resolved_paths(cfg)
-        schedule_url = paths.get("schedule_url", "")
-        read_local = schedule_reads_local(cfg)
-        if read_local:
-            events = read_schedule(paths["schedule_file"])
-        else:
-            events = (
-                read_schedule_from_url(schedule_url, cfg)
-                if schedule_url
-                else read_schedule(paths["schedule_file"])
-            )
+        schedule_target = schedule_working_target(paths, cfg)
+        events = read_schedule(schedule_target, cfg)
         bands, _band_cache = band_name_options(cfg, paths)
         stats: dict[str, dict[str, int]] = {}
         for event in events:
@@ -684,35 +772,33 @@ def create_app() -> Flask:
     def bands():
         cfg = load_config()
         paths = resolved_paths(cfg)
-        band_list_url = paths.get("band_list_url", "")
+        lineup_target = lineup_working_target(paths, cfg)
         read_local = band_list_reads_local(cfg)
-        if read_local:
-            rows = read_lineup(paths["lineup_file"], cfg)
-            lineup_read_url = paths["lineup_file"]
-        else:
-            rows = read_lineup_from_url(band_list_url, cfg) if band_list_url else []
-            lineup_read_url = band_list_url or "(not configured)"
+        rows = read_lineup(lineup_target, cfg)
+        pending_names = get_pending_lineup_band_names(cfg, paths)
+        display_bands = lineup_rows_for_display(rows)
+        for band_row in display_bands:
+            band_row["sync_pending"] = band_row.get("bandName", "") in pending_names
+        list_ctx = _lineup_list_context(cfg, paths, return_to="bands")
         return render_template(
             "band_view.html",
-            bands=lineup_rows_for_display(rows),
-            lineup_read_url=lineup_read_url,
+            bands=display_bands,
+            lineup_read_url=lineup_target,
             read_local=read_local,
-            write_file=paths.get("lineup_file", ""),
+            write_file=lineup_target,
             message=request.args.get("message", ""),
+            sync_error=request.args.get("sync_error", ""),
+            **list_ctx,
         )
 
     @app.route("/bands/entry", methods=["GET", "POST"])
     def band_entry():
         cfg = load_config()
         paths = resolved_paths(cfg)
-        lineup_path = paths["lineup_file"]
-        band_list_url = paths.get("band_list_url", "")
+        lineup_target = lineup_working_target(paths, cfg)
         read_local = band_list_reads_local(cfg)
-        existing_local = read_lineup(lineup_path, cfg)
-        existing_network = (
-            read_lineup_from_url(band_list_url, cfg) if band_list_url else []
-        )
-        existing_for_display = existing_local if read_local else existing_network
+        existing_rows = read_lineup(lineup_target, cfg)
+        existing_for_display = existing_rows
 
         form_data = {key: request.values.get(key, "") for key in _band_form_fields(cfg)}
         form_data["latestAlbum"] = request.values.get("latestAlbum", "")
@@ -759,9 +845,9 @@ def create_app() -> Flask:
                 if (
                     is_update
                     and orig_index is not None
-                    and 0 <= orig_index < len(existing_local)
+                    and 0 <= orig_index < len(existing_rows)
                 ):
-                    csv_data["priorYears"] = existing_local[orig_index].get("priorYears", "")
+                    csv_data["priorYears"] = existing_rows[orig_index].get("priorYears", "")
             source_for_exclude = existing_for_display
             exclude_index = (
                 orig_index if is_update and orig_index < len(source_for_exclude) else None
@@ -770,20 +856,22 @@ def create_app() -> Flask:
             ok, errors = validate_band_data(
                 csv_data,
                 cfg,
-                lineup_path,
-                band_list_url="" if read_local else band_list_url,
+                lineup_file=lineup_target,
                 exclude_index=exclude_index,
             )
 
             if ok:
-                if is_update and orig_index is not None and 0 <= orig_index < len(existing_local):
-                    updated = replace_band_at_index(existing_local, orig_index, csv_data)
-                    write_lineup(lineup_path, updated, cfg)
-                    message = f"{band_name} has been updated"
-                else:
-                    append_band(csv_data, lineup_path, cfg)
-                    message = "Band successfully added to the lineup."
-                return redirect(url_for("bands", message=message))
+                try:
+                    if is_update and orig_index is not None and 0 <= orig_index < len(existing_rows):
+                        updated = replace_band_at_index(existing_rows, orig_index, csv_data)
+                        write_lineup(lineup_target, updated, cfg)
+                        message = f"{band_name} has been updated"
+                    else:
+                        append_band(csv_data, lineup_target, cfg)
+                        message = "Band successfully added to the lineup."
+                    return redirect(url_for("bands", message=message, sync_pending=1))
+                except ValueError as exc:
+                    errors = [str(exc)]
             else:
                 form_data = {
                     **csv_data,
@@ -799,7 +887,8 @@ def create_app() -> Flask:
         return render_template(
             "band_entry.html",
             form_data=form_data,
-            write_file=lineup_path,
+            write_file=lineup_target,
+            uses_staging=uses_dropbox_api(cfg),
             show_prior_years_edit=show_prior_years_edit,
             use_city_state=bool(cfg.get("use_city_state_field")),
             errors=errors,
@@ -810,16 +899,56 @@ def create_app() -> Flask:
     def band_remove():
         cfg = load_config()
         paths = resolved_paths(cfg)
+        lineup_target = lineup_working_target(paths, cfg)
         index_str = request.form.get("index", "").strip()
 
         if index_str.isdigit():
             idx = int(index_str)
-            rows = read_lineup(paths["lineup_file"], cfg)
+            rows = read_lineup(lineup_target, cfg)
             if 0 <= idx < len(rows):
                 updated = remove_band_at_index(rows, idx)
-                write_lineup(paths["lineup_file"], updated, cfg)
+                write_lineup(lineup_target, updated, cfg)
 
-        return redirect(url_for("bands", message="Band removed"))
+        return redirect(url_for("bands", message="Band removed", sync_pending=1))
+
+    @app.post("/bands/sync")
+    def lineup_sync():
+        cfg = load_config()
+        paths = resolved_paths(cfg)
+        wants_json = (
+            request.headers.get("X-Requested-With") == "XMLHttpRequest"
+            or "application/json" in (request.headers.get("Accept") or "")
+        )
+        try:
+            status = sync_lineup_to_dropbox(cfg, paths)
+            message = status.status_label
+            if wants_json:
+                return jsonify(
+                    {
+                        "ok": True,
+                        "message": message,
+                        "state": status.state,
+                        "pending_count": status.pending_count,
+                    }
+                )
+            return redirect(url_for("bands", message=message))
+        except ValueError as exc:
+            if wants_json:
+                return jsonify({"ok": False, "error": str(exc)}), 400
+            return redirect(url_for("bands", sync_error=str(exc)))
+
+    @app.post("/bands/reload-staging")
+    def lineup_reload_staging():
+        cfg = load_config()
+        paths = resolved_paths(cfg)
+        return_to = request.form.get("return_to", "bands")
+        try:
+            reload_lineup_staging_from_published(cfg, paths)
+            invalidate_cached_url(paths.get("band_list_url", ""), paths)
+            message = "Working copy refreshed from published lineup."
+        except ValueError as exc:
+            message = str(exc)
+        return redirect(url_for("bands", message=message))
 
     @app.get("/bands/view")
     def band_view():
@@ -857,25 +986,26 @@ def create_app() -> Flask:
             label = request.form.get("labelName", "").strip()
             text = request.form.get("descriptionText", "")
             form = {"labelName": label, "descriptionText": text}
-            if not notes_dir:
+            map_target = description_map_write_target(paths, cfg)
+            needs_notes_dir = uses_local_files(cfg)
+            if needs_notes_dir and not notes_dir:
                 errors.append("Notes directory is not configured.")
             elif not label:
                 errors.append("Band or event name is required.")
             else:
                 try:
-                    saved = save_description_note(notes_dir, label, text)
+                    saved = save_description_note(notes_dir, label, text, cfg=cfg)
                     saved_label = label
                     saved_filename = saved.name
 
                     if action == "save_and_map":
-                        map_path = paths.get("description_map_file", "")
-                        if not map_path:
-                            errors.append("Description map file is not configured.")
+                        if not map_target:
+                            errors.append("Description map is not configured.")
                         else:
                             try:
-                                share_url = share_link_for_local_file(saved, cfg)
+                                share_url = share_link_for_label(notes_dir, label, cfg)
                                 status, msg = upsert_map_entry(
-                                    map_path,
+                                    map_target,
                                     label,
                                     share_url,
                                     cache_date_today(),
@@ -948,26 +1078,26 @@ def create_app() -> Flask:
     def descriptions_map():
         cfg = load_config()
         paths = resolved_paths(cfg)
-        map_path = paths.get("description_map_file", "")
+        map_target = description_map_write_target(paths, cfg)
         map_url = paths.get("description_map_url", "")
         read_local = description_map_reads_local(cfg)
         if read_local:
-            entries = read_description_map(map_path) if map_path else []
-            description_map_read_url = map_path
+            entries = read_description_map(map_target, cfg) if map_target else []
+            description_map_read_url = map_target
         else:
             entries = (
                 read_description_map_from_url(map_url, cfg)
                 if map_url
-                else (read_description_map(map_path) if map_path else [])
+                else (read_description_map(map_target, cfg) if map_target else [])
             )
-            description_map_read_url = map_url or map_path
+            description_map_read_url = map_url or map_target
         return render_template(
             "descriptions_view.html",
             entries=entries,
             description_map_read_url=description_map_read_url,
             description_map_published_url=map_url,
             read_local=read_local,
-            write_file=map_path,
+            write_file=map_target,
             message=request.args.get("message", ""),
         )
 
@@ -975,16 +1105,16 @@ def create_app() -> Flask:
     def descriptions_map_entry():
         cfg = load_config()
         paths = resolved_paths(cfg)
-        map_path = paths.get("description_map_file", "")
+        map_target = description_map_write_target(paths, cfg)
         map_url = paths.get("description_map_url", "")
         read_local = description_map_reads_local(cfg)
         if read_local:
-            map_rows = read_description_map(map_path) if map_path else []
+            map_rows = read_description_map(map_target, cfg) if map_target else []
         else:
             map_rows = (
                 read_description_map_from_url(map_url, cfg)
                 if map_url
-                else (read_description_map(map_path) if map_path else [])
+                else (read_description_map(map_target, cfg) if map_target else [])
             )
         label_names, band_list_cache = description_label_options(
             cfg,
@@ -1037,14 +1167,14 @@ def create_app() -> Flask:
             confirm_update = request.form.get("confirm_update") == "1"
             pending_confirm = confirm_update
 
-            if not map_path:
-                errors.append("Description map file is not configured.")
+            if not map_target:
+                errors.append("Description map is not configured.")
             else:
                 edit_idx = (
                     int(form["OrigMapIndex"]) if form["OrigMapIndex"].isdigit() else None
                 )
                 status, msg = upsert_map_entry(
-                    map_path,
+                    map_target,
                     form["bandName"],
                     form["mapUrl"],
                     form["cacheDate"],
@@ -1073,7 +1203,7 @@ def create_app() -> Flask:
             band_list_refresh_url=url_for("descriptions_refresh_label_names"),
             band_list_refresh_return_to="map_entry",
             cache_message=cache_message,
-            description_map_file=map_path,
+            description_map_file=map_target,
             notes_directory=paths.get("notes_directory", ""),
             errors=errors,
             success=success,
@@ -1088,10 +1218,10 @@ def create_app() -> Flask:
     def descriptions_map_remove():
         cfg = load_config()
         paths = resolved_paths(cfg)
-        map_path = paths.get("description_map_file", "")
+        map_target = description_map_write_target(paths, cfg)
         index_str = request.form.get("index", "").strip()
-        if map_path and index_str.isdigit():
-            remove_map_entry_at_index(map_path, int(index_str))
+        if map_target and index_str.isdigit():
+            remove_map_entry_at_index(map_target, int(index_str), cfg)
         return redirect(url_for("descriptions_map", message="Map entry removed"))
 
     @app.get("/descriptions/view")
@@ -1106,7 +1236,7 @@ def create_app() -> Flask:
         label = request.args.get("label", "").strip()
         if not label:
             return jsonify({"ok": False, "error": "label is required"}), 400
-        if not notes_dir:
+        if uses_local_files(cfg) and not notes_dir:
             return jsonify({"ok": False, "error": "Notes directory is not configured."}), 400
         try:
             url = share_link_for_label(notes_dir, label, cfg)
@@ -1129,12 +1259,16 @@ def create_app() -> Flask:
 
 
 def _config_from_form(form) -> dict[str, Any]:
+    storage_mode = (form.get("storage_mode", "") or STORAGE_DROPBOX).strip()
+    if storage_mode not in (STORAGE_LOCAL, STORAGE_DROPBOX):
+        storage_mode = STORAGE_DROPBOX
     return {
         "festival_name": form.get("festival_name", "").strip(),
         "pointer_url": form.get("pointer_url", "").strip(),
         "event_year": form.get("event_year", "").strip(),
         "roles": roles_from_form(form.getlist("roles")),
         "setup_complete": True,
+        "storage_mode": storage_mode,
         "lineup_file": form.get("lineup_file", "").strip(),
         "schedule_file": form.get("schedule_file", "").strip(),
         "band_list_url": form.get("band_list_url", "").strip(),
@@ -1152,11 +1286,12 @@ def _config_from_form(form) -> dict[str, Any]:
 
 
 def _config_to_wizard_draft(cfg: dict[str, Any]) -> dict[str, Any]:
-    return {
+    draft = {
         "festival_name": str(cfg.get("festival_name", "") or ""),
         "pointer_url": str(cfg.get("pointer_url", "") or ""),
         "event_year": str(cfg.get("event_year", "") or ""),
         "roles": normalize_roles(cfg.get("roles")),
+        "storage_mode": normalize_storage_mode(cfg),
         "band_list_url": str(cfg.get("band_list_url", "") or ""),
         "schedule_url": str(cfg.get("schedule_url", "") or ""),
         "description_map_url": str(cfg.get("description_map_url", "") or ""),
@@ -1164,12 +1299,15 @@ def _config_to_wizard_draft(cfg: dict[str, Any]) -> dict[str, Any]:
         "schedule_file": str(cfg.get("schedule_file", "") or ""),
         "description_map_file": str(cfg.get("description_map_file", "") or ""),
         "notes_directory": str(cfg.get("notes_directory", "") or ""),
+        "dropbox_root": str(cfg.get("dropbox_root", "") or ""),
         "venues": list(cfg.get("venues") or []),
         "dates": list(cfg.get("dates") or []),
         "days": list(cfg.get("days") or []),
         "event_types": list(cfg.get("event_types") or []),
         "setup_complete": False,
     }
+    clear_local_storage_paths(draft)
+    return draft
 
 
 def _wizard_draft_from_form(form) -> dict[str, Any]:
@@ -1181,10 +1319,32 @@ def _wizard_draft_from_form(form) -> dict[str, Any]:
 def _wizard_to_config(draft: dict[str, Any]) -> dict[str, Any]:
     cfg = dict(draft)
     cfg["roles"] = normalize_roles(cfg.get("roles"))
+    cfg["storage_mode"] = normalize_storage_mode(cfg)
+    clear_local_storage_paths(cfg)
     return cfg
 
 
 def _dropbox_ui_state(cfg: dict[str, Any]) -> dict[str, Any]:
+    auth = dropbox_auth_status(cfg)
+    if uses_dropbox_api(cfg):
+        ready, message = dropbox_integration_ready()
+        connected = bool(auth.get("dropbox_auth_connected"))
+        if not connected:
+            message = (
+                auth.get("dropbox_auth_message")
+                or "Connect Dropbox to read and write festival files via the API."
+            )
+        elif not ready:
+            message = message or "Dropbox integration is not available."
+        else:
+            message = ""
+        return {
+            "dropbox_ready": connected and ready,
+            "dropbox_status_message": message,
+            "dropbox_root_display": "",
+            **auth,
+        }
+
     ready, message = dropbox_integration_ready()
     dropbox_root = ""
     dropbox_ready = False

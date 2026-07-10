@@ -4,13 +4,21 @@
 {% block subheading %}{{ bands|length }} band(s){% endblock %}
 
 {% block content %}
+{% include "_staging_list_toolbar.html" %}
+{% if data_sync.uses_staging %}
+<div class="target-file">Working copy: <code>{{ working_file }}</code> ({{ data_sync.band_count }} band{{ 's' if data_sync.band_count != 1 else '' }})</div>
+{% else %}
 <div class="target-file">Reading from: <code>{{ lineup_read_url }}</code>{% if read_local %} (local write file){% else %} (published){% endif %}</div>
 {% if write_file %}
 <div class="target-file">Writing to: <code>{{ write_file }}</code></div>
 {% endif %}
+{% endif %}
 
 {% if message %}
 <div class="message success page-message">{{ message }}</div>
+{% endif %}
+{% if sync_error %}
+<div class="message error page-message">{{ sync_error }}</div>
 {% endif %}
 
 <div class="panel">
@@ -27,17 +35,17 @@
         <th>Country</th>
         <th>Genre</th>
         <th>Noteworthy</th>
-        {% if read_local %}<th>Actions</th>{% endif %}
+        {% if write_file %}<th>Actions</th>{% endif %}
       </tr>
     </thead>
     <tbody>
       {% for b in bands %}
-      <tr>
-        <td>{{ b.bandName }}</td>
+      <tr{% if b.sync_pending %} class="row-pending-sync"{% endif %}>
+        <td>{{ b.bandName }}{% if b.sync_pending %} <span class="sync-pending-badge">Pending</span>{% endif %}</td>
         <td>{{ b.country }}</td>
         <td>{{ b.genre }}</td>
         <td>{{ b.noteworthy }}</td>
-        {% if read_local %}
+        {% if write_file %}
         <td class="row-actions">
           <a class="btn secondary" href="{{ url_for('band_entry', editIndex=b.source_index) }}">Edit</a>
           <form method="post" action="{{ url_for('band_remove') }}" class="inline-form" onsubmit="return confirm('Remove {{ b.bandName }} from the lineup?');">
@@ -54,4 +62,10 @@
   <p>No bands in the lineup yet.</p>
   {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+{% if data_sync.uses_staging %}
+<script src="{{ url_for('static', filename='staging-sync.js') }}"></script>
+{% endif %}
 {% endblock %}

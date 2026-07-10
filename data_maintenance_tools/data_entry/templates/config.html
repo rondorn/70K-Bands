@@ -12,16 +12,21 @@
 {% endif %}
 <div id="loadFeedback" class="message info" style="display:none" role="status" aria-live="polite"></div>
 
-<div class="message info dropbox-notice">
-  <strong>Reads use network URLs; writes use local paths.</strong>
-  All views and validation load from the network links below. New data is written to local CSV
-  paths inside your Dropbox-synced folder. Install the Dropbox desktop app so those paths exist
-  on your machine and sync to the shared festival folder.
+<div id="storageModeNoticeLocal" class="message info dropbox-notice"{% if uses_dropbox_api %} style="display:none"{% endif %}>
+  <strong>Local files mode.</strong>
+  Views and validation load from the network URLs below. New data is written to local CSV paths
+  (which may live inside a Dropbox-synced folder on your machine).
+</div>
+<div id="storageModeNoticeDropbox" class="message info dropbox-notice"{% if not uses_dropbox_api %} style="display:none"{% endif %}>
+  <strong>All files on Dropbox.</strong>
+  Connect your Dropbox account below. Reads and writes use the Dropbox API via the network URLs
+  from the pointer — no local file paths are required.
 </div>
 
 <div class="panel">
   <p class="hint">
-    Choose your admin role(s), then set network read URLs (from the pointer) and local write paths.
+    Choose your admin role(s) and how festival files are stored, then set network read URLs
+    (from the pointer) and local write paths when using local files mode.
     Use <strong>Load from pointer</strong> after entering the pointer URL to import read URLs
     and schedule metadata. To walk through setup again with your current values pre-filled,
     use <strong>Re-run setup wizard</strong>.
@@ -67,6 +72,54 @@
     </div>
 
     <div class="form-row">
+      <div class="form-label">File storage</div>
+      <div class="form-input">
+        <fieldset class="storage-mode-radios">
+          <legend class="sr-only">How festival files are read and written</legend>
+          <label class="role-option">
+            <input type="radio" name="storage_mode" value="dropbox_api"
+              {% if cfg.storage_mode != 'local_files' %}checked{% endif %}>
+            <span><strong>All files on Dropbox</strong> — Dropbox sign-in required; everything read and written via the Dropbox API.</span>
+          </label>
+          <label class="role-option" style="margin-top:10px;">
+            <input type="radio" name="storage_mode" value="local_files"
+              {% if cfg.storage_mode == 'local_files' %}checked{% endif %}>
+            <span><strong>Local files</strong> — Read published network URLs; write local files (may sync via Dropbox desktop).</span>
+          </label>
+        </fieldset>
+      </div>
+    </div>
+
+    <div class="form-row storage-dropbox-only"{% if not uses_dropbox_api %} style="display:none"{% endif %}>
+      <div class="form-label">Dropbox connection <span class="required">*</span></div>
+      <div class="form-input">
+        <p class="hint" style="margin-top:0;">
+          Required in all-files-on-Dropbox mode. Saves upload lineup, schedule, description map,
+          and note files directly to Dropbox.
+        </p>
+        <div style="margin-top:12px;">
+          {% if dropbox_auth_connected %}
+          <div class="message success" style="margin-bottom:10px;">
+            Connected{% if dropbox_auth_label %}: {{ dropbox_auth_label }}{% endif %}
+          </div>
+          {% if dropbox_auth_can_disconnect %}
+          <button type="submit"
+            class="secondary"
+            formaction="{{ url_for('dropbox_oauth_disconnect') }}"
+            formmethod="post"
+            name="dropbox_disconnect"
+            value="1">Disconnect Dropbox</button>
+          {% endif %}
+          {% elif dropbox_auth_can_connect %}
+          <a class="btn" href="{{ url_for('dropbox_oauth_start') }}">Connect Dropbox</a>
+          {% elif dropbox_auth_message %}
+          <div class="hint">{{ dropbox_auth_message }}</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="form-row">
       <div class="form-label">Festival name</div>
       <div class="form-input">
         <input type="text" name="festival_name" value="{{ cfg.festival_name }}" placeholder="e.g. 70K Tons of Metal">
@@ -88,16 +141,21 @@
       <div class="form-input"><input type="text" id="eventYear" name="event_year" value="{{ cfg.event_year }}" placeholder="2027"></div>
     </div>
 
-    {% if role_requirements.lineup_file %}
-    <div class="form-row">
-      <div class="form-label">Lineup file <span class="required">*</span></div>
+    {% if role_band_list %}
+    <div class="form-row storage-local-only"{% if uses_dropbox_api %} style="display:none"{% endif %}>
+      <div class="form-label">Lineup file {% if role_requirements.lineup_file %}<span class="required">*</span>{% endif %}</div>
       <div class="form-input">
         <div class="path-picker">
           <input type="text" id="lineupFile" name="lineup_file" value="{{ cfg.lineup_file }}">
           <button type="button" class="secondary" id="chooseLineupFileBtn">Choose file…</button>
         </div>
-        <div class="hint">Local write path for Add Band (Band List Admin). Not used for reading the lineup.</div>
-        <label style="display:block;margin-top:10px;">
+        <div class="hint">Local write path for Add Band (Band List Admin). Not used in all-files-on-Dropbox mode.</div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-label"></div>
+      <div class="form-input">
+        <label style="display:block;">
           <input type="checkbox" name="use_city_state_field" {% if cfg.use_city_state_field %}checked{% endif %}>
           Use city/state fields in lineup CSV
         </label>
@@ -109,9 +167,9 @@
     {% if cfg.use_city_state_field %}<input type="hidden" name="use_city_state_field" value="on">{% endif %}
     {% endif %}
 
-    {% if role_requirements.schedule_file %}
-    <div class="form-row">
-      <div class="form-label">Schedule file <span class="required">*</span></div>
+    {% if role_schedule %}
+    <div class="form-row storage-local-only"{% if uses_dropbox_api %} style="display:none"{% endif %}>
+      <div class="form-label">Schedule file {% if role_requirements.schedule_file %}<span class="required">*</span>{% endif %}</div>
       <div class="form-input">
         <div class="path-picker">
           <input type="text" id="scheduleFile" name="schedule_file" value="{{ cfg.schedule_file }}">
@@ -148,9 +206,9 @@
     <input type="hidden" name="schedule_url" value="{{ cfg.schedule_url }}">
     {% endif %}
 
-    {% if role_requirements.description_map_file %}
-    <div class="form-row">
-      <div class="form-label">Description map file <span class="required">*</span></div>
+    {% if role_description %}
+    <div class="form-row storage-local-only"{% if uses_dropbox_api %} style="display:none"{% endif %}>
+      <div class="form-label">Description map file {% if role_requirements.description_map_file %}<span class="required">*</span>{% endif %}</div>
       <div class="form-input">
         <div class="path-picker">
           <input type="text" id="descriptionMapFile" name="description_map_file" value="{{ cfg.description_map_file }}">
@@ -175,19 +233,19 @@
     <input type="hidden" name="description_map_url" value="{{ cfg.description_map_url }}">
     {% endif %}
 
-    {% if role_requirements.notes_directory %}
-    <div class="form-row">
-      <div class="form-label">Notes directory <span class="required">*</span></div>
+    {% if role_schedule or role_description %}
+    <div class="form-row storage-local-only"{% if uses_dropbox_api %} style="display:none"{% endif %}>
+      <div class="form-label">Notes directory {% if role_requirements.notes_directory %}<span class="required">*</span>{% endif %}</div>
       <div class="form-input">
         <div class="path-picker">
           <input type="text" id="notesDirectory" name="notes_directory" value="{{ cfg.notes_directory }}" placeholder="Choose a Dropbox-synced folder…">
           <button type="button" class="secondary" id="chooseNotesDirBtn">Choose folder…</button>
         </div>
         <div class="hint">Local folder for description text files (Schedule and Description Admin).</div>
-        <label style="display:block;margin-top:14px;">Dropbox connection</label>
+        <label style="display:block;margin-top:14px;">Dropbox connection (optional)</label>
         <p class="hint" style="margin-top:4px;">
           Sign in with your own Dropbox account so the app can publish share links
-          for description files. Each admin connects once on their machine.
+          for description files after you save them locally.
         </p>
         <div style="margin-top:12px;">
           {% if dropbox_auth_connected %}
@@ -195,9 +253,12 @@
             Connected{% if dropbox_auth_label %}: {{ dropbox_auth_label }}{% endif %}
           </div>
           {% if dropbox_auth_can_disconnect %}
-          <form method="post" action="{{ url_for('dropbox_oauth_disconnect') }}" style="display:inline;">
-            <button type="submit" class="secondary">Disconnect Dropbox</button>
-          </form>
+          <button type="submit"
+            class="secondary"
+            formaction="{{ url_for('dropbox_oauth_disconnect') }}"
+            formmethod="post"
+            name="dropbox_disconnect"
+            value="1">Disconnect Dropbox</button>
           {% endif %}
           {% elif dropbox_auth_can_connect %}
           <a class="btn" href="{{ url_for('dropbox_oauth_start') }}">Connect Dropbox</a>
@@ -336,6 +397,9 @@
   }
 
   async function bindFilePicker(button, input, title) {
+    if (!button || !input) {
+      return;
+    }
     button.addEventListener('click', async () => {
       const label = button.textContent;
       button.disabled = true;
@@ -354,6 +418,36 @@
   bindFilePicker(chooseLineupFileBtn, lineupFileInput, 'Choose lineup CSV file');
   bindFilePicker(chooseScheduleFileBtn, scheduleFileInput, 'Choose schedule CSV file');
   bindFilePicker(chooseDescriptionMapFileBtn, descriptionMapFileInput, 'Choose description map CSV file');
+
+  const storageModeNoticeLocal = document.getElementById('storageModeNoticeLocal');
+  const storageModeNoticeDropbox = document.getElementById('storageModeNoticeDropbox');
+  const storageModeRadios = document.querySelectorAll('input[name="storage_mode"]');
+
+  function isDropboxApiMode() {
+    const selected = document.querySelector('input[name="storage_mode"]:checked');
+    return selected && selected.value === 'dropbox_api';
+  }
+
+  function updateStorageModeVisibility() {
+    const dropboxMode = isDropboxApiMode();
+    document.querySelectorAll('.storage-local-only').forEach((el) => {
+      el.style.display = dropboxMode ? 'none' : '';
+    });
+    document.querySelectorAll('.storage-dropbox-only').forEach((el) => {
+      el.style.display = dropboxMode ? '' : 'none';
+    });
+    if (storageModeNoticeLocal) {
+      storageModeNoticeLocal.style.display = dropboxMode ? 'none' : '';
+    }
+    if (storageModeNoticeDropbox) {
+      storageModeNoticeDropbox.style.display = dropboxMode ? '' : 'none';
+    }
+  }
+
+  storageModeRadios.forEach((radio) => {
+    radio.addEventListener('change', updateStorageModeVisibility);
+  });
+  updateStorageModeVisibility();
 
   if (chooseNotesDirBtn && notesDirectoryInput) {
     chooseNotesDirBtn.addEventListener('click', async () => {

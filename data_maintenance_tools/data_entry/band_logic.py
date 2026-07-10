@@ -182,22 +182,22 @@ def validate_band_data(
             errors.append(f"{field_labels[field]} is required")
 
     band_name = (data.get("bandName") or "").strip()
-    read_url = (band_list_url or "").strip()
-    if band_name and read_url:
-        for idx, row in enumerate(read_lineup_from_url(read_url, cfg)):
+    read_target = (lineup_file or "").strip()
+    if band_name and read_target:
+        for idx, row in enumerate(read_lineup(read_target, cfg)):
+            if exclude_index is not None and idx == exclude_index:
+                continue
+            if row.get("bandName", "").strip() == band_name:
+                errors.append(f"Band '{band_name}' already exists in the lineup")
+                break
+    elif band_name and band_list_url:
+        for idx, row in enumerate(read_lineup_from_url(band_list_url, cfg)):
             if exclude_index is not None and idx == exclude_index:
                 continue
             if row.get("bandName", "").strip() == band_name:
                 errors.append(
                     f"Band '{band_name}' already exists in the published lineup"
                 )
-                break
-    elif band_name and lineup_file:
-        for idx, row in enumerate(read_lineup(lineup_file, cfg)):
-            if exclude_index is not None and idx == exclude_index:
-                continue
-            if row.get("bandName", "").strip() == band_name:
-                errors.append(f"Band '{band_name}' already exists in the lineup file")
                 break
 
     for field in ("officalSite", "imageUrl"):
@@ -238,16 +238,22 @@ def lineup_band_names(
     *,
     force_refresh: bool = False,
 ) -> tuple[list[str], CacheMeta | None]:
-    """
-    Band names for schedule dropdowns and similar UI.
-
-    Band List Admin reads the local lineup file so new bands appear immediately.
-    Everyone else reads the published URL through the TTL network cache.
-    """
-    from data_entry.config_store import band_list_reads_local
+    """Band names for schedule dropdowns and similar UI."""
+    from data_entry.config_store import band_list_reads_local, uses_dropbox_api
 
     if band_list_reads_local(cfg):
         rows = read_lineup(paths.get("lineup_file", ""), cfg)
+        names = [
+            row.get("bandName", "").strip()
+            for row in rows
+            if row.get("bandName", "").strip()
+        ]
+        return names, None
+
+    if uses_dropbox_api(cfg):
+        from data_entry.lineup_staging import lineup_working_target
+
+        rows = read_lineup(lineup_working_target(paths, cfg), cfg)
         names = [
             row.get("bandName", "").strip()
             for row in rows
@@ -269,33 +275,23 @@ def lineup_band_names(
             if row.get("bandName", "").strip()
         ]
         return names, meta
-
-    if paths.get("lineup_file"):
-        rows = read_lineup(paths.get("lineup_file", ""), cfg)
-        names = [
-            row.get("bandName", "").strip()
-            for row in rows
-            if row.get("bandName", "").strip()
-        ]
-        return names, None
-
     return [], None
 
 
-def load_band_names(band_list_url: str, lineup_file: str = "") -> list[str]:
-    """Load band names using path arguments only (no role-aware local read)."""
-    paths = {"band_list_url": band_list_url, "lineup_file": lineup_file}
+def load_band_names(band_list_url: str) -> list[str]:
+    """Load band names from the published band list URL."""
+    paths = {"band_list_url": band_list_url}
     names, _meta = lineup_band_names({}, paths)
     return names
 
 
 def check_duplicate(
     band_name: str,
-    csv_file: str,
+    target: str,
     cfg: dict[str, Any],
     exclude_index: int | None = None,
 ) -> bool:
-    rows = read_lineup(csv_file, cfg)
+    rows = read_lineup(target, cfg)
     for idx, row in enumerate(rows):
         if exclude_index is not None and idx == exclude_index:
             continue
@@ -304,13 +300,16 @@ def check_duplicate(
     return False
 
 
-def read_lineup(csv_file: str, cfg: dict[str, Any]) -> list[dict[str, str]]:
-    """Read lineup rows from a local CSV file (write target only)."""
+def read_lineup(target: str, cfg: dict[str, Any]) -> list[dict[str, str]]:
+    """Read lineup from a local CSV path or a published URL."""
     fields = lineup_fields(cfg)
-    path = Path(csv_file)
-    if not path.is_file():
-        return []
-    return _parse_lineup_csv(path.read_text(encoding="utf-8"), fields)
+    target_str = str(target or "").strip()
+    if target_str.lower().startswith("http"):
+        return read_lineup_from_url(target_str, cfg, force_refresh=False)
+    path = Path(target_str)
+    if path.is_file():
+        return _parse_lineup_csv(path.read_text(encoding="utf-8"), fields)
+    return []
 
 
 def read_lineup_from_url(
@@ -352,19 +351,45 @@ def lineup_rows_for_display(rows: list[dict[str, str]]) -> list[dict[str, str]]:
     return indexed
 
 
-def write_lineup(
-    csv_file: str, rows: list[dict[str, str]], cfg: dict[str, Any]
-) -> None:
+def _lineup_csv_text(rows: list[dict[str, str]], cfg: dict[str, Any]) -> str:
+    import io
+
     fields = lineup_fields(cfg)
-    path = Path(csv_file)
+    buffer = io.StringIO()
+    writer = csv.DictWriter(buffer, fieldnames=fields)
+    writer.writeheader()
+    for row in rows:
+        normalized = normalize_band_row_for_csv(row)
+        writer.writerow({field: normalized.get(field, "") for field in fields})
+    return buffer.getvalue()
+
+
+def write_lineup(
+    target: str, rows: list[dict[str, str]], cfg: dict[str, Any]
+) -> None:
+    from data_entry.config_store import uses_dropbox_api
+    from data_entry.dropbox_storage import DropboxStorageError, upload_text
+    from data_entry.lineup_staging import is_lineup_staging_path, mark_lineup_staging_pending
+
+    text = _lineup_csv_text(rows, cfg)
+    target_str = str(target or "").strip()
+    if target_str.lower().startswith("http"):
+        if not target_str:
+            raise ValueError("Band list URL is not configured.")
+        try:
+            upload_text(target_str, text, cfg)
+        except DropboxStorageError as exc:
+            raise ValueError(str(exc)) from exc
+        _invalidate_published_cache(cfg)
+        return
+
+    path = Path(target_str)
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fields)
-        writer.writeheader()
-        for row in rows:
-            normalized = normalize_band_row_for_csv(row)
-            writer.writerow({field: normalized.get(field, "") for field in fields})
-    _invalidate_published_cache(cfg)
+    path.write_text(text, encoding="utf-8")
+    if uses_dropbox_api(cfg) and is_lineup_staging_path(path, cfg):
+        mark_lineup_staging_pending(cfg)
+    else:
+        _invalidate_published_cache(cfg)
 
 
 def remove_band_at_index(rows: list[dict[str, str]], index: int) -> list[dict[str, str]]:
@@ -380,15 +405,9 @@ def replace_band_at_index(
     return updated
 
 
-def append_band(data: dict[str, str], csv_file: str, cfg: dict[str, Any]) -> None:
+def append_band(data: dict[str, str], target: str, cfg: dict[str, Any]) -> None:
+    rows = read_lineup(target, cfg)
     fields = lineup_fields(cfg)
-    path = Path(csv_file)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    write_header = not path.is_file() or path.stat().st_size == 0
-    with path.open("a", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fields)
-        if write_header:
-            writer.writeheader()
-        normalized = normalize_band_row_for_csv(data)
-        writer.writerow({field: normalized.get(field, "") for field in fields})
-    _invalidate_published_cache(cfg)
+    normalized = normalize_band_row_for_csv(data)
+    rows.append({field: normalized.get(field, "") for field in fields})
+    write_lineup(target, rows, cfg)
