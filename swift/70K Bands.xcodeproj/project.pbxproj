@@ -470,6 +470,7 @@
 		11AE9BE720CE12C20007C4E1 /* ShowsAttended.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11AE985220CDFE890007C4E1 /* ShowsAttended.swift */; };
 		11B20C441ECDE4EE0031FD3A /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11B20C431ECDE4ED0031FD3A /* UserNotifications.framework */; };
 		11BE68F51A59C45100602EC7 /* webViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11BE68F41A59C45100602EC7 /* webViewController.swift */; };
+		11BEEA0E300141FA004F14F5 /* GoogleService-Info-MMF.plist in Resources */ = {isa = PBXBuildFile; fileRef = 623E8E20310107DE3AB5199E /* GoogleService-Info-MMF.plist */; };
 		11C061ED2F55FDAA0037A875 /* AutoChooseAttendanceWizardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C061EC2F55FDAA0037A875 /* AutoChooseAttendanceWizardView.swift */; };
 		11C061EE2F55FDAA0037A875 /* AutoChooseAttendanceWizardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C061EC2F55FDAA0037A875 /* AutoChooseAttendanceWizardView.swift */; };
 		11C061EF2F55FDAA0037A875 /* AutoChooseAttendanceWizardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C061EC2F55FDAA0037A875 /* AutoChooseAttendanceWizardView.swift */; };
@@ -596,7 +597,6 @@
 		35A9F66DA92B743D8A39E501 /* firebaseBandDataWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D4844A2241DA0C00910878 /* firebaseBandDataWrite.swift */; };
 		39C00A3B9AA43F6055793948 /* countries.txt in Resources */ = {isa = PBXBuildFile; fileRef = 11D05AAB291C505200D5B002 /* countries.txt */; };
 		3A77CC86891D43781090538C /* SharingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1129138C2EE74F7F008472A3 /* SharingView.swift */; };
-		3D70D6FFF0FC4B719F68D26A /* RMF in Resources */ = {isa = PBXBuildFile; fileRef = 001AC4D4D1FB48BCA6385B88 /* RMF */; };
 		3E84A8659301BF791B5C994D /* MasterViewYearChangeCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9DA42F415D3700367442 /* MasterViewYearChangeCoordinator.swift */; };
 		415C5D050350420AFB3905CE /* dataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DAB49A1A5DDA9400A8B12E /* dataHandler.swift */; };
 		4176FC5E07C7F7E6B101DA79 /* DropDown+Appearance.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110E084A2AECB6E100075618 /* DropDown+Appearance.swift */; };
@@ -681,7 +681,6 @@
 		B3B9B6A68244159AB74975A3 /* ScheduleQRCodeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E8A0112EE8A10008472A3 /* ScheduleQRCodeViewController.swift */; };
 		B3C642CB9EC6C01E105300CA /* FirebaseWriteMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D5EA122F74C58400F498DE /* FirebaseWriteMonitor.swift */; };
 		B6068448536BDC6C38AB3B70 /* UILaunchScreen-MDF.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1172EE652E5A3486006E3596 /* UILaunchScreen-MDF.xib */; };
-		B6872945622F442593B1EF82 /* GoogleService-Info-RMF.plist in Resources */ = {isa = PBXBuildFile; fileRef = 4C5AACFFF1F94E719B297DF0 /* GoogleService-Info-RMF.plist */; };
 		B7C547FDF6B7E8F410EBD7D8 /* PortraitFilterSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119C803C2F4CEB5700304A1D /* PortraitFilterSheetView.swift */; };
 		BDE31D9D2E7A29D6165DE1B3 /* ShowAttendedReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11111FA620D03D77008E41F6 /* ShowAttendedReport.swift */; };
 		BE635B27BE2B02D1591B5CBE /* CustomListEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119434B32B1FCFA000DA3F87 /* CustomListEntry.swift */; };
@@ -771,7 +770,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		001AC4D4D1FB48BCA6385B88 /* RMF */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = RMF; path = RMF.lproj/Localizable.strings; sourceTree = "<group>"; };
 		080FE1E959C6EBF8BA8E5265 /* ProfilePickerViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProfilePickerViewController.swift; sourceTree = "<group>"; };
 		0D90F6D0C80F241C22A80FB4 /* Pods-70K BandsTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-70K BandsTests.debug.xcconfig"; path = "Target Support Files/Pods-70K BandsTests/Pods-70K BandsTests.debug.xcconfig"; sourceTree = "<group>"; };
 		110924351F748601002237AB /* CustomBandDescription.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomBandDescription.swift; sourceTree = "<group>"; };
@@ -1640,7 +1638,7 @@
 				115C13083000A5EF007EA9A1 /* Localizable.strings in Resources */,
 				115C13093000A5EF007EA9A1 /* Settings.bundle in Resources */,
 				115C130A3000A5EF007EA9A1 /* NotificationPayload.apns in Resources */,
-				2EF13079D62489398791AF32 /* GoogleService-Info-MMF.plist in Resources */,
+				11BEEA0E300141FA004F14F5 /* GoogleService-Info-MMF.plist in Resources */,
 				C7935F106EA845CE82868178 /* Info-RMF.plist in Resources */,
 				F9C7936B23EB4C408395690C /* Base.lproj/UILaunchScreen-RMF.xib in Resources */,
 			);
@@ -2893,7 +2891,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260705001;
+				CURRENT_PROJECT_VERSION = 20260710001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -2922,7 +2920,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260705001;
+				MARKETING_VERSION = 20260710001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -2978,7 +2976,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260705001;
+				CURRENT_PROJECT_VERSION = 20260710001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -3003,7 +3001,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260705001;
+				MARKETING_VERSION = 20260710001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -3200,7 +3198,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260705001;
+				CURRENT_PROJECT_VERSION = 20260710001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -3222,7 +3220,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260705001;
+				MARKETING_VERSION = 20260710001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -3278,7 +3276,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260705001;
+				CURRENT_PROJECT_VERSION = 20260710001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -3303,7 +3301,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260705001;
+				MARKETING_VERSION = 20260710001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -3361,7 +3359,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260705001;
+				CURRENT_PROJECT_VERSION = 20260710001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -3383,7 +3381,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260705001;
+				MARKETING_VERSION = 20260710001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -3442,7 +3440,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260705001;
+				CURRENT_PROJECT_VERSION = 20260710001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -3467,7 +3465,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260705001;
+				MARKETING_VERSION = 20260710001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -3539,7 +3537,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "RWMF Bands!";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				"INFOPLIST_KEY_UILaunchStoryboardName[sdk=*]" = UILaunchScreen-RMF;
+				"INFOPLIST_KEY_UILaunchStoryboardName[sdk=*]" = "UILaunchScreen-RMF";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -3549,7 +3547,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260705001;
+				MARKETING_VERSION = 20260710001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -3623,7 +3621,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "RWMF Bands!";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				"INFOPLIST_KEY_UILaunchStoryboardName[sdk=*]" = UILaunchScreen-RMF;
+				"INFOPLIST_KEY_UILaunchStoryboardName[sdk=*]" = "UILaunchScreen-RMF";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -3633,7 +3631,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260705001;
+				MARKETING_VERSION = 20260710001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
