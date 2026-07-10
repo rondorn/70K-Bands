@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 
-from flask import Flask, jsonify, redirect, render_template, request, url_for
+from flask import Flask, jsonify, redirect, render_template, request, session, url_for
 
 from data_entry.band_logic import (
     apply_band_url_defaults,
@@ -65,6 +65,21 @@ from data_entry.description_map import (
     upsert_map_entry,
 )
 from data_entry.description_notes import save_description_note
+from data_entry.dropbox_links import (
+    DropboxLinkError,
+    dropbox_integration_ready,
+    resolve_dropbox_root,
+    share_link_for_label,
+    share_link_for_local_file,
+)
+from data_entry.dropbox_oauth import (
+    DropboxOAuthError,
+    finish_oauth_flow,
+    clear_tokens,
+    dropbox_auth_status,
+    start_oauth_flow,
+    store_oauth_result,
+)
 from data_entry.discover import discover_band
 from data_entry.network_cache import invalidate_cached_url
 from data_entry.pointer import introspect_pointer
@@ -295,6 +310,12 @@ def create_app() -> Flask:
 
         festivals = list_festivals()
         role_requirements = fields_required_for_roles(cfg.get("roles", []))
+        oauth_message = request.args.get("dropbox_message", "")
+        oauth_error = request.args.get("dropbox_error", "")
+        if oauth_message:
+            message = oauth_message
+        if oauth_error:
+            error = oauth_error
         return render_template(
             "config.html",
             cfg=cfg,
@@ -309,6 +330,62 @@ def create_app() -> Flask:
             event_types_text=textarea_from_list(cfg.get("event_types", [])),
             message=message,
             error=error,
+            **_dropbox_ui_state(cfg),
+        )
+
+    @app.get("/oauth/dropbox/start")
+    def dropbox_oauth_start():
+        cfg = load_config()
+        try:
+            redirect_uri = url_for("dropbox_oauth_callback", _external=True)
+            authorize_url = start_oauth_flow(session, redirect_uri, cfg)
+            return redirect(authorize_url)
+        except DropboxOAuthError as exc:
+            return redirect(
+                url_for("config_page", dropbox_error=str(exc))
+            )
+
+    @app.get("/oauth/dropbox/callback")
+    def dropbox_oauth_callback():
+        cfg = load_config()
+        if request.args.get("error"):
+            return redirect(
+                url_for(
+                    "config_page",
+                    dropbox_error=(
+                        "Dropbox sign-in was cancelled or denied. "
+                        + (request.args.get("error_description") or "")
+                    ).strip(),
+                )
+            )
+        try:
+            redirect_uri = url_for("dropbox_oauth_callback", _external=True)
+            oauth_result = finish_oauth_flow(session, redirect_uri, request.args, cfg)
+            account = store_oauth_result(oauth_result, cfg)
+            label = (
+                account.get("account_email")
+                or account.get("account_name")
+                or "your Dropbox account"
+            )
+            return redirect(
+                url_for(
+                    "config_page",
+                    dropbox_message=f"Connected to Dropbox as {label}.",
+                )
+            )
+        except Exception as exc:
+            return redirect(
+                url_for(
+                    "config_page",
+                    dropbox_error=f"Dropbox connection failed: {exc}",
+                )
+            )
+
+    @app.post("/oauth/dropbox/disconnect")
+    def dropbox_oauth_disconnect():
+        clear_tokens()
+        return redirect(
+            url_for("config_page", dropbox_message="Disconnected from Dropbox.")
         )
 
     @app.get("/api/introspect")
@@ -770,8 +847,13 @@ def create_app() -> Flask:
         errors: list[str] = []
         success = False
         success_message = ""
+        saved_label = ""
+        saved_filename = ""
+        share_url = ""
+        dropbox_state = _dropbox_ui_state(cfg)
 
         if request.method == "POST":
+            action = request.form.get("action", "save")
             label = request.form.get("labelName", "").strip()
             text = request.form.get("descriptionText", "")
             form = {"labelName": label, "descriptionText": text}
@@ -782,12 +864,53 @@ def create_app() -> Flask:
             else:
                 try:
                     saved = save_description_note(notes_dir, label, text)
-                    success = True
-                    success_message = (
-                        f"Saved {saved.name}. Share the Dropbox link with the map maintainer "
-                        "or add it under Descriptions → Map."
-                    )
-                    form = {"labelName": "", "descriptionText": ""}
+                    saved_label = label
+                    saved_filename = saved.name
+
+                    if action == "save_and_map":
+                        map_path = paths.get("description_map_file", "")
+                        if not map_path:
+                            errors.append("Description map file is not configured.")
+                        else:
+                            try:
+                                share_url = share_link_for_local_file(saved, cfg)
+                                status, msg = upsert_map_entry(
+                                    map_path,
+                                    label,
+                                    share_url,
+                                    cache_date_today(),
+                                    confirm_update=True,
+                                    cfg=cfg,
+                                )
+                                if status in ("added", "updated"):
+                                    return redirect(
+                                        url_for(
+                                            "descriptions_map",
+                                            message=(
+                                                f"Saved {saved.name} and updated the map for {label}."
+                                            ),
+                                        )
+                                    )
+                                errors.append(
+                                    msg or "Description saved but map entry could not be updated."
+                                )
+                            except DropboxLinkError as exc:
+                                errors.append(
+                                    f"Saved {saved.name}, but Dropbox link failed: {exc}"
+                                )
+                    else:
+                        success = True
+                        success_message = f"Saved {saved.name}."
+                        if dropbox_state["dropbox_ready"]:
+                            success_message += (
+                                " Use Get Dropbox link below, or Save & add to map next time."
+                            )
+                        else:
+                            success_message += (
+                                " Share the Dropbox link manually, or connect Dropbox on the "
+                                "Config screen for automatic link discovery."
+                            )
+                        form = {"labelName": "", "descriptionText": ""}
                 except Exception as exc:
                     errors.append(str(exc))
 
@@ -804,6 +927,10 @@ def create_app() -> Flask:
             errors=errors,
             success=success,
             success_message=success_message,
+            saved_label=saved_label,
+            saved_filename=saved_filename,
+            share_url=share_url,
+            **dropbox_state,
         )
 
     @app.post("/descriptions/refresh-label-names")
@@ -838,6 +965,7 @@ def create_app() -> Flask:
             "descriptions_view.html",
             entries=entries,
             description_map_read_url=description_map_read_url,
+            description_map_published_url=map_url,
             read_local=read_local,
             write_file=map_path,
             message=request.args.get("message", ""),
@@ -946,12 +1074,14 @@ def create_app() -> Flask:
             band_list_refresh_return_to="map_entry",
             cache_message=cache_message,
             description_map_file=map_path,
+            notes_directory=paths.get("notes_directory", ""),
             errors=errors,
             success=success,
             success_message=success_message,
             confirm_prompt=confirm_prompt,
             pending_confirm=pending_confirm,
             modify_mode=modify_mode,
+            **_dropbox_ui_state(cfg),
         )
 
     @app.post("/descriptions/map/remove")
@@ -967,6 +1097,22 @@ def create_app() -> Flask:
     @app.get("/descriptions/view")
     def descriptions_view():
         return redirect(url_for("descriptions_map", message=request.args.get("message", "")))
+
+    @app.get("/api/dropbox/share-link")
+    def api_dropbox_share_link():
+        cfg = load_config()
+        paths = resolved_paths(cfg)
+        notes_dir = paths.get("notes_directory", "")
+        label = request.args.get("label", "").strip()
+        if not label:
+            return jsonify({"ok": False, "error": "label is required"}), 400
+        if not notes_dir:
+            return jsonify({"ok": False, "error": "Notes directory is not configured."}), 400
+        try:
+            url = share_link_for_label(notes_dir, label, cfg)
+            return jsonify({"ok": True, "url": url})
+        except DropboxLinkError as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
 
     @app.get("/bands/discover")
     def band_discover():
@@ -996,6 +1142,7 @@ def _config_from_form(form) -> dict[str, Any]:
         "description_map_url": form.get("description_map_url", "").strip(),
         "description_map_file": form.get("description_map_file", "").strip(),
         "notes_directory": form.get("notes_directory", "").strip(),
+        "dropbox_root": form.get("dropbox_root", "").strip(),
         "venues": list_from_textarea(form.get("venues_text", "")),
         "dates": list_from_textarea(form.get("dates_text", "")),
         "days": list_from_textarea(form.get("days_text", "")),
@@ -1035,6 +1182,33 @@ def _wizard_to_config(draft: dict[str, Any]) -> dict[str, Any]:
     cfg = dict(draft)
     cfg["roles"] = normalize_roles(cfg.get("roles"))
     return cfg
+
+
+def _dropbox_ui_state(cfg: dict[str, Any]) -> dict[str, Any]:
+    ready, message = dropbox_integration_ready()
+    dropbox_root = ""
+    dropbox_ready = False
+    if ready:
+        try:
+            root = resolve_dropbox_root(cfg)
+            if root is not None:
+                dropbox_root = str(root)
+                dropbox_ready = True
+            else:
+                message = (
+                    "Set Dropbox root on the Config screen, or install Dropbox desktop sync."
+                )
+        except DropboxLinkError as exc:
+            message = str(exc)
+    auth = dropbox_auth_status(cfg)
+    if not auth.get("dropbox_auth_connected") and not dropbox_ready:
+        message = auth.get("dropbox_auth_message") or message
+    return {
+        "dropbox_ready": dropbox_ready and auth.get("dropbox_auth_connected", False),
+        "dropbox_status_message": message,
+        "dropbox_root_display": dropbox_root,
+        **auth,
+    }
 
 
 def _band_form_fields(cfg: dict[str, Any]) -> list[str]:

@@ -5,13 +5,25 @@
 
 {% block content %}
 <div class="target-file">Notes directory: <code>{{ notes_directory or '(not configured)' }}</code></div>
+{% if dropbox_root_display %}
+<div class="target-file">Dropbox root: <code>{{ dropbox_root_display }}</code></div>
+{% endif %}
 
 {% if cache_message %}
 <div class="message success page-message">{{ cache_message }}</div>
 {% endif %}
 
 {% if success %}
-<div class="message success page-message">{{ success_message }}</div>
+<div class="message success page-message" id="saveSuccess">
+  {{ success_message }}
+  {% if saved_label and dropbox_ready %}
+  <div style="margin-top:10px;">
+    <button type="button" class="secondary" id="getDropboxLinkBtn" data-label="{{ saved_label }}">Get Dropbox link</button>
+    <span id="dropboxLinkStatus" class="hint" style="margin-left:8px;"></span>
+  </div>
+  <div id="dropboxLinkResult" class="hint" style="margin-top:8px;display:none;"></div>
+  {% endif %}
+</div>
 {% endif %}
 
 {% if errors %}
@@ -24,8 +36,12 @@
 <div class="message error">Set Notes directory on the Config screen before writing descriptions.</div>
 {% endif %}
 
+{% if not dropbox_ready and dropbox_status_message %}
+<div class="message info">Dropbox link discovery: {{ dropbox_status_message }}</div>
+{% endif %}
+
 <div class="form-section">
-  <form method="post">
+  <form method="post" id="writeForm">
     <div class="form-row">
       <div class="form-label">Band / event name <span class="required">*</span></div>
       <div class="form-input">
@@ -44,14 +60,17 @@
       <div class="form-label">Description text <span class="required">*</span></div>
       <div class="form-input">
         <textarea id="descriptionText" name="descriptionText" rows="12" placeholder="Plain-text description for the app…">{{ form.descriptionText }}</textarea>
-        <div class="hint">Saved as a .txt file in the notes directory. Share the Dropbox link with whoever maintains the description map.</div>
+        <div class="hint">Saved as a .txt file in the notes directory inside your Dropbox-synced folder.</div>
       </div>
     </div>
 
     <div class="form-row">
       <div class="form-label"></div>
       <div class="form-input">
-        <input type="submit" value="Save description file" {% if not notes_directory %}disabled{% endif %}>
+        <button type="submit" name="action" value="save" {% if not notes_directory %}disabled{% endif %}>Save description file</button>
+        {% if dropbox_ready %}
+        <button type="submit" name="action" value="save_and_map" class="secondary" style="margin-left:8px;" {% if not notes_directory %}disabled{% endif %}>Save &amp; add to map</button>
+        {% endif %}
       </div>
     </div>
   </form>
@@ -60,10 +79,43 @@
 
 {% block scripts %}
 <script>
-  document.querySelector('form').addEventListener('click', e => {
+  document.getElementById('writeForm').addEventListener('click', e => {
     if (e.target.closest('button, input[type="submit"]')) {
-      document.querySelectorAll('.page-message').forEach(el => el.remove());
+      document.querySelectorAll('.page-message').forEach(el => {
+        if (el.id !== 'saveSuccess') el.remove();
+      });
     }
   });
+
+  const getLinkBtn = document.getElementById('getDropboxLinkBtn');
+  if (getLinkBtn) {
+    getLinkBtn.addEventListener('click', async () => {
+      const label = getLinkBtn.dataset.label || '';
+      const status = document.getElementById('dropboxLinkStatus');
+      const result = document.getElementById('dropboxLinkResult');
+      if (!label) return;
+      status.textContent = 'Waiting for Dropbox sync…';
+      result.style.display = 'none';
+      getLinkBtn.disabled = true;
+      try {
+        const resp = await fetch('{{ url_for("api_dropbox_share_link") }}?label=' + encodeURIComponent(label));
+        const payload = await resp.json();
+        if (!payload.ok) {
+          status.textContent = payload.error || 'Could not get link.';
+          return;
+        }
+        status.textContent = 'Link ready.';
+        result.style.display = 'block';
+        const mapUrl = '{{ url_for("descriptions_map_entry") }}?bandName=' + encodeURIComponent(label) + '&mapUrl=' + encodeURIComponent(payload.url);
+        result.innerHTML =
+          'Share link: <a href="' + payload.url + '" target="_blank" rel="noopener">' + payload.url + '</a><br>' +
+          '<a href="' + mapUrl + '">Add to description map</a> (opens with URL filled in)';
+      } catch (err) {
+        status.textContent = 'Request failed: ' + err;
+      } finally {
+        getLinkBtn.disabled = false;
+      }
+    });
+  }
 </script>
 {% endblock %}

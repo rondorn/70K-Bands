@@ -5,6 +5,10 @@
 
 {% block content %}
 <div class="target-file">Reading from: <code>{{ description_map_read_url or '(not configured)' }}</code>{% if read_local %} (local write file){% else %} (published){% endif %}</div>
+{% if description_map_published_url %}
+<div class="target-file">Apps download map from: <a href="{{ description_map_published_url }}" target="_blank" rel="noopener"><code>{{ description_map_published_url }}</code></a></div>
+<p class="hint">Local map edits sync via Dropbox to this published URL. Cache dates on each row tell the app when description text may have changed.</p>
+{% endif %}
 {% if write_file %}
 <div class="target-file">Writing to: <code>{{ write_file }}</code></div>
 {% endif %}

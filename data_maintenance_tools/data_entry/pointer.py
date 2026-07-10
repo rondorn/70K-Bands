@@ -196,9 +196,10 @@ def _current_event_year(sections: dict[str, dict[str, str]]) -> str:
     return numeric[0] if numeric else ""
 
 
-def _prior_year_section(sections: dict[str, dict[str, str]]) -> str:
+def _schedule_source_section(sections: dict[str, dict[str, str]]) -> str:
     """
-    Section to use for venue/date hints: the year immediately below Current::eventYear.
+    Section to use for venue/date hints from schedule CSV.
+    Prefer the year below Current::eventYear; if none exists, use the current year.
     """
     current_year = _current_event_year(sections)
     if current_year.isdigit():
@@ -208,14 +209,22 @@ def _prior_year_section(sections: dict[str, dict[str, str]]) -> str:
         for year in _numeric_years(sections):
             if int(year) < int(current_year):
                 return year
+        if current_year in sections:
+            return current_year
     numeric = _numeric_years(sections)
-    return numeric[0] if numeric else ""
+    if numeric:
+        return numeric[0]
+    current = sections.get("Current", {})
+    if current.get("scheduleUrl", "").strip():
+        return "Current"
+    return ""
 
 
 def introspect_pointer(pointer_url: str, _max_years: int = 8) -> dict[str, Any]:
     """
-    Fetch a pointer file and learn venues, dates, days, and event types from the schedule
-    year below Current::eventYear. Band URLs and event year come from Current.
+    Fetch a pointer file and learn venues, dates, days, and event types from a schedule
+    year. Uses the year below Current::eventYear when present; otherwise the current year.
+    Band URLs and event year come from Current.
     """
     sections = fetch_pointer(pointer_url)
     current = sections.get("Current", {})
@@ -223,23 +232,23 @@ def introspect_pointer(pointer_url: str, _max_years: int = 8) -> dict[str, Any]:
         raise ValueError("Pointer file has no Current section.")
 
     current_year = _current_event_year(sections)
-    prior_section = _prior_year_section(sections)
-    if not prior_section:
+    schedule_section = _schedule_source_section(sections)
+    if not schedule_section:
         raise ValueError(
             f"Pointer file has Current::eventYear {current_year or '(missing)'} "
-            "but no prior year section was found for schedule data."
+            "but no schedule section was found (prior year, current year, or Current::scheduleUrl)."
         )
 
-    section = sections.get(prior_section, {})
+    section = sections.get(schedule_section, {})
     schedule_url = section.get("scheduleUrl", "").strip()
     if not schedule_url:
-        raise ValueError(f"Section {prior_section} has no scheduleUrl in the pointer file.")
+        raise ValueError(f"Section {schedule_section} has no scheduleUrl in the pointer file.")
 
     try:
         csv_text = fetch_url(schedule_url)
     except Exception as exc:
         raise ValueError(
-            f"Could not download schedule CSV from {prior_section} section: {exc}"
+            f"Could not download schedule CSV from {schedule_section} section: {exc}"
         ) from exc
 
     schedule_rows = _parse_schedule_csv(csv_text)
@@ -249,11 +258,11 @@ def introspect_pointer(pointer_url: str, _max_years: int = 8) -> dict[str, Any]:
     event_types = hints["event_types"]
     if not venues and not dates and not event_types:
         raise ValueError(
-            f"Schedule from {prior_section} section contained no venues, dates, days, "
+            f"Schedule from {schedule_section} section contained no venues, dates, days, "
             "or event types."
         )
 
-    # Optional explicit list in pointer (Current or prior-year section) prepended.
+    # Optional explicit list in pointer (Current or schedule source section) prepended.
     pointer_event_types = _event_types_from_pointer_section(current)
     if not pointer_event_types:
         pointer_event_types = _event_types_from_pointer_section(section)
@@ -274,7 +283,7 @@ def introspect_pointer(pointer_url: str, _max_years: int = 8) -> dict[str, Any]:
     ordered_days = order_days_from_schedule(schedule_rows, target_year)
     if not normalized_dates and not ordered_days and not venues and not merged_event_types:
         raise ValueError(
-            f"Schedule from {prior_section} section contained no usable venues, dates, "
+            f"Schedule from {schedule_section} section contained no usable venues, dates, "
             "days, or event types after normalization."
         )
 
@@ -290,8 +299,8 @@ def introspect_pointer(pointer_url: str, _max_years: int = 8) -> dict[str, Any]:
         "dates": [" "] + normalized_dates,
         "days": day_options,
         "event_types": merged_event_types,
-        "years_found": [prior_section],
-        "schedule_source_year": prior_section,
+        "years_found": [schedule_section],
+        "schedule_source_year": schedule_section,
         "sections": list(sections.keys()),
     }
 

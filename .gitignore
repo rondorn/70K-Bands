@@ -33,7 +33,10 @@ andriod/local.properties
 andriod/app/local.properties
 andriod/app/app-release.apk
 
-# Markdown: ignore all except README.md (also see ~/.gitignore_global)
+# Festival data entry — local secrets and OAuth tokens (per machine)
+data_maintenance_tools/dropbox_oauth.json
+data_maintenance_tools/festival_data_entry.json
+
 *.md
 !README.md
 !**/README.md

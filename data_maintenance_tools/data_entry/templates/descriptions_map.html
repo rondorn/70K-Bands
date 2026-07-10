@@ -5,6 +5,9 @@
 
 {% block content %}
 <div class="target-file">Map file: <code>{{ description_map_file or '(not configured)' }}</code></div>
+{% if dropbox_root_display %}
+<div class="target-file">Dropbox root: <code>{{ dropbox_root_display }}</code></div>
+{% endif %}
 
 {% if cache_message %}
 <div class="message success page-message">{{ cache_message }}</div>
@@ -28,6 +31,10 @@
 <div class="message error">Set Description map file on the Config screen before updating the map.</div>
 {% endif %}
 
+{% if not dropbox_ready and dropbox_status_message %}
+<div class="message info">Dropbox link lookup: {{ dropbox_status_message }}</div>
+{% endif %}
+
 <div class="form-section">
   <form method="post" id="mapForm">
     {% if modify_mode %}
@@ -48,6 +55,11 @@
         </select>
         {% include "_band_list_name_hint.html" %}
         <div class="hint">Also includes Special/Unofficial event titles from the schedule and existing map entries.</div>
+        {% if dropbox_ready %}
+        <button type="button" class="secondary" id="lookupDropboxLinkBtn" style="margin-top:8px;">Look up Dropbox link</button>
+        <span id="lookupDropboxStatus" class="hint" style="margin-left:8px;"></span>
+        <div class="hint">Uses the saved .txt file in the notes directory for the selected name.</div>
+        {% endif %}
       </div>
     </div>
 
@@ -90,5 +102,34 @@
       document.querySelectorAll('.page-message').forEach(el => el.remove());
     }
   });
+
+  const lookupBtn = document.getElementById('lookupDropboxLinkBtn');
+  if (lookupBtn) {
+    lookupBtn.addEventListener('click', async () => {
+      const label = document.getElementById('bandName').value.trim();
+      const status = document.getElementById('lookupDropboxStatus');
+      const mapUrlInput = document.getElementById('mapUrl');
+      if (!label) {
+        status.textContent = 'Select a band or event name first.';
+        return;
+      }
+      status.textContent = 'Waiting for Dropbox sync…';
+      lookupBtn.disabled = true;
+      try {
+        const resp = await fetch('{{ url_for("api_dropbox_share_link") }}?label=' + encodeURIComponent(label));
+        const payload = await resp.json();
+        if (!payload.ok) {
+          status.textContent = payload.error || 'Could not look up link.';
+          return;
+        }
+        mapUrlInput.value = payload.url;
+        status.textContent = 'URL filled from Dropbox.';
+      } catch (err) {
+        status.textContent = 'Request failed: ' + err;
+      } finally {
+        lookupBtn.disabled = false;
+      }
+    });
+  }
 </script>
 {% endblock %}

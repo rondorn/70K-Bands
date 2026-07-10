@@ -40,6 +40,7 @@ ENDPOINT_ROLES: dict[str, frozenset[str]] = {
     "descriptions_map_remove": frozenset({ROLE_DESCRIPTION}),
     "descriptions_view": frozenset({ROLE_DESCRIPTION}),
     "descriptions_refresh_label_names": frozenset({ROLE_DESCRIPTION}),
+    "api_dropbox_share_link": frozenset({ROLE_DESCRIPTION}),
 }
 
 ROLE_EXEMPT_ENDPOINTS = frozenset(
@@ -51,6 +52,9 @@ ROLE_EXEMPT_ENDPOINTS = frozenset(
         "api_introspect",
         "api_choose_directory",
         "api_choose_file",
+        "dropbox_oauth_start",
+        "dropbox_oauth_callback",
+        "dropbox_oauth_disconnect",
     }
 )
 
@@ -67,6 +71,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "description_map_url": "",
     "description_map_file": "",
     "notes_directory": "",
+    "dropbox_root": "",
     "venues": [" "],
     "dates": [" "],
     "days": [],

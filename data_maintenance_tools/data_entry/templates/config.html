@@ -184,10 +184,38 @@
           <button type="button" class="secondary" id="chooseNotesDirBtn">Choose folder…</button>
         </div>
         <div class="hint">Local folder for description text files (Schedule and Description Admin).</div>
+        <label style="display:block;margin-top:14px;">Dropbox connection</label>
+        <p class="hint" style="margin-top:4px;">
+          Sign in with your own Dropbox account so the app can publish share links
+          for description files. Each admin connects once on their machine.
+        </p>
+        <div style="margin-top:12px;">
+          {% if dropbox_auth_connected %}
+          <div class="message success" style="margin-bottom:10px;">
+            Connected{% if dropbox_auth_label %}: {{ dropbox_auth_label }}{% endif %}
+          </div>
+          {% if dropbox_auth_can_disconnect %}
+          <form method="post" action="{{ url_for('dropbox_oauth_disconnect') }}" style="display:inline;">
+            <button type="submit" class="secondary">Disconnect Dropbox</button>
+          </form>
+          {% endif %}
+          {% elif dropbox_auth_can_connect %}
+          <a class="btn" href="{{ url_for('dropbox_oauth_start') }}">Connect Dropbox</a>
+          {% elif dropbox_auth_message %}
+          <div class="hint">{{ dropbox_auth_message }}</div>
+          {% endif %}
+        </div>
+        <label style="display:block;margin-top:14px;">Dropbox root (optional)</label>
+        <div class="path-picker">
+          <input type="text" id="dropboxRoot" name="dropbox_root" value="{{ cfg.dropbox_root }}" placeholder="Auto-detect ~/Dropbox if empty">
+          <button type="button" class="secondary" id="chooseDropboxRootBtn">Choose folder…</button>
+        </div>
+        <div class="hint">Folder that contains your synced festival files. Used to map local note paths to Dropbox share links after you connect Dropbox.</div>
       </div>
     </div>
     {% else %}
     <input type="hidden" name="notes_directory" value="{{ cfg.notes_directory }}">
+    <input type="hidden" name="dropbox_root" value="{{ cfg.dropbox_root }}">
     {% endif %}
 
     {% if role_requirements.venues %}
@@ -256,6 +284,8 @@
   const loadFeedback = document.getElementById('loadFeedback');
   const chooseNotesDirBtn = document.getElementById('chooseNotesDirBtn');
   const notesDirectoryInput = document.getElementById('notesDirectory');
+  const chooseDropboxRootBtn = document.getElementById('chooseDropboxRootBtn');
+  const dropboxRootInput = document.getElementById('dropboxRoot');
   const chooseLineupFileBtn = document.getElementById('chooseLineupFileBtn');
   const lineupFileInput = document.getElementById('lineupFile');
   const chooseScheduleFileBtn = document.getElementById('chooseScheduleFileBtn');
@@ -325,18 +355,36 @@
   bindFilePicker(chooseScheduleFileBtn, scheduleFileInput, 'Choose schedule CSV file');
   bindFilePicker(chooseDescriptionMapFileBtn, descriptionMapFileInput, 'Choose description map CSV file');
 
-  chooseNotesDirBtn.addEventListener('click', async () => {
-    chooseNotesDirBtn.disabled = true;
-    chooseNotesDirBtn.textContent = 'Choose folder…';
-    try {
-      await chooseDirectory(notesDirectoryInput, 'Choose notes directory');
-    } catch (err) {
-      showLoadFeedback('Error: ' + err, 'error');
-    } finally {
-      chooseNotesDirBtn.disabled = false;
+  if (chooseNotesDirBtn && notesDirectoryInput) {
+    chooseNotesDirBtn.addEventListener('click', async () => {
+      chooseNotesDirBtn.disabled = true;
       chooseNotesDirBtn.textContent = 'Choose folder…';
-    }
-  });
+      try {
+        await chooseDirectory(notesDirectoryInput, 'Choose notes directory');
+      } catch (err) {
+        showLoadFeedback('Error: ' + err, 'error');
+      } finally {
+        chooseNotesDirBtn.disabled = false;
+        chooseNotesDirBtn.textContent = 'Choose folder…';
+      }
+    });
+  }
+
+  if (chooseDropboxRootBtn && dropboxRootInput) {
+    chooseDropboxRootBtn.addEventListener('click', async () => {
+      chooseDropboxRootBtn.disabled = true;
+      const label = chooseDropboxRootBtn.textContent;
+      chooseDropboxRootBtn.textContent = 'Choose folder…';
+      try {
+        await chooseDirectory(dropboxRootInput, 'Choose Dropbox root folder');
+      } catch (err) {
+        showLoadFeedback('Error: ' + err, 'error');
+      } finally {
+        chooseDropboxRootBtn.disabled = false;
+        chooseDropboxRootBtn.textContent = label;
+      }
+    });
+  }
 
   function listToTextarea(values) {
     return (values || []).map(v => String(v)).join('\n');
