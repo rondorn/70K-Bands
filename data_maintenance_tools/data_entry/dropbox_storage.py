@@ -98,7 +98,14 @@ def _upload_error_message(exc: Exception, api_path: str) -> str:
 
 
 def upload_text(share_url: str, text: str, cfg: dict[str, Any] | None = None) -> None:
-    """Overwrite a Dropbox file identified by its published share URL."""
+    """
+    Edit an existing Dropbox file in place (same path, same share link).
+
+    Resolves the share URL to its API path, then updates that file's content.
+    Never deletes or recreates the file — that would mint a new share link and
+    break pointers / attendee apps. (SDK WriteMode.overwrite = content update
+    of the existing path, not file replacement.)
+    """
     from dropbox.files import WriteMode
     from dropbox.exceptions import ApiError, AuthError, BadInputError
 
@@ -110,6 +117,7 @@ def upload_text(share_url: str, text: str, cfg: dict[str, Any] | None = None) ->
 
     payload = text.encode("utf-8")
     try:
+        # WriteMode.overwrite updates content at api_path; share links stay valid.
         dbx.files_upload(payload, api_path, mode=WriteMode.overwrite)
     except (ApiError, BadInputError, AuthError) as exc:
         raise DropboxStorageError(_upload_error_message(exc, api_path)) from exc
@@ -157,7 +165,12 @@ def ensure_notes_directory(cfg: dict[str, Any] | None = None) -> str:
 
 
 def upload_note(label: str, content: str, cfg: dict[str, Any] | None = None) -> str:
-    """Upload a description note; returns its API path."""
+    """
+    Create or edit a description note in place at a stable API path.
+
+    Returns the API path. First save may create the file; later saves update
+    content only so any existing share link keeps working.
+    """
     ensure_notes_directory(cfg)
     api_path = note_api_path(label, cfg)
     from dropbox.files import WriteMode

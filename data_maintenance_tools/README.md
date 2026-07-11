@@ -1,18 +1,24 @@
 # Festival Data Maintenance Tools
 
-Portable, festival-agnostic web app for entering **band lineup** and **schedule** CSV data. Works on macOS, Windows, and Linux.
+Portable, festival-agnostic tools for entering **band lineup** and **schedule** CSV data.
+
+See **[WORKSPACE.md](WORKSPACE.md)** for the promoter product model (testing/production pointers, promote, Dropbox folder layout).
+See **[STORE_SUBMISSION.md](STORE_SUBMISSION.md)** for Mac / iPad / Windows store readiness.
+See **[promoter_admin/](promoter_admin/)** for the Flutter shell.
 
 ## What is in this folder
 
 | Item | Purpose |
 |------|---------|
-| `run_data_entry.py` | Main entry point (Python) |
+| `run_data_entry.py` | Main entry point (Python / Flask prototype) |
 | `run.sh` / `run.bat` | Start the server (creates venv on first run) |
 | `setup.sh` / `setup.bat` | One-time install of dependencies |
-| `requirements.txt` | Python packages (Flask, BeautifulSoup) |
+| `requirements.txt` | Python packages (Flask, BeautifulSoup, dropbox) |
 | `festival_data_entry.example.json` | Config template |
-| `data_entry/` | Application code, HTML templates, CSS |
-| `data/` | Default location for lineup and schedule CSV files |
+| `data_entry/` | Application code, HTML templates, CSS, workspace API |
+| `promoter_admin/` | Flutter cross-platform shell (store apps) |
+| `WORKSPACE.md` | Festival workspace conventions |
+| `STORE_SUBMISSION.md` | App store path |
 
 You do **not** need anything else from the parent repository. Copy or zip this entire `data_maintenance_tools` folder to another machine.
 

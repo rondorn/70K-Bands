@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block title %}Configuration — {{ festival_name }}{% endblock %}
 {% block heading %}Festival Configuration{% endblock %}
-{% block subheading %}Pointer URL, destination files, venues, and dates{% endblock %}
+{% block subheading %}Pointers, Dropbox, venues, and festival vocabulary{% endblock %}
 
 {% block content %}
 {% if message %}
@@ -19,23 +19,23 @@
 </div>
 <div id="storageModeNoticeDropbox" class="message info dropbox-notice"{% if not uses_dropbox_api %} style="display:none"{% endif %}>
   <strong>All files on Dropbox.</strong>
-  Connect your Dropbox account below. Reads and writes use the Dropbox API via the network URLs
-  from the pointer — no local file paths are required.
+  Edits use the <strong>testing</strong> pointer. Promote publishes to the <strong>production</strong> pointer.
 </div>
 
 <div class="panel">
   <p class="hint">
-    Choose your admin role(s) and how festival files are stored, then set network read URLs
-    (from the pointer) and local write paths when using local files mode.
-    Use <strong>Load from pointer</strong> after entering the pointer URL to import read URLs
-    and schedule metadata. To walk through setup again with your current values pre-filled,
-    use <strong>Re-run setup wizard</strong>.
+    Configure testing and production pointers (or
+    <a href="{{ url_for('create_festival') }}">create a new festival on Dropbox</a>).
+    Use <strong>Load from testing pointer</strong> to import lineup/schedule/map URLs and schedule vocabulary.
+    <a href="{{ url_for('promote_page') }}">Promote to production</a> when testing is ready.
   </p>
 
   <div class="form-row">
     <div class="form-label"></div>
     <div class="form-input config-actions" style="margin-bottom:1rem;">
       <a class="btn secondary" href="{{ url_for('setup_wizard', rerun=1) }}">Re-run setup wizard</a>
+      <a class="btn secondary" href="{{ url_for('create_festival') }}">Create festival…</a>
+      <a class="btn secondary" href="{{ url_for('promote_page') }}">Promote…</a>
     </div>
   </div>
 
@@ -128,11 +128,35 @@
     </div>
 
     <div class="form-row">
-      <div class="form-label">Pointer URL {% if role_requirements.pointer_url %}<span class="required">*</span>{% endif %}</div>
+      <div class="form-label">Testing pointer <span class="required">*</span></div>
       <div class="form-input">
-        <input type="url" id="pointerUrl" name="pointer_url" value="{{ cfg.pointer_url }}" placeholder="https://.../productionPointer.txt">
-        <div class="hint">Production pointer on Dropbox. Use <strong>Load from pointer</strong> below to import network read URLs and schedule fields.</div>
-        <button type="button" id="loadPointerBtn" class="secondary" style="margin-top:10px" disabled>Load from pointer</button>
+        <input type="url" id="testingPointerUrl" name="testing_pointer_url"
+          value="{{ cfg.testing_pointer_url or cfg.pointer_url }}"
+          placeholder="https://.../testingPointer.txt">
+        <div class="hint">Active pointer for all edits. Same role as attendee-app <code>defaultStorageUrlTest</code>.</div>
+        <button type="button" id="loadPointerBtn" class="secondary" style="margin-top:10px" disabled>Load from testing pointer</button>
+        <button type="submit" name="reload_from_testing_pointer" value="1" class="secondary" style="margin-top:10px"
+          data-busy-label="Loading…">Load &amp; save</button>
+        <input type="hidden" id="pointerUrl" name="pointer_url" value="{{ cfg.testing_pointer_url or cfg.pointer_url }}">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-label">Production pointer</div>
+      <div class="form-input">
+        <input type="url" id="productionPointerUrl" name="production_pointer_url"
+          value="{{ cfg.production_pointer_url }}"
+          placeholder="https://.../productionPointer.txt">
+        <div class="hint">What attendee apps read (<code>defaultStorageUrl</code>). Used only by Promote.</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-label">Dropbox festival folder</div>
+      <div class="form-input">
+        <input type="text" name="dropbox_festival_folder" value="{{ cfg.dropbox_festival_folder }}"
+          placeholder="/Festivals/MyFest/2027">
+        <div class="hint">Optional API path for create-festival / documentation.</div>
       </div>
     </div>
 
@@ -187,7 +211,7 @@
       <div class="form-label">Band list URL</div>
       <div class="form-input">
         <input type="url" id="bandListUrl" name="band_list_url" value="{{ cfg.band_list_url }}" readonly>
-        <div class="hint">Network read URL for band dropdowns and lineup view (from pointer Current::artistUrl).</div>
+        <div class="hint">Derived from testing pointer <code>Current::artistUrl</code> (advanced).</div>
       </div>
     </div>
     {% else %}
@@ -345,8 +369,25 @@
 
 {% block scripts %}
 <script>
+  const testingPointerInput = document.getElementById('testingPointerUrl');
   const pointerInput = document.getElementById('pointerUrl');
   const loadBtn = document.getElementById('loadPointerBtn');
+
+  function syncPointerAlias() {
+    if (testingPointerInput && pointerInput) {
+      pointerInput.value = testingPointerInput.value.trim();
+    }
+  }
+  if (testingPointerInput) {
+    testingPointerInput.addEventListener('input', () => {
+      syncPointerAlias();
+      updateLoadButton();
+    });
+    testingPointerInput.addEventListener('change', () => {
+      syncPointerAlias();
+      updateLoadButton();
+    });
+  }
   const loadFeedback = document.getElementById('loadFeedback');
   const chooseNotesDirBtn = document.getElementById('chooseNotesDirBtn');
   const notesDirectoryInput = document.getElementById('notesDirectory');
@@ -496,11 +537,14 @@
   }
 
   function updateLoadButton() {
-    loadBtn.disabled = pointerInput.value.trim().length === 0;
+    const url = (testingPointerInput || pointerInput).value.trim();
+    loadBtn.disabled = url.length === 0;
   }
 
-  pointerInput.addEventListener('input', updateLoadButton);
-  pointerInput.addEventListener('change', updateLoadButton);
+  if (pointerInput && !testingPointerInput) {
+    pointerInput.addEventListener('input', updateLoadButton);
+    pointerInput.addEventListener('change', updateLoadButton);
+  }
   updateLoadButton();
 
   const festivalSwitch = document.getElementById('festivalSwitch');

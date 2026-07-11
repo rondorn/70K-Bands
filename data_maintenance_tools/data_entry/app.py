@@ -99,6 +99,14 @@ from data_entry.lineup_staging import (
 )
 from data_entry.network_cache import invalidate_cached_url
 from data_entry.pointer import introspect_pointer
+from data_entry.promote import PromoteError, preview_promote, promote_testing_to_production
+from data_entry.workspace import (
+    apply_testing_pointer_to_config,
+    create_festival as workspace_create_festival,
+    open_workspace,
+    upsert_band as workspace_upsert_band,
+    upsert_event as workspace_upsert_event,
+)
 from data_entry.schedule_staging import (
     get_pending_schedule_event_keys,
     get_schedule_sync_status,
@@ -370,18 +378,40 @@ def create_app() -> Flask:
                 return redirect(url_for("config_page"))
 
             cfg = _config_from_form(request.form)
-            validation_errors = validate_config_for_roles(cfg)
-            if validation_errors:
-                error = " ".join(validation_errors)
-                cfg = load_config()
-                cfg.update(_config_from_form(request.form))
+            if request.form.get("reload_from_testing_pointer"):
+                try:
+                    cfg = apply_testing_pointer_to_config(cfg, force=True)
+                except Exception as exc:
+                    error = str(exc)
+                    cfg = load_config()
+                    cfg.update(_config_from_form(request.form))
+                else:
+                    validation_errors = validate_config_for_roles(cfg)
+                    if validation_errors:
+                        error = " ".join(validation_errors)
+                    else:
+                        current_festival_id = save_config(
+                            cfg,
+                            festival_id=request.form.get("festival_id", "").strip()
+                            or None,
+                        )
+                        ensure_data_files(cfg)
+                        message = "Loaded testing pointer and saved configuration."
+                        cfg = load_config()
             else:
-                current_festival_id = save_config(
-                    cfg, festival_id=request.form.get("festival_id", "").strip() or None
-                )
-                ensure_data_files(cfg)
-                message = "Configuration saved."
-                cfg = load_config()
+                validation_errors = validate_config_for_roles(cfg)
+                if validation_errors:
+                    error = " ".join(validation_errors)
+                    cfg = load_config()
+                    cfg.update(_config_from_form(request.form))
+                else:
+                    current_festival_id = save_config(
+                        cfg,
+                        festival_id=request.form.get("festival_id", "").strip() or None,
+                    )
+                    ensure_data_files(cfg)
+                    message = "Configuration saved."
+                    cfg = load_config()
 
         festivals = list_festivals()
         role_requirements = fields_required_for_roles(cfg.get("roles", []), cfg)
@@ -404,6 +434,88 @@ def create_app() -> Flask:
             days_text=textarea_from_list(cfg.get("days", [])),
             event_types_text=textarea_from_list(cfg.get("event_types", [])),
             message=message,
+            error=error,
+            **_dropbox_ui_state(cfg),
+        )
+
+    @app.route("/promote", methods=["GET", "POST"])
+    def promote_page():
+        cfg = load_config()
+        paths = resolved_paths(cfg)
+        error = ""
+        message = request.args.get("message", "")
+        diff_lines: list[str] = []
+        try:
+            diff = preview_promote(cfg)
+            diff_lines = diff.summary_lines
+        except PromoteError as exc:
+            error = str(exc)
+
+        if request.method == "POST" and request.form.get("action") == "promote":
+            try:
+                result = promote_testing_to_production(cfg, paths)
+                return redirect(
+                    url_for(
+                        "promote_page",
+                        message="Promoted testing data to production. "
+                        + " ".join(result.messages),
+                    )
+                )
+            except PromoteError as exc:
+                error = str(exc)
+
+        return render_template(
+            "promote.html",
+            cfg=cfg,
+            message=message,
+            error=error,
+            diff_lines=diff_lines,
+            testing_pointer=cfg.get("testing_pointer_url") or cfg.get("pointer_url") or "",
+            production_pointer=cfg.get("production_pointer_url") or "",
+        )
+
+    @app.route("/festivals/create", methods=["GET", "POST"])
+    def create_festival():
+        cfg = load_config()
+        error = ""
+        form = {
+            "festival_name": request.values.get("festival_name", ""),
+            "event_year": request.values.get("event_year", ""),
+            "dropbox_festival_folder": request.values.get("dropbox_festival_folder", ""),
+        }
+        if request.method == "POST":
+            form = {
+                "festival_name": request.form.get("festival_name", "").strip(),
+                "event_year": request.form.get("event_year", "").strip(),
+                "dropbox_festival_folder": request.form.get(
+                    "dropbox_festival_folder", ""
+                ).strip(),
+            }
+            try:
+                new_cfg = workspace_create_festival(
+                    festival_folder=form["dropbox_festival_folder"],
+                    festival_name=form["festival_name"],
+                    event_year=form["event_year"],
+                    cfg=cfg,
+                    roles=list(effective_roles(cfg))
+                    or [ROLE_BAND_LIST, ROLE_SCHEDULE, ROLE_DESCRIPTION],
+                )
+                create_new_festival(save_current=None)
+                save_config(new_cfg)
+                return redirect(
+                    url_for(
+                        "config_page",
+                        dropbox_message=(
+                            "Festival created on Dropbox with testing and "
+                            "production pointers."
+                        ),
+                    )
+                )
+            except Exception as exc:
+                error = str(exc)
+        return render_template(
+            "create_festival.html",
+            form=form,
             error=error,
             **_dropbox_ui_state(cfg),
         )
@@ -560,48 +672,21 @@ def create_app() -> Flask:
             )
             if not errors:
                 try:
-                    if is_update:
-                        updated = replace_matching_event(
-                            existing,
-                            orig_band,
-                            orig_venue,
-                            orig_date,
-                            orig_start,
-                            event,
-                        )
-                        write_schedule(schedule_target, updated, cfg)
-                        confirm_message = f"{event.band} has been updated"
-                    else:
-                        append_schedule_event(schedule_target, event, cfg)
-                        confirm_message = f"{event.band} has been added"
-                    description_note_message = ""
-                    if event.event_type in NON_BAND_EVENT_TYPES:
-                        description_text = request.form.get("DescriptionText", "")
-                        if description_text.strip() and descriptions_directory_configured(
-                            paths, cfg
-                        ):
-                            try:
-                                saved_note = save_description_note(
-                                    "",
-                                    event.band,
-                                    description_text,
-                                    cfg=cfg,
-                                    paths=paths,
-                                )
-                                description_note_message = (
-                                    f" Description note saved as {saved_note.name}."
-                                )
-                            except Exception as exc:
-                                description_note_message = (
-                                    f" Description note not saved: {exc}"
-                                )
-                        elif description_text.strip() and not descriptions_directory_configured(
-                            paths, cfg
-                        ):
-                            description_note_message = (
-                                " Description not saved: configure the description map on the Config screen."
-                            )
-                    confirm_message += description_note_message
+                    description_text = request.form.get("DescriptionText", "").strip()
+                    from data_entry.workspace import Workspace
+
+                    ws = Workspace(cfg=cfg, paths=paths)
+                    replace_key = (
+                        (orig_band, orig_venue, orig_date, orig_start)
+                        if is_update
+                        else None
+                    )
+                    confirm_message, _share = workspace_upsert_event(
+                        ws,
+                        event,
+                        description=description_text or None,
+                        replace_key=replace_key,
+                    )
                     confirm_html = (
                         f"Band={html.escape(event.band)}<br>"
                         f"Venue={html.escape(event.location)}<br>"
@@ -615,6 +700,9 @@ def create_app() -> Flask:
                     form = _preserve_schedule_defaults(request.form)
                     modify_mode = False
                 except ValueError as exc:
+                    errors = [str(exc)]
+                    confirm_message = ""
+                except Exception as exc:
                     errors = [str(exc)]
                     confirm_message = ""
                     form = dict(request.form)
@@ -816,6 +904,7 @@ def create_app() -> Flask:
         form_data["latestAlbum"] = request.values.get("latestAlbum", "")
         form_data["musicBrainz"] = request.values.get("musicBrainz", "")
         form_data["OrigBandIndex"] = request.values.get("OrigBandIndex", "")
+        form_data["descriptionText"] = request.values.get("descriptionText", "")
 
         edit_index = request.values.get("editIndex", "")
         if request.method == "GET" and edit_index.isdigit():
@@ -874,15 +963,26 @@ def create_app() -> Flask:
 
             if ok:
                 try:
-                    if is_update and orig_index is not None and 0 <= orig_index < len(existing_rows):
-                        updated = replace_band_at_index(existing_rows, orig_index, csv_data)
-                        write_lineup(lineup_target, updated, cfg)
-                        message = f"{band_name} has been updated"
-                    else:
-                        append_band(csv_data, lineup_target, cfg)
-                        message = "Band successfully added to the lineup."
+                    description_text = request.form.get("descriptionText", "").strip()
+                    from data_entry.workspace import Workspace
+
+                    ws = Workspace(cfg=cfg, paths=paths)
+                    message, _share = workspace_upsert_band(
+                        ws,
+                        csv_data,
+                        description=description_text or None,
+                        replace_index=(
+                            orig_index
+                            if is_update
+                            and orig_index is not None
+                            and 0 <= orig_index < len(existing_rows)
+                            else None
+                        ),
+                    )
                     return redirect(url_for("bands", message=message, sync_pending=1))
                 except ValueError as exc:
+                    errors = [str(exc)]
+                except Exception as exc:
                     errors = [str(exc)]
             else:
                 form_data = {
@@ -890,6 +990,7 @@ def create_app() -> Flask:
                     "latestAlbum": latest_album,
                     "musicBrainz": request.form.get("musicBrainz", "").strip(),
                     "OrigBandIndex": orig_index_str,
+                    "descriptionText": request.form.get("descriptionText", ""),
                 }
                 if request.form.get("edit_prior_years") == "1":
                     form_data["priorYears"] = request.form.get("priorYears", "").strip()
@@ -1298,6 +1399,110 @@ def create_app() -> Flask:
             return jsonify(result), 400
         return jsonify(result)
 
+    # --- Workspace JSON API (Flutter / external clients) ---
+
+    @app.get("/api/workspace")
+    def api_workspace():
+        cfg = load_config()
+        return jsonify(
+            {
+                "ok": True,
+                "festival_name": cfg.get("festival_name", ""),
+                "event_year": cfg.get("event_year", ""),
+                "testing_pointer_url": cfg.get("testing_pointer_url")
+                or cfg.get("pointer_url")
+                or "",
+                "production_pointer_url": cfg.get("production_pointer_url") or "",
+                "dropbox_festival_folder": cfg.get("dropbox_festival_folder") or "",
+                "band_list_url": cfg.get("band_list_url") or "",
+                "schedule_url": cfg.get("schedule_url") or "",
+                "description_map_url": cfg.get("description_map_url") or "",
+            }
+        )
+
+    @app.get("/api/bands")
+    def api_bands_list():
+        from data_entry.workspace import Workspace, list_bands
+
+        cfg = load_config()
+        paths = resolved_paths(cfg)
+        rows = list_bands(Workspace(cfg=cfg, paths=paths))
+        return jsonify({"ok": True, "bands": rows})
+
+    @app.post("/api/bands")
+    def api_bands_upsert():
+        from data_entry.workspace import Workspace
+
+        cfg = load_config()
+        paths = resolved_paths(cfg)
+        payload = request.get_json(silent=True) or {}
+        band = payload.get("band") or {}
+        description = payload.get("description")
+        replace_index = payload.get("replace_index")
+        try:
+            message, share_url = workspace_upsert_band(
+                Workspace(cfg=cfg, paths=paths),
+                {str(k): str(v or "") for k, v in band.items()},
+                description=description,
+                replace_index=int(replace_index)
+                if replace_index is not None and str(replace_index).isdigit()
+                else None,
+            )
+            return jsonify({"ok": True, "message": message, "share_url": share_url})
+        except Exception as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
+
+    @app.get("/api/schedule")
+    def api_schedule_list():
+        from data_entry.workspace import Workspace, list_schedule
+
+        cfg = load_config()
+        paths = resolved_paths(cfg)
+        events = list_schedule(Workspace(cfg=cfg, paths=paths))
+        return jsonify(
+            {
+                "ok": True,
+                "events": [e.as_row() if hasattr(e, "as_row") else e for e in events],
+            }
+        )
+
+    @app.post("/api/promote")
+    def api_promote():
+        cfg = load_config()
+        paths = resolved_paths(cfg)
+        try:
+            result = promote_testing_to_production(cfg, paths)
+            return jsonify(
+                {"ok": True, "messages": result.messages, "summary": result.summary_lines}
+            )
+        except PromoteError as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
+
+    @app.post("/api/festivals/create")
+    def api_create_festival():
+        cfg = load_config()
+        payload = request.get_json(silent=True) or {}
+        try:
+            new_cfg = workspace_create_festival(
+                festival_folder=str(payload.get("dropbox_festival_folder") or ""),
+                festival_name=str(payload.get("festival_name") or ""),
+                event_year=str(payload.get("event_year") or ""),
+                cfg=cfg,
+                roles=list(effective_roles(cfg))
+                or [ROLE_BAND_LIST, ROLE_SCHEDULE, ROLE_DESCRIPTION],
+            )
+            create_new_festival(save_current=None)
+            save_config(new_cfg)
+            return jsonify(
+                {
+                    "ok": True,
+                    "testing_pointer_url": new_cfg.get("testing_pointer_url"),
+                    "production_pointer_url": new_cfg.get("production_pointer_url"),
+                }
+            )
+        except Exception as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
+
     return app
 
 
@@ -1307,7 +1512,16 @@ def _config_from_form(form) -> dict[str, Any]:
         storage_mode = STORAGE_DROPBOX
     return {
         "festival_name": form.get("festival_name", "").strip(),
-        "pointer_url": form.get("pointer_url", "").strip(),
+        "pointer_url": (
+            form.get("testing_pointer_url", "").strip()
+            or form.get("pointer_url", "").strip()
+        ),
+        "testing_pointer_url": (
+            form.get("testing_pointer_url", "").strip()
+            or form.get("pointer_url", "").strip()
+        ),
+        "production_pointer_url": form.get("production_pointer_url", "").strip(),
+        "dropbox_festival_folder": form.get("dropbox_festival_folder", "").strip(),
         "event_year": form.get("event_year", "").strip(),
         "roles": roles_from_form(form.getlist("roles")),
         "setup_complete": True,
@@ -1331,7 +1545,14 @@ def _config_from_form(form) -> dict[str, Any]:
 def _config_to_wizard_draft(cfg: dict[str, Any]) -> dict[str, Any]:
     draft = {
         "festival_name": str(cfg.get("festival_name", "") or ""),
-        "pointer_url": str(cfg.get("pointer_url", "") or ""),
+        "pointer_url": str(
+            cfg.get("testing_pointer_url", "") or cfg.get("pointer_url", "") or ""
+        ),
+        "testing_pointer_url": str(
+            cfg.get("testing_pointer_url", "") or cfg.get("pointer_url", "") or ""
+        ),
+        "production_pointer_url": str(cfg.get("production_pointer_url", "") or ""),
+        "dropbox_festival_folder": str(cfg.get("dropbox_festival_folder", "") or ""),
         "event_year": str(cfg.get("event_year", "") or ""),
         "roles": normalize_roles(cfg.get("roles")),
         "storage_mode": normalize_storage_mode(cfg),

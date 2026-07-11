@@ -1,0 +1,54 @@
+{% extends "layout.html" %}
+{% block title %}Promote — {{ festival_name }}{% endblock %}
+{% block heading %}Promote to Production{% endblock %}
+{% block subheading %}Publish testing festival data to the production pointer targets{% endblock %}
+
+{% block content %}
+{% if message %}
+<div class="message success">{{ message }}</div>
+{% endif %}
+{% if error %}
+<div class="message error">{{ error }}</div>
+{% endif %}
+
+<div class="panel">
+  <p class="hint">
+    Day-to-day edits always target the <strong>testing</strong> pointer.
+    Promote edits the existing <strong>production</strong> lineup, schedule, and
+    description map files <em>in place</em> (same Dropbox share links — never
+    delete/replace files, or links break).
+  </p>
+
+  <div class="form-row">
+    <div class="form-label">Testing pointer</div>
+    <div class="form-input"><code>{{ testing_pointer or '(not set)' }}</code></div>
+  </div>
+  <div class="form-row">
+    <div class="form-label">Production pointer</div>
+    <div class="form-input"><code>{{ production_pointer or '(not set)' }}</code></div>
+  </div>
+
+  {% if diff_lines %}
+  <div class="form-row">
+    <div class="form-label">Preview</div>
+    <div class="form-input">
+      <ul class="hint" style="margin:0;padding-left:1.2rem;">
+        {% for line in diff_lines %}
+        <li>{{ line }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  {% endif %}
+
+  <form method="post" style="margin-top:1.5rem;">
+    <input type="hidden" name="action" value="promote">
+    <button type="submit" class="btn"
+      {% if error or not testing_pointer or not production_pointer %}disabled{% endif %}
+      data-busy-label="Promoting…">
+      Promote testing → production
+    </button>
+    <a class="btn secondary" href="{{ url_for('config_page') }}">Settings</a>
+  </form>
+</div>
+{% endblock %}

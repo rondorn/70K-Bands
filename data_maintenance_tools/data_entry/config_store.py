@@ -57,6 +57,9 @@ ENDPOINT_ROLES: dict[str, frozenset[str]] = {
     "descriptions_refresh_label_names": frozenset({ROLE_DESCRIPTION}),
     "descriptions_refresh_map": frozenset({ROLE_DESCRIPTION}),
     "api_dropbox_share_link": frozenset({ROLE_DESCRIPTION}),
+    "promote_page": frozenset({ROLE_BAND_LIST, ROLE_SCHEDULE, ROLE_DESCRIPTION}),
+    "promote_run": frozenset({ROLE_BAND_LIST, ROLE_SCHEDULE, ROLE_DESCRIPTION}),
+    "create_festival": frozenset({ROLE_BAND_LIST, ROLE_SCHEDULE, ROLE_DESCRIPTION}),
 }
 
 ROLE_EXEMPT_ENDPOINTS = frozenset(
@@ -71,12 +74,23 @@ ROLE_EXEMPT_ENDPOINTS = frozenset(
         "dropbox_oauth_start",
         "dropbox_oauth_callback",
         "dropbox_oauth_disconnect",
+        "create_festival",
+        "promote_page",
+        "api_workspace",
+        "api_bands_list",
+        "api_bands_upsert",
+        "api_schedule_list",
+        "api_promote",
+        "api_create_festival",
     }
 )
 
 DEFAULT_CONFIG: dict[str, Any] = {
     "festival_name": "",
     "pointer_url": "",
+    "testing_pointer_url": "",
+    "production_pointer_url": "",
+    "dropbox_festival_folder": "",
     "event_year": "",
     "roles": [],
     "setup_complete": False,
@@ -147,6 +161,14 @@ def _normalize_festival_config(data: dict[str, Any]) -> dict[str, Any]:
     merged.pop("include_prior_years_field", None)
     merged["storage_mode"] = normalize_storage_mode(merged)
     clear_local_storage_paths(merged)
+    # Prefer explicit testing pointer; keep pointer_url as the active (testing) alias.
+    testing = str(merged.get("testing_pointer_url", "") or "").strip()
+    legacy = str(merged.get("pointer_url", "") or "").strip()
+    if testing:
+        merged["pointer_url"] = testing
+    elif legacy:
+        merged["testing_pointer_url"] = legacy
+        merged["pointer_url"] = legacy
     return merged
 
 
@@ -410,11 +432,18 @@ def description_map_write_target(paths: dict[str, str], cfg: dict[str, Any] | No
 def resolved_paths(cfg: dict[str, Any] | None = None) -> dict[str, str]:
     cfg = cfg or load_config()
     base = config_path().parent
+    testing_pointer = (
+        str(cfg.get("testing_pointer_url", "") or "").strip()
+        or str(cfg.get("pointer_url", "") or "").strip()
+    )
     paths = {
         "band_list_url": str(cfg.get("band_list_url", "") or "").strip(),
         "schedule_url": str(cfg.get("schedule_url", "") or "").strip(),
-        "pointer_url": str(cfg.get("pointer_url", "") or "").strip(),
+        "pointer_url": testing_pointer,
+        "testing_pointer_url": testing_pointer,
+        "production_pointer_url": str(cfg.get("production_pointer_url", "") or "").strip(),
         "description_map_url": str(cfg.get("description_map_url", "") or "").strip(),
+        "dropbox_festival_folder": str(cfg.get("dropbox_festival_folder", "") or "").strip(),
     }
     if uses_local_files(cfg):
         paths.update(
@@ -545,6 +574,8 @@ def fields_required_for_roles(
         "schedule_url": ROLE_SCHEDULE in roles,
         "description_map_url": ROLE_DESCRIPTION in roles,
         "pointer_url": ROLE_SCHEDULE in roles,
+        "testing_pointer_url": bool(roles),
+        "production_pointer_url": False,
         "venues": ROLE_SCHEDULE in roles,
         "dates": ROLE_SCHEDULE in roles,
         "days": ROLE_SCHEDULE in roles,
@@ -590,7 +621,10 @@ def validate_config_for_roles(
         _missing_text("schedule_url", "Schedule URL")
     if required["description_map_url"]:
         _missing_text("description_map_url", "Description map URL")
-    if required["pointer_url"]:
+    testing = str(cfg.get("testing_pointer_url", "") or cfg.get("pointer_url", "") or "").strip()
+    if required.get("testing_pointer_url") and not testing:
+        errors.append("Testing pointer URL is required.")
+    elif required["pointer_url"] and not testing:
         _missing_text("pointer_url", "Pointer URL")
     if required["venues"]:
         _missing_text("venues", "Venues")
@@ -648,18 +682,27 @@ def textarea_from_list(values: list[str]) -> str:
     return "\n".join(values or [])
 
 
-def merge_pointer_hints(cfg: dict[str, Any], hints: dict[str, Any]) -> dict[str, Any]:
+def merge_pointer_hints(
+    cfg: dict[str, Any], hints: dict[str, Any], *, force_urls: bool = False
+) -> dict[str, Any]:
     """Apply pointer introspection without overwriting non-empty user values."""
     merged = deepcopy(cfg)
-    if hints.get("event_year") and not str(merged.get("event_year", "")).strip():
+    if hints.get("event_year") and (
+        force_urls or not str(merged.get("event_year", "")).strip()
+    ):
         merged["event_year"] = hints["event_year"]
-    if hints.get("band_list_url") and not str(merged.get("band_list_url", "")).strip():
+    if hints.get("band_list_url") and (
+        force_urls or not str(merged.get("band_list_url", "")).strip()
+    ):
         merged["band_list_url"] = hints["band_list_url"]
-    if hints.get("schedule_url") and not str(merged.get("schedule_url", "")).strip():
+    if hints.get("schedule_url") and (
+        force_urls or not str(merged.get("schedule_url", "")).strip()
+    ):
         merged["schedule_url"] = hints["schedule_url"]
-    if hints.get("description_map_url") and not str(
-        merged.get("description_map_url", "")
-    ).strip():
+    if hints.get("description_map_url") and (
+        force_urls
+        or not str(merged.get("description_map_url", "")).strip()
+    ):
         merged["description_map_url"] = hints["description_map_url"]
 
     for key in ("venues", "dates", "days"):

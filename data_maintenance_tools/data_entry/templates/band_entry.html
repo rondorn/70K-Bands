@@ -138,6 +138,14 @@
     {% endif %}
 
     <div class="form-row">
+      <div class="form-label">Description</div>
+      <div class="form-input">
+        <textarea id="descriptionText" name="descriptionText" rows="6" placeholder="Optional band biography / notes">{{ form_data.descriptionText or '' }}</textarea>
+        <div class="hint">Optional. When provided, saves a Dropbox note and adds it to the description map automatically.</div>
+      </div>
+    </div>
+
+    <div class="form-row">
       <div class="form-label"></div>
       <div class="form-input">
         <input type="submit" value="Save">

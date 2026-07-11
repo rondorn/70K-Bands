@@ -1,0 +1,856 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:promoter_admin/src/models/festival_workspace.dart';
+import 'package:promoter_admin/src/services/band_discover_service.dart';
+import 'package:promoter_admin/src/services/description_map_service.dart';
+import 'package:promoter_admin/src/services/lineup_service.dart';
+import 'package:promoter_admin/src/services/location_parse.dart';
+import 'package:promoter_admin/src/theme/app_theme.dart';
+import 'package:promoter_admin/src/widgets/app_shell.dart';
+
+class BandsSection extends StatefulWidget {
+  const BandsSection({
+    super.key,
+    required this.workspace,
+    required this.lineupService,
+    required this.descriptionMapService,
+    required this.tab,
+    required this.onTabChanged,
+    required this.onFormModeChanged,
+    required this.dropboxConnected,
+    required this.onConnectDropbox,
+  });
+
+  final FestivalWorkspace workspace;
+  final LineupService lineupService;
+  final DescriptionMapService descriptionMapService;
+  final BandsTab tab;
+  final ValueChanged<BandsTab> onTabChanged;
+  final ValueChanged<bool> onFormModeChanged;
+  final bool dropboxConnected;
+  final Future<void> Function() onConnectDropbox;
+
+  @override
+  State<BandsSection> createState() => _BandsSectionState();
+}
+
+class _BandsSectionState extends State<BandsSection> {
+  final _discover = BandDiscoverService();
+  List<BandRow> _bands = [];
+  String? _error;
+  String? _message;
+  bool _loading = true;
+  bool _saving = false;
+  bool _discovering = false;
+  String? _discoverStatus;
+  String? _discoverWarnings;
+  int? _editingIndex;
+  bool _addDescription = false;
+
+  final _name = TextEditingController();
+  final _metalArchives = TextEditingController();
+  final _musicBrainz = TextEditingController();
+  final _latestAlbum = TextEditingController();
+  final _site = TextEditingController();
+  final _image = TextEditingController();
+  final _youtube = TextEditingController();
+  final _wikipedia = TextEditingController();
+  final _country = TextEditingController();
+  final _city = TextEditingController();
+  final _state = TextEditingController();
+  final _genre = TextEditingController();
+  final _noteworthy = TextEditingController();
+  final _priorYears = TextEditingController();
+  final _description = TextEditingController();
+
+  bool get _isEditing => _editingIndex != null;
+  bool get _useCityState => widget.workspace.useCityStateField;
+
+  /// File order stays as entered; alphabetical is display-only.
+  List<int> get _bandsDisplayOrder {
+    final indices = List<int>.generate(_bands.length, (i) => i);
+    indices.sort((a, b) {
+      final byName = _bands[a]
+          .name
+          .toLowerCase()
+          .compareTo(_bands[b].name.toLowerCase());
+      if (byName != 0) return byName;
+      return a.compareTo(b);
+    });
+    return indices;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  @override
+  void didUpdateWidget(covariant BandsSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.tab != BandsTab.add && widget.tab == BandsTab.add) {
+      // Opening form from list Add (unless already editing).
+      if (_editingIndex == null) {
+        _clearForm();
+        _addDescription = false;
+      }
+    }
+    if (widget.tab == BandsTab.list && oldWidget.tab != BandsTab.list) {
+      _editingIndex = null;
+      _addDescription = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _metalArchives.dispose();
+    _musicBrainz.dispose();
+    _latestAlbum.dispose();
+    _site.dispose();
+    _image.dispose();
+    _youtube.dispose();
+    _wikipedia.dispose();
+    _country.dispose();
+    _city.dispose();
+    _state.dispose();
+    _genre.dispose();
+    _noteworthy.dispose();
+    _priorYears.dispose();
+    _description.dispose();
+    super.dispose();
+  }
+
+  void _clearForm() {
+    _name.clear();
+    _metalArchives.clear();
+    _musicBrainz.clear();
+    _latestAlbum.clear();
+    _site.clear();
+    _image.clear();
+    _youtube.clear();
+    _wikipedia.clear();
+    _country.clear();
+    _city.clear();
+    _state.clear();
+    _genre.clear();
+    _noteworthy.clear();
+    _priorYears.clear();
+    _description.clear();
+    _discoverStatus = null;
+    _discoverWarnings = null;
+  }
+
+  void _fillForm(BandRow band) {
+    _name.text = band.name;
+    _metalArchives.text = band.fields['metalArchives'] ?? '';
+    _musicBrainz.clear();
+    _latestAlbum.clear();
+    _site.text = (band.fields['officalSite'] ?? '').trim();
+    _image.text = (band.fields['imageUrl'] ?? '').trim();
+    _youtube.text = (band.fields['youtube'] ?? '').trim();
+    _wikipedia.text = (band.fields['wikipedia'] ?? '').trim();
+    _country.text = band.country;
+    _city.text = (band.fields['city'] ?? '').trim();
+    _state.text = _normalizedState((band.fields['state'] ?? '').trim());
+    _genre.text = band.genre;
+    _noteworthy.text = (band.fields['noteworthy'] ?? '').trim();
+    _priorYears.text = (band.fields['priorYears'] ?? '').trim();
+    _discoverStatus = null;
+    _discoverWarnings = null;
+  }
+
+  /// Full US state names → two-letter codes (e.g. California → CA).
+  String _normalizedState(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) return '';
+    return stateNameToCode(trimmed);
+  }
+
+  BandRow _rowFromForm(String name) {
+    final fields = <String, String>{
+      'bandName': name,
+      'officalSite': _site.text.trim().isEmpty ? ' ' : _site.text.trim(),
+      'imageUrl': _image.text.trim().isEmpty ? ' ' : _image.text.trim(),
+      'youtube': _youtube.text.trim().isEmpty ? ' ' : _youtube.text.trim(),
+      'metalArchives': _metalArchives.text.trim(),
+      'wikipedia':
+          _wikipedia.text.trim().isEmpty ? ' ' : _wikipedia.text.trim(),
+      'country': _country.text.trim(),
+      'genre': _genre.text.trim(),
+      'noteworthy':
+          _noteworthy.text.trim().isEmpty ? ' ' : _noteworthy.text.trim(),
+      'priorYears': _priorYears.text.trim(),
+    };
+    if (_useCityState) {
+      fields['city'] = _city.text.trim();
+      fields['state'] = _normalizedState(_state.text);
+    }
+    return BandRow(fields);
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final bands = await widget.lineupService.load(widget.workspace);
+      setState(() {
+        _bands = bands;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _runDiscover() async {
+    final ma = _metalArchives.text.trim();
+    final mb = _musicBrainz.text.trim();
+    final band = _name.text.trim();
+    if (ma.isEmpty && mb.isEmpty && band.isEmpty) {
+      setState(() {
+        _discoverStatus =
+            'Enter a Metal Archives URL, MusicBrainz URL, or band name.';
+        _discoverWarnings = null;
+      });
+      return;
+    }
+    setState(() {
+      _discovering = true;
+      _discoverWarnings = null;
+      if (ma.isNotEmpty) {
+        _discoverStatus = 'Querying Metal Archives…';
+      } else if (mb.isNotEmpty) {
+        _discoverStatus = 'Querying MusicBrainz…';
+      } else {
+        _discoverStatus = 'Searching MusicBrainz by band name…';
+      }
+    });
+    try {
+      final result = await _discover.discover(
+        metalArchivesUrl: ma,
+        musicBrainzUrl: mb,
+        bandName: band,
+      );
+      if (!mounted) return;
+      if (!result.ok) {
+        setState(() {
+          _discovering = false;
+          _discoverStatus = result.error;
+          _discoverWarnings =
+              result.warnings.isEmpty ? null : result.warnings.join(' ');
+        });
+        return;
+      }
+      void fill(TextEditingController c, String key) {
+        final v = result.data[key];
+        if (v != null) c.text = v;
+      }
+
+      fill(_name, 'bandName');
+      fill(_metalArchives, 'metalArchives');
+      fill(_musicBrainz, 'musicBrainz');
+      fill(_latestAlbum, 'latestAlbum');
+      fill(_site, 'officalSite');
+      fill(_image, 'imageUrl');
+      fill(_youtube, 'youtube');
+      fill(_wikipedia, 'wikipedia');
+      fill(_country, 'country');
+      fill(_genre, 'genre');
+      if (_useCityState) {
+        fill(_city, 'city');
+        final stateRaw = result.data['state'];
+        if (stateRaw != null && stateRaw.trim().isNotEmpty) {
+          _state.text = _normalizedState(stateRaw);
+        }
+      }
+
+      setState(() {
+        _discovering = false;
+        _discoverStatus =
+            'Populated from ${result.source}. Review and save.';
+        _discoverWarnings =
+            result.warnings.isEmpty ? null : result.warnings.join(' ');
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _discovering = false;
+        _discoverStatus = 'Request failed: $e';
+      });
+    }
+  }
+
+  Future<void> _saveBand() async {
+    final name = _name.text.trim();
+    if (name.isEmpty) {
+      setState(() => _error = 'Band name is required.');
+      return;
+    }
+    if (!widget.dropboxConnected) {
+      await widget.onConnectDropbox();
+      return;
+    }
+    setState(() {
+      _saving = true;
+      _error = null;
+      _message = null;
+    });
+    try {
+      final updated = List<BandRow>.from(_bands);
+      final row = _rowFromForm(name);
+      final editIdx = _editingIndex;
+      if (editIdx != null && editIdx >= 0 && editIdx < updated.length) {
+        updated[editIdx] = row;
+      } else {
+        updated.add(row);
+      }
+      // Keep file order as entered; alphabetical sorting is display-only.
+      await widget.lineupService.save(widget.workspace, updated);
+
+      var descriptionNote = '';
+      final wantDescription = _addDescription && !_isEditing;
+      final descriptionText = _description.text.trim();
+      if (wantDescription &&
+          descriptionText.isNotEmpty &&
+          widget.workspace.canEditDescriptions) {
+        if (widget.workspace.descriptionMapUrl.trim().isEmpty) {
+          throw StateError(
+            'Description map URL is not configured — '
+            'Load from pointer in Settings, or uncheck Add description.',
+          );
+        }
+        await widget.descriptionMapService.writeDescriptionAndUpsertMap(
+          workspace: widget.workspace,
+          labelName: name,
+          text: descriptionText,
+        );
+        descriptionNote = ' Description saved and added to the map.';
+      }
+
+      _clearForm();
+      setState(() {
+        _bands = updated;
+        _saving = false;
+        _editingIndex = null;
+        _addDescription = false;
+        _message = editIdx != null
+            ? 'Updated “$name” in testing lineup (in place).'
+            : 'Saved “$name” to testing lineup (in place).$descriptionNote';
+      });
+      widget.onTabChanged(BandsTab.list);
+    } catch (e) {
+      setState(() {
+        _saving = false;
+        _error = e.toString();
+      });
+    }
+  }
+
+  void _startAdd() {
+    setState(() {
+      _editingIndex = null;
+      _addDescription = false;
+      _error = null;
+      _clearForm();
+    });
+    widget.onFormModeChanged(false);
+    widget.onTabChanged(BandsTab.add);
+  }
+
+  void _startEdit(int index) {
+    final band = _bands[index];
+    setState(() {
+      _editingIndex = index;
+      _addDescription = false;
+      _error = null;
+      _fillForm(band);
+    });
+    widget.onFormModeChanged(true);
+    widget.onTabChanged(BandsTab.add);
+  }
+
+  Future<void> _deleteBand(int index) async {
+    final band = _bands[index];
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.panel,
+        title: const Text('Remove band'),
+        content: Text('Remove ${band.name} from the lineup?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    if (!widget.dropboxConnected) {
+      await widget.onConnectDropbox();
+      return;
+    }
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    try {
+      final updated = List<BandRow>.from(_bands)..removeAt(index);
+      await widget.lineupService.save(widget.workspace, updated);
+      setState(() {
+        _bands = updated;
+        _saving = false;
+        _message = 'Removed “${band.name}” from testing lineup (in place).';
+      });
+    } catch (e) {
+      setState(() {
+        _saving = false;
+        _error = e.toString();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return const Center(
+        child: CircularProgressIndicator(color: AppColors.accent),
+      );
+    }
+
+    if (widget.tab == BandsTab.add) {
+      return _buildForm();
+    }
+    return _buildList();
+  }
+
+  Widget _buildList() {
+    final order = _bandsDisplayOrder;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (widget.workspace.bandListUrl.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Text(
+              'Reading from: ${widget.workspace.bandListUrl}',
+              style: const TextStyle(color: AppColors.muted, fontSize: 13),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        if (_message != null) StatusBanner(text: _message!),
+        if (_error != null) StatusBanner(text: _error!, isError: true),
+        if (_saving) const LinearProgressIndicator(color: AppColors.accent),
+        Expanded(
+          child: PortalPanel(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: FilledButton(
+                    onPressed: _startAdd,
+                    child: const Text('Add'),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: _bands.isEmpty
+                      ? const Text(
+                          'No bands in the lineup yet.',
+                          style: TextStyle(color: AppColors.muted),
+                        )
+                      : LayoutBuilder(
+                          builder: (context, constraints) {
+                            return SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minWidth: constraints.maxWidth,
+                                ),
+                                child: SingleChildScrollView(
+                                  child: DataTable(
+                                    columnSpacing: 14,
+                                    horizontalMargin: 8,
+                                    headingRowHeight: 40,
+                                    dataRowMinHeight: 40,
+                                    dataRowMaxHeight: 48,
+                                    dividerThickness: 1,
+                                    border: TableBorder(
+                                      horizontalInside: BorderSide(
+                                        color: AppColors.panelBorder
+                                            .withValues(alpha: 0.85),
+                                      ),
+                                      verticalInside: BorderSide(
+                                        color: AppColors.panelBorder
+                                            .withValues(alpha: 0.55),
+                                      ),
+                                    ),
+                                    headingRowColor: WidgetStateProperty.all(
+                                      const Color(0xFF222222),
+                                    ),
+                                    columns: const [
+                                      DataColumn(label: Text('Band')),
+                                      DataColumn(label: Text('Country')),
+                                      DataColumn(label: Text('Genre')),
+                                      DataColumn(label: Text('Noteworthy')),
+                                      DataColumn(label: Text('Actions')),
+                                    ],
+                                    rows: [
+                                      for (final i in order)
+                                        DataRow(
+                                          cells: [
+                                            DataCell(Text(_bands[i].name)),
+                                            DataCell(Text(_bands[i].country)),
+                                            DataCell(Text(_bands[i].genre)),
+                                            DataCell(
+                                              Text(
+                                                _bands[i].noteworthy,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            DataCell(
+                                              Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  OutlinedButton(
+                                                    style: OutlinedButton
+                                                        .styleFrom(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                        horizontal: 12,
+                                                        vertical: 8,
+                                                      ),
+                                                      minimumSize: Size.zero,
+                                                      tapTargetSize:
+                                                          MaterialTapTargetSize
+                                                              .shrinkWrap,
+                                                    ),
+                                                    onPressed: _saving
+                                                        ? null
+                                                        : () => _startEdit(i),
+                                                    child: const Text('Edit'),
+                                                  ),
+                                                  const SizedBox(width: 6),
+                                                  OutlinedButton(
+                                                    style: OutlinedButton
+                                                        .styleFrom(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                        horizontal: 12,
+                                                        vertical: 8,
+                                                      ),
+                                                      minimumSize: Size.zero,
+                                                      tapTargetSize:
+                                                          MaterialTapTargetSize
+                                                              .shrinkWrap,
+                                                    ),
+                                                    onPressed: _saving
+                                                        ? null
+                                                        : () =>
+                                                            _deleteBand(i),
+                                                    child:
+                                                        const Text('Delete'),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: _load,
+                    icon: const Icon(Icons.refresh, size: 18),
+                    label: Text('${_bands.length} band(s) — Refresh'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildForm() {
+    return SingleChildScrollView(
+      child: PortalPanel(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (_error != null) StatusBanner(text: _error!, isError: true),
+            if (!widget.dropboxConnected)
+              const StatusBanner(
+                text: 'Connect Dropbox in Settings to save the lineup.',
+                isError: true,
+              ),
+            FormRow(
+              label: 'Band name',
+              requiredField: true,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(controller: _name),
+                  const SizedBox(height: 8),
+                  OutlinedButton(
+                    onPressed: _discovering ? null : _runDiscover,
+                    child: Text(_discovering ? 'Discovering…' : 'Discover'),
+                  ),
+                  if (_discoverStatus != null) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      _discoverStatus!,
+                      style: TextStyle(
+                        color: _discoverStatus!.startsWith('Populated')
+                            ? AppColors.successText
+                            : AppColors.muted,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                  if (_discoverWarnings != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      _discoverWarnings!,
+                      style: const TextStyle(
+                        color: Color(0xFFFFB86B),
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                  const HintText(
+                    'Discover fills fields from Metal Archives or MusicBrainz '
+                    'using the band name and/or URLs below.',
+                  ),
+                ],
+              ),
+            ),
+            FormRow(
+              label: 'Metal Archives',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: _metalArchives,
+                    decoration: const InputDecoration(
+                      hintText: 'https://www.metal-archives.com/bands/...',
+                    ),
+                  ),
+                  const HintText(
+                    'Optional. Band page URL; stored with https://. '
+                    'Discover uses this when provided.',
+                  ),
+                ],
+              ),
+            ),
+            FormRow(
+              label: 'MusicBrainz',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: _musicBrainz,
+                    decoration: const InputDecoration(
+                      hintText: 'https://musicbrainz.org/artist/...',
+                    ),
+                  ),
+                  const HintText(
+                    'Artist page URL (not saved to CSV). Used when Metal Archives '
+                    'is unavailable.',
+                  ),
+                ],
+              ),
+            ),
+            FormRow(
+              label: 'Latest album',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(controller: _latestAlbum),
+                  const HintText(
+                    'Optional. From discography; used for YouTube search only '
+                    '(not saved to CSV).',
+                  ),
+                ],
+              ),
+            ),
+            FormRow(
+              label: 'Official site',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(controller: _site),
+                  const HintText('Stored without https://.'),
+                ],
+              ),
+            ),
+            FormRow(
+              label: 'Image URL',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(controller: _image),
+                  const HintText('Stored without https://.'),
+                ],
+              ),
+            ),
+            FormRow(
+              label: 'YouTube',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(controller: _youtube),
+                  const HintText(
+                    'Search URL; stored with https://. Filled by Discover.',
+                  ),
+                ],
+              ),
+            ),
+            FormRow(
+              label: 'Wikipedia',
+              child: TextField(controller: _wikipedia),
+            ),
+            FormRow(
+              label: 'Country',
+              child: TextField(controller: _country),
+            ),
+            if (_useCityState) ...[
+              FormRow(
+                label: 'City',
+                child: TextField(controller: _city),
+              ),
+              FormRow(
+                label: 'State',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: _state,
+                      textCapitalization: TextCapitalization.characters,
+                      inputFormatters: [
+                        LengthLimitingTextInputFormatter(32),
+                      ],
+                      onEditingComplete: () {
+                        final normalized = _normalizedState(_state.text);
+                        if (normalized != _state.text) {
+                          _state.text = normalized;
+                          _state.selection = TextSelection.collapsed(
+                            offset: normalized.length,
+                          );
+                        }
+                      },
+                    ),
+                    const HintText(
+                      'Optional. Two-letter US state code (e.g. CA). '
+                      'Full names from Discover are converted automatically.',
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            FormRow(
+              label: 'Genre',
+              child: TextField(controller: _genre),
+            ),
+            FormRow(
+              label: 'Noteworthy',
+              child: TextField(controller: _noteworthy, maxLines: 3),
+            ),
+            FormRow(
+              label: 'Prior years',
+              child: TextField(controller: _priorYears),
+            ),
+            if (!_isEditing && widget.workspace.canEditDescriptions)
+              FormRow(
+                label: 'Description',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      value: _addDescription,
+                      onChanged: (v) =>
+                          setState(() => _addDescription = v ?? false),
+                      title: const Text(
+                        'Add description',
+                        style: TextStyle(color: AppColors.heading, fontSize: 15),
+                      ),
+                      activeColor: AppColors.accent,
+                    ),
+                    if (_addDescription) ...[
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: _description,
+                        maxLines: 8,
+                        minLines: 4,
+                        decoration: const InputDecoration(
+                          hintText: 'Band description text…',
+                        ),
+                      ),
+                      const HintText(
+                        'Saved with the band. Writes the description file and '
+                        'adds it to the description map automatically.',
+                      ),
+                    ] else
+                      const HintText(
+                        'Check to enter a description that will be saved and '
+                        'mapped when you save this band.',
+                      ),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 10,
+              children: [
+                FilledButton(
+                  onPressed: _saving ? null : _saveBand,
+                  child: Text(
+                    _saving
+                        ? 'Saving…'
+                        : (_isEditing ? 'Save changes' : 'Save to testing'),
+                  ),
+                ),
+                OutlinedButton(
+                  onPressed: () {
+                    setState(() {
+                      _editingIndex = null;
+                      _addDescription = false;
+                      _clearForm();
+                    });
+                    widget.onTabChanged(BandsTab.list);
+                  },
+                  child: const Text('Cancel'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
