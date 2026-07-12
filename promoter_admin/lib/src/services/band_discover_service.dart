@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:promoter_admin/src/services/location_parse.dart';
+import 'package:promoter_admin/src/services/ma_web_html_fetch.dart';
 import 'package:promoter_admin/src/services/platform_http.dart';
 
 /// Band discovery from Metal Archives and/or MusicBrainz (parity with web portal).
@@ -686,13 +687,38 @@ class BandDiscoverService {
 
   bool _looksLikeCloudflareChallenge(String body) {
     final lower = body.toLowerCase();
+    // Real MA pages embed Cloudflare's jsd script (`/cdn-cgi/challenge-platform/...`).
+    // That is not a block page — only treat interstitials as blocked.
+    if (lower.contains('class="band_name"') ||
+        lower.contains('var bandname =') ||
+        lower.contains('id="band_stats"') ||
+        lower.contains('class="display discog"')) {
+      return false;
+    }
     return lower.contains('just a moment...') ||
+        lower.contains('<title>just a moment') ||
         lower.contains('cf-browser-verification') ||
-        lower.contains('cdn-cgi/challenge');
+        lower.contains('checking your browser') ||
+        lower.contains('cdn-cgi/challenge-platform/h/');
   }
 
   Future<String> _fetchHtml(String url) async {
     Object? lastError;
+
+    // iPad/iPhone: WKWebView can complete Cloudflare's browser challenge.
+    // URLSession alone is not enough on-device.
+    if (MaWebHtmlFetch.isSupported) {
+      try {
+        final html = await MaWebHtmlFetch.fetchHtml(url)
+            .timeout(const Duration(seconds: 40));
+        if (html.length >= 500 && !_looksLikeCloudflareChallenge(html)) {
+          return html;
+        }
+        lastError = 'WKWebView returned blocked or short HTML';
+      } catch (e) {
+        lastError = e;
+      }
+    }
 
     try {
       final resp = await _maHtmlClient()
@@ -713,12 +739,12 @@ class BandDiscoverService {
       lastError = e;
     }
 
-    // Desktop fallback: curl with the approved UA. iOS has no curl —
-    // URLSession + 70000tons is the primary path there.
-    if (Platform.isMacOS || Platform.isLinux) {
+    // Desktop fallback: curl with the approved UA (macOS/Linux/Windows).
+    // Windows 10 1803+ ships curl.exe; iOS has no curl.
+    if (Platform.isMacOS || Platform.isLinux || Platform.isWindows) {
       try {
         final result = await Process.run(
-          'curl',
+          Platform.isWindows ? 'curl.exe' : 'curl',
           [
             '-sL',
             '--max-time',

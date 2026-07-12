@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:promoter_admin/src/models/festival_workspace.dart';
@@ -225,7 +227,9 @@ class _BandsSectionState extends State<BandsSection> {
       _discovering = true;
       _discoverWarnings = null;
       if (ma.isNotEmpty) {
-        _discoverStatus = 'Querying Metal Archives…';
+        _discoverStatus = Platform.isIOS
+            ? 'Querying Metal Archives (may take ~15–30s)…'
+            : 'Querying Metal Archives…';
       } else if (mb.isNotEmpty) {
         _discoverStatus = 'Querying MusicBrainz…';
       } else {

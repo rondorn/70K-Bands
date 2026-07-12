@@ -42,12 +42,17 @@ open macos/Runner.xcworkspace
 
 ## Dropbox console (one-time)
 
-This app uses app key `ug24jfmymp185wi` (same family as the Flask tool). Add this
-**redirect URI** on the Dropbox app settings page:
+This app uses app key `ug24jfmymp185wi` (same family as the Flask tool). Add
+**both** redirect URIs on the Dropbox app settings page:
 
 ```text
 http://127.0.0.1:53682/oauth/dropbox/callback
+omfadmin://oauth/dropbox/callback
 ```
+
+- Desktop (Mac/Windows) uses the localhost URI.
+- iPhone/iPad uses `omfadmin://…` so the system auth sheet can dismiss and return
+  to the app (Safari + localhost hangs because iOS suspends the app).
 
 Also ensure scopes include: `account_info.read`, `files.content.write`,
 `files.metadata.read`, `sharing.read`, `sharing.write`.

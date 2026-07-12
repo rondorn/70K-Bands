@@ -24,6 +24,10 @@ class FestivalRegistry {
     return FestivalWorkspace(id: activeFestivalId.isEmpty ? 'festival-1' : activeFestivalId);
   }
 
+  /// True when no festival has a name + testing pointer yet (fresh install).
+  bool get needsFestivalSetup =>
+      festivals.isEmpty || festivals.values.every((f) => !f.isConfigured);
+
   List<({String id, String name})> get choices {
     final items = festivals.entries
         .map(

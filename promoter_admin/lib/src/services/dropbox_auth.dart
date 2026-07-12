@@ -3,24 +3,35 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:crypto/crypto.dart';
+import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:http/http.dart' as http;
 import 'package:promoter_admin/src/services/durable_json_store.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// Dropbox OAuth (PKCE) for the promoter macOS app.
+/// Dropbox OAuth (PKCE) for Open Metal Fest Admin.
 ///
-/// Redirect URI (must be listed on the Dropbox app):
-///   http://127.0.0.1:53682/oauth/dropbox/callback
+/// Redirect URIs (both must be listed on the Dropbox app):
+///   - Desktop: http://127.0.0.1:53682/oauth/dropbox/callback
+///   - iOS/Android: omfadmin://oauth/dropbox/callback
+///
+/// Mobile uses ASWebAuthenticationSession / Chrome Custom Tabs so the auth
+/// sheet dismisses and returns to the app. Opening external Safari + localhost
+/// hangs on iPad because iOS suspends the app (and its callback server) while
+/// Safari is foreground.
 ///
 /// macOS sandbox must include `com.apple.security.network.server` so the
-/// local callback listener can bind to 127.0.0.1.
-///
-/// Tokens are stored under `~/Library/Application Support/OpenMetalFestAdmin/`
-/// so they survive bundle-id changes and reinstalls (with the home-relative
-/// sandbox entitlement).
+/// desktop callback listener can bind to 127.0.0.1.
 class DropboxAuth {
   static const appKey = 'ug24jfmymp185wi';
-  static const redirectUri = 'http://127.0.0.1:53682/oauth/dropbox/callback';
+
+  /// Desktop loopback callback (HttpServer).
+  static const loopbackRedirectUri =
+      'http://127.0.0.1:53682/oauth/dropbox/callback';
+
+  /// Native app callback (ASWebAuthenticationSession / Chrome Custom Tabs).
+  static const appRedirectScheme = 'omfadmin';
+  static const appRedirectUri = 'omfadmin://oauth/dropbox/callback';
+
   static const _callbackPort = 53682;
   static const scopes = [
     'account_info.read',
@@ -36,6 +47,12 @@ class DropboxAuth {
   static const _kName = 'dbx_account_name';
 
   final DurableJsonStore _store = dropboxAuthStore();
+
+  /// iOS/Android cannot reliably host a localhost callback while Safari is up.
+  static bool get usesAppRedirect => Platform.isIOS || Platform.isAndroid;
+
+  static String get redirectUri =>
+      usesAppRedirect ? appRedirectUri : loopbackRedirectUri;
 
   Future<bool> get isConnected async {
     final refresh = await _store.getString(_kRefresh) ?? '';
@@ -72,6 +89,7 @@ class DropboxAuth {
     final verifier = _randomVerifier();
     final challenge = _challenge(verifier);
     final state = _randomVerifier().substring(0, 16);
+    final redirect = redirectUri;
 
     final authUrl = Uri.https('www.dropbox.com', '/oauth2/authorize', {
       'client_id': appKey,
@@ -79,13 +97,15 @@ class DropboxAuth {
       'token_access_type': 'offline',
       'code_challenge': challenge,
       'code_challenge_method': 'S256',
-      'redirect_uri': redirectUri,
+      'redirect_uri': redirect,
       'state': state,
       'scope': scopes.join(' '),
     });
 
-    final code = await _waitForCode(authUrl, state);
-    final tokens = await _exchangeCode(code, verifier);
+    final code = usesAppRedirect
+        ? await _waitForCodeViaWebAuth(authUrl, state)
+        : await _waitForCodeLoopback(authUrl, state);
+    final tokens = await _exchangeCode(code, verifier, redirect);
     await _store.setString(_kAccess, tokens['access_token'] ?? '');
     if ((tokens['refresh_token'] ?? '').isNotEmpty) {
       await _store.setString(_kRefresh, tokens['refresh_token']!);
@@ -114,7 +134,35 @@ class DropboxAuth {
     }
   }
 
-  Future<String> _waitForCode(Uri authUrl, String expectedState) async {
+  /// iOS/Android: system auth session dismisses when Dropbox redirects to our scheme.
+  Future<String> _waitForCodeViaWebAuth(Uri authUrl, String expectedState) async {
+    late final String result;
+    try {
+      result = await FlutterWebAuth2.authenticate(
+        url: authUrl.toString(),
+        callbackUrlScheme: appRedirectScheme,
+      );
+    } catch (e) {
+      throw StateError('Dropbox sign-in was cancelled or failed ($e).');
+    }
+
+    final uri = Uri.parse(result);
+    final params = uri.queryParameters;
+    if (params['error'] != null) {
+      throw StateError(params['error_description'] ?? params['error']!);
+    }
+    if (params['state'] != expectedState) {
+      throw StateError('OAuth state mismatch.');
+    }
+    final code = params['code'];
+    if (code == null || code.isEmpty) {
+      throw StateError('Dropbox did not return an authorization code.');
+    }
+    return code;
+  }
+
+  /// Desktop: local HTTP listener + external browser.
+  Future<String> _waitForCodeLoopback(Uri authUrl, String expectedState) async {
     HttpServer server;
     try {
       server = await HttpServer.bind(InternetAddress.loopbackIPv4, _callbackPort);
@@ -131,55 +179,125 @@ class DropboxAuth {
       await for (final request in server) {
         final params = request.uri.queryParameters;
         if (request.uri.path != '/oauth/dropbox/callback') {
-          request.response
-            ..statusCode = 404
-            ..write('Not found')
-            ..close();
+          await _writePlain(request.response, 404, 'Not found');
           continue;
         }
         if (params['error'] != null) {
-          request.response
-            ..statusCode = 400
-            ..headers.contentType = ContentType.html
-            ..write(
-              '<html><body><h2>Dropbox sign-in cancelled.</h2>'
-              '<p>You can close this window.</p></body></html>',
-            );
-          await request.response.close();
+          await _writeHtml(
+            request.response,
+            400,
+            _callbackPage(
+              title: 'Dropbox sign-in cancelled',
+              body: 'You can close this window and return to the app.',
+            ),
+          );
           throw StateError(params['error_description'] ?? params['error']!);
         }
         if (params['state'] != expectedState) {
-          request.response
-            ..statusCode = 400
-            ..write('Invalid state')
-            ..close();
+          await _writePlain(request.response, 400, 'Invalid state');
           throw StateError('OAuth state mismatch.');
         }
         final code = params['code'];
         if (code == null || code.isEmpty) {
-          request.response
-            ..statusCode = 400
-            ..write('Missing code')
-            ..close();
+          await _writePlain(request.response, 400, 'Missing code');
           throw StateError('Dropbox did not return an authorization code.');
         }
-        request.response
-          ..statusCode = 200
-          ..headers.contentType = ContentType.html
-          ..write(
-            '<html><body><h2>Connected to Dropbox.</h2>'
-            '<p>Return to Open Metal Fest Admin.</p></body></html>',
-          );
-        await request.response.close();
+        await _writeHtml(
+          request.response,
+          200,
+          _callbackPage(
+            title: 'Connected to Dropbox',
+            body:
+                'You can close this window and return to Open Metal Fest Admin.',
+          ),
+        );
+        await Future<void>.delayed(const Duration(milliseconds: 1200));
         return code;
       }
       throw StateError('OAuth server closed unexpectedly.');
     } finally {
-      await server.close(force: true);
+      await server.close(force: false);
     }
   }
 
-  Future<Map<String, String>> _exchangeCode(String code, String verifier) async {
+  static String _callbackPage({required String title, required String body}) {
+    return '''
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>$title</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #1a1a1a;
+      color: #e8e8e8;
+      display: flex;
+      min-height: 100vh;
+      margin: 0;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+    }
+    .card {
+      max-width: 420px;
+      background: #2a2a2a;
+      border: 1px solid #404040;
+      border-radius: 12px;
+      padding: 28px 24px;
+    }
+    h1 { font-size: 1.35rem; margin: 0 0 12px; color: #fff; }
+    p { margin: 0; color: #b0b0b0; line-height: 1.45; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>$title</h1>
+    <p>$body</p>
+  </div>
+</body>
+</html>
+''';
+  }
+
+  static Future<void> _writeHtml(
+    HttpResponse response,
+    int statusCode,
+    String html,
+  ) async {
+    final bytes = utf8.encode(html);
+    response
+      ..statusCode = statusCode
+      ..headers.contentType = ContentType.html
+      ..headers.set(HttpHeaders.cacheControlHeader, 'no-store')
+      ..headers.set(HttpHeaders.connectionHeader, 'close')
+      ..contentLength = bytes.length
+      ..add(bytes);
+    await response.close();
+  }
+
+  static Future<void> _writePlain(
+    HttpResponse response,
+    int statusCode,
+    String text,
+  ) async {
+    final bytes = utf8.encode(text);
+    response
+      ..statusCode = statusCode
+      ..headers.contentType = ContentType.text
+      ..headers.set(HttpHeaders.connectionHeader, 'close')
+      ..contentLength = bytes.length
+      ..add(bytes);
+    await response.close();
+  }
+
+  Future<Map<String, String>> _exchangeCode(
+    String code,
+    String verifier,
+    String redirect,
+  ) async {
     final resp = await http.post(
       Uri.parse('https://api.dropboxapi.com/oauth2/token'),
       headers: {'Content-Type': 'application/x-www-form-urlencoded'},
@@ -188,7 +306,7 @@ class DropboxAuth {
         'code': code,
         'client_id': appKey,
         'code_verifier': verifier,
-        'redirect_uri': redirectUri,
+        'redirect_uri': redirect,
       },
     );
     if (resp.statusCode < 200 || resp.statusCode >= 300) {

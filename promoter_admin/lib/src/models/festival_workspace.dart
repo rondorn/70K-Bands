@@ -51,6 +51,10 @@ class FestivalWorkspace {
 
   bool get hasTestingPointer => testingPointerUrl.trim().isNotEmpty;
 
+  /// True once the festival has a name and testing pointer (ready for normal use).
+  bool get isConfigured =>
+      festivalName.trim().isNotEmpty && testingPointerUrl.trim().isNotEmpty;
+
   bool get hasAnyEditAccess =>
       canEditBands || canEditSchedule || canEditDescriptions;
 

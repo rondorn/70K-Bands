@@ -42,6 +42,7 @@ dependencies:
   path_provider: ^2.1.5
   icloud_storage_plus: ^3.0.0
   cupertino_http: ^3.0.2
+  flutter_web_auth_2: ^5.0.3
 
 dev_dependencies:
   flutter_test:
