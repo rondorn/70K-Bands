@@ -82,7 +82,16 @@ iCloud.com.rdorn.open-metal-fest-admin
 A local mirror is kept at `~/Library/Application Support/OpenMetalFestAdmin/`
 (macOS) for offline fallback. Schedule staging stays device-local.
 
-**Windows** (if added later): local-only — no iCloud.
+**Windows:** local-only — no iCloud.
+
+## Windows builds (GitHub Actions)
+
+You cannot compile Windows on a Mac. Use the **Promoter Admin Windows** workflow:
+
+1. Push `promoter_admin/windows/` and `.github/workflows/promoter-admin-windows.yml`.
+2. GitHub → **Actions** → **Promoter Admin Windows** → **Run workflow**.
+3. When the run finishes, download the **omf-admin-windows** artifact.
+4. Unzip and run the `.exe` **from inside that folder** (DLLs must stay next to the exe).
 
 ### Xcode one-time setup
 
