@@ -200,14 +200,9 @@ class _ScheduleSectionState extends State<ScheduleSection> {
 
   List<String> get _days => DropdownOptions.withEmpty(widget.workspace.days);
 
-  List<String> get _types {
-    final t = widget.workspace.eventTypes;
-    return DropdownOptions.withEmpty(
-      t.isEmpty
-          ? const ['Metal Show', 'Special Event', 'Unofficial Event']
-          : t,
-    );
-  }
+  List<String> get _types => DropdownOptions.withEmpty(
+        ScheduleValidation.withDefaultEventTypes(widget.workspace.eventTypes),
+      );
 
   List<String> get _bandOptions => DropdownOptions.withEmpty(_bandNames);
 
@@ -241,7 +236,9 @@ class _ScheduleSectionState extends State<ScheduleSection> {
           venues: ws.venues.isEmpty ? hints.venues : ws.venues,
           dates: ws.dates.isEmpty ? hints.dates : ws.dates,
           days: ws.days.isEmpty ? hints.days : ws.days,
-          eventTypes: ws.eventTypes.isEmpty ? hints.eventTypes : ws.eventTypes,
+          eventTypes: ScheduleValidation.withDefaultEventTypes(
+            ws.eventTypes.isEmpty ? hints.eventTypes : ws.eventTypes,
+          ),
         );
         await widget.onWorkspaceChanged(ws);
       }
@@ -393,7 +390,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
         if (widget.workspace.descriptionMapUrl.trim().isEmpty) {
           throw StateError(
             'Description map URL is not configured — '
-            'Load from pointer in Settings, or clear the description text.',
+            'Load festival data in Settings, or clear the description text.',
           );
         }
         descriptionUrl =
@@ -582,7 +579,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
       setState(() {
         _events = updated;
         _committing = false;
-        _message = 'Removed “${e.band}” from testing schedule (in place).';
+        _message = 'Removed “${e.band}” from Testing schedule.';
         if (_lastSavedIndex != null) {
           if (_lastSavedIndex == index) {
             _lastSavedIndex = null;
@@ -888,7 +885,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
             child: bands.isEmpty
                 ? const Text(
-                    'No bands or schedule events to summarize yet.',
+                    'No artists or schedule events to summarize yet.',
                     style: TextStyle(color: AppColors.muted),
                   )
                 : LayoutBuilder(

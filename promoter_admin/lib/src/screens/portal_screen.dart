@@ -73,51 +73,55 @@ class _PortalScreenState extends State<PortalScreen> {
       case AppSection.settings:
         if (_showPromote) {
           return (
-            heading: 'Promote to Production',
-            subheading: 'Copy testing data onto production files in place',
+            heading: 'Publish to Production',
+            subheading:
+                'Copy Testing artists, schedule, and descriptions to Production',
           );
         }
         return (
           heading: 'Festival Configuration',
-          subheading: 'Pointers, Dropbox, venues, and festival vocabulary',
+          subheading:
+              'Testing & Production links, Dropbox, venues, and festival vocabulary',
         );
       case AppSection.bands:
         return _bandsTab == BandsTab.add
             ? (
-                heading: _bandFormIsEdit ? 'Edit Band' : 'Add Band',
+                heading: _bandFormIsEdit ? 'Edit Artist' : 'Add Artist',
                 subheading: 'Discover from Metal Archives or MusicBrainz',
               )
             : (
-                heading: 'Band Lineup',
-                subheading: 'Testing lineup from Current::artistUrl',
+                heading: 'Artists',
+                subheading: 'Testing lineup (what Advanced → Testing shows in the app)',
               );
       case AppSection.schedule:
         switch (_scheduleTab) {
           case ScheduleTab.view:
             return (
               heading: 'Schedule View',
-              subheading: 'Events on the testing schedule',
+              subheading: 'Events on the Testing schedule',
             );
           case ScheduleTab.stats:
             return (
               heading: 'Show Stats',
-              subheading: 'Counts per band and event type',
+              subheading: 'Counts per artist and event type',
             );
           case ScheduleTab.entry:
             return (
-              heading: 'Schedule Data Entry',
-              subheading: 'Add events to the festival schedule',
+              heading: 'Schedule Entry',
+              subheading: 'Add events to the Testing schedule',
             );
         }
       case AppSection.descriptions:
         return _descriptionsTab == DescriptionsTab.map
             ? (
                 heading: 'Description Map',
-                subheading: 'Link band and event names to Dropbox description files',
+                subheading:
+                    'Link artist and event names to Dropbox description files',
               )
             : (
                 heading: 'Write Description',
-                subheading: 'Save plain-text description files for bands and events',
+                subheading:
+                    'Save description files for artists and events (map updates automatically)',
               );
     }
   }
@@ -135,10 +139,10 @@ class _PortalScreenState extends State<PortalScreen> {
       parts.add('Dropbox not connected');
     }
     if (_ws.testingPointerUrl.isNotEmpty) {
-      parts.add('Testing pointer set');
+      parts.add('Testing link set');
     }
     final access = <String>[];
-    if (_ws.canEditBands) access.add('bands');
+    if (_ws.canEditBands) access.add('artists');
     if (_ws.canEditSchedule) access.add('schedule');
     if (_ws.canEditDescriptions) access.add('descriptions');
     if (access.isEmpty) {

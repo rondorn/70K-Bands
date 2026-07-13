@@ -2,6 +2,7 @@ import 'package:promoter_admin/src/models/festival_workspace.dart';
 import 'package:promoter_admin/src/services/dropbox_api.dart';
 import 'package:promoter_admin/src/services/lineup_service.dart';
 import 'package:promoter_admin/src/services/schedule_service.dart';
+import 'package:promoter_admin/src/services/schedule_validation.dart';
 
 /// Bootstrap a new festival folder on Dropbox (layout + pointers).
 ///
@@ -211,7 +212,7 @@ class FestivalCreateService {
       bandListUrl: testBandUrl,
       scheduleUrl: testScheduleUrl,
       descriptionMapUrl: testMapUrl,
-      eventTypes: const ['Show', 'Special Event', 'Unofficial Event'],
+      eventTypes: ScheduleValidation.defaultEventTypes,
       canEditBands: true,
       canEditSchedule: true,
       canEditDescriptions: true,

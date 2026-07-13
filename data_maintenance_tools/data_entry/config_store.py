@@ -108,14 +108,33 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "days": [],
     "event_types": [
         "Show",
-        "Meet and Greet",
         "Clinic",
-        "Listening Party",
+        "Meet and Greet",
         "Special Event",
         "Unofficial Event",
     ],
     "use_city_state_field": False,
 }
+
+REQUIRED_EVENT_TYPES = list(DEFAULT_CONFIG["event_types"])
+
+
+def ensure_default_event_types(existing: list | None) -> list[str]:
+    """Defaults first, then any festival-specific extras (deduped)."""
+    out: list[str] = []
+    seen: set[str] = set()
+    for value in REQUIRED_EVENT_TYPES:
+        v = str(value).strip()
+        if v and v not in seen:
+            seen.add(v)
+            out.append(v)
+    for value in existing or []:
+        v = str(value).strip()
+        if v and v not in seen:
+            seen.add(v)
+            out.append(v)
+    return out
+
 
 SCHEDULE_HEADER = (
     "Band,Location,Date,Day,Start Time,End Time,Type,Description URL,Notes,ImageURL\n"
@@ -169,6 +188,7 @@ def _normalize_festival_config(data: dict[str, Any]) -> dict[str, Any]:
     elif legacy:
         merged["testing_pointer_url"] = legacy
         merged["pointer_url"] = legacy
+    merged["event_types"] = ensure_default_event_types(merged.get("event_types"))
     return merged
 
 
@@ -727,6 +747,10 @@ def merge_pointer_hints(
             v = str(value).strip()
             if v and v not in combined_types:
                 combined_types.append(v)
-        merged["event_types"] = combined_types or existing_types
+        merged["event_types"] = ensure_default_event_types(
+            combined_types or existing_types
+        )
+    else:
+        merged["event_types"] = ensure_default_event_types(existing_types)
 
     return merged

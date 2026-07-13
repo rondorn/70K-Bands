@@ -3,6 +3,7 @@ import 'package:promoter_admin/src/models/pointer_file.dart';
 import 'package:promoter_admin/src/services/csv_util.dart';
 import 'package:promoter_admin/src/services/http_fetch.dart';
 import 'package:promoter_admin/src/services/schedule_service.dart';
+import 'package:promoter_admin/src/services/schedule_validation.dart';
 
 class PointerService {
   Future<PointerFile> fetchPointer(String url) async {
@@ -57,7 +58,11 @@ class PointerService {
       final pointerTypes = production.eventTypesFromPointer;
       final mergedTypes = <String>[];
       final seen = <String>{};
-      for (final t in [...pointerTypes, ...hints.eventTypes]) {
+      for (final t in [
+        ...ScheduleValidation.defaultEventTypes,
+        ...pointerTypes,
+        ...hints.eventTypes,
+      ]) {
         final v = t.trim();
         if (v.isEmpty || v == ' ') continue;
         if (seen.add(v)) mergedTypes.add(v);
@@ -66,9 +71,7 @@ class PointerService {
         venues: hints.venues,
         dates: hints.dates,
         days: hints.days,
-        eventTypes: mergedTypes.isNotEmpty
-            ? mergedTypes
-            : const ['Show', 'Special Event', 'Unofficial Event'],
+        eventTypes: ScheduleValidation.withDefaultEventTypes(mergedTypes),
       );
     } catch (e) {
       throw StateError(

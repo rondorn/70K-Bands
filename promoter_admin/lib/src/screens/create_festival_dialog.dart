@@ -180,7 +180,7 @@ class _CreateFestivalFormState extends State<CreateFestivalForm> {
 
     final testing = _testingPointer.text.trim();
     if (testing.isEmpty) {
-      setState(() => _error = 'Testing pointer URL is required.');
+      setState(() => _error = 'Testing link URL is required.');
       return;
     }
     widget.onSubmit(
@@ -213,9 +213,10 @@ class _CreateFestivalFormState extends State<CreateFestivalForm> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const Text(
-          'Add a festival configuration. By default, paste existing '
-          'pointer URLs. Check the box only when you need new Dropbox '
-          'files created from scratch.',
+          'Add a festival configuration. By default, paste the Testing and '
+          'Production links from your app developer (Dropbox pointer files). '
+          'Check the box only when you need new Dropbox files created from scratch '
+          '(you can send those new links to your developer afterward).',
           style: TextStyle(color: AppColors.muted, fontSize: 13),
         ),
         const SizedBox(height: 16),
@@ -242,12 +243,13 @@ class _CreateFestivalFormState extends State<CreateFestivalForm> {
             _error = null;
           }),
           title: const Text(
-            'Create new pointer files',
+            'Create new Testing & Production links',
             style: TextStyle(color: AppColors.heading, fontSize: 15),
           ),
           subtitle: const Text(
-            'Also creates header-only artists / schedule / description map '
-            'CSVs (testing + production) on Dropbox.',
+            'Creates Dropbox pointer files plus empty artists / schedule / '
+            'description map files (Testing + Production). Your app developer '
+            'may use these links even if they wire different official pointers later.',
             style: TextStyle(color: AppColors.muted, fontSize: 12),
           ),
         ),
@@ -257,7 +259,7 @@ class _CreateFestivalFormState extends State<CreateFestivalForm> {
             controller: _testingPointer,
             maxLines: 2,
             decoration: const InputDecoration(
-              labelText: 'Testing pointer URL',
+              labelText: 'Testing link URL',
               hintText:
                   'https://www.dropbox.com/.../productionPointer_test.txt?raw=1',
             ),
@@ -267,15 +269,16 @@ class _CreateFestivalFormState extends State<CreateFestivalForm> {
             controller: _productionPointer,
             maxLines: 2,
             decoration: const InputDecoration(
-              labelText: 'Production pointer URL',
+              labelText: 'Production link URL',
               hintText:
                   'https://www.dropbox.com/.../productionPointer.txt?raw=1',
             ),
           ),
           const SizedBox(height: 6),
           const Text(
-            'Production pointer is used for venues / dates / event types. '
-            'Optional if you only have a testing pointer.',
+            'Production link is used for venues / dates / event types. '
+            'Optional if you only have a Testing link. '
+            'Your app developer may ask you for these URLs.',
             style: TextStyle(color: AppColors.muted, fontSize: 12),
           ),
         ] else ...[

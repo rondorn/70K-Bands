@@ -294,7 +294,7 @@ class _BandsSectionState extends State<BandsSection> {
   Future<void> _saveBand() async {
     final name = _name.text.trim();
     if (name.isEmpty) {
-      setState(() => _error = 'Band name is required.');
+      setState(() => _error = 'Artist name is required.');
       return;
     }
     if (!widget.dropboxConnected) {
@@ -327,7 +327,7 @@ class _BandsSectionState extends State<BandsSection> {
         if (widget.workspace.descriptionMapUrl.trim().isEmpty) {
           throw StateError(
             'Description map URL is not configured — '
-            'Load from pointer in Settings, or uncheck Add description.',
+            'Load festival data in Settings, or uncheck Add description.',
           );
         }
         await widget.descriptionMapService.writeDescriptionAndUpsertMap(
@@ -345,8 +345,8 @@ class _BandsSectionState extends State<BandsSection> {
         _editingIndex = null;
         _addDescription = false;
         _message = editIdx != null
-            ? 'Updated “$name” in testing lineup (in place).'
-            : 'Saved “$name” to testing lineup (in place).$descriptionNote';
+            ? 'Updated “$name” in Testing artists.'
+            : 'Saved “$name” to Testing artists.$descriptionNote';
       });
       widget.onTabChanged(BandsTab.list);
     } catch (e) {
@@ -387,7 +387,7 @@ class _BandsSectionState extends State<BandsSection> {
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.panel,
         title: const Text('Remove band'),
-        content: Text('Remove ${band.name} from the lineup?'),
+        content: Text('Remove ${band.name} from the artists list?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -415,7 +415,7 @@ class _BandsSectionState extends State<BandsSection> {
       setState(() {
         _bands = updated;
         _saving = false;
-        _message = 'Removed “${band.name}” from testing lineup (in place).';
+        _message = 'Removed “${band.name}” from Testing artists.';
       });
     } catch (e) {
       setState(() {
@@ -467,14 +467,14 @@ class _BandsSectionState extends State<BandsSection> {
                   alignment: Alignment.centerLeft,
                   child: FilledButton(
                     onPressed: _startAdd,
-                    child: const Text('Add'),
+                    child: const Text('Add artist'),
                   ),
                 ),
                 const SizedBox(height: 12),
                 Expanded(
                   child: _bands.isEmpty
                       ? const Text(
-                          'No bands in the lineup yet.',
+                          'No artists in the Testing lineup yet.',
                           style: TextStyle(color: AppColors.muted),
                         )
                       : LayoutBuilder(
@@ -588,7 +588,7 @@ class _BandsSectionState extends State<BandsSection> {
                   child: TextButton.icon(
                     onPressed: _load,
                     icon: const Icon(Icons.refresh, size: 18),
-                    label: Text('${_bands.length} band(s) — Refresh'),
+                    label: Text('${_bands.length} artist(s) — Refresh'),
                   ),
                 ),
               ],
@@ -608,11 +608,11 @@ class _BandsSectionState extends State<BandsSection> {
             if (_error != null) StatusBanner(text: _error!, isError: true),
             if (!widget.dropboxConnected)
               const StatusBanner(
-                text: 'Connect Dropbox in Settings to save the lineup.',
+                text: 'Connect Dropbox in Settings to save artists.',
                 isError: true,
               ),
             FormRow(
-              label: 'Band name',
+              label: 'Artist name',
               requiredField: true,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -836,7 +836,7 @@ class _BandsSectionState extends State<BandsSection> {
                   child: Text(
                     _saving
                         ? 'Saving…'
-                        : (_isEditing ? 'Save changes' : 'Save to testing'),
+                        : (_isEditing ? 'Save changes' : 'Save to Testing'),
                   ),
                 ),
                 OutlinedButton(

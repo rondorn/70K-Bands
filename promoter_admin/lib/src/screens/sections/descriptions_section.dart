@@ -256,7 +256,7 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
         _mapEditingIndex = null;
         _message = editIdx != null
             ? 'Updated map entry for $label.'
-            : 'Map entry saved for $label.';
+            : 'Description map entry saved for $label.';
         _mapUrl.clear();
         _mapDate.text = DescriptionMapService.cacheDateToday();
         _mapLabel = DropdownOptions.empty;
@@ -330,7 +330,7 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
         } else if (_mapEditingIndex != null && _mapEditingIndex! > index) {
           _mapEditingIndex = _mapEditingIndex! - 1;
         }
-        _message = 'Removed “${e.band}” from description map (in place).';
+        _message = 'Removed “${e.band}” from description map.';
       });
     } catch (err) {
       setState(() {
@@ -362,7 +362,7 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
           children: [
             Text(
               'Descriptions folder: beside the description map file '
-              '(${widget.workspace.descriptionMapUrl.isEmpty ? 'not configured' : 'from testing pointer'}).',
+              '(${widget.workspace.descriptionMapUrl.isEmpty ? 'not configured' : 'from Testing link'}).',
               style: const TextStyle(color: AppColors.muted, fontSize: 13),
             ),
             const SizedBox(height: 12),
@@ -381,7 +381,8 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Next step: copy this URL for the Map (or send it to the Map admin).',
+                      'Next step: copy this URL for the Description map '
+                      '(or send it to whoever maintains the map).',
                       style: TextStyle(color: AppColors.label),
                     ),
                     const SizedBox(height: 6),
@@ -447,7 +448,7 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
                 ),
                 OutlinedButton(
                   onPressed: () => widget.onTabChanged(DescriptionsTab.map),
-                  child: const Text('Open Map'),
+                  child: const Text('Open Description map'),
                 ),
               ],
             ),

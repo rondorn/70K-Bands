@@ -88,4 +88,22 @@ void main() {
     expect(stats['A']?['Meet and Greet'], 1);
     expect(stats['B']?['Show'], 1);
   });
+
+  test('default event types are always first and complete', () {
+    expect(
+      ScheduleValidation.withDefaultEventTypes(const ['Listening Party', 'Show']),
+      [
+        'Show',
+        'Clinic',
+        'Meet and Greet',
+        'Special Event',
+        'Unofficial Event',
+        'Listening Party',
+      ],
+    );
+    expect(
+      ScheduleValidation.withDefaultEventTypes(const []),
+      ScheduleValidation.defaultEventTypes,
+    );
+  });
 }

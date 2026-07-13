@@ -13,6 +13,30 @@ class ScheduleValidation {
   /// Official / fan non-performance events: title lives in Band column; Notes unused.
   static const nonBandEventTypes = {'Special Event', 'Unofficial Event'};
 
+  /// Always available in schedule entry for every festival.
+  static const defaultEventTypes = [
+    'Show',
+    'Clinic',
+    'Meet and Greet',
+    'Special Event',
+    'Unofficial Event',
+  ];
+
+  /// Defaults first, then any extra festival-specific types (deduped).
+  static List<String> withDefaultEventTypes(Iterable<String> existing) {
+    final out = <String>[];
+    final seen = <String>{};
+    for (final t in defaultEventTypes) {
+      if (seen.add(t)) out.add(t);
+    }
+    for (final t in existing) {
+      final v = t.trim();
+      if (v.isEmpty) continue;
+      if (seen.add(v)) out.add(v);
+    }
+    return out;
+  }
+
   static bool isNonBandEventType(String type) =>
       nonBandEventTypes.contains(type.trim());
 
@@ -205,9 +229,9 @@ class ScheduleValidation {
       if (seen.add(v)) out.add(v);
     }
     if (out.isEmpty) {
-      return const ['Show', 'Special Event', 'Unofficial Event'];
+      return List<String>.from(defaultEventTypes);
     }
-    return out;
+    return withDefaultEventTypes(out);
   }
 
   static (int, int) parseTimeParts(String timeStr) {

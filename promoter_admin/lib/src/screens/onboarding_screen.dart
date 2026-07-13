@@ -54,7 +54,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Future<void> _handleCreate(CreateFestivalResult result) async {
     if (result.createPointerFiles && !widget.dropboxConnected) {
       setState(() {
-        _error = 'Connect Dropbox before creating new pointer and data files.';
+        _error = 'Connect Dropbox before creating new festival links and data files.';
         _status = null;
       });
       return;
@@ -65,7 +65,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       _error = null;
       _status = result.createPointerFiles
           ? 'Creating festival on Dropbox…'
-          : 'Loading festival from pointers…';
+          : 'Loading festival from links…';
     });
     try {
       late final FestivalWorkspace created;
@@ -158,7 +158,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Set up your festival before using the admin tools.',
+                    'Set up Testing and Production links, then connect Dropbox.',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: AppColors.muted, fontSize: 14),
                   ),

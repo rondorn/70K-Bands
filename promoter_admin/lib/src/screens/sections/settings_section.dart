@@ -7,6 +7,7 @@ import 'package:promoter_admin/src/services/festival_year_service.dart';
 import 'package:promoter_admin/src/services/pointer_service.dart';
 import 'package:promoter_admin/src/services/promote_service.dart';
 import 'package:promoter_admin/src/services/schedule_service.dart';
+import 'package:promoter_admin/src/services/schedule_validation.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
 import 'package:promoter_admin/src/widgets/portal_dropdown.dart';
@@ -82,8 +83,10 @@ class _SettingsSectionState extends State<SettingsSection> {
     _venues = TextEditingController(text: widget.workspace.venues.join('\n'));
     _dates = TextEditingController(text: widget.workspace.dates.join('\n'));
     _days = TextEditingController(text: widget.workspace.days.join('\n'));
-    _eventTypes =
-        TextEditingController(text: widget.workspace.eventTypes.join('\n'));
+    _eventTypes = TextEditingController(
+      text: ScheduleValidation.withDefaultEventTypes(widget.workspace.eventTypes)
+          .join('\n'),
+    );
     _canEditBands = widget.workspace.canEditBands;
     _canEditSchedule = widget.workspace.canEditSchedule;
     _canEditDescriptions = widget.workspace.canEditDescriptions;
@@ -114,7 +117,7 @@ class _SettingsSectionState extends State<SettingsSection> {
     if (_dates.text != d) _dates.text = d;
     final days = w.days.join('\n');
     if (_days.text != days) _days.text = days;
-    final t = w.eventTypes.join('\n');
+    final t = ScheduleValidation.withDefaultEventTypes(w.eventTypes).join('\n');
     if (_eventTypes.text != t) _eventTypes.text = t;
     _canEditBands = w.canEditBands;
     _canEditSchedule = w.canEditSchedule;
@@ -152,7 +155,7 @@ class _SettingsSectionState extends State<SettingsSection> {
       venues: _lines(_venues.text),
       dates: _lines(_dates.text),
       days: _lines(_days.text),
-      eventTypes: _lines(_eventTypes.text),
+      eventTypes: ScheduleValidation.withDefaultEventTypes(_lines(_eventTypes.text)),
       canEditBands: _canEditBands,
       canEditSchedule: _canEditSchedule,
       canEditDescriptions: _canEditDescriptions,
@@ -174,10 +177,10 @@ class _SettingsSectionState extends State<SettingsSection> {
 
   String _accessSummary(FestivalWorkspace w) {
     final parts = <String>[];
-    parts.add(w.canEditBands ? 'Bands ✓' : 'Bands ✗');
+    parts.add(w.canEditBands ? 'Artists ✓' : 'Artists ✗');
     parts.add(w.canEditSchedule ? 'Schedule ✓' : 'Schedule ✗');
     parts.add(w.canEditDescriptions ? 'Descriptions ✓' : 'Descriptions ✗');
-    parts.add(w.canEditPointers ? 'Pointers ✓' : 'Pointers ✗');
+    parts.add(w.canEditPointers ? 'Links ✓' : 'Links ✗');
     return parts.join(' · ');
   }
 
@@ -216,7 +219,7 @@ class _SettingsSectionState extends State<SettingsSection> {
     if (result.createPointerFiles && !widget.dropboxConnected) {
       setState(() {
         _error =
-            'Connect Dropbox before creating new pointer and data files.';
+            'Connect Dropbox before creating new festival links and data files.';
         _status = null;
       });
       return;
@@ -227,7 +230,7 @@ class _SettingsSectionState extends State<SettingsSection> {
       _error = null;
       _status = result.createPointerFiles
           ? 'Creating festival on Dropbox…'
-          : 'Loading festival from pointers…';
+          : 'Loading festival from links…';
     });
     try {
       await widget.onWorkspaceChanged(_draft());
@@ -261,8 +264,9 @@ class _SettingsSectionState extends State<SettingsSection> {
         _busy = false;
         _status = result.createPointerFiles
             ? 'Created “${created.festivalName}” in ${result.folder}. '
-                'Testing and production pointers are ready.'
-            : 'Added “${created.festivalName}” from existing pointers '
+                'Testing and Production links are ready — send them to your '
+                'app developer if needed.'
+            : 'Added “${created.festivalName}” from existing links '
                 '(year ${created.eventYear}).';
       });
     } catch (e) {
@@ -325,7 +329,7 @@ class _SettingsSectionState extends State<SettingsSection> {
     setState(() {
       _busy = true;
       _error = null;
-      _status = 'Loading pointers…';
+      _status = 'Loading festival data…';
     });
     try {
       var updated = await widget.pointerService.applyPointers(_draft());
@@ -490,9 +494,9 @@ class _SettingsSectionState extends State<SettingsSection> {
         _canEditPointers = updated.canEditPointers;
         _busy = false;
         _status =
-            'Rolled testing to ${updated.eventYear} '
-            '(archived $currentYear on the testing pointer). '
-            'Production pointer was not changed — Promote when ready.';
+            'Rolled Testing to ${updated.eventYear} '
+            '(archived $currentYear on the Testing link). '
+            'Production was not changed — Publish to Production when ready.';
       });
     } catch (e) {
       if (!mounted) return;
@@ -526,8 +530,10 @@ class _SettingsSectionState extends State<SettingsSection> {
             if (_status != null) StatusBanner(text: _status!),
             if (_error != null) StatusBanner(text: _error!, isError: true),
             const Text(
-              'All files on Dropbox. Edits use the testing pointer. '
-              'Promote publishes to the production pointer.',
+              'All files live on Dropbox. Edit against Testing '
+              '(Advanced → Testing in the fan app). '
+              'Publish to Production updates what most attendees see. '
+              'Your app developer may ask you to copy the Testing and Production links below.',
               style: TextStyle(color: AppColors.muted),
             ),
             const SizedBox(height: 16),
@@ -576,8 +582,8 @@ class _SettingsSectionState extends State<SettingsSection> {
                     ],
                   ),
                   const HintText(
-                    'Each festival has its own pointers and vocabulary. '
-                    'Add New Festival uses existing pointers by default, or can '
+                    'Each festival has its own Testing/Production links and vocabulary. '
+                    'Add New Festival uses existing links by default, or can '
                     'create new Dropbox files. Switching saves the current form first.',
                   ),
                 ],
@@ -625,7 +631,7 @@ class _SettingsSectionState extends State<SettingsSection> {
               ),
             ),
             FormRow(
-              label: 'Testing pointer',
+              label: 'Testing link',
               requiredField: true,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -639,29 +645,32 @@ class _SettingsSectionState extends State<SettingsSection> {
                     ),
                   ),
                   const HintText(
-                    'From the app maintainer. Used for lineup / schedule / map URLs.',
+                    'Dropbox pointer file for Testing. From your app developer, '
+                    'or create one and send them the link. Used for artists / schedule / descriptions.',
                   ),
                 ],
               ),
             ),
             FormRow(
-              label: 'Production pointer',
+              label: 'Production link',
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   TextField(controller: _production, maxLines: 2),
                   const HintText(
-                    'Used by Promote, and for venues / dates / days / event types on Load.',
+                    'Dropbox pointer file for Production (what most attendees see). '
+                    'Also used for venues / dates / days / event types on Load. '
+                    'Your app developer may ask for this link.',
                   ),
                 ],
               ),
             ),
             FormRow(
-              label: 'Derived URLs',
+              label: 'Data files',
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _ReadonlyLine('Lineup', widget.workspace.bandListUrl),
+                  _ReadonlyLine('Artists', widget.workspace.bandListUrl),
                   _ReadonlyLine('Schedule', widget.workspace.scheduleUrl),
                   _ReadonlyLine('Description map', widget.workspace.descriptionMapUrl),
                   if (widget.workspace.eventYear.isNotEmpty)
@@ -673,9 +682,9 @@ class _SettingsSectionState extends State<SettingsSection> {
                       child: const Text('Add new year…'),
                     ),
                     const HintText(
-                      'Archives Current on the testing pointer only and creates '
-                      'empty lineup / schedule / map files. Production is unchanged '
-                      'until you Promote.',
+                      'Archives Current on the Testing link only and creates '
+                      'empty artists / schedule / map files. Production is unchanged '
+                      'until you Publish to Production.',
                     ),
                   ],
                 ],
@@ -690,13 +699,13 @@ class _SettingsSectionState extends State<SettingsSection> {
                     contentPadding: EdgeInsets.zero,
                     dense: true,
                     controlAffinity: ListTileControlAffinity.leading,
-                    title: const Text('Band lineup'),
+                    title: const Text('Artists'),
                     subtitle: Text(
                       widget.workspace.bandListUrl.trim().isEmpty
-                          ? 'No lineup URL yet'
+                          ? 'No artists URL yet'
                           : (_canEditBands
-                              ? 'Write access — Band section shown'
-                              : 'No write access — Band section hidden'),
+                              ? 'Write access — Artists section shown'
+                              : 'No write access — Artists section hidden'),
                       style: const TextStyle(color: AppColors.muted, fontSize: 12),
                     ),
                     value: _canEditBands,
@@ -745,15 +754,15 @@ class _SettingsSectionState extends State<SettingsSection> {
                     padding: const EdgeInsets.only(top: 4, bottom: 4),
                     child: Text(
                       widget.workspace.testingPointerUrl.trim().isEmpty
-                          ? 'Pointers: no testing pointer URL yet'
+                          ? 'Links: no Testing link yet'
                           : (_canEditPointers
-                              ? 'Testing pointer: write access — Add new year available'
-                              : 'Testing pointer: no write access — Add new year hidden'),
+                              ? 'Testing link: write access — Add new year available'
+                              : 'Testing link: no write access — Add new year hidden'),
                       style: const TextStyle(color: AppColors.muted, fontSize: 12),
                     ),
                   ),
                   const HintText(
-                    'Detected from Dropbox when you Load from pointer or Refresh. '
+                    'Detected from Dropbox when you Load festival data or Refresh. '
                     'Uncheck to hide a section; check to show it even if detection is wrong.',
                   ),
                   const SizedBox(height: 8),
@@ -773,9 +782,9 @@ class _SettingsSectionState extends State<SettingsSection> {
                     contentPadding: EdgeInsets.zero,
                     dense: true,
                     controlAffinity: ListTileControlAffinity.leading,
-                    title: const Text('Use city/state fields in lineup CSV'),
+                    title: const Text('Use city/state fields for artists'),
                     subtitle: const Text(
-                      'When enabled, band entry shows city and state, and Discover '
+                      'When enabled, artist entry shows city and state, and Discover '
                       'can populate them from Metal Archives or MusicBrainz. '
                       'Full US state names are stored as two-letter codes.',
                       style: TextStyle(color: AppColors.muted, fontSize: 12),
@@ -796,7 +805,7 @@ class _SettingsSectionState extends State<SettingsSection> {
                 children: [
                   TextField(controller: _venues, maxLines: 5),
                   const HintText(
-                    'One per line. Loaded from the production schedule.',
+                    'One per line. Loaded from the Production schedule.',
                   ),
                 ],
               ),
@@ -811,7 +820,16 @@ class _SettingsSectionState extends State<SettingsSection> {
             ),
             FormRow(
               label: 'Event types',
-              child: TextField(controller: _eventTypes, maxLines: 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(controller: _eventTypes, maxLines: 4),
+                  const HintText(
+                    'Always includes Show, Clinic, Meet and Greet, Special Event, '
+                    'and Unofficial Event. Add festival-specific types on extra lines.',
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 8),
             Wrap(
@@ -820,7 +838,7 @@ class _SettingsSectionState extends State<SettingsSection> {
               children: [
                 FilledButton(
                   onPressed: _busy ? null : _loadFromPointer,
-                  child: Text(_busy ? 'Working…' : 'Load from pointer'),
+                  child: Text(_busy ? 'Working…' : 'Load festival data'),
                 ),
                 OutlinedButton(
                   onPressed: _busy ? null : _save,
@@ -831,7 +849,7 @@ class _SettingsSectionState extends State<SettingsSection> {
                     _canEditDescriptions)
                   OutlinedButton(
                     onPressed: () => widget.onShowPromote(true),
-                    child: const Text('Promote…'),
+                    child: const Text('Publish to Production…'),
                   ),
               ],
             ),
@@ -970,13 +988,13 @@ class _PromotePanelState extends State<_PromotePanel> {
           widget.workspace.scheduleUrl.trim().isNotEmpty) {
         await widget.scheduleService.flushSync(widget.workspace);
       }
-      setState(() => _status = 'Promoting…');
+      setState(() => _status = 'Publishing…');
       final diff = await _promote.promote(widget.workspace);
       if (!mounted) return;
       setState(() {
         _diff = diff;
         _promoting = false;
-        _status = 'Promote complete.';
+        _status = 'Published to Production.';
       });
     } catch (e) {
       if (!mounted) return;
@@ -1014,25 +1032,26 @@ class _PromotePanelState extends State<_PromotePanel> {
           children: [
             Text(
               yearRoll
-                  ? 'Testing is on a newer event year than production. Promote '
-                      'copies testing lineup, schedule, and description map onto '
-                      'the new-year production files, then rewrites the production '
-                      'pointer (archive Current as $productionYear, set Current '
+                  ? 'Testing is on a newer event year than Production. Publish '
+                      'copies Testing artists, schedule, and description map onto '
+                      'the new-year Production files, then updates the Production '
+                      'pointer file (archive Current as $productionYear, set Current '
                       'to $testingYear).'
-                  : 'Day-to-day edits use the testing pointer. Promote copies testing '
-                      'lineup, schedule, and description map onto the production files '
-                      'in place so share links stay stable.',
+                  : 'Day-to-day edits use Testing. Publish to Production copies '
+                      'artists, schedule, and description map onto the Production files '
+                      'without breaking Dropbox share links.',
               style: const TextStyle(color: AppColors.muted),
             ),
             const SizedBox(height: 12),
             StatusBanner(
               text: yearRoll
-                  ? 'Year roll: testing $testingYear → production $productionYear. '
-                      'CSV data goes into the $testingYear production files only; '
-                      '$productionYear production files are left as-is. The production '
-                      'pointer is then updated so Current points at $testingYear.'
-                  : 'Verify lineup, schedule, and descriptions look correct in '
-                      'Testing before promoting. Production is what attendee apps read.',
+                  ? 'Year roll: Testing $testingYear → Production $productionYear. '
+                      'CSV data goes into the $testingYear Production files only; '
+                      '$productionYear Production files are left as-is. The Production '
+                      'pointer file is then updated so Current points at $testingYear.'
+                  : 'Verify artists, schedule, and descriptions look correct in '
+                      'Testing (fan app: Advanced → Testing) before publishing. '
+                      'Production is what most attendees see.',
             ),
             const SizedBox(height: 16),
             if (_status != null) StatusBanner(text: _status!),
@@ -1041,17 +1060,17 @@ class _PromotePanelState extends State<_PromotePanel> {
               _ReadonlyLine('Testing event year', testingYear),
               _ReadonlyLine('Production event year', productionYear),
             ],
-            _ReadonlyLine('Testing pointer', workspace.testingPointerUrl),
-            _ReadonlyLine('Production pointer', workspace.productionPointerUrl),
+            _ReadonlyLine('Testing link', workspace.testingPointerUrl),
+            _ReadonlyLine('Production link', workspace.productionPointerUrl),
             const SizedBox(height: 12),
             if (!widget.dropboxConnected)
               const StatusBanner(
-                text: 'Connect Dropbox in Settings before promoting.',
+                text: 'Connect Dropbox in Settings before publishing.',
                 isError: true,
               ),
             if (workspace.productionPointerUrl.trim().isEmpty)
               const StatusBanner(
-                text: 'Set a production pointer in Settings before promoting.',
+                text: 'Set a Production link in Settings before publishing.',
                 isError: true,
               ),
             if (_loadingPreview)
@@ -1088,10 +1107,10 @@ class _PromotePanelState extends State<_PromotePanel> {
                   onPressed: _canPromote ? _runPromote : null,
                   child: Text(
                     _promoting
-                        ? 'Promoting…'
+                        ? 'Publishing…'
                         : (yearRoll
-                            ? 'Promote year $testingYear → production'
-                            : 'Promote testing → production'),
+                            ? 'Publish year $testingYear → Production'
+                            : 'Publish Testing → Production'),
                   ),
                 ),
                 OutlinedButton(
@@ -1138,11 +1157,11 @@ class _PromoteConfirmDialogState extends State<_PromoteConfirmDialog> {
     final diff = widget.diff;
     if (diff != null && diff.isYearRoll) {
       items.add(
-        'Production pointer (archive Current as ${diff.productionYear}, '
+        'Production pointer file (archive Current as ${diff.productionYear}, '
         'set Current to ${diff.testingYear})',
       );
     }
-    if (widget.canEditBands) items.add('Band lineup');
+    if (widget.canEditBands) items.add('Artists');
     if (widget.canEditSchedule) items.add('Schedule');
     if (widget.canEditDescriptions) items.add('Description map');
     return items;
@@ -1156,8 +1175,8 @@ class _PromoteConfirmDialogState extends State<_PromoteConfirmDialog> {
       backgroundColor: AppColors.panel,
       title: Text(
         yearRoll
-            ? 'Confirm promote year ${diff!.testingYear} to production'
-            : 'Confirm promote to production',
+            ? 'Confirm publish year ${diff!.testingYear} to Production'
+            : 'Confirm publish to Production',
       ),
       content: SizedBox(
         width: 480,
@@ -1168,20 +1187,20 @@ class _PromoteConfirmDialogState extends State<_PromoteConfirmDialog> {
             children: [
               StatusBanner(
                 text: yearRoll
-                    ? 'This will rewrite the production pointer for '
+                    ? 'This will rewrite the Production pointer file for '
                         '“${widget.festivalName}” (archive ${diff!.productionYear}, '
                         'Current → ${diff.testingYear}) and overwrite the new-year '
-                        'production CSVs. Attendee apps use production. '
+                        'Production CSVs. Most attendees see Production. '
                         'This cannot be undone from the admin app.'
-                    : 'This will overwrite production data for '
-                        '“${widget.festivalName}”. Attendee apps use production. '
+                    : 'This will overwrite Production data for '
+                        '“${widget.festivalName}”. Most attendees see Production. '
                         'This cannot be undone from the admin app.',
                 isError: true,
               ),
               const Text(
                 'Before continuing, confirm you have already checked that '
-                'everything looks correct while working against the testing '
-                'pointer (bands, schedule, descriptions).',
+                'everything looks correct in Testing '
+                '(artists, schedule, descriptions).',
                 style: TextStyle(color: AppColors.heading, fontSize: 14),
               ),
               const SizedBox(height: 14),
@@ -1233,8 +1252,8 @@ class _PromoteConfirmDialogState extends State<_PromoteConfirmDialog> {
                 title: Text(
                   yearRoll
                       ? 'I have verified Testing ($testingYearLabel) looks correct '
-                          'and want to publish that year to production'
-                      : 'I have verified Testing looks correct and want to publish to production',
+                          'and want to publish that year to Production'
+                      : 'I have verified Testing looks correct and want to publish to Production',
                   style: const TextStyle(color: AppColors.heading, fontSize: 14),
                 ),
               ),
@@ -1253,8 +1272,8 @@ class _PromoteConfirmDialogState extends State<_PromoteConfirmDialog> {
               : null,
           child: Text(
             yearRoll
-                ? 'Promote year ${diff!.testingYear} to production'
-                : 'Promote to production',
+                ? 'Publish year ${diff!.testingYear} to Production'
+                : 'Publish to Production',
           ),
         ),
       ],
@@ -1381,8 +1400,8 @@ class _AddNewYearDialogState extends State<_AddNewYearDialog> {
               ],
               Text(
                 'Current year ${widget.currentYear} will be archived on the '
-                'testing pointer only. New empty CSV files will be created for $year. '
-                'The production pointer is not modified — use Promote after verifying testing.',
+                'Testing link only. New empty CSV files will be created for $year. '
+                'The Production link is not modified — Publish to Production after verifying Testing.',
                 style: const TextStyle(color: AppColors.muted, fontSize: 13),
               ),
               const SizedBox(height: 16),

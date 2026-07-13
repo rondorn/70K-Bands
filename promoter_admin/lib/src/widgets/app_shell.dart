@@ -232,109 +232,119 @@ class _NavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final showPromote =
         canEditBands || canEditSchedule || canEditDescriptions;
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      alignment: WrapAlignment.spaceBetween,
-      children: [
+    final sections = <Widget>[
+      _NavSection(
+        label: 'Config',
+        children: [
+          _NavLink(
+            label: 'Settings',
+            selected: section == AppSection.settings && !settingsPromoteSelected,
+            onTap: () => onSectionChanged(AppSection.settings),
+          ),
+          if (showPromote)
+            _NavLink(
+              label: 'Publish',
+              secondary: true,
+              selected:
+                  section == AppSection.settings && settingsPromoteSelected,
+              onTap: () {
+                onSectionChanged(AppSection.settings);
+                onPromoteTap?.call();
+              },
+            ),
+        ],
+      ),
+      if (canEditBands)
         _NavSection(
-          label: 'Configuration',
+          label: 'Artists',
           children: [
             _NavLink(
-              label: 'Settings',
-              selected: section == AppSection.settings && !settingsPromoteSelected,
-              onTap: () => onSectionChanged(AppSection.settings),
+              label: 'Artists',
+              selected: section == AppSection.bands,
+              onTap: () {
+                onSectionChanged(AppSection.bands);
+                onBandsTabChanged?.call(BandsTab.list);
+              },
             ),
-            if (showPromote)
-              _NavLink(
-                label: 'Promote',
-                secondary: true,
-                selected:
-                    section == AppSection.settings && settingsPromoteSelected,
-                onTap: () {
-                  onSectionChanged(AppSection.settings);
-                  onPromoteTap?.call();
-                },
-              ),
           ],
         ),
-        if (canEditBands)
-          _NavSection(
-            label: 'Band',
-            children: [
-              _NavLink(
-                label: 'Bands',
-                selected: section == AppSection.bands,
-                onTap: () {
-                  onSectionChanged(AppSection.bands);
-                  onBandsTabChanged?.call(BandsTab.list);
-                },
-              ),
-            ],
+      if (canEditDescriptions)
+        _NavSection(
+          label: 'Descriptions',
+          children: [
+            _NavLink(
+              label: 'Write',
+              selected:
+                  section == AppSection.descriptions &&
+                  descriptionsTab == DescriptionsTab.write,
+              onTap: () {
+                onSectionChanged(AppSection.descriptions);
+                onDescriptionsTabChanged?.call(DescriptionsTab.write);
+              },
+            ),
+            _NavLink(
+              label: 'Map',
+              secondary: true,
+              selected:
+                  section == AppSection.descriptions &&
+                  descriptionsTab == DescriptionsTab.map,
+              onTap: () {
+                onSectionChanged(AppSection.descriptions);
+                onDescriptionsTabChanged?.call(DescriptionsTab.map);
+              },
+            ),
+          ],
+        ),
+      if (canEditSchedule)
+        _NavSection(
+          label: 'Schedule',
+          children: [
+            _NavLink(
+              label: 'Entry',
+              selected: section == AppSection.schedule &&
+                  scheduleTab == ScheduleTab.entry,
+              onTap: () {
+                onSectionChanged(AppSection.schedule);
+                onScheduleTabChanged?.call(ScheduleTab.entry);
+              },
+            ),
+            _NavLink(
+              label: 'View',
+              secondary: true,
+              selected: section == AppSection.schedule &&
+                  scheduleTab == ScheduleTab.view,
+              onTap: () {
+                onSectionChanged(AppSection.schedule);
+                onScheduleTabChanged?.call(ScheduleTab.view);
+              },
+            ),
+            _NavLink(
+              label: 'Stats',
+              secondary: true,
+              selected: section == AppSection.schedule &&
+                  scheduleTab == ScheduleTab.stats,
+              onTap: () {
+                onSectionChanged(AppSection.schedule);
+                onScheduleTabChanged?.call(ScheduleTab.stats);
+              },
+            ),
+          ],
+        ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SizedBox(
+          width: constraints.maxWidth,
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: sections,
           ),
-        if (canEditDescriptions)
-          _NavSection(
-            label: 'Descriptions',
-            children: [
-              _NavLink(
-                label: 'Write',
-                selected:
-                    section == AppSection.descriptions &&
-                    descriptionsTab == DescriptionsTab.write,
-                onTap: () {
-                  onSectionChanged(AppSection.descriptions);
-                  onDescriptionsTabChanged?.call(DescriptionsTab.write);
-                },
-              ),
-              _NavLink(
-                label: 'Map',
-                secondary: true,
-                selected:
-                    section == AppSection.descriptions &&
-                    descriptionsTab == DescriptionsTab.map,
-                onTap: () {
-                  onSectionChanged(AppSection.descriptions);
-                  onDescriptionsTabChanged?.call(DescriptionsTab.map);
-                },
-              ),
-            ],
-          ),
-        if (canEditSchedule)
-          _NavSection(
-            label: 'Schedule',
-            children: [
-              _NavLink(
-                label: 'Entry',
-                selected: section == AppSection.schedule &&
-                    scheduleTab == ScheduleTab.entry,
-                onTap: () {
-                  onSectionChanged(AppSection.schedule);
-                  onScheduleTabChanged?.call(ScheduleTab.entry);
-                },
-              ),
-              _NavLink(
-                label: 'View',
-                secondary: true,
-                selected: section == AppSection.schedule &&
-                    scheduleTab == ScheduleTab.view,
-                onTap: () {
-                  onSectionChanged(AppSection.schedule);
-                  onScheduleTabChanged?.call(ScheduleTab.view);
-                },
-              ),
-              _NavLink(
-                label: 'Stats',
-                secondary: true,
-                selected: section == AppSection.schedule &&
-                    scheduleTab == ScheduleTab.stats,
-                onTap: () {
-                  onSectionChanged(AppSection.schedule);
-                  onScheduleTabChanged?.call(ScheduleTab.stats);
-                },
-              ),
-            ],
-          ),
-      ],
+        );
+      },
     );
   }
 }
@@ -348,7 +358,7 @@ class _NavSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: AppColors.navPanel,
         borderRadius: BorderRadius.circular(8),
@@ -366,10 +376,10 @@ class _NavSection extends StatelessWidget {
               letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 6),
           ...children.map(
             (child) => Padding(
-              padding: const EdgeInsets.only(left: 8),
+              padding: const EdgeInsets.only(left: 6),
               child: child,
             ),
           ),
@@ -404,7 +414,7 @@ class _NavLink extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(6),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           child: Text(
             label,
             style: const TextStyle(

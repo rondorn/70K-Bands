@@ -1,6 +1,7 @@
 # Open Metal Fest Admin
 
-Cross-platform festival admin app (Flutter). **macOS first** for local testing.
+Cross-platform festival admin app (Flutter). **macOS first** for local testing;
+Windows builds via GitHub Actions.
 
 Part of the Open Metal Fest Suite — open source apps for metal festivals.
 
@@ -8,9 +9,26 @@ Part of the Open Metal Fest Suite — open source apps for metal festivals.
 
 ## Ownership model
 
-- **App maintainer** owns pointer files and gives you testing + production pointer URLs.
-- **Promoter** edits lineup / schedule / description files **in place** (stable Dropbox share links — never delete/replace files).
-- Edits target **testing**; **Promote** copies testing → production in place.
+- **App developer** owns fan-app wiring and usually owns the official Testing /
+  Production **pointer files**. They give promoters the two Dropbox links, or
+  use links the festival created to populate those files.
+- **Promoters / volunteers** edit **Artists**, **Schedule**, and/or **Descriptions**
+  on Dropbox (stable share links — never delete/replace files). Access is flexible:
+  any mix of those capabilities is fine; sections without write access are hidden.
+- Edits target **Testing**. **Publish to Production** copies Testing → Production
+  without breaking share links.
+- In the **fan app**, most attendees see **Production**. **Testing** is available
+  under Advanced preferences (most users never switch).
+
+## Two setup paths
+
+**Path 1 (usual):** Install → paste Testing + Production links from the app
+developer → Connect Dropbox → **Load festival data** → work.
+
+**Path 2 (new festival / handoff):** Install → create festival links on Dropbox →
+send those URLs to the app developer. They may use that data to fill the official
+pointers the fan app uses (the created links are not always wired into the app
+directly).
 
 ## Run on this Mac
 
@@ -30,15 +48,16 @@ open macos/Runner.xcworkspace
 
 | Feature | Status |
 |---------|--------|
-| Multi-festival registry + Settings (pointers, venues, access) | Done |
-| Load testing/production pointers → derive lineup/schedule/map URLs | Done |
+| Multi-festival registry + Settings (Testing/Production links, venues, access) | Done |
+| Load festival data from Testing/Production links → Artists / Schedule / Description map URLs | Done |
 | Connect Dropbox (PKCE, local callback) | Done |
-| File-access gating (hide Band / Schedule / Descriptions without write) | Done |
-| Create festival (existing pointers or bootstrap new Dropbox files) | Done |
-| Bands list + add/edit (Discover; optional city/state; inline description) | Done |
+| File-access gating (hide Artists / Schedule / Descriptions without write) | Done |
+| Create festival (existing links or bootstrap new Dropbox files) | Done |
+| Artists list + add/edit (Discover; optional city/state; inline description) | Done |
 | Schedule entry / view / stats (local staging + background Dropbox sync) | Done |
-| Descriptions write + map | Done |
-| Promote testing → production (in place, scoped by write access) | Done |
+| Default event types: Show, Clinic, Meet and Greet, Special Event, Unofficial Event | Done |
+| Descriptions write (auto map update) + Description map when needed | Done |
+| Publish Testing → Production (scoped by write access) | Done |
 
 ## Dropbox console (one-time)
 
@@ -57,16 +76,20 @@ omfadmin://oauth/dropbox/callback
 Also ensure scopes include: `account_info.read`, `files.content.write`,
 `files.metadata.read`, `sharing.read`, `sharing.write`.
 
-## How to use (macOS)
+## How to use
 
-1. **Settings** — paste testing + production pointer URLs (or **Add New Festival**),
-   then **Load from pointer**. Connect Dropbox if prompted.
-2. **Bands** — Discover from Metal Archives / MusicBrainz; save to the testing lineup.
-   Optional **Add description** writes the file and map on save.
+1. **Settings** — paste Testing + Production links (or **Add New Festival**),
+   Connect Dropbox, then **Load festival data**. Your app developer may ask you
+   to copy those links back to them.
+2. **Artists** — Discover from Metal Archives / MusicBrainz; save to the Testing
+   lineup. Optional **Add description** writes the file and updates the map on save.
 3. **Schedule** — add events quickly; saves go to a local staging file and sync to
-   Dropbox in the background (View shows Pending vs Synced).
-4. **Descriptions** — write files and maintain the description map when needed.
-5. **Promote** — preview counts, confirm, then copy testing → production in place.
+   Dropbox in the background (View shows Pending vs Synced). Event types always
+   include Show, Clinic, Meet and Greet, Special Event, and Unofficial Event;
+   festival-specific types can be added in Settings.
+4. **Descriptions** — write files (map updates automatically when you choose that
+   save path). **Description map** remains available for fixups and split ownership.
+5. **Publish** — preview counts, confirm, then copy Testing → Production.
 
 ## Config storage
 
@@ -88,9 +111,10 @@ A local mirror is kept at `~/Library/Application Support/OpenMetalFestAdmin/`
 
 You cannot compile Windows on a Mac. Use the **Promoter Admin Windows** workflow:
 
-1. Push `promoter_admin/windows/` and `.github/workflows/promoter-admin-windows.yml`.
+1. Push `promoter_admin/windows/` and `.github/workflows/promoter-admin-windows.yml`
+   (must be on the default branch, `master`, for the Actions UI to list it).
 2. GitHub → **Actions** → **Promoter Admin Windows** → **Run workflow**.
-3. When the run finishes, download the **omf-admin-windows** artifact.
+3. When the run finishes, open the run → **Artifacts** → download **omf-admin-windows**.
 4. Unzip and run the `.exe` **from inside that folder** (DLLs must stay next to the exe).
 
 ### Xcode one-time setup
