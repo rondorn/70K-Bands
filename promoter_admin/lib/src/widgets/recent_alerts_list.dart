@@ -57,6 +57,7 @@ class AlertQueueItem {
     if (!lower.endsWith('.pending') &&
         !lower.endsWith('.completed') &&
         !lower.endsWith('.failed') &&
+        !lower.endsWith('.error') &&
         !lower.endsWith('.processing')) {
       return null;
     }
@@ -68,7 +69,7 @@ class AlertQueueItem {
       status = AlertQueueStatus.pending;
     } else if (lower.endsWith('.completed')) {
       status = AlertQueueStatus.completed;
-    } else if (lower.endsWith('.failed')) {
+    } else if (lower.endsWith('.failed') || lower.endsWith('.error')) {
       status = AlertQueueStatus.failed;
     } else {
       status = AlertQueueStatus.other;

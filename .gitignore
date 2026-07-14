@@ -37,6 +37,17 @@ andriod/app/app-release.apk
 data_maintenance_tools/dropbox_oauth.json
 data_maintenance_tools/festival_data_entry.json
 
+# Alert queue — live config, Firebase Admin SDK JSONs, OAuth/ADC copies
+data_maintenance_tools/alert_queue/message_queue.config.yaml
+data_maintenance_tools/alert_queue/**/*.config.yaml
+data_maintenance_tools/alert_queue/**/google*Auth.json
+data_maintenance_tools/alert_queue/**/*firebase-adminsdk*.json
+data_maintenance_tools/alert_queue/**/client_secret*.json
+data_maintenance_tools/alert_queue/**/credentials*.json
+data_maintenance_tools/alert_queue/.venv/
+**/omf_fcm_credentials/
+**/application_default_credentials.json
+
 *.md
 !README.md
 !**/README.md
