@@ -20,13 +20,16 @@ cd data_maintenance_tools/alert_queue
 This creates `.venv`, installs Python deps, ensures `~/omf_fcm_credentials/`,
 and writes a starter `message_queue.config.yaml` next to the scripts if missing.
 
+Scripts auto-use `.venv` when present (`./monitorMessageQueue.py` is enough).
+Recreate a broken venv with `./setup.sh --force`.
+
 Then edit that config and place each festival’s Firebase Admin SDK JSON under
 `~/omf_fcm_credentials/` (gitignored).
 
 ## Manual send
 
 ```bash
-python3 sendGoogleMessage.py \
+./sendGoogleMessage.py \
   --credentials ~/omf_fcm_credentials/mdf.json \
   --title "MDF Band Announcement" \
   --topic global \
@@ -38,19 +41,25 @@ python3 sendGoogleMessage.py \
 
 ```bash
 # Dry-run once (default config: ./message_queue.config.yaml)
-python3 monitorMessageQueue.py --dry-run -v
+./monitorMessageQueue.py --dry-run -v
 
 # Production (non-interactive)
-python3 monitorMessageQueue.py --no-prompt
+./monitorMessageQueue.py --no-prompt
 ```
 
-Cron every 5 minutes:
+### Dropbox: keep alert folders offline (required on macOS)
+
+If pending files are **cloud-only**, cron fails with
+`Resource deadlock avoided`. Right-click `OpenMetalFestAlertFolder`
+(and each festival subfolder) in Dropbox → **Make available offline**.
+
+### Cron
 
 ```cron
-*/5 * * * * /path/to/alert_queue/.venv/bin/python /path/to/alert_queue/monitorMessageQueue.py --no-prompt
+*/5 * * * * /Users/YOU/alert_queue/run_from_cron.sh
 ```
 
-## Pending file contract
+Logs: `~/omf_message_queue.cron.log` and `~/omf_message_queue.log`.## Pending file contract
 
 Admin writes plain-text files such as:
 

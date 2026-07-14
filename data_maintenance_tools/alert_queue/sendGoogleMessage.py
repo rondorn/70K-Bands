@@ -22,7 +22,16 @@ import os
 import subprocess
 import sys
 import warnings
+from pathlib import Path
 from typing import Any, Optional
+
+# Prefer alert_queue/.venv (created by setup.sh) over system Python.
+_SCRIPT_DIR = Path(__file__).resolve().parent
+if str(_SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(_SCRIPT_DIR))
+import run_in_venv  # noqa: E402
+
+run_in_venv.ensure()
 
 # macOS system Python ships LibreSSL; urllib3 v2 warning is harmless for FCM.
 warnings.filterwarnings("ignore", message=".*OpenSSL.*LibreSSL.*")
@@ -30,6 +39,10 @@ warnings.filterwarnings("ignore", message=".*OpenSSL.*LibreSSL.*")
 warnings.filterwarnings(
     "ignore",
     message=".*authenticated using end user credentials.*",
+)
+warnings.filterwarnings(
+    "ignore",
+    message=".*Python version 3.9 past its end of life.*",
 )
 
 import firebase_admin

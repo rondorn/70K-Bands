@@ -16,13 +16,23 @@ Secrets (config + credentials JSON) must stay out of git.
 from __future__ import annotations
 
 import argparse
+import errno
 import os
 import sys
+import time
 import traceback
 import warnings
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
+
+# Prefer alert_queue/.venv (created by setup.sh) over system Python.
+_SCRIPT_DIR = Path(__file__).resolve().parent
+if str(_SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(_SCRIPT_DIR))
+import run_in_venv  # noqa: E402
+
+run_in_venv.ensure()
 
 # Quiet known-harmless macOS / ADC warnings before heavy imports.
 warnings.filterwarnings("ignore", message=".*OpenSSL.*LibreSSL.*")
@@ -30,29 +40,57 @@ warnings.filterwarnings(
     "ignore",
     message=".*authenticated using end user credentials.*",
 )
+warnings.filterwarnings(
+    "ignore",
+    message=".*Python version 3.9 past its end of life.*",
+)
 
 try:
     import yaml
 except ImportError as exc:  # pragma: no cover
     raise SystemExit(
-        "PyYAML is required. pip install -r "
-        "data_maintenance_tools/alert_queue/requirements.txt"
+        "PyYAML is missing. Run ./setup.sh in this directory, then retry."
     ) from exc
 
-# Allow `python monitorMessageQueue.py` from this directory.
-_SCRIPT_DIR = Path(__file__).resolve().parent
-if str(_SCRIPT_DIR) not in sys.path:
-    sys.path.insert(0, str(_SCRIPT_DIR))
-
 import sendGoogleMessage  # noqa: E402
-
 
 PENDING_SUFFIXES = (".pending",)
 ALERT_PREFIXES = ("bandannouncements-", "customalert-")
 
+# Dropbox desktop sync on macOS often surfaces these briefly while a file is
+# downloading/locking. Retry and keep .pending — do not mark .error.
+_TRANSIENT_ERRNOS = {
+    errno.EDEADLK,  # 11 on macOS — "Resource deadlock avoided"
+    errno.EAGAIN,
+    errno.EBUSY,
+    getattr(errno, "ETXTBSY", 26),
+}
+
 
 def _expand(path: str) -> Path:
     return Path(os.path.expanduser(path)).resolve()
+
+
+def _is_transient_fs_error(exc: BaseException) -> bool:
+    if isinstance(exc, OSError) and getattr(exc, "errno", None) in _TRANSIENT_ERRNOS:
+        return True
+    msg = str(exc).lower()
+    return "resource deadlock avoided" in msg or "deadlock" in msg
+
+
+def _retry_fs(op_name: str, fn, *, attempts: int = 5, base_delay: float = 0.4):
+    """Retry a filesystem call through Dropbox lock blips."""
+    last: Optional[BaseException] = None
+    for i in range(attempts):
+        try:
+            return fn()
+        except OSError as exc:
+            last = exc
+            if not _is_transient_fs_error(exc) or i + 1 >= attempts:
+                raise
+            time.sleep(base_delay * (i + 1))
+    assert last is not None
+    raise last
 
 
 def _default_log_path() -> Path:
@@ -153,9 +191,15 @@ def is_alert_pending(path: Path) -> bool:
 def list_pending_files(dropbox_dir: Path) -> list[Path]:
     if not dropbox_dir.is_dir():
         raise NotADirectoryError(f"dropbox_dir does not exist: {dropbox_dir}")
-    files = [p for p in dropbox_dir.iterdir() if p.is_file() and is_alert_pending(p)]
-    files.sort(key=lambda p: p.stat().st_mtime)
-    return files
+
+    def _scan() -> list[Path]:
+        files = [
+            p for p in dropbox_dir.iterdir() if p.is_file() and is_alert_pending(p)
+        ]
+        files.sort(key=lambda p: p.stat().st_mtime)
+        return files
+
+    return _retry_fs("list pending", _scan)
 
 
 def rename_status(path: Path, new_suffix: str) -> Path:
@@ -166,11 +210,19 @@ def rename_status(path: Path, new_suffix: str) -> Path:
         if lower.endswith(old):
             new_name = name[: -len(old)] + new_suffix
             dest = path.with_name(new_name)
-            path.rename(dest)
-            return dest
+
+            def _do() -> Path:
+                path.rename(dest)
+                return dest
+
+            return _retry_fs(f"rename→{new_suffix}", _do)
     dest = path.with_name(name + new_suffix)
-    path.rename(dest)
-    return dest
+
+    def _do_fallback() -> Path:
+        path.rename(dest)
+        return dest
+
+    return _retry_fs(f"rename→{new_suffix}", _do_fallback)
 
 
 def warm_festival_auth(
@@ -257,7 +309,10 @@ def process_festival(
     err_n = 0
     for path in pending:
         try:
-            text = path.read_text(encoding="utf-8")
+            text = _retry_fs(
+                "read pending",
+                lambda p=path: p.read_text(encoding="utf-8"),
+            )
             if not text.strip():
                 raise ValueError("pending file is empty")
 
@@ -282,19 +337,35 @@ def process_festival(
                 log_line(log_file, f"{fest_id}: completed → {dest.name}")
             ok_n += 1
         except Exception as exc:
-            err_n += 1
             log_line(log_file, f"{fest_id}: ERROR {path.name}: {exc}")
             log_line(log_file, traceback.format_exc(), also_stderr=verbose)
+            if _is_transient_fs_error(exc):
+                # Dropbox sync blip — leave .pending for the next cron tick.
+                log_line(
+                    log_file,
+                    f"{fest_id}: Dropbox File Provider deadlock on {path.name} "
+                    "(usually cloud-only / not offline); left as .pending — "
+                    "Make OpenMetalFestAlertFolder available offline in Dropbox",
+                )
+                continue
+            err_n += 1
             if not dry_run:
                 try:
                     dest = rename_status(path, ".error")
                     log_line(log_file, f"{fest_id}: renamed → {dest.name}")
                 except Exception as rename_exc:
-                    log_line(
-                        log_file,
-                        f"{fest_id}: failed renaming {path.name} to .error: "
-                        f"{rename_exc}",
-                    )
+                    if _is_transient_fs_error(rename_exc):
+                        log_line(
+                            log_file,
+                            f"{fest_id}: could not rename {path.name} to .error "
+                            f"(lock); left as .pending: {rename_exc}",
+                        )
+                    else:
+                        log_line(
+                            log_file,
+                            f"{fest_id}: failed renaming {path.name} to .error: "
+                            f"{rename_exc}",
+                        )
     return ok_n, err_n
 
 

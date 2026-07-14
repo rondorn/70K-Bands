@@ -27,28 +27,51 @@ if ! python3 -c 'import venv' >/dev/null 2>&1; then
 fi
 
 VENV="$ROOT/.venv"
+VENV_PY="$VENV/bin/python"
+FORCE_RECREATE=0
+if [[ "${1:-}" == "--force" || "${1:-}" == "-f" ]]; then
+  FORCE_RECREATE=1
+fi
+
+venv_is_usable() {
+  [[ -x "$VENV_PY" ]] || return 1
+  # Must be able to run pip inside the venv (not the externally-managed system pip).
+  "$VENV_PY" -m pip --version >/dev/null 2>&1
+}
+
+if [[ "$FORCE_RECREATE" -eq 1 && -d "$VENV" ]]; then
+  echo "==> removing existing .venv (--force)"
+  rm -rf "$VENV"
+fi
+
 if [[ ! -d "$VENV" ]]; then
   echo "==> creating virtualenv at .venv"
+  python3 -m venv "$VENV"
+elif ! venv_is_usable; then
+  echo "==> existing .venv is broken; recreating"
+  rm -rf "$VENV"
   python3 -m venv "$VENV"
 else
   echo "==> reusing existing .venv"
 fi
 
-# shellcheck disable=SC1091
-source "$VENV/bin/activate"
+if [[ ! -x "$VENV_PY" ]]; then
+  echo "error: expected $VENV_PY after venv create" >&2
+  exit 1
+fi
 
 echo "==> upgrading pip"
-python -m pip install --upgrade pip wheel >/dev/null
+"$VENV_PY" -m pip install --upgrade pip wheel >/dev/null
 
 echo "==> installing requirements.txt"
-python -m pip install -r "$ROOT/requirements.txt"
+"$VENV_PY" -m pip install -r "$ROOT/requirements.txt"
 
 echo "==> verifying imports"
-python - <<'PY'
+"$VENV_PY" - <<'PY'
 import firebase_admin
 import google.auth
 import yaml
-print("ok: firebase_admin", firebase_admin.__version__ if hasattr(firebase_admin, "__version__") else "")
+print("ok: firebase_admin", getattr(firebase_admin, "__version__", ""))
 print("ok: google.auth")
 print("ok: PyYAML")
 PY
@@ -89,11 +112,17 @@ fi
 
 echo
 echo "Setup complete."
-echo "Activate later with:"
-echo "  source $VENV/bin/activate"
+echo "Run the monitor with:"
+echo "  $ROOT/monitorMessageQueue.py"
 echo
-echo "Dry-run monitor:"
-echo "  $VENV/bin/python $ROOT/monitorMessageQueue.py --config $LIVE_CONFIG --dry-run -v"
+echo "Dry-run:"
+echo "  $ROOT/monitorMessageQueue.py --dry-run -v"
 echo
-echo "Cron (every 5 min, non-interactive):"
-echo "  */5 * * * * $VENV/bin/python $ROOT/monitorMessageQueue.py --config $LIVE_CONFIG --no-prompt"
+echo "IMPORTANT (macOS Dropbox): make OpenMetalFestAlertFolder available offline"
+echo "  (cloud-only files → 'Resource deadlock avoided' from cron)."
+echo
+echo "Cron:"
+echo "  */5 * * * * $ROOT/run_from_cron.sh"
+echo "  Logs: ~/omf_message_queue.log and ~/omf_message_queue.cron.log"
+echo
+echo "Recreate venv anytime with: ./setup.sh --force"
