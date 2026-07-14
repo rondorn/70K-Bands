@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:promoter_admin/src/branding.dart';
 import 'package:promoter_admin/src/models/festival_workspace.dart';
@@ -120,22 +122,33 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
         (_registry ?? await _store.loadRegistry()).upsertActive(current),
       );
     }
-    var registry = await _store.switchActive(festivalId);
-    if (_dropboxConnected) {
-      final active = registry.active;
-      final hasUrls = active.bandListUrl.trim().isNotEmpty ||
-          active.scheduleUrl.trim().isNotEmpty ||
-          active.descriptionMapUrl.trim().isNotEmpty;
-      if (hasUrls) {
-        try {
-          final probed =
-              await _dropboxApi.probeWorkspaceWriteAccess(active);
-          registry = registry.upsertActive(probed);
-          await _store.saveRegistry(registry);
-        } catch (_) {}
-      }
-    }
+    // Trust persisted canEdit* for an immediate switch; refresh probes in the
+    // background so Dropbox latency does not block the UI.
+    final registry = await _store.switchActive(festivalId);
     setState(() => _registry = registry);
+    unawaited(_refreshWriteAccessInBackground(festivalId));
+  }
+
+  /// Re-probe Dropbox write flags for [festivalId] without blocking the UI.
+  /// No-ops if the user has already switched away before the probe finishes.
+  Future<void> _refreshWriteAccessInBackground(String festivalId) async {
+    if (!_dropboxConnected) return;
+    final snapshot = _registry;
+    if (snapshot == null || snapshot.activeFestivalId != festivalId) return;
+    final active = snapshot.active;
+    final hasUrls = active.bandListUrl.trim().isNotEmpty ||
+        active.scheduleUrl.trim().isNotEmpty ||
+        active.descriptionMapUrl.trim().isNotEmpty;
+    if (!hasUrls) return;
+    try {
+      final probed = await _dropboxApi.probeWorkspaceWriteAccess(active);
+      if (!mounted) return;
+      final current = _registry;
+      if (current == null || current.activeFestivalId != festivalId) return;
+      await _save(probed);
+    } catch (_) {
+      // Keep last-known canEdit* flags; user can Refresh/Load later.
+    }
   }
 
   Future<void> _addFestival(FestivalWorkspace workspace) async {

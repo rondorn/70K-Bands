@@ -43,11 +43,19 @@ class DropboxAuth {
   ];
 
   static const _kAccess = 'dbx_access_token';
+  static const _kAccessExpiresAtMs = 'dbx_access_expires_at_ms';
   static const _kRefresh = 'dbx_refresh_token';
   static const _kEmail = 'dbx_account_email';
   static const _kName = 'dbx_account_name';
 
+  /// Refresh a few minutes before Dropbox's typical ~4h access-token lifetime.
+  static const _expirySkew = Duration(minutes: 5);
+
   final DurableJsonStore _store = dropboxAuthStore();
+
+  String? _cachedAccess;
+  DateTime? _cachedExpiresAt;
+  Future<String>? _refreshInFlight;
 
   /// iOS/Android cannot reliably host a localhost callback while Safari is up.
   static bool get usesAppRedirect => Platform.isIOS || Platform.isAndroid;
@@ -68,22 +76,94 @@ class DropboxAuth {
   }
 
   Future<void> disconnect() async {
+    _cachedAccess = null;
+    _cachedExpiresAt = null;
+    _refreshInFlight = null;
     await _store.remove(_kAccess);
+    await _store.remove(_kAccessExpiresAtMs);
     await _store.remove(_kRefresh);
     await _store.remove(_kEmail);
     await _store.remove(_kName);
   }
 
+  bool _tokenStillValid(String token, DateTime? expiresAt) {
+    if (token.isEmpty) return false;
+    if (expiresAt == null) return true; // legacy tokens without expiry metadata
+    return DateTime.now().isBefore(expiresAt.subtract(_expirySkew));
+  }
+
   Future<String> accessToken() async {
+    if (_cachedAccess != null &&
+        _tokenStillValid(_cachedAccess!, _cachedExpiresAt)) {
+      return _cachedAccess!;
+    }
+
     final existing = await _store.getString(_kAccess) ?? '';
+    final expiresRaw = await _store.getString(_kAccessExpiresAtMs) ?? '';
+    final expiresAtMs = int.tryParse(expiresRaw);
+    final expiresAt = expiresAtMs == null
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch(expiresAtMs);
+    if (_tokenStillValid(existing, expiresAt)) {
+      _cachedAccess = existing;
+      _cachedExpiresAt = expiresAt;
+      return existing;
+    }
+
     final refresh = await _store.getString(_kRefresh) ?? '';
     if (refresh.isEmpty) {
-      if (existing.isNotEmpty) return existing;
+      if (existing.isNotEmpty) {
+        _cachedAccess = existing;
+        _cachedExpiresAt = expiresAt;
+        return existing;
+      }
       throw StateError('Connect Dropbox first.');
     }
-    final refreshed = await _refresh(refresh);
-    await _store.setString(_kAccess, refreshed);
-    return refreshed;
+
+    // Coalesce parallel refresh storms (e.g. probeWorkspaceWriteAccess).
+    final inFlight = _refreshInFlight;
+    if (inFlight != null) return inFlight;
+
+    final future = _refreshAndStore(refresh);
+    _refreshInFlight = future;
+    try {
+      return await future;
+    } finally {
+      if (identical(_refreshInFlight, future)) {
+        _refreshInFlight = null;
+      }
+    }
+  }
+
+  Future<String> _refreshAndStore(String refreshToken) async {
+    final tokens = await _refresh(refreshToken);
+    final access = tokens['access_token'] ?? '';
+    if (access.isEmpty) {
+      throw StateError('Token refresh returned an empty access token.');
+    }
+    await _persistAccessToken(
+      access,
+      expiresInSeconds: int.tryParse(tokens['expires_in'] ?? ''),
+    );
+    return access;
+  }
+
+  Future<void> _persistAccessToken(
+    String access, {
+    int? expiresInSeconds,
+  }) async {
+    final ttl = expiresInSeconds != null && expiresInSeconds > 0
+        ? expiresInSeconds
+        : 14400; // Dropbox default when omitted
+    final expiresAt =
+        DateTime.now().add(Duration(seconds: ttl));
+    _cachedAccess = access;
+    _cachedExpiresAt = expiresAt;
+    await _store.setString(_kAccess, access);
+    await _store.setString(
+      _kAccessExpiresAtMs,
+      expiresAt.millisecondsSinceEpoch.toString(),
+    );
   }
 
   Future<String> connectInteractive() async {
@@ -107,11 +187,18 @@ class DropboxAuth {
         ? await _waitForCodeViaWebAuth(authUrl, state)
         : await _waitForCodeLoopback(authUrl, state);
     final tokens = await _exchangeCode(code, verifier, redirect);
-    await _store.setString(_kAccess, tokens['access_token'] ?? '');
+    final access = tokens['access_token'] ?? '';
+    if (access.isEmpty) {
+      throw StateError('Dropbox did not return an access token.');
+    }
+    await _persistAccessToken(
+      access,
+      expiresInSeconds: int.tryParse(tokens['expires_in'] ?? ''),
+    );
     if ((tokens['refresh_token'] ?? '').isNotEmpty) {
       await _store.setString(_kRefresh, tokens['refresh_token']!);
     }
-    await _fetchAndStoreAccount(tokens['access_token']!);
+    await _fetchAndStoreAccount(access);
     return accountLabel();
   }
 
@@ -317,10 +404,11 @@ class DropboxAuth {
     return {
       'access_token': (data['access_token'] ?? '').toString(),
       'refresh_token': (data['refresh_token'] ?? '').toString(),
+      'expires_in': (data['expires_in'] ?? '').toString(),
     };
   }
 
-  Future<String> _refresh(String refreshToken) async {
+  Future<Map<String, String>> _refresh(String refreshToken) async {
     final resp = await http.post(
       Uri.parse('https://api.dropboxapi.com/oauth2/token'),
       headers: {'Content-Type': 'application/x-www-form-urlencoded'},
@@ -334,7 +422,10 @@ class DropboxAuth {
       throw StateError('Token refresh failed: ${resp.body}');
     }
     final data = jsonDecode(resp.body) as Map<String, dynamic>;
-    return (data['access_token'] ?? '').toString();
+    return {
+      'access_token': (data['access_token'] ?? '').toString(),
+      'expires_in': (data['expires_in'] ?? '').toString(),
+    };
   }
 
   static String _randomVerifier() {
