@@ -5,7 +5,9 @@ Windows builds via GitHub Actions.
 
 Part of the Open Metal Fest Suite — open source apps for metal festivals.
 
-`data_maintenance_tools/` stays as the existing Flask prototype — this app is separate.
+Festival admin for artists, schedule, descriptions, and publish lives here.
+Other one-off tools (for example the 70K schedule QR poster) remain under
+`data_maintenance_tools/`.
 
 ## Ownership model
 
@@ -14,7 +16,10 @@ Part of the Open Metal Fest Suite — open source apps for metal festivals.
   use links the festival created to populate those files.
 - **Promoters / volunteers** edit **Artists**, **Schedule**, and/or **Descriptions**
   on Dropbox (stable share links — never delete/replace files). Access is flexible:
-  any mix of those capabilities is fine; sections without write access are hidden.
+  any mix of those capabilities is fine. Without write access, Artists, Schedule,
+  and Descriptions stay viewable; Artists/Schedule Add · Edit · Delete are disabled.
+  Without description-map write, you can still author description files (local
+  Dropbox folder, first-time prompt) and copy the share link for a map admin.
 - Edits target **Testing**. **Publish to Production** copies Testing → Production
   without breaking share links.
 - In the **fan app**, most attendees see **Production**. **Testing** is available
@@ -51,12 +56,12 @@ open macos/Runner.xcworkspace
 | Multi-festival registry + Settings (Testing/Production links, venues, access) | Done |
 | Load festival data from Testing/Production links → Artists / Schedule / Description map URLs | Done |
 | Connect Dropbox (PKCE, local callback) | Done |
-| File-access gating (hide Artists / Schedule / Descriptions without write) | Done |
+| File-access gating (Artists / Schedule / Descriptions viewable; map write gated) | Done |
 | Create festival (existing links or bootstrap new Dropbox files) | Done |
 | Artists list + add/edit (Discover; optional city/state; inline description) | Done |
 | Schedule entry / view / stats (local staging + background Dropbox sync) | Done |
 | Default event types: Show, Clinic, Meet and Greet, Special Event, Unofficial Event | Done |
-| Descriptions write (auto map update) + Description map when needed | Done |
+| Descriptions list (Create Description / Attach Link / Edit / Delete; date cache bump) | Done |
 | Publish Testing → Production (scoped by write access) | Done |
 
 ## Dropbox console (one-time)
@@ -82,13 +87,17 @@ Also ensure scopes include: `account_info.read`, `files.content.write`,
    Connect Dropbox, then **Load festival data**. Your app developer may ask you
    to copy those links back to them.
 2. **Artists** — Discover from Metal Archives / MusicBrainz; save to the Testing
-   lineup. Optional **Add description** writes the file and updates the map on save.
+   lineup. Optional **Add description** writes the file (and updates the map when
+   you have description write access).
 3. **Schedule** — add events quickly; saves go to a local staging file and sync to
    Dropbox in the background (View shows Pending vs Synced). Event types always
    include Show, Clinic, Meet and Greet, Special Event, and Unofficial Event;
-   festival-specific types can be added in Settings.
-4. **Descriptions** — write files (map updates automatically when you choose that
-   save path). **Description map** remains available for fixups and split ownership.
+   festival-specific types can be added in Settings. Non-band events can include
+   a description (schedule-only path for non-artist titles).
+4. **Descriptions** — alphabetical artist list. Missing entries are greyed with
+   **Create Description** / **Attach Link** (link only with map write).
+   Mapped rows get **Edit** / **Delete**. Edit bumps the cache date (`-1`, `-2`
+   same day). Without map write you can still create files and copy the share link.
 5. **Publish** — preview counts, confirm, then copy Testing → Production.
 
 ## Config storage

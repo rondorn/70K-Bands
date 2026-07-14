@@ -59,10 +59,11 @@ class _PortalScreenState extends State<PortalScreen> {
   AppSection _section = AppSection.settings;
   BandsTab _bandsTab = BandsTab.list;
   ScheduleTab _scheduleTab = ScheduleTab.entry;
-  DescriptionsTab _descriptionsTab = DescriptionsTab.write;
+  DescriptionsTab _descriptionsTab = DescriptionsTab.list;
   bool _showPromote = false;
   String? _descriptionPrefillLabel;
   bool _bandFormIsEdit = false;
+  String _descriptionFormHeading = 'Create Description';
 
   FestivalWorkspace get _ws => widget.workspace;
 
@@ -112,16 +113,17 @@ class _PortalScreenState extends State<PortalScreen> {
             );
         }
       case AppSection.descriptions:
-        return _descriptionsTab == DescriptionsTab.map
+        return _descriptionsTab == DescriptionsTab.form
             ? (
-                heading: 'Description Map',
-                subheading:
-                    'Link artist and event names to Dropbox description files',
+                heading: _descriptionFormHeading,
+                subheading: _ws.canEditDescriptions
+                    ? 'Save to Dropbox and update the description map'
+                    : 'Save a Dropbox file and share the link with the description admin',
               )
             : (
-                heading: 'Write Description',
+                heading: 'Descriptions',
                 subheading:
-                    'Save description files for artists and events (map updates automatically)',
+                    'Artists with and without description map entries',
               );
     }
   }
@@ -141,24 +143,44 @@ class _PortalScreenState extends State<PortalScreen> {
     if (_ws.testingPointerUrl.isNotEmpty) {
       parts.add('Testing link set');
     }
-    final access = <String>[];
-    if (_ws.canEditBands) access.add('artists');
-    if (_ws.canEditSchedule) access.add('schedule');
-    if (_ws.canEditDescriptions) access.add('descriptions');
-    if (access.isEmpty) {
-      parts.add('No writable data files');
-    } else if (access.length < 3) {
-      parts.add('Edit: ${access.join(', ')}');
+    final edit = <String>[];
+    if (_ws.canEditBands) edit.add('artists');
+    if (_ws.canEditSchedule) edit.add('schedule');
+    if (_ws.canEditDescriptions) edit.add('descriptions');
+    if (edit.isEmpty) {
+      parts.add('View only (no write access)');
+    } else if (edit.length < 3) {
+      parts.add('Edit: ${edit.join(', ')}');
     }
     return parts.join(' · ');
   }
 
   void _ensureSectionAllowed() {
-    final denied = (_section == AppSection.bands && !_ws.canEditBands) ||
-        (_section == AppSection.schedule && !_ws.canEditSchedule) ||
-        (_section == AppSection.descriptions && !_ws.canEditDescriptions) ||
-        (_showPromote && !_ws.hasAnyEditAccess);
-    if (!denied) return;
+    // Artists / Schedule / Descriptions stay visible without write —
+    // mutation controls are disabled or narrowed inside each section.
+    final denied = _showPromote && !_ws.hasAnyEditAccess;
+    if (!denied) {
+      if (_section == AppSection.schedule &&
+          !_ws.canEditSchedule &&
+          _scheduleTab == ScheduleTab.entry) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          setState(() => _scheduleTab = ScheduleTab.view);
+        });
+      }
+      if (_section == AppSection.bands &&
+          !_ws.canEditBands &&
+          _bandsTab == BandsTab.add) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          setState(() {
+            _bandsTab = BandsTab.list;
+            _bandFormIsEdit = false;
+          });
+        });
+      }
+      return;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       setState(() {
@@ -210,12 +232,13 @@ class _PortalScreenState extends State<PortalScreen> {
         _section = AppSection.schedule;
         _showPromote = false;
       }),
-      descriptionsTab: _descriptionsTab,
       onDescriptionsTabChanged: (t) => setState(() {
         _descriptionsTab = t;
         _section = AppSection.descriptions;
         _showPromote = false;
-        _descriptionPrefillLabel = null;
+        if (t == DescriptionsTab.list) {
+          _descriptionPrefillLabel = null;
+        }
       }),
       child: _buildBody(),
     );
@@ -248,6 +271,7 @@ class _PortalScreenState extends State<PortalScreen> {
           workspace: _ws,
           lineupService: widget.lineupService,
           descriptionMapService: widget.descriptionMapService,
+          dropboxApi: widget.dropboxApi,
           tab: _bandsTab,
           onTabChanged: (t) => setState(() {
             _bandsTab = t;
@@ -266,6 +290,7 @@ class _PortalScreenState extends State<PortalScreen> {
           scheduleService: widget.scheduleService,
           lineupService: widget.lineupService,
           descriptionMapService: widget.descriptionMapService,
+          dropboxApi: widget.dropboxApi,
           tab: _scheduleTab,
           onTabChanged: (t) => setState(() => _scheduleTab = t),
           dropboxConnected: widget.dropboxConnected,
@@ -277,9 +302,13 @@ class _PortalScreenState extends State<PortalScreen> {
           workspace: _ws,
           descriptionMapService: widget.descriptionMapService,
           lineupService: widget.lineupService,
-          scheduleService: widget.scheduleService,
+          dropboxApi: widget.dropboxApi,
           tab: _descriptionsTab,
           onTabChanged: (t) => setState(() => _descriptionsTab = t),
+          onFormModeChanged: (heading) => setState(() {
+            _descriptionFormHeading = heading;
+            _descriptionsTab = DescriptionsTab.form;
+          }),
           dropboxConnected: widget.dropboxConnected,
           onConnectDropbox: widget.onConnectDropbox,
           prefillLabel: _descriptionPrefillLabel,

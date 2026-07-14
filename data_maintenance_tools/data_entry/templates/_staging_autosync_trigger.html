@@ -1,8 +1,0 @@
-{# Invisible auto-sync trigger — no toolbar UI, used on entry pages after saves. #}
-{% if data_sync.uses_staging and data_sync.needs_auto_sync %}
-<div class="staging-autosync-hidden" id="stagingSyncToolbar"
-  data-auto-sync="1"
-  data-debounce-seconds="{{ autosync_debounce_seconds | default(data_sync.auto_sync_debounce_seconds) }}"
-  data-sync-url="{{ sync_url }}"
-  hidden></div>
-{% endif %}

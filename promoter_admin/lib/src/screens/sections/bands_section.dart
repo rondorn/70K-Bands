@@ -5,10 +5,12 @@ import 'package:flutter/services.dart';
 import 'package:promoter_admin/src/models/festival_workspace.dart';
 import 'package:promoter_admin/src/services/band_discover_service.dart';
 import 'package:promoter_admin/src/services/description_map_service.dart';
+import 'package:promoter_admin/src/services/dropbox_api.dart';
 import 'package:promoter_admin/src/services/lineup_service.dart';
 import 'package:promoter_admin/src/services/location_parse.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
+import 'package:promoter_admin/src/widgets/dropbox_folder_picker.dart';
 
 class BandsSection extends StatefulWidget {
   const BandsSection({
@@ -16,6 +18,7 @@ class BandsSection extends StatefulWidget {
     required this.workspace,
     required this.lineupService,
     required this.descriptionMapService,
+    required this.dropboxApi,
     required this.tab,
     required this.onTabChanged,
     required this.onFormModeChanged,
@@ -26,6 +29,7 @@ class BandsSection extends StatefulWidget {
   final FestivalWorkspace workspace;
   final LineupService lineupService;
   final DescriptionMapService descriptionMapService;
+  final DropboxApi dropboxApi;
   final BandsTab tab;
   final ValueChanged<BandsTab> onTabChanged;
   final ValueChanged<bool> onFormModeChanged;
@@ -41,6 +45,7 @@ class _BandsSectionState extends State<BandsSection> {
   List<BandRow> _bands = [];
   String? _error;
   String? _message;
+  String? _shareUrl;
   bool _loading = true;
   bool _saving = false;
   bool _discovering = false;
@@ -67,6 +72,7 @@ class _BandsSectionState extends State<BandsSection> {
 
   bool get _isEditing => _editingIndex != null;
   bool get _useCityState => widget.workspace.useCityStateField;
+  bool get _canEdit => widget.workspace.canEditBands;
 
   /// File order stays as entered; alphabetical is display-only.
   List<int> get _bandsDisplayOrder {
@@ -292,6 +298,7 @@ class _BandsSectionState extends State<BandsSection> {
   }
 
   Future<void> _saveBand() async {
+    if (!_canEdit) return;
     final name = _name.text.trim();
     if (name.isEmpty) {
       setState(() => _error = 'Artist name is required.');
@@ -319,23 +326,37 @@ class _BandsSectionState extends State<BandsSection> {
       await widget.lineupService.save(widget.workspace, updated);
 
       var descriptionNote = '';
+      String? handoffLink;
       final wantDescription = _addDescription && !_isEditing;
       final descriptionText = _description.text.trim();
-      if (wantDescription &&
-          descriptionText.isNotEmpty &&
-          widget.workspace.canEditDescriptions) {
-        if (widget.workspace.descriptionMapUrl.trim().isEmpty) {
-          throw StateError(
-            'Description map URL is not configured — '
-            'Load festival data in Settings, or uncheck Add description.',
+      if (wantDescription && descriptionText.isNotEmpty) {
+        if (widget.workspace.canEditDescriptions) {
+          if (widget.workspace.descriptionMapUrl.trim().isEmpty) {
+            throw StateError(
+              'Description map URL is not configured — '
+              'Load festival data in Settings, or uncheck Add description.',
+            );
+          }
+          await widget.descriptionMapService.writeDescriptionAndUpsertMap(
+            workspace: widget.workspace,
+            labelName: name,
+            text: descriptionText,
           );
+          descriptionNote = ' Description saved and added to the map.';
+        } else {
+          handoffLink =
+              await widget.descriptionMapService.writeDescriptionFileForUser(
+            labelName: name,
+            text: descriptionText,
+            promptForFolder: () => showDropboxFolderPicker(
+              context: context,
+              dropboxApi: widget.dropboxApi,
+              title: 'Where should descriptions be saved?',
+            ),
+          );
+          descriptionNote =
+              ' Description file saved — copy the link below for the description admin.';
         }
-        await widget.descriptionMapService.writeDescriptionAndUpsertMap(
-          workspace: widget.workspace,
-          labelName: name,
-          text: descriptionText,
-        );
-        descriptionNote = ' Description saved and added to the map.';
       }
 
       _clearForm();
@@ -344,6 +365,7 @@ class _BandsSectionState extends State<BandsSection> {
         _saving = false;
         _editingIndex = null;
         _addDescription = false;
+        _shareUrl = handoffLink;
         _message = editIdx != null
             ? 'Updated “$name” in Testing artists.'
             : 'Saved “$name” to Testing artists.$descriptionNote';
@@ -358,6 +380,7 @@ class _BandsSectionState extends State<BandsSection> {
   }
 
   void _startAdd() {
+    if (!_canEdit) return;
     setState(() {
       _editingIndex = null;
       _addDescription = false;
@@ -369,6 +392,7 @@ class _BandsSectionState extends State<BandsSection> {
   }
 
   void _startEdit(int index) {
+    if (!_canEdit) return;
     final band = _bands[index];
     setState(() {
       _editingIndex = index;
@@ -381,6 +405,7 @@ class _BandsSectionState extends State<BandsSection> {
   }
 
   Future<void> _deleteBand(int index) async {
+    if (!_canEdit) return;
     final band = _bands[index];
     final ok = await showDialog<bool>(
       context: context,
@@ -456,6 +481,50 @@ class _BandsSectionState extends State<BandsSection> {
           ),
         if (_message != null) StatusBanner(text: _message!),
         if (_error != null) StatusBanner(text: _error!, isError: true),
+        if (_shareUrl != null)
+          Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A2430),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFF6B8CFF)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Share this URL with whoever maintains the description map:',
+                  style: TextStyle(color: AppColors.label),
+                ),
+                const SizedBox(height: 6),
+                SelectableText(
+                  _shareUrl!,
+                  style: const TextStyle(color: AppColors.heading),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton(
+                  onPressed: () async {
+                    final url = _shareUrl!;
+                    await Clipboard.setData(ClipboardData(text: url));
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('URL copied to clipboard')),
+                    );
+                  },
+                  child: const Text('Copy URL'),
+                ),
+              ],
+            ),
+          ),
+        if (!_canEdit)
+          const Padding(
+            padding: EdgeInsets.only(bottom: 10),
+            child: StatusBanner(
+              text: 'View only — no Dropbox write access to the artists list. '
+                  'Add, Edit, and Delete are disabled.',
+            ),
+          ),
         if (_saving) const LinearProgressIndicator(color: AppColors.accent),
         Expanded(
           child: PortalPanel(
@@ -466,7 +535,7 @@ class _BandsSectionState extends State<BandsSection> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: FilledButton(
-                    onPressed: _startAdd,
+                    onPressed: _canEdit ? _startAdd : null,
                     child: const Text('Add artist'),
                   ),
                 ),
@@ -544,7 +613,7 @@ class _BandsSectionState extends State<BandsSection> {
                                                           MaterialTapTargetSize
                                                               .shrinkWrap,
                                                     ),
-                                                    onPressed: _saving
+                                                    onPressed: !_canEdit || _saving
                                                         ? null
                                                         : () => _startEdit(i),
                                                     child: const Text('Edit'),
@@ -563,7 +632,7 @@ class _BandsSectionState extends State<BandsSection> {
                                                           MaterialTapTargetSize
                                                               .shrinkWrap,
                                                     ),
-                                                    onPressed: _saving
+                                                    onPressed: !_canEdit || _saving
                                                         ? null
                                                         : () =>
                                                             _deleteBand(i),
@@ -787,7 +856,7 @@ class _BandsSectionState extends State<BandsSection> {
               label: 'Prior years',
               child: TextField(controller: _priorYears),
             ),
-            if (!_isEditing && widget.workspace.canEditDescriptions)
+            if (!_isEditing)
               FormRow(
                 label: 'Description',
                 child: Column(
@@ -815,14 +884,20 @@ class _BandsSectionState extends State<BandsSection> {
                           hintText: 'Band description text…',
                         ),
                       ),
-                      const HintText(
-                        'Saved with the band. Writes the description file and '
-                        'adds it to the description map automatically.',
+                      HintText(
+                        widget.workspace.canEditDescriptions
+                            ? 'Writes the description file and adds it to the '
+                                'description map automatically.'
+                            : 'Saves to your Dropbox folder; you will get a '
+                                'link to share with the description admin.',
                       ),
                     ] else
-                      const HintText(
-                        'Check to enter a description that will be saved and '
-                        'mapped when you save this band.',
+                      HintText(
+                        widget.workspace.canEditDescriptions
+                            ? 'Check to enter a description that will be saved '
+                                'and mapped when you save this band.'
+                            : 'Check to enter a description file (map handoff '
+                                'link will be shown after save).',
                       ),
                   ],
                 ),
@@ -832,7 +907,7 @@ class _BandsSectionState extends State<BandsSection> {
               spacing: 10,
               children: [
                 FilledButton(
-                  onPressed: _saving ? null : _saveBand,
+                  onPressed: !_canEdit || _saving ? null : _saveBand,
                   child: Text(
                     _saving
                         ? 'Saving…'

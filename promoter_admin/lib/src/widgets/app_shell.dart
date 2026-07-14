@@ -6,7 +6,7 @@ enum AppSection { settings, bands, schedule, descriptions }
 
 enum BandsTab { list, add }
 enum ScheduleTab { entry, view, stats }
-enum DescriptionsTab { write, map }
+enum DescriptionsTab { list, form }
 
 class AppShell extends StatelessWidget {
   const AppShell({
@@ -27,7 +27,6 @@ class AppShell extends StatelessWidget {
     this.onBandsTabChanged,
     this.scheduleTab = ScheduleTab.entry,
     this.onScheduleTabChanged,
-    this.descriptionsTab = DescriptionsTab.write,
     this.onDescriptionsTabChanged,
   });
 
@@ -47,7 +46,6 @@ class AppShell extends StatelessWidget {
   final ValueChanged<BandsTab>? onBandsTabChanged;
   final ScheduleTab scheduleTab;
   final ValueChanged<ScheduleTab>? onScheduleTabChanged;
-  final DescriptionsTab descriptionsTab;
   final ValueChanged<DescriptionsTab>? onDescriptionsTabChanged;
 
   @override
@@ -89,7 +87,6 @@ class AppShell extends StatelessWidget {
                     onBandsTabChanged: onBandsTabChanged,
                     scheduleTab: scheduleTab,
                     onScheduleTabChanged: onScheduleTabChanged,
-                    descriptionsTab: descriptionsTab,
                     onDescriptionsTabChanged: onDescriptionsTabChanged,
                   ),
                   const SizedBox(height: 14),
@@ -210,7 +207,6 @@ class _NavBar extends StatelessWidget {
     required this.onBandsTabChanged,
     required this.scheduleTab,
     required this.onScheduleTabChanged,
-    required this.descriptionsTab,
     required this.onDescriptionsTabChanged,
   });
 
@@ -225,7 +221,6 @@ class _NavBar extends StatelessWidget {
   final ValueChanged<BandsTab>? onBandsTabChanged;
   final ScheduleTab scheduleTab;
   final ValueChanged<ScheduleTab>? onScheduleTabChanged;
-  final DescriptionsTab descriptionsTab;
   final ValueChanged<DescriptionsTab>? onDescriptionsTabChanged;
 
   @override
@@ -254,51 +249,36 @@ class _NavBar extends StatelessWidget {
             ),
         ],
       ),
-      if (canEditBands)
-        _NavSection(
-          label: 'Artists',
-          children: [
-            _NavLink(
-              label: 'Artists',
-              selected: section == AppSection.bands,
-              onTap: () {
-                onSectionChanged(AppSection.bands);
-                onBandsTabChanged?.call(BandsTab.list);
-              },
-            ),
-          ],
-        ),
-      if (canEditDescriptions)
-        _NavSection(
-          label: 'Descriptions',
-          children: [
-            _NavLink(
-              label: 'Write',
-              selected:
-                  section == AppSection.descriptions &&
-                  descriptionsTab == DescriptionsTab.write,
-              onTap: () {
-                onSectionChanged(AppSection.descriptions);
-                onDescriptionsTabChanged?.call(DescriptionsTab.write);
-              },
-            ),
-            _NavLink(
-              label: 'Map',
-              secondary: true,
-              selected:
-                  section == AppSection.descriptions &&
-                  descriptionsTab == DescriptionsTab.map,
-              onTap: () {
-                onSectionChanged(AppSection.descriptions);
-                onDescriptionsTabChanged?.call(DescriptionsTab.map);
-              },
-            ),
-          ],
-        ),
-      if (canEditSchedule)
-        _NavSection(
-          label: 'Schedule',
-          children: [
+      _NavSection(
+        label: 'Artists',
+        children: [
+          _NavLink(
+            label: 'Artists',
+            selected: section == AppSection.bands,
+            onTap: () {
+              onSectionChanged(AppSection.bands);
+              onBandsTabChanged?.call(BandsTab.list);
+            },
+          ),
+        ],
+      ),
+      _NavSection(
+        label: 'Descriptions',
+        children: [
+          _NavLink(
+            label: 'Descriptions',
+            selected: section == AppSection.descriptions,
+            onTap: () {
+              onSectionChanged(AppSection.descriptions);
+              onDescriptionsTabChanged?.call(DescriptionsTab.list);
+            },
+          ),
+        ],
+      ),
+      _NavSection(
+        label: 'Schedule',
+        children: [
+          if (canEditSchedule)
             _NavLink(
               label: 'Entry',
               selected: section == AppSection.schedule &&
@@ -308,28 +288,28 @@ class _NavBar extends StatelessWidget {
                 onScheduleTabChanged?.call(ScheduleTab.entry);
               },
             ),
-            _NavLink(
-              label: 'View',
-              secondary: true,
-              selected: section == AppSection.schedule &&
-                  scheduleTab == ScheduleTab.view,
-              onTap: () {
-                onSectionChanged(AppSection.schedule);
-                onScheduleTabChanged?.call(ScheduleTab.view);
-              },
-            ),
-            _NavLink(
-              label: 'Stats',
-              secondary: true,
-              selected: section == AppSection.schedule &&
-                  scheduleTab == ScheduleTab.stats,
-              onTap: () {
-                onSectionChanged(AppSection.schedule);
-                onScheduleTabChanged?.call(ScheduleTab.stats);
-              },
-            ),
-          ],
-        ),
+          _NavLink(
+            label: 'View',
+            secondary: canEditSchedule,
+            selected: section == AppSection.schedule &&
+                scheduleTab == ScheduleTab.view,
+            onTap: () {
+              onSectionChanged(AppSection.schedule);
+              onScheduleTabChanged?.call(ScheduleTab.view);
+            },
+          ),
+          _NavLink(
+            label: 'Stats',
+            secondary: true,
+            selected: section == AppSection.schedule &&
+                scheduleTab == ScheduleTab.stats,
+            onTap: () {
+              onSectionChanged(AppSection.schedule);
+              onScheduleTabChanged?.call(ScheduleTab.stats);
+            },
+          ),
+        ],
+      ),
     ];
 
     return LayoutBuilder(

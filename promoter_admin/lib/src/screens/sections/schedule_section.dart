@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:promoter_admin/src/models/festival_workspace.dart';
 import 'package:promoter_admin/src/services/description_map_service.dart';
+import 'package:promoter_admin/src/services/dropbox_api.dart';
 import 'package:promoter_admin/src/services/http_fetch.dart';
 import 'package:promoter_admin/src/services/lineup_service.dart';
 import 'package:promoter_admin/src/services/schedule_service.dart';
@@ -10,6 +12,7 @@ import 'package:promoter_admin/src/services/schedule_staging.dart';
 import 'package:promoter_admin/src/services/schedule_validation.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
+import 'package:promoter_admin/src/widgets/dropbox_folder_picker.dart';
 import 'package:promoter_admin/src/widgets/portal_dropdown.dart';
 
 class ScheduleSection extends StatefulWidget {
@@ -19,6 +22,7 @@ class ScheduleSection extends StatefulWidget {
     required this.scheduleService,
     required this.lineupService,
     required this.descriptionMapService,
+    required this.dropboxApi,
     required this.tab,
     required this.onTabChanged,
     required this.dropboxConnected,
@@ -30,6 +34,7 @@ class ScheduleSection extends StatefulWidget {
   final ScheduleService scheduleService;
   final LineupService lineupService;
   final DescriptionMapService descriptionMapService;
+  final DropboxApi dropboxApi;
   final ScheduleTab tab;
   final ValueChanged<ScheduleTab> onTabChanged;
   final bool dropboxConnected;
@@ -45,6 +50,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
   List<String> _bandNames = [];
   String? _error;
   String? _message;
+  String? _shareUrl;
   bool _loading = true;
   /// True only while validating / writing description / writing local staging.
   /// Dropbox sync runs in the background and must not block Add.
@@ -58,6 +64,9 @@ class _ScheduleSectionState extends State<ScheduleSection> {
   /// File index of the event shown in the bottom “last saved” confirmation.
   int? _lastSavedIndex;
   ScheduleEvent? _lastSavedEvent;
+
+  bool get _isEditing => _editingIndex != null;
+  bool get _canEdit => widget.workspace.canEditSchedule;
 
   String? _band;
   String? _type;
@@ -73,8 +82,6 @@ class _ScheduleSectionState extends State<ScheduleSection> {
   final _notes = TextEditingController();
   final _descriptionText = TextEditingController();
   final _imageUrl = TextEditingController();
-
-  bool get _isEditing => _editingIndex != null;
 
   bool get _isNonBand =>
       ScheduleValidation.isNonBandEventType((_type ?? '').trim());
@@ -337,6 +344,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
   }
 
   Future<void> _saveEvent() async {
+    if (!_canEdit) return;
     if (!widget.dropboxConnected) {
       await widget.onConnectDropbox();
       return;
@@ -387,18 +395,32 @@ class _ScheduleSectionState extends State<ScheduleSection> {
 
     try {
       if (nonBand && descriptionBody.isNotEmpty) {
-        if (widget.workspace.descriptionMapUrl.trim().isEmpty) {
-          throw StateError(
-            'Description map URL is not configured — '
-            'Load festival data in Settings, or clear the description text.',
+        final canEditMap = widget.workspace.canEditDescriptions;
+        if (canEditMap) {
+          if (widget.workspace.descriptionMapUrl.trim().isEmpty) {
+            throw StateError(
+              'Description map URL is not configured — '
+              'Load festival data in Settings, or clear the description text.',
+            );
+          }
+          descriptionUrl =
+              await widget.descriptionMapService.writeDescriptionAndUpsertMap(
+            workspace: widget.workspace,
+            labelName: band,
+            text: descriptionBody,
+          );
+        } else {
+          descriptionUrl =
+              await widget.descriptionMapService.writeDescriptionFileForUser(
+            labelName: band,
+            text: descriptionBody,
+            promptForFolder: () => showDropboxFolderPicker(
+              context: context,
+              dropboxApi: widget.dropboxApi,
+              title: 'Where should descriptions be saved?',
+            ),
           );
         }
-        descriptionUrl =
-            await widget.descriptionMapService.writeDescriptionAndUpsertMap(
-          workspace: widget.workspace,
-          labelName: band,
-          text: descriptionBody,
-        );
       }
 
       final event = ScheduleEvent(
@@ -465,15 +487,23 @@ class _ScheduleSectionState extends State<ScheduleSection> {
         updated.add(toSave);
       }
       await widget.scheduleService.save(widget.workspace, updated);
+      final handoffLink = descriptionBody.isNotEmpty &&
+              !widget.workspace.canEditDescriptions &&
+              descriptionUrl.trim().isNotEmpty
+          ? descriptionUrl.trim()
+          : null;
       setState(() {
         _events = updated;
+        _shareUrl = handoffLink;
         _prepareNextEntry(
           saved: toSave,
           savedIndex: savedIndex,
           wasUpdate: wasUpdate,
-          extraMessage: descriptionBody.isNotEmpty
-              ? 'Description saved and added to the map.'
-              : '',
+          extraMessage: descriptionBody.isEmpty
+              ? ''
+              : (widget.workspace.canEditDescriptions
+                  ? 'Description saved and added to the map.'
+                  : 'Description file saved — copy the link below for the description admin.'),
         );
       });
       await _refreshOutstanding();
@@ -499,6 +529,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
   }
 
   void _startEdit(int index) {
+    if (!_canEdit) return;
     final e = _events[index];
     final startParts = e.startTime.split(':');
     final hour = startParts.isNotEmpty ? startParts[0].padLeft(2, '0') : '';
@@ -545,6 +576,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
   }
 
   Future<void> _deleteEvent(int index) async {
+    if (!_canEdit) return;
     final e = _events[index];
     final ok = await showDialog<bool>(
       context: context,
@@ -721,6 +753,14 @@ class _ScheduleSectionState extends State<ScheduleSection> {
           ),
         if (_message != null) StatusBanner(text: _message!),
         if (_error != null) StatusBanner(text: _error!, isError: true),
+        if (!_canEdit)
+          const Padding(
+            padding: EdgeInsets.only(bottom: 10),
+            child: StatusBanner(
+              text: 'View only — no Dropbox write access to the schedule. '
+                  'Edit and Delete are disabled.',
+            ),
+          ),
         if (_committing) const LinearProgressIndicator(color: AppColors.accent),
         Expanded(
           child: PortalPanel(
@@ -810,7 +850,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                                                     MaterialTapTargetSize
                                                         .shrinkWrap,
                                               ),
-                                              onPressed: _committing
+                                              onPressed: !_canEdit || _committing
                                                   ? null
                                                   : () => _startEdit(i),
                                               child: const Text('Edit'),
@@ -828,7 +868,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                                                     MaterialTapTargetSize
                                                         .shrinkWrap,
                                               ),
-                                              onPressed: _committing
+                                              onPressed: !_canEdit || _committing
                                                   ? null
                                                   : () => _deleteEvent(i),
                                               child: const Text('Delete'),
@@ -976,6 +1016,45 @@ class _ScheduleSectionState extends State<ScheduleSection> {
             _syncStatusBar(),
             if (_error != null) StatusBanner(text: _error!, isError: true),
             if (_message != null) StatusBanner(text: _message!),
+            if (_shareUrl != null) ...[
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1A2430),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFF6B8CFF)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Share this URL with whoever maintains the description map:',
+                      style: TextStyle(color: AppColors.label),
+                    ),
+                    const SizedBox(height: 6),
+                    SelectableText(
+                      _shareUrl!,
+                      style: const TextStyle(color: AppColors.heading),
+                    ),
+                    const SizedBox(height: 8),
+                    OutlinedButton(
+                      onPressed: () async {
+                        final url = _shareUrl!;
+                        await Clipboard.setData(ClipboardData(text: url));
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('URL copied to clipboard'),
+                          ),
+                        );
+                      },
+                      child: const Text('Copy URL'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             if (!widget.dropboxConnected)
               const StatusBanner(
                 text: 'Connect Dropbox in Settings to save the schedule.',
@@ -1155,9 +1234,14 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                         hintText: 'Plain-text description for the app…',
                       ),
                     ),
-                    const HintText(
-                      'When you save, the note is written to Dropbox and added '
-                      'to the description map automatically.',
+                    HintText(
+                      widget.workspace.canEditDescriptions
+                          ? 'When you save, the note is written to Dropbox and '
+                              'added to the description map automatically.'
+                          : 'When you save, the note is written to your Dropbox '
+                              'folder and you get a link to share with the '
+                              'description admin. The URL is also stored on '
+                              'this schedule row.',
                     ),
                     if (_isEditing)
                       const HintText(
@@ -1200,7 +1284,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
               spacing: 10,
               children: [
                 FilledButton(
-                  onPressed: _committing ? null : _saveEvent,
+                  onPressed: !_canEdit || _committing ? null : _saveEvent,
                   child: Text(
                     _committing
                         ? 'Saving…'
@@ -1257,7 +1341,9 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                       runSpacing: 8,
                       children: [
                         OutlinedButton(
-                          onPressed: _committing || _lastSavedIndex == null
+                          onPressed: !_canEdit ||
+                                  _committing ||
+                                  _lastSavedIndex == null
                               ? null
                               : () => _startEdit(_lastSavedIndex!),
                           child: const Text('Edit last entry'),

@@ -5,6 +5,13 @@ import 'package:promoter_admin/src/models/festival_workspace.dart';
 import 'package:promoter_admin/src/services/dropbox_auth.dart';
 import 'package:promoter_admin/src/services/http_fetch.dart';
 
+class DropboxFolderEntry {
+  const DropboxFolderEntry({required this.name, required this.path});
+
+  final String name;
+  final String path;
+}
+
 /// Dropbox file operations that edit existing files in place (stable share links).
 class DropboxApi {
   DropboxApi(this.auth);
@@ -316,6 +323,73 @@ class DropboxApi {
   Future<String> uploadNewTextFileAndShare(String apiPath, String text) async {
     await uploadTextAtPath(apiPath, text);
     return shareUrlForPath(apiPath);
+  }
+
+  /// Immediate children of [apiPath] (empty string = Dropbox root).
+  Future<List<DropboxFolderEntry>> listFolder(String apiPath) async {
+    var path = apiPath.trim().replaceAll('\\', '/');
+    if (path == '/') path = '';
+    if (path.isNotEmpty && !path.startsWith('/')) path = '/$path';
+    path = path.replaceAll(RegExp(r'/+$'), '');
+
+    final token = await auth.accessToken();
+    final entries = <DropboxFolderEntry>[];
+    String? cursor;
+    var hasMore = true;
+
+    while (hasMore) {
+      final http.Response resp;
+      if (cursor == null) {
+        resp = await http.post(
+          Uri.parse('https://api.dropboxapi.com/2/files/list_folder'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'path': path,
+            'recursive': false,
+            'include_deleted': false,
+            'include_non_downloadable_files': false,
+          }),
+        );
+      } else {
+        resp = await http.post(
+          Uri.parse('https://api.dropboxapi.com/2/files/list_folder/continue'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({'cursor': cursor}),
+        );
+      }
+      if (resp.statusCode < 200 || resp.statusCode >= 300) {
+        throw StateError(
+          'Dropbox list_folder failed (${resp.statusCode}): ${resp.body}',
+        );
+      }
+      final data = jsonDecode(resp.body) as Map<String, dynamic>;
+      final batch = data['entries'] as List<dynamic>? ?? const [];
+      for (final raw in batch) {
+        if (raw is! Map<String, dynamic>) continue;
+        final tag = (raw['.tag'] ?? '').toString();
+        if (tag != 'folder') continue;
+        final name = (raw['name'] ?? '').toString();
+        var entryPath =
+            (raw['path_display'] ?? raw['path_lower'] ?? '').toString();
+        if (entryPath.isEmpty || name.isEmpty) continue;
+        if (!entryPath.startsWith('/')) entryPath = '/$entryPath';
+        entries.add(DropboxFolderEntry(name: name, path: entryPath));
+      }
+      hasMore = data['has_more'] == true;
+      cursor = (data['cursor'] ?? '').toString();
+      if (!hasMore || cursor.isEmpty) break;
+    }
+
+    entries.sort(
+      (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+    );
+    return entries;
   }
 
   String _metadataShareUrl(String url) {

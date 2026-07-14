@@ -704,8 +704,8 @@ class _SettingsSectionState extends State<SettingsSection> {
                       widget.workspace.bandListUrl.trim().isEmpty
                           ? 'No artists URL yet'
                           : (_canEditBands
-                              ? 'Write access — Artists section shown'
-                              : 'No write access — Artists section hidden'),
+                              ? 'Write access — Add / Edit / Delete enabled'
+                              : 'No write access — view only (Add / Edit / Delete disabled)'),
                       style: const TextStyle(color: AppColors.muted, fontSize: 12),
                     ),
                     value: _canEditBands,
@@ -722,8 +722,8 @@ class _SettingsSectionState extends State<SettingsSection> {
                       widget.workspace.scheduleUrl.trim().isEmpty
                           ? 'No schedule URL yet'
                           : (_canEditSchedule
-                              ? 'Write access — Schedule section shown'
-                              : 'No write access — Schedule section hidden'),
+                              ? 'Write access — Add / Edit / Delete enabled'
+                              : 'No write access — view only (Add / Edit / Delete disabled)'),
                       style: const TextStyle(color: AppColors.muted, fontSize: 12),
                     ),
                     value: _canEditSchedule,
