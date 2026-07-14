@@ -21,10 +21,21 @@ import argparse
 import os
 import subprocess
 import sys
+import warnings
 from typing import Any, Optional
+
+# macOS system Python ships LibreSSL; urllib3 v2 warning is harmless for FCM.
+warnings.filterwarnings("ignore", message=".*OpenSSL.*LibreSSL.*")
+# ADC user-creds warning; we set quota_project_id when project_id is known.
+warnings.filterwarnings(
+    "ignore",
+    message=".*authenticated using end user credentials.*",
+)
 
 import firebase_admin
 from firebase_admin import credentials, messaging
+
+_FCM_SCOPES = ["https://www.googleapis.com/auth/firebase.messaging"]
 
 
 def _app_name(credentials_path: Optional[str], project_id: Optional[str]) -> str:
@@ -33,6 +44,29 @@ def _app_name(credentials_path: Optional[str], project_id: Optional[str]) -> str
     if project_id:
         return f"project:{project_id}"
     return "[DEFAULT]"
+
+
+def adc_is_configured() -> bool:
+    """True if Application Default Credentials are already available."""
+    try:
+        import google.auth  # type: ignore
+
+        google.auth.default(scopes=_FCM_SCOPES)
+        return True
+    except Exception:
+        return False
+
+
+def _load_adc(
+    *,
+    project_id: Optional[str],
+) -> tuple[Any, Optional[str]]:
+    import google.auth  # type: ignore
+
+    kwargs: dict[str, Any] = {"scopes": _FCM_SCOPES}
+    if project_id:
+        kwargs["quota_project_id"] = project_id
+    return google.auth.default(**kwargs)
 
 
 def ensure_firebase_app(
@@ -66,11 +100,7 @@ def ensure_firebase_app(
     else:
         # Application Default Credentials (user OAuth via gcloud, or env SA).
         try:
-            import google.auth  # type: ignore
-
-            adc, adc_project = google.auth.default(
-                scopes=["https://www.googleapis.com/auth/firebase.messaging"]
-            )
+            adc, adc_project = _load_adc(project_id=project_id)
             cred = adc
             if not project_id and adc_project:
                 options["projectId"] = adc_project
@@ -94,13 +124,7 @@ def ensure_firebase_app(
                     subprocess.check_call(
                         ["gcloud", "auth", "application-default", "login"]
                     )
-                    import google.auth  # type: ignore
-
-                    adc, adc_project = google.auth.default(
-                        scopes=[
-                            "https://www.googleapis.com/auth/firebase.messaging"
-                        ]
-                    )
+                    adc, adc_project = _load_adc(project_id=project_id)
                     cred = adc
                     if not project_id and adc_project:
                         options["projectId"] = adc_project

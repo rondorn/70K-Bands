@@ -19,9 +19,17 @@ import argparse
 import os
 import sys
 import traceback
+import warnings
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
+
+# Quiet known-harmless macOS / ADC warnings before heavy imports.
+warnings.filterwarnings("ignore", message=".*OpenSSL.*LibreSSL.*")
+warnings.filterwarnings(
+    "ignore",
+    message=".*authenticated using end user credentials.*",
+)
 
 try:
     import yaml
@@ -80,6 +88,7 @@ def resolve_credentials_file(
     credentials_dir: Optional[Path],
     *,
     log_file: Optional[Path] = None,
+    verbose: bool = False,
 ) -> Optional[Path]:
     """Resolve service-account JSON for a festival, or None for ADC/OAuth.
 
@@ -104,7 +113,7 @@ def resolve_credentials_file(
     if not tag:
         return None
     if not credentials_dir:
-        if log_file is not None:
+        if verbose and log_file is not None:
             log_line(
                 log_file,
                 f"{festival.get('id')}: credentials_tag={tag!r} but "
@@ -121,7 +130,7 @@ def resolve_credentials_file(
         if path.is_file():
             return path
 
-    if log_file is not None:
+    if verbose and log_file is not None:
         log_line(
             log_file,
             f"{festival.get('id')}: no SA JSON for tag={tag!r} under "
@@ -179,7 +188,7 @@ def warm_festival_auth(
     """
     fest_id = str(festival.get("id") or festival.get("name") or "unknown")
     cred_path = resolve_credentials_file(
-        festival, credentials_dir, log_file=log_file
+        festival, credentials_dir, log_file=log_file, verbose=verbose
     )
     project_id = (festival.get("project_id") or "").strip() or None
     if cred_path:
@@ -188,7 +197,8 @@ def warm_festival_auth(
         cred_desc = "ADC/OAuth"
         if project_id:
             cred_desc += f" project={project_id}"
-    log_line(log_file, f"{fest_id}: ensuring credentials ({cred_desc})")
+    if verbose:
+        log_line(log_file, f"{fest_id}: ensuring credentials ({cred_desc})")
     sendGoogleMessage.ensure_firebase_app(
         credentials_path=str(cred_path) if cred_path else None,
         project_id=project_id,
@@ -218,7 +228,7 @@ def process_festival(
 
     dropbox_dir = _expand(dropbox_raw)
     cred_path = resolve_credentials_file(
-        festival, credentials_dir, log_file=log_file
+        festival, credentials_dir, log_file=log_file, verbose=verbose
     )
     project_id = (festival.get("project_id") or "").strip() or None
 
@@ -364,28 +374,33 @@ def main(argv: Optional[list[str]] = None) -> int:
         f"dry_run={args.dry_run}",
     )
 
-    # Interactive first-run: establish ADC/OAuth before scanning, even with no
-    # pending files. Cron uses --no-prompt and skips this.
+    # Interactive first-run only when ADC is missing. Once logged in, skip the
+    # warm-up chatter unless -v.
     if allow_prompt and sys.stdin.isatty():
-        log_line(log_file, "warming credentials (interactive ADC/OAuth allowed)")
-        for festival in festivals:
-            fest_id = str(festival.get("id") or festival.get("name") or "?")
-            try:
-                warm_festival_auth(
-                    festival,
-                    credentials_dir=credentials_dir,
-                    allow_prompt=True,
-                    verbose=args.verbose,
-                    log_file=log_file,
-                )
-            except Exception as exc:
-                log_line(log_file, f"{fest_id}: auth warm-up ERROR: {exc}")
-                log_line(log_file, traceback.format_exc(), also_stderr=args.verbose)
-                print(
-                    f"error: could not establish credentials for {fest_id}: {exc}",
-                    file=sys.stderr,
-                )
-                return 1
+        need_login = not sendGoogleMessage.adc_is_configured()
+        if need_login or args.verbose:
+            if need_login:
+                log_line(log_file, "warming credentials (interactive ADC/OAuth)")
+            for festival in festivals:
+                fest_id = str(festival.get("id") or festival.get("name") or "?")
+                try:
+                    warm_festival_auth(
+                        festival,
+                        credentials_dir=credentials_dir,
+                        allow_prompt=True,
+                        verbose=args.verbose,
+                        log_file=log_file,
+                    )
+                except Exception as exc:
+                    log_line(log_file, f"{fest_id}: auth warm-up ERROR: {exc}")
+                    log_line(
+                        log_file, traceback.format_exc(), also_stderr=args.verbose
+                    )
+                    print(
+                        f"error: could not establish credentials for {fest_id}: {exc}",
+                        file=sys.stderr,
+                    )
+                    return 1
 
     total_ok = 0
     total_err = 0
