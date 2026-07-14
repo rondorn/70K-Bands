@@ -78,8 +78,11 @@ omfadmin://oauth/dropbox/callback
 - iPhone/iPad uses `omfadmin://…` so the system auth sheet can dismiss and return
   to the app (Safari + localhost hangs because iOS suspends the app).
 
-Also ensure scopes include: `account_info.read`, `files.content.write`,
-`files.metadata.read`, `sharing.read`, `sharing.write`.
+Also ensure scopes include: `account_info.read`, `files.content.read`,
+`files.content.write`, `files.metadata.read`, `sharing.read`, `sharing.write`.
+
+After changing scopes in the Dropbox developer console, users must
+**Disconnect** and **Connect Dropbox** again so a new token is issued.
 
 ## How to use
 

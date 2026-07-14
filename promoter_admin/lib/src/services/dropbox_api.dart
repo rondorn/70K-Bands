@@ -12,6 +12,18 @@ class DropboxFolderEntry {
   final String path;
 }
 
+class DropboxListedFile {
+  const DropboxListedFile({
+    required this.name,
+    required this.path,
+    this.serverModified,
+  });
+
+  final String name;
+  final String path;
+  final DateTime? serverModified;
+}
+
 /// Dropbox file operations that edit existing files in place (stable share links).
 class DropboxApi {
   DropboxApi(this.auth);
@@ -126,7 +138,110 @@ class DropboxApi {
     return meta.statusCode >= 200 && meta.statusCode < 300;
   }
 
-  /// Probe write access for testing lineup / schedule / description-map / pointer.
+  /// Whether the signed-in account can create files in the folder behind [shareUrl].
+  ///
+  /// Probes by uploading then deleting a tiny marker file (folders do not use
+  /// the same edit_contents metadata path as shared files).
+  Future<bool> canWriteFolderShareUrl(String shareUrl) async {
+    final url = normalizeDropboxUrl(shareUrl).trim();
+    if (url.isEmpty) return false;
+
+    late final String folderPath;
+    try {
+      folderPath = await resolveApiPath(url);
+    } catch (_) {
+      return false;
+    }
+
+    final probeName =
+        '.omf_write_probe_${DateTime.now().millisecondsSinceEpoch}';
+    final probePath = '$folderPath/$probeName'.replaceAll('//', '/');
+    try {
+      await uploadTextAtPath(probePath, 'ok');
+      await deletePath(probePath);
+      return true;
+    } catch (_) {
+      try {
+        await deletePath(probePath);
+      } catch (_) {}
+      return false;
+    }
+  }
+
+  /// Delete a Dropbox path. Missing path is treated as success.
+  Future<void> deletePath(String apiPath) async {
+    var path = apiPath.trim().replaceAll('\\', '/');
+    if (path.isEmpty) return;
+    if (!path.startsWith('/')) path = '/$path';
+    final token = await auth.accessToken();
+    final resp = await http.post(
+      Uri.parse('https://api.dropboxapi.com/2/files/delete_v2'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'path': path}),
+    );
+    if (resp.statusCode >= 200 && resp.statusCode < 300) return;
+    final body = resp.body.toLowerCase();
+    if (body.contains('not_found') || body.contains('path_lookup/not_found')) {
+      return;
+    }
+    throw StateError(
+      'Dropbox delete failed for $path (${resp.statusCode}): ${resp.body}',
+    );
+  }
+
+  /// Download UTF-8 text at a Dropbox API path.
+  Future<String> downloadTextAtPath(String apiPath) async {
+    var path = apiPath.trim().replaceAll('\\', '/');
+    if (path.isEmpty) throw ArgumentError('Path is required');
+    if (!path.startsWith('/')) path = '/$path';
+    final token = await auth.accessToken();
+    final resp = await http.post(
+      Uri.parse('https://content.dropboxapi.com/2/files/download'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Dropbox-API-Arg': jsonEncode({'path': path}),
+      },
+    );
+    if (resp.statusCode < 200 || resp.statusCode >= 300) {
+      final body = resp.body;
+      if (body.contains('files.content.read') || body.contains('missing_scope')) {
+        throw StateError(
+          'Dropbox app is missing files.content.read. '
+          'Enable it in the Dropbox developer console, then Disconnect and '
+          'Connect Dropbox again in Settings.',
+        );
+      }
+      throw StateError(
+        'Dropbox download failed for $path (${resp.statusCode}): $body',
+      );
+    }
+    var body = resp.body;
+    if (body.isNotEmpty && body.codeUnitAt(0) == 0xFEFF) {
+      body = body.substring(1);
+    }
+    return body;
+  }
+
+  /// Upload [text] as [fileName] inside the folder behind [folderShareUrl].
+  Future<void> uploadTextInFolder({
+    required String folderShareUrl,
+    required String fileName,
+    required String text,
+  }) async {
+    final name = fileName.trim();
+    if (name.isEmpty || name.contains('/') || name.contains('\\')) {
+      throw ArgumentError('fileName must be a simple file name, got: $fileName');
+    }
+    final folderPath = await resolveApiPath(folderShareUrl);
+    final path = '$folderPath/$name'.replaceAll('//', '/');
+    await uploadTextAtPath(path, text);
+  }
+
+  /// Probe write access for testing lineup / schedule / description-map / pointer
+  /// / optional alert folder.
   Future<FestivalWorkspace> probeWorkspaceWriteAccess(
     FestivalWorkspace workspace,
   ) async {
@@ -134,6 +249,7 @@ class DropboxApi {
     final scheduleUrl = workspace.scheduleUrl.trim();
     final mapUrl = workspace.descriptionMapUrl.trim();
     final testingPointer = workspace.testingPointerUrl.trim();
+    final alertFolder = workspace.alertFolderUrl.trim();
 
     final results = await Future.wait([
       bandUrl.isEmpty
@@ -148,6 +264,9 @@ class DropboxApi {
       testingPointer.isEmpty
           ? Future<bool>.value(false)
           : canWriteShareUrl(testingPointer),
+      alertFolder.isEmpty
+          ? Future<bool>.value(false)
+          : canWriteFolderShareUrl(alertFolder),
     ]);
 
     return workspace.copyWith(
@@ -156,6 +275,7 @@ class DropboxApi {
       canEditDescriptions: results[2],
       // Year-roll only edits the testing pointer; production stays via Promote.
       canEditPointers: results[3],
+      canEditAlerts: results[4],
     );
   }
 
@@ -188,6 +308,8 @@ class DropboxApi {
       }
       throw StateError('Dropbox upload failed (${resp.statusCode}): $body');
     }
+    // Keep share-URL reads in sync with what we just wrote.
+    await putCachedUrlText(shareUrl, text);
   }
 
   /// Create folder if missing. Ignores conflict when it already exists.
@@ -389,6 +511,97 @@ class DropboxApi {
     entries.sort(
       (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
     );
+    return entries;
+  }
+
+  /// Immediate file children of the folder behind [folderShareUrl].
+  Future<List<DropboxListedFile>> listFilesInShareFolder(
+    String folderShareUrl,
+  ) async {
+    final folderPath = await resolveApiPath(folderShareUrl);
+    return listFilesInFolder(folderPath);
+  }
+
+  /// Immediate file children of [apiPath] (empty string = Dropbox root).
+  Future<List<DropboxListedFile>> listFilesInFolder(String apiPath) async {
+    var path = apiPath.trim().replaceAll('\\', '/');
+    if (path == '/') path = '';
+    if (path.isNotEmpty && !path.startsWith('/')) path = '/$path';
+    path = path.replaceAll(RegExp(r'/+$'), '');
+
+    final token = await auth.accessToken();
+    final entries = <DropboxListedFile>[];
+    String? cursor;
+    var hasMore = true;
+
+    while (hasMore) {
+      final http.Response resp;
+      if (cursor == null) {
+        resp = await http.post(
+          Uri.parse('https://api.dropboxapi.com/2/files/list_folder'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'path': path,
+            'recursive': false,
+            'include_deleted': false,
+            'include_non_downloadable_files': false,
+          }),
+        );
+      } else {
+        resp = await http.post(
+          Uri.parse('https://api.dropboxapi.com/2/files/list_folder/continue'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({'cursor': cursor}),
+        );
+      }
+      if (resp.statusCode < 200 || resp.statusCode >= 300) {
+        throw StateError(
+          'Dropbox list_folder failed (${resp.statusCode}): ${resp.body}',
+        );
+      }
+      final data = jsonDecode(resp.body) as Map<String, dynamic>;
+      final batch = data['entries'] as List<dynamic>? ?? const [];
+      for (final raw in batch) {
+        if (raw is! Map<String, dynamic>) continue;
+        final tag = (raw['.tag'] ?? '').toString();
+        if (tag != 'file') continue;
+        final name = (raw['name'] ?? '').toString();
+        var entryPath =
+            (raw['path_display'] ?? raw['path_lower'] ?? '').toString();
+        if (entryPath.isEmpty || name.isEmpty) continue;
+        if (!entryPath.startsWith('/')) entryPath = '/$entryPath';
+        DateTime? modified;
+        final serverModified = raw['server_modified']?.toString();
+        if (serverModified != null && serverModified.isNotEmpty) {
+          modified = DateTime.tryParse(serverModified)?.toLocal();
+        }
+        entries.add(
+          DropboxListedFile(
+            name: name,
+            path: entryPath,
+            serverModified: modified,
+          ),
+        );
+      }
+      hasMore = data['has_more'] == true;
+      cursor = (data['cursor'] ?? '').toString();
+      if (!hasMore || cursor.isEmpty) break;
+    }
+
+    entries.sort((a, b) {
+      final am = a.serverModified;
+      final bm = b.serverModified;
+      if (am != null && bm != null) return bm.compareTo(am);
+      if (am != null) return -1;
+      if (bm != null) return 1;
+      return b.name.toLowerCase().compareTo(a.name.toLowerCase());
+    });
     return entries;
   }
 

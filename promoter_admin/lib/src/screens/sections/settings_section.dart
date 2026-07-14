@@ -11,6 +11,7 @@ import 'package:promoter_admin/src/services/schedule_validation.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
 import 'package:promoter_admin/src/widgets/portal_dropdown.dart';
+import 'package:promoter_admin/src/widgets/recent_alerts_list.dart';
 
 class SettingsSection extends StatefulWidget {
   const SettingsSection({
@@ -60,6 +61,7 @@ class _SettingsSectionState extends State<SettingsSection> {
   late final TextEditingController _name;
   late final TextEditingController _testing;
   late final TextEditingController _production;
+  late final TextEditingController _alertFolder;
   late final TextEditingController _venues;
   late final TextEditingController _dates;
   late final TextEditingController _days;
@@ -68,6 +70,7 @@ class _SettingsSectionState extends State<SettingsSection> {
   late bool _canEditSchedule;
   late bool _canEditDescriptions;
   late bool _canEditPointers;
+  late bool _canEditAlerts;
   late bool _useCityStateField;
   String? _status;
   String? _error;
@@ -80,6 +83,8 @@ class _SettingsSectionState extends State<SettingsSection> {
     _testing = TextEditingController(text: widget.workspace.testingPointerUrl);
     _production =
         TextEditingController(text: widget.workspace.productionPointerUrl);
+    _alertFolder =
+        TextEditingController(text: widget.workspace.alertFolderUrl);
     _venues = TextEditingController(text: widget.workspace.venues.join('\n'));
     _dates = TextEditingController(text: widget.workspace.dates.join('\n'));
     _days = TextEditingController(text: widget.workspace.days.join('\n'));
@@ -91,6 +96,7 @@ class _SettingsSectionState extends State<SettingsSection> {
     _canEditSchedule = widget.workspace.canEditSchedule;
     _canEditDescriptions = widget.workspace.canEditDescriptions;
     _canEditPointers = widget.workspace.canEditPointers;
+    _canEditAlerts = widget.workspace.canEditAlerts;
     _useCityStateField = widget.workspace.useCityStateField;
   }
 
@@ -111,6 +117,9 @@ class _SettingsSectionState extends State<SettingsSection> {
     if (_production.text != w.productionPointerUrl) {
       _production.text = w.productionPointerUrl;
     }
+    if (_alertFolder.text != w.alertFolderUrl) {
+      _alertFolder.text = w.alertFolderUrl;
+    }
     final v = w.venues.join('\n');
     if (_venues.text != v) _venues.text = v;
     final d = w.dates.join('\n');
@@ -123,6 +132,7 @@ class _SettingsSectionState extends State<SettingsSection> {
     _canEditSchedule = w.canEditSchedule;
     _canEditDescriptions = w.canEditDescriptions;
     _canEditPointers = w.canEditPointers;
+    _canEditAlerts = w.canEditAlerts;
     _useCityStateField = w.useCityStateField;
   }
 
@@ -131,6 +141,7 @@ class _SettingsSectionState extends State<SettingsSection> {
     _name.dispose();
     _testing.dispose();
     _production.dispose();
+    _alertFolder.dispose();
     _venues.dispose();
     _dates.dispose();
     _days.dispose();
@@ -152,6 +163,7 @@ class _SettingsSectionState extends State<SettingsSection> {
       festivalName: _name.text.trim(),
       testingPointerUrl: _testing.text.trim(),
       productionPointerUrl: _production.text.trim(),
+      alertFolderUrl: _alertFolder.text.trim(),
       venues: _lines(_venues.text),
       dates: _lines(_dates.text),
       days: _lines(_days.text),
@@ -160,6 +172,7 @@ class _SettingsSectionState extends State<SettingsSection> {
       canEditSchedule: _canEditSchedule,
       canEditDescriptions: _canEditDescriptions,
       canEditPointers: _canEditPointers,
+      canEditAlerts: _canEditAlerts,
       useCityStateField: _useCityStateField,
     );
   }
@@ -170,7 +183,8 @@ class _SettingsSectionState extends State<SettingsSection> {
         workspace.scheduleUrl.trim().isNotEmpty ||
         workspace.descriptionMapUrl.trim().isNotEmpty ||
         workspace.testingPointerUrl.trim().isNotEmpty ||
-        workspace.productionPointerUrl.trim().isNotEmpty;
+        workspace.productionPointerUrl.trim().isNotEmpty ||
+        workspace.alertFolderUrl.trim().isNotEmpty;
     if (!hasUrls) return workspace;
     return widget.dropboxApi.probeWorkspaceWriteAccess(workspace);
   }
@@ -181,7 +195,33 @@ class _SettingsSectionState extends State<SettingsSection> {
     parts.add(w.canEditSchedule ? 'Schedule ✓' : 'Schedule ✗');
     parts.add(w.canEditDescriptions ? 'Descriptions ✓' : 'Descriptions ✗');
     parts.add(w.canEditPointers ? 'Links ✓' : 'Links ✗');
+    if (w.alertFolderUrl.trim().isNotEmpty) {
+      parts.add(w.canEditAlerts ? 'Alerts ✓' : 'Alerts ✗');
+    }
     return parts.join(' · ');
+  }
+
+  /// When an alert folder URL is set, require Dropbox write access before saving.
+  Future<FestivalWorkspace> _verifyAlertFolderAccess(
+    FestivalWorkspace draft,
+  ) async {
+    final folder = draft.alertFolderUrl.trim();
+    if (folder.isEmpty) {
+      return draft.copyWith(canEditAlerts: false);
+    }
+    if (!widget.dropboxConnected) {
+      throw StateError(
+        'Connect Dropbox to verify write access on the alert folder before saving.',
+      );
+    }
+    final canWrite = await widget.dropboxApi.canWriteFolderShareUrl(folder);
+    if (!canWrite) {
+      throw StateError(
+        'No Dropbox write access to the alert folder. '
+        'Ask the folder owner to grant edit access, then try Save again.',
+      );
+    }
+    return draft.copyWith(canEditAlerts: true);
   }
 
   Future<void> _switchFestival(String? festivalId) async {
@@ -344,6 +384,7 @@ class _SettingsSectionState extends State<SettingsSection> {
         _canEditSchedule = updated.canEditSchedule;
         _canEditDescriptions = updated.canEditDescriptions;
         _canEditPointers = updated.canEditPointers;
+        _canEditAlerts = updated.canEditAlerts;
         _status =
             'Loaded testing data files + production vocabulary '
             '(year ${updated.eventYear}). '
@@ -385,6 +426,7 @@ class _SettingsSectionState extends State<SettingsSection> {
         _canEditSchedule = updated.canEditSchedule;
         _canEditDescriptions = updated.canEditDescriptions;
         _canEditPointers = updated.canEditPointers;
+        _canEditAlerts = updated.canEditAlerts;
         _status = 'Write access: ${_accessSummary(updated)}. '
             'Admin sections without access are hidden.';
         _busy = false;
@@ -415,6 +457,7 @@ class _SettingsSectionState extends State<SettingsSection> {
           draft = await _probeAccess(draft);
         }
       }
+      draft = await _verifyAlertFolderAccess(draft);
       await widget.onWorkspaceChanged(draft);
       if (!mounted) return;
       setState(() {
@@ -422,7 +465,10 @@ class _SettingsSectionState extends State<SettingsSection> {
         _canEditSchedule = draft.canEditSchedule;
         _canEditDescriptions = draft.canEditDescriptions;
         _canEditPointers = draft.canEditPointers;
-        _status = 'Configuration saved.';
+        _canEditAlerts = draft.canEditAlerts;
+        _status = draft.alertFolderUrl.trim().isEmpty
+            ? 'Configuration saved.'
+            : 'Configuration saved. Alert folder write access verified.';
         _busy = false;
       });
     } catch (e) {
@@ -492,6 +538,7 @@ class _SettingsSectionState extends State<SettingsSection> {
         _canEditSchedule = updated.canEditSchedule;
         _canEditDescriptions = updated.canEditDescriptions;
         _canEditPointers = updated.canEditPointers;
+        _canEditAlerts = updated.canEditAlerts;
         _busy = false;
         _status =
             'Rolled Testing to ${updated.eventYear} '
@@ -661,6 +708,28 @@ class _SettingsSectionState extends State<SettingsSection> {
                     'Dropbox pointer file for Production (what most attendees see). '
                     'Also used for venues / dates / days / event types on Load. '
                     'Your app developer may ask for this link.',
+                  ),
+                ],
+              ),
+            ),
+            FormRow(
+              label: 'Alert folder',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: _alertFolder,
+                    maxLines: 2,
+                    decoration: const InputDecoration(
+                      hintText:
+                          'https://www.dropbox.com/scl/fo/…/alerts?rlkey=…&dl=0',
+                    ),
+                  ),
+                  const HintText(
+                    'Optional Dropbox folder for band-add announcement files '
+                    '(paste a folder share link). Save requires Dropbox write access '
+                    'when set. Publish to Production queues bandAnnouncements-….pending '
+                    'for newly added bands only.',
                   ),
                 ],
               ),
@@ -912,6 +981,7 @@ class _PromotePanelState extends State<_PromotePanel> {
   String? _status;
   bool _loadingPreview = true;
   bool _promoting = false;
+  int _alertsRefreshToken = 0;
 
   @override
   void initState() {
@@ -930,31 +1000,39 @@ class _PromotePanelState extends State<_PromotePanel> {
     }
   }
 
-  Future<void> _loadPreview() async {
+  Future<void> _loadPreview({
+    String? keepStatus,
+    bool forceRefresh = false,
+  }) async {
     setState(() {
       _loadingPreview = true;
       _error = null;
-      _status = null;
+      _status = keepStatus;
       _diff = null;
     });
     try {
       if (widget.workspace.canEditSchedule &&
           widget.workspace.scheduleUrl.trim().isNotEmpty) {
-        setState(() => _status = 'Flushing local schedule to Dropbox…');
+        if (keepStatus == null) {
+          setState(() => _status = 'Flushing local schedule to Dropbox…');
+        }
         await widget.scheduleService.flushSync(widget.workspace);
       }
-      final diff = await _promote.preview(widget.workspace);
+      final diff = await _promote.preview(
+        widget.workspace,
+        forceRefresh: forceRefresh,
+      );
       if (!mounted) return;
       setState(() {
         _diff = diff;
-        _status = null;
+        _status = keepStatus;
         _loadingPreview = false;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _error = e.toString();
-        _status = null;
+        _status = keepStatus;
         _loadingPreview = false;
       });
     }
@@ -974,6 +1052,8 @@ class _PromotePanelState extends State<_PromotePanel> {
         canEditBands: widget.workspace.canEditBands,
         canEditSchedule: widget.workspace.canEditSchedule,
         canEditDescriptions: widget.workspace.canEditDescriptions,
+        alertFolderConfigured:
+            widget.workspace.alertFolderUrl.trim().isNotEmpty,
       ),
     );
     if (ok != true || !mounted) return;
@@ -991,11 +1071,34 @@ class _PromotePanelState extends State<_PromotePanel> {
       setState(() => _status = 'Publishing…');
       final diff = await _promote.promote(widget.workspace);
       if (!mounted) return;
+
+      final alertQueued = diff.messages.any(
+        (m) => m.contains('Queued band announcement'),
+      );
+      final status = alertQueued
+          ? 'Published to Production. Queued push for ${diff.addedBandNames.length} '
+              'new band(s) — ALL app users will see that announcement when it sends. '
+              'Processing can take up to 10 minutes.'
+          : 'Published to Production.';
+
       setState(() {
-        _diff = diff;
         _promoting = false;
-        _status = 'Published to Production.';
+        _status = status;
+        _alertsRefreshToken++;
       });
+
+      await showDialog<void>(
+        context: context,
+        builder: (context) => _PublishResultDialog(
+          festivalName: widget.workspace.displayName,
+          diff: diff,
+          alertQueued: alertQueued,
+        ),
+      );
+      if (!mounted) return;
+
+      // Refresh counts so Testing → Production preview reflects the publish.
+      await _loadPreview(keepStatus: status);
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -1024,6 +1127,7 @@ class _PromotePanelState extends State<_PromotePanel> {
     final yearRoll = _diff?.isYearRoll == true;
     final testingYear = _diff?.testingYear.trim() ?? '';
     final productionYear = _diff?.productionYear.trim() ?? '';
+    final alertFolder = workspace.alertFolderUrl.trim();
 
     return SingleChildScrollView(
       child: PortalPanel(
@@ -1053,6 +1157,26 @@ class _PromotePanelState extends State<_PromotePanel> {
                       'Testing (fan app: Advanced → Testing) before publishing. '
                       'Production is what most attendees see.',
             ),
+            if (workspace.canEditBands && alertFolder.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              if ((_diff?.addedBandNames.isNotEmpty ?? false))
+                StatusBanner(
+                  text:
+                      'This publish will announce ${_diff!.addedBandNames.length} '
+                      'new band(s) to ALL festival app users. Review the list in '
+                      'the confirmation dialog before publishing — there is no '
+                      'clawing that push back once it is sent.',
+                  isError: true,
+                )
+              else
+                const StatusBanner(
+                  text:
+                      'If this publish adds new bands, a push notification listing those '
+                      'bands goes to ALL users of the festival app. There is no clawing '
+                      'that message back once it is sent.',
+                  isError: true,
+                ),
+            ],
             const SizedBox(height: 16),
             if (_status != null) StatusBanner(text: _status!),
             if (_error != null) StatusBanner(text: _error!, isError: true),
@@ -1097,6 +1221,30 @@ class _PromotePanelState extends State<_PromotePanel> {
                     style: const TextStyle(color: AppColors.muted, fontSize: 13),
                   ),
                 ),
+              if (workspace.canEditBands &&
+                  alertFolder.isNotEmpty &&
+                  _diff!.addedBandNames.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                const Text(
+                  'Bands that will be announced:',
+                  style: TextStyle(
+                    color: AppColors.label,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                for (final name in _diff!.addedBandNames)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text(
+                      '• $name',
+                      style: const TextStyle(
+                        color: AppColors.heading,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+              ],
             ],
             const SizedBox(height: 16),
             Wrap(
@@ -1114,7 +1262,9 @@ class _PromotePanelState extends State<_PromotePanel> {
                   ),
                 ),
                 OutlinedButton(
-                  onPressed: _promoting ? null : _loadPreview,
+                  onPressed: _promoting
+                      ? null
+                      : () => _loadPreview(forceRefresh: true),
                   child: const Text('Refresh preview'),
                 ),
                 OutlinedButton(
@@ -1123,9 +1273,103 @@ class _PromotePanelState extends State<_PromotePanel> {
                 ),
               ],
             ),
+            if (alertFolder.isNotEmpty) ...[
+              const SizedBox(height: 28),
+              RecentAlertsList(
+                dropboxApi: widget.dropboxApi,
+                folderShareUrl: alertFolder,
+                dropboxConnected: widget.dropboxConnected,
+                refreshToken: _alertsRefreshToken,
+              ),
+            ],
           ],
         ),
       ),
+    );
+  }
+}
+
+class _PublishResultDialog extends StatelessWidget {
+  const _PublishResultDialog({
+    required this.festivalName,
+    required this.diff,
+    required this.alertQueued,
+  });
+
+  final String festivalName;
+  final PromoteDiff diff;
+  final bool alertQueued;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: AppColors.panel,
+      title: const Text('Publish complete'),
+      content: SizedBox(
+        width: 480,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              StatusBanner(
+                text: '“$festivalName” Production data was updated successfully.',
+              ),
+              const Text(
+                'What happened:',
+                style: TextStyle(
+                  color: AppColors.label,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 6),
+              for (final line in diff.messages)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    '• $line',
+                    style: const TextStyle(color: AppColors.muted, fontSize: 13),
+                  ),
+                ),
+              if (alertQueued) ...[
+                const SizedBox(height: 12),
+                StatusBanner(
+                  text:
+                      'Band announcement queued for ${diff.addedBandNames.length} '
+                      'new band(s). ALL app users will receive that push. '
+                      'Processing can take up to 10 minutes.',
+                  isError: true,
+                ),
+                const Text(
+                  'New bands announced:',
+                  style: TextStyle(
+                    color: AppColors.label,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                for (final name in diff.addedBandNames)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text(
+                      '• $name',
+                      style: const TextStyle(
+                        color: AppColors.heading,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+              ],
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        FilledButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('OK'),
+        ),
+      ],
     );
   }
 }
@@ -1137,6 +1381,7 @@ class _PromoteConfirmDialog extends StatefulWidget {
     required this.canEditBands,
     required this.canEditSchedule,
     required this.canEditDescriptions,
+    required this.alertFolderConfigured,
   });
 
   final String festivalName;
@@ -1144,6 +1389,7 @@ class _PromoteConfirmDialog extends StatefulWidget {
   final bool canEditBands;
   final bool canEditSchedule;
   final bool canEditDescriptions;
+  final bool alertFolderConfigured;
 
   @override
   State<_PromoteConfirmDialog> createState() => _PromoteConfirmDialogState();
@@ -1197,6 +1443,46 @@ class _PromoteConfirmDialogState extends State<_PromoteConfirmDialog> {
                         'This cannot be undone from the admin app.',
                 isError: true,
               ),
+              if (widget.canEditBands &&
+                  widget.alertFolderConfigured &&
+                  (diff?.addedBandNames.isNotEmpty ?? false)) ...[
+                const SizedBox(height: 8),
+                StatusBanner(
+                  text:
+                      'This publish will queue a push to ALL festival app users '
+                      'announcing ${diff!.addedBandNames.length} new band(s). '
+                      'There is no clawing that announcement back once it is sent. '
+                      'Cancel now if any name should not go out.',
+                  isError: true,
+                ),
+                const Text(
+                  'Bands that will be announced:',
+                  style: TextStyle(
+                    color: AppColors.label,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                for (final name in diff.addedBandNames)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text(
+                      '• $name',
+                      style: const TextStyle(
+                        color: AppColors.heading,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+              ] else if (widget.canEditBands &&
+                  widget.alertFolderConfigured) ...[
+                const SizedBox(height: 8),
+                const StatusBanner(
+                  text:
+                      'No new bands vs Production — no band announcement push '
+                      'will be queued by this publish.',
+                ),
+              ],
               const Text(
                 'Before continuing, confirm you have already checked that '
                 'everything looks correct in Testing '

@@ -5,6 +5,7 @@ class FestivalWorkspace {
     this.festivalName = '',
     this.testingPointerUrl = '',
     this.productionPointerUrl = '',
+    this.alertFolderUrl = '',
     this.eventYear = '',
     this.bandListUrl = '',
     this.scheduleUrl = '',
@@ -17,6 +18,8 @@ class FestivalWorkspace {
     this.canEditSchedule = true,
     this.canEditDescriptions = true,
     this.canEditPointers = false,
+    this.canEditAlerts = false,
+    this.allowCustomAlerts = false,
     this.useCityStateField = false,
   });
 
@@ -25,6 +28,10 @@ class FestivalWorkspace {
   final String festivalName;
   final String testingPointerUrl;
   final String productionPointerUrl;
+
+  /// Dropbox folder share link for band-add announcement `.pending` files.
+  /// Pasted manually in Settings (not created by festival bootstrap).
+  final String alertFolderUrl;
   final String eventYear;
 
   /// Derived from testing pointer Current::artistUrl (not edited by hand).
@@ -45,6 +52,12 @@ class FestivalWorkspace {
 
   /// Write access to the testing pointer (year-roll / Add new year).
   final bool canEditPointers;
+
+  /// Write access to [alertFolderUrl] (Dropbox probe on save / refresh).
+  final bool canEditAlerts;
+
+  /// From pointer `Current::allowCustomAlerts` — shows the Alerts admin section.
+  final bool allowCustomAlerts;
 
   /// When true, band form/CSV include city and state columns.
   final bool useCityStateField;
@@ -68,6 +81,7 @@ class FestivalWorkspace {
     String? festivalName,
     String? testingPointerUrl,
     String? productionPointerUrl,
+    String? alertFolderUrl,
     String? eventYear,
     String? bandListUrl,
     String? scheduleUrl,
@@ -80,6 +94,8 @@ class FestivalWorkspace {
     bool? canEditSchedule,
     bool? canEditDescriptions,
     bool? canEditPointers,
+    bool? canEditAlerts,
+    bool? allowCustomAlerts,
     bool? useCityStateField,
   }) {
     return FestivalWorkspace(
@@ -87,6 +103,7 @@ class FestivalWorkspace {
       festivalName: festivalName ?? this.festivalName,
       testingPointerUrl: testingPointerUrl ?? this.testingPointerUrl,
       productionPointerUrl: productionPointerUrl ?? this.productionPointerUrl,
+      alertFolderUrl: alertFolderUrl ?? this.alertFolderUrl,
       eventYear: eventYear ?? this.eventYear,
       bandListUrl: bandListUrl ?? this.bandListUrl,
       scheduleUrl: scheduleUrl ?? this.scheduleUrl,
@@ -99,6 +116,8 @@ class FestivalWorkspace {
       canEditSchedule: canEditSchedule ?? this.canEditSchedule,
       canEditDescriptions: canEditDescriptions ?? this.canEditDescriptions,
       canEditPointers: canEditPointers ?? this.canEditPointers,
+      canEditAlerts: canEditAlerts ?? this.canEditAlerts,
+      allowCustomAlerts: allowCustomAlerts ?? this.allowCustomAlerts,
       useCityStateField: useCityStateField ?? this.useCityStateField,
     );
   }
@@ -108,6 +127,7 @@ class FestivalWorkspace {
         'festivalName': festivalName,
         'testingPointerUrl': testingPointerUrl,
         'productionPointerUrl': productionPointerUrl,
+        'alertFolderUrl': alertFolderUrl,
         'eventYear': eventYear,
         'bandListUrl': bandListUrl,
         'scheduleUrl': scheduleUrl,
@@ -120,6 +140,8 @@ class FestivalWorkspace {
         'canEditSchedule': canEditSchedule ? '1' : '0',
         'canEditDescriptions': canEditDescriptions ? '1' : '0',
         'canEditPointers': canEditPointers ? '1' : '0',
+        'canEditAlerts': canEditAlerts ? '1' : '0',
+        'allowCustomAlerts': allowCustomAlerts ? '1' : '0',
         'useCityStateField': useCityStateField ? '1' : '0',
       };
 
@@ -144,6 +166,7 @@ class FestivalWorkspace {
       festivalName: map['festivalName'] ?? '',
       testingPointerUrl: map['testingPointerUrl'] ?? '',
       productionPointerUrl: map['productionPointerUrl'] ?? '',
+      alertFolderUrl: map['alertFolderUrl'] ?? '',
       eventYear: map['eventYear'] ?? '',
       bandListUrl: map['bandListUrl'] ?? '',
       scheduleUrl: map['scheduleUrl'] ?? '',
@@ -156,6 +179,8 @@ class FestivalWorkspace {
       canEditSchedule: _boolPref(map, 'canEditSchedule'),
       canEditDescriptions: _boolPref(map, 'canEditDescriptions'),
       canEditPointers: _boolPref(map, 'canEditPointers', fallback: false),
+      canEditAlerts: _boolPref(map, 'canEditAlerts', fallback: false),
+      allowCustomAlerts: _boolPref(map, 'allowCustomAlerts', fallback: false),
       useCityStateField: _boolPref(map, 'useCityStateField', fallback: false),
     );
   }

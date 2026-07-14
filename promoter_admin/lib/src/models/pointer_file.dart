@@ -12,6 +12,14 @@ class PointerFile {
   String get descriptionMapUrl => (current['descriptionMap'] ?? '').trim();
   String get eventYear => (current['eventYear'] ?? '').trim();
 
+  /// Developer-gated UI for freeform push alerts (`Current::allowCustomAlerts::1`).
+  bool get allowCustomAlerts => isTruthyFlag(current['allowCustomAlerts']);
+
+  static bool isTruthyFlag(String? raw) {
+    final v = (raw ?? '').trim().toLowerCase();
+    return v == '1' || v == 'true' || v == 'yes' || v == 'on';
+  }
+
   /// Explicit event-type list from Current or the vocabulary schedule section.
   List<String> get eventTypesFromPointer {
     final fromCurrent = _parseEventTypesList(

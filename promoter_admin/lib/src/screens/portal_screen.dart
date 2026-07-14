@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:promoter_admin/src/models/festival_workspace.dart';
+import 'package:promoter_admin/src/screens/sections/alerts_section.dart';
 import 'package:promoter_admin/src/screens/sections/bands_section.dart';
 import 'package:promoter_admin/src/screens/sections/descriptions_section.dart';
 import 'package:promoter_admin/src/screens/sections/schedule_section.dart';
@@ -125,6 +126,11 @@ class _PortalScreenState extends State<PortalScreen> {
                 subheading:
                     'Artists with and without description map entries',
               );
+      case AppSection.alerts:
+        return (
+          heading: 'Send Alert',
+          subheading: 'Queue a push notification for all festival app users',
+        );
     }
   }
 
@@ -158,6 +164,16 @@ class _PortalScreenState extends State<PortalScreen> {
   void _ensureSectionAllowed() {
     // Artists / Schedule / Descriptions stay visible without write —
     // mutation controls are disabled or narrowed inside each section.
+    if (_section == AppSection.alerts && !_ws.allowCustomAlerts) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() {
+          _section = AppSection.settings;
+          _showPromote = false;
+        });
+      });
+      return;
+    }
     final denied = _showPromote && !_ws.hasAnyEditAccess;
     if (!denied) {
       if (_section == AppSection.schedule &&
@@ -209,6 +225,7 @@ class _PortalScreenState extends State<PortalScreen> {
       canEditBands: _ws.canEditBands,
       canEditSchedule: _ws.canEditSchedule,
       canEditDescriptions: _ws.canEditDescriptions,
+      allowCustomAlerts: _ws.allowCustomAlerts,
       onPromoteTap: () => setState(() {
         _section = AppSection.settings;
         _showPromote = true;
@@ -317,6 +334,13 @@ class _PortalScreenState extends State<PortalScreen> {
               setState(() => _descriptionPrefillLabel = null);
             }
           },
+        );
+      case AppSection.alerts:
+        return AlertsSection(
+          workspace: _ws,
+          dropboxApi: widget.dropboxApi,
+          dropboxConnected: widget.dropboxConnected,
+          onConnectDropbox: widget.onConnectDropbox,
         );
     }
   }

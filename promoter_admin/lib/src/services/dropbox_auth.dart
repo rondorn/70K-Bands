@@ -35,6 +35,7 @@ class DropboxAuth {
   static const _callbackPort = 53682;
   static const scopes = [
     'account_info.read',
+    'files.content.read',
     'files.content.write',
     'files.metadata.read',
     'sharing.read',

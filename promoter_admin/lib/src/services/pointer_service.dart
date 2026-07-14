@@ -6,8 +6,11 @@ import 'package:promoter_admin/src/services/schedule_service.dart';
 import 'package:promoter_admin/src/services/schedule_validation.dart';
 
 class PointerService {
-  Future<PointerFile> fetchPointer(String url) async {
-    final text = await fetchUrlText(url);
+  Future<PointerFile> fetchPointer(
+    String url, {
+    bool forceRefresh = false,
+  }) async {
+    final text = await fetchUrlText(url, forceRefresh: forceRefresh);
     return PointerFile.parse(text);
   }
 
@@ -27,12 +30,14 @@ class PointerService {
       bandListUrl: pointer.artistUrl,
       scheduleUrl: pointer.scheduleUrl,
       descriptionMapUrl: pointer.descriptionMapUrl,
+      allowCustomAlerts: pointer.allowCustomAlerts,
     );
   }
 
   /// Load from both pointers:
   /// - Testing → band / schedule / description-map URLs (+ event year)
   /// - Production → venues, dates, days, event types from production schedule
+  /// - Custom-alerts UI flag prefers Production Current, else Testing
   Future<FestivalWorkspace> applyPointers(FestivalWorkspace workspace) async {
     var updated = await applyTestingPointer(workspace);
 
@@ -44,6 +49,11 @@ class PointerService {
     }
 
     final production = await fetchPointer(productionUrl);
+    // Developer gate lives on the Production pointer Current section.
+    updated = updated.copyWith(
+      allowCustomAlerts: production.allowCustomAlerts,
+    );
+
     final vocabScheduleUrl = production.scheduleUrlForVocabulary;
     if (vocabScheduleUrl.isEmpty) {
       throw StateError(

@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:promoter_admin/src/models/pointer_file.dart';
 import 'package:promoter_admin/src/services/pointer_service.dart';
@@ -42,5 +41,23 @@ Another Band,Thrash,USA
     expect(rows.length, 2);
     expect(rows.first.name, 'Another Band');
     expect(rows.last.name, 'Iron Test');
+  });
+
+  test('PointerFile.allowCustomAlerts reads Current flag', () {
+    const on = '''
+Current::artistUrl::https://example.com/lineup.csv
+Current::scheduleUrl::https://example.com/schedule.csv
+Current::eventYear::2027
+Current::descriptionMap::https://example.com/map.csv
+Current::allowCustomAlerts::1
+''';
+    const off = '''
+Current::artistUrl::https://example.com/lineup.csv
+Current::scheduleUrl::https://example.com/schedule.csv
+Current::eventYear::2027
+Current::descriptionMap::https://example.com/map.csv
+''';
+    expect(PointerFile.parse(on).allowCustomAlerts, isTrue);
+    expect(PointerFile.parse(off).allowCustomAlerts, isFalse);
   });
 }

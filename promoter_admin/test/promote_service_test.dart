@@ -48,4 +48,47 @@ void main() {
       isTrue,
     );
   });
+
+  test('addedBandsFromCsv returns names only in testing', () {
+    const production = 'bandName,country\nAlpha,US\nBeta,DE\n';
+    const testing =
+        'bandName,country\nAlpha,US\nBeta,DE\nGamma,SE\ndelta,NO\n';
+    expect(
+      PromoteService.addedBandsFromCsv(
+        testingCsv: testing,
+        productionCsv: production,
+      ),
+      ['delta', 'Gamma'],
+    );
+  });
+
+  test('bandAnnouncementText is plain text list', () {
+    expect(
+      PromoteService.bandAnnouncementText(
+        festivalName: 'MDF',
+        bands: ['Band A', 'Band B'],
+      ),
+      'The following bands have just been added to MDF!\n'
+      'Band A\n'
+      'Band B\n',
+    );
+  });
+
+  test('bandAnnouncementPendingFileName uses datetime stamp', () {
+    expect(
+      PromoteService.bandAnnouncementPendingFileName(
+        DateTime(2026, 7, 14, 8, 45, 3),
+      ),
+      'bandAnnouncements-2026-07-14-08-45-03.pending',
+    );
+  });
+
+  test('customAlertPendingFileName uses datetime stamp', () {
+    expect(
+      PromoteService.customAlertPendingFileName(
+        DateTime(2026, 7, 14, 9, 1, 2),
+      ),
+      'customAlert-2026-07-14-09-01-02.pending',
+    );
+  });
 }

@@ -15,6 +15,7 @@ class PromoteDiff {
     this.mapRowsProduction = 0,
     this.testingYear = '',
     this.productionYear = '',
+    this.addedBandNames = const [],
     List<String>? messages,
   }) : messages = messages ?? <String>[];
 
@@ -26,6 +27,7 @@ class PromoteDiff {
   int mapRowsProduction;
   String testingYear;
   String productionYear;
+  List<String> addedBandNames;
   final List<String> messages;
 
   bool get isYearRoll {
@@ -77,8 +79,8 @@ class PromoteService {
     return '${path.substring(0, path.length - '_test.csv'.length)}.csv';
   }
 
-  Future<Map<String, String>> _currentUrls(String pointerUrl) async {
-    final pointer = await pointerService.fetchPointer(pointerUrl);
+  Future<Map<String, String>> _currentUrls(String pointerUrl, {bool forceRefresh = false}) async {
+    final pointer = await pointerService.fetchPointer(pointerUrl, forceRefresh: forceRefresh);
     final current = pointer.current;
     if (current.isEmpty) {
       throw StateError('Pointer has no Current section: $pointerUrl');
@@ -121,10 +123,15 @@ class PromoteService {
       return _productionShareUrlForTestingUrl(src);
     }
 
+    final resolved = await Future.wait([
+      resolve('band_list_url'),
+      resolve('schedule_url'),
+      resolve('description_map_url'),
+    ]);
     final dest = {
-      'band_list_url': await resolve('band_list_url'),
-      'schedule_url': await resolve('schedule_url'),
-      'description_map_url': await resolve('description_map_url'),
+      'band_list_url': resolved[0],
+      'schedule_url': resolved[1],
+      'description_map_url': resolved[2],
     };
 
     // Refuse to target the old Current production files.
@@ -156,7 +163,61 @@ class PromoteService {
     return lines.length - 1;
   }
 
-  Future<PromoteDiff> preview(FestivalWorkspace workspace) async {
+  /// Band names present in [testingCsv] but not in [productionCsv] (case-insensitive).
+  static List<String> addedBandsFromCsv({
+    required String testingCsv,
+    required String productionCsv,
+  }) {
+    final testing = PointerService.parseLineupCsv(testingCsv);
+    final production = PointerService.parseLineupCsv(productionCsv);
+    final prodKeys = {
+      for (final b in production) b.name.toLowerCase(),
+    };
+    final added = <String>[];
+    for (final b in testing) {
+      if (!prodKeys.contains(b.name.toLowerCase())) {
+        added.add(b.name);
+      }
+    }
+    added.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    return added;
+  }
+
+  static String bandAnnouncementText({
+    required String festivalName,
+    required List<String> bands,
+  }) {
+    final label =
+        festivalName.trim().isEmpty ? 'the festival' : festivalName.trim();
+    final buffer = StringBuffer(
+      'The following bands have just been added to $label!\n',
+    );
+    for (final name in bands) {
+      buffer.writeln(name);
+    }
+    return buffer.toString();
+  }
+
+  /// `bandAnnouncements-YYYY-MM-DD-HH-MM-SS.pending`
+  static String bandAnnouncementPendingFileName(DateTime when) {
+    String two(int n) => n.toString().padLeft(2, '0');
+    return 'bandAnnouncements-${when.year}-'
+        '${two(when.month)}-${two(when.day)}-'
+        '${two(when.hour)}-${two(when.minute)}-${two(when.second)}.pending';
+  }
+
+  /// `customAlert-YYYY-MM-DD-HH-MM-SS.pending`
+  static String customAlertPendingFileName(DateTime when) {
+    String two(int n) => n.toString().padLeft(2, '0');
+    return 'customAlert-${when.year}-'
+        '${two(when.month)}-${two(when.day)}-'
+        '${two(when.hour)}-${two(when.minute)}-${two(when.second)}.pending';
+  }
+
+  Future<PromoteDiff> preview(
+    FestivalWorkspace workspace, {
+    bool forceRefresh = false,
+  }) async {
     final testingUrl = workspace.testingPointerUrl.trim();
     final productionUrl = workspace.productionPointerUrl.trim();
     if (testingUrl.isEmpty) {
@@ -166,8 +227,12 @@ class PromoteService {
       throw StateError('Production pointer URL is not configured.');
     }
 
-    final testUrls = await _currentUrls(testingUrl);
-    final prodUrls = await _currentUrls(productionUrl);
+    final pointerPair = await Future.wait([
+      _currentUrls(testingUrl, forceRefresh: forceRefresh),
+      _currentUrls(productionUrl, forceRefresh: forceRefresh),
+    ]);
+    final testUrls = pointerPair[0];
+    final prodUrls = pointerPair[1];
     final testingYear = testUrls['event_year'] ?? '';
     final productionYear = prodUrls['event_year'] ?? '';
     final yearRoll = testingYear.isNotEmpty &&
@@ -196,37 +261,68 @@ class PromoteService {
       );
     }
 
-    Future<void> count(
+    Future<({String? testing, String? production, String? error})> loadPair(
       String key,
-      void Function(int t, int p) assign,
     ) async {
       final tUrl = testUrls[key] ?? '';
       final pUrl = destUrls[key] ?? '';
       if (tUrl.isEmpty || pUrl.isEmpty) {
-        diff.messages.add('Missing URL for $key on testing or production target.');
-        return;
+        return (
+          testing: null,
+          production: null,
+          error: 'Missing URL for $key on testing or production target.',
+        );
       }
       try {
-        final tText = await fetchUrlText(tUrl);
-        final pText = await fetchUrlText(pUrl);
-        assign(countCsvRows(tText), countCsvRows(pText));
+        final pair = await Future.wait([
+          fetchUrlText(tUrl, forceRefresh: forceRefresh),
+          fetchUrlText(pUrl, forceRefresh: forceRefresh),
+        ]);
+        return (testing: pair[0], production: pair[1], error: null);
       } catch (e) {
-        diff.messages.add('Could not fetch $key: $e');
+        return (testing: null, production: null, error: 'Could not fetch $key: $e');
       }
     }
 
-    await count('band_list_url', (t, p) {
-      diff.bandsTesting = t;
-      diff.bandsProduction = p;
-    });
-    await count('schedule_url', (t, p) {
-      diff.eventsTesting = t;
-      diff.eventsProduction = p;
-    });
-    await count('description_map_url', (t, p) {
-      diff.mapRowsTesting = t;
-      diff.mapRowsProduction = p;
-    });
+    final loaded = await Future.wait([
+      loadPair('band_list_url'),
+      loadPair('schedule_url'),
+      loadPair('description_map_url'),
+    ]);
+
+    final bands = loaded[0];
+    if (bands.error != null) {
+      diff.messages.add(bands.error!);
+    } else {
+      diff.bandsTesting = countCsvRows(bands.testing!);
+      diff.bandsProduction = countCsvRows(bands.production!);
+      diff.addedBandNames = addedBandsFromCsv(
+        testingCsv: bands.testing!,
+        productionCsv: bands.production!,
+      );
+      if (diff.addedBandNames.isNotEmpty) {
+        diff.messages.add(
+          '${diff.addedBandNames.length} new band(s) vs production target '
+          '(will be announced if alert folder is configured).',
+        );
+      }
+    }
+
+    final schedule = loaded[1];
+    if (schedule.error != null) {
+      diff.messages.add(schedule.error!);
+    } else {
+      diff.eventsTesting = countCsvRows(schedule.testing!);
+      diff.eventsProduction = countCsvRows(schedule.production!);
+    }
+
+    final map = loaded[2];
+    if (map.error != null) {
+      diff.messages.add(map.error!);
+    } else {
+      diff.mapRowsTesting = countCsvRows(map.testing!);
+      diff.mapRowsProduction = countCsvRows(map.production!);
+    }
 
     return diff;
   }
@@ -257,8 +353,12 @@ class PromoteService {
       );
     }
 
-    final testUrls = await _currentUrls(testingUrl);
-    final prodUrls = await _currentUrls(productionUrl);
+    final pointerPair = await Future.wait([
+      _currentUrls(testingUrl),
+      _currentUrls(productionUrl),
+    ]);
+    final testUrls = pointerPair[0];
+    final prodUrls = pointerPair[1];
     final testingYear = (testUrls['event_year'] ?? '').trim();
     final productionYear = (prodUrls['event_year'] ?? '').trim();
     final yearRoll = testingYear.isNotEmpty &&
@@ -272,6 +372,7 @@ class PromoteService {
       yearRoll: yearRoll,
     );
 
+    // Reuses URL text cache filled by the Publish preview (reads stay local).
     final diff = await preview(workspace);
 
     final jobs = <({String key, String label, bool enabled})>[
@@ -293,6 +394,10 @@ class PromoteService {
     ];
 
     var anyEnabled = false;
+    var lineupPromoted = false;
+    String? testingLineupText;
+    String? productionLineupBeforeText;
+
     for (final job in jobs) {
       if (!job.enabled) {
         diff.messages.add('${job.label}: skipped (no write access).');
@@ -323,7 +428,20 @@ class PromoteService {
       }
       try {
         final text = await fetchUrlText(src);
+        String productionBefore = '';
+        if (job.key == 'band_list_url') {
+          try {
+            productionBefore = await fetchUrlText(dest);
+          } catch (_) {
+            productionBefore = '';
+          }
+          testingLineupText = text;
+          productionLineupBeforeText = productionBefore;
+        }
         await dropboxApi.uploadTextInPlace(dest, text);
+        if (job.key == 'band_list_url') {
+          lineupPromoted = true;
+        }
         diff.messages.add(
           yearRoll
               ? 'Wrote testing ${job.label} → $testingYear production file '
@@ -339,6 +457,19 @@ class PromoteService {
       throw StateError(
         'No writable data files to promote. Check File access in Settings.',
       );
+    }
+
+    if (lineupPromoted &&
+        testingLineupText != null &&
+        productionLineupBeforeText != null) {
+      final added = addedBandsFromCsv(
+        testingCsv: testingLineupText,
+        productionCsv: productionLineupBeforeText,
+      );
+      diff.addedBandNames = added;
+      if (added.isNotEmpty) {
+        await _enqueueBandAnnouncement(workspace, diff, added);
+      }
     }
 
     if (yearRoll) {
@@ -367,6 +498,48 @@ class PromoteService {
     }
 
     return diff;
+  }
+
+  Future<void> _enqueueBandAnnouncement(
+    FestivalWorkspace workspace,
+    PromoteDiff diff,
+    List<String> addedBands,
+  ) async {
+    final folderUrl = workspace.alertFolderUrl.trim();
+    if (folderUrl.isEmpty) {
+      diff.messages.add(
+        'Band announcement skipped: no alert folder URL in Settings '
+        '(${addedBands.length} new band(s)).',
+      );
+      return;
+    }
+    if (!workspace.canEditAlerts) {
+      diff.messages.add(
+        'Band announcement skipped: no write access to alert folder '
+        '(${addedBands.length} new band(s)). Fix access in Settings.',
+      );
+      return;
+    }
+
+    final body = bandAnnouncementText(
+      festivalName: workspace.festivalName,
+      bands: addedBands,
+    );
+    final fileName = bandAnnouncementPendingFileName(DateTime.now());
+    try {
+      await dropboxApi.uploadTextInFolder(
+        folderShareUrl: folderUrl,
+        fileName: fileName,
+        text: body,
+      );
+      diff.messages.add(
+        'Queued band announcement ($fileName) for ${addedBands.length} new band(s).',
+      );
+    } catch (e) {
+      diff.messages.add(
+        'Failed to queue band announcement for ${addedBands.length} new band(s): $e',
+      );
+    }
   }
 
   /// Resolve Current URLs from a pointer (exposed for tests / diagnostics).

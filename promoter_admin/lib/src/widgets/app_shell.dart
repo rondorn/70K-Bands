@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:promoter_admin/src/branding.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
 
-enum AppSection { settings, bands, schedule, descriptions }
+enum AppSection { settings, bands, schedule, descriptions, alerts }
 
 enum BandsTab { list, add }
 enum ScheduleTab { entry, view, stats }
@@ -23,6 +23,7 @@ class AppShell extends StatelessWidget {
     this.canEditBands = true,
     this.canEditSchedule = true,
     this.canEditDescriptions = true,
+    this.allowCustomAlerts = false,
     this.bandsTab = BandsTab.list,
     this.onBandsTabChanged,
     this.scheduleTab = ScheduleTab.entry,
@@ -42,6 +43,7 @@ class AppShell extends StatelessWidget {
   final bool canEditBands;
   final bool canEditSchedule;
   final bool canEditDescriptions;
+  final bool allowCustomAlerts;
   final BandsTab bandsTab;
   final ValueChanged<BandsTab>? onBandsTabChanged;
   final ScheduleTab scheduleTab;
@@ -83,6 +85,7 @@ class AppShell extends StatelessWidget {
                     canEditBands: canEditBands,
                     canEditSchedule: canEditSchedule,
                     canEditDescriptions: canEditDescriptions,
+                    allowCustomAlerts: allowCustomAlerts,
                     bandsTab: bandsTab,
                     onBandsTabChanged: onBandsTabChanged,
                     scheduleTab: scheduleTab,
@@ -203,6 +206,7 @@ class _NavBar extends StatelessWidget {
     required this.canEditBands,
     required this.canEditSchedule,
     required this.canEditDescriptions,
+    required this.allowCustomAlerts,
     required this.bandsTab,
     required this.onBandsTabChanged,
     required this.scheduleTab,
@@ -217,6 +221,7 @@ class _NavBar extends StatelessWidget {
   final bool canEditBands;
   final bool canEditSchedule;
   final bool canEditDescriptions;
+  final bool allowCustomAlerts;
   final BandsTab bandsTab;
   final ValueChanged<BandsTab>? onBandsTabChanged;
   final ScheduleTab scheduleTab;
@@ -310,6 +315,17 @@ class _NavBar extends StatelessWidget {
           ),
         ],
       ),
+      if (allowCustomAlerts)
+        _NavSection(
+          label: 'Alerts',
+          children: [
+            _NavLink(
+              label: 'Send alert',
+              selected: section == AppSection.alerts,
+              onTap: () => onSectionChanged(AppSection.alerts),
+            ),
+          ],
+        ),
     ];
 
     return LayoutBuilder(
