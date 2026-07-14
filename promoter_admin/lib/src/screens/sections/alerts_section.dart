@@ -6,7 +6,11 @@ import 'package:promoter_admin/src/theme/app_theme.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
 import 'package:promoter_admin/src/widgets/recent_alerts_list.dart';
 
-/// Freeform push alert composer (gated by Production pointer allowCustomAlerts).
+/// Freeform push alert composer.
+///
+/// Nav visibility: [FestivalWorkspace.customAlertsUiEnabled]
+/// (`allowCustomAlerts` flag or pointer write access).
+/// Send requires alert-folder write ([FestivalWorkspace.canEditAlerts]).
 class AlertsSection extends StatefulWidget {
   const AlertsSection({
     super.key,

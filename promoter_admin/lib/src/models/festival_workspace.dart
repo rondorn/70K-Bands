@@ -56,7 +56,7 @@ class FestivalWorkspace {
   /// Write access to [alertFolderUrl] (Dropbox probe on save / refresh).
   final bool canEditAlerts;
 
-  /// From pointer `Current::allowCustomAlerts` — shows the Alerts admin section.
+  /// From Production pointer `Current::allowCustomAlerts` (festival-wide grant).
   final bool allowCustomAlerts;
 
   /// When true, band form/CSV include city and state columns.
@@ -70,6 +70,16 @@ class FestivalWorkspace {
 
   bool get hasAnyEditAccess =>
       canEditBands || canEditSchedule || canEditDescriptions;
+
+  /// Show the Alerts (custom push) section when an alert folder is configured and
+  /// either:
+  /// - Production pointer has `Current::allowCustomAlerts::1`, or
+  /// - this Dropbox user can write the testing pointer ([canEditPointers]).
+  ///
+  /// Sending still requires [canEditAlerts] (alert folder write access).
+  bool get customAlertsUiEnabled =>
+      alertFolderUrl.trim().isNotEmpty &&
+      (allowCustomAlerts || canEditPointers);
 
   String get displayName {
     final n = festivalName.trim();

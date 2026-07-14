@@ -12,7 +12,8 @@ class PointerFile {
   String get descriptionMapUrl => (current['descriptionMap'] ?? '').trim();
   String get eventYear => (current['eventYear'] ?? '').trim();
 
-  /// Developer-gated UI for freeform push alerts (`Current::allowCustomAlerts::1`).
+  /// Festival-wide grant for freeform push alerts (`Current::allowCustomAlerts::1`).
+  /// Pointer writers also get the Alerts UI without this flag.
   bool get allowCustomAlerts => isTruthyFlag(current['allowCustomAlerts']);
 
   static bool isTruthyFlag(String? raw) {

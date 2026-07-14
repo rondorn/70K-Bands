@@ -164,7 +164,7 @@ class _PortalScreenState extends State<PortalScreen> {
   void _ensureSectionAllowed() {
     // Artists / Schedule / Descriptions stay visible without write —
     // mutation controls are disabled or narrowed inside each section.
-    if (_section == AppSection.alerts && !_ws.allowCustomAlerts) {
+    if (_section == AppSection.alerts && !_ws.customAlertsUiEnabled) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         setState(() {
@@ -225,7 +225,7 @@ class _PortalScreenState extends State<PortalScreen> {
       canEditBands: _ws.canEditBands,
       canEditSchedule: _ws.canEditSchedule,
       canEditDescriptions: _ws.canEditDescriptions,
-      allowCustomAlerts: _ws.allowCustomAlerts,
+      allowCustomAlerts: _ws.customAlertsUiEnabled,
       onPromoteTap: () => setState(() {
         _section = AppSection.settings;
         _showPromote = true;

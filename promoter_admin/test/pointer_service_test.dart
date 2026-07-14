@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:promoter_admin/src/models/festival_workspace.dart';
 import 'package:promoter_admin/src/models/pointer_file.dart';
 import 'package:promoter_admin/src/services/pointer_service.dart';
 
@@ -59,5 +60,35 @@ Current::descriptionMap::https://example.com/map.csv
 ''';
     expect(PointerFile.parse(on).allowCustomAlerts, isTrue);
     expect(PointerFile.parse(off).allowCustomAlerts, isFalse);
+  });
+
+  test('customAlertsUiEnabled needs alert folder plus flag or pointer write', () {
+    expect(
+      const FestivalWorkspace(
+        alertFolderUrl: 'https://dropbox.example/alerts',
+        allowCustomAlerts: true,
+      ).customAlertsUiEnabled,
+      isTrue,
+    );
+    expect(
+      const FestivalWorkspace(
+        alertFolderUrl: 'https://dropbox.example/alerts',
+        canEditPointers: true,
+      ).customAlertsUiEnabled,
+      isTrue,
+    );
+    expect(
+      const FestivalWorkspace(
+        canEditPointers: true,
+        allowCustomAlerts: true,
+      ).customAlertsUiEnabled,
+      isFalse,
+    );
+    expect(
+      const FestivalWorkspace(
+        alertFolderUrl: 'https://dropbox.example/alerts',
+      ).customAlertsUiEnabled,
+      isFalse,
+    );
   });
 }

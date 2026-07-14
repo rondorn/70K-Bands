@@ -49,7 +49,8 @@ class PointerService {
     }
 
     final production = await fetchPointer(productionUrl);
-    // Developer gate lives on the Production pointer Current section.
+    // Festival-wide grant on Production Current; combined with canEditPointers
+    // in FestivalWorkspace.customAlertsUiEnabled.
     updated = updated.copyWith(
       allowCustomAlerts: production.allowCustomAlerts,
     );
