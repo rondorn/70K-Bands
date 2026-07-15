@@ -169,6 +169,8 @@ Publish copies your reviewed **Testing** work into **Production** so most attend
 
 Only people with edit rights on Artists, Schedule, and/or Descriptions can publish — and only those parts they’re allowed to change will update.
 
+You don’t need to wait until everything is finished before publishing. Festivals often publish in **stages**. For example, new bands may go live through the year as they are announced, descriptions can be published when they’re ready, and the schedule is often published once it’s finalized. Publish whenever a meaningful set of changes has been checked in Testing.
+
 Before you publish:
 
 1. Check Testing in the **fan app** (Advanced → Testing).
