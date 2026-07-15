@@ -880,6 +880,15 @@ class BandDiscoverService {
       }
     }
 
+    // Windows: try system curl first. It uses Schannel (Windows cert store /
+    // lazy root loading). Dart's BoringSSL often fails on metal-archives.com
+    // with CERTIFICATE_VERIFY_FAILED for GTS Root R4 until roots are bundled.
+    if (Platform.isWindows) {
+      final fromCurl = await _fetchMaBodyViaCurl(url, expectJson: expectJson);
+      if (fromCurl.body != null) return fromCurl.body!;
+      lastError = fromCurl.error;
+    }
+
     try {
       final resp = await _maHtmlClient()
           .get(
@@ -898,34 +907,49 @@ class BandDiscoverService {
       lastError = e;
     }
 
-    // Desktop fallback: curl with the approved UA (macOS/Linux/Windows).
-    // Windows 10 1803+ ships curl.exe; iOS has no curl.
-    if (Platform.isMacOS || Platform.isLinux || Platform.isWindows) {
-      try {
-        final result = await Process.run(
-          Platform.isWindows ? 'curl.exe' : 'curl',
-          [
-            '-sL',
-            '--max-time',
-            '25',
-            '-A',
-            kMetalArchivesUserAgent,
-            url,
-          ],
-        );
-        final out = (result.stdout as String?) ?? '';
-        if (result.exitCode == 0 &&
-            _isAcceptableMaBody(out, expectJson: expectJson)) {
-          return out;
-        }
-      } catch (e) {
-        lastError = e;
-      }
+    // Desktop fallback: curl with the approved UA (macOS/Linux; Windows already
+    // tried above). Windows 10 1803+ ships curl.exe; iOS has no curl.
+    if (Platform.isMacOS || Platform.isLinux) {
+      final fromCurl = await _fetchMaBodyViaCurl(url, expectJson: expectJson);
+      if (fromCurl.body != null) return fromCurl.body!;
+      lastError = fromCurl.error ?? lastError;
     }
 
     throw StateError(
       'Metal Archives returned a blocked or empty response ($lastError).',
     );
+  }
+
+  Future<({String? body, Object? error})> _fetchMaBodyViaCurl(
+    String url, {
+    required bool expectJson,
+  }) async {
+    try {
+      final result = await Process.run(
+        Platform.isWindows ? 'curl.exe' : 'curl',
+        [
+          '-sL',
+          '--max-time',
+          '25',
+          '-A',
+          kMetalArchivesUserAgent,
+          url,
+        ],
+      );
+      final out = (result.stdout as String?) ?? '';
+      if (result.exitCode == 0 &&
+          _isAcceptableMaBody(out, expectJson: expectJson)) {
+        return (body: out, error: null);
+      }
+      return (
+        body: null,
+        error: result.exitCode != 0
+            ? 'curl exit ${result.exitCode}'
+            : 'curl returned blocked or short body (${out.length} bytes)',
+      );
+    } catch (e) {
+      return (body: null, error: e);
+    }
   }
 
   String _stripScheme(String url) {
