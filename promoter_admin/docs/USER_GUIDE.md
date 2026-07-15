@@ -25,10 +25,17 @@ Someone who releases or maintains the festival apps will give you the **Testing*
 
 ## Testing vs Production (the one idea to learn)
 
-- **Testing** — what you edit in this admin app day to day.  
-- **Production** — what most fans see by default.
+**Testing** is a safe place to make and verify changes before attendees see them. You edit Testing in this admin app every day; mistakes stay off the public festival experience until you (or someone authorized) choose to Publish.
 
-Before anyone Publishes, open the **festival (fan) app**, turn on **Advanced → Testing**, and confirm the lineup, descriptions, and schedule look right.
+**Production** is what most fans see by default when they open the festival app.
+
+| | Testing | Production |
+|---|---------|------------|
+| **Who sees it** | You (and anyone using the fan app’s Testing mode) | Most attendees |
+| **What you do here** | Add/edit artists, descriptions, schedule | Live lineup and schedule after Publish |
+| **Risk** | Low — experiment and fix freely | Higher — fans see it; hard to undo quickly |
+
+Before anyone Publishes, open the **festival (fan) app**, turn on **Advanced → Testing**, and confirm the lineup, descriptions, and schedule look right. That preview is how you use Testing as a safety net.
 
 If a button is missing or grayed out (for example you can view Artists but not Add), your Dropbox account doesn’t have edit rights on that part — ask the person who shared the festival Dropbox with you.
 
@@ -157,6 +164,8 @@ These are **not** tied to a lineup band:
 ## Publish (Testing → what fans see)
 
 **Nav:** CONFIG → **Publish**
+
+Publish copies your reviewed **Testing** work into **Production** so most attendees see it. Until you Publish, fans keep seeing the previous Production version — Testing stays your safe staging ground (see [Testing vs Production](#testing-vs-production-the-one-idea-to-learn)).
 
 Only people with edit rights on Artists, Schedule, and/or Descriptions can publish — and only those parts they’re allowed to change will update.
 
