@@ -372,7 +372,10 @@ class _SettingsSectionState extends State<SettingsSection> {
       _status = 'Loading festival data…';
     });
     try {
-      var updated = await widget.pointerService.applyPointers(_draft());
+      var updated = await widget.pointerService.applyPointers(
+        _draft(),
+        forceRefresh: true,
+      );
       if (widget.dropboxConnected) {
         setState(() => _status = 'Checking Dropbox write access…');
         updated = await _probeAccess(updated);

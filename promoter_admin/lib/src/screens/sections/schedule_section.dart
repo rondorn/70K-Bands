@@ -222,16 +222,33 @@ class _ScheduleSectionState extends State<ScheduleSection> {
         ScheduleService.lengths.where((l) => l.trim().isNotEmpty),
       );
 
-  Future<void> _load() async {
+  Future<void> _load({bool forceRefresh = false}) async {
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
-      final events = await widget.scheduleService.load(widget.workspace);
+      final sync = widget.scheduleService.syncStatus;
+      final hasLocalPending = sync.state == ScheduleSyncState.pending ||
+          sync.state == ScheduleSyncState.syncing ||
+          sync.pendingCount > 0;
+
+      final List<ScheduleEvent> events;
+      if (forceRefresh && !hasLocalPending) {
+        events = await widget.scheduleService.reloadFromPublished(
+          widget.workspace,
+          forceRefresh: true,
+        );
+      } else {
+        events = await widget.scheduleService.load(widget.workspace);
+      }
+
       List<String> bands = [];
       try {
-        final lineup = await widget.lineupService.load(widget.workspace);
+        final lineup = await widget.lineupService.load(
+          widget.workspace,
+          forceRefresh: forceRefresh,
+        );
         bands = lineup.map((b) => b.name).where((n) => n.isNotEmpty).toList();
       } catch (_) {}
 
@@ -263,6 +280,11 @@ class _ScheduleSectionState extends State<ScheduleSection> {
         _length = DropdownOptions.pick('60', _lengthOptions);
         _applyLengthToEnd();
         _loading = false;
+        if (forceRefresh && hasLocalPending) {
+          _message =
+              'Refreshed lineup; schedule kept local because unsynced edits '
+              'are still pending. Sync or discard those first to reload from Dropbox.';
+        }
       });
       await _refreshOutstanding();
     } catch (e) {
@@ -890,7 +912,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
         Align(
           alignment: Alignment.centerRight,
           child: TextButton.icon(
-            onPressed: _load,
+            onPressed: () => _load(forceRefresh: true),
             icon: const Icon(Icons.refresh, size: 18),
             label: Text('${_events.length} event(s) — Refresh'),
           ),
@@ -998,7 +1020,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
         Align(
           alignment: Alignment.centerRight,
           child: TextButton.icon(
-            onPressed: _load,
+            onPressed: () => _load(forceRefresh: true),
             icon: const Icon(Icons.refresh, size: 18),
             label: Text('${_events.length} event(s) — Refresh'),
           ),

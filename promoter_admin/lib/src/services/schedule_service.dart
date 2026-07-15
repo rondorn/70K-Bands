@@ -158,9 +158,13 @@ class ScheduleService {
 
   /// Discard staging and reload from the published testing schedule URL.
   Future<List<ScheduleEvent>> reloadFromPublished(
-    FestivalWorkspace workspace,
-  ) async {
-    final text = await staging.reloadFromPublished(workspace);
+    FestivalWorkspace workspace, {
+    bool forceRefresh = true,
+  }) async {
+    final text = await staging.reloadFromPublished(
+      workspace,
+      forceRefresh: forceRefresh,
+    );
     return parseEvents(text);
   }
 

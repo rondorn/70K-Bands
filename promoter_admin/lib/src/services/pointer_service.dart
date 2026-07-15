@@ -17,13 +17,14 @@ class PointerService {
   /// Refresh testing data-file URLs only (lineup / schedule / map).
   /// Does not change venues, dates, days, or event types.
   Future<FestivalWorkspace> applyTestingPointer(
-    FestivalWorkspace workspace,
-  ) async {
+    FestivalWorkspace workspace, {
+    bool forceRefresh = false,
+  }) async {
     final url = workspace.testingPointerUrl.trim();
     if (url.isEmpty) {
       throw StateError('Testing pointer URL is required.');
     }
-    final pointer = await fetchPointer(url);
+    final pointer = await fetchPointer(url, forceRefresh: forceRefresh);
     return workspace.copyWith(
       eventYear:
           pointer.eventYear.isNotEmpty ? pointer.eventYear : workspace.eventYear,
@@ -38,8 +39,12 @@ class PointerService {
   /// - Testing → band / schedule / description-map URLs (+ event year)
   /// - Production → venues, dates, days, event types from production schedule
   /// - Custom-alerts UI flag prefers Production Current, else Testing
-  Future<FestivalWorkspace> applyPointers(FestivalWorkspace workspace) async {
-    var updated = await applyTestingPointer(workspace);
+  Future<FestivalWorkspace> applyPointers(
+    FestivalWorkspace workspace, {
+    bool forceRefresh = false,
+  }) async {
+    var updated =
+        await applyTestingPointer(workspace, forceRefresh: forceRefresh);
 
     final productionUrl = updated.productionPointerUrl.trim();
     if (productionUrl.isEmpty) {
@@ -48,7 +53,8 @@ class PointerService {
       );
     }
 
-    final production = await fetchPointer(productionUrl);
+    final production =
+        await fetchPointer(productionUrl, forceRefresh: forceRefresh);
     // Festival-wide grant on Production Current; combined with canEditPointers
     // in FestivalWorkspace.customAlertsUiEnabled.
     updated = updated.copyWith(
@@ -63,7 +69,10 @@ class PointerService {
     }
 
     try {
-      final csv = await fetchUrlText(vocabScheduleUrl);
+      final csv = await fetchUrlText(
+        vocabScheduleUrl,
+        forceRefresh: forceRefresh,
+      );
       final events = ScheduleService.parseEvents(csv);
       final hints = ScheduleService.hintsFromEvents(events);
       final pointerTypes = production.eventTypesFromPointer;
@@ -92,8 +101,11 @@ class PointerService {
     return updated;
   }
 
-  Future<List<BandRow>> fetchLineup(String bandListUrl) async {
-    final text = await fetchUrlText(bandListUrl);
+  Future<List<BandRow>> fetchLineup(
+    String bandListUrl, {
+    bool forceRefresh = false,
+  }) async {
+    final text = await fetchUrlText(bandListUrl, forceRefresh: forceRefresh);
     return parseLineupCsv(text);
   }
 

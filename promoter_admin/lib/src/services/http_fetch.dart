@@ -77,6 +77,11 @@ class UrlTextCache {
 ///
 /// Uses memory then disk cache unless [forceRefresh] is true. On network
 /// success (or [putCachedUrlText]), updates both layers.
+///
+/// When [forceRefresh] is true, skips local cache, asks intermediaries not to
+/// reuse a cached response, and appends a one-time query param so Dropbox
+/// CDNs cannot serve a stale share-link body. The cache key remains the
+/// normalized URL without that param.
 Future<String> fetchUrlText(
   String url, {
   Duration timeout = const Duration(seconds: 45),
@@ -95,13 +100,22 @@ Future<String> fetchUrlText(
       await UrlTextCache.put(normalized, disk);
       return disk;
     }
+  } else {
+    await UrlTextCache.invalidate(normalized);
   }
 
+  final requestUrl =
+      forceRefresh ? cacheBustedUrl(normalized) : normalized;
+  final headers = <String, String>{
+    'User-Agent': kSafariUserAgent,
+    if (forceRefresh) ...{
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache',
+    },
+  };
+
   final response = await http
-      .get(
-        Uri.parse(normalized),
-        headers: {'User-Agent': kSafariUserAgent},
-      )
+      .get(Uri.parse(requestUrl), headers: headers)
       .timeout(timeout);
   if (response.statusCode < 200 || response.statusCode >= 300) {
     throw Exception('HTTP ${response.statusCode} for $normalized');
@@ -113,6 +127,14 @@ Future<String> fetchUrlText(
   }
   await UrlTextCache.put(normalized, body);
   return body;
+}
+
+/// Append a unique query param so CDNs treat the request as uncached.
+String cacheBustedUrl(String normalizedUrl) {
+  final uri = Uri.parse(normalizedUrl);
+  final params = Map<String, String>.from(uri.queryParameters);
+  params['_'] = DateTime.now().millisecondsSinceEpoch.toString();
+  return uri.replace(queryParameters: params).toString();
 }
 
 /// Seed / overwrite the cache after a successful Dropbox upload.

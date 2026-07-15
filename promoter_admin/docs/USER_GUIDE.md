@@ -31,11 +31,13 @@ Someone who releases or maintains the festival apps will give you the **Testing*
 
 | | Testing | Production |
 |---|---------|------------|
-| **Who sees it** | You (and anyone using the fan app’s Testing mode) | Most attendees |
+| **Who sees it** | People with access to Testing (often via Advanced → Testing; can be locked down) | Most attendees |
 | **What you do here** | Add/edit artists, descriptions, schedule | Live lineup and schedule after Publish |
 | **Risk** | Low — experiment and fix freely | Higher — fans see it; hard to undo quickly |
 
 Before anyone Publishes, open the **festival (fan) app**, turn on **Advanced → Testing**, and confirm the lineup, descriptions, and schedule look right. That preview is how you use Testing as a safety net.
+
+**Who can see Testing in the fan app?** By default, Advanced → Testing can expose Testing data to anyone who finds that switch. For a volunteer-run festival that only works from **already public** info, that is usually fine. If a promoter wants to enter data **before** bands are announced and is concerned that Advanced could be a back door into unannounced lineup info, that can be locked down easily: set access rights so the fan app **cannot see Testing data at all**. Ask your festival contact / app maintainer if you need that tightened.
 
 If a button is missing or grayed out (for example you can view Artists but not Add), your Dropbox account doesn’t have edit rights on that part — ask the person who shared the festival Dropbox with you.
 
@@ -57,6 +59,8 @@ You can keep several festivals in the app (for example 70K and MDF) and switch t
 ## Settings (leave alone most of the time)
 
 **Nav:** CONFIG → **Settings**
+
+![Festival Configuration — Settings](images/settings.png)
 
 You’ll mainly use Settings once:
 
@@ -83,6 +87,8 @@ You’ll mainly use Settings once:
 
 See the Testing lineup (band, country, genre, noteworthy). Use **Refresh** if someone else changed Dropbox data.
 
+![Artists — Testing lineup](images/artists-list.png)
+
 ### Add a band
 
 **Standard workflow** (uses **Discover**, the button under **Artist name**)
@@ -95,6 +101,8 @@ See the Testing lineup (band, country, genre, noteworthy). Use **Refresh** if so
 6. Review every field. You may **edit, replace, clear, or add** any detail whenever you think it needs fixing (name, links, country, genre, noteworthy, and so on). Discover is a starting point, not the final word.
 7. Optional: check **Add description** and write the band blurb.
 8. **Save to Testing**.
+
+![Add Artist — Discover and fields](images/artists-add.png)
 
 Discover will not guess when several bands share a name — that’s why step 4 uses a page URL.
 
@@ -127,6 +135,8 @@ You’ll see who has a description and who doesn’t. Typical actions:
 - **Edit** — change the wording (or, if offered, where the text lives)  
 - **Delete** — remove that description  
 
+![Create Description](images/descriptions-create.png)
+
 If Edit / Delete / Attach Link aren’t available, you can still create description text for someone else to finish connecting — ask your festival contact (they’ll often use **Attach Link** with the URL you send them).
 
 ---
@@ -145,6 +155,8 @@ Pick a **Band Name** from the Testing lineup, then venue, day, date, start/end (
 
 If validation complains but you’re sure the times are right, you can skip the check when that option is shown.
 
+![Schedule Entry](images/schedule-entry.png)
+
 ### Special Events and Unofficial Events
 
 These are **not** tied to a lineup band:
@@ -159,11 +171,15 @@ These are **not** tied to a lineup band:
 - **View** — full list; edit or delete if you have schedule rights  
 - **Stats** — how many of each event type each artist has
 
+![Schedule View](images/schedule-view.png)
+
 ---
 
 ## Publish (Testing → what fans see)
 
 **Nav:** CONFIG → **Publish**
+
+![Publish to Production](images/publish.png)
 
 Publish copies your reviewed **Testing** work into **Production** so most attendees see it. Until you Publish, fans keep seeing the previous Production version — Testing stays your safe staging ground (see [Testing vs Production](#testing-vs-production-the-one-idea-to-learn)).
 
@@ -189,6 +205,8 @@ Pushes often go out within about **10 minutes** after Publish (depends on the fe
 ## Send alert (broadcast message)
 
 **Nav:** ALERTS → **Send alert** (only if your festival turned this on for you)
+
+![Send Alert](images/send-alert.png)
 
 Type a plain message, confirm that it goes to **all** app users, and queue it. There is no “take it back” in the app after you confirm.
 

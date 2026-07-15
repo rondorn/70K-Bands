@@ -205,13 +205,16 @@ class _BandsSectionState extends State<BandsSection> {
     return BandRow(fields);
   }
 
-  Future<void> _load() async {
+  Future<void> _load({bool forceRefresh = false}) async {
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
-      final bands = await widget.lineupService.load(widget.workspace);
+      final bands = await widget.lineupService.load(
+        widget.workspace,
+        forceRefresh: forceRefresh,
+      );
       setState(() {
         _bands = bands;
         _loading = false;
@@ -675,7 +678,7 @@ class _BandsSectionState extends State<BandsSection> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton.icon(
-                    onPressed: _load,
+                    onPressed: () => _load(forceRefresh: true),
                     icon: const Icon(Icons.refresh, size: 18),
                     label: Text('${_bands.length} artist(s) — Refresh'),
                   ),

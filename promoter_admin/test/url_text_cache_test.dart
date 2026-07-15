@@ -25,4 +25,14 @@ void main() {
     await putCachedUrlText('https://example.com/lineup.csv', 'csv-data');
     expect(UrlTextCache.peek('https://example.com/lineup.csv'), 'csv-data');
   });
+
+  test('cacheBustedUrl adds unique query param without dropping others', () {
+    final busted = cacheBustedUrl(
+      'https://www.dropbox.com/s/abc/file.txt?raw=1',
+    );
+    final uri = Uri.parse(busted);
+    expect(uri.queryParameters['raw'], '1');
+    expect(uri.queryParameters['_'], isNotNull);
+    expect(uri.queryParameters['_']!.isNotEmpty, isTrue);
+  });
 }

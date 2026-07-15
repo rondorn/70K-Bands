@@ -105,7 +105,7 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
     }
   }
 
-  Future<void> _load() async {
+  Future<void> _load({bool forceRefresh = false}) async {
     setState(() {
       _loading = true;
       _error = null;
@@ -113,7 +113,10 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
     try {
       List<DescriptionMapEntry> entries = [];
       try {
-        entries = await widget.descriptionMapService.load(widget.workspace);
+        entries = await widget.descriptionMapService.load(
+          widget.workspace,
+          forceRefresh: forceRefresh,
+        );
       } catch (e) {
         // Still show lineup even if map is missing / unreadable.
         if (widget.workspace.descriptionMapUrl.trim().isNotEmpty) {
@@ -123,7 +126,10 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
 
       final lineupNames = <String>{};
       try {
-        final bands = await widget.lineupService.load(widget.workspace);
+        final bands = await widget.lineupService.load(
+          widget.workspace,
+          forceRefresh: forceRefresh,
+        );
         for (final b in bands) {
           if (b.name.trim().isNotEmpty) lineupNames.add(b.name.trim());
         }
@@ -568,7 +574,7 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: OutlinedButton(
-                    onPressed: _saving ? null : _load,
+                    onPressed: _saving ? null : () => _load(forceRefresh: true),
                     child: const Text('Refresh'),
                   ),
                 ),

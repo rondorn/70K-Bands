@@ -610,10 +610,13 @@ class ScheduleStagingCoordinator extends ChangeNotifier {
   }
 
   /// Discard local staging and reload from the published Dropbox URL.
-  Future<String> reloadFromPublished(FestivalWorkspace workspace) async {
+  Future<String> reloadFromPublished(
+    FestivalWorkspace workspace, {
+    bool forceRefresh = true,
+  }) async {
     _debounceTimer?.cancel();
     final url = await resolveScheduleUrl(workspace);
-    final text = await fetchUrlText(url);
+    final text = await fetchUrlText(url, forceRefresh: forceRefresh);
     final csv = await _csvFile(workspace);
     await csv.parent.create(recursive: true);
     await csv.writeAsString(text);

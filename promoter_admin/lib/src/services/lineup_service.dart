@@ -32,9 +32,12 @@ class LineupService {
     return [...fields, 'city', 'state'];
   }
 
-  Future<List<BandRow>> load(FestivalWorkspace workspace) async {
-    final url = await _lineupUrl(workspace);
-    return pointerService.fetchLineup(url);
+  Future<List<BandRow>> load(
+    FestivalWorkspace workspace, {
+    bool forceRefresh = false,
+  }) async {
+    final url = await _lineupUrl(workspace, forceRefresh: forceRefresh);
+    return pointerService.fetchLineup(url, forceRefresh: forceRefresh);
   }
 
   Future<void> save(FestivalWorkspace workspace, List<BandRow> bands) async {
@@ -46,10 +49,16 @@ class LineupService {
     await dropboxApi.uploadTextInPlace(url, csv);
   }
 
-  Future<String> _lineupUrl(FestivalWorkspace workspace) async {
+  Future<String> _lineupUrl(
+    FestivalWorkspace workspace, {
+    bool forceRefresh = false,
+  }) async {
     var url = workspace.bandListUrl.trim();
     if (url.isEmpty) {
-      final refreshed = await pointerService.applyTestingPointer(workspace);
+      final refreshed = await pointerService.applyTestingPointer(
+        workspace,
+        forceRefresh: forceRefresh,
+      );
       url = refreshed.bandListUrl.trim();
     }
     if (url.isEmpty) {

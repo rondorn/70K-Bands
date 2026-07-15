@@ -44,9 +44,12 @@ class DescriptionMapService {
 
   static const columns = ['Band', 'URL', 'Date'];
 
-  Future<List<DescriptionMapEntry>> load(FestivalWorkspace workspace) async {
-    final url = await _mapUrl(workspace);
-    final text = await fetchUrlText(url);
+  Future<List<DescriptionMapEntry>> load(
+    FestivalWorkspace workspace, {
+    bool forceRefresh = false,
+  }) async {
+    final url = await _mapUrl(workspace, forceRefresh: forceRefresh);
+    final text = await fetchUrlText(url, forceRefresh: forceRefresh);
     return parseEntries(text);
   }
 
@@ -292,10 +295,16 @@ class DescriptionMapService {
         .replaceAll(RegExp(r'_+'), '_');
   }
 
-  Future<String> _mapUrl(FestivalWorkspace workspace) async {
+  Future<String> _mapUrl(
+    FestivalWorkspace workspace, {
+    bool forceRefresh = false,
+  }) async {
     var url = workspace.descriptionMapUrl.trim();
     if (url.isEmpty) {
-      final refreshed = await pointerService.applyTestingPointer(workspace);
+      final refreshed = await pointerService.applyTestingPointer(
+        workspace,
+        forceRefresh: forceRefresh,
+      );
       url = refreshed.descriptionMapUrl.trim();
     }
     if (url.isEmpty) {
