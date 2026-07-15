@@ -863,30 +863,23 @@ class BandDiscoverService {
   }) async {
     Object? lastError;
 
-    // iPad/iPhone: WKWebView can complete Cloudflare's browser challenge.
-    // URLSession alone is not enough on-device.
+    // iOS WKWebView / Windows WebView2: run Cloudflare's JS challenge.
+    // Plain HttpClient/curl get HTTP 403 from Cloudflare on Windows.
     if (MaWebHtmlFetch.isSupported) {
       try {
-        final html = await MaWebHtmlFetch.fetchHtml(url)
-            .timeout(const Duration(seconds: 40));
+        final html = await MaWebHtmlFetch.fetchHtml(
+          url,
+          expectJson: expectJson,
+        ).timeout(const Duration(seconds: 50));
         if (_isAcceptableMaBody(html, expectJson: expectJson)) {
           return html;
         }
         lastError = expectJson
-            ? 'WKWebView returned non-JSON or blocked body'
-            : 'WKWebView returned blocked or short HTML';
+            ? 'Browser fetch returned non-JSON or blocked body'
+            : 'Browser fetch returned blocked or short HTML';
       } catch (e) {
         lastError = e;
       }
-    }
-
-    // Windows: try system curl first. It uses Schannel (Windows cert store /
-    // lazy root loading). Dart's BoringSSL often fails on metal-archives.com
-    // with CERTIFICATE_VERIFY_FAILED for GTS Root R4 until roots are bundled.
-    if (Platform.isWindows) {
-      final fromCurl = await _fetchMaBodyViaCurl(url, expectJson: expectJson);
-      if (fromCurl.body != null) return fromCurl.body!;
-      lastError = fromCurl.error;
     }
 
     try {
@@ -907,8 +900,8 @@ class BandDiscoverService {
       lastError = e;
     }
 
-    // Desktop fallback: curl with the approved UA (macOS/Linux; Windows already
-    // tried above). Windows 10 1803+ ships curl.exe; iOS has no curl.
+    // Desktop curl fallback (macOS/Linux). Helps with TLS quirks; Cloudflare
+    // blocks it on Windows, so Windows relies on WebView2 above instead.
     if (Platform.isMacOS || Platform.isLinux) {
       final fromCurl = await _fetchMaBodyViaCurl(url, expectJson: expectJson);
       if (fromCurl.body != null) return fromCurl.body!;
