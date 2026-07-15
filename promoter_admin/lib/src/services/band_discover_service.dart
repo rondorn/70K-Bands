@@ -891,15 +891,19 @@ class BandDiscoverService {
       }
     }
 
-    // Windows (always) / iOS (fallback): browser engine for Cloudflare JS.
+    // Windows (primary) / iOS (fallback): browser engine for Cloudflare JS.
+    // Windows reuses one WebView2; warm sessions use a shorter outer timeout.
     if (MaWebHtmlFetch.isSupported) {
       try {
+        final browserTimeout = Platform.isIOS
+            ? const Duration(seconds: 32)
+            : (MaWebHtmlFetch.windowsSessionWarm
+                ? const Duration(seconds: 18)
+                : const Duration(seconds: 50));
         final html = await MaWebHtmlFetch.fetchHtml(
           url,
           expectJson: expectJson,
-        ).timeout(
-          Duration(seconds: Platform.isIOS ? 32 : 50),
-        );
+        ).timeout(browserTimeout);
         if (_isAcceptableMaBody(html, expectJson: expectJson)) {
           return html;
         }

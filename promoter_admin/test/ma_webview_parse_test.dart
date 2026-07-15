@@ -47,4 +47,24 @@ void main() {
       isTrue,
     );
   });
+
+  test('expectJson accepts HTML band links from WebView-painted ajax', () {
+    const html = '''
+*<a href="https://www.metal-archives.com/bands/Absolute_Darkness/3540421383">Absolute Darkness</a>
+''';
+    expect(
+      MaWebHtmlFetch.isAcceptableMaBody(html, expectJson: true),
+      isTrue,
+    );
+  });
+
+  test('expectJson accepts short JSON ajax payloads', () {
+    expect(
+      MaWebHtmlFetch.isAcceptableMaBody(
+        '{"aaData":[]}',
+        expectJson: true,
+      ),
+      isTrue,
+    );
+  });
 }
