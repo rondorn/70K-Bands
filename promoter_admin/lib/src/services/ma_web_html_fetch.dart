@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:desktop_webview_window/desktop_webview_window.dart';
@@ -46,7 +47,7 @@ class MaWebHtmlFetch {
     if (html.length < 500) {
       throw StateError('WKWebView returned empty or blocked HTML.');
     }
-    _assertNotChallenge(html, expectJson: false);
+    _assertNotChallenge(html);
     return html;
   }
 
@@ -117,13 +118,11 @@ class MaWebHtmlFetch {
 '''
                 : 'document.documentElement.outerHTML',
           );
-          final body = (raw ?? '').trim();
-          // evaluateJavaScript may return a JSON-encoded string with quotes.
-          final text = _unwrapJsString(body);
-          if (_isAcceptable(text, expectJson: expectJson)) {
+          final text = unwrapJsStringResult(raw);
+          if (isAcceptableMaBody(text, expectJson: expectJson)) {
             return text;
           }
-          if (_looksLikeChallenge(text)) {
+          if (looksLikeCloudflareChallenge(text)) {
             lastError = 'still on Cloudflare challenge (${text.length} bytes)';
             continue;
           }
@@ -142,41 +141,118 @@ class MaWebHtmlFetch {
     }
   }
 
-  static String _unwrapJsString(String value) {
-    var v = value.trim();
-    if (v.length >= 2 && v.startsWith('"') && v.endsWith('"')) {
-      try {
-        // Cheap unescape for typical WebView2 JSON string results.
-        v = v
-            .substring(1, v.length - 1)
-            .replaceAll(r'\"', '"')
-            .replaceAll(r'\n', '\n')
-            .replaceAll(r'\r', '\r')
-            .replaceAll(r'\t', '\t')
-            .replaceAll(r'\\', r'\');
-      } catch (_) {}
+  /// WebView2 / Chrome DevTools often return a JSON-encoded string
+  /// (`"…\u003Ca href=…"`). Decode until we have real HTML.
+  static String unwrapJsStringResult(String? value) {
+    var v = (value ?? '').trim();
+    if (v.isEmpty) return v;
+
+    for (var i = 0; i < 3; i++) {
+      if (v.length >= 2 && v.startsWith('"') && v.endsWith('"')) {
+        try {
+          final decoded = jsonDecode(v);
+          if (decoded is String) {
+            v = decoded;
+            continue;
+          }
+        } catch (_) {}
+      }
+      if (v.contains(r'\u00') || v.contains(r'\/') || v.contains(r'\"')) {
+        final next = decodeJsonStringEscapes(v);
+        if (next == v) break;
+        v = next;
+        continue;
+      }
+      break;
     }
     return v.trim();
   }
 
-  static bool _isAcceptable(String body, {required bool expectJson}) {
+  /// Decode `\uXXXX`, `\"`, `\\`, etc. without requiring surrounding quotes.
+  static String decodeJsonStringEscapes(String value) {
+    final buf = StringBuffer();
+    for (var i = 0; i < value.length; i++) {
+      final ch = value[i];
+      if (ch != r'\' || i + 1 >= value.length) {
+        buf.write(ch);
+        continue;
+      }
+      final next = value[i + 1];
+      switch (next) {
+        case 'u':
+          if (i + 5 < value.length) {
+            final hex = value.substring(i + 2, i + 6);
+            final code = int.tryParse(hex, radix: 16);
+            if (code != null) {
+              buf.writeCharCode(code);
+              i += 5;
+              continue;
+            }
+          }
+          buf.write(ch);
+          break;
+        case 'n':
+          buf.write('\n');
+          i++;
+          break;
+        case 'r':
+          buf.write('\r');
+          i++;
+          break;
+        case 't':
+          buf.write('\t');
+          i++;
+          break;
+        case '"':
+        case r'\':
+        case '/':
+          buf.write(next);
+          i++;
+          break;
+        default:
+          buf.write(ch);
+          break;
+      }
+    }
+    return buf.toString();
+  }
+
+  static bool isAcceptableMaBody(String body, {required bool expectJson}) {
     if (body.length < 20) return false;
-    if (_looksLikeChallenge(body)) return false;
+    if (looksLikeCloudflareChallenge(body)) return false;
     if (expectJson) {
       final trimmed = body.trimLeft();
       return trimmed.startsWith('{') || trimmed.startsWith('[');
     }
     final lower = body.toLowerCase();
-    final looksLikeMa = lower.contains('class="band_name"') ||
+    if (lower.contains('class="band_name"') ||
         lower.contains('var bandname =') ||
         lower.contains('id="band_stats"') ||
-        lower.contains('class="display discog"');
-    if (looksLikeMa) return true;
-    return body.length >= 5000;
+        lower.contains('class="display discog"') ||
+        lower.contains('id="band_disco"') ||
+        lower.contains('header_official') ||
+        lower.contains('id="logo"')) {
+      return true;
+    }
+    // ajax-list / fragments: shorter HTML tables without band_name markers.
+    if (lower.contains('<table') || lower.contains('<tr')) {
+      return body.length >= 200;
+    }
+    return body.length >= 500;
   }
 
-  static bool _looksLikeChallenge(String body) {
+  static bool looksLikeCloudflareChallenge(String body) {
     final lower = body.toLowerCase();
+    // Real MA pages embed Cloudflare's jsd script (`/cdn-cgi/challenge-platform/...`).
+    // That is not a block page — only treat interstitials as blocked.
+    if (lower.contains('class="band_name"') ||
+        lower.contains('var bandname =') ||
+        lower.contains('id="band_stats"') ||
+        lower.contains('class="display discog"') ||
+        lower.contains('header_official') ||
+        lower.contains('id="band_disco"')) {
+      return false;
+    }
     return lower.contains('just a moment...') ||
         lower.contains('<title>just a moment') ||
         lower.contains('cf-browser-verification') ||
@@ -185,14 +261,14 @@ class MaWebHtmlFetch {
         (lower.contains('access denied') && lower.contains('cloudflare'));
   }
 
-  static void _assertNotChallenge(String html, {required bool expectJson}) {
+  static void _assertNotChallenge(String html) {
     final lower = html.toLowerCase();
     final looksLikeMa = lower.contains('class="band_name"') ||
         lower.contains('var bandname =') ||
         lower.contains('id="band_stats"') ||
         lower.contains('class="display discog"');
     if (looksLikeMa) return;
-    if (_looksLikeChallenge(html)) {
+    if (looksLikeCloudflareChallenge(html)) {
       throw StateError(
         'WKWebView still on Cloudflare challenge page after timeout.',
       );

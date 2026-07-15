@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:promoter_admin/src/services/location_parse.dart';
 import 'package:promoter_admin/src/services/ma_web_html_fetch.dart';
@@ -325,19 +326,41 @@ class BandDiscoverService {
     return (data: data, warnings: warnings);
   }
 
+  /// Exposed for unit tests (WebView2 escape / name parsing).
+  @visibleForTesting
+  Map<String, String> debugParseMaBandPage(String html, String bandUrl) =>
+      _parseMaBandPage(html, bandUrl);
+
   Map<String, String> _parseMaBandPage(String html, String bandUrl) {
+    // Prefer the clean JS string when present.
     var bandName = '';
-    final h1 = RegExp(
-      r'class="band_name"[^>]*>\s*(?:<a[^>]*>)?([^<]+)',
-      caseSensitive: false,
-    ).firstMatch(html);
-    if (h1 != null) {
-      bandName = _decodeHtml(h1.group(1)!.trim());
+    final script = RegExp(r'var bandName\s*=\s*"([^"]+)"').firstMatch(html);
+    if (script != null) {
+      bandName = _decodeHtml(script.group(1)!).trim();
     }
     if (bandName.isEmpty) {
-      final script = RegExp(r'var bandName = "([^"]+)"').firstMatch(html);
-      if (script != null) bandName = _decodeHtml(script.group(1)!);
+      // Capture the whole <h1 class="band_name">…</h1> block, then strip tags.
+      final block = RegExp(
+        r'class="band_name"[^>]*>([\s\S]*?)</h1>',
+        caseSensitive: false,
+      ).firstMatch(html);
+      if (block != null) {
+        bandName = _decodeHtml(
+          block.group(1)!.replaceAll(RegExp(r'<[^>]+>'), '').trim(),
+        );
+      }
     }
+    if (bandName.isEmpty) {
+      final h1 = RegExp(
+        r'class="band_name"[^>]*>\s*(?:<a[^>]*>)?([^<]+)',
+        caseSensitive: false,
+      ).firstMatch(html);
+      if (h1 != null) {
+        bandName = _decodeHtml(h1.group(1)!.trim());
+      }
+    }
+    // Never keep raw HTML fragments in the name field.
+    bandName = bandName.replaceAll(RegExp(r'<[^>]+>'), '').trim();
 
     String dd(String label) {
       final re = RegExp(
@@ -828,33 +851,11 @@ class BandDiscoverService {
   http.Client _maHtmlClient() =>
       _htmlClient ??= createMetalArchivesHttpClient();
 
-  bool _looksLikeCloudflareChallenge(String body) {
-    final lower = body.toLowerCase();
-    // Real MA pages embed Cloudflare's jsd script (`/cdn-cgi/challenge-platform/...`).
-    // That is not a block page — only treat interstitials as blocked.
-    if (lower.contains('class="band_name"') ||
-        lower.contains('var bandname =') ||
-        lower.contains('id="band_stats"') ||
-        lower.contains('class="display discog"')) {
-      return false;
-    }
-    return lower.contains('just a moment...') ||
-        lower.contains('<title>just a moment') ||
-        lower.contains('cf-browser-verification') ||
-        lower.contains('checking your browser') ||
-        lower.contains('cdn-cgi/challenge-platform/h/');
-  }
-
   Future<String> _fetchHtml(String url) =>
       _fetchMaBody(url, expectJson: false);
 
   bool _isAcceptableMaBody(String body, {required bool expectJson}) {
-    if (_looksLikeCloudflareChallenge(body)) return false;
-    if (expectJson) {
-      final trimmed = body.trimLeft();
-      return trimmed.startsWith('{') || trimmed.startsWith('[');
-    }
-    return body.length >= 500;
+    return MaWebHtmlFetch.isAcceptableMaBody(body, expectJson: expectJson);
   }
 
   Future<String> _fetchMaBody(
