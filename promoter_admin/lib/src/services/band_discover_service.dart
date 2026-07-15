@@ -467,15 +467,21 @@ class BandDiscoverService {
   /// (case + accent fold; e.g. ü≈u, ñ≈n). Never uses MA "exact" search — that
   /// misses ASCII vs accented spellings.
   Future<List<MaBandSearchHit>> _searchMetalArchivesExact(String name) async {
-    final queries = <String>{name};
-    final folded = foldBandNameForMatch(name);
-    if (folded.isNotEmpty) queries.add(folded);
-
     final byUrl = <String, MaBandSearchHit>{};
-    for (final query in queries) {
-      for (final hit in await _fetchMetalArchivesSearchRows(query)) {
+    void absorb(Iterable<MaBandSearchHit> hits) {
+      for (final hit in hits) {
         if (!bandNamesEqualForDiscover(hit.name, name)) continue;
         byUrl.putIfAbsent(hit.url, () => hit);
+      }
+    }
+
+    absorb(await _fetchMetalArchivesSearchRows(name));
+    // Only pay for a second search when the original spelling found nothing.
+    if (byUrl.isEmpty) {
+      final folded = foldBandNameForMatch(name);
+      // String inequality: e.g. "Mötley" → also try "motley" against MA's index.
+      if (folded.isNotEmpty && folded != name) {
+        absorb(await _fetchMetalArchivesSearchRows(folded));
       }
     }
     return byUrl.values.toList();
@@ -496,16 +502,15 @@ class BandDiscoverService {
         'iDisplayLength': '200',
       },
     );
-    final body = await _fetchMaBody(uri.toString(), expectJson: true);
-    final payload = jsonDecode(body) as Map<String, dynamic>;
-    final rows = (payload['aaData'] as List<dynamic>?) ?? const [];
-    final hits = <MaBandSearchHit>[];
-    for (final row in rows) {
-      if (row is! List) continue;
-      final hit = parseMetalArchivesSearchHit(row);
-      if (hit != null) hits.add(hit);
+    // Prefer JSON, but WebView/CF sometimes returns HTML (or HTML-wrapped /
+    // mangled) search content. Parse either form.
+    String body;
+    try {
+      body = await _fetchMaBody(uri.toString(), expectJson: true);
+    } catch (_) {
+      body = await _fetchMaBody(uri.toString(), expectJson: false);
     }
-    return hits;
+    return parseMetalArchivesSearchResponse(body);
   }
 
   /// MusicBrainz open search, then keep only tight Discover matches on
@@ -864,14 +869,37 @@ class BandDiscoverService {
   }) async {
     Object? lastError;
 
-    // iOS WKWebView / Windows WebView2: run Cloudflare's JS challenge.
-    // Plain HttpClient/curl get HTTP 403 from Cloudflare on Windows.
+    // iOS: Cupertino/URLSession is often enough and much faster than WKWebView.
+    // Prefer it first; use WKWebView only when the response is blocked/empty.
+    if (Platform.isIOS) {
+      try {
+        final resp = await _maHtmlClient()
+            .get(
+              Uri.parse(url),
+              headers: {'User-Agent': kMetalArchivesUserAgent},
+            )
+            .timeout(const Duration(seconds: 12));
+        if (resp.statusCode >= 200 &&
+            resp.statusCode < 300 &&
+            _isAcceptableMaBody(resp.body, expectJson: expectJson)) {
+          return resp.body;
+        }
+        lastError =
+            'HTTP ${resp.statusCode} (${resp.body.length} bytes)';
+      } catch (e) {
+        lastError = e;
+      }
+    }
+
+    // Windows (always) / iOS (fallback): browser engine for Cloudflare JS.
     if (MaWebHtmlFetch.isSupported) {
       try {
         final html = await MaWebHtmlFetch.fetchHtml(
           url,
           expectJson: expectJson,
-        ).timeout(const Duration(seconds: 50));
+        ).timeout(
+          Duration(seconds: Platform.isIOS ? 32 : 50),
+        );
         if (_isAcceptableMaBody(html, expectJson: expectJson)) {
           return html;
         }
@@ -883,22 +911,25 @@ class BandDiscoverService {
       }
     }
 
-    try {
-      final resp = await _maHtmlClient()
-          .get(
-            Uri.parse(url),
-            headers: {'User-Agent': kMetalArchivesUserAgent},
-          )
-          .timeout(const Duration(seconds: 25));
-      if (resp.statusCode >= 200 &&
-          resp.statusCode < 300 &&
-          _isAcceptableMaBody(resp.body, expectJson: expectJson)) {
-        return resp.body;
+    // macOS / Windows: Dart/URLSession client (Windows has GTS roots bundled).
+    if (!Platform.isIOS) {
+      try {
+        final resp = await _maHtmlClient()
+            .get(
+              Uri.parse(url),
+              headers: {'User-Agent': kMetalArchivesUserAgent},
+            )
+            .timeout(const Duration(seconds: 25));
+        if (resp.statusCode >= 200 &&
+            resp.statusCode < 300 &&
+            _isAcceptableMaBody(resp.body, expectJson: expectJson)) {
+          return resp.body;
+        }
+        lastError =
+            'HTTP ${resp.statusCode} (${resp.body.length} bytes)';
+      } catch (e) {
+        lastError = e;
       }
-      lastError =
-          'HTTP ${resp.statusCode} (${resp.body.length} bytes)';
-    } catch (e) {
-      lastError = e;
     }
 
     // Desktop curl fallback (macOS/Linux). Helps with TLS quirks; Cloudflare
@@ -1220,9 +1251,87 @@ const _diacriticAscii = <String, String>{
 };
 
 final _maSearchLink = RegExp(
-  r'''href=["'](https?://(?:www\.)?metal-archives\.com/bands/[^"']+)["'][^>]*>([^<]+)''',
+  // MA sometimes prefixes a strong match with '*" before the <a>.
+  r'''\*?\s*<a[^>]*href=["'](https?://(?:www\.)?metal-archives\.com/bands/[^"']+)["'][^>]*>([^<]+)''',
   caseSensitive: false,
 );
+
+/// Parse Metal Archives ajax-advanced JSON **or** HTML search body.
+List<MaBandSearchHit> parseMetalArchivesSearchResponse(String body) {
+  final text = MaWebHtmlFetch.unwrapJsStringResult(body);
+  final byUrl = <String, MaBandSearchHit>{};
+
+  void absorb(MaBandSearchHit? hit) {
+    if (hit == null) return;
+    byUrl.putIfAbsent(hit.url, () => hit);
+  }
+
+  // 1) Prefer structured ajax JSON when present.
+  final jsonPayload = _extractJsonObject(text);
+  if (jsonPayload != null) {
+    try {
+      final decoded = jsonDecode(jsonPayload);
+      if (decoded is Map) {
+        final rows = (decoded['aaData'] as List<dynamic>?) ?? const [];
+        for (final row in rows) {
+          if (row is! List) continue;
+          absorb(parseMetalArchivesSearchHit(row));
+        }
+      }
+    } catch (_) {
+      // Fall through to HTML scrape.
+    }
+  }
+
+  // 2) Scrape band links from HTML (or broken / HTML-wrapped JSON).
+  // Always run when JSON yielded nothing — MA often returns markup-only bodies
+  // through WebView (including a leading '*' on strong matches).
+  if (byUrl.isEmpty) {
+    for (final match in _maSearchLink.allMatches(text)) {
+      final url = match.group(1)?.trim() ?? '';
+      final name = _decodeHtmlEntities(match.group(2)?.trim() ?? '');
+      if (url.isEmpty || name.isEmpty) continue;
+      absorb(MaBandSearchHit(name: name, url: url));
+    }
+  }
+
+  return byUrl.values.toList();
+}
+
+/// Return the first top-level `{ … }` slice, or null if none.
+String? _extractJsonObject(String body) {
+  final start = body.indexOf('{');
+  if (start < 0) return null;
+  var depth = 0;
+  var inString = false;
+  var escape = false;
+  for (var i = start; i < body.length; i++) {
+    final ch = body[i];
+    if (inString) {
+      if (escape) {
+        escape = false;
+      } else if (ch == r'\') {
+        escape = true;
+      } else if (ch == '"') {
+        inString = false;
+      }
+      continue;
+    }
+    if (ch == '"') {
+      inString = true;
+      continue;
+    }
+    if (ch == '{') depth++;
+    if (ch == '}') {
+      depth--;
+      if (depth == 0) {
+        return body.substring(start, i + 1);
+      }
+    }
+  }
+  // Incomplete object — still try decode from start.
+  return body.substring(start);
+}
 
 /// Parse one Metal Archives ajax-advanced band search row.
 MaBandSearchHit? parseMetalArchivesSearchHit(List<dynamic> row) {

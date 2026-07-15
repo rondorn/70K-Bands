@@ -49,9 +49,57 @@ void main() {
       expect(hit.formedYear, '1990');
     });
 
+    test('parses strong-match cells that prefix name with *', () {
+      final hit = parseMetalArchivesSearchHit([
+        '*<a href="https://www.metal-archives.com/bands/Absolute_Darkness/3540421383">Absolute Darkness</a>',
+        'Black Metal',
+        'United States',
+        '2020',
+      ]);
+      expect(hit, isNotNull);
+      expect(hit!.name, 'Absolute Darkness');
+      expect(hit.url, contains('3540421383'));
+    });
+
     test('returns null for malformed rows', () {
       expect(parseMetalArchivesSearchHit(const []), isNull);
       expect(parseMetalArchivesSearchHit(['no link here']), isNull);
+    });
+  });
+
+  group('parseMetalArchivesSearchResponse', () {
+    test('parses valid ajax JSON', () {
+      const body = '''
+{"aaData":[["<a href=\\"https://www.metal-archives.com/bands/Exhumed/143\\">Exhumed</a>","Death Metal","United States","1990"]]}
+''';
+      final hits = parseMetalArchivesSearchResponse(body);
+      expect(hits, hasLength(1));
+      expect(hits.single.name, 'Exhumed');
+    });
+
+    test('scrapes HTML when body is not JSON', () {
+      const body = '''
+<html><body>
+*<a href="https://www.metal-archives.com/bands/Absolute_Darkness/3540421383">Absolute Darkness</a>
+</body></html>
+''';
+      final hits = parseMetalArchivesSearchResponse(body);
+      expect(hits, hasLength(1));
+      expect(hits.single.name, 'Absolute Darkness');
+      expect(hits.single.url, contains('3540421383'));
+    });
+
+    test('recovers when JSON decode would FormatException', () {
+      // Mimics WebView returning markup where a bare * breaks jsonDecode.
+      const body = '''
+{
+  "junk": true
+}
+*<a href="https://www.metal-archives.com/bands/Absolute_Darkness/3540421383">Absolute Darkness</a>
+''';
+      // First object has no aaData; HTML scrape should still find the band.
+      final hits = parseMetalArchivesSearchResponse(body);
+      expect(hits.any((h) => h.name == 'Absolute Darkness'), isTrue);
     });
   });
 
