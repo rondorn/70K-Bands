@@ -11,6 +11,7 @@ import 'package:promoter_admin/src/services/location_parse.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
 import 'package:promoter_admin/src/widgets/dropbox_folder_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class BandsSection extends StatefulWidget {
   const BandsSection({
@@ -51,6 +52,8 @@ class _BandsSectionState extends State<BandsSection> {
   bool _discovering = false;
   String? _discoverStatus;
   String? _discoverWarnings;
+  String? _discoverPickListUrl;
+  String? _discoverPickListLabel;
   int? _editingIndex;
   bool _addDescription = false;
 
@@ -148,6 +151,8 @@ class _BandsSectionState extends State<BandsSection> {
     _description.clear();
     _discoverStatus = null;
     _discoverWarnings = null;
+    _discoverPickListUrl = null;
+    _discoverPickListLabel = null;
   }
 
   void _fillForm(BandRow band) {
@@ -167,6 +172,8 @@ class _BandsSectionState extends State<BandsSection> {
     _priorYears.text = (band.fields['priorYears'] ?? '').trim();
     _discoverStatus = null;
     _discoverWarnings = null;
+    _discoverPickListUrl = null;
+    _discoverPickListLabel = null;
   }
 
   /// Full US state names → two-letter codes (e.g. California → CA).
@@ -226,12 +233,16 @@ class _BandsSectionState extends State<BandsSection> {
         _discoverStatus =
             'Enter a Metal Archives URL, MusicBrainz URL, or band name.';
         _discoverWarnings = null;
+        _discoverPickListUrl = null;
+        _discoverPickListLabel = null;
       });
       return;
     }
     setState(() {
       _discovering = true;
       _discoverWarnings = null;
+      _discoverPickListUrl = null;
+      _discoverPickListLabel = null;
       if (ma.isNotEmpty) {
         _discoverStatus = Platform.isIOS
             ? 'Querying Metal Archives (may take ~15–30s)…'
@@ -239,7 +250,8 @@ class _BandsSectionState extends State<BandsSection> {
       } else if (mb.isNotEmpty) {
         _discoverStatus = 'Querying MusicBrainz…';
       } else {
-        _discoverStatus = 'Searching MusicBrainz by band name…';
+        _discoverStatus =
+            'Searching Metal Archives by exact name (then MusicBrainz)…';
       }
     });
     try {
@@ -255,6 +267,10 @@ class _BandsSectionState extends State<BandsSection> {
           _discoverStatus = result.error;
           _discoverWarnings =
               result.warnings.isEmpty ? null : result.warnings.join(' ');
+          _discoverPickListUrl =
+              result.pickListUrl.isEmpty ? null : result.pickListUrl;
+          _discoverPickListLabel =
+              result.pickListLabel.isEmpty ? null : result.pickListLabel;
         });
         return;
       }
@@ -284,15 +300,19 @@ class _BandsSectionState extends State<BandsSection> {
       setState(() {
         _discovering = false;
         _discoverStatus =
-            'Populated from ${result.source}. Review and save.';
+            'Populated from ${result.source}.';
         _discoverWarnings =
             result.warnings.isEmpty ? null : result.warnings.join(' ');
+        _discoverPickListUrl = null;
+        _discoverPickListLabel = null;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _discovering = false;
         _discoverStatus = 'Request failed: $e';
+        _discoverPickListUrl = null;
+        _discoverPickListLabel = null;
       });
     }
   }
@@ -704,6 +724,32 @@ class _BandsSectionState extends State<BandsSection> {
                       ),
                     ),
                   ],
+                  if (_discoverPickListUrl != null) ...[
+                    const SizedBox(height: 4),
+                    TextButton(
+                      onPressed: () async {
+                        final uri = Uri.tryParse(_discoverPickListUrl!);
+                        if (uri == null) return;
+                        await launchUrl(
+                          uri,
+                          mode: LaunchMode.externalApplication,
+                        );
+                      },
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        foregroundColor: AppColors.accent,
+                      ),
+                      child: Text(
+                        _discoverPickListLabel ?? 'Open search results',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                  ],
                   if (_discoverWarnings != null) ...[
                     const SizedBox(height: 4),
                     Text(
@@ -715,8 +761,11 @@ class _BandsSectionState extends State<BandsSection> {
                     ),
                   ],
                   const HintText(
-                    'Discover fills fields from Metal Archives or MusicBrainz '
-                    'using the band name and/or URLs below.',
+                    'Standard: type the band name, click Discover, then verify. '
+                    'If several matches appear, research the links, paste the '
+                    'correct URL into Metal Archives or MusicBrainz below, and '
+                    'Discover again. You can always edit or replace any field by '
+                    'hand. Prefer a band page URL when name search is ambiguous.',
                   ),
                 ],
               ),

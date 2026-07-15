@@ -51,3 +51,4 @@ data_maintenance_tools/alert_queue/.venv/
 *.md
 !README.md
 !**/README.md
+!**/USER_GUIDE.md

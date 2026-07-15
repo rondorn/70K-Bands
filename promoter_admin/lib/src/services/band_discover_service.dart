@@ -38,12 +38,24 @@ class BandDiscoverService {
 
     var maUrl = metalArchivesUrl.trim();
     var mbUrl = musicBrainzUrl.trim();
+    final inputName = bandName.trim();
 
     if (maUrl.isNotEmpty &&
         _mbArtistUrl.hasMatch(maUrl) &&
         mbUrl.isEmpty) {
       mbUrl = maUrl;
       maUrl = '';
+    }
+
+    // Name-only: MA exact → unique use / multi reject; else MB exact same rules.
+    if (maUrl.isEmpty && mbUrl.isEmpty) {
+      if (inputName.isEmpty) {
+        return DiscoverResult.fail(
+          'Enter a Metal Archives URL, MusicBrainz URL, or band name.',
+          warnings,
+        );
+      }
+      return _discoverByExactName(inputName);
     }
 
     if (maUrl.isNotEmpty && !_maAnyBand.hasMatch(maUrl)) {
@@ -55,7 +67,7 @@ class BandDiscoverService {
 
     if (maUrl.isNotEmpty) {
       try {
-        final ma = await _fromMetalArchives(maUrl, bandName);
+        final ma = await _fromMetalArchives(maUrl, inputName);
         data.addAll({
           for (final e in ma.data.entries)
             if (e.value.trim().isNotEmpty) e.key: e.value,
@@ -67,12 +79,14 @@ class BandDiscoverService {
       }
     }
 
+    // MusicBrainz only when the user pasted an MB URL (never as silent fill-in
+    // after Metal Archives already resolved the band).
     if (mbUrl.isNotEmpty) {
       try {
         final mb = await _fromMusicBrainzUrl(
           mbUrl,
-          fallbackName: bandName.isNotEmpty
-              ? bandName
+          fallbackName: inputName.isNotEmpty
+              ? inputName
               : (data['bandName'] ?? ''),
         );
         _mergeMissing(data, mb.data);
@@ -81,27 +95,102 @@ class BandDiscoverService {
       } catch (e) {
         warnings.add(e.toString());
       }
-    } else {
-      final resolved =
-          (data['bandName'] ?? bandName).trim();
-      final needsMb = data['bandName'] == null ||
-          ((data['country'] ?? '').isEmpty &&
-              (data['genre'] ?? '').isEmpty &&
-              (data['officalSite'] ?? '').isEmpty);
-      if (needsMb && resolved.isNotEmpty) {
-        final mb = await _fromMusicBrainzName(resolved);
-        _mergeMissing(data, mb.data);
-        warnings.addAll(mb.warnings);
-        if ((mb.data['bandName'] ?? '').isNotEmpty) {
-          sources.add('musicbrainz');
-        }
+    }
+
+    if ((data['bandName'] ?? '').isEmpty && inputName.isNotEmpty) {
+      data['bandName'] = inputName;
+    }
+
+    return _finalizeDiscover(data, warnings, sources);
+  }
+
+  Future<DiscoverResult> _discoverByExactName(String name) async {
+    final warnings = <String>[];
+    final data = <String, String>{};
+    final sources = <String>[];
+
+    List<MaBandSearchHit> maHits;
+    try {
+      maHits = await _searchMetalArchivesExact(name);
+    } catch (e) {
+      return DiscoverResult.fail(
+        'Metal Archives search failed ($e). Try again, or paste a band URL.',
+        warnings,
+      );
+    }
+
+    if (maHits.length > 1) {
+      return DiscoverResult.fail(
+        _ambiguousMaMessage(name, maHits.length),
+        warnings,
+        pickListUrl: metalArchivesSearchUrl(name),
+        pickListLabel: 'Open Metal Archives results',
+      );
+    }
+
+    if (maHits.length == 1) {
+      try {
+        final ma = await _fromMetalArchives(maHits.first.url, name);
+        data.addAll({
+          for (final e in ma.data.entries)
+            if (e.value.trim().isNotEmpty) e.key: e.value,
+        });
+        warnings.addAll(ma.warnings);
+        sources.add('metal_archives');
+      } catch (e) {
+        return DiscoverResult.fail(
+          'Found "$name" on Metal Archives but could not load the page ($e).',
+          warnings,
+        );
       }
+      // Unique MA hit → stop here. Do not call MusicBrainz.
+      return _finalizeDiscover(data, warnings, sources);
     }
 
-    if ((data['bandName'] ?? '').isEmpty && bandName.trim().isNotEmpty) {
-      data['bandName'] = bandName.trim();
+    // Zero MA hits → MusicBrainz exact name.
+    final mb = await _lookupMusicBrainzExactName(name);
+    warnings.addAll(mb.warnings);
+    if (mb.status == ExactNameStatus.unique) {
+      data.addAll({
+        for (final e in mb.data.entries)
+          if (e.value.trim().isNotEmpty) e.key: e.value,
+      });
+      sources.add('musicbrainz');
+      return _finalizeDiscover(data, warnings, sources);
+    }
+    if (mb.status == ExactNameStatus.ambiguous) {
+      return DiscoverResult.fail(
+        'No Metal Archives match, but MusicBrainz has '
+        '${mb.matchCount} artists matching "$name". '
+        'Open the results, pick the correct artist, paste that URL into '
+        'MusicBrainz below, then Discover again.',
+        warnings,
+        pickListUrl: musicBrainzSearchUrl(name),
+        pickListLabel: 'Open MusicBrainz results',
+      );
+    }
+    if (mb.status == ExactNameStatus.error) {
+      return DiscoverResult.fail(
+        'No exact match on Metal Archives, and MusicBrainz lookup failed'
+        '${mb.error.isEmpty ? '' : ' (${mb.error})'}. '
+        'Paste a band URL, or try again.',
+        warnings,
+      );
     }
 
+    return DiscoverResult.fail(
+      '"$name" does not appear to exist on Metal Archives or MusicBrainz '
+      '(tight name match: case and accents like ü/u may differ). '
+      'Check the spelling, or paste a Metal Archives / MusicBrainz URL.',
+      warnings,
+    );
+  }
+
+  DiscoverResult _finalizeDiscover(
+    Map<String, String> data,
+    List<String> warnings,
+    List<String> sources,
+  ) {
     final name = (data['bandName'] ?? '').trim();
     final latestAlbum = (data['latestAlbum'] ?? '').trim();
     if (name.isNotEmpty) {
@@ -111,7 +200,7 @@ class BandDiscoverService {
       data['youtube'] = _youtubeSearch(name, latestAlbum);
     }
 
-    if ((data['bandName'] ?? '').isEmpty) {
+    if (name.isEmpty) {
       return DiscoverResult.fail(
         'No band data found. Provide a Metal Archives URL, MusicBrainz URL, or band name.',
         warnings,
@@ -126,8 +215,25 @@ class BandDiscoverService {
     return DiscoverResult.ok(
       data: data,
       warnings: warnings,
-      source: sources.isEmpty ? 'unknown' : sources.join('+'),
+      source: _formatDiscoverSource(sources),
     );
+  }
+
+  String _formatDiscoverSource(List<String> sources) {
+    if (sources.isEmpty) return 'unknown';
+    return sources
+        .map((s) => switch (s) {
+              'metal_archives' => 'Metal Archives',
+              'musicbrainz' => 'MusicBrainz',
+              _ => s,
+            })
+        .join(' + ');
+  }
+
+  String _ambiguousMaMessage(String name, int count) {
+    return 'Metal Archives has $count bands matching "$name". '
+        'Open the results, pick the correct band, paste that URL into '
+        'Metal Archives below, then Discover again.';
   }
 
   void _mergeMissing(Map<String, String> target, Map<String, String> incoming) {
@@ -334,32 +440,94 @@ class BandDiscoverService {
     return _fromMusicBrainzArtist(m.group(1)!.toLowerCase(), fallbackName);
   }
 
-  Future<({Map<String, String> data, List<String> warnings})> _fromMusicBrainzName(
-    String name,
+  /// Open Metal Archives name search, then keep only tight Discover matches
+  /// (case + accent fold; e.g. ü≈u, ñ≈n). Never uses MA "exact" search — that
+  /// misses ASCII vs accented spellings.
+  Future<List<MaBandSearchHit>> _searchMetalArchivesExact(String name) async {
+    final queries = <String>{name};
+    final folded = foldBandNameForMatch(name);
+    if (folded.isNotEmpty) queries.add(folded);
+
+    final byUrl = <String, MaBandSearchHit>{};
+    for (final query in queries) {
+      for (final hit in await _fetchMetalArchivesSearchRows(query)) {
+        if (!bandNamesEqualForDiscover(hit.name, name)) continue;
+        byUrl.putIfAbsent(hit.url, () => hit);
+      }
+    }
+    return byUrl.values.toList();
+  }
+
+  Future<List<MaBandSearchHit>> _fetchMetalArchivesSearchRows(
+    String query,
   ) async {
+    final uri = Uri.https(
+      'www.metal-archives.com',
+      '/search/ajax-advanced/searching/bands/',
+      {
+        'exactBandMatch': '0',
+        'bandName': query,
+        'sEcho': '1',
+        'iColumns': '6',
+        'iDisplayStart': '0',
+        'iDisplayLength': '200',
+      },
+    );
+    final body = await _fetchMaBody(uri.toString(), expectJson: true);
+    final payload = jsonDecode(body) as Map<String, dynamic>;
+    final rows = (payload['aaData'] as List<dynamic>?) ?? const [];
+    final hits = <MaBandSearchHit>[];
+    for (final row in rows) {
+      if (row is! List) continue;
+      final hit = parseMetalArchivesSearchHit(row);
+      if (hit != null) hits.add(hit);
+    }
+    return hits;
+  }
+
+  /// MusicBrainz open search, then keep only tight Discover matches on
+  /// name / sort-name (case + accent fold). Never auto-picks among duplicates.
+  Future<ExactNameLookup> _lookupMusicBrainzExactName(String name) async {
     final warnings = <String>[];
-    final query = Uri.encodeQueryComponent('artist:"$name"');
-    final search = await _mbGet('/artist/?query=$query&fmt=json&limit=5');
-    final artists = (search['artists'] as List<dynamic>?) ?? const [];
-    if (artists.isEmpty) {
-      return (data: <String, String>{}, warnings: ["No MusicBrainz artist found for '$name'."]);
+    try {
+      final queries = <String>{name};
+      final folded = foldBandNameForMatch(name);
+      if (folded.isNotEmpty) queries.add(folded);
+
+      final exactById = <String, Map>{};
+      for (final q in queries) {
+        final encoded = Uri.encodeQueryComponent(q);
+        final search =
+            await _mbGet('/artist/?query=$encoded&fmt=json&limit=25');
+        final artists = (search['artists'] as List<dynamic>?) ?? const [];
+        for (final raw in artists) {
+          if (raw is! Map) continue;
+          if (!musicBrainzArtistMatchesExactName(raw, name)) continue;
+          final id = (raw['id'] ?? '').toString();
+          if (id.isEmpty) continue;
+          exactById[id] = raw;
+        }
+      }
+      final exact = exactById.values.toList();
+      if (exact.isEmpty) {
+        return ExactNameLookup.notFound(warnings);
+      }
+      if (exact.length > 1) {
+        return ExactNameLookup.ambiguous(exact.length, warnings);
+      }
+      final mbid = exact.first['id']?.toString() ?? '';
+      if (mbid.isEmpty) {
+        return ExactNameLookup.error(
+          'MusicBrainz search returned no artist ID.',
+          warnings,
+        );
+      }
+      final detail = await _fromMusicBrainzArtist(mbid, name);
+      warnings.addAll(detail.warnings);
+      return ExactNameLookup.unique(detail.data, warnings);
+    } catch (e) {
+      return ExactNameLookup.error(e.toString(), warnings);
     }
-    final mbid = (artists.first as Map)['id']?.toString() ?? '';
-    if (mbid.isEmpty) {
-      return (
-        data: <String, String>{},
-        warnings: ['MusicBrainz search returned no artist ID.']
-      );
-    }
-    final detail = await _fromMusicBrainzArtist(mbid, name);
-    warnings.addAll(detail.warnings);
-    if (artists.length > 1) {
-      warnings.add(
-        "MusicBrainz returned ${artists.length} matches; "
-        "using '${detail.data['bandName'] ?? name}'.",
-      );
-    }
-    return (data: detail.data, warnings: warnings);
   }
 
   Future<({Map<String, String> data, List<String> warnings})> _fromMusicBrainzArtist(
@@ -380,9 +548,6 @@ class BandDiscoverService {
     }
 
     final latestAlbum = _latestStudioAlbum(detail);
-    if (latestAlbum.$1.isEmpty && latestAlbum.$2.isNotEmpty) {
-      warnings.addAll(latestAlbum.$2);
-    }
 
     var wikipedia = _urlForTypes(detail, const ['wikipedia']);
     if (wikipedia.isNotEmpty &&
@@ -400,7 +565,7 @@ class BandDiscoverService {
       official = _urlForTypes(detail, const ['bandcamp']);
     }
 
-    final image = await _resolveMbImage(detail, warnings);
+    final image = await _resolveMbImage(detail);
 
     var location = parseMusicBrainzLocation(detail);
     var state = location.state;
@@ -427,22 +592,6 @@ class BandDiscoverService {
       if (location.city.isNotEmpty) 'city': location.city,
       if (state.isNotEmpty) 'state': state,
     };
-
-    if (data['country']!.isEmpty) {
-      warnings.add('Country not listed on MusicBrainz.');
-    }
-    if (data['genre']!.isEmpty) {
-      warnings.add('Genre/tags not found on MusicBrainz.');
-    }
-    if (data['officalSite']!.isEmpty) {
-      warnings.add('No official homepage or Bandcamp link on MusicBrainz.');
-    }
-    if (data['wikipedia']!.isEmpty) {
-      warnings.add('No English Wikipedia link on MusicBrainz (Wikidata-only).');
-    }
-    if (data['metalArchives']!.isEmpty) {
-      warnings.add('No Metal Archives link on MusicBrainz.');
-    }
 
     return (data: data, warnings: warnings);
   }
@@ -564,10 +713,7 @@ class BandDiscoverService {
     return (title, const []);
   }
 
-  Future<String> _resolveMbImage(
-    Map<String, dynamic> detail,
-    List<String> warnings,
-  ) async {
+  Future<String> _resolveMbImage(Map<String, dynamic> detail) async {
     // Prefer Cover Art Archive for latest album (Bandcamp scrape is heavier).
     final groups = (detail['release-groups'] as List<dynamic>?) ?? const [];
     final albums = groups
@@ -580,7 +726,6 @@ class BandDiscoverService {
         return db.compareTo(da);
       });
     if (albums.isEmpty) {
-      warnings.add('No Bandcamp or album cover image found.');
       return '';
     }
     final rgId = albums.first['id']?.toString() ?? '';
@@ -605,13 +750,11 @@ class BandDiscoverService {
                       : ''))
               .toString();
           if (url.isNotEmpty) {
-            warnings.add('Using latest album cover from Cover Art Archive.');
             return url;
           }
         }
       }
     } catch (_) {}
-    warnings.add('No Bandcamp or album cover image found.');
     return '';
   }
 
@@ -702,7 +845,22 @@ class BandDiscoverService {
         lower.contains('cdn-cgi/challenge-platform/h/');
   }
 
-  Future<String> _fetchHtml(String url) async {
+  Future<String> _fetchHtml(String url) =>
+      _fetchMaBody(url, expectJson: false);
+
+  bool _isAcceptableMaBody(String body, {required bool expectJson}) {
+    if (_looksLikeCloudflareChallenge(body)) return false;
+    if (expectJson) {
+      final trimmed = body.trimLeft();
+      return trimmed.startsWith('{') || trimmed.startsWith('[');
+    }
+    return body.length >= 500;
+  }
+
+  Future<String> _fetchMaBody(
+    String url, {
+    required bool expectJson,
+  }) async {
     Object? lastError;
 
     // iPad/iPhone: WKWebView can complete Cloudflare's browser challenge.
@@ -711,10 +869,12 @@ class BandDiscoverService {
       try {
         final html = await MaWebHtmlFetch.fetchHtml(url)
             .timeout(const Duration(seconds: 40));
-        if (html.length >= 500 && !_looksLikeCloudflareChallenge(html)) {
+        if (_isAcceptableMaBody(html, expectJson: expectJson)) {
           return html;
         }
-        lastError = 'WKWebView returned blocked or short HTML';
+        lastError = expectJson
+            ? 'WKWebView returned non-JSON or blocked body'
+            : 'WKWebView returned blocked or short HTML';
       } catch (e) {
         lastError = e;
       }
@@ -729,8 +889,7 @@ class BandDiscoverService {
           .timeout(const Duration(seconds: 25));
       if (resp.statusCode >= 200 &&
           resp.statusCode < 300 &&
-          resp.body.length >= 500 &&
-          !_looksLikeCloudflareChallenge(resp.body)) {
+          _isAcceptableMaBody(resp.body, expectJson: expectJson)) {
         return resp.body;
       }
       lastError =
@@ -756,8 +915,7 @@ class BandDiscoverService {
         );
         final out = (result.stdout as String?) ?? '';
         if (result.exitCode == 0 &&
-            out.length >= 500 &&
-            !_looksLikeCloudflareChallenge(out)) {
+            _isAcceptableMaBody(out, expectJson: expectJson)) {
           return out;
         }
       } catch (e) {
@@ -766,8 +924,7 @@ class BandDiscoverService {
     }
 
     throw StateError(
-      'Metal Archives returned a blocked or empty response'
-      '${lastError == null ? '' : ' ($lastError)'}.',
+      'Metal Archives returned a blocked or empty response ($lastError).',
     );
   }
 
@@ -848,6 +1005,8 @@ class DiscoverResult {
     this.warnings = const [],
     this.source = '',
     this.error = '',
+    this.pickListUrl = '',
+    this.pickListLabel = '',
   });
 
   factory DiscoverResult.ok({
@@ -862,12 +1021,217 @@ class DiscoverResult {
         source: source,
       );
 
-  factory DiscoverResult.fail(String error, List<String> warnings) =>
-      DiscoverResult._(ok: false, error: error, warnings: warnings);
+  factory DiscoverResult.fail(
+    String error,
+    List<String> warnings, {
+    String pickListUrl = '',
+    String pickListLabel = '',
+  }) =>
+      DiscoverResult._(
+        ok: false,
+        error: error,
+        warnings: warnings,
+        pickListUrl: pickListUrl,
+        pickListLabel: pickListLabel,
+      );
 
   final bool ok;
   final Map<String, String> data;
   final List<String> warnings;
   final String source;
   final String error;
+
+  /// Browser link to the open search results when Discover refuses to choose.
+  final String pickListUrl;
+  final String pickListLabel;
+}
+
+enum ExactNameStatus { unique, ambiguous, notFound, error }
+
+class ExactNameLookup {
+  ExactNameLookup._({
+    required this.status,
+    this.data = const {},
+    this.warnings = const [],
+    this.matchCount = 0,
+    this.error = '',
+  });
+
+  factory ExactNameLookup.unique(
+    Map<String, String> data,
+    List<String> warnings,
+  ) =>
+      ExactNameLookup._(
+        status: ExactNameStatus.unique,
+        data: data,
+        warnings: warnings,
+        matchCount: 1,
+      );
+
+  factory ExactNameLookup.ambiguous(int count, List<String> warnings) =>
+      ExactNameLookup._(
+        status: ExactNameStatus.ambiguous,
+        warnings: warnings,
+        matchCount: count,
+      );
+
+  factory ExactNameLookup.notFound(List<String> warnings) =>
+      ExactNameLookup._(
+        status: ExactNameStatus.notFound,
+        warnings: warnings,
+      );
+
+  factory ExactNameLookup.error(String error, List<String> warnings) =>
+      ExactNameLookup._(
+        status: ExactNameStatus.error,
+        warnings: warnings,
+        error: error,
+      );
+
+  final ExactNameStatus status;
+  final Map<String, String> data;
+  final List<String> warnings;
+  final int matchCount;
+  final String error;
+}
+
+class MaBandSearchHit {
+  const MaBandSearchHit({
+    required this.name,
+    required this.url,
+    this.genre = '',
+    this.country = '',
+    this.formedYear = '',
+  });
+
+  final String name;
+  final String url;
+  final String genre;
+  final String country;
+  final String formedYear;
+}
+
+/// Metal Archives band-name search results page for ambiguous Discover picks.
+String metalArchivesSearchUrl(String name) => Uri.https(
+      'www.metal-archives.com',
+      '/search',
+      {'searchString': name, 'type': 'band_name'},
+    ).toString();
+
+/// MusicBrainz artist search results page for ambiguous Discover picks.
+String musicBrainzSearchUrl(String name) => Uri.https(
+      'musicbrainz.org',
+      '/search',
+      {
+        'query': name,
+        'type': 'artist',
+        'method': 'indexed',
+      },
+    ).toString();
+
+/// Fold band names for Discover matching: trim, lowercase, strip diacritics
+/// (ü→u, ñ→n / Spanish tilde, ÿ→y, …) and expand a few Latin ligatures (ß→ss).
+/// Keeps other spelling, spacing, and word differences unchanged.
+String foldBandNameForMatch(String input) {
+  final lower = input.trim().toLowerCase();
+  final buf = StringBuffer();
+  for (final rune in lower.runes) {
+    // Combining marks (including tilde U+0303 used to form ñ in NFD).
+    if (rune >= 0x0300 && rune <= 0x036F) {
+      continue;
+    }
+    final ch = String.fromCharCode(rune);
+    final mapped = _diacriticAscii[ch];
+    if (mapped != null) {
+      buf.write(mapped);
+      continue;
+    }
+    buf.write(ch);
+  }
+  return buf.toString();
+}
+
+/// Tight Discover name match: case-insensitive and diacritic-insensitive only.
+bool bandNamesEqualForDiscover(String a, String b) =>
+    foldBandNameForMatch(a) == foldBandNameForMatch(b);
+
+/// @nodoc Kept for older call sites / tests; same as [bandNamesEqualForDiscover].
+bool bandNamesEqualIgnoreCase(String a, String b) =>
+    bandNamesEqualForDiscover(a, b);
+
+/// MusicBrainz exact match: [name] or [sort-name] equals [query]
+/// (case + diacritic fold).
+///
+/// Enables typed "Green Jelly" / "Gurschach" against "Green Jellÿ" / "Gürschach".
+bool musicBrainzArtistMatchesExactName(Map artist, String query) {
+  final artistName = (artist['name'] ?? '').toString();
+  final sortName = (artist['sort-name'] ?? '').toString();
+  return bandNamesEqualForDiscover(artistName, query) ||
+      bandNamesEqualForDiscover(sortName, query);
+}
+
+/// Common Latin letters with diacritics → ASCII base (or ligature expansion).
+const _diacriticAscii = <String, String>{
+  'à': 'a', 'á': 'a', 'â': 'a', 'ã': 'a', 'ä': 'a', 'å': 'a', 'ā': 'a',
+  'ă': 'a', 'ą': 'a',
+  'ç': 'c', 'ć': 'c', 'ĉ': 'c', 'ċ': 'c', 'č': 'c',
+  'ď': 'd', 'đ': 'd', 'ð': 'd',
+  'è': 'e', 'é': 'e', 'ê': 'e', 'ë': 'e', 'ē': 'e', 'ĕ': 'e', 'ė': 'e',
+  'ę': 'e', 'ě': 'e',
+  'ĝ': 'g', 'ğ': 'g', 'ġ': 'g', 'ģ': 'g',
+  'ĥ': 'h', 'ħ': 'h',
+  'ì': 'i', 'í': 'i', 'î': 'i', 'ï': 'i', 'ĩ': 'i', 'ī': 'i', 'ĭ': 'i',
+  'į': 'i', 'ı': 'i',
+  'ĵ': 'j',
+  'ķ': 'k',
+  'ĺ': 'l', 'ļ': 'l', 'ľ': 'l', 'ŀ': 'l', 'ł': 'l',
+  'ñ': 'n', 'ń': 'n', 'ņ': 'n', 'ň': 'n', 'ŉ': 'n', 'ŋ': 'n',
+  'ò': 'o', 'ó': 'o', 'ô': 'o', 'õ': 'o', 'ö': 'o', 'ø': 'o', 'ō': 'o',
+  'ŏ': 'o', 'ő': 'o',
+  'œ': 'oe',
+  'ŕ': 'r', 'ŗ': 'r', 'ř': 'r',
+  'ś': 's', 'ŝ': 's', 'ş': 's', 'š': 's', 'ș': 's', 'ß': 'ss',
+  'ţ': 't', 'ť': 't', 'ŧ': 't', 'ț': 't',
+  'ù': 'u', 'ú': 'u', 'û': 'u', 'ü': 'u', 'ũ': 'u', 'ū': 'u', 'ŭ': 'u',
+  'ů': 'u', 'ű': 'u', 'ų': 'u',
+  'ŵ': 'w',
+  'ý': 'y', 'ÿ': 'y', 'ŷ': 'y',
+  'ź': 'z', 'ż': 'z', 'ž': 'z',
+  'æ': 'ae',
+  'þ': 'th',
+};
+
+final _maSearchLink = RegExp(
+  r'''href=["'](https?://(?:www\.)?metal-archives\.com/bands/[^"']+)["'][^>]*>([^<]+)''',
+  caseSensitive: false,
+);
+
+/// Parse one Metal Archives ajax-advanced band search row.
+MaBandSearchHit? parseMetalArchivesSearchHit(List<dynamic> row) {
+  if (row.isEmpty) return null;
+  final cell = row[0]?.toString() ?? '';
+  final match = _maSearchLink.firstMatch(cell);
+  if (match == null) return null;
+  final url = match.group(1)!.trim();
+  final name = _decodeHtmlEntities(match.group(2)!.trim());
+  if (name.isEmpty || url.isEmpty) return null;
+  return MaBandSearchHit(
+    name: name,
+    url: url,
+    genre: row.length > 1 ? _decodeHtmlEntities(row[1].toString().trim()) : '',
+    country:
+        row.length > 2 ? _decodeHtmlEntities(row[2].toString().trim()) : '',
+    formedYear:
+        row.length > 3 ? _decodeHtmlEntities(row[3].toString().trim()) : '',
+  );
+}
+
+String _decodeHtmlEntities(String value) {
+  return value
+      .replaceAll('&amp;', '&')
+      .replaceAll('&quot;', '"')
+      .replaceAll('&#39;', "'")
+      .replaceAll('&lt;', '<')
+      .replaceAll('&gt;', '>')
+      .replaceAll('&nbsp;', ' ');
 }

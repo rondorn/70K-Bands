@@ -9,6 +9,8 @@ Festival admin for artists, schedule, descriptions, and publish lives here.
 Other one-off tools (for example the 70K schedule QR poster) remain under
 `data_maintenance_tools/`.
 
+**Promoter / operator guide:** [docs/USER_GUIDE.md](docs/USER_GUIDE.md)
+
 ## Ownership model
 
 - **App developer** owns fan-app wiring and usually owns the official Testing /

@@ -89,7 +89,8 @@ class _PortalScreenState extends State<PortalScreen> {
         return _bandsTab == BandsTab.add
             ? (
                 heading: _bandFormIsEdit ? 'Edit Artist' : 'Add Artist',
-                subheading: 'Discover from Metal Archives or MusicBrainz',
+                subheading:
+                    'Prefer MA/MB URLs; name search only when the match is unique',
               )
             : (
                 heading: 'Artists',
