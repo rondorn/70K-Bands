@@ -263,11 +263,106 @@ class _SettingsSectionState extends State<SettingsSection> {
   Future<FestivalWorkspace> _draftReadyToPersist() async {
     final draft = _draft();
     _syncNormalizedDayDateFields(draft);
-    DayDateAlignment.requireAlignedLists(
+
+    // Count rule uses the normalized lists that will actually be saved.
+    final errors = DayDateAlignment.validateLists(
       days: draft.days,
       dates: draft.dates,
     );
+    // Also catch “7 date lines that collapse to 6 after dedupe” vs day count.
+    final rawDateLines = DayDateAlignment.meaningful(_lines(_dates.text));
+    if (rawDateLines.length != draft.dates.length &&
+        draft.days.isNotEmpty &&
+        draft.dates.length != draft.days.length + 1) {
+      errors.add(
+        'Some Date lines were removed as duplicates or invalid '
+        '(${rawDateLines.length} lines → ${draft.dates.length} unique dates). '
+        'Need exactly ${draft.days.length + 1} Dates for ${draft.days.length} Days.',
+      );
+    }
+    if (errors.isNotEmpty) {
+      throw StateError(errors.join('\n'));
+    }
     return draft;
+  }
+
+  Future<void> _showAlignmentError(String message) async {
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.panel,
+        title: const Text('Days / Dates not aligned'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _save() async {
+    setState(() {
+      _busy = true;
+      _error = null;
+      _status = null;
+    });
+    try {
+      final before = widget.workspace;
+      var draft = await _draftReadyToPersist();
+
+      if (draft.testingPointerUrl.isNotEmpty && draft.bandListUrl.isEmpty) {
+        if (draft.productionPointerUrl.isNotEmpty) {
+          draft = await widget.pointerService.applyPointers(draft);
+        } else {
+          draft = await widget.pointerService.applyTestingPointer(draft);
+        }
+        // Pointer load may refresh Days/Dates — require alignment again.
+        DayDateAlignment.requireAlignedLists(
+          days: draft.days,
+          dates: draft.dates,
+        );
+        _syncNormalizedDayDateFields(draft);
+        if (widget.dropboxConnected) {
+          draft = await _probeAccess(draft);
+        }
+      }
+      draft = await _verifyAlertFolderAccess(draft);
+      await _purgeScheduleCacheIfVocabChanged(before, draft);
+      await widget.onWorkspaceChanged(draft);
+      if (!mounted) return;
+      setState(() {
+        _canEditBands = draft.canEditBands;
+        _canEditSchedule = draft.canEditSchedule;
+        _canEditDescriptions = draft.canEditDescriptions;
+        _canEditPointers = draft.canEditPointers;
+        _canEditAlerts = draft.canEditAlerts;
+        _error = null;
+        final vocabNote = _scheduleVocabChanged(before, draft)
+            ? ' Schedule menus will use the updated venues / days / dates / types.'
+            : '';
+        _status = draft.alertFolderUrl.trim().isEmpty
+            ? 'Configuration saved.$vocabNote'
+            : 'Configuration saved. Alert folder write access verified.$vocabNote';
+        _busy = false;
+      });
+    } catch (e) {
+      final message = _cleanError(e);
+      setState(() {
+        _error = message;
+        _status = null;
+        _busy = false;
+      });
+      final isAlign = message.contains('1:1 with one extra Date') ||
+          message.contains('consecutive calendar') ||
+          message.contains('unique dates');
+      if (isAlign) {
+        await _showAlignmentError(message);
+      }
+    }
   }
 
   Future<void> _switchFestival(String? festivalId) async {
@@ -288,11 +383,18 @@ class _SettingsSectionState extends State<SettingsSection> {
         _status = 'Switched festival.';
       });
     } catch (e) {
+      final message = _cleanError(e);
       setState(() {
         _busy = false;
-        _error = _cleanError(e);
+        _error = message;
         _status = null;
       });
+      final isAlign = message.contains('1:1 with one extra Date') ||
+          message.contains('consecutive calendar') ||
+          message.contains('unique dates');
+      if (isAlign) {
+        await _showAlignmentError(message);
+      }
     }
   }
 
@@ -549,57 +651,6 @@ class _SettingsSectionState extends State<SettingsSection> {
     final url = after.scheduleUrl.trim();
     if (url.isNotEmpty) {
       await UrlTextCache.invalidate(url);
-    }
-  }
-
-  Future<void> _save() async {
-    setState(() {
-      _busy = true;
-      _error = null;
-    });
-    try {
-      final before = widget.workspace;
-      var draft = await _draftReadyToPersist();
-
-      if (draft.testingPointerUrl.isNotEmpty && draft.bandListUrl.isEmpty) {
-        if (draft.productionPointerUrl.isNotEmpty) {
-          draft = await widget.pointerService.applyPointers(draft);
-        } else {
-          draft = await widget.pointerService.applyTestingPointer(draft);
-        }
-        // Pointer load may refresh Days/Dates — require alignment again.
-        DayDateAlignment.requireAlignedLists(
-          days: draft.days,
-          dates: draft.dates,
-        );
-        _syncNormalizedDayDateFields(draft);
-        if (widget.dropboxConnected) {
-          draft = await _probeAccess(draft);
-        }
-      }
-      draft = await _verifyAlertFolderAccess(draft);
-      await _purgeScheduleCacheIfVocabChanged(before, draft);
-      await widget.onWorkspaceChanged(draft);
-      if (!mounted) return;
-      setState(() {
-        _canEditBands = draft.canEditBands;
-        _canEditSchedule = draft.canEditSchedule;
-        _canEditDescriptions = draft.canEditDescriptions;
-        _canEditPointers = draft.canEditPointers;
-        _canEditAlerts = draft.canEditAlerts;
-        final vocabNote = _scheduleVocabChanged(before, draft)
-            ? ' Schedule menus will use the updated venues / days / dates / types.'
-            : '';
-        _status = draft.alertFolderUrl.trim().isEmpty
-            ? 'Configuration saved.$vocabNote'
-            : 'Configuration saved. Alert folder write access verified.$vocabNote';
-        _busy = false;
-      });
-    } catch (e) {
-      setState(() {
-        _error = _cleanError(e);
-        _busy = false;
-      });
     }
   }
 

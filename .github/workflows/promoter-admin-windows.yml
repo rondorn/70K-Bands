@@ -17,6 +17,25 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Read version from pubspec
+        id: version
+        shell: pwsh
+        run: |
+          $line = Select-String -Path pubspec.yaml -Pattern '^version:\s*(.+)$' |
+            Select-Object -First 1
+          $full = $line.Matches.Groups[1].Value.Trim()
+          if ($full -notmatch '^([0-9.]+)\+(\d+)$') {
+            throw "Unexpected pubspec version: $full (expected name+number, e.g. 1.0.1+17)"
+          }
+          $name = $Matches[1]
+          $number = $Matches[2]
+          $zip = "omf-admin-windows-${name}_${number}.zip"
+          "full=$full" >> $env:GITHUB_OUTPUT
+          "name=$name" >> $env:GITHUB_OUTPUT
+          "number=$number" >> $env:GITHUB_OUTPUT
+          "zip=$zip" >> $env:GITHUB_OUTPUT
+          Write-Host "Building $full → $zip"
+
       - run: flutter config --enable-windows-desktop
 
       - run: flutter pub get
@@ -25,11 +44,15 @@ jobs:
 
       - name: Zip release folder
         shell: pwsh
+        env:
+          ZIP_NAME: ${{ steps.version.outputs.zip }}
         run: |
+          $zip = Join-Path .. $env:ZIP_NAME
           Compress-Archive -Path build\windows\x64\runner\Release\* `
-            -DestinationPath ..\omf-admin-windows.zip
+            -DestinationPath $zip
+          Write-Host "Created $zip"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: omf-admin-windows
-          path: omf-admin-windows.zip
+          name: omf-admin-windows-${{ steps.version.outputs.name }}_${{ steps.version.outputs.number }}
+          path: ${{ steps.version.outputs.zip }}
