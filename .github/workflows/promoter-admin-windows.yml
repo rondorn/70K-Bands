@@ -1,7 +1,24 @@
+# Open Metal Fest Admin — Windows build + GitHub Release
+#
+# Triggers on push to master (promoter_admin changes) and manual run.
+# Publishes a downloadable zip on the rolling release tag: omf-admin-windows
+#   → https://github.com/<org>/<repo>/releases/tag/omf-admin-windows
+#
+# Prefer GitHub Releases over committing zips into the git tree (binaries
+# bloat the repo). The release page is the stable download “directory”.
+
 name: Promoter Admin Windows
 
 on:
+  push:
+    branches: [master]
+    paths:
+      - 'promoter_admin/**'
+      - '.github/workflows/promoter-admin-windows.yml'
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build-windows:
@@ -56,3 +73,28 @@ jobs:
         with:
           name: omf-admin-windows-${{ steps.version.outputs.name }}_${{ steps.version.outputs.number }}
           path: ${{ steps.version.outputs.zip }}
+
+      - name: Publish GitHub Release (easy download link)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: omf-admin-windows
+          target_commitish: ${{ github.sha }}
+          name: Open Metal Fest Admin Windows ${{ steps.version.outputs.name }}_${{ steps.version.outputs.number }}
+          body: |
+            ## Open Metal Fest Admin for Windows
+
+            **Version:** ${{ steps.version.outputs.full }}
+
+            ### Download
+            Use the **Assets** zip below (`${{ steps.version.outputs.zip }}`).
+
+            Stable release page (always latest master build):
+            https://github.com/${{ github.repository }}/releases/tag/omf-admin-windows
+
+            ### Install
+            1. Download and unzip.
+            2. Run `promoter_admin.exe` (or the runner exe in the folder).
+
+            Built from commit `${{ github.sha }}` on `master`.
+          files: ${{ steps.version.outputs.zip }}
+          fail_on_unmatched_files: true
