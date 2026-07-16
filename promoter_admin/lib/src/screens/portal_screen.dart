@@ -304,6 +304,14 @@ class _PortalScreenState extends State<PortalScreen> {
         );
       case AppSection.schedule:
         return ScheduleSection(
+          key: ValueKey(
+            'schedule-vocab|'
+            '${_ws.venues.join('\n')}|'
+            '${_ws.days.join('\n')}|'
+            '${_ws.dates.join('\n')}|'
+            '${_ws.eventTypes.join('\n')}|'
+            '${_ws.dateRolloverTime}',
+          ),
           workspace: _ws,
           scheduleService: widget.scheduleService,
           lineupService: widget.lineupService,

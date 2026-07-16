@@ -13,6 +13,7 @@ class FestivalWorkspace {
     this.venues = const [],
     this.dates = const [],
     this.days = const [],
+    this.dateRolloverTime = '8:00',
     this.eventTypes = const [],
     this.canEditBands = true,
     this.canEditSchedule = true,
@@ -43,6 +44,11 @@ class FestivalWorkspace {
   final List<String> venues;
   final List<String> dates;
   final List<String> days;
+
+  /// Start times from midnight until this clock time use the *next* date
+  /// in the ordered Dates list (overnight on the same festival Day).
+  final String dateRolloverTime;
+
   final List<String> eventTypes;
 
   /// Write access to testing data files (Dropbox probe + optional override).
@@ -99,6 +105,7 @@ class FestivalWorkspace {
     List<String>? venues,
     List<String>? dates,
     List<String>? days,
+    String? dateRolloverTime,
     List<String>? eventTypes,
     bool? canEditBands,
     bool? canEditSchedule,
@@ -121,6 +128,7 @@ class FestivalWorkspace {
       venues: venues ?? this.venues,
       dates: dates ?? this.dates,
       days: days ?? this.days,
+      dateRolloverTime: dateRolloverTime ?? this.dateRolloverTime,
       eventTypes: eventTypes ?? this.eventTypes,
       canEditBands: canEditBands ?? this.canEditBands,
       canEditSchedule: canEditSchedule ?? this.canEditSchedule,
@@ -145,6 +153,7 @@ class FestivalWorkspace {
         'venues': venues.join('\n'),
         'dates': dates.join('\n'),
         'days': days.join('\n'),
+        'dateRolloverTime': dateRolloverTime,
         'eventTypes': eventTypes.join('\n'),
         'canEditBands': canEditBands ? '1' : '0',
         'canEditSchedule': canEditSchedule ? '1' : '0',
@@ -184,6 +193,9 @@ class FestivalWorkspace {
       venues: list('venues'),
       dates: list('dates'),
       days: list('days'),
+      dateRolloverTime: (map['dateRolloverTime'] ?? '8:00').trim().isEmpty
+          ? '8:00'
+          : (map['dateRolloverTime'] ?? '8:00').trim(),
       eventTypes: list('eventTypes'),
       canEditBands: _boolPref(map, 'canEditBands'),
       canEditSchedule: _boolPref(map, 'canEditSchedule'),

@@ -1,6 +1,7 @@
 import 'package:promoter_admin/src/models/festival_workspace.dart';
 import 'package:promoter_admin/src/models/pointer_file.dart';
 import 'package:promoter_admin/src/services/csv_util.dart';
+import 'package:promoter_admin/src/services/day_date_alignment.dart';
 import 'package:promoter_admin/src/services/http_fetch.dart';
 import 'package:promoter_admin/src/services/schedule_service.dart';
 import 'package:promoter_admin/src/services/schedule_validation.dart';
@@ -38,6 +39,7 @@ class PointerService {
   /// Load from both pointers:
   /// - Testing → band / schedule / description-map URLs (+ event year)
   /// - Production → venues, dates, days, event types from production schedule
+  ///   **only when the corresponding local list is empty** (never overwrite)
   /// - Custom-alerts UI flag prefers Production Current, else Testing
   Future<FestivalWorkspace> applyPointers(
     FestivalWorkspace workspace, {
@@ -48,15 +50,11 @@ class PointerService {
 
     final productionUrl = updated.productionPointerUrl.trim();
     if (productionUrl.isEmpty) {
-      throw StateError(
-        'Production pointer URL is required to load venues and event types.',
-      );
+      return updated;
     }
 
     final production =
         await fetchPointer(productionUrl, forceRefresh: forceRefresh);
-    // Festival-wide grant on Production Current; combined with canEditPointers
-    // in FestivalWorkspace.customAlertsUiEnabled.
     updated = updated.copyWith(
       allowCustomAlerts: production.allowCustomAlerts,
     );
@@ -87,11 +85,12 @@ class PointerService {
         if (v.isEmpty || v == ' ') continue;
         if (seen.add(v)) mergedTypes.add(v);
       }
-      updated = updated.copyWith(
+      updated = mergeScheduleVocabulary(
+        workspace: updated,
         venues: hints.venues,
         dates: hints.dates,
         days: hints.days,
-        eventTypes: ScheduleValidation.withDefaultEventTypes(mergedTypes),
+        eventTypes: mergedTypes,
       );
     } catch (e) {
       throw StateError(
@@ -99,6 +98,36 @@ class PointerService {
       );
     }
     return updated;
+  }
+
+  /// Fill venues / days / dates / event types only when the local list is empty.
+  /// Existing preference values are never overwritten.
+  static FestivalWorkspace mergeScheduleVocabulary({
+    required FestivalWorkspace workspace,
+    required List<String> venues,
+    required List<String> dates,
+    required List<String> days,
+    required List<String> eventTypes,
+  }) {
+    final cleanVenues = DayDateAlignment.meaningful(venues);
+    final cleanDates = DayDateAlignment.normalizeDates(dates);
+    final cleanDays = DayDateAlignment.normalizeDays(days);
+    final cleanTypes = ScheduleValidation.withDefaultEventTypes(eventTypes);
+
+    return workspace.copyWith(
+      venues: DayDateAlignment.meaningful(workspace.venues).isEmpty
+          ? cleanVenues
+          : workspace.venues,
+      dates: DayDateAlignment.meaningful(workspace.dates).isEmpty
+          ? cleanDates
+          : workspace.dates,
+      days: DayDateAlignment.meaningful(workspace.days).isEmpty
+          ? cleanDays
+          : workspace.days,
+      eventTypes: DayDateAlignment.meaningful(workspace.eventTypes).isEmpty
+          ? cleanTypes
+          : ScheduleValidation.withDefaultEventTypes(workspace.eventTypes),
+    );
   }
 
   Future<List<BandRow>> fetchLineup(

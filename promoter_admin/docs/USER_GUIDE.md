@@ -69,10 +69,11 @@ You’ll mainly use Settings once:
 - **Dropbox** — Connect / Disconnect with your personal account.  
 - **Testing link** / **Production link** — the URLs you were given.  
 - **Alert folder** — only if your festival uses push announcements (optional).  
-- **Load festival data** — pull the latest Testing/Production setup after links change.  
-- **Save configuration** — keep your local settings.  
+- **Load festival data** — pull Testing/Production file URLs and fill empty Venues / Days / Dates / Event types from Production. Existing lists are kept (not overwritten).  
+- **Save configuration** — keep your local settings. Changing Venues / Days / Dates / Event types refreshes Schedule Entry menus.  
 - **Use city/state fields** — turn on if this festival tracks city/state for artists.  
-- **Venues / Dates / Days / Event types** — lists used when entering schedule items (usually filled by Load; you can edit if needed).  
+- **Venues / Dates / Days / Event types** — lists used when entering schedule items (filled once by Load when empty; you edit afterward).  
+- **Days / Dates alignment** — Days and Dates are ordered lists: Day line 1 pairs with Date line 1, and so on. Dates must be consecutive `M/D/YYYY` values (no leading zeros) with **one more date than days** (the last date covers overnight on the final day). **Date rollover** (default `8:00`) decides when a start time uses the next calendar date while keeping the same Day. Schedule Entry fills Date from Day + start time; you can still change Date by hand.  
 - **Add new year…** — only for people who manage year transitions (starts a new Testing year; Production updates when someone Publishes).
 
 **File access** shows whether you can edit Artists, Schedule, and Descriptions. Use **Refresh file access** if rights were just shared to you and the app still looks locked.
@@ -151,7 +152,7 @@ Saves upload to Testing in the background. On **View**, look for **Pending** / *
 
 ### Shows and band events
 
-Pick a **Band Name** from the Testing lineup, then venue, day, date, start/end (or length), and optional **Notes**. The form remembers your last choices so you can enter several sets in a row. **Edit last entry** if you need a quick correction.
+Pick a **Band Name** from the Testing lineup, then venue, **Day**, start/end (or length), and optional **Notes**. **Date** fills from the Settings Days/Dates order and Date rollover when you pick Day or change start time — change it by hand if needed. The form remembers your last choices so you can enter several sets in a row. **Edit last entry** if you need a quick correction.
 
 If validation complains but you’re sure the times are right, you can skip the check when that option is shown.
 

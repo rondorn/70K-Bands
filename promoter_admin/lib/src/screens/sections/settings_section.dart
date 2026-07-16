@@ -6,6 +6,8 @@ import 'package:promoter_admin/src/services/festival_create_service.dart';
 import 'package:promoter_admin/src/services/festival_year_service.dart';
 import 'package:promoter_admin/src/services/pointer_service.dart';
 import 'package:promoter_admin/src/services/promote_service.dart';
+import 'package:promoter_admin/src/services/day_date_alignment.dart';
+import 'package:promoter_admin/src/services/http_fetch.dart';
 import 'package:promoter_admin/src/services/schedule_service.dart';
 import 'package:promoter_admin/src/services/schedule_validation.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
@@ -65,6 +67,7 @@ class _SettingsSectionState extends State<SettingsSection> {
   late final TextEditingController _venues;
   late final TextEditingController _dates;
   late final TextEditingController _days;
+  late final TextEditingController _dateRollover;
   late final TextEditingController _eventTypes;
   late bool _canEditBands;
   late bool _canEditSchedule;
@@ -88,6 +91,11 @@ class _SettingsSectionState extends State<SettingsSection> {
     _venues = TextEditingController(text: widget.workspace.venues.join('\n'));
     _dates = TextEditingController(text: widget.workspace.dates.join('\n'));
     _days = TextEditingController(text: widget.workspace.days.join('\n'));
+    _dateRollover = TextEditingController(
+      text: widget.workspace.dateRolloverTime.trim().isEmpty
+          ? DayDateAlignment.defaultRolloverTime
+          : widget.workspace.dateRolloverTime.trim(),
+    );
     _eventTypes = TextEditingController(
       text: ScheduleValidation.withDefaultEventTypes(widget.workspace.eventTypes)
           .join('\n'),
@@ -126,6 +134,10 @@ class _SettingsSectionState extends State<SettingsSection> {
     if (_dates.text != d) _dates.text = d;
     final days = w.days.join('\n');
     if (_days.text != days) _days.text = days;
+    final roll = w.dateRolloverTime.trim().isEmpty
+        ? DayDateAlignment.defaultRolloverTime
+        : w.dateRolloverTime.trim();
+    if (_dateRollover.text != roll) _dateRollover.text = roll;
     final t = ScheduleValidation.withDefaultEventTypes(w.eventTypes).join('\n');
     if (_eventTypes.text != t) _eventTypes.text = t;
     _canEditBands = w.canEditBands;
@@ -145,6 +157,7 @@ class _SettingsSectionState extends State<SettingsSection> {
     _venues.dispose();
     _dates.dispose();
     _days.dispose();
+    _dateRollover.dispose();
     _eventTypes.dispose();
     super.dispose();
   }
@@ -156,6 +169,10 @@ class _SettingsSectionState extends State<SettingsSection> {
       .toList();
 
   FestivalWorkspace _draft() {
+    final days = DayDateAlignment.normalizeDays(_lines(_days.text));
+    final dates = DayDateAlignment.normalizeDates(_lines(_dates.text));
+    final (rollH, rollM) =
+        DayDateAlignment.parseRolloverTime(_dateRollover.text);
     return widget.workspace.copyWith(
       id: widget.workspace.id.isEmpty
           ? widget.activeFestivalId
@@ -165,8 +182,9 @@ class _SettingsSectionState extends State<SettingsSection> {
       productionPointerUrl: _production.text.trim(),
       alertFolderUrl: _alertFolder.text.trim(),
       venues: _lines(_venues.text),
-      dates: _lines(_dates.text),
-      days: _lines(_days.text),
+      dates: dates,
+      days: days,
+      dateRolloverTime: DayDateAlignment.formatRolloverTime(rollH, rollM),
       eventTypes: ScheduleValidation.withDefaultEventTypes(_lines(_eventTypes.text)),
       canEditBands: _canEditBands,
       canEditSchedule: _canEditSchedule,
@@ -224,6 +242,34 @@ class _SettingsSectionState extends State<SettingsSection> {
     return draft.copyWith(canEditAlerts: true);
   }
 
+  /// Persist form draft only when Days/Dates counts align (1:1 + extra date).
+  void _syncNormalizedDayDateFields(FestivalWorkspace draft) {
+    final normalizedDates = draft.dates.join('\n');
+    if (_dates.text != normalizedDates) _dates.text = normalizedDates;
+    final normalizedDays = draft.days.join('\n');
+    if (_days.text != normalizedDays) _days.text = normalizedDays;
+    if (_dateRollover.text != draft.dateRolloverTime) {
+      _dateRollover.text = draft.dateRolloverTime;
+    }
+  }
+
+  String _cleanError(Object e) {
+    final s = e.toString();
+    if (s.startsWith('Bad state: ')) return s.substring('Bad state: '.length);
+    if (s.startsWith('Exception: ')) return s.substring('Exception: '.length);
+    return s;
+  }
+
+  Future<FestivalWorkspace> _draftReadyToPersist() async {
+    final draft = _draft();
+    _syncNormalizedDayDateFields(draft);
+    DayDateAlignment.requireAlignedLists(
+      days: draft.days,
+      dates: draft.dates,
+    );
+    return draft;
+  }
+
   Future<void> _switchFestival(String? festivalId) async {
     if (festivalId == null || festivalId == widget.activeFestivalId) return;
     setState(() {
@@ -233,7 +279,8 @@ class _SettingsSectionState extends State<SettingsSection> {
     });
     try {
       // Save current form before switching so edits aren't lost.
-      await widget.onWorkspaceChanged(_draft());
+      final draft = await _draftReadyToPersist();
+      await widget.onWorkspaceChanged(draft);
       await widget.onSwitchFestival(festivalId);
       if (!mounted) return;
       setState(() {
@@ -243,7 +290,7 @@ class _SettingsSectionState extends State<SettingsSection> {
     } catch (e) {
       setState(() {
         _busy = false;
-        _error = e.toString();
+        _error = _cleanError(e);
         _status = null;
       });
     }
@@ -273,7 +320,8 @@ class _SettingsSectionState extends State<SettingsSection> {
           : 'Loading festival from links…';
     });
     try {
-      await widget.onWorkspaceChanged(_draft());
+      final draft = await _draftReadyToPersist();
+      await widget.onWorkspaceChanged(draft);
       late final FestivalWorkspace created;
       if (result.createPointerFiles) {
         created = await FestivalCreateService(widget.dropboxApi).createFestival(
@@ -312,7 +360,7 @@ class _SettingsSectionState extends State<SettingsSection> {
     } catch (e) {
       setState(() {
         _busy = false;
-        _error = e.toString();
+        _error = _cleanError(e);
         _status = null;
       });
     }
@@ -372,8 +420,9 @@ class _SettingsSectionState extends State<SettingsSection> {
       _status = 'Loading festival data…';
     });
     try {
+      final before = _draft();
       var updated = await widget.pointerService.applyPointers(
-        _draft(),
+        before,
         forceRefresh: true,
       );
       if (widget.dropboxConnected) {
@@ -382,6 +431,34 @@ class _SettingsSectionState extends State<SettingsSection> {
       }
       await widget.onWorkspaceChanged(updated);
       if (!mounted) return;
+      final filled = <String>[];
+      final kept = <String>[];
+      void track(String label, List<String> was, List<String> now) {
+        final had = DayDateAlignment.meaningful(was).isNotEmpty;
+        final has = DayDateAlignment.meaningful(now).isNotEmpty;
+        if (!had && has) {
+          filled.add(label);
+        } else if (had) {
+          kept.add(label);
+        }
+      }
+
+      track('venues', before.venues, updated.venues);
+      track('days', before.days, updated.days);
+      track('dates', before.dates, updated.dates);
+      track('event types', before.eventTypes, updated.eventTypes);
+
+      final alignNotes = DayDateAlignment.validateLists(
+        days: updated.days,
+        dates: updated.dates,
+      );
+      final vocabBits = <String>[];
+      if (filled.isNotEmpty) {
+        vocabBits.add('filled empty ${filled.join(', ')}');
+      }
+      if (kept.isNotEmpty) {
+        vocabBits.add('kept existing ${kept.join(', ')}');
+      }
       setState(() {
         _canEditBands = updated.canEditBands;
         _canEditSchedule = updated.canEditSchedule;
@@ -394,13 +471,15 @@ class _SettingsSectionState extends State<SettingsSection> {
             '${updated.venues.where((v) => v.trim().isNotEmpty).length} venues, '
             '${updated.dates.where((d) => d.trim().isNotEmpty).length} dates, '
             '${updated.days.where((d) => d.trim().isNotEmpty).length} days, '
-            '${updated.eventTypes.length} event types. '
-            '${widget.dropboxConnected ? 'Access: ${_accessSummary(updated)}.' : 'Connect Dropbox to detect write access.'}';
+            '${updated.eventTypes.length} event types'
+            '${vocabBits.isEmpty ? '' : ' — ${vocabBits.join('; ')}'}. '
+            '${widget.dropboxConnected ? 'Access: ${_accessSummary(updated)}.' : 'Connect Dropbox to detect write access.'}'
+            '${alignNotes.isEmpty ? '' : ' Day/Date lists need a fix before Save: ${alignNotes.first}'}';
         _busy = false;
       });
     } catch (e) {
       setState(() {
-        _error = e.toString();
+        _error = _cleanError(e);
         _status = null;
         _busy = false;
       });
@@ -443,24 +522,63 @@ class _SettingsSectionState extends State<SettingsSection> {
     }
   }
 
+  bool _sameVocabList(List<String> a, List<String> b) {
+    final aa = DayDateAlignment.meaningful(a);
+    final bb = DayDateAlignment.meaningful(b);
+    if (aa.length != bb.length) return false;
+    for (var i = 0; i < aa.length; i++) {
+      if (aa[i] != bb[i]) return false;
+    }
+    return true;
+  }
+
+  bool _scheduleVocabChanged(FestivalWorkspace before, FestivalWorkspace after) {
+    return !_sameVocabList(before.venues, after.venues) ||
+        !_sameVocabList(before.days, after.days) ||
+        !_sameVocabList(before.dates, after.dates) ||
+        !_sameVocabList(before.eventTypes, after.eventTypes) ||
+        before.dateRolloverTime.trim() != after.dateRolloverTime.trim();
+  }
+
+  /// Drop cached schedule bodies so Entry menus reload from updated prefs.
+  Future<void> _purgeScheduleCacheIfVocabChanged(
+    FestivalWorkspace before,
+    FestivalWorkspace after,
+  ) async {
+    if (!_scheduleVocabChanged(before, after)) return;
+    final url = after.scheduleUrl.trim();
+    if (url.isNotEmpty) {
+      await UrlTextCache.invalidate(url);
+    }
+  }
+
   Future<void> _save() async {
     setState(() {
       _busy = true;
       _error = null;
     });
     try {
-      var draft = _draft();
+      final before = widget.workspace;
+      var draft = await _draftReadyToPersist();
+
       if (draft.testingPointerUrl.isNotEmpty && draft.bandListUrl.isEmpty) {
         if (draft.productionPointerUrl.isNotEmpty) {
           draft = await widget.pointerService.applyPointers(draft);
         } else {
           draft = await widget.pointerService.applyTestingPointer(draft);
         }
+        // Pointer load may refresh Days/Dates — require alignment again.
+        DayDateAlignment.requireAlignedLists(
+          days: draft.days,
+          dates: draft.dates,
+        );
+        _syncNormalizedDayDateFields(draft);
         if (widget.dropboxConnected) {
           draft = await _probeAccess(draft);
         }
       }
       draft = await _verifyAlertFolderAccess(draft);
+      await _purgeScheduleCacheIfVocabChanged(before, draft);
       await widget.onWorkspaceChanged(draft);
       if (!mounted) return;
       setState(() {
@@ -469,14 +587,17 @@ class _SettingsSectionState extends State<SettingsSection> {
         _canEditDescriptions = draft.canEditDescriptions;
         _canEditPointers = draft.canEditPointers;
         _canEditAlerts = draft.canEditAlerts;
+        final vocabNote = _scheduleVocabChanged(before, draft)
+            ? ' Schedule menus will use the updated venues / days / dates / types.'
+            : '';
         _status = draft.alertFolderUrl.trim().isEmpty
-            ? 'Configuration saved.'
-            : 'Configuration saved. Alert folder write access verified.';
+            ? 'Configuration saved.$vocabNote'
+            : 'Configuration saved. Alert folder write access verified.$vocabNote';
         _busy = false;
       });
     } catch (e) {
       setState(() {
-        _error = e.toString();
+        _error = _cleanError(e);
         _busy = false;
       });
     }
@@ -883,12 +1004,51 @@ class _SettingsSectionState extends State<SettingsSection> {
               ),
             ),
             FormRow(
-              label: 'Dates',
-              child: TextField(controller: _dates, maxLines: 4),
+              label: 'Days',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(controller: _days, maxLines: 4),
+                  const HintText(
+                    'One per line, in festival order (names are labels only). '
+                    'Line 1 pairs with Dates line 1, and so on.',
+                  ),
+                ],
+              ),
             ),
             FormRow(
-              label: 'Days',
-              child: TextField(controller: _days, maxLines: 4),
+              label: 'Dates',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(controller: _dates, maxLines: 5),
+                  const HintText(
+                    'One per line as M/D/YYYY (no leading zeros). Must be '
+                    'consecutive calendar days, with exactly one more date than '
+                    'Days — the last date covers overnight on the final day. '
+                    'Save normalizes 01/13 → 1/13 and removes duplicates.',
+                  ),
+                ],
+              ),
+            ),
+            FormRow(
+              label: 'Date rollover',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: _dateRollover,
+                    decoration: const InputDecoration(
+                      hintText: '8:00',
+                    ),
+                  ),
+                  const HintText(
+                    'Start times from midnight until this time use the next '
+                    'Date in the list (same Day label). After this time, Date '
+                    'matches the Day’s base date. Typical: 8:00.',
+                  ),
+                ],
+              ),
             ),
             FormRow(
               label: 'Event types',

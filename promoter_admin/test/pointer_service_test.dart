@@ -91,4 +91,39 @@ Current::descriptionMap::https://example.com/map.csv
       isFalse,
     );
   });
+
+  test('mergeScheduleVocabulary fills only empty lists', () {
+    const existing = FestivalWorkspace(
+      venues: ['Pool Deck'],
+      days: ['Day 1'],
+      dates: ['1/13/2027', '1/14/2027'],
+      eventTypes: ['Show', 'Clinic'],
+    );
+    final merged = PointerService.mergeScheduleVocabulary(
+      workspace: existing,
+      venues: ['Theater', 'Pool Deck'],
+      dates: ['2/1/2027', '2/2/2027', '2/3/2027'],
+      days: ['Friday', 'Saturday'],
+      eventTypes: ['Show', 'Special Event'],
+    );
+    expect(merged.venues, ['Pool Deck']);
+    expect(merged.days, ['Day 1']);
+    expect(merged.dates, ['1/13/2027', '1/14/2027']);
+    expect(merged.eventTypes, contains('Clinic'));
+  });
+
+  test('mergeScheduleVocabulary seeds blank workspace', () {
+    const blank = FestivalWorkspace();
+    final merged = PointerService.mergeScheduleVocabulary(
+      workspace: blank,
+      venues: ['Pool Deck', ' '],
+      dates: ['01/13/2027', '1/14/2027'],
+      days: ['Day 1'],
+      eventTypes: ['Show'],
+    );
+    expect(merged.venues, ['Pool Deck']);
+    expect(merged.dates, ['1/13/2027', '1/14/2027']);
+    expect(merged.days, ['Day 1']);
+    expect(merged.eventTypes, contains('Show'));
+  });
 }

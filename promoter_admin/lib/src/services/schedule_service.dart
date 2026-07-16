@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:promoter_admin/src/models/festival_workspace.dart';
 import 'package:promoter_admin/src/services/csv_util.dart';
+import 'package:promoter_admin/src/services/day_date_alignment.dart';
 import 'package:promoter_admin/src/services/dropbox_api.dart';
 import 'package:promoter_admin/src/services/pointer_service.dart';
 import 'package:promoter_admin/src/services/schedule_staging.dart';
@@ -185,30 +186,44 @@ class ScheduleService {
 
   static ScheduleHints hintsFromEvents(List<ScheduleEvent> events) {
     final venues = <String>{};
-    final dates = <String>{};
-    final days = <String>{};
     final types = <String>{};
+    final dayEarliest = <String, DateTime>{};
+    final dateRaw = <String>[];
+
     for (final e in events) {
       if (e.location.trim().isNotEmpty) venues.add(e.location.trim());
-      if (e.date.trim().isNotEmpty) dates.add(e.date.trim());
-      if (e.day.trim().isNotEmpty) days.add(e.day.trim());
       if (e.type.trim().isNotEmpty) types.add(e.type.trim());
+      if (e.date.trim().isNotEmpty) dateRaw.add(e.date.trim());
+
+      final day = e.day.trim();
+      final dt = DayDateAlignment.parseDate(e.date);
+      if (day.isNotEmpty && dt != null) {
+        final prev = dayEarliest[day];
+        if (prev == null || dt.isBefore(prev)) {
+          dayEarliest[day] = dt;
+        }
+      }
     }
-    final dayOrder = [
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-      'Sunday',
-      'Monday',
-      'Tuesday',
-    ];
-    final orderedDays = dayOrder.where(days.contains).toList()
-      ..addAll(days.where((d) => !dayOrder.contains(d)));
+
+    final orderedDays = dayEarliest.keys.toList()
+      ..sort((a, b) {
+        final byDate = dayEarliest[a]!.compareTo(dayEarliest[b]!);
+        if (byDate != 0) return byDate;
+        return a.toLowerCase().compareTo(b.toLowerCase());
+      });
+
+    // Prefer chronological M/D/Y (no leading zeros); append overnight buffer
+    // when Load finds N days and N dates so Schedule entry can auto-fill.
+    var dates = DayDateAlignment.normalizeDates(dateRaw);
+    dates = DayDateAlignment.ensureOvernightBuffer(
+      days: orderedDays,
+      dates: dates,
+    );
+
     return ScheduleHints(
-      venues: [' ', ...venues.toList()..sort()],
-      dates: [' ', ...dates.toList()..sort()],
-      days: orderedDays.isEmpty ? const [] : [' ', ...orderedDays],
+      venues: venues.toList()..sort(),
+      dates: dates,
+      days: orderedDays,
       eventTypes: types.toList()..sort(),
     );
   }

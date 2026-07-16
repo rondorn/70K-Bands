@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:promoter_admin/src/models/festival_workspace.dart';
+import 'package:promoter_admin/src/services/day_date_alignment.dart';
 import 'package:promoter_admin/src/services/description_map_service.dart';
 import 'package:promoter_admin/src/services/dropbox_api.dart';
 import 'package:promoter_admin/src/services/http_fetch.dart';
 import 'package:promoter_admin/src/services/lineup_service.dart';
+import 'package:promoter_admin/src/services/pointer_service.dart';
 import 'package:promoter_admin/src/services/schedule_service.dart';
 import 'package:promoter_admin/src/services/schedule_staging.dart';
 import 'package:promoter_admin/src/services/schedule_validation.dart';
@@ -252,17 +254,22 @@ class _ScheduleSectionState extends State<ScheduleSection> {
         bands = lineup.map((b) => b.name).where((n) => n.isNotEmpty).toList();
       } catch (_) {}
 
-      // Keep vocabulary fresh from schedule if Settings lists are empty.
+      // Seed vocabulary from the schedule only when Settings lists are empty.
       var ws = widget.workspace;
-      if (ws.venues.isEmpty || ws.dates.isEmpty) {
+      final needVenues =
+          DayDateAlignment.meaningful(ws.venues).isEmpty;
+      final needDates = DayDateAlignment.meaningful(ws.dates).isEmpty;
+      final needDays = DayDateAlignment.meaningful(ws.days).isEmpty;
+      final needTypes =
+          DayDateAlignment.meaningful(ws.eventTypes).isEmpty;
+      if (needVenues || needDates || needDays || needTypes) {
         final hints = ScheduleService.hintsFromEvents(events);
-        ws = ws.copyWith(
-          venues: ws.venues.isEmpty ? hints.venues : ws.venues,
-          dates: ws.dates.isEmpty ? hints.dates : ws.dates,
-          days: ws.days.isEmpty ? hints.days : ws.days,
-          eventTypes: ScheduleValidation.withDefaultEventTypes(
-            ws.eventTypes.isEmpty ? hints.eventTypes : ws.eventTypes,
-          ),
+        ws = PointerService.mergeScheduleVocabulary(
+          workspace: ws,
+          venues: hints.venues,
+          dates: hints.dates,
+          days: hints.days,
+          eventTypes: hints.eventTypes,
         );
         await widget.onWorkspaceChanged(ws);
       }
@@ -315,6 +322,27 @@ class _ScheduleSectionState extends State<ScheduleSection> {
     }
   }
 
+  /// Fill Date from ordered Days/Dates + rollover (Date stays manually editable).
+  void _applyDateFromDayAndStart() {
+    final resolved = DayDateAlignment.resolveDate(
+      days: widget.workspace.days,
+      dates: widget.workspace.dates,
+      day: _day ?? '',
+      startHour: _startHour,
+      startMin: _startMin,
+      rolloverTime: widget.workspace.dateRolloverTime,
+    );
+    if (resolved == null) return;
+    _date = DropdownOptions.pick(resolved, _dates);
+  }
+
+  void _onDayChanged(String? v) {
+    setState(() {
+      _day = v;
+      _applyDateFromDayAndStart();
+    });
+  }
+
   void _onStartHourChanged(String? v) {
     setState(() {
       _startHour = v ?? DropdownOptions.empty;
@@ -323,6 +351,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
         _startMin = DropdownOptions.pick('00', _minOptions);
       }
       _applyLengthToEnd();
+      _applyDateFromDayAndStart();
     });
   }
 
@@ -330,6 +359,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
     setState(() {
       _startMin = v ?? DropdownOptions.empty;
       _applyLengthToEnd();
+      _applyDateFromDayAndStart();
     });
   }
 
@@ -1145,16 +1175,29 @@ class _ScheduleSectionState extends State<ScheduleSection> {
               child: PortalStringDropdown(
                 value: _day,
                 items: _days,
-                onChanged: (v) => setState(() => _day = v),
+                onChanged: _onDayChanged,
               ),
             ),
             FormRow(
               label: 'Date',
               requiredField: true,
-              child: PortalStringDropdown(
-                value: _date,
-                items: _dates,
-                onChanged: (v) => setState(() => _date = v),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  PortalStringDropdown(
+                    value: _date,
+                    items: _dates,
+                    onChanged: (v) => setState(() => _date = v),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.only(top: 6),
+                    child: Text(
+                      'Filled from Day + start time (Settings Days/Dates order '
+                      'and Date rollover). Change freely if needed.',
+                      style: TextStyle(color: AppColors.muted, fontSize: 12),
+                    ),
+                  ),
+                ],
               ),
             ),
             FormRow(
