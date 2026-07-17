@@ -368,6 +368,65 @@ void main() {
     expect(text, contains('LATE ACT'));
   });
 
+  test('pdf short interstitial does not omit the following set', () async {
+    // Repro: 5-minute raffle between shows used to grow over the next block.
+    const workspace = FestivalWorkspace(
+      days: ['Saturday'],
+      dates: ['6/13/2026', '6/14/2026'],
+      venues: ['Stage 1', 'Stage 2'],
+    );
+    final layout = RunningOrderLayout.build([
+      event(
+        band: 'Graveshadow',
+        day: 'Saturday',
+        date: '6/13/2026',
+        venue: 'Stage 1',
+        start: '20:05',
+        end: '20:30',
+      ),
+      event(
+        band: 'Raffle Give Away',
+        day: 'Saturday',
+        date: '6/13/2026',
+        venue: 'Stage 1',
+        start: '20:35',
+        end: '20:40',
+      ),
+      event(
+        band: 'Holy Divers',
+        day: 'Saturday',
+        date: '6/13/2026',
+        venue: 'Stage 1',
+        start: '20:45',
+        end: '21:45',
+      ),
+    ], workspace);
+
+    final bytes = await PdfExporter.build(
+      layout: layout,
+      festivalName: 'Redwood',
+    );
+    await Directory('/tmp/70k-ro').create(recursive: true);
+    final file = File('/tmp/70k-ro/short-interstitial.pdf');
+    await file.writeAsBytes(bytes);
+    final extracted = await Process.run('pdftotext', [
+      '-layout',
+      file.path,
+      '-',
+    ]);
+    expect(extracted.exitCode, 0);
+    final text = extracted.stdout.toString();
+    expect(text, contains('RAFFLE GIVE AWAY'));
+    expect(text, contains('HOLY DIVERS'));
+    expect(text, contains('GRAVESHADOW'));
+    // Name is listed before time so short-slot clipping keeps the title.
+    final raffleAt = text.indexOf('RAFFLE GIVE AWAY');
+    final raffleTimeAt = text.indexOf('20.35');
+    expect(raffleAt, greaterThanOrEqualTo(0));
+    expect(raffleTimeAt, greaterThanOrEqualTo(0));
+    expect(raffleAt, lessThan(raffleTimeAt));
+  });
+
   test('html expands schedule height for crowded long days', () {
     const shortDayWorkspace = FestivalWorkspace(
       days: ['Day 1'],

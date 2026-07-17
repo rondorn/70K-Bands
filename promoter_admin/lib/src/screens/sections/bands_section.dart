@@ -11,6 +11,7 @@ import 'package:promoter_admin/src/services/location_parse.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
 import 'package:promoter_admin/src/widgets/dropbox_folder_picker.dart';
+import 'package:promoter_admin/src/widgets/export_artists_dialog.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class BandsSection extends StatefulWidget {
@@ -555,12 +556,25 @@ class _BandsSectionState extends State<BandsSection> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: FilledButton(
-                    onPressed: _canEdit ? _startAdd : null,
-                    child: const Text('Add artist'),
-                  ),
+                Row(
+                  children: [
+                    FilledButton(
+                      onPressed: _canEdit ? _startAdd : null,
+                      child: const Text('Add artist'),
+                    ),
+                    const Spacer(),
+                    OutlinedButton.icon(
+                      onPressed: _bands.isEmpty
+                          ? null
+                          : () => showArtistsExportDialog(
+                                context,
+                                workspace: widget.workspace,
+                                bands: _bands,
+                              ),
+                      icon: const Icon(Icons.ios_share_outlined, size: 18),
+                      label: const Text('Export…'),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
                 Expanded(

@@ -111,24 +111,23 @@ class HtmlExporter {
         final heightStyle = dense
             ? 'min-height:max(18px,calc($height% - 1px));height:auto'
             : 'height:max(18px,calc($height% - 1px));min-height:max(18px,calc($height% - 1px))';
-        html
-          ..writeln(
-            '<article class="event venue-${event.venueIndex % 8}'
-            '${dense ? ' dense' : ''}" '
-            'style="left:calc(${_percent(event.venueIndex, page.venues.length)}% + 2px + '
-            '((100% / ${page.venues.length} - 4px) * ${event.laneIndex} / $laneCount));'
-            'width:calc((100% / ${page.venues.length} - 4px) / $laneCount - 1px);'
-            'top:$top%;$heightStyle">',
-          )
-          ..writeln('<time>$timeHtml</time>');
-        if (typeLabel != null) {
-          html.writeln('<em class="event-type">${_escape(typeLabel)}</em>');
-        }
+        html.writeln(
+          '<article class="event venue-${event.venueIndex % 8}'
+          '${dense ? ' dense' : ''}" '
+          'style="left:calc(${_percent(event.venueIndex, page.venues.length)}% + 2px + '
+          '((100% / ${page.venues.length} - 4px) * ${event.laneIndex} / $laneCount));'
+          'width:calc((100% / ${page.venues.length} - 4px) / $laneCount - 1px);'
+          'top:$top%;$heightStyle">',
+        );
         final bands = event.displayTitles;
         for (var i = 0; i < bands.length; i++) {
           final label = i < bands.length - 1 ? '${bands[i]} /' : bands[i];
           html.writeln('<strong>${_escape(label)}</strong>');
         }
+        if (typeLabel != null) {
+          html.writeln('<em class="event-type">${_escape(typeLabel)}</em>');
+        }
+        html.writeln('<time>$timeHtml</time>');
         for (final note in event.noteLines) {
           if (event.bandNames.isEmpty && event.displayTitles.contains(note)) {
             continue;

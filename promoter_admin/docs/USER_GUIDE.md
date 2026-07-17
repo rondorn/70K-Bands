@@ -32,7 +32,7 @@ When a newer version appears on the Releases page, download the new zip, unzip i
 | Area             | In plain terms                                                                                                              |
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | **Settings**     | One-time (or rare) festival setup: Dropbox login, Testing/Production links, optional announcement folder.                   |
-| **Artists**      | Build and edit the Testing lineup: add, change, or remove bands.                                                            |
+| **Artists**      | Build and edit the Testing lineup: add, change, or remove bands; export an HTML logo lineup. |
 | **Descriptions** | Write or update the text fans read about a band (usually done when you add the band; you can also fix or add them later).   |
 | **Schedule**     | Enter shows and other events; browse the event list; see simple stats; export a PDF/HTML running order (official admins). |
 | **Publish**      | When Testing looks right, push your changes so most fans see them in Production. New bands can trigger a push notification. |
@@ -132,6 +132,26 @@ Discover will not guess when several bands share a name — that’s why step 4 
 - **Edit** — change details → **Save changes**. (To change the long description text later, use the **Descriptions** section.)  
 - **Delete** — remove the band from the Testing lineup (confirm first). That does not by itself send a “removed” notification to fans.
 
+### Export the lineup
+
+Use this when you want a simple **logo grid** of the Testing lineup (for a web page, social post layout, or sharing with staff).
+
+On **Artists**, choose **Export…**. On Mac you can also use **File → Save Artists as HTML…**.
+
+1. Choose **Color** or **Black & white**.
+2. Save the HTML file anywhere on your computer.
+3. Open the file in a browser to preview or share it.
+
+**What you get**
+
+- One page of band logos, **four across**.
+- A count at the top (for example `61 bands`).
+- **Hover** a logo to see the band name.
+- **Click** a logo to open that band’s official site (when **Official site** is filled in for the artist).
+- If a band has no logo yet, the name is shown in that slot instead.
+
+If you’ve configured a **Festival logo** under Settings, it appears at the top of the page.
+
 ---
 
 ## Descriptions
@@ -215,7 +235,9 @@ The export dialog reminds you of this when you save.
 
 Each festival **day** becomes one page (venues across the top, time running down the page). Late-night sets follow the same **Date rollover** rules as Schedule Entry.
 
-**PDF vs HTML in practice:** PDF is a standard printable letter page that stays one page per day even when the day is packed (names stay readable; boxes and text shrink a bit if needed). HTML is a wide, dark on-screen layout; busy days simply get a taller timeline so nothing is cut off.
+In each event box, the **band or event name** appears first, with the **time underneath**. Very short slots may hide the time so the name still fits.
+
+**PDF vs HTML in practice:** PDF is a standard printable letter page (one page per day). HTML is a wide, dark on-screen layout; busy days get a taller timeline so everything stays readable.
 
 #### Labels on the page
 
@@ -226,7 +248,7 @@ Each festival **day** becomes one page (venues across the top, time running down
 
 When you export a **single** event type, the suggested file name includes that type (for example `…-shows-running-order.pdf`). Mixed exports use a plain `…-running-order` name.
 
-Bands that share the **same venue and exact time** (common for Meet and Greets) appear together in one block, with names separated by `/`. If two events at the same venue only partly overlap in time, they sit side by side so both stay visible. **Notes** and full band names are always included — nothing is dropped to make the layout fit.
+Bands that share the **same venue and exact time** (common for Meet and Greets) appear together in one block, with names separated by `/`. If two events at the same venue only partly overlap in time, they sit side by side so both stay visible.
 
 #### Festival logo on exports
 

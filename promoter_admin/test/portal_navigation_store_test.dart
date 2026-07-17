@@ -15,11 +15,24 @@ void main() {
       expect(restored.scheduleTab, ScheduleTab.view);
     });
 
-    test('defaults schedule tab when missing', () {
+    test('defaults schedule tab to view when missing', () {
       final restored = PortalNavigation.fromJson({'section': 'bands'});
       expect(restored, isNotNull);
       expect(restored!.section, AppSection.bands);
-      expect(restored.scheduleTab, ScheduleTab.entry);
+      expect(restored.scheduleTab, ScheduleTab.view);
+    });
+
+    test('never restores schedule entry on launch', () {
+      final restored = PortalNavigation.fromJson({
+        'section': 'schedule',
+        'scheduleTab': 'entry',
+      });
+      expect(restored, isNotNull);
+      expect(restored!.scheduleTab, ScheduleTab.view);
+      expect(
+        PortalNavigation.listSafeScheduleTab(ScheduleTab.stats),
+        ScheduleTab.stats,
+      );
     });
 
     test('rejects unknown section', () {

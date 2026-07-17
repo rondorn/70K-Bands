@@ -6,10 +6,13 @@ import 'package:promoter_admin/src/widgets/app_shell.dart';
 
 /// Last portal section per festival, stored in Application Support / iCloud
 /// (same durable path as festival registry — survives app upgrades).
+///
+/// Data-entry tabs (Schedule Entry, Add Artist, Description form) are never
+/// restored on launch — those always open on their list/view screens.
 class PortalNavigation {
   const PortalNavigation({
     this.section = AppSection.settings,
-    this.scheduleTab = ScheduleTab.entry,
+    this.scheduleTab = ScheduleTab.view,
   });
 
   final AppSection section;
@@ -26,9 +29,15 @@ class PortalNavigation {
     if (section == null) return null;
     return PortalNavigation(
       section: section,
-      scheduleTab: _parseScheduleTab(data['scheduleTab']) ?? ScheduleTab.entry,
+      scheduleTab: listSafeScheduleTab(
+        _parseScheduleTab(data['scheduleTab']) ?? ScheduleTab.view,
+      ),
     );
   }
+
+  /// Schedule Entry is intentionally not restored on launch.
+  static ScheduleTab listSafeScheduleTab(ScheduleTab tab) =>
+      tab == ScheduleTab.entry ? ScheduleTab.view : tab;
 
   static AppSection? _parseSection(Object? raw) {
     final name = raw?.toString().trim();

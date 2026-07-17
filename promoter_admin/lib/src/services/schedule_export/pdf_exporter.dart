@@ -335,8 +335,9 @@ class PdfExporter {
       );
     }
 
-    // Draw later events first so earlier blocks (which may grow to fit names)
-    // stay readable on top when slots are short.
+    // Later events first so an earlier block that shares a boundary paints on
+    // top. Boxes are hard-capped at the next same-venue/lane start so short
+    // slots (e.g. a 5-minute raffle) never spill over the following set.
     final drawOrder = [...page.events]
       ..sort((a, b) {
         final byStart = b.startMinute.compareTo(a.startMinute);
@@ -356,46 +357,69 @@ class PdfExporter {
           1.5 +
           event.laneIndex * laneWidth;
 
+      final nextStart = _nextBlockingStart(event, page);
+      final freeUntilNext =
+          (nextStart - event.startMinute) * minuteHeight - 1.2;
+      // Grow into unused gap before the next event, but never past it.
+      final maxHeight = math.max(8.0, freeUntilNext);
+      final minSlot = math.max(8.0, slotHeight - 1.2);
+
       final typeLabel = labeling.eventLabel(event.source.type);
       final timeLines = event.timeLine(formatClock: _clock).split('\n');
       final bands = event.displayTitles
           .map((name) => name.toUpperCase())
           .toList();
-      final notes = event.noteLines;
-      final contentLines =
-          timeLines.length +
-          (typeLabel == null ? 0 : 1) +
-          bands.length +
-          notes.length;
+      final notes = [
+        for (final note in event.noteLines)
+          if (event.bandNames.isNotEmpty ||
+              !event.displayTitles.contains(note))
+            note,
+      ];
 
-      // Prefer fitting inside the time slot; never clip names — grow the box
-      // when a narrow column wraps text on a long day (short minuteHeight).
-      final available = slotHeight < 14 ? 14.0 : slotHeight - 1.2;
+      // Name first (cuts favor the name); time/notes drop before names do.
+      var showType = typeLabel != null;
+      var showTime = true;
+      var showNotes = notes.isNotEmpty;
       var nameSize = venueCount > 6 ? 6.5 : (venueCount > 4 ? 7.0 : 8.0);
       var timeSize = 6.0;
       var noteSize = 5.5;
-      if (contentLines > 3 || laneCount > 1 || available < 28) {
-        nameSize = 5.5;
-        timeSize = 5.0;
-        noteSize = 4.8;
+
+      double estimate() => _estimateBoxHeight(
+        laneWidth: laneWidth,
+        nameSize: nameSize,
+        timeSize: timeSize,
+        noteSize: noteSize,
+        timeLines: showTime ? timeLines.length : 0,
+        typeLabel: showType,
+        bands: bands,
+        notes: showNotes ? notes.length : 0,
+      );
+
+      var estimated = estimate();
+      while (estimated > maxHeight && nameSize > 3.6) {
+        nameSize = math.max(3.6, nameSize - 0.4);
+        timeSize = math.max(3.2, timeSize - 0.35);
+        noteSize = math.max(3.0, noteSize - 0.3);
+        estimated = estimate();
       }
-      if (contentLines > 5 || available < 20 || venueCount > 5) {
-        nameSize = 5.0;
-        timeSize = 4.6;
-        noteSize = 4.4;
+      if (estimated > maxHeight && showNotes) {
+        showNotes = false;
+        estimated = estimate();
       }
-      // Rough wrap estimate for narrow lanes (avg ~4.5pt per glyph at 5–6pt).
-      final avgCharWidth = nameSize * 0.55;
-      final charsPerLine = math.max(6, ((laneWidth - 6) / avgCharWidth).floor());
-      var wrappedBandLines = 0;
-      for (final band in bands) {
-        wrappedBandLines += math.max(1, (band.length / charsPerLine).ceil());
+      if (estimated > maxHeight && showType) {
+        showType = false;
+        estimated = estimate();
       }
-      final estimated =
-          4.0 +
-          (timeLines.length + (typeLabel == null ? 0 : 1) + notes.length) *
-              (timeSize + 1.4) +
-          wrappedBandLines * (nameSize + 1.4);
+      if (estimated > maxHeight && showTime) {
+        showTime = false;
+        estimated = estimate();
+      }
+      // Last resort: shrink name-only block a bit more.
+      while (estimated > maxHeight && nameSize > 3.2) {
+        nameSize = math.max(3.2, nameSize - 0.3);
+        estimated = estimate();
+      }
+      final boxHeight = math.min(maxHeight, math.max(minSlot, estimated));
 
       final border = scheme.colorful
           ? _venueColors[event.venueIndex % _venueColors.length]
@@ -410,12 +434,8 @@ class PdfExporter {
           top: top + 0.6,
           child: pw.Container(
             width: laneWidth - 0.5,
-            // Min height follows the time slot; no max height so band names
-            // are never clipped when text wraps in a short slot.
-            constraints: pw.BoxConstraints(
-              minHeight: math.max(available, estimated),
-            ),
-            padding: const pw.EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+            height: boxHeight,
+            padding: const pw.EdgeInsets.symmetric(horizontal: 2, vertical: 1),
             decoration: pw.BoxDecoration(
               color: fill,
               border: pw.Border.all(color: border, width: 0.9),
@@ -425,46 +445,50 @@ class PdfExporter {
               mainAxisAlignment: pw.MainAxisAlignment.start,
               crossAxisAlignment: pw.CrossAxisAlignment.center,
               children: [
-                for (final line in timeLines)
-                  pw.Text(
-                    line,
-                    textAlign: pw.TextAlign.center,
-                    style: pw.TextStyle(
-                      color: scheme.blockText,
-                      fontSize: timeSize,
-                    ),
-                  ),
-                if (typeLabel != null)
-                  pw.Text(
-                    typeLabel,
-                    textAlign: pw.TextAlign.center,
-                    style: pw.TextStyle(
-                      color: scheme.blockText,
-                      fontSize: timeSize,
-                      fontWeight: pw.FontWeight.bold,
-                    ),
-                  ),
                 for (var i = 0; i < bands.length; i++)
                   pw.Text(
                     i < bands.length - 1 ? '${bands[i]} /' : bands[i],
                     textAlign: pw.TextAlign.center,
+                    maxLines: 2,
                     style: pw.TextStyle(
                       color: scheme.blockText,
                       fontSize: nameSize,
                       fontWeight: pw.FontWeight.bold,
                     ),
                   ),
-                  for (final note in notes)
-                    if (event.bandNames.isNotEmpty ||
-                        !event.displayTitles.contains(note))
-                      pw.Text(
-                        note,
-                        textAlign: pw.TextAlign.center,
-                        style: pw.TextStyle(
-                          color: scheme.blockText,
-                          fontSize: noteSize,
-                        ),
+                if (showType && typeLabel != null)
+                  pw.Text(
+                    typeLabel,
+                    textAlign: pw.TextAlign.center,
+                    maxLines: 1,
+                    style: pw.TextStyle(
+                      color: scheme.blockText,
+                      fontSize: timeSize,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                if (showTime)
+                  for (final line in timeLines)
+                    pw.Text(
+                      line,
+                      textAlign: pw.TextAlign.center,
+                      maxLines: 1,
+                      style: pw.TextStyle(
+                        color: scheme.blockText,
+                        fontSize: timeSize,
                       ),
+                    ),
+                if (showNotes)
+                  for (final note in notes)
+                    pw.Text(
+                      note,
+                      textAlign: pw.TextAlign.center,
+                      maxLines: 2,
+                      style: pw.TextStyle(
+                        color: scheme.blockText,
+                        fontSize: noteSize,
+                      ),
+                    ),
               ],
             ),
           ),
@@ -493,6 +517,50 @@ class PdfExporter {
       color: PdfColors.white,
       child: pw.Stack(children: children),
     );
+  }
+
+  /// Earliest start of another event that must not be covered — same venue and
+  /// overlapping lane — or the page end.
+  static int _nextBlockingStart(
+    RunningOrderEvent event,
+    RunningOrderPage page,
+  ) {
+    var next = page.endMinute;
+    for (final other in page.events) {
+      if (identical(other, event)) continue;
+      if (other.venueIndex != event.venueIndex) continue;
+      if (other.startMinute <= event.startMinute) continue;
+      // Different lanes can sit side by side; only same-lane (or full-width)
+      // events block vertical growth.
+      final sameLane =
+          event.laneCount <= 1 ||
+          other.laneCount <= 1 ||
+          other.laneIndex == event.laneIndex;
+      if (!sameLane) continue;
+      next = math.min(next, other.startMinute);
+    }
+    return next;
+  }
+
+  static double _estimateBoxHeight({
+    required double laneWidth,
+    required double nameSize,
+    required double timeSize,
+    required double noteSize,
+    required int timeLines,
+    required bool typeLabel,
+    required List<String> bands,
+    required int notes,
+  }) {
+    final avgCharWidth = nameSize * 0.55;
+    final charsPerLine = math.max(6, ((laneWidth - 6) / avgCharWidth).floor());
+    var wrappedBandLines = 0;
+    for (final band in bands) {
+      wrappedBandLines += math.max(1, (band.length / charsPerLine).ceil());
+    }
+    return 3.0 +
+        (timeLines + (typeLabel ? 1 : 0) + notes) * (timeSize + 1.2) +
+        wrappedBandLines * (nameSize + 1.2);
   }
 
   static String _hourLabel(int timelineMinute) {

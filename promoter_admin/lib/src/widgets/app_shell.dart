@@ -26,7 +26,7 @@ class AppShell extends StatelessWidget {
     this.allowCustomAlerts = false,
     this.bandsTab = BandsTab.list,
     this.onBandsTabChanged,
-    this.scheduleTab = ScheduleTab.entry,
+    this.scheduleTab = ScheduleTab.view,
     this.onScheduleTabChanged,
     this.onDescriptionsTabChanged,
   });

@@ -15,6 +15,7 @@ import 'package:promoter_admin/src/services/portal_navigation_store.dart';
 import 'package:promoter_admin/src/services/pointer_service.dart';
 import 'package:promoter_admin/src/services/schedule_service.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
+import 'package:promoter_admin/src/widgets/export_artists_dialog.dart';
 import 'package:promoter_admin/src/widgets/export_schedule_dialog.dart';
 
 class PortalScreen extends StatefulWidget {
@@ -66,12 +67,13 @@ class _PortalScreenState extends State<PortalScreen> {
 
   AppSection _section = AppSection.settings;
   BandsTab _bandsTab = BandsTab.list;
-  ScheduleTab _scheduleTab = ScheduleTab.entry;
+  ScheduleTab _scheduleTab = ScheduleTab.view;
   DescriptionsTab _descriptionsTab = DescriptionsTab.list;
   bool _showPromote = false;
   String? _descriptionPrefillLabel;
   bool _bandFormIsEdit = false;
   String _descriptionFormHeading = 'Create Description';
+  Future<void> _persistChain = Future<void>.value();
 
   FestivalWorkspace get _ws => widget.workspace;
 
@@ -87,10 +89,11 @@ class _PortalScreenState extends State<PortalScreen> {
     setState(() {
       if (saved != null) {
         _section = saved.section;
-        _scheduleTab = saved.scheduleTab;
+        // Never reopen data-entry forms after launch / festival switch.
+        _scheduleTab = PortalNavigation.listSafeScheduleTab(saved.scheduleTab);
       } else {
         _section = AppSection.settings;
-        _scheduleTab = ScheduleTab.entry;
+        _scheduleTab = ScheduleTab.view;
       }
       _bandsTab = BandsTab.list;
       _descriptionsTab = DescriptionsTab.list;
@@ -102,10 +105,18 @@ class _PortalScreenState extends State<PortalScreen> {
   }
 
   Future<void> _persistNavigation() async {
-    await _navStore.saveForFestival(
-      widget.activeFestivalId,
-      PortalNavigation(section: _section, scheduleTab: _scheduleTab),
-    );
+    // Serialize writes so rapid nav callbacks (section then tab) cannot race
+    // and leave an older Entry tab on disk after View was selected.
+    final section = _section;
+    final scheduleTab = _scheduleTab;
+    final festivalId = widget.activeFestivalId;
+    _persistChain = _persistChain.then((_) async {
+      await _navStore.saveForFestival(
+        festivalId,
+        PortalNavigation(section: section, scheduleTab: scheduleTab),
+      );
+    });
+    await _persistChain;
   }
 
   void _applyNavigation({
@@ -296,6 +307,29 @@ class _PortalScreenState extends State<PortalScreen> {
     }
   }
 
+  Future<void> _openArtistsExport() async {
+    try {
+      final bands = await widget.lineupService.load(_ws);
+      if (!mounted) return;
+      if (bands.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('There are no artists to export.')),
+        );
+        return;
+      }
+      await showArtistsExportDialog(
+        context,
+        workspace: _ws,
+        bands: bands,
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not load the artists list: $error')),
+      );
+    }
+  }
+
   @override
   void didUpdateWidget(covariant PortalScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -326,6 +360,8 @@ class _PortalScreenState extends State<PortalScreen> {
         section: s,
         showPromote: false,
         bandsTab: s == AppSection.bands ? BandsTab.list : null,
+        // Opening Schedule via section alone lands on View, never Entry.
+        scheduleTab: s == AppSection.schedule ? ScheduleTab.view : null,
         descriptionsTab: s == AppSection.descriptions
             ? DescriptionsTab.list
             : null,
@@ -400,6 +436,10 @@ class _PortalScreenState extends State<PortalScreen> {
               label: 'Save Schedule as HTML…',
               onSelected: () =>
                   unawaited(_openScheduleExport(ScheduleExportFormat.html)),
+            ),
+            PlatformMenuItem(
+              label: 'Save Artists as HTML…',
+              onSelected: () => unawaited(_openArtistsExport()),
             ),
           ],
         ),
