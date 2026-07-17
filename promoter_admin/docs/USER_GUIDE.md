@@ -16,7 +16,7 @@ Someone who releases or maintains the festival apps will give you the **Testing*
 | **Settings**     | One-time (or rare) festival setup: Dropbox login, Testing/Production links, optional announcement folder.                   |
 | **Artists**      | Build and edit the Testing lineup: add, change, or remove bands.                                                            |
 | **Descriptions** | Write or update the text fans read about a band (usually done when you add the band; you can also fix or add them later).   |
-| **Schedule**     | Enter shows and other events; browse the event list; see simple stats.                                                      |
+| **Schedule**     | Enter shows and other events; browse the event list; see simple stats; export a PDF/HTML running order (official admins). |
 | **Publish**      | When Testing looks right, push your changes so most fans see them in Production. New bands can trigger a push notification. |
 | **Send alert**   | Optional: type a message and send it to **everyone** who uses that festival’s app.                                          |
 
@@ -71,7 +71,8 @@ You’ll mainly use Settings once:
 - **Alert folder** — only if your festival uses push announcements (optional).  
 - **Load festival data** — pull Testing/Production file URLs and fill empty Venues / Days / Dates / Event types from Production. Existing lists are kept (not overwritten).  
 - **Save configuration** — keep your local settings. Changing Venues / Days / Dates / Event types refreshes Schedule Entry menus.  
-- **Use city/state fields** — turn on if this festival tracks city/state for artists.  
+- **Festival logo** — optional image URL (Dropbox share link works) used only when exporting a running order; see [Export a running order](#export-a-running-order).  
+ - **Use city/state fields** — turn on if this festival tracks city/state for artists.  
 - **Venues / Dates / Days / Event types** — lists used when entering schedule items (filled once by Load when empty; you edit afterward).  
 - **Days / Dates alignment** — Days and Dates are ordered lists: Day line 1 pairs with Date line 1, and so on. Dates must be consecutive `M/D/YYYY` values (no leading zeros) with **one more date than days** (the last date covers overnight on the final day). **Date rollover** (default `8:00`) decides when a start time uses the next calendar date while keeping the same Day. Schedule Entry fills Date from Day + start time; you can still change Date by hand.  
 - **Add new year…** — only for people who manage year transitions (starts a new Testing year; Production updates when someone Publishes).
@@ -174,6 +175,55 @@ These are **not** tied to a lineup band:
 
 ![Schedule View](images/schedule-view.png)
 
+### Export a running order
+
+On **Schedule → View**, select **Export…**. On macOS you can also use **File → Save Schedule as PDF…** or **Save Schedule as HTML…**.
+
+#### Who this is for (important)
+
+Exports are for **official festival admins / event promoters**. The promoter may use a PDF or HTML export as the **official** running order.
+
+**Do not** use an export to **compete with** an official running-order PDF or official web schedule that already exists for the festival. Unofficial volunteers should not circulate an export as a public substitute for the promoter’s materials.
+
+The export dialog also reminds you of this.
+
+#### How to export
+
+1. Choose **PDF** or **HTML**.
+2. Choose **Color** or **Black & white**. PDF defaults to black-and-white; HTML defaults to color.
+3. Check the **event types** to include. **Show** starts selected. Changing the checkboxes only affects this export — not the schedule data or the View list.
+4. Save the file.
+
+#### PDF vs HTML
+
+| | **PDF** | **HTML** |
+| --- | --- | --- |
+| Layout | Letter **portrait**, printer-style (white page, outlined event boxes, hour + half-hour lines) | **Landscape** dark schedule (colorful venue blocks by default) |
+| Typical use | Can be used as the **official** running order by the event promoter. Do **not** use it to compete with an official version. | Can be used as the **official** running order by the event promoter. Do **not** use it to compete with an official version. |
+| Color mode | Same structure; color only tints venue headers and borders | Full color theme vs black-and-white theme |
+| Crowding | Fixed printable page — fonts/boxes adjust within the page | Timeline **grows taller** when a day is long or dense so names stay readable; uncrowded days keep the same compact height |
+
+Each festival **day** becomes one page, with venue columns and a vertical time axis. Overnight times follow the festival’s **Date rollover** setting (same rules as Schedule Entry).
+
+#### Event-type labels
+
+Only these types can show a type label: **Clinic**, **Meet and Greet**, and **Unofficial Event**.
+
+- **Show** and **Special Event** are **never** labeled (on the page header or on individual events).
+- **Only one** of Clinic / Meet and Greet / Unofficial Event selected → that type appears in the **page header** in plural (for example `CLINICS` or `MEET & GREETS`). Events themselves are not labeled.
+- **Mixed types** selected (for example Shows + Clinics) → eligible events get a **per-event** label; Shows and Special Events stay unlabeled.
+- Other custom festival types are not labeled.
+
+Suggested save names include the event type when you export a **single** type (for example `…-shows-running-order.pdf` or `…-meet-and-greets-running-order.html`). Mixed-type exports keep a plain `…-running-order` name.
+
+Deck / location subtitles under venue names are not exported yet (there is no separate deck field in the data).
+
+When several bands share the **same venue and time slot** (common for Meet and Greets), they are shown together in one block (names listed with `/`). If times only partially overlap at the same venue, blocks sit side by side. Event boxes grow and fonts shrink as needed so **band names and notes are never clipped or omitted**.
+
+#### Festival logo
+
+Optional. In **Settings**, paste a **Festival logo** image link (a Dropbox share link works; `dl=0` is normalized to `raw=1` on save). When set, the logo appears to the **left** of the day header on each PDF page (HTML already places it in the left brand column). Keeping it beside the day title preserves vertical space for the schedule grid. If the image cannot be downloaded at export time, the export still succeeds without the logo.
+
 ---
 
 ## Publish (Testing → what fans see)
@@ -243,6 +293,7 @@ Volunteers who can’t Publish still improve Testing for whoever does.
 | No Add / Edit / Delete             | Ask for **edit** share on those Dropbox files to your personal account, then **Refresh file access**.                  |
 | No Schedule **Entry**              | You can view only — need schedule edit rights.                                                                         |
 | No **Publish**                     | Need edit rights on at least Artists, Schedule, or Descriptions.                                                       |
+| Export vs official schedule        | Promoters may use exports as the official running order. Do **not** use them to compete with an existing official PDF or web schedule. |
 | No **Send alert**                  | Festival hasn’t enabled alerts for you, or alert folder isn’t set / shared for write.                                  |
 | Description won’t “stick” for fans | Usually fixed by adding it while creating the band, or asking someone with fuller rights to finish under Descriptions. |
 

@@ -69,6 +69,7 @@ class _SettingsSectionState extends State<SettingsSection> {
   late final TextEditingController _days;
   late final TextEditingController _dateRollover;
   late final TextEditingController _eventTypes;
+  late final TextEditingController _festivalLogo;
   late bool _canEditBands;
   late bool _canEditSchedule;
   late bool _canEditDescriptions;
@@ -84,10 +85,10 @@ class _SettingsSectionState extends State<SettingsSection> {
     super.initState();
     _name = TextEditingController(text: widget.workspace.festivalName);
     _testing = TextEditingController(text: widget.workspace.testingPointerUrl);
-    _production =
-        TextEditingController(text: widget.workspace.productionPointerUrl);
-    _alertFolder =
-        TextEditingController(text: widget.workspace.alertFolderUrl);
+    _production = TextEditingController(
+      text: widget.workspace.productionPointerUrl,
+    );
+    _alertFolder = TextEditingController(text: widget.workspace.alertFolderUrl);
     _venues = TextEditingController(text: widget.workspace.venues.join('\n'));
     _dates = TextEditingController(text: widget.workspace.dates.join('\n'));
     _days = TextEditingController(text: widget.workspace.days.join('\n'));
@@ -97,8 +98,12 @@ class _SettingsSectionState extends State<SettingsSection> {
           : widget.workspace.dateRolloverTime.trim(),
     );
     _eventTypes = TextEditingController(
-      text: ScheduleValidation.withDefaultEventTypes(widget.workspace.eventTypes)
-          .join('\n'),
+      text: ScheduleValidation.withDefaultEventTypes(
+        widget.workspace.eventTypes,
+      ).join('\n'),
+    );
+    _festivalLogo = TextEditingController(
+      text: widget.workspace.festivalLogoUrl,
     );
     _canEditBands = widget.workspace.canEditBands;
     _canEditSchedule = widget.workspace.canEditSchedule;
@@ -140,6 +145,9 @@ class _SettingsSectionState extends State<SettingsSection> {
     if (_dateRollover.text != roll) _dateRollover.text = roll;
     final t = ScheduleValidation.withDefaultEventTypes(w.eventTypes).join('\n');
     if (_eventTypes.text != t) _eventTypes.text = t;
+    if (_festivalLogo.text != w.festivalLogoUrl) {
+      _festivalLogo.text = w.festivalLogoUrl;
+    }
     _canEditBands = w.canEditBands;
     _canEditSchedule = w.canEditSchedule;
     _canEditDescriptions = w.canEditDescriptions;
@@ -159,6 +167,7 @@ class _SettingsSectionState extends State<SettingsSection> {
     _days.dispose();
     _dateRollover.dispose();
     _eventTypes.dispose();
+    _festivalLogo.dispose();
     super.dispose();
   }
 
@@ -171,8 +180,9 @@ class _SettingsSectionState extends State<SettingsSection> {
   FestivalWorkspace _draft() {
     final days = DayDateAlignment.normalizeDays(_lines(_days.text));
     final dates = DayDateAlignment.normalizeDates(_lines(_dates.text));
-    final (rollH, rollM) =
-        DayDateAlignment.parseRolloverTime(_dateRollover.text);
+    final (rollH, rollM) = DayDateAlignment.parseRolloverTime(
+      _dateRollover.text,
+    );
     return widget.workspace.copyWith(
       id: widget.workspace.id.isEmpty
           ? widget.activeFestivalId
@@ -181,11 +191,14 @@ class _SettingsSectionState extends State<SettingsSection> {
       testingPointerUrl: _testing.text.trim(),
       productionPointerUrl: _production.text.trim(),
       alertFolderUrl: _alertFolder.text.trim(),
+      festivalLogoUrl: normalizeDropboxUrl(_festivalLogo.text.trim()),
       venues: _lines(_venues.text),
       dates: dates,
       days: days,
       dateRolloverTime: DayDateAlignment.formatRolloverTime(rollH, rollM),
-      eventTypes: ScheduleValidation.withDefaultEventTypes(_lines(_eventTypes.text)),
+      eventTypes: ScheduleValidation.withDefaultEventTypes(
+        _lines(_eventTypes.text),
+      ),
       canEditBands: _canEditBands,
       canEditSchedule: _canEditSchedule,
       canEditDescriptions: _canEditDescriptions,
@@ -197,7 +210,8 @@ class _SettingsSectionState extends State<SettingsSection> {
 
   Future<FestivalWorkspace> _probeAccess(FestivalWorkspace workspace) async {
     if (!widget.dropboxConnected) return workspace;
-    final hasUrls = workspace.bandListUrl.trim().isNotEmpty ||
+    final hasUrls =
+        workspace.bandListUrl.trim().isNotEmpty ||
         workspace.scheduleUrl.trim().isNotEmpty ||
         workspace.descriptionMapUrl.trim().isNotEmpty ||
         workspace.testingPointerUrl.trim().isNotEmpty ||
@@ -356,7 +370,8 @@ class _SettingsSectionState extends State<SettingsSection> {
         _status = null;
         _busy = false;
       });
-      final isAlign = message.contains('1:1 with one extra Date') ||
+      final isAlign =
+          message.contains('1:1 with one extra Date') ||
           message.contains('consecutive calendar') ||
           message.contains('unique dates');
       if (isAlign) {
@@ -389,7 +404,8 @@ class _SettingsSectionState extends State<SettingsSection> {
         _error = message;
         _status = null;
       });
-      final isAlign = message.contains('1:1 with one extra Date') ||
+      final isAlign =
+          message.contains('1:1 with one extra Date') ||
           message.contains('consecutive calendar') ||
           message.contains('unique dates');
       if (isAlign) {
@@ -454,10 +470,10 @@ class _SettingsSectionState extends State<SettingsSection> {
         _busy = false;
         _status = result.createPointerFiles
             ? 'Created “${created.festivalName}” in ${result.folder}. '
-                'Testing and Production links are ready — send them to your '
-                'app developer if needed.'
+                  'Testing and Production links are ready — send them to your '
+                  'app developer if needed.'
             : 'Added “${created.festivalName}” from existing links '
-                '(year ${created.eventYear}).';
+                  '(year ${created.eventYear}).';
       });
     } catch (e) {
       setState(() {
@@ -611,7 +627,8 @@ class _SettingsSectionState extends State<SettingsSection> {
         _canEditDescriptions = updated.canEditDescriptions;
         _canEditPointers = updated.canEditPointers;
         _canEditAlerts = updated.canEditAlerts;
-        _status = 'Write access: ${_accessSummary(updated)}. '
+        _status =
+            'Write access: ${_accessSummary(updated)}. '
             'Admin sections without access are hidden.';
         _busy = false;
       });
@@ -634,7 +651,10 @@ class _SettingsSectionState extends State<SettingsSection> {
     return true;
   }
 
-  bool _scheduleVocabChanged(FestivalWorkspace before, FestivalWorkspace after) {
+  bool _scheduleVocabChanged(
+    FestivalWorkspace before,
+    FestivalWorkspace after,
+  ) {
     return !_sameVocabList(before.venues, after.venues) ||
         !_sameVocabList(before.days, after.days) ||
         !_sameVocabList(before.dates, after.dates) ||
@@ -675,9 +695,12 @@ class _SettingsSectionState extends State<SettingsSection> {
       builder: (context) => _AddNewYearDialog(
         currentYear: currentYear,
         festivalName: draft.festivalName,
-        initialFolder: inferredFolder ??
+        initialFolder:
+            inferredFolder ??
             FestivalCreateService.defaultFolderForName(draft.festivalName),
-        initialPrefix: FestivalCreateService.defaultFilePrefix(draft.festivalName),
+        initialPrefix: FestivalCreateService.defaultFilePrefix(
+          draft.festivalName,
+        ),
       ),
     );
     if (result == null || !mounted) return;
@@ -765,15 +788,15 @@ class _SettingsSectionState extends State<SettingsSection> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   PortalStringDropdown(
-                    value: widget.festivalChoices
-                            .any((c) => c.id == widget.activeFestivalId)
+                    value:
+                        widget.festivalChoices.any(
+                          (c) => c.id == widget.activeFestivalId,
+                        )
                         ? widget.activeFestivalId
                         : (widget.festivalChoices.isNotEmpty
-                            ? widget.festivalChoices.first.id
-                            : null),
-                    items: [
-                      for (final c in widget.festivalChoices) c.id,
-                    ],
+                              ? widget.festivalChoices.first.id
+                              : null),
+                    items: [for (final c in widget.festivalChoices) c.id],
                     enabled: !_busy,
                     onChanged: _busy ? null : _switchFestival,
                     labelBuilder: (id) {
@@ -910,13 +933,38 @@ class _SettingsSectionState extends State<SettingsSection> {
               ),
             ),
             FormRow(
+              label: 'Festival logo',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: _festivalLogo,
+                    maxLines: 2,
+                    decoration: const InputDecoration(
+                      hintText:
+                          'https://www.dropbox.com/.../festival-logo.png?raw=1',
+                    ),
+                  ),
+                  const HintText(
+                    'Optional Dropbox (or other) image link used only in PDF '
+                    'and HTML schedule exports, where it replaces the festival '
+                    'name at the top of each page. Prefer a PNG or JPEG. '
+                    'dl=0 share links are normalized to raw=1 on save.',
+                  ),
+                ],
+              ),
+            ),
+            FormRow(
               label: 'Data files',
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _ReadonlyLine('Artists', widget.workspace.bandListUrl),
                   _ReadonlyLine('Schedule', widget.workspace.scheduleUrl),
-                  _ReadonlyLine('Description map', widget.workspace.descriptionMapUrl),
+                  _ReadonlyLine(
+                    'Description map',
+                    widget.workspace.descriptionMapUrl,
+                  ),
                   if (widget.workspace.eventYear.isNotEmpty)
                     _ReadonlyLine('Event year', widget.workspace.eventYear),
                   if (widget.dropboxConnected && _canEditPointers) ...[
@@ -948,9 +996,12 @@ class _SettingsSectionState extends State<SettingsSection> {
                       widget.workspace.bandListUrl.trim().isEmpty
                           ? 'No artists URL yet'
                           : (_canEditBands
-                              ? 'Write access — Add / Edit / Delete enabled'
-                              : 'No write access — view only (Add / Edit / Delete disabled)'),
-                      style: const TextStyle(color: AppColors.muted, fontSize: 12),
+                                ? 'Write access — Add / Edit / Delete enabled'
+                                : 'No write access — view only (Add / Edit / Delete disabled)'),
+                      style: const TextStyle(
+                        color: AppColors.muted,
+                        fontSize: 12,
+                      ),
                     ),
                     value: _canEditBands,
                     onChanged: _busy
@@ -966,9 +1017,12 @@ class _SettingsSectionState extends State<SettingsSection> {
                       widget.workspace.scheduleUrl.trim().isEmpty
                           ? 'No schedule URL yet'
                           : (_canEditSchedule
-                              ? 'Write access — Add / Edit / Delete enabled'
-                              : 'No write access — view only (Add / Edit / Delete disabled)'),
-                      style: const TextStyle(color: AppColors.muted, fontSize: 12),
+                                ? 'Write access — Add / Edit / Delete enabled'
+                                : 'No write access — view only (Add / Edit / Delete disabled)'),
+                      style: const TextStyle(
+                        color: AppColors.muted,
+                        fontSize: 12,
+                      ),
                     ),
                     value: _canEditSchedule,
                     onChanged: _busy
@@ -984,15 +1038,18 @@ class _SettingsSectionState extends State<SettingsSection> {
                       widget.workspace.descriptionMapUrl.trim().isEmpty
                           ? 'No description map URL yet'
                           : (_canEditDescriptions
-                              ? 'Write access — Descriptions section shown'
-                              : 'No write access — Descriptions section hidden'),
-                      style: const TextStyle(color: AppColors.muted, fontSize: 12),
+                                ? 'Write access — Descriptions section shown'
+                                : 'No write access — Descriptions section hidden'),
+                      style: const TextStyle(
+                        color: AppColors.muted,
+                        fontSize: 12,
+                      ),
                     ),
                     value: _canEditDescriptions,
                     onChanged: _busy
                         ? null
                         : (v) =>
-                            setState(() => _canEditDescriptions = v ?? false),
+                              setState(() => _canEditDescriptions = v ?? false),
                   ),
                   Padding(
                     padding: const EdgeInsets.only(top: 4, bottom: 4),
@@ -1000,9 +1057,12 @@ class _SettingsSectionState extends State<SettingsSection> {
                       widget.workspace.testingPointerUrl.trim().isEmpty
                           ? 'Links: no Testing link yet'
                           : (_canEditPointers
-                              ? 'Testing link: write access — Add new year available'
-                              : 'Testing link: no write access — Add new year hidden'),
-                      style: const TextStyle(color: AppColors.muted, fontSize: 12),
+                                ? 'Testing link: write access — Add new year available'
+                                : 'Testing link: no write access — Add new year hidden'),
+                      style: const TextStyle(
+                        color: AppColors.muted,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
                   const HintText(
@@ -1037,7 +1097,7 @@ class _SettingsSectionState extends State<SettingsSection> {
                     onChanged: _busy
                         ? null
                         : (v) =>
-                            setState(() => _useCityStateField = v ?? false),
+                              setState(() => _useCityStateField = v ?? false),
                   ),
                 ],
               ),
@@ -1089,9 +1149,7 @@ class _SettingsSectionState extends State<SettingsSection> {
                 children: [
                   TextField(
                     controller: _dateRollover,
-                    decoration: const InputDecoration(
-                      hintText: '8:00',
-                    ),
+                    decoration: const InputDecoration(hintText: '8:00'),
                   ),
                   const HintText(
                     'Start times from midnight until this time use the next '
@@ -1127,9 +1185,7 @@ class _SettingsSectionState extends State<SettingsSection> {
                   onPressed: _busy ? null : _save,
                   child: const Text('Save configuration'),
                 ),
-                if (_canEditBands ||
-                    _canEditSchedule ||
-                    _canEditDescriptions)
+                if (_canEditBands || _canEditSchedule || _canEditDescriptions)
                   OutlinedButton(
                     onPressed: () => widget.onShowPromote(true),
                     child: const Text('Publish to Production…'),
@@ -1266,8 +1322,9 @@ class _PromotePanelState extends State<_PromotePanel> {
         canEditBands: widget.workspace.canEditBands,
         canEditSchedule: widget.workspace.canEditSchedule,
         canEditDescriptions: widget.workspace.canEditDescriptions,
-        alertFolderConfigured:
-            widget.workspace.alertFolderUrl.trim().isNotEmpty,
+        alertFolderConfigured: widget.workspace.alertFolderUrl
+            .trim()
+            .isNotEmpty,
       ),
     );
     if (ok != true || !mounted) return;
@@ -1291,8 +1348,8 @@ class _PromotePanelState extends State<_PromotePanel> {
       );
       final status = alertQueued
           ? 'Published to Production. Queued push for ${diff.addedBandNames.length} '
-              'new band(s) — ALL app users will see that announcement when it sends. '
-              'Processing can take up to 10 minutes.'
+                'new band(s) — ALL app users will see that announcement when it sends. '
+                'Processing can take up to 10 minutes.'
           : 'Published to Production.';
 
       setState(() {
@@ -1351,25 +1408,25 @@ class _PromotePanelState extends State<_PromotePanel> {
             Text(
               yearRoll
                   ? 'Testing is on a newer event year than Production. Publish '
-                      'copies Testing artists, schedule, and description map onto '
-                      'the new-year Production files, then updates the Production '
-                      'pointer file (archive Current as $productionYear, set Current '
-                      'to $testingYear).'
+                        'copies Testing artists, schedule, and description map onto '
+                        'the new-year Production files, then updates the Production '
+                        'pointer file (archive Current as $productionYear, set Current '
+                        'to $testingYear).'
                   : 'Day-to-day edits use Testing. Publish to Production copies '
-                      'artists, schedule, and description map onto the Production files '
-                      'without breaking Dropbox share links.',
+                        'artists, schedule, and description map onto the Production files '
+                        'without breaking Dropbox share links.',
               style: const TextStyle(color: AppColors.muted),
             ),
             const SizedBox(height: 12),
             StatusBanner(
               text: yearRoll
                   ? 'Year roll: Testing $testingYear → Production $productionYear. '
-                      'CSV data goes into the $testingYear Production files only; '
-                      '$productionYear Production files are left as-is. The Production '
-                      'pointer file is then updated so Current points at $testingYear.'
+                        'CSV data goes into the $testingYear Production files only; '
+                        '$productionYear Production files are left as-is. The Production '
+                        'pointer file is then updated so Current points at $testingYear.'
                   : 'Verify artists, schedule, and descriptions look correct in '
-                      'Testing (fan app: Advanced → Testing) before publishing. '
-                      'Production is what most attendees see.',
+                        'Testing (fan app: Advanced → Testing) before publishing. '
+                        'Production is what most attendees see.',
             ),
             if (workspace.canEditBands && alertFolder.isNotEmpty) ...[
               const SizedBox(height: 12),
@@ -1432,7 +1489,10 @@ class _PromotePanelState extends State<_PromotePanel> {
                   padding: const EdgeInsets.only(bottom: 4),
                   child: Text(
                     '• $line',
-                    style: const TextStyle(color: AppColors.muted, fontSize: 13),
+                    style: const TextStyle(
+                      color: AppColors.muted,
+                      fontSize: 13,
+                    ),
                   ),
                 ),
               if (workspace.canEditBands &&
@@ -1471,8 +1531,8 @@ class _PromotePanelState extends State<_PromotePanel> {
                     _promoting
                         ? 'Publishing…'
                         : (yearRoll
-                            ? 'Publish year $testingYear → Production'
-                            : 'Publish Testing → Production'),
+                              ? 'Publish year $testingYear → Production'
+                              : 'Publish Testing → Production'),
                   ),
                 ),
                 OutlinedButton(
@@ -1527,7 +1587,8 @@ class _PublishResultDialog extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               StatusBanner(
-                text: '“$festivalName” Production data was updated successfully.',
+                text:
+                    '“$festivalName” Production data was updated successfully.',
               ),
               const Text(
                 'What happened:',
@@ -1542,7 +1603,10 @@ class _PublishResultDialog extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 4),
                   child: Text(
                     '• $line',
-                    style: const TextStyle(color: AppColors.muted, fontSize: 13),
+                    style: const TextStyle(
+                      color: AppColors.muted,
+                      fontSize: 13,
+                    ),
                   ),
                 ),
               if (alertQueued) ...[
@@ -1648,13 +1712,13 @@ class _PromoteConfirmDialogState extends State<_PromoteConfirmDialog> {
               StatusBanner(
                 text: yearRoll
                     ? 'This will rewrite the Production pointer file for '
-                        '“${widget.festivalName}” (archive ${diff!.productionYear}, '
-                        'Current → ${diff.testingYear}) and overwrite the new-year '
-                        'Production CSVs. Most attendees see Production. '
-                        'This cannot be undone from the admin app.'
+                          '“${widget.festivalName}” (archive ${diff!.productionYear}, '
+                          'Current → ${diff.testingYear}) and overwrite the new-year '
+                          'Production CSVs. Most attendees see Production. '
+                          'This cannot be undone from the admin app.'
                     : 'This will overwrite Production data for '
-                        '“${widget.festivalName}”. Most attendees see Production. '
-                        'This cannot be undone from the admin app.',
+                          '“${widget.festivalName}”. Most attendees see Production. '
+                          'This cannot be undone from the admin app.',
                 isError: true,
               ),
               if (widget.canEditBands &&
@@ -1717,7 +1781,10 @@ class _PromoteConfirmDialogState extends State<_PromoteConfirmDialog> {
                   padding: const EdgeInsets.only(bottom: 4),
                   child: Text(
                     '• $item',
-                    style: const TextStyle(color: AppColors.muted, fontSize: 13),
+                    style: const TextStyle(
+                      color: AppColors.muted,
+                      fontSize: 13,
+                    ),
                   ),
                 ),
               if (diff != null) ...[
@@ -1747,14 +1814,16 @@ class _PromoteConfirmDialogState extends State<_PromoteConfirmDialog> {
                 contentPadding: EdgeInsets.zero,
                 controlAffinity: ListTileControlAffinity.leading,
                 value: _verifiedTesting,
-                onChanged: (v) =>
-                    setState(() => _verifiedTesting = v ?? false),
+                onChanged: (v) => setState(() => _verifiedTesting = v ?? false),
                 title: Text(
                   yearRoll
                       ? 'I have verified Testing ($testingYearLabel) looks correct '
-                          'and want to publish that year to Production'
+                            'and want to publish that year to Production'
                       : 'I have verified Testing looks correct and want to publish to Production',
-                  style: const TextStyle(color: AppColors.heading, fontSize: 14),
+                  style: const TextStyle(
+                    color: AppColors.heading,
+                    fontSize: 14,
+                  ),
                 ),
               ),
             ],
@@ -1850,7 +1919,9 @@ class _AddNewYearDialogState extends State<_AddNewYearDialog> {
       return;
     }
     if (year == widget.currentYear.trim()) {
-      setState(() => _error = 'New year must differ from ${widget.currentYear}.');
+      setState(
+        () => _error = 'New year must differ from ${widget.currentYear}.',
+      );
       return;
     }
     if (prefix.isEmpty) {
@@ -1863,11 +1934,7 @@ class _AddNewYearDialogState extends State<_AddNewYearDialog> {
     }
     Navigator.pop(
       context,
-      _AddNewYearResult(
-        newYear: year,
-        folder: folder,
-        filePrefix: prefix,
-      ),
+      _AddNewYearResult(newYear: year, folder: folder, filePrefix: prefix),
     );
   }
 

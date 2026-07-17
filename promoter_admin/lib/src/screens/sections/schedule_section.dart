@@ -15,6 +15,7 @@ import 'package:promoter_admin/src/services/schedule_validation.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
 import 'package:promoter_admin/src/widgets/dropbox_folder_picker.dart';
+import 'package:promoter_admin/src/widgets/export_schedule_dialog.dart';
 import 'package:promoter_admin/src/widgets/portal_dropdown.dart';
 
 class ScheduleSection extends StatefulWidget {
@@ -54,15 +55,19 @@ class _ScheduleSectionState extends State<ScheduleSection> {
   String? _message;
   String? _shareUrl;
   bool _loading = true;
+
   /// True only while validating / writing description / writing local staging.
   /// Dropbox sync runs in the background and must not block Add.
   bool _committing = false;
+
   /// Keys for events not yet on Dropbox (vs last synced snapshot).
   Set<String> _outstandingKeys = {};
+
   /// Keys that flipped from outstanding → synced on the latest sync notify.
   Set<String> _justSyncedKeys = {};
 
   int? _editingIndex;
+
   /// File index of the event shown in the bottom “last saved” confirmation.
   int? _lastSavedIndex;
   ScheduleEvent? _lastSavedEvent;
@@ -117,8 +122,9 @@ class _ScheduleSectionState extends State<ScheduleSection> {
       final eb = _events[b];
       final byDate = _dateSortKey(ea.date).compareTo(_dateSortKey(eb.date));
       if (byDate != 0) return byDate;
-      final byStart =
-          _timeSortKey(ea.startTime).compareTo(_timeSortKey(eb.startTime));
+      final byStart = _timeSortKey(
+        ea.startTime,
+      ).compareTo(_timeSortKey(eb.startTime));
       if (byStart != 0) return byStart;
       return a.compareTo(b);
     });
@@ -210,19 +216,20 @@ class _ScheduleSectionState extends State<ScheduleSection> {
   List<String> get _days => DropdownOptions.withEmpty(widget.workspace.days);
 
   List<String> get _types => DropdownOptions.withEmpty(
-        ScheduleValidation.withDefaultEventTypes(widget.workspace.eventTypes),
-      );
+    ScheduleValidation.withDefaultEventTypes(widget.workspace.eventTypes),
+  );
 
   List<String> get _bandOptions => DropdownOptions.withEmpty(_bandNames);
 
   List<String> get _hourOptions =>
       DropdownOptions.withEmpty(ScheduleService.hours);
 
-  List<String> get _minOptions => DropdownOptions.withEmpty(ScheduleService.mins);
+  List<String> get _minOptions =>
+      DropdownOptions.withEmpty(ScheduleService.mins);
 
   List<String> get _lengthOptions => DropdownOptions.withEmpty(
-        ScheduleService.lengths.where((l) => l.trim().isNotEmpty),
-      );
+    ScheduleService.lengths.where((l) => l.trim().isNotEmpty),
+  );
 
   Future<void> _load({bool forceRefresh = false}) async {
     setState(() {
@@ -231,7 +238,8 @@ class _ScheduleSectionState extends State<ScheduleSection> {
     });
     try {
       final sync = widget.scheduleService.syncStatus;
-      final hasLocalPending = sync.state == ScheduleSyncState.pending ||
+      final hasLocalPending =
+          sync.state == ScheduleSyncState.pending ||
           sync.state == ScheduleSyncState.syncing ||
           sync.pendingCount > 0;
 
@@ -256,12 +264,10 @@ class _ScheduleSectionState extends State<ScheduleSection> {
 
       // Seed vocabulary from the schedule only when Settings lists are empty.
       var ws = widget.workspace;
-      final needVenues =
-          DayDateAlignment.meaningful(ws.venues).isEmpty;
+      final needVenues = DayDateAlignment.meaningful(ws.venues).isEmpty;
       final needDates = DayDateAlignment.meaningful(ws.dates).isEmpty;
       final needDays = DayDateAlignment.meaningful(ws.days).isEmpty;
-      final needTypes =
-          DayDateAlignment.meaningful(ws.eventTypes).isEmpty;
+      final needTypes = DayDateAlignment.meaningful(ws.eventTypes).isEmpty;
       if (needVenues || needDates || needDays || needTypes) {
         final hints = ScheduleService.hintsFromEvents(events);
         ws = PointerService.mergeScheduleVocabulary(
@@ -422,9 +428,11 @@ class _ScheduleSectionState extends State<ScheduleSection> {
     }
 
     if (band.isEmpty) {
-      setState(() => _error = nonBand
-          ? 'Event title is required.'
-          : 'Band name is required.');
+      setState(
+        () => _error = nonBand
+            ? 'Event title is required.'
+            : 'Band name is required.',
+      );
       return;
     }
     if (_startHour.trim().isEmpty || _startMin.trim().isEmpty) {
@@ -455,23 +463,23 @@ class _ScheduleSectionState extends State<ScheduleSection> {
               'Load festival data in Settings, or clear the description text.',
             );
           }
-          descriptionUrl =
-              await widget.descriptionMapService.writeDescriptionAndUpsertMap(
-            workspace: widget.workspace,
-            labelName: band,
-            text: descriptionBody,
-          );
+          descriptionUrl = await widget.descriptionMapService
+              .writeDescriptionAndUpsertMap(
+                workspace: widget.workspace,
+                labelName: band,
+                text: descriptionBody,
+              );
         } else {
-          descriptionUrl =
-              await widget.descriptionMapService.writeDescriptionFileForUser(
-            labelName: band,
-            text: descriptionBody,
-            promptForFolder: () => showDropboxFolderPicker(
-              context: context,
-              dropboxApi: widget.dropboxApi,
-              title: 'Where should descriptions be saved?',
-            ),
-          );
+          descriptionUrl = await widget.descriptionMapService
+              .writeDescriptionFileForUser(
+                labelName: band,
+                text: descriptionBody,
+                promptForFolder: () => showDropboxFolderPicker(
+                  context: context,
+                  dropboxApi: widget.dropboxApi,
+                  title: 'Where should descriptions be saved?',
+                ),
+              );
         }
       }
 
@@ -539,7 +547,8 @@ class _ScheduleSectionState extends State<ScheduleSection> {
         updated.add(toSave);
       }
       await widget.scheduleService.save(widget.workspace, updated);
-      final handoffLink = descriptionBody.isNotEmpty &&
+      final handoffLink =
+          descriptionBody.isNotEmpty &&
               !widget.workspace.canEditDescriptions &&
               descriptionUrl.trim().isNotEmpty
           ? descriptionUrl.trim()
@@ -554,8 +563,8 @@ class _ScheduleSectionState extends State<ScheduleSection> {
           extraMessage: descriptionBody.isEmpty
               ? ''
               : (widget.workspace.canEditDescriptions
-                  ? 'Description saved and added to the map.'
-                  : 'Description file saved — copy the link below for the description admin.'),
+                    ? 'Description saved and added to the map.'
+                    : 'Description file saved — copy the link below for the description admin.'),
         );
       });
       await _refreshOutstanding();
@@ -728,7 +737,9 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                   ? null
                   : () async {
                       try {
-                        await widget.scheduleService.flushSync(widget.workspace);
+                        await widget.scheduleService.flushSync(
+                          widget.workspace,
+                        );
                       } catch (e) {
                         if (!mounted) return;
                         // Keep the soft sync banner; avoid a second raw exception dump.
@@ -793,6 +804,23 @@ class _ScheduleSectionState extends State<ScheduleSection> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _syncStatusBar(),
+        Align(
+          alignment: Alignment.centerRight,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: OutlinedButton.icon(
+              onPressed: _events.isEmpty
+                  ? null
+                  : () => showScheduleExportDialog(
+                      context,
+                      workspace: widget.workspace,
+                      events: _events,
+                    ),
+              icon: const Icon(Icons.ios_share_outlined, size: 18),
+              label: const Text('Export…'),
+            ),
+          ),
+        ),
         if (widget.workspace.scheduleUrl.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(bottom: 10),
@@ -809,7 +837,8 @@ class _ScheduleSectionState extends State<ScheduleSection> {
           const Padding(
             padding: EdgeInsets.only(bottom: 10),
             child: StatusBanner(
-              text: 'View only — no Dropbox write access to the schedule. '
+              text:
+                  'View only — no Dropbox write access to the schedule. '
                   'Edit and Delete are disabled.',
             ),
           ),
@@ -894,15 +923,16 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                                               style: OutlinedButton.styleFrom(
                                                 padding:
                                                     const EdgeInsets.symmetric(
-                                                  horizontal: 12,
-                                                  vertical: 8,
-                                                ),
+                                                      horizontal: 12,
+                                                      vertical: 8,
+                                                    ),
                                                 minimumSize: Size.zero,
                                                 tapTargetSize:
                                                     MaterialTapTargetSize
                                                         .shrinkWrap,
                                               ),
-                                              onPressed: !_canEdit || _committing
+                                              onPressed:
+                                                  !_canEdit || _committing
                                                   ? null
                                                   : () => _startEdit(i),
                                               child: const Text('Edit'),
@@ -912,15 +942,16 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                                               style: OutlinedButton.styleFrom(
                                                 padding:
                                                     const EdgeInsets.symmetric(
-                                                  horizontal: 12,
-                                                  vertical: 8,
-                                                ),
+                                                      horizontal: 12,
+                                                      vertical: 8,
+                                                    ),
                                                 minimumSize: Size.zero,
                                                 tapTargetSize:
                                                     MaterialTapTargetSize
                                                         .shrinkWrap,
                                               ),
-                                              onPressed: !_canEdit || _committing
+                                              onPressed:
+                                                  !_canEdit || _committing
                                                   ? null
                                                   : () => _deleteEvent(i),
                                               child: const Text('Delete'),
@@ -1031,8 +1062,8 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                                                   : AppColors.heading,
                                               fontWeight:
                                                   (stats[band]?[t] ?? 0) > 0
-                                                      ? FontWeight.w600
-                                                      : FontWeight.w400,
+                                                  ? FontWeight.w600
+                                                  : FontWeight.w400,
                                             ),
                                           ),
                                         ),
@@ -1137,8 +1168,9 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                   final wasNonBand = ScheduleValidation.isNonBandEventType(
                     (_type ?? '').trim(),
                   );
-                  final nowNonBand =
-                      ScheduleValidation.isNonBandEventType(next.trim());
+                  final nowNonBand = ScheduleValidation.isNonBandEventType(
+                    next.trim(),
+                  );
                   _type = next;
                   if (wasNonBand && !nowNonBand) {
                     _descriptionText.clear();
@@ -1243,9 +1275,8 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                     child: PortalStringDropdown(
                       value: _endHour,
                       items: _hourOptions,
-                      onChanged: (v) => setState(
-                        () => _endHour = v ?? DropdownOptions.empty,
-                      ),
+                      onChanged: (v) =>
+                          setState(() => _endHour = v ?? DropdownOptions.empty),
                       decoration: const InputDecoration(labelText: 'Hour'),
                     ),
                   ),
@@ -1254,9 +1285,8 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                     child: PortalStringDropdown(
                       value: _endMin,
                       items: _minOptions,
-                      onChanged: (v) => setState(
-                        () => _endMin = v ?? DropdownOptions.empty,
-                      ),
+                      onChanged: (v) =>
+                          setState(() => _endMin = v ?? DropdownOptions.empty),
                       decoration: const InputDecoration(labelText: 'Min'),
                     ),
                   ),
@@ -1273,9 +1303,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                     controller: _notes,
                     maxLines: _isNonBand ? 1 : 2,
                     decoration: InputDecoration(
-                      hintText: _isNonBand
-                          ? 'e.g. Best Tattoo Contest'
-                          : null,
+                      hintText: _isNonBand ? 'e.g. Best Tattoo Contest' : null,
                     ),
                   ),
                   if (_isNonBand)
@@ -1302,11 +1330,11 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                     HintText(
                       widget.workspace.canEditDescriptions
                           ? 'When you save, the note is written to Dropbox and '
-                              'added to the description map automatically.'
+                                'added to the description map automatically.'
                           : 'When you save, the note is written to your Dropbox '
-                              'folder and you get a link to share with the '
-                              'description admin. The URL is also stored on '
-                              'this schedule row.',
+                                'folder and you get a link to share with the '
+                                'description admin. The URL is also stored on '
+                                'this schedule row.',
                     ),
                     if (_isEditing)
                       const HintText(
@@ -1406,7 +1434,8 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                       runSpacing: 8,
                       children: [
                         OutlinedButton(
-                          onPressed: !_canEdit ||
+                          onPressed:
+                              !_canEdit ||
                                   _committing ||
                                   _lastSavedIndex == null
                               ? null

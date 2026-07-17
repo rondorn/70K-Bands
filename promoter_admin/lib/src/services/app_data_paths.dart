@@ -16,6 +16,8 @@ class AppDataPaths {
       'Documents/$folderName/festival_registry.json';
   static const dropboxAuthRelativePath =
       'Documents/$folderName/dropbox_auth.json';
+  static const portalNavigationRelativePath =
+      'Documents/$folderName/portal_navigation.json';
 
   /// True when we should use iCloud Documents for synced config.
   static bool get prefersICloud => Platform.isIOS || Platform.isMacOS;
@@ -78,6 +80,11 @@ class AppDataPaths {
   static Future<File> localDropboxAuthFile() async {
     final dir = await localRoot();
     return File('${dir.path}/dropbox_auth.json');
+  }
+
+  static Future<File> localPortalNavigationFile() async {
+    final dir = await localRoot();
+    return File('${dir.path}/portal_navigation.json');
   }
 
   static Future<File> festivalRegistryFile() async {

@@ -6,6 +6,7 @@ class FestivalWorkspace {
     this.testingPointerUrl = '',
     this.productionPointerUrl = '',
     this.alertFolderUrl = '',
+    this.festivalLogoUrl = '',
     this.eventYear = '',
     this.bandListUrl = '',
     this.scheduleUrl = '',
@@ -33,6 +34,10 @@ class FestivalWorkspace {
   /// Dropbox folder share link for band-add announcement `.pending` files.
   /// Pasted manually in Settings (not created by festival bootstrap).
   final String alertFolderUrl;
+
+  /// Optional image URL (typically a Dropbox share link) used only in
+  /// PDF/HTML running-order exports, where it replaces the festival name.
+  final String festivalLogoUrl;
   final String eventYear;
 
   /// Derived from testing pointer Current::artistUrl (not edited by hand).
@@ -98,6 +103,7 @@ class FestivalWorkspace {
     String? testingPointerUrl,
     String? productionPointerUrl,
     String? alertFolderUrl,
+    String? festivalLogoUrl,
     String? eventYear,
     String? bandListUrl,
     String? scheduleUrl,
@@ -121,6 +127,7 @@ class FestivalWorkspace {
       testingPointerUrl: testingPointerUrl ?? this.testingPointerUrl,
       productionPointerUrl: productionPointerUrl ?? this.productionPointerUrl,
       alertFolderUrl: alertFolderUrl ?? this.alertFolderUrl,
+      festivalLogoUrl: festivalLogoUrl ?? this.festivalLogoUrl,
       eventYear: eventYear ?? this.eventYear,
       bandListUrl: bandListUrl ?? this.bandListUrl,
       scheduleUrl: scheduleUrl ?? this.scheduleUrl,
@@ -141,30 +148,35 @@ class FestivalWorkspace {
   }
 
   Map<String, String> toPrefs() => {
-        'id': id,
-        'festivalName': festivalName,
-        'testingPointerUrl': testingPointerUrl,
-        'productionPointerUrl': productionPointerUrl,
-        'alertFolderUrl': alertFolderUrl,
-        'eventYear': eventYear,
-        'bandListUrl': bandListUrl,
-        'scheduleUrl': scheduleUrl,
-        'descriptionMapUrl': descriptionMapUrl,
-        'venues': venues.join('\n'),
-        'dates': dates.join('\n'),
-        'days': days.join('\n'),
-        'dateRolloverTime': dateRolloverTime,
-        'eventTypes': eventTypes.join('\n'),
-        'canEditBands': canEditBands ? '1' : '0',
-        'canEditSchedule': canEditSchedule ? '1' : '0',
-        'canEditDescriptions': canEditDescriptions ? '1' : '0',
-        'canEditPointers': canEditPointers ? '1' : '0',
-        'canEditAlerts': canEditAlerts ? '1' : '0',
-        'allowCustomAlerts': allowCustomAlerts ? '1' : '0',
-        'useCityStateField': useCityStateField ? '1' : '0',
-      };
+    'id': id,
+    'festivalName': festivalName,
+    'testingPointerUrl': testingPointerUrl,
+    'productionPointerUrl': productionPointerUrl,
+    'alertFolderUrl': alertFolderUrl,
+    'festivalLogoUrl': festivalLogoUrl,
+    'eventYear': eventYear,
+    'bandListUrl': bandListUrl,
+    'scheduleUrl': scheduleUrl,
+    'descriptionMapUrl': descriptionMapUrl,
+    'venues': venues.join('\n'),
+    'dates': dates.join('\n'),
+    'days': days.join('\n'),
+    'dateRolloverTime': dateRolloverTime,
+    'eventTypes': eventTypes.join('\n'),
+    'canEditBands': canEditBands ? '1' : '0',
+    'canEditSchedule': canEditSchedule ? '1' : '0',
+    'canEditDescriptions': canEditDescriptions ? '1' : '0',
+    'canEditPointers': canEditPointers ? '1' : '0',
+    'canEditAlerts': canEditAlerts ? '1' : '0',
+    'allowCustomAlerts': allowCustomAlerts ? '1' : '0',
+    'useCityStateField': useCityStateField ? '1' : '0',
+  };
 
-  static bool _boolPref(Map<String, String> map, String key, {bool fallback = true}) {
+  static bool _boolPref(
+    Map<String, String> map,
+    String key, {
+    bool fallback = true,
+  }) {
     final raw = map[key];
     if (raw == null) return fallback;
     final v = raw.trim().toLowerCase();
@@ -186,6 +198,9 @@ class FestivalWorkspace {
       testingPointerUrl: map['testingPointerUrl'] ?? '',
       productionPointerUrl: map['productionPointerUrl'] ?? '',
       alertFolderUrl: map['alertFolderUrl'] ?? '',
+      festivalLogoUrl: (map['festivalLogoUrl'] ?? '').trim().isNotEmpty
+          ? (map['festivalLogoUrl'] ?? '').trim()
+          : (map['festivalLogoPath'] ?? '').trim(),
       eventYear: map['eventYear'] ?? '',
       bandListUrl: map['bandListUrl'] ?? '',
       scheduleUrl: map['scheduleUrl'] ?? '',

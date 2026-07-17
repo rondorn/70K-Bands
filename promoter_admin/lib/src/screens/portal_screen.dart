@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:promoter_admin/src/branding.dart';
 import 'package:promoter_admin/src/models/festival_workspace.dart';
 import 'package:promoter_admin/src/screens/sections/alerts_section.dart';
 import 'package:promoter_admin/src/screens/sections/bands_section.dart';
@@ -8,9 +11,11 @@ import 'package:promoter_admin/src/screens/sections/settings_section.dart';
 import 'package:promoter_admin/src/services/description_map_service.dart';
 import 'package:promoter_admin/src/services/dropbox_api.dart';
 import 'package:promoter_admin/src/services/lineup_service.dart';
+import 'package:promoter_admin/src/services/portal_navigation_store.dart';
 import 'package:promoter_admin/src/services/pointer_service.dart';
 import 'package:promoter_admin/src/services/schedule_service.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
+import 'package:promoter_admin/src/widgets/export_schedule_dialog.dart';
 
 class PortalScreen extends StatefulWidget {
   const PortalScreen({
@@ -57,6 +62,8 @@ class PortalScreen extends StatefulWidget {
 }
 
 class _PortalScreenState extends State<PortalScreen> {
+  final _navStore = PortalNavigationStore();
+
   AppSection _section = AppSection.settings;
   BandsTab _bandsTab = BandsTab.list;
   ScheduleTab _scheduleTab = ScheduleTab.entry;
@@ -67,6 +74,68 @@ class _PortalScreenState extends State<PortalScreen> {
   String _descriptionFormHeading = 'Create Description';
 
   FestivalWorkspace get _ws => widget.workspace;
+
+  @override
+  void initState() {
+    super.initState();
+    _restoreNavigation();
+  }
+
+  Future<void> _restoreNavigation() async {
+    final saved = await _navStore.loadForFestival(widget.activeFestivalId);
+    if (!mounted) return;
+    setState(() {
+      if (saved != null) {
+        _section = saved.section;
+        _scheduleTab = saved.scheduleTab;
+      } else {
+        _section = AppSection.settings;
+        _scheduleTab = ScheduleTab.entry;
+      }
+      _bandsTab = BandsTab.list;
+      _descriptionsTab = DescriptionsTab.list;
+      _showPromote = false;
+      _bandFormIsEdit = false;
+      _descriptionPrefillLabel = null;
+    });
+    _ensureSectionAllowed();
+  }
+
+  Future<void> _persistNavigation() async {
+    await _navStore.saveForFestival(
+      widget.activeFestivalId,
+      PortalNavigation(section: _section, scheduleTab: _scheduleTab),
+    );
+  }
+
+  void _applyNavigation({
+    AppSection? section,
+    BandsTab? bandsTab,
+    ScheduleTab? scheduleTab,
+    DescriptionsTab? descriptionsTab,
+    bool? showPromote,
+    bool resetBandForm = false,
+    bool clearDescriptionPrefill = false,
+  }) {
+    setState(() {
+      if (section != null) _section = section;
+      if (bandsTab != null) {
+        _bandsTab = bandsTab;
+        if (bandsTab == BandsTab.list) _bandFormIsEdit = false;
+      }
+      if (scheduleTab != null) _scheduleTab = scheduleTab;
+      if (descriptionsTab != null) {
+        _descriptionsTab = descriptionsTab;
+        if (descriptionsTab == DescriptionsTab.list) {
+          _descriptionPrefillLabel = null;
+        }
+      }
+      if (showPromote != null) _showPromote = showPromote;
+      if (resetBandForm) _bandFormIsEdit = false;
+      if (clearDescriptionPrefill) _descriptionPrefillLabel = null;
+    });
+    _persistNavigation();
+  }
 
   String get _festivalName => _ws.festivalName.trim();
 
@@ -94,7 +163,8 @@ class _PortalScreenState extends State<PortalScreen> {
               )
             : (
                 heading: 'Artists',
-                subheading: 'Testing lineup (what Advanced → Testing shows in the app)',
+                subheading:
+                    'Testing lineup (what Advanced → Testing shows in the app)',
               );
       case AppSection.schedule:
         switch (_scheduleTab) {
@@ -124,8 +194,7 @@ class _PortalScreenState extends State<PortalScreen> {
               )
             : (
                 heading: 'Descriptions',
-                subheading:
-                    'Artists with and without description map entries',
+                subheading: 'Artists with and without description map entries',
               );
       case AppSection.alerts:
         return (
@@ -168,10 +237,7 @@ class _PortalScreenState extends State<PortalScreen> {
     if (_section == AppSection.alerts && !_ws.customAlertsUiEnabled) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        setState(() {
-          _section = AppSection.settings;
-          _showPromote = false;
-        });
+        _applyNavigation(section: AppSection.settings, showPromote: false);
       });
       return;
     }
@@ -182,7 +248,7 @@ class _PortalScreenState extends State<PortalScreen> {
           _scheduleTab == ScheduleTab.entry) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
-          setState(() => _scheduleTab = ScheduleTab.view);
+          _applyNavigation(scheduleTab: ScheduleTab.view);
         });
       }
       if (_section == AppSection.bands &&
@@ -200,23 +266,50 @@ class _PortalScreenState extends State<PortalScreen> {
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      setState(() {
-        _section = AppSection.settings;
-        _showPromote = false;
-      });
+      _applyNavigation(section: AppSection.settings, showPromote: false);
     });
+  }
+
+  Future<void> _openScheduleExport(ScheduleExportFormat format) async {
+    try {
+      final events = await widget.scheduleService.load(_ws);
+      if (!mounted) return;
+      if (events.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('There are no schedule events to export.'),
+          ),
+        );
+        return;
+      }
+      await showScheduleExportDialog(
+        context,
+        workspace: _ws,
+        events: events,
+        initialFormat: format,
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not load the schedule: $error')),
+      );
+    }
   }
 
   @override
   void didUpdateWidget(covariant PortalScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.activeFestivalId != widget.activeFestivalId) {
+      _restoreNavigation();
+      return;
+    }
     _ensureSectionAllowed();
   }
 
   @override
   Widget build(BuildContext context) {
     final titles = _titles;
-    return AppShell(
+    final shell = AppShell(
       festivalName: _festivalName,
       heading: titles.heading,
       subheading: titles.subheading,
@@ -227,38 +320,156 @@ class _PortalScreenState extends State<PortalScreen> {
       canEditSchedule: _ws.canEditSchedule,
       canEditDescriptions: _ws.canEditDescriptions,
       allowCustomAlerts: _ws.customAlertsUiEnabled,
-      onPromoteTap: () => setState(() {
-        _section = AppSection.settings;
-        _showPromote = true;
-      }),
-      onSectionChanged: (s) {
-        setState(() {
-          _section = s;
-          _showPromote = false;
-        });
-      },
+      onPromoteTap: () =>
+          _applyNavigation(section: AppSection.settings, showPromote: true),
+      onSectionChanged: (s) => _applyNavigation(
+        section: s,
+        showPromote: false,
+        bandsTab: s == AppSection.bands ? BandsTab.list : null,
+        descriptionsTab: s == AppSection.descriptions
+            ? DescriptionsTab.list
+            : null,
+        resetBandForm: s == AppSection.bands,
+        clearDescriptionPrefill: s == AppSection.descriptions,
+      ),
       bandsTab: _bandsTab,
-      onBandsTabChanged: (t) => setState(() {
-        _bandsTab = t;
-        _section = AppSection.bands;
-        _showPromote = false;
-        if (t == BandsTab.list) _bandFormIsEdit = false;
-      }),
+      onBandsTabChanged: (t) => _applyNavigation(
+        section: AppSection.bands,
+        bandsTab: t,
+        showPromote: false,
+        resetBandForm: t == BandsTab.list,
+      ),
       scheduleTab: _scheduleTab,
-      onScheduleTabChanged: (t) => setState(() {
-        _scheduleTab = t;
-        _section = AppSection.schedule;
-        _showPromote = false;
-      }),
-      onDescriptionsTabChanged: (t) => setState(() {
-        _descriptionsTab = t;
-        _section = AppSection.descriptions;
-        _showPromote = false;
-        if (t == DescriptionsTab.list) {
-          _descriptionPrefillLabel = null;
-        }
-      }),
+      onScheduleTabChanged: (t) => _applyNavigation(
+        section: AppSection.schedule,
+        scheduleTab: t,
+        showPromote: false,
+      ),
+      onDescriptionsTabChanged: (t) => _applyNavigation(
+        section: AppSection.descriptions,
+        descriptionsTab: t,
+        showPromote: false,
+        clearDescriptionPrefill: t == DescriptionsTab.list,
+      ),
       child: _buildBody(),
+    );
+    return PlatformMenuBar(
+      menus: [
+        const PlatformMenu(
+          label: AppBrand.name,
+          menus: [
+            PlatformProvidedMenuItem(type: PlatformProvidedMenuItemType.about),
+            PlatformMenuItemGroup(
+              members: [
+                PlatformProvidedMenuItem(
+                  type: PlatformProvidedMenuItemType.servicesSubmenu,
+                ),
+              ],
+            ),
+            PlatformMenuItemGroup(
+              members: [
+                PlatformProvidedMenuItem(
+                  type: PlatformProvidedMenuItemType.hide,
+                ),
+                PlatformProvidedMenuItem(
+                  type: PlatformProvidedMenuItemType.hideOtherApplications,
+                ),
+                PlatformProvidedMenuItem(
+                  type: PlatformProvidedMenuItemType.showAllApplications,
+                ),
+              ],
+            ),
+            PlatformMenuItemGroup(
+              members: [
+                PlatformProvidedMenuItem(
+                  type: PlatformProvidedMenuItemType.quit,
+                ),
+              ],
+            ),
+          ],
+        ),
+        PlatformMenu(
+          label: 'File',
+          menus: [
+            PlatformMenuItem(
+              label: 'Save Schedule as PDF…',
+              onSelected: () =>
+                  unawaited(_openScheduleExport(ScheduleExportFormat.pdf)),
+            ),
+            PlatformMenuItem(
+              label: 'Save Schedule as HTML…',
+              onSelected: () =>
+                  unawaited(_openScheduleExport(ScheduleExportFormat.html)),
+            ),
+          ],
+        ),
+        const PlatformMenu(
+          label: 'Edit',
+          menus: [
+            PlatformMenuItem(
+              label: 'Undo',
+              onSelectedIntent: UndoTextIntent(SelectionChangedCause.keyboard),
+            ),
+            PlatformMenuItem(
+              label: 'Redo',
+              onSelectedIntent: RedoTextIntent(SelectionChangedCause.keyboard),
+            ),
+            PlatformMenuItemGroup(
+              members: [
+                PlatformMenuItem(
+                  label: 'Cut',
+                  onSelectedIntent: CopySelectionTextIntent.cut(
+                    SelectionChangedCause.toolbar,
+                  ),
+                ),
+                PlatformMenuItem(
+                  label: 'Copy',
+                  onSelectedIntent: CopySelectionTextIntent.copy,
+                ),
+                PlatformMenuItem(
+                  label: 'Paste',
+                  onSelectedIntent: PasteTextIntent(
+                    SelectionChangedCause.toolbar,
+                  ),
+                ),
+                PlatformMenuItem(
+                  label: 'Select All',
+                  onSelectedIntent: SelectAllTextIntent(
+                    SelectionChangedCause.toolbar,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        const PlatformMenu(
+          label: 'View',
+          menus: [
+            PlatformProvidedMenuItem(
+              type: PlatformProvidedMenuItemType.toggleFullScreen,
+            ),
+          ],
+        ),
+        const PlatformMenu(
+          label: 'Window',
+          menus: [
+            PlatformProvidedMenuItem(
+              type: PlatformProvidedMenuItemType.minimizeWindow,
+            ),
+            PlatformProvidedMenuItem(
+              type: PlatformProvidedMenuItemType.zoomWindow,
+            ),
+            PlatformMenuItemGroup(
+              members: [
+                PlatformProvidedMenuItem(
+                  type: PlatformProvidedMenuItemType.arrangeWindowsInFront,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
+      child: shell,
     );
   }
 
@@ -318,7 +529,11 @@ class _PortalScreenState extends State<PortalScreen> {
           descriptionMapService: widget.descriptionMapService,
           dropboxApi: widget.dropboxApi,
           tab: _scheduleTab,
-          onTabChanged: (t) => setState(() => _scheduleTab = t),
+          onTabChanged: (t) => _applyNavigation(
+            section: AppSection.schedule,
+            scheduleTab: t,
+            showPromote: false,
+          ),
           dropboxConnected: widget.dropboxConnected,
           onConnectDropbox: widget.onConnectDropbox,
           onWorkspaceChanged: widget.onWorkspaceChanged,

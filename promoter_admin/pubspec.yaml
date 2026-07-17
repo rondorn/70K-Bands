@@ -45,6 +45,10 @@ dependencies:
   flutter_web_auth_2: ^5.0.3
   # Direct dependency: Metal Archives Discover on Windows (WebView2 / CF).
   desktop_webview_window: ^0.3.0
+  pdf: ^3.13.0
+  file_selector: ^1.1.0
+  path: ^1.9.1
+  image: ^4.9.1
 
 dev_dependencies:
   flutter_test:
@@ -70,6 +74,8 @@ flutter:
 
   assets:
     - assets/branding/open_metal_fest_admin_logo.png
+    - assets/fonts/NotoSans-Regular.ttf
+    - assets/fonts/NotoSans-Bold.ttf
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
