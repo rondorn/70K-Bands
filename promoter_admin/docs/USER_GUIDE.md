@@ -8,6 +8,24 @@ Someone who releases or maintains the festival apps will give you the **Testing*
 
 ---
 
+## Install (download the app)
+
+Download the latest build from the project’s [Releases](https://github.com/rondorn/70K-Bands/releases) page.
+
+1. Open the release that matches your computer (**Mac** or **Windows**).
+2. Under **Assets**, download the zip (look for `omf-admin-macos-…` or `omf-admin-windows-…`).
+3. Unzip the download.
+
+**Mac:** Drag **Open Metal Fest Admin** into your **Applications** folder, then open it from there. The first time, macOS may ask to confirm a download from the internet — choose **Open**.
+
+**Windows:** Open the unzipped folder and run `promoter_admin.exe` (or the main `.exe` in that folder). If Windows SmartScreen warns you, choose **More info** → **Run anyway** when you trust the download.
+
+You do **not** need to install anything else. After the app opens, continue with [Getting started](#getting-started) (festival name, Testing/Production links, Dropbox).
+
+When a newer version appears on the Releases page, download the new zip, unzip it, and **overwrite** the previous app (on Mac: drag the new copy into **Applications** and replace the old one). Festival settings, Dropbox connection, and other preferences are stored separately on your computer — updating the app does **not** wipe them. You do not need to re-enter Testing/Production links or reconnect Dropbox after a normal update.
+
+---
+
 ## What this app is for
 
 
@@ -45,12 +63,13 @@ If a button is missing or grayed out (for example you can view Artists but not A
 
 ## Getting started
 
-1. Get the festival **name**, **Testing link**, and usually **Production link** from your festival contact.
-2. Ask them to share **edit** access (on Dropbox) to the files you’re supposed to work on — using **your Dropbox email**.
-3. In the admin app: enter the festival, paste the links, **Connect Dropbox** with your personal account, then **Load festival data**.
-4. You’re in. Work under **Artists**, **Descriptions**, and **Schedule** as needed.
+1. [Install the app](#install-download-the-app) if you don’t have it yet.
+2. Get the festival **name**, **Testing link**, and usually **Production link** from your festival contact.
+3. Ask them to share **edit** access (on Dropbox) to the files you’re supposed to work on — using **your Dropbox email**.
+4. In the admin app: enter the festival, paste the links, **Connect Dropbox** with your personal account, then **Load festival data**.
+5. You’re in. Work under **Artists**, **Descriptions**, and **Schedule** as needed.
 
-Creating a brand-new festival from scratch (new empty Dropbox files) is for festival owners / developers, not a typical volunteer first step.
+Creating a brand-new festival from scratch (new empty Dropbox files) is for festival owners / the person who maintains the apps — not a typical volunteer first step.
 
 You can keep several festivals in the app (for example 70K and MDF) and switch them under Settings → **Festival**.
 
@@ -71,10 +90,10 @@ You’ll mainly use Settings once:
 - **Alert folder** — only if your festival uses push announcements (optional).  
 - **Load festival data** — pull Testing/Production file URLs and fill empty Venues / Days / Dates / Event types from Production. Existing lists are kept (not overwritten).  
 - **Save configuration** — keep your local settings. Changing Venues / Days / Dates / Event types refreshes Schedule Entry menus.  
-- **Festival logo** — optional image URL (Dropbox share link works) used only when exporting a running order; see [Export a running order](#export-a-running-order).  
- - **Use city/state fields** — turn on if this festival tracks city/state for artists.  
+- **Festival logo** — optional. Paste any public image URL. The logo is used anywhere the app displays festival branding, including exported running-order pages.  
+- **Use city/state fields** — turn on if this festival tracks city/state for artists. Most often used for smaller, more local festivals rather than ones with international acts — though it can be used for any size event.  
 - **Venues / Dates / Days / Event types** — lists used when entering schedule items (filled once by Load when empty; you edit afterward).  
-- **Days / Dates alignment** — Days and Dates are ordered lists: Day line 1 pairs with Date line 1, and so on. Dates must be consecutive `M/D/YYYY` values (no leading zeros) with **one more date than days** (the last date covers overnight on the final day). **Date rollover** (default `8:00`) decides when a start time uses the next calendar date while keeping the same Day. Schedule Entry fills Date from Day + start time; you can still change Date by hand.  
+- **Days / Dates** — keep them in matching order (first Day with first Date, and so on). You need **one more date than days** so late-night sets that spill past midnight still land on the right calendar day. **Date rollover** (default 8:00 AM) is the cutoff: times before that still count as the previous festival day. Schedule Entry usually fills Date for you when you pick Day and start time; you can change Date by hand if needed.  
 - **Add new year…** — only for people who manage year transitions (starts a new Testing year; Production updates when someone Publishes).
 
 **File access** shows whether you can edit Artists, Schedule, and Descriptions. Use **Refresh file access** if rights were just shared to you and the app still looks locked.
@@ -93,7 +112,7 @@ See the Testing lineup (band, country, genre, noteworthy). Use **Refresh** if so
 
 ### Add a band
 
-**Standard workflow** (uses **Discover**, the button under **Artist name**)
+**Discover** automatically looks up information from Metal Archives and MusicBrainz, so you usually don’t have to type anything except the band name. That is the normal way to add artists (the **Discover** button sits under **Artist name**).
 
 1. **Add artist**.
 2. Type the **band name** and click **Discover**.
@@ -177,52 +196,41 @@ These are **not** tied to a lineup band:
 
 ### Export a running order
 
-On **Schedule → View**, select **Export…**. On macOS you can also use **File → Save Schedule as PDF…** or **Save Schedule as HTML…**.
+On **Schedule → View**, choose **Export…**. On Mac you can also use **File → Save Schedule as PDF…** or **Save Schedule as HTML…**.
 
 #### Who this is for (important)
 
-Exports are for **official festival admins / event promoters**. The promoter may use a PDF or HTML export as the **official** running order.
+This is meant for **official festival admins / promoters**. You may publish the PDF or HTML as the festival’s **official** running order.
 
-**Do not** use an export to **compete with** an official running-order PDF or official web schedule that already exists for the festival. Unofficial volunteers should not circulate an export as a public substitute for the promoter’s materials.
+**Do not** circulate an export as a public substitute if the festival already has an official running-order PDF or web schedule. Unofficial volunteers should not compete with those materials.
 
-The export dialog also reminds you of this.
+The export dialog reminds you of this when you save.
 
 #### How to export
 
-1. Choose **PDF** or **HTML**.
-2. Choose **Color** or **Black & white**. PDF defaults to black-and-white; HTML defaults to color.
-3. Check the **event types** to include. **Show** starts selected. Changing the checkboxes only affects this export — not the schedule data or the View list.
-4. Save the file.
+1. Choose **PDF** (best for printing / posting as a handout) or **HTML** (best for a screen or web page).
+2. Choose **Color** or **Black & white**. PDF starts in black-and-white; HTML starts in color.
+3. Check which **event types** to include. **Show** is selected by default. This only changes what goes into *this* file — it does not change your schedule data.
+4. Save the exported file anywhere on your computer.
 
-#### PDF vs HTML
+Each festival **day** becomes one page (venues across the top, time running down the page). Late-night sets follow the same **Date rollover** rules as Schedule Entry.
 
-| | **PDF** | **HTML** |
-| --- | --- | --- |
-| Layout | Letter **portrait**, printer-style (white page, outlined event boxes, hour + half-hour lines) | **Landscape** dark schedule (colorful venue blocks by default) |
-| Typical use | Can be used as the **official** running order by the event promoter. Do **not** use it to compete with an official version. | Can be used as the **official** running order by the event promoter. Do **not** use it to compete with an official version. |
-| Color mode | Same structure; color only tints venue headers and borders | Full color theme vs black-and-white theme |
-| Crowding | Fixed printable page — fonts/boxes adjust within the page | Timeline **grows taller** when a day is long or dense so names stay readable; uncrowded days keep the same compact height |
+**PDF vs HTML in practice:** PDF is a standard printable letter page that stays one page per day even when the day is packed (names stay readable; boxes and text shrink a bit if needed). HTML is a wide, dark on-screen layout; busy days simply get a taller timeline so nothing is cut off.
 
-Each festival **day** becomes one page, with venue columns and a vertical time axis. Overnight times follow the festival’s **Date rollover** setting (same rules as Schedule Entry).
+#### Labels on the page
 
-#### Event-type labels
+- **Shows** and **Special Events** never get a type label (they’re the “normal” schedule look).
+- If you export **only** Clinics, Meet and Greets, or Unofficial Events, the day header says that type in plural (for example **CLINICS** or **MEET & GREETS**) and individual boxes stay unlabeled.
+- If you mix types (for example Shows + Clinics), Clinics / Meet and Greets / Unofficial Events get a small label on each event; Shows and Special Events stay unlabeled.
+- Custom event types your festival added are included when checked, but they don’t get a special type label.
 
-Only these types can show a type label: **Clinic**, **Meet and Greet**, and **Unofficial Event**.
+When you export a **single** event type, the suggested file name includes that type (for example `…-shows-running-order.pdf`). Mixed exports use a plain `…-running-order` name.
 
-- **Show** and **Special Event** are **never** labeled (on the page header or on individual events).
-- **Only one** of Clinic / Meet and Greet / Unofficial Event selected → that type appears in the **page header** in plural (for example `CLINICS` or `MEET & GREETS`). Events themselves are not labeled.
-- **Mixed types** selected (for example Shows + Clinics) → eligible events get a **per-event** label; Shows and Special Events stay unlabeled.
-- Other custom festival types are not labeled.
+Bands that share the **same venue and exact time** (common for Meet and Greets) appear together in one block, with names separated by `/`. If two events at the same venue only partly overlap in time, they sit side by side so both stay visible. **Notes** and full band names are always included — nothing is dropped to make the layout fit.
 
-Suggested save names include the event type when you export a **single** type (for example `…-shows-running-order.pdf` or `…-meet-and-greets-running-order.html`). Mixed-type exports keep a plain `…-running-order` name.
+#### Festival logo on exports
 
-Deck / location subtitles under venue names are not exported yet (there is no separate deck field in the data).
-
-When several bands share the **same venue and time slot** (common for Meet and Greets), they are shown together in one block (names listed with `/`). If times only partially overlap at the same venue, blocks sit side by side. Event boxes grow and fonts shrink as needed so **band names and notes are never clipped or omitted**.
-
-#### Festival logo
-
-Optional. In **Settings**, paste a **Festival logo** image link (a Dropbox share link works; `dl=0` is normalized to `raw=1` on save). When set, the logo appears to the **left** of the day header on each PDF page (HTML already places it in the left brand column). Keeping it beside the day title preserves vertical space for the schedule grid. If the image cannot be downloaded at export time, the export still succeeds without the logo.
+If you’ve configured a **Festival logo** under Settings, it appears automatically on exported schedules. If the image can’t be loaded when you export, you still get the schedule — just without the logo.
 
 ---
 
@@ -243,7 +251,7 @@ Before you publish:
 1. Check Testing in the **fan app** (Advanced → Testing).
 2. Open **Publish** and read the **preview**.
 3. Note any **bands that will be announced** (new bands vs what’s already live).
-4. Confirm only when you’re sure — this can’t be easily undone for fans.
+4. Confirm only when you’re sure. Changes can be restored if necessary, but attendees may already have seen or received them.
 
 ### When new bands notify fans
 
@@ -291,9 +299,10 @@ Volunteers who can’t Publish still improve Testing for whoever does.
 | Symptom                            | Likely fix                                                                                                             |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | No Add / Edit / Delete             | Ask for **edit** share on those Dropbox files to your personal account, then **Refresh file access**.                  |
+| Discover didn’t find my band       | Verify spelling. If multiple matches exist, use the Metal Archives or MusicBrainz page URL. Otherwise enter the information manually. |
 | No Schedule **Entry**              | You can view only — need schedule edit rights.                                                                         |
 | No **Publish**                     | Need edit rights on at least Artists, Schedule, or Descriptions.                                                       |
-| Export vs official schedule        | Promoters may use exports as the official running order. Do **not** use them to compete with an existing official PDF or web schedule. |
+| Export vs official schedule        | Promoters may publish exports as the official running order. Don’t circulate one that competes with an existing official PDF or web schedule. |
 | No **Send alert**                  | Festival hasn’t enabled alerts for you, or alert folder isn’t set / shared for write.                                  |
 | Description won’t “stick” for fans | Usually fixed by adding it while creating the band, or asking someone with fuller rights to finish under Descriptions. |
 
@@ -304,10 +313,11 @@ Volunteers who can’t Publish still improve Testing for whoever does.
 
 Coordinate once with whoever ships the apps:
 
+- [ ] Editors have the right Mac/Windows build from [Releases](https://github.com/rondorn/70K-Bands/releases)  
 - [ ] Correct Testing and Production links  
 - [ ] Each editor’s **personal Dropbox** has ownership or **shared write** on the pieces they edit  
-- [ ] Fan apps point at the same Production data  
-- [ ] If using pushes: shared alert folder, kept available offline on the machine that sends notifications  
+- [ ] Fan apps show the same live (Production) festival data  
+- [ ] If using pushes: shared alert folder, and the machine that sends notifications can reach it  
 - [ ] If volunteers should send freeform alerts: turn that on with the app maintainer  
 
 After that, most people only need Artists, Descriptions, Schedule, and (when authorized) Publish.
