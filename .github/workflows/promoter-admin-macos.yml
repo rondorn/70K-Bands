@@ -4,6 +4,9 @@
 # Publishes a downloadable zip on the rolling release tag: omf-admin-macos
 #   → https://github.com/<org>/<repo>/releases/tag/omf-admin-macos
 #
+# The job fails unless promoter_admin/pubspec.yaml version was incremented
+# versus the previous master tip (push) or parent commit (manual run).
+#
 # Optional signing / notarization (Developer ID, not App Store review).
 # Add these repository secrets for Gatekeeper-clean downloads:
 #   MACOS_CERTIFICATE          — base64-encoded .p12 (Developer ID Application)
@@ -39,6 +42,42 @@ jobs:
         working-directory: promoter_admin
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Require pubspec version bump
+        working-directory: .
+        env:
+          EVENT_BEFORE: ${{ github.event.before }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          current=$(grep -E '^version:' promoter_admin/pubspec.yaml | head -1 | sed 's/version:[[:space:]]*//')
+          if [[ ! "$current" =~ ^[0-9.]+\+[0-9]+$ ]]; then
+            echo "::error::Unexpected pubspec version '$current' (expected name+number, e.g. 1.0.2+1)"
+            exit 1
+          fi
+
+          before_ref=""
+          if [[ "$EVENT_NAME" == "push" && -n "${EVENT_BEFORE:-}" && "$EVENT_BEFORE" != "0000000000000000000000000000000000000000" ]]; then
+            before_ref="$EVENT_BEFORE"
+          elif git rev-parse --verify HEAD^ >/dev/null 2>&1; then
+            before_ref="$(git rev-parse HEAD^)"
+          fi
+
+          previous=""
+          if [[ -n "$before_ref" ]]; then
+            previous=$(git show "${before_ref}:promoter_admin/pubspec.yaml" 2>/dev/null \
+              | grep -E '^version:' | head -1 | sed 's/version:[[:space:]]*//' || true)
+          fi
+
+          echo "Current version:  $current"
+          echo "Previous version: ${previous:-(none)}"
+          if [[ -n "$previous" && "$previous" == "$current" ]]; then
+            echo "::error::promoter_admin/pubspec.yaml version was not incremented (still $current). Bump version/build (e.g. 1.0.2+2) before running the admin build workflow."
+            exit 1
+          fi
+          echo "Version bump OK."
 
       - uses: subosito/flutter-action@v2
         with:

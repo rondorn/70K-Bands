@@ -4,6 +4,9 @@
 # Publishes a downloadable zip on the rolling release tag: omf-admin-windows
 #   → https://github.com/<org>/<repo>/releases/tag/omf-admin-windows
 #
+# The job fails unless promoter_admin/pubspec.yaml version was incremented
+# versus the previous master tip (push) or parent commit (manual run).
+#
 # Prefer GitHub Releases over committing zips into the git tree (binaries
 # bloat the repo). The release page is the stable download “directory”.
 
@@ -28,6 +31,55 @@ jobs:
         working-directory: promoter_admin
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Require pubspec version bump
+        working-directory: .
+        shell: pwsh
+        env:
+          EVENT_BEFORE: ${{ github.event.before }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          $line = Select-String -Path promoter_admin/pubspec.yaml -Pattern '^version:\s*(.+)$' |
+            Select-Object -First 1
+          if ($null -eq $line) { throw "No version: line in promoter_admin/pubspec.yaml" }
+          $current = $line.Matches.Groups[1].Value.Trim()
+          if ($current -notmatch '^([0-9.]+)\+(\d+)$') {
+            throw "Unexpected pubspec version: $current (expected name+number, e.g. 1.0.2+1)"
+          }
+
+          $beforeRef = $null
+          if ($env:EVENT_NAME -eq 'push' -and
+              -not [string]::IsNullOrWhiteSpace($env:EVENT_BEFORE) -and
+              $env:EVENT_BEFORE -ne '0000000000000000000000000000000000000000') {
+            $beforeRef = $env:EVENT_BEFORE
+          } else {
+            git rev-parse --verify HEAD^ 2>$null | Out-Null
+            if ($LASTEXITCODE -eq 0) {
+              $beforeRef = (git rev-parse HEAD^).Trim()
+            }
+          }
+
+          $previous = $null
+          if ($beforeRef) {
+            $prevContent = git show "${beforeRef}:promoter_admin/pubspec.yaml" 2>$null
+            if ($LASTEXITCODE -eq 0 -and $prevContent) {
+              $prevLine = $prevContent |
+                Select-String -Pattern '^version:\s*(.+)$' |
+                Select-Object -First 1
+              if ($prevLine) {
+                $previous = $prevLine.Matches.Groups[1].Value.Trim()
+              }
+            }
+          }
+
+          Write-Host "Current version:  $current"
+          Write-Host "Previous version: $(if ($previous) { $previous } else { '<(none)>' })"
+          if ($previous -and $previous -eq $current) {
+            throw "promoter_admin/pubspec.yaml version was not incremented (still $current). Bump version/build (e.g. 1.0.2+2) before running the admin build workflow."
+          }
+          Write-Host "Version bump OK."
 
       - uses: subosito/flutter-action@v2
         with:
@@ -42,7 +94,7 @@ jobs:
             Select-Object -First 1
           $full = $line.Matches.Groups[1].Value.Trim()
           if ($full -notmatch '^([0-9.]+)\+(\d+)$') {
-            throw "Unexpected pubspec version: $full (expected name+number, e.g. 1.0.1+17)"
+            throw "Unexpected pubspec version: $full (expected name+number, e.g. 1.0.2+1)"
           }
           $name = $Matches[1]
           $number = $Matches[2]
