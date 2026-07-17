@@ -459,14 +459,41 @@ class FormRow extends StatelessWidget {
     required this.label,
     required this.child,
     this.requiredField = false,
+    this.onLabelTap,
   });
 
   final String label;
   final Widget child;
   final bool requiredField;
+  final VoidCallback? onLabelTap;
 
   @override
   Widget build(BuildContext context) {
+    Widget labelWidget = RichText(
+      text: TextSpan(
+        style: const TextStyle(
+          color: AppColors.label,
+          fontWeight: FontWeight.w600,
+          fontSize: 15,
+        ),
+        children: [
+          TextSpan(text: label),
+          if (requiredField)
+            const TextSpan(
+              text: ' *',
+              style: TextStyle(color: Color(0xFFFF3333)),
+            ),
+        ],
+      ),
+    );
+    if (onLabelTap != null) {
+      labelWidget = GestureDetector(
+        onTap: onLabelTap,
+        behavior: HitTestBehavior.opaque,
+        child: labelWidget,
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
@@ -476,23 +503,7 @@ class FormRow extends StatelessWidget {
             width: 168,
             child: Padding(
               padding: const EdgeInsets.only(top: 12),
-              child: RichText(
-                text: TextSpan(
-                  style: const TextStyle(
-                    color: AppColors.label,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                  ),
-                  children: [
-                    TextSpan(text: label),
-                    if (requiredField)
-                      const TextSpan(
-                        text: ' *',
-                        style: TextStyle(color: Color(0xFFFF3333)),
-                      ),
-                  ],
-                ),
-              ),
+              child: labelWidget,
             ),
           ),
           const SizedBox(width: 14),

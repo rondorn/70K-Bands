@@ -118,23 +118,55 @@ class FestivalYearService {
   static List<String> plannedFilenames({
     required String prefix,
     required String newYear,
+    bool shareArtistsWithProduction = false,
+    bool shareMapWithProduction = false,
   }) {
     return [
       artistFileName(prefix, newYear, testing: false),
-      artistFileName(prefix, newYear, testing: true),
+      if (!shareArtistsWithProduction)
+        artistFileName(prefix, newYear, testing: true),
       scheduleFileName(prefix, newYear, testing: false),
       scheduleFileName(prefix, newYear, testing: true),
       descriptionMapFileName(prefix, newYear, testing: false),
-      descriptionMapFileName(prefix, newYear, testing: true),
+      if (!shareMapWithProduction)
+        descriptionMapFileName(prefix, newYear, testing: true),
     ];
   }
 
+  /// Replace selected Current keys on a pointer file text (preserves other keys).
+  static String patchCurrentUrls({
+    required String pointerText,
+    String? artistUrl,
+    String? scheduleUrl,
+    String? descriptionMapUrl,
+  }) {
+    final parsed = _parseSections(pointerText);
+    final sections = parsed.sections;
+    final current = Map<String, String>.from(sections['Current'] ?? const {});
+    if (current.isEmpty) {
+      throw FormatException('Pointer file has no Current section.');
+    }
+    if (artistUrl != null) current['artistUrl'] = artistUrl.trim();
+    if (scheduleUrl != null) current['scheduleUrl'] = scheduleUrl.trim();
+    if (descriptionMapUrl != null) {
+      current['descriptionMap'] = descriptionMapUrl.trim();
+    }
+    sections['Current'] = current;
+    return _serializeSections(sections, parsed.order, parsed.keyOrders);
+  }
+
   /// Create empty CSVs and rewrite the **testing** pointer in place only.
+  ///
+  /// When [shareArtistsWithProduction] / [shareMapWithProduction] is true,
+  /// Testing Current points at the new-year Production file for that channel
+  /// (no separate `*_test` file). Schedule always gets a separate Testing file.
   Future<FestivalWorkspace> rollNewYear({
     required FestivalWorkspace workspace,
     required String newYear,
     required String dropboxFolder,
     String filePrefix = '',
+    bool shareArtistsWithProduction = false,
+    bool shareMapWithProduction = false,
   }) async {
     final testingPointerUrl = workspace.testingPointerUrl.trim();
     if (testingPointerUrl.isEmpty) {
@@ -179,21 +211,30 @@ class FestivalYearService {
     final testMap = '$root/${descriptionMapFileName(prefix, year, testing: true)}';
 
     await dropboxApi.ensureTextFile(prodArtists, lineupCsv);
-    await dropboxApi.ensureTextFile(testArtists, lineupCsv);
+    if (!shareArtistsWithProduction) {
+      await dropboxApi.ensureTextFile(testArtists, lineupCsv);
+    }
     await dropboxApi.ensureTextFile(prodSchedule, scheduleCsv);
     await dropboxApi.ensureTextFile(testSchedule, scheduleCsv);
     await dropboxApi.ensureTextFile(prodMap, mapCsv);
-    await dropboxApi.ensureTextFile(testMap, mapCsv);
+    if (!shareMapWithProduction) {
+      await dropboxApi.ensureTextFile(testMap, mapCsv);
+    }
 
-    final testBandUrl = await dropboxApi.shareUrlForPath(testArtists);
+    final prodBandUrl = await dropboxApi.shareUrlForPath(prodArtists);
+    final prodScheduleUrl = await dropboxApi.shareUrlForPath(prodSchedule);
+    final prodMapUrl = await dropboxApi.shareUrlForPath(prodMap);
+    final testBandUrl = shareArtistsWithProduction
+        ? prodBandUrl
+        : await dropboxApi.shareUrlForPath(testArtists);
     final testScheduleUrl = await dropboxApi.shareUrlForPath(testSchedule);
-    final testMapUrl = await dropboxApi.shareUrlForPath(testMap);
+    final testMapUrl = shareMapWithProduction
+        ? prodMapUrl
+        : await dropboxApi.shareUrlForPath(testMap);
 
     // Production placeholder files are created for later Promote, but the
     // production pointer is intentionally left untouched.
-    await dropboxApi.shareUrlForPath(prodArtists);
-    await dropboxApi.shareUrlForPath(prodSchedule);
-    await dropboxApi.shareUrlForPath(prodMap);
+    assert(prodScheduleUrl.isNotEmpty);
 
     final rewrittenTesting = rewritePointerText(
       pointerText: testingText,
@@ -214,6 +255,111 @@ class FestivalYearService {
       canEditSchedule: true,
       canEditDescriptions: true,
       canEditPointers: true,
+    );
+  }
+
+  /// Production Dropbox path → sibling testing path (`….csv` → `…_test.csv`).
+  static String testingPathFromProductionPath(String apiPath) {
+    var path = apiPath.trim().replaceAll('\\', '/');
+    if (!path.startsWith('/')) path = '/$path';
+    final lower = path.toLowerCase();
+    if (lower.endsWith('_test.csv')) return path;
+    if (!lower.endsWith('.csv')) {
+      throw ArgumentError('Expected a .csv path, got: $apiPath');
+    }
+    return '${path.substring(0, path.length - '.csv'.length)}_test.csv';
+  }
+
+  /// Point Testing Current artists and/or description map at Production's
+  /// Current URLs (intentional live sharing). Schedule is never changed here.
+  Future<FestivalWorkspace> shareTestingChannelsWithProduction({
+    required FestivalWorkspace workspace,
+    bool shareArtists = false,
+    bool shareMap = false,
+  }) async {
+    if (!shareArtists && !shareMap) return workspace;
+    final testingPointerUrl = workspace.testingPointerUrl.trim();
+    final productionPointerUrl = workspace.productionPointerUrl.trim();
+    if (testingPointerUrl.isEmpty || productionPointerUrl.isEmpty) {
+      throw StateError('Testing and Production links are required.');
+    }
+    final productionText = await fetchUrlText(productionPointerUrl);
+    final production = PointerFile.parse(productionText);
+    if (shareArtists && production.artistUrl.isEmpty) {
+      throw StateError('Production pointer has no Current::artistUrl.');
+    }
+    if (shareMap && production.descriptionMapUrl.isEmpty) {
+      throw StateError('Production pointer has no Current::descriptionMap.');
+    }
+
+    final testingText = await fetchUrlText(testingPointerUrl);
+    final rewritten = patchCurrentUrls(
+      pointerText: testingText,
+      artistUrl: shareArtists ? production.artistUrl : null,
+      descriptionMapUrl: shareMap ? production.descriptionMapUrl : null,
+    );
+    await dropboxApi.uploadTextInPlace(testingPointerUrl, rewritten);
+
+    return workspace.copyWith(
+      bandListUrl: shareArtists ? production.artistUrl : workspace.bandListUrl,
+      descriptionMapUrl:
+          shareMap ? production.descriptionMapUrl : workspace.descriptionMapUrl,
+    );
+  }
+
+  /// Point Testing Current artists and/or description map at a dedicated
+  /// `*_test.csv` sibling (creates the file from Production content if missing).
+  Future<FestivalWorkspace> unshareTestingChannelsFromProduction({
+    required FestivalWorkspace workspace,
+    bool unshareArtists = false,
+    bool unshareMap = false,
+  }) async {
+    if (!unshareArtists && !unshareMap) return workspace;
+    final testingPointerUrl = workspace.testingPointerUrl.trim();
+    final productionPointerUrl = workspace.productionPointerUrl.trim();
+    if (testingPointerUrl.isEmpty || productionPointerUrl.isEmpty) {
+      throw StateError('Testing and Production links are required.');
+    }
+    final productionText = await fetchUrlText(productionPointerUrl);
+    final production = PointerFile.parse(productionText);
+
+    String? newArtistUrl;
+    String? newMapUrl;
+
+    if (unshareArtists) {
+      final prodUrl = production.artistUrl.trim();
+      if (prodUrl.isEmpty) {
+        throw StateError('Production pointer has no Current::artistUrl.');
+      }
+      final prodPath = await dropboxApi.resolveApiPath(prodUrl);
+      final testPath = testingPathFromProductionPath(prodPath);
+      final body = await fetchUrlText(prodUrl);
+      await dropboxApi.ensureTextFile(testPath, body);
+      newArtistUrl = await dropboxApi.shareUrlForPath(testPath);
+    }
+    if (unshareMap) {
+      final prodUrl = production.descriptionMapUrl.trim();
+      if (prodUrl.isEmpty) {
+        throw StateError('Production pointer has no Current::descriptionMap.');
+      }
+      final prodPath = await dropboxApi.resolveApiPath(prodUrl);
+      final testPath = testingPathFromProductionPath(prodPath);
+      final body = await fetchUrlText(prodUrl);
+      await dropboxApi.ensureTextFile(testPath, body);
+      newMapUrl = await dropboxApi.shareUrlForPath(testPath);
+    }
+
+    final testingText = await fetchUrlText(testingPointerUrl);
+    final rewritten = patchCurrentUrls(
+      pointerText: testingText,
+      artistUrl: newArtistUrl,
+      descriptionMapUrl: newMapUrl,
+    );
+    await dropboxApi.uploadTextInPlace(testingPointerUrl, rewritten);
+
+    return workspace.copyWith(
+      bandListUrl: newArtistUrl ?? workspace.bandListUrl,
+      descriptionMapUrl: newMapUrl ?? workspace.descriptionMapUrl,
     );
   }
 

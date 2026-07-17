@@ -17,6 +17,9 @@ class PointerService {
 
   /// Refresh testing data-file URLs only (lineup / schedule / map).
   /// Does not change venues, dates, days, or event types.
+  ///
+  /// When [FestivalWorkspace.dataSourceYearOverride] is set, Current year is
+  /// still refreshed on [eventYear], then archived-year URLs are re-applied.
   Future<FestivalWorkspace> applyTestingPointer(
     FestivalWorkspace workspace, {
     bool forceRefresh = false,
@@ -26,7 +29,7 @@ class PointerService {
       throw StateError('Testing pointer URL is required.');
     }
     final pointer = await fetchPointer(url, forceRefresh: forceRefresh);
-    return workspace.copyWith(
+    var updated = workspace.copyWith(
       eventYear:
           pointer.eventYear.isNotEmpty ? pointer.eventYear : workspace.eventYear,
       bandListUrl: pointer.artistUrl,
@@ -34,6 +37,83 @@ class PointerService {
       descriptionMapUrl: pointer.descriptionMapUrl,
       allowCustomAlerts: pointer.allowCustomAlerts,
     );
+    final override = updated.dataSourceYearOverride.trim();
+    if (override.isNotEmpty) {
+      try {
+        updated = await applyDataSourceYear(
+          updated,
+          override,
+          forceRefresh: forceRefresh,
+        );
+      } catch (_) {
+        // Archived year disappeared — fall back to Current quietly.
+        updated = updated.copyWith(clearDataSourceYearOverride: true);
+      }
+    }
+    return updated;
+  }
+
+  /// List archived years on the Testing pointer available as temporary data
+  /// sources (does not consult Production — Current there may still be last year).
+  Future<List<String>> listDataSourceYears(
+    FestivalWorkspace workspace, {
+    bool forceRefresh = false,
+  }) async {
+    final testingUrl = workspace.testingPointerUrl.trim();
+    if (testingUrl.isEmpty) return const [];
+    final testing =
+        await fetchPointer(testingUrl, forceRefresh: forceRefresh);
+    return testing.dataSourceYears;
+  }
+
+  /// Point Artists / Schedule / Descriptions at an archived year section from
+  /// the Testing pointer only. Local override — does not rewrite Dropbox files.
+  Future<FestivalWorkspace> applyDataSourceYear(
+    FestivalWorkspace workspace,
+    String year, {
+    bool forceRefresh = false,
+  }) async {
+    final target = year.trim();
+    if (target.isEmpty) {
+      return clearDataSourceYearOverride(workspace, forceRefresh: forceRefresh);
+    }
+
+    final testingUrl = workspace.testingPointerUrl.trim();
+    if (testingUrl.isEmpty) {
+      throw StateError(
+        'Testing link is required to look up archived year $target.',
+      );
+    }
+    final testing =
+        await fetchPointer(testingUrl, forceRefresh: forceRefresh);
+    final urls = testing.urlsForYear(target);
+    if (urls == null) {
+      throw StateError(
+        'Year $target was not found as an archived section on the '
+        'Testing pointer.',
+      );
+    }
+
+    return workspace.copyWith(
+      dataSourceYearOverride: target,
+      bandListUrl: urls.artistUrl,
+      scheduleUrl: urls.scheduleUrl.isNotEmpty
+          ? urls.scheduleUrl
+          : workspace.scheduleUrl,
+      descriptionMapUrl: urls.descriptionMapUrl.isNotEmpty
+          ? urls.descriptionMapUrl
+          : workspace.descriptionMapUrl,
+    );
+  }
+
+  /// Restore Artists / Schedule / Descriptions to Testing Current.
+  Future<FestivalWorkspace> clearDataSourceYearOverride(
+    FestivalWorkspace workspace, {
+    bool forceRefresh = false,
+  }) async {
+    final cleared =
+        workspace.copyWith(clearDataSourceYearOverride: true);
+    return applyTestingPointer(cleared, forceRefresh: forceRefresh);
   }
 
   /// Load from both pointers:
@@ -41,12 +121,16 @@ class PointerService {
   /// - Production → venues, dates, days, event types from production schedule
   ///   **only when the corresponding local list is empty** (never overwrite)
   /// - Custom-alerts UI flag prefers Production Current, else Testing
+  ///
+  /// Clears any demo year override so Load always returns to Current.
   Future<FestivalWorkspace> applyPointers(
     FestivalWorkspace workspace, {
     bool forceRefresh = false,
   }) async {
-    var updated =
-        await applyTestingPointer(workspace, forceRefresh: forceRefresh);
+    var updated = await applyTestingPointer(
+      workspace.copyWith(clearDataSourceYearOverride: true),
+      forceRefresh: forceRefresh,
+    );
 
     final productionUrl = updated.productionPointerUrl.trim();
     if (productionUrl.isEmpty) {

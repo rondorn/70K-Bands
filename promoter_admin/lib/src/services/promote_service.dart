@@ -5,6 +5,21 @@ import 'package:promoter_admin/src/services/festival_year_service.dart';
 import 'package:promoter_admin/src/services/http_fetch.dart';
 import 'package:promoter_admin/src/services/pointer_service.dart';
 
+/// Whether Testing and Production Current data files resolve to the same Dropbox file.
+class DataFileShareStatus {
+  const DataFileShareStatus({
+    this.artistsShared = false,
+    this.scheduleShared = false,
+    this.mapShared = false,
+  });
+
+  final bool artistsShared;
+  final bool scheduleShared;
+  final bool mapShared;
+
+  bool get anyShared => artistsShared || scheduleShared || mapShared;
+}
+
 class PromoteDiff {
   PromoteDiff({
     this.bandsTesting = 0,
@@ -16,6 +31,9 @@ class PromoteDiff {
     this.testingYear = '',
     this.productionYear = '',
     this.addedBandNames = const [],
+    this.artistsShared = false,
+    this.scheduleShared = false,
+    this.mapShared = false,
     List<String>? messages,
   }) : messages = messages ?? <String>[];
 
@@ -28,6 +46,9 @@ class PromoteDiff {
   String testingYear;
   String productionYear;
   List<String> addedBandNames;
+  bool artistsShared;
+  bool scheduleShared;
+  bool mapShared;
   final List<String> messages;
 
   bool get isYearRoll {
@@ -79,6 +100,72 @@ class PromoteService {
     return '${path.substring(0, path.length - '_test.csv'.length)}.csv';
   }
 
+  /// True when [path] looks like a dedicated Testing CSV (`*_test.csv`).
+  static bool isTestingCsvPath(String apiPath) {
+    final path = apiPath.trim().replaceAll('\\', '/').toLowerCase();
+    return path.endsWith('_test.csv');
+  }
+
+  /// Cheap URL equality (normalized). Prefer [sameDataFile] when Dropbox is available.
+  static bool sameShareUrl(String a, String b) {
+    final left = normalizeDropboxUrl(a).trim().toLowerCase();
+    final right = normalizeDropboxUrl(b).trim().toLowerCase();
+    if (left.isEmpty || right.isEmpty) return false;
+    return left == right;
+  }
+
+  /// Compare Testing vs Production Current data-file URLs (path-aware when possible).
+  Future<DataFileShareStatus> inspectDataFileSharing(
+    FestivalWorkspace workspace, {
+    bool forceRefresh = false,
+  }) async {
+    final testingUrl = workspace.testingPointerUrl.trim();
+    final productionUrl = workspace.productionPointerUrl.trim();
+    if (testingUrl.isEmpty || productionUrl.isEmpty) {
+      return const DataFileShareStatus();
+    }
+    final pointerPair = await Future.wait([
+      _currentUrls(testingUrl, forceRefresh: forceRefresh),
+      _currentUrls(productionUrl, forceRefresh: forceRefresh),
+    ]);
+    final testUrls = pointerPair[0];
+    final prodUrls = pointerPair[1];
+    final artists = await sameDataFile(
+      testUrls['band_list_url'] ?? '',
+      prodUrls['band_list_url'] ?? '',
+    );
+    final schedule = await sameDataFile(
+      testUrls['schedule_url'] ?? '',
+      prodUrls['schedule_url'] ?? '',
+    );
+    final map = await sameDataFile(
+      testUrls['description_map_url'] ?? '',
+      prodUrls['description_map_url'] ?? '',
+    );
+    return DataFileShareStatus(
+      artistsShared: artists,
+      scheduleShared: schedule,
+      mapShared: map,
+    );
+  }
+
+  /// True when two share links resolve to the same Dropbox path (or equal URLs).
+  Future<bool> sameDataFile(String urlA, String urlB) async {
+    if (sameShareUrl(urlA, urlB)) return true;
+    final a = normalizeDropboxUrl(urlA).trim();
+    final b = normalizeDropboxUrl(urlB).trim();
+    if (a.isEmpty || b.isEmpty) return false;
+    try {
+      final paths = await Future.wait([
+        dropboxApi.resolveApiPath(a),
+        dropboxApi.resolveApiPath(b),
+      ]);
+      return paths[0].toLowerCase() == paths[1].toLowerCase();
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<Map<String, String>> _currentUrls(String pointerUrl, {bool forceRefresh = false}) async {
     final pointer = await pointerService.fetchPointer(pointerUrl, forceRefresh: forceRefresh);
     final current = pointer.current;
@@ -120,6 +207,18 @@ class PromoteService {
     Future<String> resolve(String key) async {
       final src = (testUrls[key] ?? '').trim();
       if (src.isEmpty) return '';
+      // Intentional shared artists/map: Testing already points at a production
+      // (non-_test) file — that file is the year-roll destination.
+      try {
+        final path = await dropboxApi.resolveApiPath(src);
+        if (!isTestingCsvPath(path)) {
+          return src;
+        }
+      } catch (_) {
+        if (!src.toLowerCase().contains('_test.csv')) {
+          return src;
+        }
+      }
       return _productionShareUrlForTestingUrl(src);
     }
 
@@ -260,6 +359,31 @@ class PromoteService {
         '$productionYear production files are left unchanged.',
       );
     }
+
+    Future<void> noteShare(String key, String label) async {
+      final tUrl = (testUrls[key] ?? '').trim();
+      final pUrl = (destUrls[key] ?? '').trim();
+      if (tUrl.isEmpty || pUrl.isEmpty) return;
+      if (!await sameDataFile(tUrl, pUrl)) return;
+      if (key == 'schedule_url') {
+        diff.scheduleShared = true;
+        throw StateError(
+          'Schedule Testing and Production resolve to the same file. '
+          'Schedule must use a separate Testing file — fix the Testing pointer '
+          'before publishing.',
+        );
+      }
+      if (key == 'band_list_url') diff.artistsShared = true;
+      if (key == 'description_map_url') diff.mapShared = true;
+      diff.messages.add(
+        '$label: Testing and Production share the same file '
+        '(edits are live; Publish will skip copy).',
+      );
+    }
+
+    await noteShare('band_list_url', 'Artists');
+    await noteShare('schedule_url', 'Schedule');
+    await noteShare('description_map_url', 'Description map');
 
     Future<({String? testing, String? production, String? error})> loadPair(
       String key,
@@ -410,7 +534,13 @@ class PromoteService {
       if (src.isEmpty || dest.isEmpty) {
         throw StateError('Cannot promote ${job.label}: missing URL on pointer.');
       }
-      if (src == dest) {
+      if (await sameDataFile(src, dest)) {
+        if (job.key == 'schedule_url') {
+          throw StateError(
+            'Schedule Testing and Production resolve to the same file. '
+            'Schedule must use a separate Testing file — refusing to publish.',
+          );
+        }
         diff.messages.add(
           '${job.label}: testing and production share the same file — skipped copy.',
         );

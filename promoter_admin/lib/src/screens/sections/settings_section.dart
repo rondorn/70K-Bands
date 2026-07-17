@@ -80,6 +80,14 @@ class _SettingsSectionState extends State<SettingsSection> {
   String? _error;
   bool _busy = false;
 
+  /// Revealed by tapping the Data files label five times (or always when override active).
+  bool _showDemoYearControls = false;
+  int _dataFilesLabelTapCount = 0;
+  DateTime? _dataFilesLabelTapAt;
+  List<String> _demoYears = const [];
+  bool _loadingDemoYears = false;
+  DataFileShareStatus? _shareStatus;
+
   @override
   void initState() {
     super.initState();
@@ -111,6 +119,12 @@ class _SettingsSectionState extends State<SettingsSection> {
     _canEditPointers = widget.workspace.canEditPointers;
     _canEditAlerts = widget.workspace.canEditAlerts;
     _useCityStateField = widget.workspace.useCityStateField;
+    if (widget.workspace.hasDataSourceYearOverride) {
+      _showDemoYearControls = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _ensureDemoYearsLoaded();
+      });
+    }
   }
 
   @override
@@ -154,6 +168,9 @@ class _SettingsSectionState extends State<SettingsSection> {
     _canEditPointers = w.canEditPointers;
     _canEditAlerts = w.canEditAlerts;
     _useCityStateField = w.useCityStateField;
+    if (w.hasDataSourceYearOverride) {
+      _showDemoYearControls = true;
+    }
   }
 
   @override
@@ -549,6 +566,16 @@ class _SettingsSectionState extends State<SettingsSection> {
       }
       await widget.onWorkspaceChanged(updated);
       if (!mounted) return;
+      DataFileShareStatus? shareStatus;
+      try {
+        shareStatus = await PromoteService(
+          pointerService: widget.pointerService,
+          dropboxApi: widget.dropboxApi,
+        ).inspectDataFileSharing(updated);
+      } catch (_) {
+        shareStatus = null;
+      }
+      if (!mounted) return;
       final filled = <String>[];
       final kept = <String>[];
       void track(String label, List<String> was, List<String> now) {
@@ -577,7 +604,18 @@ class _SettingsSectionState extends State<SettingsSection> {
       if (kept.isNotEmpty) {
         vocabBits.add('kept existing ${kept.join(', ')}');
       }
+      final shareBits = <String>[];
+      if (shareStatus?.artistsShared == true) {
+        shareBits.add('artists shared with Production (live)');
+      }
+      if (shareStatus?.mapShared == true) {
+        shareBits.add('description map shared with Production (live)');
+      }
+      if (shareStatus?.scheduleShared == true) {
+        shareBits.add('SCHEDULE shared — fix before Publish');
+      }
       setState(() {
+        _shareStatus = shareStatus;
         _canEditBands = updated.canEditBands;
         _canEditSchedule = updated.canEditSchedule;
         _canEditDescriptions = updated.canEditDescriptions;
@@ -590,7 +628,8 @@ class _SettingsSectionState extends State<SettingsSection> {
             '${updated.dates.where((d) => d.trim().isNotEmpty).length} dates, '
             '${updated.days.where((d) => d.trim().isNotEmpty).length} days, '
             '${updated.eventTypes.length} event types'
-            '${vocabBits.isEmpty ? '' : ' — ${vocabBits.join('; ')}'}. '
+            '${vocabBits.isEmpty ? '' : ' — ${vocabBits.join('; ')}'}'
+            '${shareBits.isEmpty ? '' : ' — ${shareBits.join('; ')}'}. '
             '${widget.dropboxConnected ? 'Access: ${_accessSummary(updated)}.' : 'Connect Dropbox to detect write access.'}'
             '${alignNotes.isEmpty ? '' : ' Day/Date lists need a fix before Save: ${alignNotes.first}'}';
         _busy = false;
@@ -674,6 +713,200 @@ class _SettingsSectionState extends State<SettingsSection> {
     }
   }
 
+  void _onDataFilesLabelTap() {
+    final now = DateTime.now();
+    final at = _dataFilesLabelTapAt;
+    if (at == null || now.difference(at) > const Duration(seconds: 2)) {
+      _dataFilesLabelTapCount = 1;
+    } else {
+      _dataFilesLabelTapCount++;
+    }
+    _dataFilesLabelTapAt = now;
+    if (_dataFilesLabelTapCount < 5) return;
+    _dataFilesLabelTapCount = 0;
+    setState(() => _showDemoYearControls = true);
+    _ensureDemoYearsLoaded();
+  }
+
+  Future<void> _ensureDemoYearsLoaded() async {
+    if (_loadingDemoYears) return;
+    final draft = _draft();
+    if (draft.testingPointerUrl.trim().isEmpty &&
+        draft.productionPointerUrl.trim().isEmpty) {
+      return;
+    }
+    setState(() => _loadingDemoYears = true);
+    try {
+      final years = await widget.pointerService.listDataSourceYears(draft);
+      if (!mounted) return;
+      setState(() {
+        _demoYears = years;
+        _loadingDemoYears = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loadingDemoYears = false;
+        _error = _cleanError(e);
+      });
+    }
+  }
+
+  Future<void> _setDemoDataYear(String? year) async {
+    final target = (year ?? '').trim();
+    setState(() {
+      _busy = true;
+      _error = null;
+      _status = target.isEmpty
+          ? 'Restoring Testing Current data…'
+          : 'Switching data source to $target…';
+    });
+    try {
+      final draft = _draft();
+      final updated = target.isEmpty
+          ? await widget.pointerService.clearDataSourceYearOverride(
+              draft,
+              forceRefresh: true,
+            )
+          : await widget.pointerService.applyDataSourceYear(
+              draft,
+              target,
+              forceRefresh: true,
+            );
+      // Past-year CDN archives are usually not Dropbox-writable; refresh probe.
+      final probed = widget.dropboxConnected
+          ? await _probeAccess(updated)
+          : updated;
+      await widget.onWorkspaceChanged(probed);
+      if (!mounted) return;
+      setState(() {
+        _canEditBands = probed.canEditBands;
+        _canEditSchedule = probed.canEditSchedule;
+        _canEditDescriptions = probed.canEditDescriptions;
+        _canEditPointers = probed.canEditPointers;
+        _canEditAlerts = probed.canEditAlerts;
+        _status = target.isEmpty
+            ? 'Restored Testing Current (year ${probed.eventYear}).'
+            : 'Demo/test data source: $target '
+                '(pointer Current remains ${probed.eventYear}). '
+                'Publish is disabled until you switch back to Current. '
+                'Load festival data also restores Current.';
+        _busy = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = _cleanError(e);
+        _status = null;
+        _busy = false;
+      });
+    }
+  }
+
+  Future<void> _refreshShareStatus(FestivalWorkspace workspace) async {
+    try {
+      final status = await PromoteService(
+        pointerService: widget.pointerService,
+        dropboxApi: widget.dropboxApi,
+      ).inspectDataFileSharing(workspace);
+      if (!mounted) return;
+      setState(() => _shareStatus = status);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _shareStatus = null);
+    }
+  }
+
+  Future<void> _shareChannelWithProduction({
+    required bool artists,
+    required bool map,
+  }) async {
+    if (!widget.dropboxConnected || !_canEditPointers) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+      _status = artists
+          ? 'Pointing Testing artists at Production…'
+          : 'Pointing Testing description map at Production…';
+    });
+    try {
+      final yearService = FestivalYearService(widget.dropboxApi);
+      var updated = await yearService.shareTestingChannelsWithProduction(
+        workspace: _draft(),
+        shareArtists: artists,
+        shareMap: map,
+      );
+      if (widget.dropboxConnected) {
+        updated = await _probeAccess(updated);
+      }
+      await widget.onWorkspaceChanged(updated);
+      await _refreshShareStatus(updated);
+      if (!mounted) return;
+      setState(() {
+        _canEditBands = updated.canEditBands;
+        _canEditSchedule = updated.canEditSchedule;
+        _canEditDescriptions = updated.canEditDescriptions;
+        _canEditPointers = updated.canEditPointers;
+        _busy = false;
+        _status = artists
+            ? 'Testing artists now share the Production file (edits are live).'
+            : 'Testing description map now shares the Production file (edits are live).';
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = _cleanError(e);
+        _status = null;
+      });
+    }
+  }
+
+  Future<void> _unshareChannelFromProduction({
+    required bool artists,
+    required bool map,
+  }) async {
+    if (!widget.dropboxConnected || !_canEditPointers) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+      _status = artists
+          ? 'Creating separate Testing artists file…'
+          : 'Creating separate Testing description map…';
+    });
+    try {
+      final yearService = FestivalYearService(widget.dropboxApi);
+      var updated = await yearService.unshareTestingChannelsFromProduction(
+        workspace: _draft(),
+        unshareArtists: artists,
+        unshareMap: map,
+      );
+      if (widget.dropboxConnected) {
+        updated = await _probeAccess(updated);
+      }
+      await widget.onWorkspaceChanged(updated);
+      await _refreshShareStatus(updated);
+      if (!mounted) return;
+      setState(() {
+        _canEditBands = updated.canEditBands;
+        _canEditSchedule = updated.canEditSchedule;
+        _canEditDescriptions = updated.canEditDescriptions;
+        _canEditPointers = updated.canEditPointers;
+        _busy = false;
+        _status = artists
+            ? 'Testing artists now use a separate *_test.csv file.'
+            : 'Testing description map now uses a separate *_test.csv file.';
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = _cleanError(e);
+        _status = null;
+      });
+    }
+  }
+
   Future<void> _addNewYear() async {
     if (!widget.dropboxConnected || !_canEditPointers) return;
 
@@ -717,6 +950,8 @@ class _SettingsSectionState extends State<SettingsSection> {
         newYear: result.newYear,
         dropboxFolder: result.folder,
         filePrefix: result.filePrefix,
+        shareArtistsWithProduction: result.shareArtistsWithProduction,
+        shareMapWithProduction: result.shareMapWithProduction,
       );
       await widget.scheduleService.staging.clearForFestival(updated);
       if (updated.productionPointerUrl.trim().isNotEmpty) {
@@ -772,6 +1007,16 @@ class _SettingsSectionState extends State<SettingsSection> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (widget.workspace.hasDataSourceYearOverride)
+              StatusBanner(
+                text:
+                    'Demo/test mode: viewing archived year '
+                    '${widget.workspace.dataSourceYearOverride} data. '
+                    'Pointer Current is still ${widget.workspace.eventYear}. '
+                    'Publish is blocked. Switch back to Current (or Load festival '
+                    'data) before normal editing.',
+                isError: true,
+              ),
             if (_status != null) StatusBanner(text: _status!),
             if (_error != null) StatusBanner(text: _error!, isError: true),
             const Text(
@@ -956,6 +1201,7 @@ class _SettingsSectionState extends State<SettingsSection> {
             ),
             FormRow(
               label: 'Data files',
+              onLabelTap: _onDataFilesLabelTap,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -967,7 +1213,146 @@ class _SettingsSectionState extends State<SettingsSection> {
                   ),
                   if (widget.workspace.eventYear.isNotEmpty)
                     _ReadonlyLine('Event year', widget.workspace.eventYear),
+                  if (widget.workspace.hasDataSourceYearOverride)
+                    _ReadonlyLine(
+                      'Data source',
+                      'Archived ${widget.workspace.dataSourceYearOverride} (demo)',
+                    ),
+                  if (_showDemoYearControls ||
+                      widget.workspace.hasDataSourceYearOverride) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      'Demo data year',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            color: AppColors.label,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                    const SizedBox(height: 6),
+                    PortalStringDropdown(
+                      value: widget.workspace.hasDataSourceYearOverride
+                          ? widget.workspace.dataSourceYearOverride
+                          : '',
+                      items: DropdownOptions.withEmpty([
+                        ..._demoYears,
+                        if (widget.workspace.hasDataSourceYearOverride &&
+                            !_demoYears.contains(
+                              widget.workspace.dataSourceYearOverride,
+                            ))
+                          widget.workspace.dataSourceYearOverride,
+                      ]),
+                      enabled: !_busy && !_loadingDemoYears,
+                      emptyLabel: 'Current (${widget.workspace.eventYear.isEmpty ? 'live' : widget.workspace.eventYear})',
+                      onChanged: _busy || _loadingDemoYears
+                          ? null
+                          : _setDemoDataYear,
+                      decoration: InputDecoration(
+                        hintText: _loadingDemoYears
+                            ? 'Loading years…'
+                            : 'Current (live Testing)',
+                      ),
+                    ),
+                    const HintText(
+                      'Temporary local override for demos / testing. Uses archived '
+                      'year sections from the Testing pointer only (not Production). '
+                      'Does not change Dropbox pointer files. Prefer Current when '
+                      'finished. Publish stays disabled while an archived year is '
+                      'selected.',
+                    ),
+                    if (_demoYears.isEmpty && !_loadingDemoYears)
+                      TextButton(
+                        onPressed: _busy ? null : _ensureDemoYearsLoaded,
+                        child: const Text('Load available years'),
+                      ),
+                  ],
                   if (widget.dropboxConnected && _canEditPointers) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      'Testing vs Production files',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            color: AppColors.label,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    if (_shareStatus?.scheduleShared == true)
+                      const StatusBanner(
+                        text:
+                            'Schedule Testing and Production point at the same file. '
+                            'That is not supported — use a separate Testing schedule.',
+                        isError: true,
+                      ),
+                    Text(
+                      _shareStatus == null
+                          ? 'Load festival data to detect whether artists / schedule / '
+                              'description map are shared with Production.'
+                          : 'Artists: ${_shareStatus!.artistsShared ? 'shared (live)' : 'separate Testing file'} · '
+                              'Schedule: ${_shareStatus!.scheduleShared ? 'SHARED (fix)' : 'separate'} · '
+                              'Descriptions: ${_shareStatus!.mapShared ? 'shared (live)' : 'separate Testing file'}',
+                      style: const TextStyle(
+                        color: AppColors.muted,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        if (_shareStatus?.artistsShared != true)
+                          OutlinedButton(
+                            onPressed: _busy
+                                ? null
+                                : () => _shareChannelWithProduction(
+                                      artists: true,
+                                      map: false,
+                                    ),
+                            child: const Text('Share artists with Production'),
+                          ),
+                        if (_shareStatus?.artistsShared == true)
+                          OutlinedButton(
+                            onPressed: _busy
+                                ? null
+                                : () => _unshareChannelFromProduction(
+                                      artists: true,
+                                      map: false,
+                                    ),
+                            child: const Text('Use separate Testing artists'),
+                          ),
+                        if (_shareStatus?.mapShared != true)
+                          OutlinedButton(
+                            onPressed: _busy
+                                ? null
+                                : () => _shareChannelWithProduction(
+                                      artists: false,
+                                      map: true,
+                                    ),
+                            child: const Text('Share description map with Production'),
+                          ),
+                        if (_shareStatus?.mapShared == true)
+                          OutlinedButton(
+                            onPressed: _busy
+                                ? null
+                                : () => _unshareChannelFromProduction(
+                                      artists: false,
+                                      map: true,
+                                    ),
+                            child: const Text('Use separate Testing map'),
+                          ),
+                        TextButton(
+                          onPressed: _busy
+                              ? null
+                              : () => _refreshShareStatus(_draft()),
+                          child: const Text('Refresh share status'),
+                        ),
+                      ],
+                    ),
+                    const HintText(
+                      'Artists may intentionally share one Dropbox file with Production '
+                      '(e.g. automated promoter feed — small live edits are OK). '
+                      'Description map is optional either way. Schedule must stay separate. '
+                      'Requires Testing link write access.',
+                    ),
                     const SizedBox(height: 8),
                     OutlinedButton(
                       onPressed: _busy ? null : _addNewYear,
@@ -1309,6 +1694,16 @@ class _PromotePanelState extends State<_PromotePanel> {
   }
 
   Future<void> _runPromote() async {
+    if (widget.workspace.hasDataSourceYearOverride) {
+      setState(() {
+        _error =
+            'Publish is blocked while demo data year '
+            '${widget.workspace.dataSourceYearOverride} is selected. '
+            'Switch back to Current in Settings → Data files first.';
+        _status = null;
+      });
+      return;
+    }
     if (!widget.dropboxConnected) {
       await widget.onConnectDropbox();
       return;
@@ -1383,13 +1778,15 @@ class _PromotePanelState extends State<_PromotePanel> {
   bool get _canPromote {
     final ws = widget.workspace;
     return widget.dropboxConnected &&
+        !ws.hasDataSourceYearOverride &&
         ws.testingPointerUrl.trim().isNotEmpty &&
         ws.productionPointerUrl.trim().isNotEmpty &&
         ws.testingPointerUrl.trim() != ws.productionPointerUrl.trim() &&
         ws.hasAnyEditAccess &&
         !_loadingPreview &&
         !_promoting &&
-        _error == null;
+        _error == null &&
+        !(_diff?.scheduleShared ?? false);
   }
 
   @override
@@ -1428,6 +1825,15 @@ class _PromotePanelState extends State<_PromotePanel> {
                         'Testing (fan app: Advanced → Testing) before publishing. '
                         'Production is what most attendees see.',
             ),
+            if (workspace.hasDataSourceYearOverride) ...[
+              const SizedBox(height: 12),
+              StatusBanner(
+                text:
+                    'Demo data year ${workspace.dataSourceYearOverride} is active. '
+                    'Publish is disabled until you restore Current in Settings.',
+                isError: true,
+              ),
+            ],
             if (workspace.canEditBands && alertFolder.isNotEmpty) ...[
               const SizedBox(height: 12),
               if ((_diff?.addedBandNames.isNotEmpty ?? false))
@@ -1860,11 +2266,15 @@ class _AddNewYearResult {
     required this.newYear,
     required this.folder,
     required this.filePrefix,
+    this.shareArtistsWithProduction = false,
+    this.shareMapWithProduction = false,
   });
 
   final String newYear;
   final String folder;
   final String filePrefix;
+  final bool shareArtistsWithProduction;
+  final bool shareMapWithProduction;
 }
 
 class _AddNewYearDialog extends StatefulWidget {
@@ -1888,6 +2298,8 @@ class _AddNewYearDialogState extends State<_AddNewYearDialog> {
   late final TextEditingController _year;
   late final TextEditingController _prefix;
   late final TextEditingController _folder;
+  bool _shareArtists = false;
+  bool _shareMap = false;
   String? _error;
 
   @override
@@ -1934,7 +2346,13 @@ class _AddNewYearDialogState extends State<_AddNewYearDialog> {
     }
     Navigator.pop(
       context,
-      _AddNewYearResult(newYear: year, folder: folder, filePrefix: prefix),
+      _AddNewYearResult(
+        newYear: year,
+        folder: folder,
+        filePrefix: prefix,
+        shareArtistsWithProduction: _shareArtists,
+        shareMapWithProduction: _shareMap,
+      ),
     );
   }
 
@@ -1949,6 +2367,8 @@ class _AddNewYearDialogState extends State<_AddNewYearDialog> {
     final files = FestivalYearService.plannedFilenames(
       prefix: prefix,
       newYear: year,
+      shareArtistsWithProduction: _shareArtists,
+      shareMapWithProduction: _shareMap,
     );
 
     return AlertDialog(
@@ -1997,6 +2417,35 @@ class _AddNewYearDialogState extends State<_AddNewYearDialog> {
                   hintText: '/FestivalName_Public',
                 ),
                 onSubmitted: (_) => _submit(),
+              ),
+              const SizedBox(height: 8),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                controlAffinity: ListTileControlAffinity.leading,
+                value: _shareArtists,
+                onChanged: (v) => setState(() => _shareArtists = v ?? false),
+                title: const Text('Share artists file with Production'),
+                subtitle: const Text(
+                  'Testing uses the new-year Production artists file (no *_test artists). '
+                  'Use for automated promoter feeds.',
+                  style: TextStyle(color: AppColors.muted, fontSize: 12),
+                ),
+              ),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                controlAffinity: ListTileControlAffinity.leading,
+                value: _shareMap,
+                onChanged: (v) => setState(() => _shareMap = v ?? false),
+                title: const Text('Share description map with Production'),
+                subtitle: const Text(
+                  'Optional. Testing edits go straight to the Production map file.',
+                  style: TextStyle(color: AppColors.muted, fontSize: 12),
+                ),
+              ),
+              const HintText(
+                'Schedule always gets a separate Testing file.',
               ),
               const SizedBox(height: 12),
               Text(

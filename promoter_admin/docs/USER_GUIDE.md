@@ -53,6 +53,8 @@ When a newer version appears on the Releases page, download the new zip, unzip i
 | **What you do here** | Add/edit artists, descriptions, schedule | Live lineup and schedule after Publish |
 | **Risk** | Low — experiment and fix freely | Higher — fans see it; hard to undo quickly |
 
+**Shared files (intentional):** Some festivals (for example when an automated promoter feed writes the lineup) point Testing **artists** at the same Dropbox file as Production. That is allowed: edits are live, and Publish skips copying artists. **Schedule must stay a separate Testing file.** Description map may be shared or separate — choose in Settings → Data files (or when adding a new year).
+
 Before anyone Publishes, open the **festival (fan) app**, turn on **Advanced → Testing**, and confirm the lineup, descriptions, and schedule look right. That preview is how you use Testing as a safety net.
 
 **Who can see Testing in the fan app?** By default, Advanced → Testing can expose Testing data to anyone who finds that switch. For a volunteer-run festival that only works from **already public** info, that is usually fine. If a promoter wants to enter data **before** bands are announced and is concerned that Advanced could be a back door into unannounced lineup info, that can be locked down easily: set access rights so the fan app **cannot see Testing data at all**. Ask your festival contact / app maintainer if you need that tightened.

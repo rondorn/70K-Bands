@@ -112,18 +112,43 @@ Current::descriptionMap::https://example.com/map.csv
     expect(merged.eventTypes, contains('Clinic'));
   });
 
-  test('mergeScheduleVocabulary seeds blank workspace', () {
-    const blank = FestivalWorkspace();
-    final merged = PointerService.mergeScheduleVocabulary(
-      workspace: blank,
-      venues: ['Pool Deck', ' '],
-      dates: ['01/13/2027', '1/14/2027'],
-      days: ['Day 1'],
-      eventTypes: ['Show'],
+  test('PointerFile.dataSourceYears lists archived years with artistUrl', () {
+    const text = '''
+Current::artistUrl::https://example.com/lineup-2027.csv
+Current::scheduleUrl::https://example.com/schedule-2027.csv
+Current::eventYear::2027
+Current::descriptionMap::https://example.com/map-2027.csv
+2026::artistUrl::https://example.com/lineup-2026.csv
+2026::scheduleUrl::https://example.com/schedule-2026.csv
+2026::eventYear::2026
+2026::descriptionMap::https://example.com/map-2026.csv
+2025::artistUrl::https://example.com/lineup-2025.csv
+2025::eventYear::2025
+2024::scheduleUrl::https://example.com/schedule-2024.csv
+''';
+    final pointer = PointerFile.parse(text);
+    expect(pointer.dataSourceYears, ['2026', '2025']);
+    final urls = pointer.urlsForYear('2026');
+    expect(urls, isNotNull);
+    expect(urls!.artistUrl, 'https://example.com/lineup-2026.csv');
+    expect(urls.scheduleUrl, 'https://example.com/schedule-2026.csv');
+    expect(urls.descriptionMapUrl, 'https://example.com/map-2026.csv');
+    expect(pointer.urlsForYear('2024'), isNull);
+    expect(pointer.urlsForYear('1999'), isNull);
+  });
+
+  test('dataSourceYearOverride round-trips through prefs', () {
+    const ws = FestivalWorkspace(
+      eventYear: '2027',
+      dataSourceYearOverride: '2025',
+      bandListUrl: 'https://example.com/old.csv',
     );
-    expect(merged.venues, ['Pool Deck']);
-    expect(merged.dates, ['1/13/2027', '1/14/2027']);
-    expect(merged.days, ['Day 1']);
-    expect(merged.eventTypes, contains('Show'));
+    expect(ws.hasDataSourceYearOverride, isTrue);
+    final restored = FestivalWorkspace.fromPrefs(ws.toPrefs());
+    expect(restored.dataSourceYearOverride, '2025');
+    expect(
+      ws.copyWith(clearDataSourceYearOverride: true).dataSourceYearOverride,
+      '',
+    );
   });
 }

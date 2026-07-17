@@ -1,3 +1,20 @@
+/// Artists / schedule / map URLs from one pointer year section.
+class PointerYearUrls {
+  const PointerYearUrls({
+    required this.year,
+    required this.artistUrl,
+    required this.scheduleUrl,
+    required this.descriptionMapUrl,
+    required this.eventYear,
+  });
+
+  final String year;
+  final String artistUrl;
+  final String scheduleUrl;
+  final String descriptionMapUrl;
+  final String eventYear;
+}
+
 /// Parsed production/testing pointer (`Section::key::value` lines).
 class PointerFile {
   PointerFile(this.sections);
@@ -70,6 +87,34 @@ class PointerFile {
     final years = sections.keys.where((k) => RegExp(r'^\d+$').hasMatch(k)).toList()
       ..sort((a, b) => int.parse(b).compareTo(int.parse(a)));
     return years;
+  }
+
+  /// Archived year sections that have at least an artists URL (usable as a
+  /// temporary demo/test data source without rewriting Current).
+  List<String> get dataSourceYears {
+    final years = <String>[];
+    for (final y in _numericYears) {
+      final section = sections[y] ?? const {};
+      if ((section['artistUrl'] ?? '').trim().isNotEmpty) years.add(y);
+    }
+    return years;
+  }
+
+  /// Artists / schedule / map URLs for an archived year section, or null.
+  PointerYearUrls? urlsForYear(String year) {
+    final key = year.trim();
+    if (key.isEmpty) return null;
+    final section = sections[key];
+    if (section == null) return null;
+    final artist = (section['artistUrl'] ?? '').trim();
+    if (artist.isEmpty) return null;
+    return PointerYearUrls(
+      year: key,
+      artistUrl: artist,
+      scheduleUrl: (section['scheduleUrl'] ?? '').trim(),
+      descriptionMapUrl: (section['descriptionMap'] ?? '').trim(),
+      eventYear: (section['eventYear'] ?? key).trim(),
+    );
   }
 
   String get _currentEventYear {

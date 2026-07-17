@@ -218,6 +218,9 @@ class _PortalScreenState extends State<PortalScreen> {
   String get _metaLine {
     final parts = <String>[];
     if (_ws.eventYear.isNotEmpty) parts.add('Year ${_ws.eventYear}');
+    if (_ws.hasDataSourceYearOverride) {
+      parts.add('Demo data ${_ws.dataSourceYearOverride}');
+    }
     if (widget.dropboxConnected) {
       parts.add(
         widget.dropboxLabel.isEmpty

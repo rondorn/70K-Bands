@@ -111,4 +111,44 @@ Current::reportUrl::https://example.com/report.html
     expect(names, contains('mdf-artistFile-2027.csv'));
     expect(names, contains('mdf-artistFile-2027_test.csv'));
   });
+
+  test('plannedFilenames can omit shared artists and map test files', () {
+    final names = FestivalYearService.plannedFilenames(
+      prefix: '70k',
+      newYear: '2027',
+      shareArtistsWithProduction: true,
+      shareMapWithProduction: true,
+    );
+    expect(names, isNot(contains('70k-artistFile-2027_test.csv')));
+    expect(names, isNot(contains('70k-descriptionMap-2027_test.csv')));
+    expect(names, contains('70k-artistFile-2027.csv'));
+    expect(names, contains('70k-scheduleFile-2027_test.csv'));
+  });
+
+  test('testingPathFromProductionPath adds _test before .csv', () {
+    expect(
+      FestivalYearService.testingPathFromProductionPath(
+        '/Fest/artistLineup_2026.csv',
+      ),
+      '/Fest/artistLineup_2026_test.csv',
+    );
+  });
+
+  test('patchCurrentUrls updates only provided Current keys', () {
+    const text = '''
+Current::artistUrl::https://example.com/a.csv
+Current::scheduleUrl::https://example.com/s.csv
+Current::eventYear::2027
+Current::descriptionMap::https://example.com/m.csv
+''';
+    final out = FestivalYearService.patchCurrentUrls(
+      pointerText: text,
+      artistUrl: 'https://example.com/shared-a.csv',
+    );
+    final parsed = PointerFile.parse(out);
+    expect(parsed.artistUrl, 'https://example.com/shared-a.csv');
+    expect(parsed.scheduleUrl, 'https://example.com/s.csv');
+    expect(parsed.descriptionMapUrl, 'https://example.com/m.csv');
+    expect(parsed.eventYear, '2027');
+  });
 }

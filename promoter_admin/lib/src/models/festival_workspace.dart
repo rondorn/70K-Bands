@@ -8,6 +8,7 @@ class FestivalWorkspace {
     this.alertFolderUrl = '',
     this.festivalLogoUrl = '',
     this.eventYear = '',
+    this.dataSourceYearOverride = '',
     this.bandListUrl = '',
     this.scheduleUrl = '',
     this.descriptionMapUrl = '',
@@ -39,6 +40,11 @@ class FestivalWorkspace {
   /// PDF/HTML running-order exports, where it replaces the festival name.
   final String festivalLogoUrl;
   final String eventYear;
+
+  /// When non-empty, Artists / Schedule / Descriptions load from this archived
+  /// pointer year section instead of Testing Current (local demo/test override;
+  /// does not rewrite Dropbox pointer files).
+  final String dataSourceYearOverride;
 
   /// Derived from testing pointer Current::artistUrl (not edited by hand).
   final String bandListUrl;
@@ -82,6 +88,9 @@ class FestivalWorkspace {
   bool get hasAnyEditAccess =>
       canEditBands || canEditSchedule || canEditDescriptions;
 
+  /// True when Artists / Schedule / Descriptions are pointed at an archived year.
+  bool get hasDataSourceYearOverride => dataSourceYearOverride.trim().isNotEmpty;
+
   /// Show the Alerts (custom push) section when an alert folder is configured and
   /// either:
   /// - Production pointer has `Current::allowCustomAlerts::1`, or
@@ -105,6 +114,8 @@ class FestivalWorkspace {
     String? alertFolderUrl,
     String? festivalLogoUrl,
     String? eventYear,
+    String? dataSourceYearOverride,
+    bool clearDataSourceYearOverride = false,
     String? bandListUrl,
     String? scheduleUrl,
     String? descriptionMapUrl,
@@ -129,6 +140,9 @@ class FestivalWorkspace {
       alertFolderUrl: alertFolderUrl ?? this.alertFolderUrl,
       festivalLogoUrl: festivalLogoUrl ?? this.festivalLogoUrl,
       eventYear: eventYear ?? this.eventYear,
+      dataSourceYearOverride: clearDataSourceYearOverride
+          ? ''
+          : (dataSourceYearOverride ?? this.dataSourceYearOverride),
       bandListUrl: bandListUrl ?? this.bandListUrl,
       scheduleUrl: scheduleUrl ?? this.scheduleUrl,
       descriptionMapUrl: descriptionMapUrl ?? this.descriptionMapUrl,
@@ -155,6 +169,7 @@ class FestivalWorkspace {
     'alertFolderUrl': alertFolderUrl,
     'festivalLogoUrl': festivalLogoUrl,
     'eventYear': eventYear,
+    'dataSourceYearOverride': dataSourceYearOverride,
     'bandListUrl': bandListUrl,
     'scheduleUrl': scheduleUrl,
     'descriptionMapUrl': descriptionMapUrl,
@@ -202,6 +217,7 @@ class FestivalWorkspace {
           ? (map['festivalLogoUrl'] ?? '').trim()
           : (map['festivalLogoPath'] ?? '').trim(),
       eventYear: map['eventYear'] ?? '',
+      dataSourceYearOverride: map['dataSourceYearOverride'] ?? '',
       bandListUrl: map['bandListUrl'] ?? '',
       scheduleUrl: map['scheduleUrl'] ?? '',
       descriptionMapUrl: map['descriptionMapUrl'] ?? '',

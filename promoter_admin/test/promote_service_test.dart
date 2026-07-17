@@ -26,6 +26,34 @@ void main() {
     );
   });
 
+  test('isTestingCsvPath detects _test.csv suffix', () {
+    expect(
+      PromoteService.isTestingCsvPath('/Fest/lineup_2027_test.csv'),
+      isTrue,
+    );
+    expect(
+      PromoteService.isTestingCsvPath('/Fest/lineup_2027.csv'),
+      isFalse,
+    );
+  });
+
+  test('sameShareUrl ignores trivial Dropbox url noise via normalize', () {
+    expect(
+      PromoteService.sameShareUrl(
+        'https://www.dropbox.com/s/abc/file.csv?dl=0',
+        'https://www.dropbox.com/s/abc/file.csv?dl=0',
+      ),
+      isTrue,
+    );
+    expect(
+      PromoteService.sameShareUrl(
+        'https://www.dropbox.com/s/abc/file.csv?dl=0',
+        'https://www.dropbox.com/s/xyz/other.csv?dl=0',
+      ),
+      isFalse,
+    );
+  });
+
   test('productionPathFromTestingPath never equals a prior-year production path', () {
     const testing2027 = '/Fest/mmf-artistFile-2027_test.csv';
     const archived2026 = '/Fest/mmf-artistFile-2026.csv';
