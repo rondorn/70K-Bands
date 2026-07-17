@@ -1,25 +1,18 @@
-# Open Metal Fest Admin — macOS build + GitHub Release
+# Open Metal Fest Admin — macOS build + staged GitHub Release
 #
 # Triggers on push to master (promoter_admin changes) and manual run.
-# Publishes a downloadable zip on the rolling release tag: omf-admin-macos
-#   → https://github.com/<org>/<repo>/releases/tag/omf-admin-macos
+# When pubspec version/build is incremented, creates a draft release on the
+# rolling tag omf-admin-macos with notes but no binary. Upload your zip, then
+# publish the draft. CI also uploads a workflow artifact you can attach.
 #
 # The job fails unless promoter_admin/pubspec.yaml version was incremented
 # versus the previous master tip (push) or parent commit (manual run).
 #
-# Optional signing / notarization (Developer ID, not App Store review).
-# Add these repository secrets for Gatekeeper-clean downloads:
-#   MACOS_CERTIFICATE          — base64-encoded .p12 (Developer ID Application)
-#   MACOS_CERTIFICATE_PASSWORD — password for that .p12
-#   MACOS_CERTIFICATE_NAME     — e.g. "Developer ID Application: Your Name (TEAMID)"
-#   APPLE_TEAM_ID              — optional; defaults to K35L7F3E4S
-# Notary (pick one set):
-#   APPLE_ID + APPLE_APP_SPECIFIC_PASSWORD
-#   — or —
-#   APPLE_API_KEY_BASE64 + APPLE_API_KEY_ID + APPLE_API_ISSUER
-#
-# Without those secrets the job still builds and publishes an unsigned zip;
-# users open via Right-click → Open (fallback trust).
+# Optional signing / notarization on the CI artifact (Developer ID):
+#   MACOS_CERTIFICATE, MACOS_CERTIFICATE_PASSWORD, MACOS_CERTIFICATE_NAME
+#   APPLE_TEAM_ID (optional; defaults to K35L7F3E4S)
+# Notary: APPLE_ID + APPLE_APP_SPECIFIC_PASSWORD
+#   — or — APPLE_API_KEY_BASE64 + APPLE_API_KEY_ID + APPLE_API_ISSUER
 
 name: Promoter Admin macOS
 
@@ -240,39 +233,73 @@ jobs:
           fi
           ls -lh "../$ZIP_NAME"
 
-      - name: Upload artifact
+      - name: Upload workflow artifact (optional source for release zip)
         uses: actions/upload-artifact@v4
         with:
           name: omf-admin-macos-${{ steps.version.outputs.name }}_${{ steps.version.outputs.number }}
           path: ${{ steps.version.outputs.zip }}
 
-      - name: Publish GitHub Release (easy download link)
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: omf-admin-macos
-          target_commitish: ${{ github.sha }}
-          name: Open Metal Fest Admin macOS ${{ steps.version.outputs.name }}_${{ steps.version.outputs.number }}
-          body: |
-            ## Open Metal Fest Admin for macOS
+      - name: Stage draft GitHub Release (awaiting binary upload)
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION_FULL: ${{ steps.version.outputs.full }}
+          VERSION_NAME: ${{ steps.version.outputs.name }}
+          VERSION_NUMBER: ${{ steps.version.outputs.number }}
+          ZIP_NAME: ${{ steps.version.outputs.zip }}
+          COMMIT_SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
 
-            **Version:** ${{ steps.version.outputs.full }}
+          # Replace any existing release for this rolling tag so old binaries
+          # do not linger on a "new version" draft.
+          if gh release view omf-admin-macos >/dev/null 2>&1; then
+            gh release delete omf-admin-macos --yes
+          fi
+          git push origin :refs/tags/omf-admin-macos 2>/dev/null || true
 
-            ### Download
-            Use the **Assets** zip below (`${{ steps.version.outputs.zip }}`).
+          notes=$(cat <<EOF
+          ## Open Metal Fest Admin for macOS
 
-            Stable release page (always latest master build):
-            https://github.com/${{ github.repository }}/releases/tag/omf-admin-macos
+          **Version:** ${VERSION_FULL}
 
-            ### Install
-            1. Download and unzip.
-            2. Drag **Open Metal Fest Admin** to Applications (optional).
-            3. Open the app.
+          ### Status: draft — binary not attached yet
 
-            ### If macOS blocks the app
-            - **Signed + notarized builds:** confirm the first-open dialog.
-            - **Unsigned / not notarized:** Right-click the app → **Open** → **Open**.
-              Or: System Settings → Privacy & Security → **Open Anyway**.
+          1. Build/sign/notarize locally (or download the CI workflow artifact).
+          2. Upload asset named \`${ZIP_NAME}\` to this release.
+          3. Publish the draft when the zip is attached.
 
-            Built from commit `${{ github.sha }}` on `master`.
-          files: ${{ steps.version.outputs.zip }}
-          fail_on_unmatched_files: true
+          \`\`\`bash
+          gh release upload omf-admin-macos ./${ZIP_NAME} --clobber
+          gh release edit omf-admin-macos --draft=false
+          \`\`\`
+
+          Stable release page (after publish):
+          https://github.com/${REPO}/releases/tag/omf-admin-macos
+
+          ### Install (once published)
+          1. Download and unzip.
+          2. Drag **Open Metal Fest Admin** to Applications (optional).
+          3. Open the app.
+
+          ### If macOS blocks the app
+          - **Signed + notarized builds:** confirm the first-open dialog.
+          - **Unsigned / not notarized:** Right-click the app → **Open** → **Open**.
+            Or: System Settings → Privacy & Security → **Open Anyway**.
+
+          Staged from commit \`${COMMIT_SHA}\` on \`master\`.
+          EOF
+          )
+
+          # Trim leading spaces from the heredoc so GitHub markdown renders cleanly.
+          notes="$(printf '%s\n' "$notes" | sed -e 's/^          //')"
+
+          gh release create omf-admin-macos \
+            --draft \
+            --title "Open Metal Fest Admin macOS ${VERSION_NAME}_${VERSION_NUMBER}" \
+            --notes "$notes" \
+            --target "$COMMIT_SHA"
+
+          echo "Draft release staged: https://github.com/${REPO}/releases"
+          echo "Upload ${ZIP_NAME}, then publish the draft."
