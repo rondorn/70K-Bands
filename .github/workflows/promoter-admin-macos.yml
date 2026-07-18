@@ -7,8 +7,9 @@
 #   2. build-macos — builds a workflow artifact you can optionally attach.
 # Only the latest Mac release is kept (previous release/assets are deleted).
 #
-# The jobs fail the version check unless promoter_admin/pubspec.yaml version
-# was incremented versus the previous master tip (push) or parent commit.
+# Build/release only run when promoter_admin/pubspec.yaml version was
+# incremented versus the previous master tip (push) or parent commit.
+# No version change → succeed and skip (no error).
 #
 # Optional signing / notarization on the CI artifact (Developer ID):
 #   MACOS_CERTIFICATE, MACOS_CERTIFICATE_PASSWORD, MACOS_CERTIFICATE_NAME
@@ -34,6 +35,7 @@ jobs:
   stage-draft-release:
     runs-on: ubuntu-latest
     outputs:
+      bumped: ${{ steps.bump.outputs.bumped }}
       full: ${{ steps.version.outputs.full }}
       name: ${{ steps.version.outputs.name }}
       number: ${{ steps.version.outputs.number }}
@@ -43,7 +45,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Require pubspec version bump
+      - name: Check pubspec version bump
+        id: bump
         env:
           EVENT_BEFORE: ${{ github.event.before }}
           EVENT_NAME: ${{ github.event_name }}
@@ -71,13 +74,16 @@ jobs:
           echo "Current version:  $current"
           echo "Previous version: ${previous:-(none)}"
           if [[ -n "$previous" && "$previous" == "$current" ]]; then
-            echo "::error::promoter_admin/pubspec.yaml version was not incremented (still $current). Bump version/build (e.g. 1.0.2+2) before running the admin build workflow."
-            exit 1
+            echo "No version change — skipping macOS draft/build."
+            echo "bumped=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
           echo "Version bump OK."
+          echo "bumped=true" >> "$GITHUB_OUTPUT"
 
       - name: Read version from pubspec
         id: version
+        if: steps.bump.outputs.bumped == 'true'
         run: |
           full=$(grep -E '^version:' promoter_admin/pubspec.yaml | head -1 | sed 's/version:[[:space:]]*//')
           name="${full%%+*}"
@@ -92,6 +98,7 @@ jobs:
           echo "Staging draft for $full → expect asset $zip"
 
       - name: Stage draft GitHub Release (awaiting binary upload)
+        if: steps.bump.outputs.bumped == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION_FULL: ${{ steps.version.outputs.full }}
@@ -115,17 +122,8 @@ jobs:
 
           **Version:** ${VERSION_FULL}
 
-          ### Status: draft — notarized binary not attached yet
-
-          1. Upload the notarized zip named \`${ZIP_NAME}\`.
-          2. Publish this draft.
-
-          \`\`\`bash
-          gh release upload omf-admin-macos ./${ZIP_NAME} --clobber
-          gh release edit omf-admin-macos --draft=false
-          \`\`\`
-
-          Download page (after publish):
+          ### Download
+          Use the **Assets** zip below (\`${ZIP_NAME}\`).
           https://github.com/${REPO}/releases/tag/omf-admin-macos
 
           ### Install
@@ -150,6 +148,7 @@ jobs:
 
   build-macos:
     needs: stage-draft-release
+    if: needs.stage-draft-release.outputs.bumped == 'true'
     runs-on: macos-latest
     defaults:
       run:

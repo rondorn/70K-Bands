@@ -138,10 +138,10 @@ Discover will not guess when several bands share a name — that’s why step 4 
 
 Use this when you want a simple **logo grid** of the Testing lineup (for a web page, social post layout, or sharing with staff).
 
-On **Artists**, choose **Export…**. On Mac you can also use **File → Save Artists as HTML…**.
+On **Artists**, choose **Export…** (on-screen button — there is no app File-menu export).
 
 1. Choose **Color** or **Black & white**.
-2. Save the HTML file anywhere on your computer.
+2. Save the HTML file wherever you like.
 3. Open the file in a browser to preview or share it.
 
 **What you get**
@@ -218,7 +218,7 @@ These are **not** tied to a lineup band:
 
 ### Export a running order
 
-On **Schedule → View**, choose **Export…**. On Mac you can also use **File → Save Schedule as PDF…** or **Save Schedule as HTML…**.
+On **Schedule → View**, choose **Export…** (on-screen button — there is no app File-menu export).
 
 #### Who this is for (important)
 
@@ -232,8 +232,8 @@ The export dialog reminds you of this when you save.
 
 1. Choose **PDF** (best for printing / posting as a handout) or **HTML** (best for a screen or web page).
 2. Choose **Color** or **Black & white**. PDF starts in black-and-white; HTML starts in color.
-3. Check which **event types** to include. **Show** is selected by default. This only changes what goes into *this* file — it does not change your schedule data.
-4. Save the exported file anywhere on your computer.
+3. Check which **event types** to include. **Show** and **Special Event** are selected by default. This only changes what goes into *this* file — it does not change your schedule data.
+4. Save the exported file wherever you like.
 
 Each festival **day** becomes one page (venues across the top, time running down the page). Late-night sets follow the same **Date rollover** rules as Schedule Entry.
 

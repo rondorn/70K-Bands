@@ -7,8 +7,9 @@
 # Only the latest Windows release is kept: the previous omf-admin-windows
 # release (and its assets) is deleted before publishing the new one.
 #
-# The job fails unless promoter_admin/pubspec.yaml version was incremented
-# versus the previous master tip (push) or parent commit (manual run).
+# Build/release only run when promoter_admin/pubspec.yaml version was
+# incremented versus the previous master tip (push) or parent commit.
+# No version change → succeed and skip (no error).
 #
 # Prefer GitHub Releases over committing zips into the git tree (binaries
 # bloat the repo). The release page is the stable download “directory”.
@@ -37,7 +38,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Require pubspec version bump
+      - name: Check pubspec version bump
+        id: bump
         working-directory: .
         shell: pwsh
         env:
@@ -80,17 +82,22 @@ jobs:
           Write-Host "Current version:  $current"
           Write-Host "Previous version: $(if ($previous) { $previous } else { '<(none)>' })"
           if ($previous -and $previous -eq $current) {
-            throw "promoter_admin/pubspec.yaml version was not incremented (still $current). Bump version/build (e.g. 1.0.2+2) before running the admin build workflow."
+            Write-Host "No version change — skipping Windows build/release."
+            "bumped=false" >> $env:GITHUB_OUTPUT
+            exit 0
           }
           Write-Host "Version bump OK."
+          "bumped=true" >> $env:GITHUB_OUTPUT
 
       - uses: subosito/flutter-action@v2
+        if: steps.bump.outputs.bumped == 'true'
         with:
           channel: stable
           cache: true
 
       - name: Read version from pubspec
         id: version
+        if: steps.bump.outputs.bumped == 'true'
         shell: pwsh
         run: |
           $line = Select-String -Path pubspec.yaml -Pattern '^version:\s*(.+)$' |
@@ -109,12 +116,16 @@ jobs:
           Write-Host "Building $full → $zip"
 
       - run: flutter config --enable-windows-desktop
+        if: steps.bump.outputs.bumped == 'true'
 
       - run: flutter pub get
+        if: steps.bump.outputs.bumped == 'true'
 
       - run: flutter build windows --release
+        if: steps.bump.outputs.bumped == 'true'
 
       - name: Zip release folder
+        if: steps.bump.outputs.bumped == 'true'
         shell: pwsh
         env:
           ZIP_NAME: ${{ steps.version.outputs.zip }}
@@ -125,11 +136,13 @@ jobs:
           Write-Host "Created $zip"
 
       - uses: actions/upload-artifact@v4
+        if: steps.bump.outputs.bumped == 'true'
         with:
           name: omf-admin-windows-${{ steps.version.outputs.name }}_${{ steps.version.outputs.number }}
           path: ${{ steps.version.outputs.zip }}
 
       - name: Remove previous Windows release (keep latest only)
+        if: steps.bump.outputs.bumped == 'true'
         working-directory: .
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -142,6 +155,7 @@ jobs:
           git push origin :refs/tags/omf-admin-windows 2>/dev/null || true
 
       - name: Publish GitHub Release (latest only)
+        if: steps.bump.outputs.bumped == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: omf-admin-windows
