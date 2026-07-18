@@ -107,8 +107,9 @@ After changing scopes in the Dropbox developer console, users must
 
 ## Config storage
 
-On **macOS / iPad** (when signed into iCloud), festival config and Dropbox auth sync
-via iCloud Documents:
+On **macOS / iPad**, festival config and Dropbox auth sync via iCloud Documents
+when iCloud is **configured** on the device (signed into iCloud and this app’s
+Documents container is available):
 
 ```text
 iCloud.com.rdorn.open-metal-fest-admin
@@ -116,8 +117,10 @@ iCloud.com.rdorn.open-metal-fest-admin
   Documents/OpenMetalFestAdmin/dropbox_auth.json
 ```
 
-A local mirror is kept at `~/Library/Application Support/OpenMetalFestAdmin/`
-(macOS) for offline fallback. Schedule staging stays device-local.
+If iCloud is not set up on the device, the same files live only under local
+Application Support (`…/OpenMetalFestAdmin/`). A local mirror is also kept when
+iCloud sync is enabled. Temporary network loss does not switch modes — ubiquity
+writes still go to the container and sync later.
 
 **Windows:** local-only — no iCloud.
 

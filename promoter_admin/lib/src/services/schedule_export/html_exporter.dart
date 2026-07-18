@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:promoter_admin/src/services/schedule_export/event_type_labeling.dart';
 import 'package:promoter_admin/src/services/schedule_export/running_order_layout.dart';
+import 'package:promoter_admin/src/services/schedule_export/venue_palette.dart';
 
 class HtmlExporter {
   const HtmlExporter._();
@@ -59,7 +60,9 @@ class HtmlExporter {
       for (var i = 0; i < page.venues.length; i++) {
         final venue = page.venues[i];
         html
-          ..writeln('<div class="venue venue-${i % 8}">')
+          ..writeln(
+            '<div class="venue venue-${i % VenuePalette.accents.length}">',
+          )
           ..writeln('<strong>${_escape(venue.name)}</strong>');
         if (venue.subtitle.isNotEmpty) {
           html.writeln('<span>${_escape(venue.subtitle)}</span>');
@@ -112,7 +115,7 @@ class HtmlExporter {
             ? 'min-height:max(18px,calc($height% - 1px));height:auto'
             : 'height:max(18px,calc($height% - 1px));min-height:max(18px,calc($height% - 1px))';
         html.writeln(
-          '<article class="event venue-${event.venueIndex % 8}'
+          '<article class="event venue-${event.venueIndex % VenuePalette.accents.length}'
           '${dense ? ' dense' : ''}" '
           'style="left:calc(${_percent(event.venueIndex, page.venues.length)}% + 2px + '
           '((100% / ${page.venues.length} - 4px) * ${event.laneIndex} / $laneCount));'
@@ -248,14 +251,7 @@ body { margin: 0; background: #080808; }
 .event.dense time,
 .event.dense .event-type,
 .event.dense small { font-size: clamp(6px, .65vw, 9px); }
-.venue-0 { background: #2049b5; }
-.venue-1 { background: #087757; }
-.venue-2 { background: #a64a08; }
-.venue-3 { background: #9a20b5; }
-.venue-4 { background: #37465a; }
-.venue-5 { background: #df4c08; }
-.venue-6 { background: #8b2030; }
-.venue-7 { background: #176d87; }
+${VenuePalette.htmlVenueCss()}
 .monochrome { color-scheme: light; background: #ffffff; color: #000000; }
 .monochrome .running-order { background: #ffffff; }
 .monochrome .brand img { filter: grayscale(1); }

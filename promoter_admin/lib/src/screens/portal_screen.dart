@@ -1,7 +1,4 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:promoter_admin/src/branding.dart';
 import 'package:promoter_admin/src/models/festival_workspace.dart';
 import 'package:promoter_admin/src/screens/sections/alerts_section.dart';
 import 'package:promoter_admin/src/screens/sections/bands_section.dart';
@@ -15,8 +12,6 @@ import 'package:promoter_admin/src/services/portal_navigation_store.dart';
 import 'package:promoter_admin/src/services/pointer_service.dart';
 import 'package:promoter_admin/src/services/schedule_service.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
-import 'package:promoter_admin/src/widgets/export_artists_dialog.dart';
-import 'package:promoter_admin/src/widgets/export_schedule_dialog.dart';
 
 class PortalScreen extends StatefulWidget {
   const PortalScreen({
@@ -284,55 +279,6 @@ class _PortalScreenState extends State<PortalScreen> {
     });
   }
 
-  Future<void> _openScheduleExport(ScheduleExportFormat format) async {
-    try {
-      final events = await widget.scheduleService.load(_ws);
-      if (!mounted) return;
-      if (events.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('There are no schedule events to export.'),
-          ),
-        );
-        return;
-      }
-      await showScheduleExportDialog(
-        context,
-        workspace: _ws,
-        events: events,
-        initialFormat: format,
-      );
-    } catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not load the schedule: $error')),
-      );
-    }
-  }
-
-  Future<void> _openArtistsExport() async {
-    try {
-      final bands = await widget.lineupService.load(_ws);
-      if (!mounted) return;
-      if (bands.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('There are no artists to export.')),
-        );
-        return;
-      }
-      await showArtistsExportDialog(
-        context,
-        workspace: _ws,
-        bands: bands,
-      );
-    } catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not load the artists list: $error')),
-      );
-    }
-  }
-
   @override
   void didUpdateWidget(covariant PortalScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -392,128 +338,7 @@ class _PortalScreenState extends State<PortalScreen> {
       ),
       child: _buildBody(),
     );
-    return PlatformMenuBar(
-      menus: [
-        const PlatformMenu(
-          label: AppBrand.name,
-          menus: [
-            PlatformProvidedMenuItem(type: PlatformProvidedMenuItemType.about),
-            PlatformMenuItemGroup(
-              members: [
-                PlatformProvidedMenuItem(
-                  type: PlatformProvidedMenuItemType.servicesSubmenu,
-                ),
-              ],
-            ),
-            PlatformMenuItemGroup(
-              members: [
-                PlatformProvidedMenuItem(
-                  type: PlatformProvidedMenuItemType.hide,
-                ),
-                PlatformProvidedMenuItem(
-                  type: PlatformProvidedMenuItemType.hideOtherApplications,
-                ),
-                PlatformProvidedMenuItem(
-                  type: PlatformProvidedMenuItemType.showAllApplications,
-                ),
-              ],
-            ),
-            PlatformMenuItemGroup(
-              members: [
-                PlatformProvidedMenuItem(
-                  type: PlatformProvidedMenuItemType.quit,
-                ),
-              ],
-            ),
-          ],
-        ),
-        PlatformMenu(
-          label: 'File',
-          menus: [
-            PlatformMenuItem(
-              label: 'Save Schedule as PDF…',
-              onSelected: () =>
-                  unawaited(_openScheduleExport(ScheduleExportFormat.pdf)),
-            ),
-            PlatformMenuItem(
-              label: 'Save Schedule as HTML…',
-              onSelected: () =>
-                  unawaited(_openScheduleExport(ScheduleExportFormat.html)),
-            ),
-            PlatformMenuItem(
-              label: 'Save Artists as HTML…',
-              onSelected: () => unawaited(_openArtistsExport()),
-            ),
-          ],
-        ),
-        const PlatformMenu(
-          label: 'Edit',
-          menus: [
-            PlatformMenuItem(
-              label: 'Undo',
-              onSelectedIntent: UndoTextIntent(SelectionChangedCause.keyboard),
-            ),
-            PlatformMenuItem(
-              label: 'Redo',
-              onSelectedIntent: RedoTextIntent(SelectionChangedCause.keyboard),
-            ),
-            PlatformMenuItemGroup(
-              members: [
-                PlatformMenuItem(
-                  label: 'Cut',
-                  onSelectedIntent: CopySelectionTextIntent.cut(
-                    SelectionChangedCause.toolbar,
-                  ),
-                ),
-                PlatformMenuItem(
-                  label: 'Copy',
-                  onSelectedIntent: CopySelectionTextIntent.copy,
-                ),
-                PlatformMenuItem(
-                  label: 'Paste',
-                  onSelectedIntent: PasteTextIntent(
-                    SelectionChangedCause.toolbar,
-                  ),
-                ),
-                PlatformMenuItem(
-                  label: 'Select All',
-                  onSelectedIntent: SelectAllTextIntent(
-                    SelectionChangedCause.toolbar,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        const PlatformMenu(
-          label: 'View',
-          menus: [
-            PlatformProvidedMenuItem(
-              type: PlatformProvidedMenuItemType.toggleFullScreen,
-            ),
-          ],
-        ),
-        const PlatformMenu(
-          label: 'Window',
-          menus: [
-            PlatformProvidedMenuItem(
-              type: PlatformProvidedMenuItemType.minimizeWindow,
-            ),
-            PlatformProvidedMenuItem(
-              type: PlatformProvidedMenuItemType.zoomWindow,
-            ),
-            PlatformMenuItemGroup(
-              members: [
-                PlatformProvidedMenuItem(
-                  type: PlatformProvidedMenuItemType.arrangeWindowsInFront,
-                ),
-              ],
-            ),
-          ],
-        ),
-      ],
-      child: shell,
-    );
+    return shell;
   }
 
   Widget _buildBody() {

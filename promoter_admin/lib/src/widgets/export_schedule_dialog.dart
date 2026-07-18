@@ -1,10 +1,9 @@
 import 'dart:typed_data';
 
-import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:path/path.dart' as p;
 import 'package:promoter_admin/src/models/festival_workspace.dart';
+import 'package:promoter_admin/src/services/export_file_saver.dart';
 import 'package:promoter_admin/src/services/http_fetch.dart';
 import 'package:promoter_admin/src/services/platform_http.dart';
 import 'package:promoter_admin/src/services/schedule_export/event_type_labeling.dart';
@@ -44,7 +43,7 @@ Future<void> showScheduleExportDialog(
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Text(
-        'Saved ${result.eventCount} event(s) across '
+        'Exported ${result.eventCount} event(s) across '
         '${result.dayCount} day(s) to ${result.path}',
       ),
     ),
@@ -85,8 +84,13 @@ class _ExportScheduleDialogState extends State<ExportScheduleDialog> {
       ...ScheduleValidation.withDefaultEventTypes(widget.workspace.eventTypes),
       ...widget.events.map((event) => event.type.trim()),
     ].where((type) => type.isNotEmpty && seen.add(type.toLowerCase())).toList();
-    final show = _types.where((type) => type.trim().toLowerCase() == 'show');
-    _selectedTypes = show.isEmpty ? _types.toSet() : show.toSet();
+    final preferred = _types
+        .where((type) {
+          final key = type.trim().toLowerCase();
+          return key == 'show' || key == 'special event';
+        })
+        .toSet();
+    _selectedTypes = preferred.isEmpty ? _types.toSet() : preferred;
   }
 
   List<ScheduleEvent> get _filtered =>
@@ -101,6 +105,10 @@ class _ExportScheduleDialogState extends State<ExportScheduleDialog> {
       setState(() => _error = 'Select at least one event type with events.');
       return;
     }
+    final box = context.findRenderObject() as RenderBox?;
+    final shareOrigin = (box != null && box.hasSize)
+        ? box.localToGlobal(Offset.zero) & box.size
+        : null;
     setState(() {
       _saving = true;
       _error = null;
@@ -108,27 +116,11 @@ class _ExportScheduleDialogState extends State<ExportScheduleDialog> {
     try {
       final extension = _format.extension;
       final typeSlug = EventTypeLabeling.fileSlugForSelection(_selectedTypes);
-      final location = await getSaveLocation(
-        suggestedName:
-            '${_safeName(widget.workspace.displayName)}'
-            '${widget.workspace.eventYear.trim().isEmpty ? '' : '-${widget.workspace.eventYear.trim()}'}'
-            '${typeSlug == null ? '' : '-$typeSlug'}'
-            '-running-order.$extension',
-        acceptedTypeGroups: [
-          XTypeGroup(
-            label: '${_format.label} document',
-            extensions: [extension],
-          ),
-        ],
-      );
-      if (location == null) {
-        if (mounted) setState(() => _saving = false);
-        return;
-      }
-      final targetPath =
-          p.extension(location.path).toLowerCase() == '.$extension'
-          ? location.path
-          : '${location.path}.$extension';
+      final suggestedName =
+          '${_safeName(widget.workspace.displayName)}'
+          '${widget.workspace.eventYear.trim().isEmpty ? '' : '-${widget.workspace.eventYear.trim()}'}'
+          '${typeSlug == null ? '' : '-$typeSlug'}'
+          '-running-order.$extension';
 
       final logo = await _readLogo();
       final logoUrl = widget.workspace.festivalLogoUrl.trim();
@@ -149,15 +141,23 @@ class _ExportScheduleDialogState extends State<ExportScheduleDialog> {
               useColor: _colorMode == ScheduleExportColorMode.color,
               labeling: labeling,
             );
-      await XFile.fromData(
-        bytes,
-        name: p.basename(targetPath),
+
+      final saved = await saveExportBytes(
+        bytes: bytes,
+        suggestedName: suggestedName,
+        extension: extension,
         mimeType: _format.mimeType,
-      ).saveTo(targetPath);
+        typeLabel: '${_format.label} document',
+        sharePositionOrigin: shareOrigin,
+      );
       if (!mounted) return;
+      if (saved == null) {
+        setState(() => _saving = false);
+        return;
+      }
       Navigator.of(context).pop(
         _ScheduleExportResult(
-          path: targetPath,
+          path: saved.snackbarLocation,
           eventCount: layout.eventCount,
           dayCount: layout.pages.length,
         ),

@@ -1,10 +1,9 @@
-import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
-import 'package:path/path.dart' as p;
 import 'package:promoter_admin/src/models/festival_workspace.dart';
 import 'package:promoter_admin/src/services/artists_export/artist_export_entry.dart';
 import 'package:promoter_admin/src/services/artists_export/html_exporter.dart';
 import 'package:promoter_admin/src/services/artists_export/logo_fetcher.dart';
+import 'package:promoter_admin/src/services/export_file_saver.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
 
 enum ArtistsExportColorMode { color, blackAndWhite }
@@ -25,7 +24,7 @@ Future<void> showArtistsExportDialog(
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Text(
-        'Saved ${result.artistCount} artist(s) to ${result.path}',
+        'Exported ${result.artistCount} artist(s) to ${result.path}',
       ),
     ),
   );
@@ -51,46 +50,31 @@ class _ExportArtistsDialogState extends State<ExportArtistsDialog> {
   String? _status;
   String? _error;
 
+  Rect? _shareOrigin() {
+    final box = context.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize) return null;
+    return box.localToGlobal(Offset.zero) & box.size;
+  }
+
   Future<void> _save() async {
     final entries = ArtistExportEntry.fromBands(widget.bands);
     if (entries.isEmpty) {
       setState(() => _error = 'There are no artists to export.');
       return;
     }
+    final shareOrigin = _shareOrigin();
     setState(() {
       _saving = true;
       _error = null;
-      _status = 'Choose where to save…';
+      _status = 'Downloading logos…';
     });
     try {
       const extension = 'html';
-      final location = await getSaveLocation(
-        suggestedName:
-            '${_safeName(widget.workspace.displayName)}'
-            '${widget.workspace.eventYear.trim().isEmpty ? '' : '-${widget.workspace.eventYear.trim()}'}'
-            '-lineup.$extension',
-        acceptedTypeGroups: const [
-          XTypeGroup(
-            label: 'HTML document',
-            extensions: [extension],
-          ),
-        ],
-      );
-      if (location == null) {
-        if (mounted) {
-          setState(() {
-            _saving = false;
-            _status = null;
-          });
-        }
-        return;
-      }
-      final targetPath =
-          p.extension(location.path).toLowerCase() == '.$extension'
-          ? location.path
-          : '${location.path}.$extension';
+      final suggestedName =
+          '${_safeName(widget.workspace.displayName)}'
+          '${widget.workspace.eventYear.trim().isEmpty ? '' : '-${widget.workspace.eventYear.trim()}'}'
+          '-lineup.$extension';
 
-      if (mounted) setState(() => _status = 'Downloading logos…');
       final festivalLogoUrl = widget.workspace.festivalLogoUrl.trim();
       final festivalLogo = await LogoFetcher.fetchBytes(festivalLogoUrl);
       final withLogos = await LogoFetcher.attachBandLogos(entries);
@@ -105,14 +89,28 @@ class _ExportArtistsDialogState extends State<ExportArtistsDialog> {
         useColor: _colorMode == ArtistsExportColorMode.color,
       );
 
-      await XFile.fromData(
-        bytes,
-        name: p.basename(targetPath),
+      if (mounted) setState(() => _status = 'Saving…');
+      final saved = await saveExportBytes(
+        bytes: bytes,
+        suggestedName: suggestedName,
+        extension: extension,
         mimeType: 'text/html',
-      ).saveTo(targetPath);
+        typeLabel: 'HTML document',
+        sharePositionOrigin: shareOrigin,
+      );
       if (!mounted) return;
+      if (saved == null) {
+        setState(() {
+          _saving = false;
+          _status = null;
+        });
+        return;
+      }
       Navigator.of(context).pop(
-        _ArtistsExportResult(path: targetPath, artistCount: withLogos.length),
+        _ArtistsExportResult(
+          path: saved.snackbarLocation,
+          artistCount: withLogos.length,
+        ),
       );
     } catch (error) {
       if (!mounted) return;

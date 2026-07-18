@@ -4,7 +4,12 @@ import 'dart:io';
 import 'package:icloud_storage_plus/icloud_storage.dart';
 import 'package:promoter_admin/src/services/app_data_paths.dart';
 
-/// Read/write small UTF-8 config documents, preferring iCloud on Apple platforms.
+/// Read/write small UTF-8 config documents.
+///
+/// When iCloud Documents is configured on the device, prefers the ubiquity
+/// container and keeps a local mirror. When iCloud is not configured (no
+/// account / no container), reads and writes local Application Support only.
+/// Network outages do not change that decision.
 class ConfigDocumentStore {
   const ConfigDocumentStore();
 
@@ -20,7 +25,7 @@ class ConfigDocumentStore {
         );
         if (text != null && text.trim().isNotEmpty) return text;
       } catch (_) {
-        // Fall through to local.
+        // Fall through to local mirror (offline / first run).
       }
     }
     final file = await localFile();
@@ -38,7 +43,8 @@ class ConfigDocumentStore {
     required Future<File> Function() localFile,
     required String contents,
   }) async {
-    // Always keep a local mirror for fallback / Windows / offline boot.
+    // Always keep a local mirror so a device without iCloud (or before the
+    // container is ready) still persists festival config and Dropbox auth.
     final file = await localFile();
     await file.parent.create(recursive: true);
     await file.writeAsString(contents);
@@ -51,13 +57,13 @@ class ConfigDocumentStore {
           contents: contents,
         );
       } catch (_) {
-        // Local write already succeeded.
+        // Local write already succeeded; sync can retry on a later launch.
       }
     }
   }
 
   /// Copy local Application Support config into iCloud once (no-op if iCloud
-  /// already has a non-empty registry, or iCloud is unavailable).
+  /// is not configured on this device, or already has a non-empty registry).
   Future<bool> migrateLocalConfigToICloudIfNeeded() async {
     if (!await AppDataPaths.iCloudReady()) return false;
 
@@ -182,7 +188,7 @@ class DurableJsonStore {
   }
 }
 
-/// Dropbox auth document (iCloud on Apple, local elsewhere).
+/// Dropbox auth document (iCloud when configured on device, else local-only).
 DurableJsonStore dropboxAuthStore() => DurableJsonStore(
       iCloudRelativePath: AppDataPaths.dropboxAuthRelativePath,
       localFile: AppDataPaths.localDropboxAuthFile,

@@ -6,6 +6,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:promoter_admin/src/services/schedule_export/event_type_labeling.dart';
 import 'package:promoter_admin/src/services/schedule_export/running_order_layout.dart';
+import 'package:promoter_admin/src/services/schedule_export/venue_palette.dart';
 
 /// PDF color accents. The printed running-order layout always uses a white
 /// page (matching the official festival PDF); [colorful] only tints venue
@@ -56,17 +57,6 @@ class _PdfScheme {
 
 class PdfExporter {
   const PdfExporter._();
-
-  static const _venueColors = [
-    PdfColor.fromInt(0xFF2049B5),
-    PdfColor.fromInt(0xFF087757),
-    PdfColor.fromInt(0xFFA64A08),
-    PdfColor.fromInt(0xFF9A20B5),
-    PdfColor.fromInt(0xFF37465A),
-    PdfColor.fromInt(0xFFDF4C08),
-    PdfColor.fromInt(0xFF8B2030),
-    PdfColor.fromInt(0xFF176D87),
-  ];
 
   static Future<Uint8List> build({
     required RunningOrderLayout layout,
@@ -222,7 +212,7 @@ class PdfExporter {
     for (var venueIndex = 0; venueIndex < page.venues.length; venueIndex++) {
       final venue = page.venues[venueIndex];
       final headerColor = scheme.colorful
-          ? _venueColors[venueIndex % _venueColors.length]
+          ? VenuePalette.accentPdf(venueIndex)
           : scheme.text;
       // Deck/location subtitles are omitted until we have a real data source;
       // venue strings may still contain "(Deck …)" but we only show the name.
@@ -422,10 +412,12 @@ class PdfExporter {
       final boxHeight = math.min(maxHeight, math.max(minSlot, estimated));
 
       final border = scheme.colorful
-          ? _venueColors[event.venueIndex % _venueColors.length]
+          ? VenuePalette.accentPdf(event.venueIndex)
           : scheme.blockBorder;
+      // Opaque pastel — PdfColor alpha is unreliable in fills and was painting
+      // full-strength accents under black text.
       final fill = scheme.colorful
-          ? PdfColor(border.red, border.green, border.blue, 0.08)
+          ? VenuePalette.pdfFill(event.venueIndex)
           : scheme.blockFill;
 
       children.add(

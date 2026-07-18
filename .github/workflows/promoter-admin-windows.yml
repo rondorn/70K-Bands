@@ -4,6 +4,9 @@
 # Publishes a downloadable zip on the rolling release tag: omf-admin-windows
 #   → https://github.com/<org>/<repo>/releases/tag/omf-admin-windows
 #
+# Only the latest Windows release is kept: the previous omf-admin-windows
+# release (and its assets) is deleted before publishing the new one.
+#
 # The job fails unless promoter_admin/pubspec.yaml version was incremented
 # versus the previous master tip (push) or parent commit (manual run).
 #
@@ -126,12 +129,25 @@ jobs:
           name: omf-admin-windows-${{ steps.version.outputs.name }}_${{ steps.version.outputs.number }}
           path: ${{ steps.version.outputs.zip }}
 
-      - name: Publish GitHub Release (easy download link)
+      - name: Remove previous Windows release (keep latest only)
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view omf-admin-windows >/dev/null 2>&1; then
+            gh release delete omf-admin-windows --yes
+          fi
+          git push origin :refs/tags/omf-admin-windows 2>/dev/null || true
+
+      - name: Publish GitHub Release (latest only)
         uses: softprops/action-gh-release@v2
         with:
           tag_name: omf-admin-windows
           target_commitish: ${{ github.sha }}
           name: Open Metal Fest Admin Windows ${{ steps.version.outputs.name }}_${{ steps.version.outputs.number }}
+          make_latest: true
           body: |
             ## Open Metal Fest Admin for Windows
 
@@ -140,7 +156,7 @@ jobs:
             ### Download
             Use the **Assets** zip below (`${{ steps.version.outputs.zip }}`).
 
-            Stable release page (always latest master build):
+            Latest Windows build:
             https://github.com/${{ github.repository }}/releases/tag/omf-admin-windows
 
             ### Install

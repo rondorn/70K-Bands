@@ -10,6 +10,7 @@ import UIKit
 import CoreData
 import AVKit
 
+@available(iOS 16.0, *)
 class MasterViewController: UITableViewController, UISplitViewControllerDelegate, NSFetchedResultsControllerDelegate, UISearchBarDelegate {
     
     @IBOutlet var mainTableView: UITableView!

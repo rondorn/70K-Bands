@@ -10,10 +10,10 @@ Someone who releases or maintains the festival apps will give you the **Testing*
 
 ## Install (download the app)
 
-Download the latest build from the project’s [Releases](https://github.com/rondorn/70K-Bands/releases) page.
+Download the latest Mac or Windows build from the project’s [Releases](https://github.com/rondorn/70K-Bands/releases) page (only the current build for each platform is kept).
 
-1. Open the release that matches your computer (**Mac** or **Windows**).
-2. Under **Assets**, download the zip (look for `omf-admin-macos-…` or `omf-admin-windows-…`).
+1. Open the **Mac** or **Windows** release.
+2. Under **Assets**, download the zip (`omf-admin-macos-…` or `omf-admin-windows-…`).
 3. Unzip the download.
 
 **Mac:** Drag **Open Metal Fest Admin** into your **Applications** folder, then open it from there. The first time, macOS may ask to confirm a download from the internet — choose **Open**.

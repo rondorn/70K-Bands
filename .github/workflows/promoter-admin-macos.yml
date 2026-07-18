@@ -2,9 +2,10 @@
 #
 # Triggers on push to master (promoter_admin changes) and manual run.
 # When pubspec version/build is incremented:
-#   1. stage-draft-release — creates a draft release on tag omf-admin-macos
-#      (notes only, no binary). Upload your zip, then publish the draft.
+#   1. stage-draft-release — replaces any prior omf-admin-macos release with a
+#      draft (notes only, no binary). Upload the notarized zip, then publish.
 #   2. build-macos — builds a workflow artifact you can optionally attach.
+# Only the latest Mac release is kept (previous release/assets are deleted).
 #
 # The jobs fail the version check unless promoter_admin/pubspec.yaml version
 # was incremented versus the previous master tip (push) or parent commit.
@@ -114,29 +115,23 @@ jobs:
 
           **Version:** ${VERSION_FULL}
 
-          ### Status: draft — binary not attached yet
+          ### Status: draft — notarized binary not attached yet
 
-          1. Build/sign/notarize locally (or download the CI workflow artifact).
-          2. Upload asset named \`${ZIP_NAME}\` to this release.
-          3. Publish the draft when the zip is attached.
+          1. Upload the notarized zip named \`${ZIP_NAME}\`.
+          2. Publish this draft.
 
           \`\`\`bash
           gh release upload omf-admin-macos ./${ZIP_NAME} --clobber
           gh release edit omf-admin-macos --draft=false
           \`\`\`
 
-          Stable release page (after publish):
+          Download page (after publish):
           https://github.com/${REPO}/releases/tag/omf-admin-macos
 
-          ### Install (once published)
+          ### Install
           1. Download and unzip.
-          2. Drag **Open Metal Fest Admin** to Applications (optional).
-          3. Open the app.
-
-          ### If macOS blocks the app
-          - **Signed + notarized builds:** confirm the first-open dialog.
-          - **Unsigned / not notarized:** Right-click the app → **Open** → **Open**.
-            Or: System Settings → Privacy & Security → **Open Anyway**.
+          2. Drag **Open Metal Fest Admin** to Applications.
+          3. Open the app (confirm the first-open dialog if macOS asks).
 
           Staged from commit \`${COMMIT_SHA}\` on \`master\`.
           EOF

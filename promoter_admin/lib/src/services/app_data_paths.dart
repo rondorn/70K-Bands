@@ -5,9 +5,12 @@ import 'package:path_provider/path_provider.dart';
 
 /// Shared config locations for festival registry + Dropbox auth.
 ///
-/// On Apple platforms (when signed into iCloud), config lives in the app's
-/// iCloud Documents container so Mac and iPad share the same files.
-/// Elsewhere (Windows, or iCloud unavailable), falls back to a local folder.
+/// On Apple platforms, config syncs via the app's iCloud Documents container
+/// when iCloud is **configured** for this device (signed in + container
+/// available). If iCloud is not set up on the device, everything stays in a
+/// local Application Support folder. Transient network outages do not switch
+/// modes: once the container resolves, writes still go to the ubiquity folder
+/// (they sync when connectivity returns).
 class AppDataPaths {
   static const folderName = 'OpenMetalFestAdmin';
   static const iCloudContainerId = 'iCloud.com.rdorn.open-metal-fest-admin';
@@ -19,14 +22,61 @@ class AppDataPaths {
   static const portalNavigationRelativePath =
       'Documents/$folderName/portal_navigation.json';
 
-  /// True when we should use iCloud Documents for synced config.
+  /// True when this platform can use iCloud Documents (iOS / macOS).
   static bool get prefersICloud => Platform.isIOS || Platform.isMacOS;
 
+  /// Cached result of [iCloudReady] for this process. Null until probed.
+  static bool? _iCloudConfigured;
+
+  /// Test seam: when set, [iCloudReady] uses this instead of the native probe.
+  static Future<bool> Function()? debugICloudProbeOverride;
+
+  /// Clears the process cache (tests / after enabling iCloud mid-session).
+  static void resetICloudConfiguredCache() {
+    _iCloudConfigured = null;
+  }
+
+  /// True when iCloud Documents is configured for this app on this device.
+  ///
+  /// Requires both an iCloud account (`ubiquityIdentityToken`) **and** a
+  /// resolvable ubiquity container URL. A signed-in Apple ID with iCloud Drive
+  /// off (or no container) returns false → local storage only.
+  ///
+  /// Does **not** mean "network is up". Container resolution works offline when
+  /// iCloud is configured; temporary connectivity loss still uses iCloud paths.
   static Future<bool> iCloudReady() async {
-    if (!prefersICloud) return false;
+    final cached = _iCloudConfigured;
+    if (cached != null) return cached;
+
+    if (!prefersICloud) {
+      _iCloudConfigured = false;
+      return false;
+    }
+
+    final override = debugICloudProbeOverride;
+    if (override != null) {
+      final value = await override();
+      _iCloudConfigured = value;
+      return value;
+    }
+
     try {
-      return await ICloudStorage.icloudAvailable();
+      final signedIn = await ICloudStorage.icloudAvailable();
+      if (!signedIn) {
+        _iCloudConfigured = false;
+        return false;
+      }
+      final container = await ICloudStorage.getContainerPath(
+        containerId: iCloudContainerId,
+      );
+      final configured =
+          container != null && container.trim().isNotEmpty;
+      _iCloudConfigured = configured;
+      return configured;
     } catch (_) {
+      // Not configured / container inaccessible — use local, do not retry
+      // iCloud for the rest of this launch.
+      _iCloudConfigured = false;
       return false;
     }
   }
@@ -51,7 +101,7 @@ class AppDataPaths {
     return dir;
   }
 
-  /// Prefer iCloud container Documents path when available; else [localRoot].
+  /// Prefer iCloud container Documents path when configured; else [localRoot].
   static Future<Directory> root() async {
     if (await iCloudReady()) {
       try {
