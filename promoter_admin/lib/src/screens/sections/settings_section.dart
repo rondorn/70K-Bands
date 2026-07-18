@@ -14,6 +14,7 @@ import 'package:promoter_admin/src/theme/app_theme.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
 import 'package:promoter_admin/src/widgets/portal_dropdown.dart';
 import 'package:promoter_admin/src/widgets/recent_alerts_list.dart';
+import 'package:promoter_admin/src/widgets/url_image_preview.dart';
 
 class SettingsSection extends StatefulWidget {
   const SettingsSection({
@@ -1176,6 +1177,10 @@ class _SettingsSectionState extends State<SettingsSection> {
                   ),
                 ],
               ),
+            ),
+            UrlImagePreview(
+              controller: _festivalLogo,
+              padding: const EdgeInsets.only(bottom: 8),
             ),
             FormRow(
               label: 'Festival logo',

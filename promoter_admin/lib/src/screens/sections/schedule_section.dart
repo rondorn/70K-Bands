@@ -17,6 +17,7 @@ import 'package:promoter_admin/src/widgets/app_shell.dart';
 import 'package:promoter_admin/src/widgets/dropbox_folder_picker.dart';
 import 'package:promoter_admin/src/widgets/export_schedule_dialog.dart';
 import 'package:promoter_admin/src/widgets/portal_dropdown.dart';
+import 'package:promoter_admin/src/widgets/url_image_preview.dart';
 
 class ScheduleSection extends StatefulWidget {
   const ScheduleSection({
@@ -98,12 +99,11 @@ class _ScheduleSectionState extends State<ScheduleSection> {
       case 'Special Event':
         return 'Special Events are official festival activities that are not '
             'band performances (Best Tattoo Contest, organizer speech, etc.). '
-            'Enter the event title, description, and optional image. '
-            'Band Name is not used.';
+            'Enter the event title and optional image. Band Name is not used.';
       case 'Unofficial Event':
         return 'Unofficial Events are fan-run or unofficial happenings '
-            '(pre-parties, meetups, etc.). Enter the event title, description, '
-            'and optional image. Band Name is not used.';
+            '(pre-parties, meetups, etc.). Enter the event title and optional '
+            'image. Band Name is not used.';
       default:
         return '';
     }
@@ -1143,6 +1143,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                 text: 'Connect Dropbox in Settings to save the schedule.',
                 isError: true,
               ),
+            if (_isNonBand) UrlImagePreview(controller: _imageUrl),
             if (!_isNonBand)
               FormRow(
                 label: 'Band Name',
@@ -1155,6 +1156,26 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                   labelBuilder: (b) => b.isEmpty
                       ? (_bandNames.isEmpty ? '— load lineup first —' : '—')
                       : b,
+                ),
+              ),
+            if (_isNonBand)
+              FormRow(
+                label: 'Event title',
+                requiredField: true,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: _notes,
+                      maxLines: 1,
+                      decoration: const InputDecoration(
+                        hintText: 'e.g. Best Tattoo Contest',
+                      ),
+                    ),
+                    const HintText(
+                      'This becomes the schedule row name (Band column).',
+                    ),
+                  ],
                 ),
               ),
             FormRow(
@@ -1191,6 +1212,40 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                   style: const TextStyle(color: AppColors.muted, fontSize: 13),
                 ),
               ),
+              FormRow(
+                label: 'Image URL',
+                child: TextField(
+                  controller: _imageUrl,
+                  decoration: const InputDecoration(
+                    hintText: 'https://www.dropbox.com/…?raw=1',
+                  ),
+                ),
+              ),
+              if (widget.workspace.canEditDescriptions)
+                FormRow(
+                  label: 'Description',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TextField(
+                        controller: _descriptionText,
+                        maxLines: 6,
+                        minLines: 4,
+                        decoration: const InputDecoration(
+                          hintText: 'Plain-text description for the app…',
+                        ),
+                      ),
+                      const HintText(
+                        'When you save, the note is written to Dropbox and '
+                        'added to the description map automatically.',
+                      ),
+                      if (_isEditing)
+                        const HintText(
+                          'Leave blank while editing to keep the existing map URL.',
+                        ),
+                    ],
+                  ),
+                ),
             ],
             FormRow(
               label: 'Venue',
@@ -1293,66 +1348,14 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                 ],
               ),
             ),
-            FormRow(
-              label: _isNonBand ? 'Event title' : 'Notes',
-              requiredField: _isNonBand,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TextField(
-                    controller: _notes,
-                    maxLines: _isNonBand ? 1 : 2,
-                    decoration: InputDecoration(
-                      hintText: _isNonBand ? 'e.g. Best Tattoo Contest' : null,
-                    ),
-                  ),
-                  if (_isNonBand)
-                    const HintText(
-                      'This becomes the schedule row name (Band column).',
-                    ),
-                ],
-              ),
-            ),
-            if (_isNonBand) ...[
+            if (!_isNonBand)
               FormRow(
-                label: 'Description',
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TextField(
-                      controller: _descriptionText,
-                      maxLines: 6,
-                      minLines: 4,
-                      decoration: const InputDecoration(
-                        hintText: 'Plain-text description for the app…',
-                      ),
-                    ),
-                    HintText(
-                      widget.workspace.canEditDescriptions
-                          ? 'When you save, the note is written to Dropbox and '
-                                'added to the description map automatically.'
-                          : 'When you save, the note is written to your Dropbox '
-                                'folder and you get a link to share with the '
-                                'description admin. The URL is also stored on '
-                                'this schedule row.',
-                    ),
-                    if (_isEditing)
-                      const HintText(
-                        'Leave blank while editing to keep the existing map URL.',
-                      ),
-                  ],
-                ),
-              ),
-              FormRow(
-                label: 'Image URL',
+                label: 'Notes',
                 child: TextField(
-                  controller: _imageUrl,
-                  decoration: const InputDecoration(
-                    hintText: 'https://www.dropbox.com/…?raw=1',
-                  ),
+                  controller: _notes,
+                  maxLines: 2,
                 ),
               ),
-            ],
             FormRow(
               label: 'Verify bypass',
               child: CheckboxListTile(

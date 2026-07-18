@@ -12,6 +12,7 @@ import 'package:promoter_admin/src/theme/app_theme.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
 import 'package:promoter_admin/src/widgets/dropbox_folder_picker.dart';
 import 'package:promoter_admin/src/widgets/export_artists_dialog.dart';
+import 'package:promoter_admin/src/widgets/url_image_preview.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class BandsSection extends StatefulWidget {
@@ -717,6 +718,7 @@ class _BandsSectionState extends State<BandsSection> {
                 text: 'Connect Dropbox in Settings to save artists.',
                 isError: true,
               ),
+            UrlImagePreview(controller: _image),
             FormRow(
               label: 'Artist name',
               requiredField: true,
