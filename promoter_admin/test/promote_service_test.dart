@@ -77,6 +77,32 @@ void main() {
     );
   });
 
+  test('PromoteDiff.hasPublishableChanges is true for year roll', () {
+    expect(
+      PromoteDiff(
+        testingYear: '2027',
+        productionYear: '2026',
+      ).hasPublishableChanges,
+      isTrue,
+    );
+  });
+
+  test('PromoteDiff.hasPublishableChanges follows content-differ flags', () {
+    expect(
+      PromoteDiff(bandsContentDiffer: true).hasPublishableChanges,
+      isTrue,
+    );
+    expect(
+      PromoteDiff(eventsContentDiffer: true).hasPublishableChanges,
+      isTrue,
+    );
+    expect(
+      PromoteDiff(mapContentDiffer: true).hasPublishableChanges,
+      isTrue,
+    );
+    expect(PromoteDiff().hasPublishableChanges, isFalse);
+  });
+
   test('addedBandsFromCsv returns names only in testing', () {
     const production = 'bandName,country\nAlpha,US\nBeta,DE\n';
     const testing =

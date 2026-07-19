@@ -67,6 +67,8 @@ ThemeData buildPromoterTheme() {
       style: FilledButton.styleFrom(
         backgroundColor: AppColors.accent,
         foregroundColor: Colors.white,
+        disabledBackgroundColor: const Color(0xFF3A3A3A),
+        disabledForegroundColor: const Color(0xFF777777),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         textStyle: const TextStyle(fontWeight: FontWeight.w600),
@@ -76,6 +78,8 @@ ThemeData buildPromoterTheme() {
       style: OutlinedButton.styleFrom(
         foregroundColor: Colors.white,
         backgroundColor: AppColors.secondaryBtn,
+        disabledForegroundColor: const Color(0xFF777777),
+        disabledBackgroundColor: const Color(0xFF333333),
         side: BorderSide.none,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),

@@ -120,12 +120,30 @@ class _SettingsSectionState extends State<SettingsSection> {
     _canEditPointers = widget.workspace.canEditPointers;
     _canEditAlerts = widget.workspace.canEditAlerts;
     _useCityStateField = widget.workspace.useCityStateField;
+    for (final c in [
+      _name,
+      _testing,
+      _production,
+      _alertFolder,
+      _venues,
+      _dates,
+      _days,
+      _dateRollover,
+      _eventTypes,
+      _festivalLogo,
+    ]) {
+      c.addListener(_onFormChanged);
+    }
     if (widget.workspace.hasDataSourceYearOverride) {
       _showDemoYearControls = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _ensureDemoYearsLoaded();
       });
     }
+  }
+
+  void _onFormChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
@@ -176,16 +194,21 @@ class _SettingsSectionState extends State<SettingsSection> {
 
   @override
   void dispose() {
-    _name.dispose();
-    _testing.dispose();
-    _production.dispose();
-    _alertFolder.dispose();
-    _venues.dispose();
-    _dates.dispose();
-    _days.dispose();
-    _dateRollover.dispose();
-    _eventTypes.dispose();
-    _festivalLogo.dispose();
+    for (final c in [
+      _name,
+      _testing,
+      _production,
+      _alertFolder,
+      _venues,
+      _dates,
+      _days,
+      _dateRollover,
+      _eventTypes,
+      _festivalLogo,
+    ]) {
+      c.removeListener(_onFormChanged);
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -194,6 +217,49 @@ class _SettingsSectionState extends State<SettingsSection> {
       .map((s) => s.trimRight())
       .where((s) => s.isNotEmpty || s == ' ')
       .toList();
+
+  static bool _sameStringList(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
+  /// True when the form differs from the last-saved workspace config.
+  bool get _hasUnsavedChanges {
+    final d = _draft();
+    final w = widget.workspace;
+    final (rollH, rollM) = DayDateAlignment.parseRolloverTime(
+      w.dateRolloverTime.trim().isEmpty
+          ? DayDateAlignment.defaultRolloverTime
+          : w.dateRolloverTime,
+    );
+    final baselineRollover = DayDateAlignment.formatRolloverTime(rollH, rollM);
+    final baselineTypes = ScheduleValidation.withDefaultEventTypes(w.eventTypes);
+    final baselineDays = DayDateAlignment.normalizeDays(w.days);
+    final baselineDates = DayDateAlignment.normalizeDates(w.dates);
+    final baselineLogo = normalizeDropboxUrl(w.festivalLogoUrl.trim());
+
+    return d.festivalName != w.festivalName.trim() ||
+        d.testingPointerUrl != w.testingPointerUrl.trim() ||
+        d.productionPointerUrl != w.productionPointerUrl.trim() ||
+        d.alertFolderUrl != w.alertFolderUrl.trim() ||
+        d.festivalLogoUrl != baselineLogo ||
+        !_sameStringList(d.venues, w.venues) ||
+        !_sameStringList(d.dates, baselineDates) ||
+        !_sameStringList(d.days, baselineDays) ||
+        d.dateRolloverTime != baselineRollover ||
+        !_sameStringList(d.eventTypes, baselineTypes) ||
+        d.canEditBands != w.canEditBands ||
+        d.canEditSchedule != w.canEditSchedule ||
+        d.canEditDescriptions != w.canEditDescriptions ||
+        d.canEditPointers != w.canEditPointers ||
+        d.canEditAlerts != w.canEditAlerts ||
+        d.useCityStateField != w.useCityStateField;
+  }
+
+  bool get _canSaveConfiguration => !_busy && _hasUnsavedChanges;
 
   FestivalWorkspace _draft() {
     final days = DayDateAlignment.normalizeDays(_lines(_days.text));
@@ -1567,21 +1633,35 @@ class _SettingsSectionState extends State<SettingsSection> {
               spacing: 10,
               runSpacing: 10,
               children: [
-                FilledButton(
+                OutlinedButton(
                   onPressed: _busy ? null : _loadFromPointer,
                   child: Text(_busy ? 'Working…' : 'Load festival data'),
                 ),
-                OutlinedButton(
-                  onPressed: _busy ? null : _save,
-                  child: const Text('Save configuration'),
+                FilledButton(
+                  onPressed: _canSaveConfiguration ? _save : null,
+                  child: Text(
+                    _busy
+                        ? 'Saving…'
+                        : (_hasUnsavedChanges
+                              ? 'Save configuration'
+                              : 'No changes to save'),
+                  ),
                 ),
                 if (_canEditBands || _canEditSchedule || _canEditDescriptions)
                   OutlinedButton(
-                    onPressed: () => widget.onShowPromote(true),
+                    onPressed: _busy ? null : () => widget.onShowPromote(true),
                     child: const Text('Publish to Production…'),
                   ),
               ],
             ),
+            if (!_busy && _hasUnsavedChanges)
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Text(
+                  'You have unsaved configuration changes.',
+                  style: TextStyle(color: AppColors.accent, fontSize: 13),
+                ),
+              ),
           ],
         ),
       ),
@@ -1791,7 +1871,20 @@ class _PromotePanelState extends State<_PromotePanel> {
         !_loadingPreview &&
         !_promoting &&
         _error == null &&
-        !(_diff?.scheduleShared ?? false);
+        !(_diff?.scheduleShared ?? false) &&
+        (_diff?.hasPublishableChanges ?? false);
+  }
+
+  String _publishButtonLabel(bool yearRoll, String testingYear) {
+    if (_promoting) return 'Publishing…';
+    if (_loadingPreview) return 'Checking differences…';
+    if (_diff != null &&
+        !_diff!.hasPublishableChanges &&
+        !_diff!.scheduleShared) {
+      return 'Nothing to publish';
+    }
+    if (yearRoll) return 'Publish year $testingYear → Production';
+    return 'Publish Testing → Production';
   }
 
   @override
@@ -1932,19 +2025,25 @@ class _PromotePanelState extends State<_PromotePanel> {
               ],
             ],
             const SizedBox(height: 16),
+            if (!_loadingPreview &&
+                _diff != null &&
+                !_diff!.hasPublishableChanges &&
+                !_diff!.scheduleShared &&
+                _error == null)
+              const Padding(
+                padding: EdgeInsets.only(bottom: 12),
+                child: StatusBanner(
+                  text:
+                      'Testing and Production are already aligned — nothing to publish.',
+                ),
+              ),
             Wrap(
               spacing: 10,
               runSpacing: 10,
               children: [
                 FilledButton(
                   onPressed: _canPromote ? _runPromote : null,
-                  child: Text(
-                    _promoting
-                        ? 'Publishing…'
-                        : (yearRoll
-                              ? 'Publish year $testingYear → Production'
-                              : 'Publish Testing → Production'),
-                  ),
+                  child: Text(_publishButtonLabel(yearRoll, testingYear)),
                 ),
                 OutlinedButton(
                   onPressed: _promoting

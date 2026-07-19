@@ -34,6 +34,9 @@ class PromoteDiff {
     this.artistsShared = false,
     this.scheduleShared = false,
     this.mapShared = false,
+    this.bandsContentDiffer = false,
+    this.eventsContentDiffer = false,
+    this.mapContentDiffer = false,
     List<String>? messages,
   }) : messages = messages ?? <String>[];
 
@@ -49,12 +52,28 @@ class PromoteDiff {
   bool artistsShared;
   bool scheduleShared;
   bool mapShared;
+
+  /// True when Testing artists CSV text differs from the Production target.
+  bool bandsContentDiffer;
+
+  /// True when Testing schedule CSV text differs from the Production target.
+  bool eventsContentDiffer;
+
+  /// True when Testing description map CSV text differs from the Production target.
+  bool mapContentDiffer;
+
   final List<String> messages;
 
   bool get isYearRoll {
     final t = testingYear.trim();
     final p = productionYear.trim();
     return t.isNotEmpty && p.isNotEmpty && t != p;
+  }
+
+  /// True when Publish would change Production (year-roll or CSV content differs).
+  bool get hasPublishableChanges {
+    if (isYearRoll) return true;
+    return bandsContentDiffer || eventsContentDiffer || mapContentDiffer;
   }
 
   List<String> get summaryLines {
@@ -420,6 +439,8 @@ class PromoteService {
     } else {
       diff.bandsTesting = countCsvRows(bands.testing!);
       diff.bandsProduction = countCsvRows(bands.production!);
+      diff.bandsContentDiffer = !diff.artistsShared &&
+          !_sameCsvText(bands.testing!, bands.production!);
       diff.addedBandNames = addedBandsFromCsv(
         testingCsv: bands.testing!,
         productionCsv: bands.production!,
@@ -438,6 +459,8 @@ class PromoteService {
     } else {
       diff.eventsTesting = countCsvRows(schedule.testing!);
       diff.eventsProduction = countCsvRows(schedule.production!);
+      diff.eventsContentDiffer = !diff.scheduleShared &&
+          !_sameCsvText(schedule.testing!, schedule.production!);
     }
 
     final map = loaded[2];
@@ -446,9 +469,24 @@ class PromoteService {
     } else {
       diff.mapRowsTesting = countCsvRows(map.testing!);
       diff.mapRowsProduction = countCsvRows(map.production!);
+      diff.mapContentDiffer = !diff.mapShared &&
+          !_sameCsvText(map.testing!, map.production!);
+    }
+
+    if (!diff.hasPublishableChanges && !diff.scheduleShared) {
+      diff.messages.add(
+        'Testing and Production data files match — nothing to publish.',
+      );
     }
 
     return diff;
+  }
+
+  /// Normalize line endings / trailing whitespace for CSV content equality.
+  static bool _sameCsvText(String a, String b) {
+    String norm(String raw) =>
+        raw.replaceAll('\r\n', '\n').replaceAll('\r', '\n').trimRight();
+    return norm(a) == norm(b);
   }
 
   /// Copy testing CSV contents onto production files in place.
