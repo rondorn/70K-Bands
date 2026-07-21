@@ -571,14 +571,6 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: OutlinedButton(
-                    onPressed: _saving ? null : () => _load(forceRefresh: true),
-                    child: const Text('Refresh'),
-                  ),
-                ),
-                const SizedBox(height: 12),
                 Expanded(
                   child: _rows.isEmpty
                       ? const Text(
@@ -729,6 +721,14 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
                             );
                           },
                         ),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: _saving ? null : () => _load(forceRefresh: true),
+                    icon: const Icon(Icons.refresh, size: 18),
+                    label: Text('${_rows.length} artist(s) — Refresh'),
+                  ),
                 ),
               ],
             ),
