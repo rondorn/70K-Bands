@@ -5,6 +5,30 @@ import 'package:promoter_admin/src/models/festival_workspace.dart';
 import 'package:promoter_admin/src/services/dropbox_auth.dart';
 import 'package:promoter_admin/src/services/http_fetch.dart';
 
+/// Dropbox [Dropbox-API-Arg] must be ASCII-only JSON (HTTP header rules).
+///
+/// [jsonEncode] emits Unicode literally (e.g. æ in paths), which Dart's HTTP
+/// client rejects. Re-escape non-ASCII code points as `\uXXXX`.
+String dropboxApiArg(Object value) {
+  final json = jsonEncode(value);
+  final buffer = StringBuffer();
+  for (final rune in json.runes) {
+    if (rune <= 0x7f) {
+      buffer.writeCharCode(rune);
+    } else if (rune <= 0xffff) {
+      buffer.write('\\u${rune.toRadixString(16).padLeft(4, '0')}');
+    } else {
+      final adjusted = rune - 0x10000;
+      final high = 0xd800 + (adjusted >> 10);
+      final low = 0xdc00 + (adjusted & 0x3ff);
+      buffer
+        ..write('\\u${high.toRadixString(16).padLeft(4, '0')}')
+        ..write('\\u${low.toRadixString(16).padLeft(4, '0')}');
+    }
+  }
+  return buffer.toString();
+}
+
 class DropboxFolderEntry {
   const DropboxFolderEntry({required this.name, required this.path});
 
@@ -202,7 +226,7 @@ class DropboxApi {
       Uri.parse('https://content.dropboxapi.com/2/files/download'),
       headers: {
         'Authorization': 'Bearer $token',
-        'Dropbox-API-Arg': jsonEncode({'path': path}),
+        'Dropbox-API-Arg': dropboxApiArg({'path': path}),
       },
     );
     if (resp.statusCode < 200 || resp.statusCode >= 300) {
@@ -288,7 +312,7 @@ class DropboxApi {
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/octet-stream',
-        'Dropbox-API-Arg': jsonEncode({
+        'Dropbox-API-Arg': dropboxApiArg({
           'path': path,
           'mode': 'overwrite',
           'autorename': false,
@@ -369,7 +393,7 @@ class DropboxApi {
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/octet-stream',
-        'Dropbox-API-Arg': jsonEncode({
+        'Dropbox-API-Arg': dropboxApiArg({
           'path': path,
           'mode': 'overwrite',
           'autorename': false,

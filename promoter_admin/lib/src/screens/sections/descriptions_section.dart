@@ -280,8 +280,8 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
       return;
     }
     final label = _formLabel.trim();
-    final text = _text.text.trim();
-    if (label.isEmpty || text.isEmpty) {
+    final text = _text.text;
+    if (label.isEmpty || text.trim().isEmpty) {
       setState(() => _error = 'Artist name and description text are required.');
       return;
     }
@@ -414,8 +414,8 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
           bumpDate: true,
         );
       } else if (_editText) {
-        final text = _text.text.trim();
-        if (text.isEmpty) {
+        final text = _text.text;
+        if (text.trim().isEmpty) {
           throw StateError('Description text is required.');
         }
         if (url.isEmpty) {

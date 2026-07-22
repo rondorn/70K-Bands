@@ -149,7 +149,11 @@ class DescriptionMapService {
     return shareUrl;
   }
 
-  /// Update text at an existing share URL and bump the map cache date.
+  /// Update text at an existing share URL.
+  ///
+  /// When [text] differs from the file on Dropbox, overwrites the description
+  /// file and bumps that band's cache [Date] in the description map only
+  /// (pointer files are untouched) via [nextCacheDate].
   Future<void> updateDescriptionTextInPlace({
     required FestivalWorkspace workspace,
     required String labelName,
@@ -161,27 +165,18 @@ class DescriptionMapService {
     if (label.isEmpty || url.isEmpty) {
       throw StateError('Band name and description URL are required.');
     }
-    await dropboxApi.uploadTextInPlace(url, text);
-    final entries = await load(workspace);
-    final updated = List<DescriptionMapEntry>.from(entries);
-    final idx = updated.indexWhere(
-      (e) => e.band.toLowerCase() == label.toLowerCase(),
-    );
-    final previousDate = idx >= 0 ? updated[idx].date : '';
-    final entry = DescriptionMapEntry(
-      band: idx >= 0 ? updated[idx].band : label,
-      url: url,
-      date: nextCacheDate(previousDate),
-    );
-    if (idx >= 0) {
-      updated[idx] = entry;
-    } else {
-      updated.add(entry);
+    final previousText = await loadDescriptionText(url, forceRefresh: true);
+    if (previousText == text) {
+      return;
     }
-    updated.sort(
-      (a, b) => a.band.toLowerCase().compareTo(b.band.toLowerCase()),
+    await dropboxApi.uploadTextInPlace(url, text);
+    await upsertMapEntry(
+      workspace: workspace,
+      labelName: label,
+      url: url,
+      bumpDate: true,
+      forceRefreshMap: true,
     );
-    await save(workspace, updated);
   }
 
   /// Insert or replace a map row (URL link). Bumps Date when [bumpDate] is true.
@@ -191,13 +186,17 @@ class DescriptionMapService {
     required String url,
     bool bumpDate = true,
     String? explicitDate,
+    bool forceRefreshMap = false,
   }) async {
     final label = labelName.trim();
     final normalizedUrl = normalizeDropboxUrl(url.trim());
     if (label.isEmpty || normalizedUrl.isEmpty) {
       throw StateError('Band / event name and Dropbox URL are required.');
     }
-    final entries = await load(workspace);
+    final entries = await load(
+      workspace,
+      forceRefresh: bumpDate && forceRefreshMap,
+    );
     final updated = List<DescriptionMapEntry>.from(entries);
     final idx = updated.indexWhere(
       (e) => e.band.toLowerCase() == label.toLowerCase(),
@@ -236,12 +235,15 @@ class DescriptionMapService {
     await save(workspace, updated);
   }
 
-  Future<String> loadDescriptionText(String shareUrl) async {
+  Future<String> loadDescriptionText(
+    String shareUrl, {
+    bool forceRefresh = false,
+  }) async {
     final url = normalizeDropboxUrl(shareUrl.trim());
     if (url.isEmpty) {
       throw StateError('Description URL is required.');
     }
-    return fetchUrlText(url);
+    return fetchUrlText(url, forceRefresh: forceRefresh);
   }
 
   static List<DescriptionMapEntry> parseEntries(String text) {

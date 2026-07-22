@@ -42,5 +42,17 @@ void main() {
         today,
       );
     });
+
+    test('same-day edits keep incrementing suffix', () {
+      final today = DescriptionMapService.cacheDateToday();
+      expect(
+        DescriptionMapService.nextCacheDate(today),
+        '$today-1',
+      );
+      expect(
+        DescriptionMapService.nextCacheDate('$today-1'),
+        '$today-2',
+      );
+    });
   });
 }
