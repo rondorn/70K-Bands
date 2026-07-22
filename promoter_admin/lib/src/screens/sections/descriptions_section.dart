@@ -248,7 +248,10 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
     widget.onTabChanged(DescriptionsTab.form);
     try {
       final text =
-          await widget.descriptionMapService.loadDescriptionText(row.entry!.url);
+          await widget.descriptionMapService.loadDescriptionText(
+        row.entry!.url,
+        mapDate: row.entry!.date,
+      );
       if (!mounted) return;
       setState(() {
         _text.text = text;

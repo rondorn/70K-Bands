@@ -55,4 +55,28 @@ void main() {
       );
     });
   });
+
+  group('DescriptionMapService.descriptionTextCacheKey', () {
+    test('includes opaque map date string in cache key', () {
+      const url = 'https://www.dropbox.com/s/abc/band.txt?raw=1';
+      expect(
+        DescriptionMapService.descriptionTextCacheKey(url, '08-11-2025'),
+        '$url::desc::08-11-2025',
+      );
+      expect(
+        DescriptionMapService.descriptionTextCacheKey(url, '08-11-2025-1'),
+        isNot(
+          DescriptionMapService.descriptionTextCacheKey(url, '08-11-2025'),
+        ),
+      );
+    });
+
+    test('empty map date falls back to url-only key', () {
+      const url = 'https://example.com/band.txt';
+      expect(
+        DescriptionMapService.descriptionTextCacheKey(url, ''),
+        url,
+      );
+    });
+  });
 }

@@ -165,18 +165,30 @@ class DescriptionMapService {
     if (label.isEmpty || url.isEmpty) {
       throw StateError('Band name and description URL are required.');
     }
-    final previousText = await loadDescriptionText(url, forceRefresh: true);
+    final entries = await load(workspace);
+    final idx = entries.indexWhere(
+      (e) => e.band.toLowerCase() == label.toLowerCase(),
+    );
+    final previousDate = idx >= 0 ? entries[idx].date : '';
+    final previousText = await loadDescriptionText(
+      url,
+      mapDate: previousDate,
+    );
     if (previousText == text) {
       return;
     }
     await dropboxApi.uploadTextInPlace(url, text);
+    final newDate = nextCacheDate(previousDate);
     await upsertMapEntry(
       workspace: workspace,
       labelName: label,
       url: url,
       bumpDate: true,
+      explicitDate: newDate,
       forceRefreshMap: true,
     );
+    await putCachedUrlText(descriptionTextCacheKey(url, newDate), text);
+    await invalidateCachedUrlText(url);
   }
 
   /// Insert or replace a map row (URL link). Bumps Date when [bumpDate] is true.
@@ -235,15 +247,36 @@ class DescriptionMapService {
     await save(workspace, updated);
   }
 
+  /// Cache key for description .txt bodies — mirrors fan apps' BandName.note-DATE.
+  ///
+  /// [mapDate] is an opaque string from descriptionMap CSV (not parsed as a date).
+  /// When the string changes, cached text is missed and re-fetched.
+  static String descriptionTextCacheKey(String shareUrl, String mapDate) {
+    final url = normalizeDropboxUrl(shareUrl.trim());
+    final date = mapDate.trim();
+    if (url.isEmpty) return '';
+    if (date.isEmpty) return url;
+    return '$url::desc::$date';
+  }
+
+  /// Loads description text for [shareUrl], cached under [mapDate].
+  ///
+  /// Re-fetches from the network when [mapDate] differs from the last cached
+  /// lookup for this URL, or when [forceRefresh] is true.
   Future<String> loadDescriptionText(
     String shareUrl, {
+    required String mapDate,
     bool forceRefresh = false,
   }) async {
     final url = normalizeDropboxUrl(shareUrl.trim());
     if (url.isEmpty) {
       throw StateError('Description URL is required.');
     }
-    return fetchUrlText(url, forceRefresh: forceRefresh);
+    return fetchUrlText(
+      url,
+      cacheKey: descriptionTextCacheKey(url, mapDate),
+      forceRefresh: forceRefresh,
+    );
   }
 
   static List<DescriptionMapEntry> parseEntries(String text) {

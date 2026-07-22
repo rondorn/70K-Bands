@@ -26,6 +26,22 @@ void main() {
     expect(UrlTextCache.peek('https://example.com/lineup.csv'), 'csv-data');
   });
 
+  test('fetchUrlText can store under a custom cache key', () async {
+    await putCachedUrlText(
+      'https://example.com/band.txt::desc::07-22-2026-1',
+      'fresh body',
+    );
+    expect(
+      UrlTextCache.peek('https://example.com/band.txt::desc::07-22-2026-1'),
+      'fresh body',
+    );
+    expect(
+      UrlTextCache.peek('https://example.com/band.txt::desc::07-22-2026-2'),
+      isNull,
+    );
+    expect(UrlTextCache.peek('https://example.com/band.txt'), isNull);
+  });
+
   test('cacheBustedUrl adds unique query param without dropping others', () {
     final busted = cacheBustedUrl(
       'https://www.dropbox.com/s/abc/file.txt?raw=1',

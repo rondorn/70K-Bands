@@ -78,12 +78,16 @@ class UrlTextCache {
 /// Uses memory then disk cache unless [forceRefresh] is true. On network
 /// success (or [putCachedUrlText]), updates both layers.
 ///
+/// [cacheKey] overrides the cache storage key (HTTP still uses [url]). Use this
+/// for description text keyed by descriptionMap date strings.
+///
 /// When [forceRefresh] is true, skips local cache, asks intermediaries not to
 /// reuse a cached response, and appends a one-time query param so Dropbox
 /// CDNs cannot serve a stale share-link body. The cache key remains the
 /// normalized URL without that param.
 Future<String> fetchUrlText(
   String url, {
+  String? cacheKey,
   Duration timeout = const Duration(seconds: 45),
   bool forceRefresh = false,
 }) async {
@@ -91,17 +95,21 @@ Future<String> fetchUrlText(
   if (normalized.isEmpty) {
     throw ArgumentError('URL is required');
   }
+  final key = (cacheKey ?? normalized).trim();
+  if (key.isEmpty) {
+    throw ArgumentError('Cache key is required');
+  }
 
   if (!forceRefresh) {
-    final memory = UrlTextCache.peek(normalized);
+    final memory = UrlTextCache.peek(key);
     if (memory != null) return memory;
-    final disk = await UrlTextCache.readDisk(normalized);
+    final disk = await UrlTextCache.readDisk(key);
     if (disk != null) {
-      await UrlTextCache.put(normalized, disk);
+      await UrlTextCache.put(key, disk);
       return disk;
     }
   } else {
-    await UrlTextCache.invalidate(normalized);
+    await UrlTextCache.invalidate(key);
   }
 
   final requestUrl =
@@ -125,7 +133,7 @@ Future<String> fetchUrlText(
   if (body.isNotEmpty && body.codeUnitAt(0) == 0xFEFF) {
     body = body.substring(1);
   }
-  await UrlTextCache.put(normalized, body);
+  await UrlTextCache.put(key, body);
   return body;
 }
 
