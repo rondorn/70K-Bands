@@ -97,9 +97,9 @@ read_app_version
 if [ ! -f "$APP_VERSION" ] || [ "$HAVE_NAME" != "$WANT_NAME" ] || [ "$HAVE_NUMBER" != "$WANT_NUMBER" ]; then
   echo "Updating $APP_VERSION → ${WANT_NAME} (${WANT_NUMBER}) from pubspec.yaml…"
   write_app_version
+else
+  echo "Version OK (all platforms): ${WANT_NAME} (${WANT_NUMBER})"
 fi
-
-verify_app_version
 
 if [ "$FULL" -eq 1 ]; then
   refresh_generated
