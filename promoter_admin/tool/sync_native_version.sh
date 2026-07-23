@@ -1,15 +1,16 @@
 #!/bin/sh
 # Keep committed native/AppVersion.xcconfig in sync with pubspec.yaml.
 #
-# iOS/macOS Xcode builds include AppVersion.xcconfig AFTER gitignored Generated
-# configs, so the committed file always wins — git pull is enough on any machine.
+# Automated (no manual step in normal workflow):
+#   • Xcode Build/Archive — Runner scheme pre-action (iOS + macOS)
+#   • Optional git commit — ./tool/install-git-hooks.sh
 #
 # Windows and Dart read pubspec.yaml directly at build time.
 #
-# Usage (from anywhere):
-#   promoter_admin/tool/sync_native_version.sh           # write + verify
-#   promoter_admin/tool/sync_native_version.sh --check   # verify only (CI)
-#   promoter_admin/tool/sync_native_version.sh --full    # also refresh Generated configs
+# Manual / CI:
+#   ./tool/sync_native_version.sh           # write + verify
+#   ./tool/sync_native_version.sh --check   # verify only
+#   ./tool/sync_native_version.sh --full    # also refresh gitignored Generated configs
 
 set -eu
 

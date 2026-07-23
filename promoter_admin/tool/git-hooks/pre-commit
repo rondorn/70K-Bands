@@ -1,0 +1,20 @@
+#!/bin/sh
+# Optional git hook: keep native/AppVersion.xcconfig in sync when pubspec.yaml is committed.
+#
+# Install once from repo root:
+#   git config core.hooksPath promoter_admin/tool/git-hooks
+#
+# Or symlink this file to .git/hooks/pre-commit
+
+set -eu
+
+repo_root=$(git rev-parse --show-toplevel)
+pubspec="$repo_root/promoter_admin/pubspec.yaml"
+
+if git diff --cached --name-only | grep -qx 'promoter_admin/pubspec.yaml'; then
+  echo "pubspec.yaml changed — syncing native/AppVersion.xcconfig…"
+  /bin/sh "$repo_root/promoter_admin/tool/sync_native_version.sh"
+  git add "$repo_root/promoter_admin/native/AppVersion.xcconfig"
+fi
+
+exit 0

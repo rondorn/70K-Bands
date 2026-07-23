@@ -63,9 +63,9 @@ Committed file **`native/AppVersion.xcconfig`** carries that version into iOS an
 | Windows | `pubspec.yaml` at `flutter build windows` |
 | Dart | `pubspec.yaml` |
 
-**When bumping version:** edit `pubspec.yaml`, run `./tool/sync_native_version.sh`, commit **both** files.
+**When bumping version:** edit `pubspec.yaml` only — the Runner scheme pre-action updates `AppVersion.xcconfig` automatically on the next Xcode build or archive. Commit both files together (optional: run `./tool/install-git-hooks.sh` once so commits that touch `pubspec.yaml` also stage `AppVersion.xcconfig`).
 
-After **git pull**, no extra sync is required — the committed `AppVersion.xcconfig` already has the right version. Xcode also runs the sync script before each build as a safety net.
+After **git pull**, no extra steps are required if both files were committed together.
 
 Confirm an archive shows **1.0.4 (16)** (or whatever is in `pubspec.yaml`).
 
