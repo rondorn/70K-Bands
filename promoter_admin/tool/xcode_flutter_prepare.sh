@@ -15,9 +15,11 @@ fi
 case "$PLATFORM" in
   ios)
     ENV_SH="${SRCROOT}/Flutter/flutter_export_environment.sh"
+    GENERATED="${SRCROOT}/Flutter/Generated.xcconfig"
     ;;
   macos)
     ENV_SH="${SRCROOT}/Flutter/ephemeral/flutter_export_environment.sh"
+    GENERATED="${SRCROOT}/Flutter/ephemeral/Flutter-Generated.xcconfig"
     ;;
   *)
     echo "usage: $0 ios|macos" >&2
@@ -25,15 +27,34 @@ case "$PLATFORM" in
     ;;
 esac
 
-if [ ! -f "$ENV_SH" ]; then
-  echo "error: $ENV_SH is missing." >&2
-  echo "From promoter_admin run: flutter pub get" >&2
-  echo "Then once: flutter build ios --config-only   (or macos --config-only)" >&2
+read_xcconfig_var() {
+  file="$1"
+  key="$2"
+  grep -E "^${key}=" "$file" | head -1 | cut -d= -f2- | tr -d '\r'
+}
+
+if [ -f "$ENV_SH" ]; then
+  # shellcheck disable=SC1090
+  . "$ENV_SH"
+elif [ -f "$GENERATED" ]; then
+  FLUTTER_ROOT="$(read_xcconfig_var "$GENERATED" FLUTTER_ROOT)"
+  FLUTTER_APPLICATION_PATH="$(read_xcconfig_var "$GENERATED" FLUTTER_APPLICATION_PATH)"
+  export FLUTTER_ROOT FLUTTER_APPLICATION_PATH
+else
+  echo "error: Flutter iOS/macOS config is missing." >&2
+  echo "From promoter_admin run once: flutter pub get && flutter build ${PLATFORM} --config-only" >&2
   exit 1
 fi
 
-# shellcheck disable=SC1090
-. "$ENV_SH"
+if [ -z "${FLUTTER_ROOT:-}" ] || [ ! -d "$FLUTTER_ROOT" ]; then
+  echo "error: FLUTTER_ROOT is missing or invalid." >&2
+  exit 1
+fi
+
+if [ -z "${FLUTTER_APPLICATION_PATH:-}" ] || [ ! -d "$FLUTTER_APPLICATION_PATH" ]; then
+  echo "error: FLUTTER_APPLICATION_PATH is missing or invalid." >&2
+  exit 1
+fi
 
 if [ -z "${FLUTTER_BUILD_MODE:-}" ] && [ -n "${CONFIGURATION:-}" ]; then
   export FLUTTER_BUILD_MODE="$CONFIGURATION"

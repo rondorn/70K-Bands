@@ -346,7 +346,7 @@ class _NavBar extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             alignment: WrapAlignment.spaceBetween,
-            crossAxisAlignment: WrapCrossAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.start,
             children: sections,
           ),
         );
@@ -364,14 +364,15 @@ class _NavSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
       decoration: BoxDecoration(
         color: AppColors.navPanel,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppColors.navBorder),
       ),
-      child: Row(
+      child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
             label.toUpperCase(),
@@ -382,12 +383,15 @@ class _NavSection extends StatelessWidget {
               letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(width: 6),
-          ...children.map(
-            (child) => Padding(
-              padding: const EdgeInsets.only(left: 6),
-              child: child,
-            ),
+          const SizedBox(height: 6),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (var i = 0; i < children.length; i++) ...[
+                if (i > 0) const SizedBox(width: 6),
+                children[i],
+              ],
+            ],
           ),
         ],
       ),
