@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:promoter_admin/src/models/festival_workspace.dart';
+import 'package:promoter_admin/src/models/dropbox_folder_access.dart';
 import 'package:promoter_admin/src/screens/create_festival_dialog.dart';
 import 'package:promoter_admin/src/services/dropbox_api.dart';
+import 'package:promoter_admin/src/services/dropbox_folder_access_service.dart';
 import 'package:promoter_admin/src/services/festival_create_service.dart';
 import 'package:promoter_admin/src/services/festival_year_service.dart';
 import 'package:promoter_admin/src/services/pointer_service.dart';
@@ -12,6 +14,7 @@ import 'package:promoter_admin/src/services/schedule_service.dart';
 import 'package:promoter_admin/src/services/schedule_validation.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
+import 'package:promoter_admin/src/widgets/folder_access_dialog.dart';
 import 'package:promoter_admin/src/widgets/portal_dropdown.dart';
 import 'package:promoter_admin/src/widgets/recent_alerts_list.dart';
 import 'package:promoter_admin/src/widgets/url_image_preview.dart';
@@ -61,6 +64,9 @@ class SettingsSection extends StatefulWidget {
 }
 
 class _SettingsSectionState extends State<SettingsSection> {
+  late final DropboxFolderAccessService _folderAccessService =
+      DropboxFolderAccessService(widget.dropboxApi);
+
   late final TextEditingController _name;
   late final TextEditingController _testing;
   late final TextEditingController _production;
@@ -294,15 +300,40 @@ class _SettingsSectionState extends State<SettingsSection> {
 
   Future<FestivalWorkspace> _probeAccess(FestivalWorkspace workspace) async {
     if (!widget.dropboxConnected) return workspace;
-    final hasUrls =
-        workspace.bandListUrl.trim().isNotEmpty ||
-        workspace.scheduleUrl.trim().isNotEmpty ||
-        workspace.descriptionMapUrl.trim().isNotEmpty ||
-        workspace.testingPointerUrl.trim().isNotEmpty ||
-        workspace.productionPointerUrl.trim().isNotEmpty ||
-        workspace.alertFolderUrl.trim().isNotEmpty;
-    if (!hasUrls) return workspace;
-    return widget.dropboxApi.probeWorkspaceWriteAccess(workspace);
+    return FestivalCreateService.probeFullWorkspaceAccess(
+      workspace,
+      widget.dropboxApi,
+    );
+  }
+
+  bool _isFolderAccessKindConfigured(FestivalAccessFolderKind kind) {
+    switch (kind) {
+      case FestivalAccessFolderKind.alerts:
+        return widget.workspace.alertFolderUrl.trim().isNotEmpty ||
+            widget.workspace.alertFilesFolderPath.trim().isNotEmpty;
+      case FestivalAccessFolderKind.master:
+        return widget.workspace.testingPointerUrl.trim().isNotEmpty ||
+            widget.workspace.productionPointerUrl.trim().isNotEmpty ||
+            widget.workspace.masterFilesFolderPath.trim().isNotEmpty;
+      case FestivalAccessFolderKind.artists:
+        return widget.workspace.bandListUrl.trim().isNotEmpty ||
+            widget.workspace.artistFilesFolderPath.trim().isNotEmpty;
+      case FestivalAccessFolderKind.schedule:
+        return widget.workspace.scheduleUrl.trim().isNotEmpty ||
+            widget.workspace.scheduleFilesFolderPath.trim().isNotEmpty;
+      case FestivalAccessFolderKind.descriptions:
+        return widget.workspace.descriptionMapUrl.trim().isNotEmpty ||
+            widget.workspace.descriptionFilesFolderPath.trim().isNotEmpty;
+    }
+  }
+
+  List<FestivalAccessFolderKind> _manageableFolderAccessKinds() {
+    return FestivalAccessFolderKind.values
+        .where(_isFolderAccessKindConfigured)
+        .where(
+          (kind) => _folderAccessService.isOwnerFor(widget.workspace, kind),
+        )
+        .toList();
   }
 
   String _accessSummary(FestivalWorkspace w) {
@@ -323,7 +354,10 @@ class _SettingsSectionState extends State<SettingsSection> {
   ) async {
     final folder = draft.alertFolderUrl.trim();
     if (folder.isEmpty) {
-      return draft.copyWith(canEditAlerts: false);
+      return draft.copyWith(
+        canEditAlerts: false,
+        alertFilesFolderPath: '',
+      );
     }
     if (!widget.dropboxConnected) {
       throw StateError(
@@ -337,7 +371,14 @@ class _SettingsSectionState extends State<SettingsSection> {
         'Ask the folder owner to grant edit access, then try Save again.',
       );
     }
-    return draft.copyWith(canEditAlerts: true);
+    String alertPath = draft.alertFilesFolderPath;
+    try {
+      alertPath = await widget.dropboxApi.resolveApiPath(folder);
+    } catch (_) {}
+    return draft.copyWith(
+      canEditAlerts: true,
+      alertFilesFolderPath: alertPath,
+    );
   }
 
   /// Persist form draft only when Days/Dates counts align (1:1 + extra date).
@@ -429,6 +470,9 @@ class _SettingsSectionState extends State<SettingsSection> {
         }
       }
       draft = await _verifyAlertFolderAccess(draft);
+      if (widget.dropboxConnected) {
+        draft = await _probeAccess(draft);
+      }
       await _purgeScheduleCacheIfVocabChanged(before, draft);
       await widget.onWorkspaceChanged(draft);
       if (!mounted) return;
@@ -529,7 +573,6 @@ class _SettingsSectionState extends State<SettingsSection> {
         created = await FestivalCreateService(widget.dropboxApi).createFestival(
           festivalName: result.name,
           eventYear: result.eventYear,
-          dropboxFolder: result.folder,
           filePrefix: result.filePrefix,
         );
       } else {
@@ -544,7 +587,10 @@ class _SettingsSectionState extends State<SettingsSection> {
           draft = await widget.pointerService.applyTestingPointer(draft);
         }
         if (widget.dropboxConnected) {
-          draft = await widget.dropboxApi.probeWorkspaceWriteAccess(draft);
+          draft = await FestivalCreateService.probeFullWorkspaceAccess(
+            draft,
+            widget.dropboxApi,
+          );
         }
         created = draft;
       }
@@ -553,9 +599,12 @@ class _SettingsSectionState extends State<SettingsSection> {
       setState(() {
         _busy = false;
         _status = result.createPointerFiles
-            ? 'Created “${created.festivalName}” in ${result.folder}. '
+            ? 'Created “${created.festivalName}” with split Dropbox folders '
+                  '(artist, schedule, description, and alert). '
                   'Testing and Production links are ready — send them to your '
-                  'app developer if needed.'
+                  'app developer if needed. '
+                  'Set message_queue.config.yaml dropbox_dir to '
+                  '${FestivalCreateService.localAlertSyncPathHint(created.festivalName)}.'
             : 'Added “${created.festivalName}” from existing links '
                   '(year ${created.eventYear}).';
       });
@@ -708,6 +757,94 @@ class _SettingsSectionState extends State<SettingsSection> {
         _busy = false;
       });
     }
+  }
+
+  Future<void> _createAlertFolder() async {
+    if (!widget.dropboxConnected || _busy) return;
+    final name = _name.text.trim();
+    if (name.isEmpty) {
+      setState(() {
+        _error = 'Set a festival name before creating an alert folder.';
+        _status = null;
+      });
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+      _status = 'Creating alert folder on Dropbox…';
+    });
+    try {
+      final alert = await FestivalCreateService(
+        widget.dropboxApi,
+      ).bootstrapAlertFolder(name);
+      _alertFolder.text = alert.shareUrl;
+      var draft = _draft().copyWith(
+        alertFolderUrl: alert.shareUrl,
+        alertFilesFolderPath: alert.path,
+        canEditAlerts: true,
+        ownsAlertFilesFolder: true,
+      );
+      await widget.onWorkspaceChanged(draft);
+      if (!mounted) return;
+      setState(() {
+        _canEditAlerts = true;
+        _busy = false;
+        _status =
+            'Created ${FestivalCreateService.alertFilesFolderForName(name)}. '
+            'Point message_queue.config.yaml dropbox_dir at '
+            '${FestivalCreateService.localAlertSyncPathHint(name)}.';
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = _cleanError(e);
+        _status = null;
+      });
+    }
+  }
+
+  Future<void> _grantFolderAccess(FestivalAccessFolderKind kind) async {
+    if (!widget.dropboxConnected || _busy) return;
+    var workspace = await _probeAccess(_draft());
+    await widget.onWorkspaceChanged(workspace);
+    if (!mounted) return;
+    if (!_folderAccessService.isOwnerFor(workspace, kind)) {
+      setState(() {
+        _error =
+            'Only the ${kind.settingsLabel.toLowerCase()} folder owner can grant access.';
+        _status = null;
+      });
+      return;
+    }
+    await showGrantFolderAccessDialog(
+      context: context,
+      accessService: _folderAccessService,
+      workspace: workspace,
+      kind: kind,
+    );
+  }
+
+  Future<void> _viewFolderMembers(FestivalAccessFolderKind kind) async {
+    if (!widget.dropboxConnected || _busy) return;
+    var workspace = await _probeAccess(_draft());
+    await widget.onWorkspaceChanged(workspace);
+    if (!mounted) return;
+    if (!_folderAccessService.isOwnerFor(workspace, kind)) {
+      setState(() {
+        _error =
+            'Only the ${kind.settingsLabel.toLowerCase()} folder owner can view members.';
+        _status = null;
+      });
+      return;
+    }
+    await showFolderMembersDialog(
+      context: context,
+      accessService: _folderAccessService,
+      workspace: workspace,
+      kind: kind,
+    );
   }
 
   Future<void> _refreshAccess() async {
@@ -1230,17 +1367,25 @@ class _SettingsSectionState extends State<SettingsSection> {
                   TextField(
                     controller: _alertFolder,
                     maxLines: 2,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText:
-                          'https://www.dropbox.com/scl/fo/…/alerts?rlkey=…&dl=0',
+                          'https://www.dropbox.com/scl/fo/…/${FestivalCreateService.sanitizeFolderSegment(_name.text.isEmpty ? 'Festival' : _name.text)}_Alert_Files?rlkey=…&dl=0',
                     ),
                   ),
                   const HintText(
-                    'Optional Dropbox folder for band-add announcement files '
-                    '(paste a folder share link). Save requires Dropbox write access '
-                    'when set. Publish to Production queues bandAnnouncements-….pending '
-                    'for newly added bands only.',
+                    'Dropbox folder for band-add and custom push `.pending` files. '
+                    'New festivals get /{Festival name}_Alert_Files at Dropbox root. '
+                    'Save requires write access when set. Update '
+                    'message_queue.config.yaml dropbox_dir to the matching local sync path.',
                   ),
+                  if (widget.dropboxConnected &&
+                      _alertFolder.text.trim().isEmpty) ...[
+                    const SizedBox(height: 8),
+                    OutlinedButton(
+                      onPressed: _busy ? null : _createAlertFolder,
+                      child: const Text('Create alert folder on Dropbox'),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -1533,6 +1678,35 @@ class _SettingsSectionState extends State<SettingsSection> {
                 ],
               ),
             ),
+            if (widget.dropboxConnected &&
+                _manageableFolderAccessKinds().isNotEmpty)
+              FormRow(
+                label: 'Folder access',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const HintText(
+                      'Grant Dropbox folder access so collaborators can edit only '
+                      'master (pointer) files, artists, schedule, descriptions, or '
+                      'the alert monitoring folder. Master access is the most '
+                      'restricted — use it for year transitions and pointer control.',
+                    ),
+                    const SizedBox(height: 8),
+                    ..._manageableFolderAccessKinds().map(
+                      (kind) => _FolderAccessControls(
+                        kind: kind,
+                        folderPath: _folderAccessService.folderPathFor(
+                          widget.workspace,
+                          kind,
+                        ),
+                        busy: _busy,
+                        onGrant: () => _grantFolderAccess(kind),
+                        onViewMembers: () => _viewFolderMembers(kind),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             FormRow(
               label: 'Lineup options',
               child: Column(
@@ -2570,6 +2744,69 @@ class _AddNewYearDialogState extends State<_AddNewYearDialog> {
           child: Text('Archive ${widget.currentYear} & create $year'),
         ),
       ],
+    );
+  }
+}
+
+class _FolderAccessControls extends StatelessWidget {
+  const _FolderAccessControls({
+    required this.kind,
+    required this.folderPath,
+    required this.busy,
+    required this.onGrant,
+    required this.onViewMembers,
+  });
+
+  final FestivalAccessFolderKind kind;
+  final String folderPath;
+  final bool busy;
+  final VoidCallback onGrant;
+  final VoidCallback onViewMembers;
+
+  @override
+  Widget build(BuildContext context) {
+    final pathHint = switch (kind) {
+      FestivalAccessFolderKind.alerts =>
+        '(folder path will be detected from the alert folder link)',
+      FestivalAccessFolderKind.master =>
+        '(folder path will be detected from pointer links)',
+      _ => '(folder path will be detected from data files)',
+    };
+    final pathLabel = folderPath.isNotEmpty ? folderPath : pathHint;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            kind.settingsLabel,
+            style: const TextStyle(
+              color: AppColors.heading,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            pathLabel,
+            style: const TextStyle(color: AppColors.muted, fontSize: 12),
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              OutlinedButton(
+                onPressed: busy ? null : onGrant,
+                child: Text(kind.grantButtonLabel),
+              ),
+              OutlinedButton(
+                onPressed: busy ? null : onViewMembers,
+                child: Text('Who has ${kind.settingsLabel} access'),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

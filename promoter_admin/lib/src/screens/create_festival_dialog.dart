@@ -8,7 +8,6 @@ class CreateFestivalResult {
     required this.name,
     required this.createPointerFiles,
     this.eventYear = '',
-    this.folder = '',
     this.filePrefix = '',
     this.testingPointerUrl = '',
     this.productionPointerUrl = '',
@@ -19,7 +18,6 @@ class CreateFestivalResult {
   /// When true, bootstrap Dropbox files + pointers. When false, use provided URLs.
   final bool createPointerFiles;
   final String eventYear;
-  final String folder;
   final String filePrefix;
   final String testingPointerUrl;
   final String productionPointerUrl;
@@ -78,16 +76,13 @@ class _CreateFestivalFormState extends State<CreateFestivalForm> {
   late final TextEditingController _name;
   late final TextEditingController _year;
   late final TextEditingController _prefix;
-  late final TextEditingController _folder;
   late final TextEditingController _testingPointer;
   late final TextEditingController _productionPointer;
 
   /// Default false = provide existing pointers.
   bool _createPointerFiles = false;
   String? _error;
-  bool _folderTouched = false;
   bool _prefixTouched = false;
-  String _lastAutoFolder = '';
   String _lastAutoPrefix = '';
 
   @override
@@ -97,12 +92,8 @@ class _CreateFestivalFormState extends State<CreateFestivalForm> {
     _name = TextEditingController();
     _year = TextEditingController(text: year);
     _prefix = TextEditingController(text: 'fest');
-    _folder = TextEditingController(
-      text: FestivalCreateService.defaultFolderForName('Festival'),
-    );
     _testingPointer = TextEditingController();
     _productionPointer = TextEditingController();
-    _lastAutoFolder = _folder.text;
     _lastAutoPrefix = _prefix.text;
     _name.addListener(_onNameChanged);
     _year.addListener(() => setState(() {}));
@@ -117,13 +108,6 @@ class _CreateFestivalFormState extends State<CreateFestivalForm> {
         _lastAutoPrefix = nextPrefix;
       }
     }
-    if (!_folderTouched) {
-      final next = FestivalCreateService.defaultFolderForName(_name.text);
-      if (_folder.text == _lastAutoFolder || _folder.text.trim().isEmpty) {
-        _folder.text = next;
-        _lastAutoFolder = next;
-      }
-    }
     setState(() {});
   }
 
@@ -133,7 +117,6 @@ class _CreateFestivalFormState extends State<CreateFestivalForm> {
     _name.dispose();
     _year.dispose();
     _prefix.dispose();
-    _folder.dispose();
     _testingPointer.dispose();
     _productionPointer.dispose();
     super.dispose();
@@ -152,7 +135,6 @@ class _CreateFestivalFormState extends State<CreateFestivalForm> {
         return;
       }
       final year = _year.text.trim();
-      final folder = _folder.text.trim();
       final prefix = _prefix.text.trim();
       if (year.isEmpty) {
         setState(() => _error = 'Event year is required.');
@@ -162,16 +144,11 @@ class _CreateFestivalFormState extends State<CreateFestivalForm> {
         setState(() => _error = 'File prefix is required.');
         return;
       }
-      if (folder.isEmpty) {
-        setState(() => _error = 'Dropbox folder path is required.');
-        return;
-      }
       widget.onSubmit(
         CreateFestivalResult(
           name: name,
           createPointerFiles: true,
           eventYear: year,
-          folder: folder,
           filePrefix: prefix,
         ),
       );
@@ -205,6 +182,17 @@ class _CreateFestivalFormState extends State<CreateFestivalForm> {
         FestivalCreateService.scheduleName(prefix, year, testing: true);
     final sampleMap =
         FestivalCreateService.descriptionMapName(prefix, year, testing: true);
+    final festivalName = _name.text.trim().isEmpty ? 'Festival' : _name.text.trim();
+    final artistFolder =
+        FestivalCreateService.artistFilesFolderForName(festivalName);
+    final scheduleFolder =
+        FestivalCreateService.scheduleFilesFolderForName(festivalName);
+    final descriptionFolder =
+        FestivalCreateService.descriptionFilesFolderForName(festivalName);
+    final alertFolder =
+        FestivalCreateService.alertFilesFolderForName(festivalName);
+    final masterFolder =
+        FestivalCreateService.masterFilesFolderForName(festivalName);
     final submitLabel = widget.submitLabel ??
         (_createPointerFiles ? 'Create festival files' : 'Add festival');
 
@@ -247,9 +235,10 @@ class _CreateFestivalFormState extends State<CreateFestivalForm> {
             style: TextStyle(color: AppColors.heading, fontSize: 15),
           ),
           subtitle: const Text(
-            'Creates Dropbox pointer files plus empty artists / schedule / '
-            'description map files (Testing + Production). Your app developer '
-            'may use these links even if they wire different official pointers later.',
+            'Creates five root-level Dropbox folders (master, artists, schedule, '
+            'descriptions, alerts) plus pointer files and empty CSV placeholders '
+            '(Testing + Production). Your app developer may use these links '
+            'even if they wire different official pointers later.',
             style: TextStyle(color: AppColors.muted, fontSize: 12),
           ),
         ),
@@ -331,22 +320,15 @@ class _CreateFestivalFormState extends State<CreateFestivalForm> {
             '(+ production copies without _test).',
             style: const TextStyle(color: AppColors.muted, fontSize: 12),
           ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _folder,
-            decoration: const InputDecoration(
-              labelText: 'Dropbox folder',
-              hintText: '/FestivalName_Public',
-            ),
-            onChanged: (_) {
-              _folderTouched = true;
-            },
-            onSubmitted: (_) => _submit(),
-          ),
           const SizedBox(height: 6),
-          const Text(
-            'Defaults to /{Festival name}_Public.',
-            style: TextStyle(color: AppColors.muted, fontSize: 12),
+          Text(
+            'Dropbox folders (root level):\n'
+            '• $masterFolder\n'
+            '• $artistFolder\n'
+            '• $scheduleFolder\n'
+            '• $descriptionFolder\n'
+            '• $alertFolder',
+            style: const TextStyle(color: AppColors.muted, fontSize: 12),
           ),
         ],
         const SizedBox(height: 20),

@@ -2,13 +2,40 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:promoter_admin/src/services/festival_create_service.dart';
 
 void main() {
-  test('defaultFolderForName uses {name}_Public at Dropbox root', () {
+  test('defaultFolderForName uses legacy {name}_Public at Dropbox root', () {
     expect(
       FestivalCreateService.defaultFolderForName('Redwood Metafest'),
       '/Redwood Metafest_Public',
     );
     expect(FestivalCreateService.defaultFolderForName('MDF'), '/MDF_Public');
     expect(FestivalCreateService.defaultFolderForName('  '), '/Festival_Public');
+  });
+
+  test('split access folders use {name}_Master|Artist|Schedule|Description|Alert_Files', () {
+    expect(
+      FestivalCreateService.masterFilesFolderForName('Maryland Deathfest'),
+      '/Maryland Deathfest_MasterFiles',
+    );
+    expect(
+      FestivalCreateService.artistFilesFolderForName('Maryland Deathfest'),
+      '/Maryland Deathfest_Artist_Files',
+    );
+    expect(
+      FestivalCreateService.scheduleFilesFolderForName('Maryland Deathfest'),
+      '/Maryland Deathfest_Schedule_Files',
+    );
+    expect(
+      FestivalCreateService.descriptionFilesFolderForName('Maryland Deathfest'),
+      '/Maryland Deathfest_Description_Files',
+    );
+    expect(
+      FestivalCreateService.alertFilesFolderForName('Maryland Deathfest'),
+      '/Maryland Deathfest_Alert_Files',
+    );
+    expect(
+      FestivalCreateService.localAlertSyncPathHint('Maryland Deathfest'),
+      '~/Library/CloudStorage/Dropbox/Maryland Deathfest_Alert_Files',
+    );
   });
 
   test('defaultFilePrefix uses initials for multi-word names', () {

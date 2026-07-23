@@ -5,7 +5,7 @@
 #   */5 * * * * /Users/YOU/alert_queue/run_from_cron.sh
 #
 # If you see "Resource deadlock avoided", the Dropbox folder is likely
-# cloud-only — Make available offline on OpenMetalFestAlertFolder.
+# cloud-only — Make available offline on each festival …_Alert_Files folder.
 
 set -euo pipefail
 

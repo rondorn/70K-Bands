@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:promoter_admin/src/models/dropbox_folder_access.dart';
 import 'package:promoter_admin/src/models/festival_workspace.dart';
 import 'package:promoter_admin/src/services/dropbox_auth.dart';
 import 'package:promoter_admin/src/services/http_fetch.dart';
@@ -46,6 +47,121 @@ class DropboxListedFile {
   final String name;
   final String path;
   final DateTime? serverModified;
+}
+
+String sharedFolderMemberAccessTag(Map<String, dynamic> raw) {
+  final access = raw['access_type'];
+  if (access is Map<String, dynamic>) {
+    return (access['.tag'] ?? '').toString();
+  }
+  return '';
+}
+
+DropboxFolderMember? memberFromUserInfo(
+  Map<String, dynamic> user,
+  String accessTag,
+) {
+  final email = (user['email'] ?? '').toString();
+  final displayName = (user['display_name'] ?? email).toString();
+  final dropboxId = (user['account_id'] ?? '').toString();
+  if (email.isEmpty && dropboxId.isEmpty && displayName.isEmpty) {
+    return null;
+  }
+  return DropboxFolderMember(
+    email: email,
+    displayName: displayName.isNotEmpty ? displayName : email,
+    dropboxId: dropboxId,
+    accessLevel: accessTag.isEmpty ? 'editor' : accessTag,
+    isOwner: accessTag == 'owner',
+  );
+}
+
+DropboxFolderMember? parseUserMembershipInfo(Map<String, dynamic> raw) {
+  final user = raw['user'];
+  if (user is! Map<String, dynamic>) return null;
+  return memberFromUserInfo(user, sharedFolderMemberAccessTag(raw));
+}
+
+DropboxFolderMember? parseInviteeMembershipInfo(Map<String, dynamic> raw) {
+  final accessTag = sharedFolderMemberAccessTag(raw);
+  final user = raw['user'];
+  if (user is Map<String, dynamic>) {
+    return memberFromUserInfo(user, accessTag);
+  }
+  final invitee = raw['invitee'];
+  if (invitee is Map<String, dynamic>) {
+    final tag = (invitee['.tag'] ?? '').toString();
+    if (tag == 'email') {
+      final email = (invitee['email'] ?? '').toString();
+      if (email.isEmpty) return null;
+      return DropboxFolderMember(
+        email: email,
+        displayName: email,
+        dropboxId: '',
+        accessLevel: accessTag.isEmpty ? 'editor' : accessTag,
+      );
+    }
+  }
+  return null;
+}
+
+DropboxFolderMember? parseGroupMembershipInfo(Map<String, dynamic> raw) {
+  final group = raw['group'];
+  if (group is! Map<String, dynamic>) return null;
+  final name = (group['group_name'] ?? 'Group').toString();
+  final id = (group['group_id'] ?? '').toString();
+  if (name.isEmpty && id.isEmpty) return null;
+  final accessTag = sharedFolderMemberAccessTag(raw);
+  return DropboxFolderMember(
+    email: '',
+    displayName: name.isNotEmpty ? name : id,
+    dropboxId: id,
+    accessLevel: accessTag.isEmpty ? 'editor' : accessTag,
+  );
+}
+
+List<DropboxFolderMember> parseSharedFolderMembersResponse(
+  Map<String, dynamic> data,
+) {
+  final members = <DropboxFolderMember>[];
+  for (final raw in data['users'] as List<dynamic>? ?? const []) {
+    if (raw is! Map<String, dynamic>) continue;
+    final member = parseUserMembershipInfo(raw);
+    if (member != null) members.add(member);
+  }
+  for (final raw in data['groups'] as List<dynamic>? ?? const []) {
+    if (raw is! Map<String, dynamic>) continue;
+    final member = parseGroupMembershipInfo(raw);
+    if (member != null) members.add(member);
+  }
+  for (final raw in data['invitees'] as List<dynamic>? ?? const []) {
+    if (raw is! Map<String, dynamic>) continue;
+    final member = parseInviteeMembershipInfo(raw);
+    if (member != null) members.add(member);
+  }
+  return members;
+}
+
+/// Dropbox void sharing RPCs (`add_folder_member`, `remove_folder_member`) often
+/// return HTTP 200 with a JSON `null` body when the action completes immediately.
+/// Returns an async job id when polling is required, otherwise null.
+String? parseVoidSharingResponseBody(String body) {
+  final trimmed = body.trim();
+  if (trimmed.isEmpty || trimmed == 'null') return null;
+  final decoded = jsonDecode(trimmed);
+  if (decoded == null) return null;
+  if (decoded is! Map<String, dynamic>) {
+    throw StateError('Unexpected Dropbox sharing response: $body');
+  }
+  final tag = (decoded['.tag'] ?? '').toString();
+  if (tag == 'async_job_id') {
+    final jobId = (decoded['async_job_id'] ?? '').toString();
+    if (jobId.isEmpty) {
+      throw StateError('Dropbox returned an empty sharing async job id.');
+    }
+    return jobId;
+  }
+  return null;
 }
 
 /// Dropbox file operations that edit existing files in place (stable share links).
@@ -636,5 +752,421 @@ class DropboxApi {
       ..remove('dl');
     params.putIfAbsent('dl', () => '0');
     return uri.replace(queryParameters: params).toString();
+  }
+
+  /// Whether the signed-in account owns [apiPath] (can invite collaborators).
+  Future<bool> isFolderOwner(String apiPath) async {
+    final info = await getFolderAccessInfo(apiPath);
+    return info?.isOwner ?? false;
+  }
+
+  /// Resolve sharing metadata for [apiPath], or null when the path is missing.
+  Future<DropboxFolderAccessInfo?> getFolderAccessInfo(String apiPath) async {
+    var path = apiPath.trim().replaceAll('\\', '/');
+    if (path.isEmpty) return null;
+    if (!path.startsWith('/')) path = '/$path';
+    path = path.replaceAll(RegExp(r'/+$'), '');
+    if (path.isEmpty) path = '/';
+
+    final token = await auth.accessToken();
+    final metaResp = await http.post(
+      Uri.parse('https://api.dropboxapi.com/2/files/get_metadata'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'path': path, 'include_media_info': false}),
+    );
+    if (metaResp.statusCode < 200 || metaResp.statusCode >= 300) {
+      return null;
+    }
+    final meta = jsonDecode(metaResp.body) as Map<String, dynamic>;
+    if ((meta['.tag'] ?? '').toString() != 'folder') return null;
+
+    final sharingInfo = meta['sharing_info'];
+    String? sharedFolderId;
+    var parentShared = false;
+    if (sharingInfo is Map<String, dynamic>) {
+      sharedFolderId = (sharingInfo['shared_folder_id'] ?? '').toString().trim();
+      final parentId =
+          (sharingInfo['parent_shared_folder_id'] ?? '').toString().trim();
+      parentShared = parentId.isNotEmpty;
+    }
+
+    if (sharedFolderId != null && sharedFolderId.isNotEmpty) {
+      final accessType = await _folderAccessType(sharedFolderId);
+      return DropboxFolderAccessInfo(
+        apiPath: path,
+        sharedFolderId: sharedFolderId,
+        isOwner: accessType == 'owner',
+      );
+    }
+
+    final listedId = await _sharedFolderIdFromListFolders(path);
+    if (listedId != null && listedId.isNotEmpty) {
+      final accessType = await _folderAccessType(listedId);
+      return DropboxFolderAccessInfo(
+        apiPath: path,
+        sharedFolderId: listedId,
+        isOwner: accessType == 'owner',
+      );
+    }
+
+    // Folder exists in the account namespace but is not shared yet — treat as
+    // owner unless it lives inside someone else's shared tree.
+    return DropboxFolderAccessInfo(
+      apiPath: path,
+      sharedFolderId: '',
+      isOwner: !parentShared,
+    );
+  }
+
+  Future<String?> _folderAccessType(String sharedFolderId) async {
+    final token = await auth.accessToken();
+    final resp = await http.post(
+      Uri.parse('https://api.dropboxapi.com/2/sharing/get_folder_metadata'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'shared_folder_id': sharedFolderId}),
+    );
+    if (resp.statusCode < 200 || resp.statusCode >= 300) return null;
+    final data = jsonDecode(resp.body) as Map<String, dynamic>;
+    final access = data['access_type'];
+    if (access is Map<String, dynamic>) {
+      return (access['.tag'] ?? '').toString();
+    }
+    return null;
+  }
+
+  /// Match a mounted folder path to a shared-folder id via sharing/list_folders.
+  Future<String?> _sharedFolderIdFromListFolders(String apiPath) async {
+    var path = apiPath.trim().replaceAll('\\', '/');
+    if (!path.startsWith('/')) path = '/$path';
+    path = path.replaceAll(RegExp(r'/+$'), '').toLowerCase();
+    if (path.isEmpty) return null;
+
+    final token = await auth.accessToken();
+    String? cursor;
+    var hasMore = true;
+
+    while (hasMore) {
+      final http.Response resp;
+      if (cursor == null) {
+        resp = await http.post(
+          Uri.parse('https://api.dropboxapi.com/2/sharing/list_folders'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({'limit': 1000, 'actions': []}),
+        );
+      } else {
+        resp = await http.post(
+          Uri.parse('https://api.dropboxapi.com/2/sharing/list_folders/continue'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({'cursor': cursor}),
+        );
+      }
+      if (resp.statusCode < 200 || resp.statusCode >= 300) return null;
+
+      final data = jsonDecode(resp.body) as Map<String, dynamic>;
+      for (final raw in data['entries'] as List<dynamic>? ?? const []) {
+        if (raw is! Map<String, dynamic>) continue;
+        final entryPath =
+            (raw['path_lower'] ?? raw['path_display'] ?? '').toString().trim();
+        if (entryPath.isEmpty) continue;
+        final normalized = entryPath.startsWith('/')
+            ? entryPath.toLowerCase()
+            : '/${entryPath.toLowerCase()}';
+        if (normalized == path) {
+          final id = (raw['shared_folder_id'] ?? '').toString();
+          if (id.isNotEmpty) return id;
+        }
+      }
+
+      cursor = (data['cursor'] ?? '').toString();
+      hasMore = data['has_more'] == true && cursor.isNotEmpty;
+    }
+    return null;
+  }
+
+  /// Ensure [apiPath] is a shared folder and return its shared_folder_id.
+  Future<String> ensureSharedFolder(String apiPath) async {
+    var path = apiPath.trim().replaceAll('\\', '/');
+    if (path.isEmpty) throw ArgumentError('Folder path is required');
+    if (!path.startsWith('/')) path = '/$path';
+    path = path.replaceAll(RegExp(r'/+$'), '');
+
+    final existing = await getFolderAccessInfo(path);
+    if (existing != null &&
+        existing.sharedFolderId.isNotEmpty &&
+        existing.isOwner) {
+      return existing.sharedFolderId;
+    }
+
+    final token = await auth.accessToken();
+    final resp = await http.post(
+      Uri.parse('https://api.dropboxapi.com/2/sharing/share_folder'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'path': path, 'force_async': false}),
+    );
+    if (resp.statusCode < 200 || resp.statusCode >= 300) {
+      throw StateError(
+        'Could not share Dropbox folder $path (${resp.statusCode}): ${resp.body}',
+      );
+    }
+    final data = jsonDecode(resp.body) as Map<String, dynamic>;
+    final tag = (data['.tag'] ?? '').toString();
+    if (tag == 'complete') {
+      final complete = data['complete'] as Map<String, dynamic>? ?? const {};
+      final id = (complete['shared_folder_id'] ?? '').toString();
+      if (id.isEmpty) {
+        throw StateError('Dropbox did not return a shared folder id for $path');
+      }
+      return id;
+    }
+    if (tag == 'async_job_id') {
+      final jobId = (data['async_job_id'] ?? '').toString();
+      if (jobId.isEmpty) {
+        throw StateError('Dropbox share_folder returned an empty job id.');
+      }
+      return _awaitShareFolderJob(jobId);
+    }
+    throw StateError('Unexpected share_folder response for $path: ${resp.body}');
+  }
+
+  Future<String> _awaitShareFolderJob(String jobId) async {
+    for (var attempt = 0; attempt < 30; attempt++) {
+      final token = await auth.accessToken();
+      final resp = await http.post(
+        Uri.parse('https://api.dropboxapi.com/2/sharing/check_job_status'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'async_job_id': jobId}),
+      );
+      if (resp.statusCode < 200 || resp.statusCode >= 300) {
+        throw StateError(
+          'Dropbox share job check failed (${resp.statusCode}): ${resp.body}',
+        );
+      }
+      final data = jsonDecode(resp.body) as Map<String, dynamic>;
+      final tag = (data['.tag'] ?? '').toString();
+      if (tag == 'complete') {
+        final complete = data['complete'] as Map<String, dynamic>? ?? const {};
+        final id = (complete['shared_folder_id'] ?? '').toString();
+        if (id.isEmpty) {
+          throw StateError('Dropbox share job completed without a folder id.');
+        }
+        return id;
+      }
+      if (tag == 'failed') {
+        throw StateError('Dropbox share job failed: ${resp.body}');
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+    }
+    throw StateError('Timed out waiting for Dropbox to share the folder.');
+  }
+
+  /// Invite [email] as an editor on [sharedFolderId]. Dropbox sends the invite.
+  Future<void> addFolderMemberByEmail({
+    required String sharedFolderId,
+    required String email,
+    String accessLevel = 'editor',
+  }) async {
+    final trimmed = email.trim();
+    if (trimmed.isEmpty) throw ArgumentError('Email is required.');
+    if (sharedFolderId.trim().isEmpty) {
+      throw ArgumentError('Shared folder id is required.');
+    }
+
+    final token = await auth.accessToken();
+    final resp = await http.post(
+      Uri.parse('https://api.dropboxapi.com/2/sharing/add_folder_member'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'shared_folder_id': sharedFolderId,
+        'members': [
+          {
+            'member': {'.tag': 'email', 'email': trimmed},
+            'access_level': {'.tag': accessLevel},
+          },
+        ],
+        'quiet': false,
+      }),
+    );
+    if (resp.statusCode < 200 || resp.statusCode >= 300) {
+      throw StateError(
+        'Could not grant folder access (${resp.statusCode}): ${resp.body}',
+      );
+    }
+    final jobId = parseVoidSharingResponseBody(resp.body);
+    if (jobId != null) {
+      await _awaitVoidSharingJob(jobId);
+    }
+  }
+
+  Future<void> _awaitVoidSharingJob(String jobId) async {
+    for (var attempt = 0; attempt < 30; attempt++) {
+      final token = await auth.accessToken();
+      final resp = await http.post(
+        Uri.parse('https://api.dropboxapi.com/2/sharing/check_job_status'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'async_job_id': jobId}),
+      );
+      if (resp.statusCode < 200 || resp.statusCode >= 300) {
+        throw StateError(
+          'Dropbox job check failed (${resp.statusCode}): ${resp.body}',
+        );
+      }
+      final data = jsonDecode(resp.body) as Map<String, dynamic>;
+      final tag = (data['.tag'] ?? '').toString();
+      if (tag == 'complete') return;
+      if (tag == 'failed') {
+        throw StateError('Dropbox sharing job failed: ${resp.body}');
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+    }
+    throw StateError('Timed out waiting for Dropbox sharing job.');
+  }
+
+  /// List collaborators on [sharedFolderId] (owner included).
+  Future<List<DropboxFolderMember>> listFolderMembers(
+    String sharedFolderId,
+  ) async {
+    if (sharedFolderId.trim().isEmpty) return const [];
+
+    final token = await auth.accessToken();
+    final members = <DropboxFolderMember>[];
+    String? cursor;
+    var hasMore = true;
+
+    while (hasMore) {
+      final http.Response resp;
+      if (cursor == null) {
+        resp = await http.post(
+          Uri.parse('https://api.dropboxapi.com/2/sharing/list_folder_members'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'shared_folder_id': sharedFolderId,
+            'actions': [],
+          }),
+        );
+      } else {
+        resp = await http.post(
+          Uri.parse(
+            'https://api.dropboxapi.com/2/sharing/list_folder_members/continue',
+          ),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({'cursor': cursor}),
+        );
+      }
+      if (resp.statusCode < 200 || resp.statusCode >= 300) {
+        throw StateError(
+          'Could not list folder members (${resp.statusCode}): ${resp.body}',
+        );
+      }
+      final data = jsonDecode(resp.body) as Map<String, dynamic>;
+      members.addAll(parseSharedFolderMembersResponse(data));
+      cursor = (data['cursor'] ?? '').toString();
+      hasMore = data['has_more'] == true && cursor.isNotEmpty;
+    }
+
+    return members;
+  }
+
+  /// Revoke [member]'s access to [sharedFolderId].
+  Future<void> removeFolderMember({
+    required String sharedFolderId,
+    required DropboxFolderMember member,
+  }) async {
+    if (member.isOwner) {
+      throw StateError('Cannot revoke access for the folder owner.');
+    }
+    final token = await auth.accessToken();
+    final memberTag = member.dropboxId.isNotEmpty
+        ? {'.tag': 'dropbox_id', 'dropbox_id': member.dropboxId}
+        : {'.tag': 'email', 'email': member.email};
+    final resp = await http.post(
+      Uri.parse('https://api.dropboxapi.com/2/sharing/remove_folder_member'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'shared_folder_id': sharedFolderId,
+        'member': memberTag,
+        'leave_a_copy': false,
+      }),
+    );
+    if (resp.statusCode < 200 || resp.statusCode >= 300) {
+      throw StateError(
+        'Could not revoke folder access (${resp.statusCode}): ${resp.body}',
+      );
+    }
+    final jobId = parseVoidSharingResponseBody(resp.body);
+    if (jobId != null) {
+      await _awaitVoidSharingJob(jobId);
+    }
+  }
+
+  /// Probe folder ownership flags using cached folder paths (after cache refresh).
+  Future<FestivalWorkspace> probeWorkspaceFolderOwnership(
+    FestivalWorkspace workspace,
+  ) async {
+    final paths = [
+      workspace.masterFilesFolderPath.trim(),
+      workspace.artistFilesFolderPath.trim(),
+      workspace.scheduleFilesFolderPath.trim(),
+      workspace.descriptionFilesFolderPath.trim(),
+      workspace.alertFilesFolderPath.trim(),
+    ];
+
+    final results = await Future.wait([
+      paths[0].isEmpty
+          ? Future<bool>.value(false)
+          : isFolderOwner(paths[0]),
+      paths[1].isEmpty
+          ? Future<bool>.value(false)
+          : isFolderOwner(paths[1]),
+      paths[2].isEmpty
+          ? Future<bool>.value(false)
+          : isFolderOwner(paths[2]),
+      paths[3].isEmpty
+          ? Future<bool>.value(false)
+          : isFolderOwner(paths[3]),
+      paths[4].isEmpty
+          ? Future<bool>.value(false)
+          : isFolderOwner(paths[4]),
+    ]);
+
+    return workspace.copyWith(
+      ownsMasterFilesFolder: results[0],
+      ownsArtistFilesFolder: results[1],
+      ownsScheduleFilesFolder: results[2],
+      ownsDescriptionFilesFolder: results[3],
+      ownsAlertFilesFolder: results[4],
+    );
   }
 }

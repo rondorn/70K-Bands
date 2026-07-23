@@ -160,6 +160,9 @@ class FestivalYearService {
   /// When [shareArtistsWithProduction] / [shareMapWithProduction] is true,
   /// Testing Current points at the new-year Production file for that channel
   /// (no separate `*_test` file). Schedule always gets a separate Testing file.
+  ///
+  /// Artist / schedule / description files are created in each channel's folder
+  /// when split paths are known; otherwise [dropboxFolder] is used for all.
   Future<FestivalWorkspace> rollNewYear({
     required FestivalWorkspace workspace,
     required String newYear,
@@ -193,22 +196,43 @@ class FestivalYearService {
     final prefix = filePrefix.trim().isEmpty
         ? FestivalCreateService.defaultFilePrefix(workspace.festivalName)
         : FestivalCreateService.sanitizeFilePrefix(filePrefix);
-    final root = FestivalCreateService.normalizeFolder(dropboxFolder);
+    final legacyRoot = FestivalCreateService.normalizeFolder(dropboxFolder);
 
-    await dropboxApi.ensureFolder(root);
-    await dropboxApi.ensureFolder('$root/${FestivalCreateService.descriptionsDir}');
+    final artistRoot = workspace.artistFilesFolderPath.trim().isNotEmpty
+        ? FestivalCreateService.normalizeFolder(workspace.artistFilesFolderPath)
+        : legacyRoot;
+    final scheduleRoot = workspace.scheduleFilesFolderPath.trim().isNotEmpty
+        ? FestivalCreateService.normalizeFolder(workspace.scheduleFilesFolderPath)
+        : legacyRoot;
+    final descriptionRoot =
+        workspace.descriptionFilesFolderPath.trim().isNotEmpty
+        ? FestivalCreateService.normalizeFolder(
+            workspace.descriptionFilesFolderPath,
+          )
+        : legacyRoot;
+
+    await dropboxApi.ensureFolder(artistRoot);
+    await dropboxApi.ensureFolder(scheduleRoot);
+    await dropboxApi.ensureFolder(descriptionRoot);
+    await dropboxApi.ensureFolder(
+      '$descriptionRoot/${FestivalCreateService.descriptionsDir}',
+    );
 
     final useCityState = workspace.useCityStateField;
     final lineupCsv = FestivalCreateService.lineupHeader(useCityState: useCityState);
     final scheduleCsv = FestivalCreateService.scheduleHeader();
     final mapCsv = FestivalCreateService.mapHeader;
 
-    final prodArtists = '$root/${artistFileName(prefix, year, testing: false)}';
-    final prodSchedule = '$root/${scheduleFileName(prefix, year, testing: false)}';
-    final prodMap = '$root/${descriptionMapFileName(prefix, year, testing: false)}';
-    final testArtists = '$root/${artistFileName(prefix, year, testing: true)}';
-    final testSchedule = '$root/${scheduleFileName(prefix, year, testing: true)}';
-    final testMap = '$root/${descriptionMapFileName(prefix, year, testing: true)}';
+    final prodArtists = '$artistRoot/${artistFileName(prefix, year, testing: false)}';
+    final prodSchedule =
+        '$scheduleRoot/${scheduleFileName(prefix, year, testing: false)}';
+    final prodMap =
+        '$descriptionRoot/${descriptionMapFileName(prefix, year, testing: false)}';
+    final testArtists = '$artistRoot/${artistFileName(prefix, year, testing: true)}';
+    final testSchedule =
+        '$scheduleRoot/${scheduleFileName(prefix, year, testing: true)}';
+    final testMap =
+        '$descriptionRoot/${descriptionMapFileName(prefix, year, testing: true)}';
 
     await dropboxApi.ensureTextFile(prodArtists, lineupCsv);
     if (!shareArtistsWithProduction) {
@@ -251,6 +275,9 @@ class FestivalYearService {
       bandListUrl: testBandUrl,
       scheduleUrl: testScheduleUrl,
       descriptionMapUrl: testMapUrl,
+      artistFilesFolderPath: artistRoot,
+      scheduleFilesFolderPath: scheduleRoot,
+      descriptionFilesFolderPath: descriptionRoot,
       canEditBands: true,
       canEditSchedule: true,
       canEditDescriptions: true,

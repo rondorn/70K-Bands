@@ -345,7 +345,7 @@ def process_festival(
                     log_file,
                     f"{fest_id}: Dropbox File Provider deadlock on {path.name} "
                     "(usually cloud-only / not offline); left as .pending — "
-                    "Make OpenMetalFestAlertFolder available offline in Dropbox",
+                    "Make each festival …_Alert_Files folder available offline in Dropbox",
                 )
                 continue
             err_n += 1

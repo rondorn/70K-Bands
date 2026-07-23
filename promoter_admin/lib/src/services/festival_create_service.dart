@@ -1,5 +1,7 @@
 import 'package:promoter_admin/src/models/festival_workspace.dart';
 import 'package:promoter_admin/src/services/dropbox_api.dart';
+import 'package:promoter_admin/src/services/festival_folder_path_cache.dart';
+import 'package:promoter_admin/src/services/festival_year_service.dart';
 import 'package:promoter_admin/src/services/lineup_service.dart';
 import 'package:promoter_admin/src/services/schedule_service.dart';
 import 'package:promoter_admin/src/services/schedule_validation.dart';
@@ -9,6 +11,10 @@ import 'package:promoter_admin/src/services/schedule_validation.dart';
 /// Creates header-only placeholders for artists / schedule / description map
 /// in both testing (`*_test.csv`) and production variants, matching MDF-style
 /// naming (`{prefix}_artistLineup_{year}.csv`, etc.).
+///
+/// New festivals use five root-level Dropbox folders for access control:
+/// `/{Name}_MasterFiles`, `/{Name}_Artist_Files`, `/{Name}_Schedule_Files`,
+/// `/{Name}_Description_Files`, and `/{Name}_Alert_Files`.
 class FestivalCreateService {
   FestivalCreateService(this.dropboxApi);
 
@@ -23,10 +29,44 @@ class FestivalCreateService {
 
   static String scheduleHeader() => '${ScheduleService.columns.join(',')}\n';
 
-  /// Default Dropbox API folder for [festivalName]: `/{Name}_Public`.
+  /// Legacy single-folder default (existing festivals / year-roll fallback).
   static String defaultFolderForName(String festivalName) {
     final base = sanitizeFolderSegment(festivalName);
     return '/${base}_Public';
+  }
+
+  static String _eventSegment(String festivalName) =>
+      sanitizeFolderSegment(festivalName);
+
+  /// Root-level master access folder: `/{Name}_MasterFiles` (pointer files).
+  static String masterFilesFolderForName(String festivalName) {
+    return '/${_eventSegment(festivalName)}_MasterFiles';
+  }
+
+  /// Root-level artist access folder: `/{Name}_Artist_Files`.
+  static String artistFilesFolderForName(String festivalName) {
+    return '/${_eventSegment(festivalName)}_Artist_Files';
+  }
+
+  /// Root-level schedule access folder: `/{Name}_Schedule_Files`.
+  static String scheduleFilesFolderForName(String festivalName) {
+    return '/${_eventSegment(festivalName)}_Schedule_Files';
+  }
+
+  /// Root-level description access folder: `/{Name}_Description_Files`.
+  static String descriptionFilesFolderForName(String festivalName) {
+    return '/${_eventSegment(festivalName)}_Description_Files';
+  }
+
+  /// Root-level alert queue folder: `/{Name}_Alert_Files`.
+  static String alertFilesFolderForName(String festivalName) {
+    return '/${_eventSegment(festivalName)}_Alert_Files';
+  }
+
+  /// Local Dropbox sync path hint for [alertFilesFolderForName] (backend cron).
+  static String localAlertSyncPathHint(String festivalName) {
+    final folder = alertFilesFolderForName(festivalName);
+    return '~/Library/CloudStorage/Dropbox$folder';
   }
 
   /// Short file prefix (e.g. `mdf`, `rmf`) used in Dropbox filenames.
@@ -127,13 +167,71 @@ class FestivalCreateService {
     ].join('\n');
   }
 
+  /// Refresh cached folder paths from share URLs (background / launch validation).
+  static Future<({FestivalWorkspace workspace, bool cacheChanged})>
+      refreshFolderPathCache(
+    FestivalWorkspace workspace,
+    DropboxApi dropboxApi,
+  ) {
+    return FestivalFolderPathCache.refreshFromUrls(workspace, dropboxApi);
+  }
+
+  /// Infer split folder paths from share URLs (delegates to [FestivalFolderPathCache]).
+  static Future<FestivalWorkspace> inferSplitFoldersFromUrls(
+    FestivalWorkspace workspace,
+    DropboxApi dropboxApi,
+  ) async {
+    final result = await FestivalFolderPathCache.refreshFromUrls(
+      workspace,
+      dropboxApi,
+    );
+    return result.workspace;
+  }
+
+  /// Infer folder paths, write-access flags, and folder ownership on startup /
+  /// refresh (ownership is not persisted — must be re-probed each launch).
+  static Future<FestivalWorkspace> probeFullWorkspaceAccess(
+    FestivalWorkspace workspace,
+    DropboxApi dropboxApi,
+  ) async {
+    final hasUrls =
+        workspace.bandListUrl.trim().isNotEmpty ||
+        workspace.scheduleUrl.trim().isNotEmpty ||
+        workspace.descriptionMapUrl.trim().isNotEmpty ||
+        workspace.testingPointerUrl.trim().isNotEmpty ||
+        workspace.productionPointerUrl.trim().isNotEmpty ||
+        workspace.alertFolderUrl.trim().isNotEmpty;
+    if (!hasUrls) return workspace;
+
+    var updated = await inferSplitFoldersFromUrls(workspace, dropboxApi);
+    updated = await dropboxApi.probeWorkspaceWriteAccess(updated);
+    updated = await dropboxApi.probeWorkspaceFolderOwnership(updated);
+    return updated;
+  }
+
+  /// Create (if missing) `/{Name}_Alert_Files` and return its Dropbox path + share URL.
+  Future<({String path, String shareUrl})> bootstrapAlertFolder(
+    String festivalName,
+  ) async {
+    final name = festivalName.trim();
+    if (name.isEmpty) {
+      throw ArgumentError('Festival name is required.');
+    }
+    final root = normalizeFolder(alertFilesFolderForName(name));
+    await dropboxApi.ensureFolder(root);
+    final shareUrl = await dropboxApi.shareUrlForPath(root);
+    return (path: root, shareUrl: shareUrl);
+  }
+
   /// Create folders/files (only if missing) and return a filled workspace draft
   /// (without id — caller assigns when adding to the registry).
   Future<FestivalWorkspace> createFestival({
     required String festivalName,
     required String eventYear,
-    required String dropboxFolder,
     String filePrefix = '',
+    String? artistFilesFolder,
+    String? scheduleFilesFolder,
+    String? descriptionFilesFolder,
   }) async {
     final name = festivalName.trim();
     if (name.isEmpty) {
@@ -143,20 +241,39 @@ class FestivalCreateService {
     final prefix = filePrefix.trim().isEmpty
         ? defaultFilePrefix(name)
         : sanitizeFilePrefix(filePrefix);
-    final root = normalizeFolder(dropboxFolder);
 
-    await dropboxApi.ensureFolder(root);
-    await dropboxApi.ensureFolder('$root/$descriptionsDir');
+    final artistRoot = normalizeFolder(
+      artistFilesFolder ?? artistFilesFolderForName(name),
+    );
+    final scheduleRoot = normalizeFolder(
+      scheduleFilesFolder ?? scheduleFilesFolderForName(name),
+    );
+    final descriptionRoot = normalizeFolder(
+      descriptionFilesFolder ?? descriptionFilesFolderForName(name),
+    );
+    final masterRoot = normalizeFolder(masterFilesFolderForName(name));
+
+    await dropboxApi.ensureFolder(artistRoot);
+    await dropboxApi.ensureFolder(scheduleRoot);
+    await dropboxApi.ensureFolder(descriptionRoot);
+    await dropboxApi.ensureFolder(masterRoot);
+    await dropboxApi.ensureFolder('$descriptionRoot/$descriptionsDir');
 
     // Production placeholders
-    final prodArtists = '$root/${artistLineupName(prefix, year, testing: false)}';
-    final prodSchedule = '$root/${scheduleName(prefix, year, testing: false)}';
-    final prodMap = '$root/${descriptionMapName(prefix, year, testing: false)}';
+    final prodArtists =
+        '$artistRoot/${artistLineupName(prefix, year, testing: false)}';
+    final prodSchedule =
+        '$scheduleRoot/${scheduleName(prefix, year, testing: false)}';
+    final prodMap =
+        '$descriptionRoot/${descriptionMapName(prefix, year, testing: false)}';
 
     // Testing placeholders (what the admin edits)
-    final testArtists = '$root/${artistLineupName(prefix, year, testing: true)}';
-    final testSchedule = '$root/${scheduleName(prefix, year, testing: true)}';
-    final testMap = '$root/${descriptionMapName(prefix, year, testing: true)}';
+    final testArtists =
+        '$artistRoot/${artistLineupName(prefix, year, testing: true)}';
+    final testSchedule =
+        '$scheduleRoot/${scheduleName(prefix, year, testing: true)}';
+    final testMap =
+        '$descriptionRoot/${descriptionMapName(prefix, year, testing: true)}';
 
     final lineupCsv = lineupHeader();
     final scheduleCsv = scheduleHeader();
@@ -190,8 +307,9 @@ class FestivalCreateService {
       descriptionMapUrl: prodMapUrl,
     );
 
-    final testingPointerPath = '$root/${pointerName(prefix, testing: true)}';
-    final productionPointerPath = '$root/${pointerName(prefix, testing: false)}';
+    final testingPointerPath = '$masterRoot/${pointerName(prefix, testing: true)}';
+    final productionPointerPath =
+        '$masterRoot/${pointerName(prefix, testing: false)}';
 
     await dropboxApi.ensureTextFile(testingPointerPath, testingPointerBody);
     await dropboxApi.ensureTextFile(
@@ -204,6 +322,8 @@ class FestivalCreateService {
     final productionPointerUrl =
         await dropboxApi.shareUrlForPath(productionPointerPath);
 
+    final alert = await bootstrapAlertFolder(name);
+
     return FestivalWorkspace(
       festivalName: name,
       eventYear: year,
@@ -212,11 +332,23 @@ class FestivalCreateService {
       bandListUrl: testBandUrl,
       scheduleUrl: testScheduleUrl,
       descriptionMapUrl: testMapUrl,
+      alertFolderUrl: alert.shareUrl,
+      artistFilesFolderPath: artistRoot,
+      scheduleFilesFolderPath: scheduleRoot,
+      descriptionFilesFolderPath: descriptionRoot,
+      alertFilesFolderPath: alert.path,
+      masterFilesFolderPath: masterRoot,
+      ownsArtistFilesFolder: true,
+      ownsScheduleFilesFolder: true,
+      ownsDescriptionFilesFolder: true,
+      ownsAlertFilesFolder: true,
+      ownsMasterFilesFolder: true,
       eventTypes: ScheduleValidation.defaultEventTypes,
       canEditBands: true,
       canEditSchedule: true,
       canEditDescriptions: true,
       canEditPointers: true,
+      canEditAlerts: true,
     );
   }
 }

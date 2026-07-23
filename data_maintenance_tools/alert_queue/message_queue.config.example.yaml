@@ -1,6 +1,11 @@
 # Example config for monitorMessageQueue.py
 # setup.sh copies this to message_queue.config.yaml in this directory (gitignored).
 # Fill in local Dropbox paths and credentials; do not commit the live file.
+#
+# Each festival uses its own root-level Dropbox alert folder (created by
+# promoter_admin as /{Festival name}_Alert_Files). Map the local synced path
+# below — id must match the festival id you use in Firebase/cron, not necessarily
+# the Dropbox folder name.
 
 # FCM topic used when a festival omits topic/channel
 default_topic: global
@@ -15,32 +20,24 @@ log_file: ~/omf_message_queue.log
 #   mdf-firebase-adminsdk.json
 credentials_dir: ~/omf_fcm_credentials
 
-# Multiple festivals may share the same Google login / machine credentials dir;
-# each festival still needs its own Firebase project service-account JSON
-# (apps are isolated per Firebase project).
 festivals:
   - id: mdf
     name: MDF
     default_title: "MDF Band Announcement"
-    # Local synced Dropbox folder (same folder admin writes .pending into)
-    dropbox_dir: "/Users/YOU/Library/CloudStorage/Dropbox/OpenMetalFestAlertFolder/MDF"
-    # Tag → JSON under credentials_dir; if missing, falls back to ADC/OAuth.
-    # Optional Firebase project id (needed for multi-festival ADC):
-    # project_id: your-mdf-firebase-project-id
+    dropbox_dir: "/Users/YOU/Library/CloudStorage/Dropbox/Maryland Deathfest_Alert_Files"
     credentials_tag: mdf
     topic: global
 
   - id: rwmf
     name: RWMF
     default_title: "RWMF Band Announcement"
-    dropbox_dir: "/Users/YOU/Library/CloudStorage/Dropbox/OpenMetalFestAlertFolder/RWMF"
+    dropbox_dir: "/Users/YOU/Library/CloudStorage/Dropbox/Redwood Metafest_Alert_Files"
     credentials_tag: rwmf
     topic: global
 
   - id: 70k
     name: "70K"
     default_title: "70K Bands Alert"
-    dropbox_dir: "/Users/YOU/Library/CloudStorage/Dropbox/OpenMetalFestAlertFolder/70K"
-    # Explicit file also works (matches older DetectChanges naming):
+    dropbox_dir: "/Users/YOU/Library/CloudStorage/Dropbox/70K_Alert_Files"
     credentials_file: ~/omf_fcm_credentials/google70KbandsAuth.json
     topic: global

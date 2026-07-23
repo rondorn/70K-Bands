@@ -24,6 +24,16 @@ class FestivalWorkspace {
     this.canEditAlerts = false,
     this.allowCustomAlerts = false,
     this.useCityStateField = false,
+    this.artistFilesFolderPath = '',
+    this.scheduleFilesFolderPath = '',
+    this.descriptionFilesFolderPath = '',
+    this.alertFilesFolderPath = '',
+    this.masterFilesFolderPath = '',
+    this.ownsArtistFilesFolder = false,
+    this.ownsScheduleFilesFolder = false,
+    this.ownsDescriptionFilesFolder = false,
+    this.ownsAlertFilesFolder = false,
+    this.ownsMasterFilesFolder = false,
   });
 
   /// Stable id within the local multi-festival registry.
@@ -79,6 +89,38 @@ class FestivalWorkspace {
   /// When true, band form/CSV include city and state columns.
   final bool useCityStateField;
 
+  /// Dropbox API paths for split access-control folders (new festivals).
+  final String artistFilesFolderPath;
+  final String scheduleFilesFolderPath;
+  final String descriptionFilesFolderPath;
+
+  /// Dropbox API path for [alertFolderUrl] (resolved from the folder share link).
+  final String alertFilesFolderPath;
+
+  /// Dropbox API path for testing/production pointer files (`/{Name}_MasterFiles`).
+  final String masterFilesFolderPath;
+
+  /// Whether the signed-in Dropbox user owns each folder (can grant access).
+  final bool ownsArtistFilesFolder;
+  final bool ownsScheduleFilesFolder;
+  final bool ownsDescriptionFilesFolder;
+  final bool ownsAlertFilesFolder;
+  final bool ownsMasterFilesFolder;
+
+  bool get hasSplitAccessFolders =>
+      artistFilesFolderPath.trim().isNotEmpty ||
+      scheduleFilesFolderPath.trim().isNotEmpty ||
+      descriptionFilesFolderPath.trim().isNotEmpty ||
+      alertFilesFolderPath.trim().isNotEmpty ||
+      masterFilesFolderPath.trim().isNotEmpty;
+
+  bool get canManageAnyFolderAccess =>
+      ownsArtistFilesFolder ||
+      ownsScheduleFilesFolder ||
+      ownsDescriptionFilesFolder ||
+      ownsAlertFilesFolder ||
+      ownsMasterFilesFolder;
+
   bool get hasTestingPointer => testingPointerUrl.trim().isNotEmpty;
 
   /// True once the festival has a name and testing pointer (ready for normal use).
@@ -131,6 +173,16 @@ class FestivalWorkspace {
     bool? canEditAlerts,
     bool? allowCustomAlerts,
     bool? useCityStateField,
+    String? artistFilesFolderPath,
+    String? scheduleFilesFolderPath,
+    String? descriptionFilesFolderPath,
+    String? alertFilesFolderPath,
+    String? masterFilesFolderPath,
+    bool? ownsArtistFilesFolder,
+    bool? ownsScheduleFilesFolder,
+    bool? ownsDescriptionFilesFolder,
+    bool? ownsAlertFilesFolder,
+    bool? ownsMasterFilesFolder,
   }) {
     return FestivalWorkspace(
       id: id ?? this.id,
@@ -158,6 +210,24 @@ class FestivalWorkspace {
       canEditAlerts: canEditAlerts ?? this.canEditAlerts,
       allowCustomAlerts: allowCustomAlerts ?? this.allowCustomAlerts,
       useCityStateField: useCityStateField ?? this.useCityStateField,
+      artistFilesFolderPath:
+          artistFilesFolderPath ?? this.artistFilesFolderPath,
+      scheduleFilesFolderPath:
+          scheduleFilesFolderPath ?? this.scheduleFilesFolderPath,
+      descriptionFilesFolderPath:
+          descriptionFilesFolderPath ?? this.descriptionFilesFolderPath,
+      alertFilesFolderPath: alertFilesFolderPath ?? this.alertFilesFolderPath,
+      masterFilesFolderPath:
+          masterFilesFolderPath ?? this.masterFilesFolderPath,
+      ownsArtistFilesFolder:
+          ownsArtistFilesFolder ?? this.ownsArtistFilesFolder,
+      ownsScheduleFilesFolder:
+          ownsScheduleFilesFolder ?? this.ownsScheduleFilesFolder,
+      ownsDescriptionFilesFolder:
+          ownsDescriptionFilesFolder ?? this.ownsDescriptionFilesFolder,
+      ownsAlertFilesFolder: ownsAlertFilesFolder ?? this.ownsAlertFilesFolder,
+      ownsMasterFilesFolder:
+          ownsMasterFilesFolder ?? this.ownsMasterFilesFolder,
     );
   }
 
@@ -185,6 +255,11 @@ class FestivalWorkspace {
     'canEditAlerts': canEditAlerts ? '1' : '0',
     'allowCustomAlerts': allowCustomAlerts ? '1' : '0',
     'useCityStateField': useCityStateField ? '1' : '0',
+    'artistFilesFolderPath': artistFilesFolderPath,
+    'scheduleFilesFolderPath': scheduleFilesFolderPath,
+    'descriptionFilesFolderPath': descriptionFilesFolderPath,
+    'alertFilesFolderPath': alertFilesFolderPath,
+    'masterFilesFolderPath': masterFilesFolderPath,
   };
 
   static bool _boolPref(
@@ -235,6 +310,11 @@ class FestivalWorkspace {
       canEditAlerts: _boolPref(map, 'canEditAlerts', fallback: false),
       allowCustomAlerts: _boolPref(map, 'allowCustomAlerts', fallback: false),
       useCityStateField: _boolPref(map, 'useCityStateField', fallback: false),
+      artistFilesFolderPath: map['artistFilesFolderPath'] ?? '',
+      scheduleFilesFolderPath: map['scheduleFilesFolderPath'] ?? '',
+      descriptionFilesFolderPath: map['descriptionFilesFolderPath'] ?? '',
+      alertFilesFolderPath: map['alertFilesFolderPath'] ?? '',
+      masterFilesFolderPath: map['masterFilesFolderPath'] ?? '',
     );
   }
 }

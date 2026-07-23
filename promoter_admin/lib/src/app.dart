@@ -8,6 +8,8 @@ import 'package:promoter_admin/src/screens/portal_screen.dart';
 import 'package:promoter_admin/src/services/description_map_service.dart';
 import 'package:promoter_admin/src/services/dropbox_api.dart';
 import 'package:promoter_admin/src/services/dropbox_auth.dart';
+import 'package:promoter_admin/src/services/festival_create_service.dart';
+import 'package:promoter_admin/src/services/festival_folder_path_cache.dart';
 import 'package:promoter_admin/src/services/lineup_service.dart';
 import 'package:promoter_admin/src/services/pointer_service.dart';
 import 'package:promoter_admin/src/services/schedule_service.dart';
@@ -78,25 +80,55 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
     }
     final connected = await _auth.isConnected;
     final label = connected ? await _auth.accountLabel() : '';
-    if (connected) {
-      final current = registry.active;
-      final hasUrls = current.bandListUrl.trim().isNotEmpty ||
-          current.scheduleUrl.trim().isNotEmpty ||
-          current.descriptionMapUrl.trim().isNotEmpty;
-      if (hasUrls) {
-        try {
-          final probed =
-              await _dropboxApi.probeWorkspaceWriteAccess(current);
-          registry = registry.upsertActive(probed);
-          await _store.saveRegistry(registry);
-        } catch (_) {}
-      }
-    }
     setState(() {
       _registry = registry;
       _dropboxConnected = connected;
       _dropboxLabel = label;
     });
+    if (connected) {
+      unawaited(_validateFolderPathCacheInBackground(registry.activeFestivalId));
+    }
+  }
+
+  bool _workspaceHasFolderUrls(FestivalWorkspace workspace) {
+    return workspace.bandListUrl.trim().isNotEmpty ||
+        workspace.scheduleUrl.trim().isNotEmpty ||
+        workspace.descriptionMapUrl.trim().isNotEmpty ||
+        workspace.testingPointerUrl.trim().isNotEmpty ||
+        workspace.productionPointerUrl.trim().isNotEmpty ||
+        workspace.alertFolderUrl.trim().isNotEmpty;
+  }
+
+  /// Validate cached Dropbox folder paths against share URLs without blocking UI.
+  ///
+  /// On load the cached paths are shown immediately. If this probe finds stale
+  /// cache or changed access flags, persisted data is updated and [setState]
+  /// refreshes the UI silently (no snackbar).
+  Future<void> _validateFolderPathCacheInBackground(String festivalId) async {
+    if (!_dropboxConnected) return;
+    final snapshot = _registry;
+    if (snapshot == null || snapshot.activeFestivalId != festivalId) return;
+    final before = snapshot.active;
+    if (!_workspaceHasFolderUrls(before)) return;
+    try {
+      final probed = await FestivalCreateService.probeFullWorkspaceAccess(
+        before,
+        _dropboxApi,
+      );
+      if (!mounted) return;
+      final current = _registry;
+      if (current == null || current.activeFestivalId != festivalId) return;
+      if (!FestivalFolderPathCache.backgroundProbeDiffers(before, probed)) {
+        return;
+      }
+      final registry = current.upsertActive(probed);
+      if (FestivalFolderPathCache.persistedProbeDiffers(before, probed)) {
+        await _store.saveRegistry(registry);
+      }
+      setState(() => _registry = registry);
+    } catch (_) {
+      // Keep cached paths; user can Refresh file access later.
+    }
   }
 
   Future<void> _save(FestivalWorkspace workspace) async {
@@ -126,29 +158,13 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
     // background so Dropbox latency does not block the UI.
     final registry = await _store.switchActive(festivalId);
     setState(() => _registry = registry);
-    unawaited(_refreshWriteAccessInBackground(festivalId));
+    unawaited(_validateFolderPathCacheInBackground(festivalId));
   }
 
   /// Re-probe Dropbox write flags for [festivalId] without blocking the UI.
   /// No-ops if the user has already switched away before the probe finishes.
   Future<void> _refreshWriteAccessInBackground(String festivalId) async {
-    if (!_dropboxConnected) return;
-    final snapshot = _registry;
-    if (snapshot == null || snapshot.activeFestivalId != festivalId) return;
-    final active = snapshot.active;
-    final hasUrls = active.bandListUrl.trim().isNotEmpty ||
-        active.scheduleUrl.trim().isNotEmpty ||
-        active.descriptionMapUrl.trim().isNotEmpty;
-    if (!hasUrls) return;
-    try {
-      final probed = await _dropboxApi.probeWorkspaceWriteAccess(active);
-      if (!mounted) return;
-      final current = _registry;
-      if (current == null || current.activeFestivalId != festivalId) return;
-      await _save(probed);
-    } catch (_) {
-      // Keep last-known canEdit* flags; user can Refresh/Load later.
-    }
+    await _validateFolderPathCacheInBackground(festivalId);
   }
 
   Future<void> _addFestival(FestivalWorkspace workspace) async {
@@ -198,15 +214,11 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
         _pendingDropboxOnboarding = false;
       });
       final active = _workspace;
-      if (active != null &&
-          (active.bandListUrl.trim().isNotEmpty ||
-              active.scheduleUrl.trim().isNotEmpty ||
-              active.descriptionMapUrl.trim().isNotEmpty)) {
-        try {
-          final probed =
-              await _dropboxApi.probeWorkspaceWriteAccess(active);
-          await _save(probed);
-        } catch (_) {}
+      if (active != null && _workspaceHasFolderUrls(active)) {
+        final festivalId = _registry?.activeFestivalId ?? active.id;
+        if (festivalId.isNotEmpty) {
+          unawaited(_validateFolderPathCacheInBackground(festivalId));
+        }
       }
       if (!finishingOnboarding) {
         _messengerKey.currentState?.showSnackBar(

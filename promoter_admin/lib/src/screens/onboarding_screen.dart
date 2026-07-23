@@ -73,7 +73,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         created = await FestivalCreateService(widget.dropboxApi).createFestival(
           festivalName: result.name,
           eventYear: result.eventYear,
-          dropboxFolder: result.folder,
           filePrefix: result.filePrefix,
         );
       } else {
@@ -88,7 +87,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           draft = await widget.pointerService.applyTestingPointer(draft);
         }
         if (widget.dropboxConnected) {
-          draft = await widget.dropboxApi.probeWorkspaceWriteAccess(draft);
+          draft = await FestivalCreateService.inferSplitFoldersFromUrls(
+            draft,
+            widget.dropboxApi,
+          );
+          draft = await FestivalCreateService.probeFullWorkspaceAccess(
+            draft,
+            widget.dropboxApi,
+          );
         }
         created = draft;
       }

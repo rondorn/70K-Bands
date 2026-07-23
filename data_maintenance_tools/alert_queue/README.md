@@ -50,8 +50,12 @@ Then edit that config and place each festival’s Firebase Admin SDK JSON under
 ### Dropbox: keep alert folders offline (required on macOS)
 
 If pending files are **cloud-only**, cron fails with
-`Resource deadlock avoided`. Right-click `OpenMetalFestAlertFolder`
-(and each festival subfolder) in Dropbox → **Make available offline**.
+`Resource deadlock avoided`. Right-click each festival's `…_Alert_Files`
+folder in Dropbox → **Make available offline**.
+
+Each festival has its own root-level folder: `/{Festival name}_Alert_Files`
+(created by promoter_admin). Point `dropbox_dir` in `message_queue.config.yaml`
+at the local sync path for that folder only.
 
 ### Cron
 

@@ -10,19 +10,23 @@ Someone who releases or maintains the festival apps will give you the **Testing*
 
 ## Install (download the app)
 
-Download the latest Mac or Windows build from the project’s [Releases](https://github.com/rondorn/70K-Bands/releases) page (only the current build for each platform is kept).
+| Platform | Where to get it |
+| -------- | --------------- |
+| **Mac** | [GitHub Releases](https://github.com/rondorn/70K-Bands/releases) → **omf-admin-macos** release → download the zip under **Assets** |
+| **Windows** | Same [Releases](https://github.com/rondorn/70K-Bands/releases) page → **omf-admin-windows** release → download the zip |
+| **iPad** | **App Store** — search for **Open Metal Fest Admin** |
 
-1. Open the **Mac** or **Windows** release.
-2. Under **Assets**, download the zip (`omf-admin-macos-…` or `omf-admin-windows-…`).
-3. Unzip the download.
+**Mac:** Unzip, drag **Open Metal Fest Admin** into **Applications**, then open it. The first time, macOS may ask to confirm a download from the internet — choose **Open**.
 
-**Mac:** Drag **Open Metal Fest Admin** into your **Applications** folder, then open it from there. The first time, macOS may ask to confirm a download from the internet — choose **Open**.
+**Windows:** Unzip and run the main `.exe` **from inside that folder** (keep the other files next to it). If SmartScreen warns you, choose **More info** → **Run anyway** when you trust the download.
 
-**Windows:** Open the unzipped folder and run `promoter_admin.exe` (or the main `.exe` in that folder). If Windows SmartScreen warns you, choose **More info** → **Run anyway** when you trust the download.
+**iPad:** Install from the App Store like any other app.
 
 You do **not** need to install anything else. After the app opens, continue with [Getting started](#getting-started) (festival name, Testing/Production links, Dropbox).
 
-When a newer version appears on the Releases page, download the new zip, unzip it, and **overwrite** the previous app (on Mac: drag the new copy into **Applications** and replace the old one). Festival settings, Dropbox connection, and other preferences are stored separately on your computer — updating the app does **not** wipe them. You do not need to re-enter Testing/Production links or reconnect Dropbox after a normal update.
+When a newer version is available, update the same way you installed (Releases zip for Mac/Windows, App Store for iPad). Festival settings and your Dropbox sign-in are stored separately — updating the app does **not** wipe them. You do not need to re-enter Testing/Production links or sign in to Dropbox again after a normal update.
+
+**Mac and iPad together:** If both devices use the same Apple ID with iCloud, festival settings and your Dropbox connection can sync between them automatically.
 
 ---
 
@@ -53,7 +57,7 @@ When a newer version appears on the Releases page, download the new zip, unzip i
 | **What you do here** | Add/edit artists, descriptions, schedule | Live lineup and schedule after Publish |
 | **Risk** | Low — experiment and fix freely | Higher — fans see it; hard to undo quickly |
 
-**Shared files (intentional):** Some festivals (for example when an automated promoter feed writes the lineup) point Testing **artists** at the same Dropbox file as Production. That is allowed: edits are live, and Publish skips copying artists. **Schedule must stay a separate Testing file.** Description map may be shared or separate — choose in Settings → Data files (or when adding a new year).
+**Shared files (intentional):** Some festivals (for example when an automated promoter feed writes the lineup) point Testing **artists** at the same Dropbox file as Production. That is allowed: edits are live, and Publish skips copying artists. **Schedule must stay a separate Testing file.** Description map may be shared or separate. Festival owners can switch this under Settings → **Data files** → **Testing vs Production files** (**Share artists with Production**, **Share description map with Production**, and the reverse “use separate Testing …” buttons).
 
 Before anyone Publishes, open the **festival (fan) app**, turn on **Advanced → Testing**, and confirm the lineup, descriptions, and schedule look right. That preview is how you use Testing as a safety net.
 
@@ -68,7 +72,7 @@ If a button is missing or grayed out (for example you can view Artists but not A
 1. [Install the app](#install-download-the-app) if you don’t have it yet.
 2. Get the festival **name**, **Testing link**, and usually **Production link** from your festival contact.
 3. Ask them to share **edit** access (on Dropbox) to the files you’re supposed to work on — using **your Dropbox email**.
-4. In the admin app: enter the festival, paste the links, **Connect Dropbox** with your personal account, then **Load festival data**.
+4. In the admin app: enter the festival, paste the links, **[Connect Dropbox](#connecting-dropbox)** with your personal account, then **Load festival data**.
 5. You’re in. Work under **Artists**, **Descriptions**, and **Schedule** as needed.
 
 Creating a brand-new festival from scratch (new empty Dropbox files) is for festival owners / the person who maintains the apps — not a typical volunteer first step.
@@ -87,18 +91,34 @@ You’ll mainly use Settings once:
 
 - **Festival** — which festival you’re working on; add or delete a saved festival config.  
 - **Festival name** — label in the header.  
-- **Dropbox** — Connect / Disconnect with your personal account.  
+- **Dropbox connection** — sign in with your personal account (see [Connecting Dropbox](#connecting-dropbox)).  
 - **Testing link** / **Production link** — the URLs you were given.  
-- **Alert folder** — only if your festival uses push announcements (optional).  
+- **Alert folder** — only if your festival uses push announcements (optional). **Create alert folder on Dropbox** appears when you’re connected and the field is empty.  
+- **Festival logo** — optional image URL; a preview appears as you paste the link. Used on exported running-order pages.  
+- **Data files** — read-only list of the artists, schedule, and description map URLs the app is using. Festival owners with Testing-link write access also see **Testing vs Production files** controls (share or separate artists / description map) and **Add new year…**.  
+- **File access** — what you can edit (Artists, Schedule, Descriptions). Use **Refresh file access** if rights were just shared and buttons still look locked. Uncheck a row if detection is wrong or you don’t use that area.  
+- **Folder access** — (festival owners) invite collaborators by email to specific Dropbox folders (artists, schedule, descriptions, alerts, or master pointer files).  
+- **Lineup options** — **Use city/state fields** for festivals that track local artist location.  
+- **Venues / Days / Dates / Date rollover / Event types** — vocabulary for Schedule Entry (filled once by Load when empty; you edit afterward).  
+- **Days / Dates** — keep them in matching order (first Day with first Date, and so on). You need **one more date than days** so late-night sets that spill past midnight still land on the right calendar day. **Date rollover** (default 8:00 AM) is the cutoff: times before that still count as the previous festival day. Schedule Entry fills **Date** for you when you pick **Day** and start time; change Date by hand if needed.  
 - **Load festival data** — pull Testing/Production file URLs and fill empty Venues / Days / Dates / Event types from Production. Existing lists are kept (not overwritten).  
-- **Save configuration** — keep your local settings. Changing Venues / Days / Dates / Event types refreshes Schedule Entry menus.  
-- **Festival logo** — optional. Paste any public image URL. The logo is used anywhere the app displays festival branding, including exported running-order pages.  
-- **Use city/state fields** — turn on if this festival tracks city/state for artists. Most often used for smaller, more local festivals rather than ones with international acts — though it can be used for any size event.  
-- **Venues / Dates / Days / Event types** — lists used when entering schedule items (filled once by Load when empty; you edit afterward).  
-- **Days / Dates** — keep them in matching order (first Day with first Date, and so on). You need **one more date than days** so late-night sets that spill past midnight still land on the right calendar day. **Date rollover** (default 8:00 AM) is the cutoff: times before that still count as the previous festival day. Schedule Entry usually fills Date for you when you pick Day and start time; you can change Date by hand if needed.  
-- **Add new year…** — only for people who manage year transitions (starts a new Testing year; Production updates when someone Publishes).
+- **Save configuration** — saves your local settings. The button stays dim until something changed; a reminder appears when you have unsaved edits. Changing Venues / Days / Dates / Event types refreshes Schedule Entry menus.  
+- **Publish to Production…** — shortcut to the Publish screen (same as CONFIG → **Publish**).
 
-**File access** shows whether you can edit Artists, Schedule, and Descriptions. Use **Refresh file access** if rights were just shared to you and the app still looks locked.
+### Connecting Dropbox
+
+The app never asks for a festival password. You sign in with **your own Dropbox account** — the same email your festival contact used when they shared edit access to the files.
+
+1. In Settings, click **Connect Dropbox**.
+2. **Mac or Windows:** your web browser opens the Dropbox sign-in page. Sign in, approve access, then close the browser tab when it says you’re connected. Return to the app.
+3. **iPad:** a sign-in sheet opens inside the app. Complete sign-in there — you stay in the app the whole time.
+4. Settings shows **Connected: your@email.com** (or your Dropbox name).
+
+You stay signed in between sessions. Use **Disconnect** only if you need to switch to a different Dropbox account, then **Connect Dropbox** again.
+
+If saves suddenly fail or the app says you’re not connected, try **Disconnect** → **Connect Dropbox** once. If Dropbox permissions were changed on the developer side, your festival contact may ask everyone to reconnect.
+
+**File access** (below the links) shows whether Dropbox recognizes **write** access on artists, schedule, and description map files. That controls which Add / Edit / Publish actions appear — not whether you’re signed in.
 
 ---
 
@@ -122,7 +142,7 @@ See the Testing lineup (band, country, genre, noteworthy). Use **Refresh** if so
 4. If the app shows Metal Archives or MusicBrainz **links** (several possible matches), **open those links**, research which act is correct, paste the correct page URL into the **Metal Archives** or **MusicBrainz** field, then click **Discover** again.
 5. If you get **no usable results**, ask the band for details or do public research and fill the form yourself.
 6. Review every field. You may **edit, replace, clear, or add** any detail whenever you think it needs fixing (name, links, country, genre, noteworthy, and so on). Discover is a starting point, not the final word.
-7. Optional: check **Add description** and write the band blurb.
+7. Optional: check **Add description** and write the band blurb. If you have description-map write access, the text is saved and wired up for fans automatically. If not, the app saves a description file and shows a **URL to copy** — send that link to whoever maintains the description map.
 8. **Save to Testing**.
 
 ![Add Artist — Discover and fields](images/artists-add.png)
@@ -171,16 +191,19 @@ Most of the time, adding the description **while adding the band** is simpler �
 
 You’ll see who has a description and who doesn’t. Typical actions:
 
-- **Create Description** — write new text for an artist  
-- **Attach Link** — connect a **band** to a description that **already exists** as a Dropbox link. Use this when:  
-  - the write-up is already online and you don’t need to rewrite it, or  
-  - someone else wrote the description (or saved a file) but couldn’t finish connecting it for fans, and they’ve given you a valid link  
-- **Edit** — change the wording (or, if offered, where the text lives)  
-- **Delete** — remove that description  
+- **Create Description** — write new text for an artist (always available if you can edit artists)  
+- **Attach Link** — connect a **band** to a description that **already exists** as a Dropbox link *(requires description-map write access)*  
+- **Edit** / **Delete** — change or remove a mapped description *(requires description-map write access)*  
 
 ![Create Description](images/descriptions-create.png)
 
-If Edit / Delete / Attach Link aren’t available, you can still create description text for someone else to finish connecting — ask your festival contact (they’ll often use **Attach Link** with the URL you send them).
+### If you don’t have description-map write access
+
+Dropbox may give you edit rights on the **artist lineup** but not on the **description map** file. That is normal for split volunteer roles.
+
+- You can still open **Descriptions** and use **Create Description** — the app writes a description file and shows a **share URL to copy** for the person who maintains the map.  
+- **Edit**, **Delete**, and **Attach Link** are not shown until you have map write access (or your festival contact shares that file with you and you **Refresh file access**).  
+- The same handoff applies when you check **Add description** while adding a band under **Artists**.
 
 ---
 
@@ -204,8 +227,12 @@ If validation complains but you’re sure the times are right, you can skip the 
 
 These are **not** tied to a lineup band:
 
-- Enter an **Event title** instead of a band name  
-- Optional short **Description** and optional **Image** (Dropbox image link)  
+- Enter an **Event title** (this is the name fans see on the schedule)  
+- Pick **Event Type** (Special Event or Unofficial Event)  
+- Optional **Image URL** — paste a Dropbox or web image link; a **preview** appears below the field so you can confirm it looks right  
+- Optional **Description** — only if you have description-map write access; otherwise skip it or add a note elsewhere  
+- Then venue, **Day**, start/end (or length), and optional **Notes** as usual  
+
 - **Special Event** = official non-band programming  
 - **Unofficial Event** = fan meetups and similar
 
@@ -260,13 +287,15 @@ If you’ve configured a **Festival logo** under Settings, it appears automatica
 
 ## Publish (Testing → what fans see)
 
-**Nav:** CONFIG → **Publish**
+**Nav:** CONFIG → **Publish** (or **Publish to Production…** on the Settings screen)
 
 ![Publish to Production](images/publish.png)
 
 Publish copies your reviewed **Testing** work into **Production** so most attendees see it. Until you Publish, fans keep seeing the previous Production version — Testing stays your safe staging ground (see [Testing vs Production](#testing-vs-production-the-one-idea-to-learn)).
 
 Only people with edit rights on Artists, Schedule, and/or Descriptions can publish — and only those parts they’re allowed to change will update.
+
+The Publish button shows **Nothing to publish** when Testing already matches Production (nothing new to copy). That is normal between publish cycles.
 
 You don’t need to wait until everything is finished before publishing. Festivals often publish in **stages**. For example, new bands may go live through the year as they are announced, descriptions can be published when they’re ready, and the schedule is often published once it’s finalized. Publish whenever a meaningful set of changes has been checked in Testing.
 
@@ -323,12 +352,15 @@ Volunteers who can’t Publish still improve Testing for whoever does.
 | Symptom                            | Likely fix                                                                                                             |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | No Add / Edit / Delete             | Ask for **edit** share on those Dropbox files to your personal account, then **Refresh file access**.                  |
+| Dropbox says not connected         | Settings → **Connect Dropbox**. If it still fails, **Disconnect** then connect again. On Mac/Windows, complete sign-in in the browser tab. |
 | Discover didn’t find my band       | Verify spelling. If multiple matches exist, use the Metal Archives or MusicBrainz page URL. Otherwise enter the information manually. |
 | No Schedule **Entry**              | You can view only — need schedule edit rights.                                                                         |
 | No **Publish**                     | Need edit rights on at least Artists, Schedule, or Descriptions.                                                       |
+| **Nothing to publish**             | Testing already matches Production — make and save changes in Testing first, then try again.                           |
+| No Edit / Attach Link on Descriptions | Need **write** access on the description **map** file, not just the artist list. Create Description still works — copy the URL for your map admin. |
 | Export vs official schedule        | Promoters may publish exports as the official running order. Don’t circulate one that competes with an existing official PDF or web schedule. |
 | No **Send alert**                  | Festival hasn’t enabled alerts for you, or alert folder isn’t set / shared for write.                                  |
-| Description won’t “stick” for fans | Usually fixed by adding it while creating the band, or asking someone with fuller rights to finish under Descriptions. |
+| Description won’t “stick” for fans | Usually fixed by adding it while creating the band, or asking someone with map write access to **Attach Link** with the URL you copied. |
 
 
 ---
@@ -337,11 +369,12 @@ Volunteers who can’t Publish still improve Testing for whoever does.
 
 Coordinate once with whoever ships the apps:
 
-- [ ] Editors have the right Mac/Windows build from [Releases](https://github.com/rondorn/70K-Bands/releases)  
+- [ ] Editors have the right build (Mac/Windows from [Releases](https://github.com/rondorn/70K-Bands/releases); iPad from the App Store)  
 - [ ] Correct Testing and Production links  
 - [ ] Each editor’s **personal Dropbox** has ownership or **shared write** on the pieces they edit  
 - [ ] Fan apps show the same live (Production) festival data  
 - [ ] If using pushes: shared alert folder, and the machine that sends notifications can reach it  
 - [ ] If volunteers should send freeform alerts: turn that on with the app maintainer  
+- [ ] **Folder access** (Settings) used to invite editors to the right Dropbox folders when needed  
 
 After that, most people only need Artists, Descriptions, Schedule, and (when authorized) Publish.

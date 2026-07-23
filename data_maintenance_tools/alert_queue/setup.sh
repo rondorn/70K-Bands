@@ -118,7 +118,7 @@ echo
 echo "Dry-run:"
 echo "  $ROOT/monitorMessageQueue.py --dry-run -v"
 echo
-echo "IMPORTANT (macOS Dropbox): make OpenMetalFestAlertFolder available offline"
+echo "IMPORTANT (macOS Dropbox): make each festival …_Alert_Files folder available offline"
 echo "  (cloud-only files → 'Resource deadlock avoided' from cron)."
 echo
 echo "Cron:"
