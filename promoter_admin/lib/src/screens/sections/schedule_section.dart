@@ -9,6 +9,7 @@ import 'package:promoter_admin/src/services/dropbox_api.dart';
 import 'package:promoter_admin/src/services/http_fetch.dart';
 import 'package:promoter_admin/src/services/lineup_service.dart';
 import 'package:promoter_admin/src/services/pointer_service.dart';
+import 'package:promoter_admin/src/services/schedule_qr/schedule_qr_poster_pdf.dart';
 import 'package:promoter_admin/src/services/schedule_service.dart';
 import 'package:promoter_admin/src/services/schedule_staging.dart';
 import 'package:promoter_admin/src/services/schedule_validation.dart';
@@ -17,6 +18,7 @@ import 'package:promoter_admin/src/widgets/app_shell.dart';
 import 'package:promoter_admin/src/widgets/dropbox_folder_picker.dart';
 import 'package:promoter_admin/src/widgets/export_schedule_dialog.dart';
 import 'package:promoter_admin/src/widgets/portal_dropdown.dart';
+import 'package:promoter_admin/src/widgets/schedule_running_order_preview.dart';
 import 'package:promoter_admin/src/widgets/url_image_preview.dart';
 
 class ScheduleSection extends StatefulWidget {
@@ -713,7 +715,53 @@ class _ScheduleSectionState extends State<ScheduleSection> {
     if (widget.tab == ScheduleTab.stats) {
       return _buildStats();
     }
+    if (widget.tab == ScheduleTab.preview) {
+      return _buildPreview();
+    }
     return _buildEntry();
+  }
+
+  Future<void> _openExportDialog() async {
+    var qrCodeSupported = false;
+    var guideUrl = '';
+    try {
+      final pointerUrl = widget.workspace.testingPointerUrl.trim();
+      if (pointerUrl.isNotEmpty) {
+        final pointer = await widget.lineupService.pointerService.fetchPointer(
+          pointerUrl,
+        );
+        qrCodeSupported = pointer.qrCodeSupport;
+        guideUrl = pointer.scheduleQRGuideURL;
+      }
+    } catch (_) {}
+
+    if (qrCodeSupported && guideUrl.trim().isEmpty) {
+      guideUrl = scheduleQrDefaultGuideUrl;
+    }
+
+    var bandNamesForQr = <String>[];
+    try {
+      var ws = widget.workspace;
+      var url = ws.bandListUrl.trim();
+      if (url.isEmpty) {
+        ws = await widget.lineupService.pointerService.applyTestingPointer(ws);
+        url = ws.bandListUrl.trim();
+      }
+      if (url.isNotEmpty) {
+        bandNamesForQr = await widget.lineupService.pointerService
+            .fetchLineupNamesForQr(url);
+      }
+    } catch (_) {}
+
+    if (!mounted) return;
+    await showScheduleExportDialog(
+      context,
+      workspace: widget.workspace,
+      events: _events,
+      qrCodeSupported: qrCodeSupported,
+      bandNamesForQr: bandNamesForQr,
+      scheduleQrGuideUrl: guideUrl,
+    );
   }
 
   Widget _syncStatusBar() {
@@ -811,11 +859,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
             child: OutlinedButton.icon(
               onPressed: _events.isEmpty
                   ? null
-                  : () => showScheduleExportDialog(
-                      context,
-                      workspace: widget.workspace,
-                      events: _events,
-                    ),
+                  : () => _openExportDialog(),
               icon: const Icon(Icons.ios_share_outlined, size: 18),
               label: const Text('Export…'),
             ),
@@ -968,6 +1012,30 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                       );
                     },
                   ),
+          ),
+        ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            onPressed: () => _load(forceRefresh: true),
+            icon: const Icon(Icons.refresh, size: 18),
+            label: Text('${_events.length} event(s) — Refresh'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPreview() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _syncStatusBar(),
+        if (_error != null) StatusBanner(text: _error!, isError: true),
+        Expanded(
+          child: ScheduleRunningOrderPreview(
+            workspace: widget.workspace,
+            events: _events,
           ),
         ),
         Align(

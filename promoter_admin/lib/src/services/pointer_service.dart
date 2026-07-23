@@ -223,6 +223,13 @@ class PointerService {
   }
 
   static List<BandRow> parseLineupCsv(String text) {
+    final bands = parseLineupCsvPreservingOrder(text);
+    bands.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    return bands;
+  }
+
+  /// Artist CSV row order — required for schedule QR band codes (do not sort).
+  static List<BandRow> parseLineupCsvPreservingOrder(String text) {
     final rows = parseCsvMaps(text);
     final bands = <BandRow>[];
     for (final map in rows) {
@@ -230,7 +237,18 @@ class PointerService {
       if (name.isEmpty || name.toLowerCase() == 'bandname') continue;
       bands.add(BandRow(map));
     }
-    bands.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     return bands;
+  }
+
+  /// Canonical band names for QR encode/decode (file order, trimmed).
+  Future<List<String>> fetchLineupNamesForQr(
+    String bandListUrl, {
+    bool forceRefresh = false,
+  }) async {
+    final text = await fetchUrlText(bandListUrl, forceRefresh: forceRefresh);
+    return parseLineupCsvPreservingOrder(text)
+        .map((row) => row.name.trim())
+        .where((name) => name.isNotEmpty)
+        .toList();
   }
 }

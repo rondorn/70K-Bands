@@ -33,6 +33,13 @@ class PointerFile {
   /// Pointer writers also get the Alerts UI without this flag.
   bool get allowCustomAlerts => isTruthyFlag(current['allowCustomAlerts']);
 
+  /// Schedule QR poster export (`Current::QRCodeSupport::Yes`).
+  bool get qrCodeSupport => isTruthyFlag(current['QRCodeSupport']);
+
+  /// Deep link for the Camera-app guide QR on printed posters.
+  String get scheduleQRGuideURL =>
+      (current['scheduleQRGuideURL'] ?? '').trim();
+
   static bool isTruthyFlag(String? raw) {
     final v = (raw ?? '').trim().toLowerCase();
     return v == '1' || v == 'true' || v == 'yes' || v == 'on';

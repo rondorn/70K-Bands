@@ -33,6 +33,20 @@ void main() {
         PortalNavigation.listSafeScheduleTab(ScheduleTab.stats),
         ScheduleTab.stats,
       );
+      expect(
+        PortalNavigation.listSafeScheduleTab(ScheduleTab.preview),
+        ScheduleTab.preview,
+      );
+    });
+
+    test('round-trips preview schedule tab', () {
+      const nav = PortalNavigation(
+        section: AppSection.schedule,
+        scheduleTab: ScheduleTab.preview,
+      );
+      final restored = PortalNavigation.fromJson(nav.toJson());
+      expect(restored, isNotNull);
+      expect(restored!.scheduleTab, ScheduleTab.preview);
     });
 
     test('rejects unknown section', () {

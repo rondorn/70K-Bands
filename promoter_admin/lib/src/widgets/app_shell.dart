@@ -5,7 +5,7 @@ import 'package:promoter_admin/src/theme/app_theme.dart';
 enum AppSection { settings, bands, schedule, descriptions, alerts }
 
 enum BandsTab { list, add }
-enum ScheduleTab { entry, view, stats }
+enum ScheduleTab { entry, view, stats, preview }
 enum DescriptionsTab { list, form }
 
 class AppShell extends StatelessWidget {
@@ -311,6 +311,16 @@ class _NavBar extends StatelessWidget {
             onTap: () {
               onSectionChanged(AppSection.schedule);
               onScheduleTabChanged?.call(ScheduleTab.stats);
+            },
+          ),
+          _NavLink(
+            label: 'Preview',
+            secondary: true,
+            selected: section == AppSection.schedule &&
+                scheduleTab == ScheduleTab.preview,
+            onTap: () {
+              onSectionChanged(AppSection.schedule);
+              onScheduleTabChanged?.call(ScheduleTab.preview);
             },
           ),
         ],

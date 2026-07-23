@@ -184,6 +184,11 @@ class _PortalScreenState extends State<PortalScreen> {
               heading: 'Show Stats',
               subheading: 'Counts per artist and event type',
             );
+          case ScheduleTab.preview:
+            return (
+              heading: 'Schedule Preview',
+              subheading: 'HTML running-order layout for review',
+            );
           case ScheduleTab.entry:
             return (
               heading: 'Schedule Entry',
