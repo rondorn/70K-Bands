@@ -1,0 +1,4 @@
+// Committed app version for iOS and macOS (shared across all build machines).
+// Source of truth: pubspec.yaml — update via tool/sync_native_version.sh when bumping.
+FLUTTER_BUILD_NAME=1.0.4
+FLUTTER_BUILD_NUMBER=16

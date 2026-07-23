@@ -51,6 +51,24 @@ Or open in Xcode after first build:
 open macos/Runner.xcworkspace
 ```
 
+## iOS / iPad archive (App Store)
+
+`pubspec.yaml` `version:` is the source of truth for **every platform** (e.g. `1.0.4+16` → **1.0.4**, build **16**).
+
+Committed file **`native/AppVersion.xcconfig`** carries that version into iOS and macOS Xcode builds. It is included **after** gitignored `Generated.xcconfig`, so a stale local Generated file cannot change the archive version.
+
+| Platform | Version source |
+| -------- | -------------- |
+| iOS / macOS | `native/AppVersion.xcconfig` (in git) |
+| Windows | `pubspec.yaml` at `flutter build windows` |
+| Dart | `pubspec.yaml` |
+
+**When bumping version:** edit `pubspec.yaml`, run `./tool/sync_native_version.sh`, commit **both** files.
+
+After **git pull**, no extra sync is required — the committed `AppVersion.xcconfig` already has the right version. Xcode also runs the sync script before each build as a safety net.
+
+Confirm an archive shows **1.0.4 (16)** (or whatever is in `pubspec.yaml`).
+
 ## Features
 
 | Feature | Status |
