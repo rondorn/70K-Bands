@@ -38,7 +38,7 @@ When a newer version is available, update the same way you installed (Releases z
 | **Settings**     | One-time (or rare) festival setup: Dropbox login, Testing/Production links, optional announcement folder.                   |
 | **Artists**      | Build and edit the Testing lineup: add, change, or remove bands; export an HTML logo lineup. |
 | **Descriptions** | Write or update the text fans read about a band (usually done when you add the band; you can also fix or add them later).   |
-| **Schedule**     | Enter shows and other events; browse the event list; see simple stats; export a PDF/HTML running order (official admins). |
+| **Schedule**     | Enter shows and other events; browse the event list; preview the running-order layout; see simple stats; export PDF/HTML running order or a QR poster (official admins). |
 | **Publish**      | When Testing looks right, push your changes so most fans see them in Production. New bands can trigger a push notification. |
 | **Send alert**   | Optional: type a message and send it to **everyone** who uses that festival’s app.                                          |
 
@@ -209,7 +209,7 @@ Dropbox may give you edit rights on the **artist lineup** but not on the **descr
 
 ## Schedule
 
-**Nav:** SCHEDULE → **Entry** (if you can edit) · **View** · **Stats**
+**Nav:** SCHEDULE → **Entry** (if you can edit) · **View** · **Stats** · **Preview**
 
 Common event types: **Show**, **Clinic**, **Meet and Greet**, **Special Event**, **Unofficial Event** (festivals can add more).
 
@@ -236,26 +236,43 @@ These are **not** tied to a lineup band:
 - **Special Event** = official non-band programming  
 - **Unofficial Event** = fan meetups and similar
 
-### View and Stats
+### View, Stats, and Preview
 
 - **View** — full list; edit or delete if you have schedule rights  
-- **Stats** — how many of each event type each artist has
+- **Stats** — how many of each event type each artist has  
+- **Preview** — see what the **HTML running order** will look like before you export or publish (see below)
 
 ![Schedule View](images/schedule-view.png)
 
-### Export a running order
+### Preview the running order (before you export)
+
+Use **Preview** when you want to double-check days, venues, and times against your source spreadsheet or PDF **without** saving a file yet.
+
+**Nav:** SCHEDULE → **Preview**
+
+1. Choose **Color** or **Black & white** (same choices as HTML export).
+2. Turn event types on or off with the chips — **Show** and **Special Event** are selected by default, same as export.
+3. Scroll through the layout and compare it to your source material.
+
+**Mac and iPad:** the preview appears inside the app (same scrollable page as HTML export).
+
+**Windows:** the app builds the same HTML and opens it in your **default web browser** automatically. Change filters or color in the app, then **refresh the browser tab** (or use **Open in browser again**) to see updates.
+
+Preview does **not** change your schedule data and does **not** publish anything — it is only for review.
+
+### Export a running order or QR poster
 
 On **Schedule → View**, choose **Export…** (on-screen button — there is no app File-menu export).
 
-#### Who this is for (important)
+#### Who exports are for (important)
 
-This is meant for **official festival admins / promoters**. You may publish the PDF or HTML as the festival’s **official** running order.
+**PDF and HTML running orders** are meant for **official festival admins / promoters**. You may publish those as the festival’s **official** running order.
 
-**Do not** circulate an export as a public substitute if the festival already has an official running-order PDF or web schedule. Unofficial volunteers should not compete with those materials.
+**Do not** circulate a running-order export as a public substitute if the festival already has an official PDF or web schedule. Unofficial volunteers should not compete with those materials.
 
-The export dialog reminds you of this when you save.
+**QR posters** help **app users who do not have internet access** load updated schedule information into the festival app. Official staff print a poster at the event (for example on the ship); fans scan the QR to import the schedule. The same tool covers small gaps (for example newly added **Clinics**) and major refreshes (for example a full **Storm Schedule**).
 
-#### How to export
+#### Running order (PDF or HTML)
 
 1. Choose **PDF** (best for printing / posting as a handout) or **HTML** (best for a screen or web page).
 2. Choose **Color** or **Black & white**. PDF starts in black-and-white; HTML starts in color.
@@ -268,7 +285,42 @@ In each event box, the **band or event name** appears first, with the **time und
 
 **PDF vs HTML in practice:** PDF is a standard printable letter page (one page per day). HTML is a wide, dark on-screen layout; busy days get a taller timeline so everything stays readable.
 
-#### Labels on the page
+**Tip:** use **Preview** first if you want to check the HTML layout on screen before exporting.
+
+#### QR poster (offline schedule update)
+
+Some festivals (for example **70,000 Tons**) let you print a **letter-size QR poster** so people **without Wi‑Fi or cell data** can still load schedule changes into the app. That might be a few missing events (clinics, meet and greets) or an entire revised schedule after a disruption — whatever is in the Testing schedule you export.
+
+The **QR poster** option appears in **Export…** only when your festival is set up for it. If you do not see it, your festival contact or app maintainer has not enabled QR schedule updates for that festival yet.
+
+**What you get**
+
+- A printable **PDF poster** with a **large schedule QR code** (the data fans scan inside the app).
+- When enabled for your festival, a **small “Camera app” QR** at the top that helps people open the in-app scanner quickly.
+- A short title you enter so the poster explains the update — for example **Clinic**, **Meet and Greet**, or **Storm Schedule** (default is “Schedule Update”).
+
+**How to export**
+
+1. On **Schedule → View**, choose **Export…**.
+2. Choose **QR poster**.
+3. Enter a **schedule update title** — this prints on the poster (default is “Schedule Update”).
+4. Save the PDF and print it at **100% scale** (do not “fit to page” — shrinking can make the QR hard to scan).
+
+**What goes into the QR**
+
+- The **full Testing schedule** currently loaded in the app (not filtered by event type like PDF/HTML export).
+- **Unofficial Event** and **Cruiser Organized** rows are left out on purpose.
+- The artist **lineup must be loaded** — the app needs band names in lineup order to build the QR. If export is disabled or errors, try **Load festival data** on Settings first.
+
+**What fans do with the poster**
+
+1. Open the **70K Bands** app (or your festival’s app if it supports QR schedule import).
+2. Go to **Preferences → Scan QR Code Schedule**.
+3. Scan the **large schedule QR** on the poster (optional: scan the small Camera-app QR first if one is printed).
+
+**PDF/HTML running order** — a timetable people can read on screen or on paper. **QR poster** — schedule data fans import into the app when they are offline.
+
+#### Labels on running-order exports
 
 - **Shows** and **Special Events** never get a type label (they’re the “normal” schedule look).
 - If you export **only** Clinics, Meet and Greets, or Unofficial Events, the day header says that type in plural (for example **CLINICS** or **MEET & GREETS**) and individual boxes stay unlabeled.
@@ -334,8 +386,9 @@ Use this only when you’ve been asked to, and only for messages that are **dire
 2. Add or edit **Artists** (and descriptions while adding when you can).
 3. Fix leftovers under **Descriptions** if needed.
 4. Enter **Schedule**.
-5. Preview in the fan app under Testing.
-6. Don’t touch Settings unless asked.
+5. Use **Preview** (or export HTML) to check the running order before publishing.
+6. Preview in the fan app under Testing.
+7. Don’t touch Settings unless asked.
 
 **People who Publish / send alerts**
 
@@ -359,6 +412,9 @@ Volunteers who can’t Publish still improve Testing for whoever does.
 | **Nothing to publish**             | Testing already matches Production — make and save changes in Testing first, then try again.                           |
 | No Edit / Attach Link on Descriptions | Need **write** access on the description **map** file, not just the artist list. Create Description still works — copy the URL for your map admin. |
 | Export vs official schedule        | Promoters may publish exports as the official running order. Don’t circulate one that competes with an existing official PDF or web schedule. |
+| No **QR poster** in Export         | Your festival may not support offline QR schedule updates yet — ask your app maintainer. You still need a loaded lineup (**Load festival data**). |
+| **Preview** on Windows opens a browser | Normal — same HTML as export. Refresh the tab after changing filters in the app. |
+| QR poster won’t scan well          | Print at **100% scale**; avoid shrinking the PDF to fit. Reprint if the schedule changed after you exported. |
 | No **Send alert**                  | Festival hasn’t enabled alerts for you, or alert folder isn’t set / shared for write.                                  |
 | Description won’t “stick” for fans | Usually fixed by adding it while creating the band, or asking someone with map write access to **Attach Link** with the URL you copied. |
 
