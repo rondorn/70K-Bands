@@ -330,7 +330,7 @@ class _NavBar extends StatelessWidget {
           label: 'Alerts',
           children: [
             _NavLink(
-              label: 'Send alert',
+              label: 'Send Alert',
               selected: section == AppSection.alerts,
               onTap: () => onSectionChanged(AppSection.alerts),
             ),
