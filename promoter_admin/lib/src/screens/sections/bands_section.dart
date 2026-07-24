@@ -6,6 +6,7 @@ import 'package:promoter_admin/src/models/festival_workspace.dart';
 import 'package:promoter_admin/src/services/band_discover_service.dart';
 import 'package:promoter_admin/src/services/description_map_service.dart';
 import 'package:promoter_admin/src/services/dropbox_api.dart';
+import 'package:promoter_admin/src/services/http_fetch.dart';
 import 'package:promoter_admin/src/services/lineup_service.dart';
 import 'package:promoter_admin/src/services/location_parse.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
@@ -58,7 +59,12 @@ class _BandsSectionState extends State<BandsSection> {
   String? _discoverPickListUrl;
   String? _discoverPickListLabel;
   int? _editingIndex;
-  bool _addDescription = false;
+  bool _showDescription = false;
+  bool _descriptionExists = false;
+  DescriptionMapEntry? _descriptionEntry;
+  bool _editDescriptionText = true;
+  bool _editDescriptionLink = false;
+  bool _loadingDescriptionText = false;
 
   final _name = TextEditingController();
   final _metalArchives = TextEditingController();
@@ -75,6 +81,7 @@ class _BandsSectionState extends State<BandsSection> {
   final _noteworthy = TextEditingController();
   final _priorYears = TextEditingController();
   final _description = TextEditingController();
+  final _descriptionUrl = TextEditingController();
 
   bool get _isEditing => _editingIndex != null;
   bool get _useCityState => widget.workspace.useCityStateField;
@@ -107,12 +114,12 @@ class _BandsSectionState extends State<BandsSection> {
       // Opening form from list Add (unless already editing).
       if (_editingIndex == null) {
         _clearForm();
-        _addDescription = false;
+        _resetDescriptionState();
       }
     }
     if (widget.tab == BandsTab.list && oldWidget.tab != BandsTab.list) {
       _editingIndex = null;
-      _addDescription = false;
+      _resetDescriptionState();
     }
   }
 
@@ -133,6 +140,7 @@ class _BandsSectionState extends State<BandsSection> {
     _noteworthy.dispose();
     _priorYears.dispose();
     _description.dispose();
+    _descriptionUrl.dispose();
     super.dispose();
   }
 
@@ -152,6 +160,7 @@ class _BandsSectionState extends State<BandsSection> {
     _noteworthy.clear();
     _priorYears.clear();
     _description.clear();
+    _descriptionUrl.clear();
     _discoverStatus = null;
     _discoverWarnings = null;
     _discoverPickListUrl = null;
@@ -184,6 +193,178 @@ class _BandsSectionState extends State<BandsSection> {
     final trimmed = raw.trim();
     if (trimmed.isEmpty) return '';
     return stateNameToCode(trimmed);
+  }
+
+  void _resetDescriptionState() {
+    _showDescription = false;
+    _descriptionExists = false;
+    _descriptionEntry = null;
+    _editDescriptionText = true;
+    _editDescriptionLink = false;
+    _loadingDescriptionText = false;
+    _description.clear();
+    _descriptionUrl.clear();
+  }
+
+  Future<void> _loadDescriptionStatusForBand(String name) async {
+    _resetDescriptionState();
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return;
+    try {
+      final entries = await widget.descriptionMapService.load(widget.workspace);
+      for (final entry in entries) {
+        if (entry.band.toLowerCase() != trimmed.toLowerCase()) continue;
+        if (entry.url.trim().isEmpty) continue;
+        if (!mounted) return;
+        setState(() {
+          _descriptionExists = true;
+          _descriptionEntry = entry;
+          _descriptionUrl.text = entry.url;
+        });
+        return;
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _loadDescriptionTextForEdit() async {
+    final entry = _descriptionEntry;
+    if (entry == null || entry.url.trim().isEmpty) return;
+    setState(() {
+      _loadingDescriptionText = true;
+      _error = null;
+    });
+    try {
+      final text = await widget.descriptionMapService.loadDescriptionText(
+        entry.url,
+        mapDate: entry.date,
+      );
+      if (!mounted) return;
+      setState(() {
+        _description.text = text;
+        _loadingDescriptionText = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loadingDescriptionText = false;
+        _error =
+            'Could not load description text (you can still edit the link): $e';
+        _editDescriptionText = false;
+        _editDescriptionLink = true;
+      });
+    }
+  }
+
+  void _toggleDescriptionSection(bool on) {
+    setState(() => _showDescription = on);
+    if (on &&
+        _isEditing &&
+        _descriptionExists &&
+        _description.text.trim().isEmpty &&
+        !_loadingDescriptionText) {
+      _loadDescriptionTextForEdit();
+    }
+  }
+
+  Future<String?> _promptDescriptionFolder() {
+    return showDropboxFolderPicker(
+      context: context,
+      dropboxApi: widget.dropboxApi,
+      title: 'Where should descriptions be saved?',
+    );
+  }
+
+  Future<({String? note, String? handoffLink})> _saveDescriptionChanges(
+    String name,
+  ) async {
+    if (!_showDescription) return (note: null, handoffLink: null);
+
+    final editingExisting = _isEditing && _descriptionExists;
+    if (editingExisting) {
+      if (!widget.workspace.canEditDescriptions) {
+        throw StateError(
+          'Description map write access is required to edit descriptions.',
+        );
+      }
+      if (widget.workspace.descriptionMapUrl.trim().isEmpty) {
+        throw StateError(
+          'Description map URL is not configured — Load festival data in Settings.',
+        );
+      }
+      if (!_editDescriptionText && !_editDescriptionLink) {
+        throw StateError(
+          'Choose Edit description text or Edit description link.',
+        );
+      }
+
+      var url = normalizeDropboxUrl(_descriptionUrl.text.trim());
+      if (url.isEmpty) url = _descriptionEntry?.url.trim() ?? '';
+
+      if (_editDescriptionLink) {
+        if (url.isEmpty) {
+          throw StateError('Dropbox URL is required.');
+        }
+        await widget.descriptionMapService.upsertMapEntry(
+          workspace: widget.workspace,
+          labelName: name,
+          url: url,
+          bumpDate: true,
+        );
+        return (
+          note: ' Description link updated.',
+          handoffLink: null,
+        );
+      }
+
+      final text = _description.text;
+      if (text.trim().isEmpty) {
+        throw StateError('Description text is required.');
+      }
+      if (url.isEmpty) {
+        throw StateError('No description URL to update.');
+      }
+      await widget.descriptionMapService.updateDescriptionTextInPlace(
+        workspace: widget.workspace,
+        labelName: name,
+        shareUrl: url,
+        text: text,
+      );
+      return (note: ' Description updated.', handoffLink: null);
+    }
+
+    final descriptionText = _description.text.trim();
+    if (descriptionText.isEmpty) {
+      return (note: null, handoffLink: null);
+    }
+
+    if (widget.workspace.canEditDescriptions) {
+      if (widget.workspace.descriptionMapUrl.trim().isEmpty) {
+        throw StateError(
+          'Description map URL is not configured — '
+          'Load festival data in Settings, or hide the description section.',
+        );
+      }
+      await widget.descriptionMapService.writeDescriptionAndUpsertMap(
+        workspace: widget.workspace,
+        labelName: name,
+        text: descriptionText,
+      );
+      return (
+        note: ' Description saved and added to the map.',
+        handoffLink: null,
+      );
+    }
+
+    final handoffLink =
+        await widget.descriptionMapService.writeDescriptionFileForUser(
+      labelName: name,
+      text: descriptionText,
+      promptForFolder: _promptDescriptionFolder,
+    );
+    return (
+      note: ' Description file saved — copy the link below for the description admin.',
+      handoffLink: handoffLink,
+    );
   }
 
   BandRow _rowFromForm(String name) {
@@ -351,49 +532,19 @@ class _BandsSectionState extends State<BandsSection> {
       // Keep file order as entered; alphabetical sorting is display-only.
       await widget.lineupService.save(widget.workspace, updated);
 
-      var descriptionNote = '';
-      String? handoffLink;
-      final wantDescription = _addDescription && !_isEditing;
-      final descriptionText = _description.text.trim();
-      if (wantDescription && descriptionText.isNotEmpty) {
-        if (widget.workspace.canEditDescriptions) {
-          if (widget.workspace.descriptionMapUrl.trim().isEmpty) {
-            throw StateError(
-              'Description map URL is not configured — '
-              'Load festival data in Settings, or uncheck Add description.',
-            );
-          }
-          await widget.descriptionMapService.writeDescriptionAndUpsertMap(
-            workspace: widget.workspace,
-            labelName: name,
-            text: descriptionText,
-          );
-          descriptionNote = ' Description saved and added to the map.';
-        } else {
-          handoffLink =
-              await widget.descriptionMapService.writeDescriptionFileForUser(
-            labelName: name,
-            text: descriptionText,
-            promptForFolder: () => showDropboxFolderPicker(
-              context: context,
-              dropboxApi: widget.dropboxApi,
-              title: 'Where should descriptions be saved?',
-            ),
-          );
-          descriptionNote =
-              ' Description file saved — copy the link below for the description admin.';
-        }
-      }
+      final descriptionResult = await _saveDescriptionChanges(name);
+      final descriptionNote = descriptionResult.note ?? '';
+      final handoffLink = descriptionResult.handoffLink;
 
       _clearForm();
       setState(() {
         _bands = updated;
         _saving = false;
         _editingIndex = null;
-        _addDescription = false;
+        _resetDescriptionState();
         _shareUrl = handoffLink;
         _message = editIdx != null
-            ? 'Updated “$name” in Testing artists.'
+            ? 'Updated “$name” in Testing artists.$descriptionNote'
             : 'Saved “$name” to Testing artists.$descriptionNote';
       });
       widget.onTabChanged(BandsTab.list);
@@ -409,7 +560,7 @@ class _BandsSectionState extends State<BandsSection> {
     if (!_canEdit) return;
     setState(() {
       _editingIndex = null;
-      _addDescription = false;
+      _resetDescriptionState();
       _error = null;
       _clearForm();
     });
@@ -422,10 +573,11 @@ class _BandsSectionState extends State<BandsSection> {
     final band = _bands[index];
     setState(() {
       _editingIndex = index;
-      _addDescription = false;
+      _resetDescriptionState();
       _error = null;
       _fillForm(band);
     });
+    _loadDescriptionStatusForBand(band.name);
     widget.onFormModeChanged(true);
     widget.onTabChanged(BandsTab.add);
   }
@@ -720,6 +872,142 @@ class _BandsSectionState extends State<BandsSection> {
     );
   }
 
+  Widget _buildDescriptionSection() {
+    final editingExisting = _isEditing && _descriptionExists;
+    final exposeLabel =
+        editingExisting ? 'Edit description' : 'Add description';
+
+    return FormRow(
+      label: 'Description',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CheckboxListTile(
+            contentPadding: EdgeInsets.zero,
+            controlAffinity: ListTileControlAffinity.leading,
+            value: _showDescription,
+            onChanged: (v) => _toggleDescriptionSection(v ?? false),
+            title: Text(
+              exposeLabel,
+              style: const TextStyle(
+                color: AppColors.heading,
+                fontSize: 15,
+              ),
+            ),
+            activeColor: AppColors.accent,
+          ),
+          if (!_showDescription)
+            HintText(
+              widget.workspace.canEditDescriptions
+                  ? 'Check to add or edit a band description here, or use the '
+                      'Descriptions section — both update the same map.'
+                  : 'Check to add a description file here (handoff link shown '
+                      'after save), or use the Descriptions section.',
+            ),
+          if (_showDescription && editingExisting) ...[
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              value: _editDescriptionText,
+              onChanged: widget.workspace.canEditDescriptions
+                  ? (v) {
+                      final on = v ?? false;
+                      setState(() {
+                        _editDescriptionText = on;
+                        if (on) _editDescriptionLink = false;
+                      });
+                      if (on &&
+                          _description.text.trim().isEmpty &&
+                          !_loadingDescriptionText) {
+                        _loadDescriptionTextForEdit();
+                      }
+                    }
+                  : null,
+              title: const Text(
+                'Edit description text',
+                style: TextStyle(color: AppColors.heading, fontSize: 15),
+              ),
+              activeColor: AppColors.accent,
+            ),
+            if (_editDescriptionText && !_editDescriptionLink)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _loadingDescriptionText
+                    ? const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.accent,
+                          ),
+                        ),
+                      )
+                    : TextField(
+                        controller: _description,
+                        maxLines: 12,
+                        minLines: 8,
+                        decoration: const InputDecoration(
+                          hintText: 'Band description text…',
+                        ),
+                      ),
+              ),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              value: _editDescriptionLink,
+              onChanged: widget.workspace.canEditDescriptions
+                  ? (v) {
+                      final on = v ?? false;
+                      setState(() {
+                        _editDescriptionLink = on;
+                        if (on) _editDescriptionText = false;
+                      });
+                    }
+                  : null,
+              title: const Text(
+                'Edit description link',
+                style: TextStyle(color: AppColors.heading, fontSize: 15),
+              ),
+              activeColor: AppColors.accent,
+            ),
+            if (_editDescriptionLink)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: TextField(
+                  controller: _descriptionUrl,
+                  decoration: const InputDecoration(
+                    hintText: 'https://www.dropbox.com/...',
+                  ),
+                ),
+              ),
+            if (widget.workspace.canEditDescriptions)
+              const HintText(
+                'Edit description text updates the file and bumps the cache '
+                'date. Edit description link only changes the map URL and '
+                'bumps the cache date — description text is left unchanged.',
+              ),
+          ] else if (_showDescription) ...[
+            const SizedBox(height: 6),
+            TextField(
+              controller: _description,
+              maxLines: 12,
+              minLines: 8,
+              decoration: const InputDecoration(
+                hintText: 'Band description text…',
+              ),
+            ),
+            HintText(
+              widget.workspace.canEditDescriptions
+                  ? 'Writes the description file and adds it to the '
+                      'description map automatically.'
+                  : 'Saves to your Dropbox folder; you will get a link to '
+                      'share with the description admin.',
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildForm() {
     return SingleChildScrollView(
       child: PortalPanel(
@@ -938,52 +1226,7 @@ class _BandsSectionState extends State<BandsSection> {
               label: 'Prior years',
               child: TextField(controller: _priorYears),
             ),
-            if (!_isEditing)
-              FormRow(
-                label: 'Description',
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    CheckboxListTile(
-                      contentPadding: EdgeInsets.zero,
-                      controlAffinity: ListTileControlAffinity.leading,
-                      value: _addDescription,
-                      onChanged: (v) =>
-                          setState(() => _addDescription = v ?? false),
-                      title: const Text(
-                        'Add description',
-                        style: TextStyle(color: AppColors.heading, fontSize: 15),
-                      ),
-                      activeColor: AppColors.accent,
-                    ),
-                    if (_addDescription) ...[
-                      const SizedBox(height: 6),
-                      TextField(
-                        controller: _description,
-                        maxLines: 8,
-                        minLines: 4,
-                        decoration: const InputDecoration(
-                          hintText: 'Band description text…',
-                        ),
-                      ),
-                      HintText(
-                        widget.workspace.canEditDescriptions
-                            ? 'Writes the description file and adds it to the '
-                                'description map automatically.'
-                            : 'Saves to your Dropbox folder; you will get a '
-                                'link to share with the description admin.',
-                      ),
-                    ] else
-                      HintText(
-                        widget.workspace.canEditDescriptions
-                            ? 'Check to enter a description that will be saved '
-                                'and mapped when you save this band.'
-                            : 'Check to enter a description file (map handoff '
-                                'link will be shown after save).',
-                      ),
-                  ],
-                ),
-              ),
+            _buildDescriptionSection(),
             const SizedBox(height: 8),
             Wrap(
               spacing: 10,
@@ -1000,7 +1243,7 @@ class _BandsSectionState extends State<BandsSection> {
                   onPressed: () {
                     setState(() {
                       _editingIndex = null;
-                      _addDescription = false;
+                      _resetDescriptionState();
                       _clearForm();
                     });
                     widget.onTabChanged(BandsTab.list);

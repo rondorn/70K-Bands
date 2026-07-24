@@ -124,7 +124,7 @@ class ScheduleService {
     '00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55',
   ];
 
-  static const lengths = ['45', '60', '90', ' '];
+  static const lengths = ['30', '45', '60', '90', ' '];
 
   /// Load the working schedule (local staging, seeded from Dropbox when needed).
   Future<List<ScheduleEvent>> load(FestivalWorkspace workspace) async {
