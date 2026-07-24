@@ -99,11 +99,15 @@ class _SettingsSectionState extends State<SettingsSection> {
   void initState() {
     super.initState();
     _name = TextEditingController(text: widget.workspace.festivalName);
-    _testing = TextEditingController(text: widget.workspace.testingPointerUrl);
-    _production = TextEditingController(
-      text: widget.workspace.productionPointerUrl,
+    _testing = TextEditingController(
+      text: displayShareUrl(widget.workspace.testingPointerUrl),
     );
-    _alertFolder = TextEditingController(text: widget.workspace.alertFolderUrl);
+    _production = TextEditingController(
+      text: displayShareUrl(widget.workspace.productionPointerUrl),
+    );
+    _alertFolder = TextEditingController(
+      text: displayShareUrl(widget.workspace.alertFolderUrl),
+    );
     _venues = TextEditingController(text: widget.workspace.venues.join('\n'));
     _dates = TextEditingController(text: widget.workspace.dates.join('\n'));
     _days = TextEditingController(text: widget.workspace.days.join('\n'));
@@ -118,7 +122,7 @@ class _SettingsSectionState extends State<SettingsSection> {
       ).join('\n'),
     );
     _festivalLogo = TextEditingController(
-      text: widget.workspace.festivalLogoUrl,
+      text: displayShareUrl(widget.workspace.festivalLogoUrl),
     );
     _canEditBands = widget.workspace.canEditBands;
     _canEditSchedule = widget.workspace.canEditSchedule;
@@ -163,14 +167,14 @@ class _SettingsSectionState extends State<SettingsSection> {
   void _syncControllersFromWorkspace() {
     final w = widget.workspace;
     if (_name.text != w.festivalName) _name.text = w.festivalName;
-    if (_testing.text != w.testingPointerUrl) {
-      _testing.text = w.testingPointerUrl;
+    if (_testing.text != displayShareUrl(w.testingPointerUrl)) {
+      _testing.text = displayShareUrl(w.testingPointerUrl);
     }
-    if (_production.text != w.productionPointerUrl) {
-      _production.text = w.productionPointerUrl;
+    if (_production.text != displayShareUrl(w.productionPointerUrl)) {
+      _production.text = displayShareUrl(w.productionPointerUrl);
     }
-    if (_alertFolder.text != w.alertFolderUrl) {
-      _alertFolder.text = w.alertFolderUrl;
+    if (_alertFolder.text != displayShareUrl(w.alertFolderUrl)) {
+      _alertFolder.text = displayShareUrl(w.alertFolderUrl);
     }
     final v = w.venues.join('\n');
     if (_venues.text != v) _venues.text = v;
@@ -184,8 +188,8 @@ class _SettingsSectionState extends State<SettingsSection> {
     if (_dateRollover.text != roll) _dateRollover.text = roll;
     final t = ScheduleValidation.withDefaultEventTypes(w.eventTypes).join('\n');
     if (_eventTypes.text != t) _eventTypes.text = t;
-    if (_festivalLogo.text != w.festivalLogoUrl) {
-      _festivalLogo.text = w.festivalLogoUrl;
+    if (_festivalLogo.text != displayShareUrl(w.festivalLogoUrl)) {
+      _festivalLogo.text = displayShareUrl(w.festivalLogoUrl);
     }
     _canEditBands = w.canEditBands;
     _canEditSchedule = w.canEditSchedule;
@@ -278,9 +282,9 @@ class _SettingsSectionState extends State<SettingsSection> {
           ? widget.activeFestivalId
           : widget.workspace.id,
       festivalName: _name.text.trim(),
-      testingPointerUrl: _testing.text.trim(),
-      productionPointerUrl: _production.text.trim(),
-      alertFolderUrl: _alertFolder.text.trim(),
+      testingPointerUrl: normalizeDropboxUrl(_testing.text.trim()),
+      productionPointerUrl: normalizeDropboxUrl(_production.text.trim()),
+      alertFolderUrl: normalizeDropboxUrl(_alertFolder.text.trim()),
       festivalLogoUrl: normalizeDropboxUrl(_festivalLogo.text.trim()),
       venues: _lines(_venues.text),
       dates: dates,
@@ -1342,6 +1346,7 @@ class _SettingsSectionState extends State<SettingsSection> {
                     'Dropbox pointer file for Testing. From your app developer, '
                     'or create one and send them the link. Used for artists / schedule / descriptions.',
                   ),
+                  const HintText(shareUrlNormalizationHint),
                 ],
               ),
             ),
@@ -1356,6 +1361,7 @@ class _SettingsSectionState extends State<SettingsSection> {
                     'Also used for venues / dates / days / event types on Load. '
                     'Your app developer may ask for this link.',
                   ),
+                  const HintText(shareUrlNormalizationHint),
                 ],
               ),
             ),
@@ -1369,7 +1375,7 @@ class _SettingsSectionState extends State<SettingsSection> {
                     maxLines: 2,
                     decoration: InputDecoration(
                       hintText:
-                          'https://www.dropbox.com/scl/fo/…/${FestivalCreateService.sanitizeFolderSegment(_name.text.isEmpty ? 'Festival' : _name.text)}_Alert_Files?rlkey=…&dl=0',
+                          'https://www.dropbox.com/scl/fo/…/${FestivalCreateService.sanitizeFolderSegment(_name.text.isEmpty ? 'Festival' : _name.text)}_Alert_Files?rlkey=…&raw=1',
                     ),
                   ),
                   const HintText(
@@ -1378,6 +1384,7 @@ class _SettingsSectionState extends State<SettingsSection> {
                     'Save requires write access when set. Update '
                     'message_queue.config.yaml dropbox_dir to the matching local sync path.',
                   ),
+                  const HintText(shareUrlNormalizationHint),
                   if (widget.dropboxConnected &&
                       _alertFolder.text.trim().isEmpty) ...[
                     const SizedBox(height: 8),
@@ -1410,7 +1417,7 @@ class _SettingsSectionState extends State<SettingsSection> {
                     'Optional Dropbox (or other) image link used only in PDF '
                     'and HTML schedule exports, where it replaces the festival '
                     'name at the top of each page. Prefer a PNG or JPEG. '
-                    'dl=0 share links are normalized to raw=1 on save.',
+                    '$shareUrlNormalizationHint',
                   ),
                 ],
               ),
@@ -1854,7 +1861,7 @@ class _ReadonlyLine extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: SelectableText(
-        '$label: ${value.isEmpty ? '(not set)' : value}',
+        '$label: ${value.isEmpty ? '(not set)' : displayShareUrl(value)}',
         style: const TextStyle(color: AppColors.muted, fontSize: 13),
       ),
     );

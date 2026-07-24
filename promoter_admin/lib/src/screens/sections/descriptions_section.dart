@@ -236,7 +236,7 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
     setState(() {
       _formMode = _FormMode.edit;
       _formLabel = row.name;
-      _url.text = row.entry!.url;
+      _url.text = displayShareUrl(row.entry!.url);
       _text.clear();
       _editText = true;
       _editLink = false;
@@ -325,7 +325,7 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
         );
         setState(() {
           _saving = false;
-          _shareUrl = shareUrl;
+          _shareUrl = displayShareUrl(shareUrl);
           _message =
               'Saved description for $label. Copy this link and send it to '
               'whoever maintains the description map.';
@@ -531,13 +531,13 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
           ),
           const SizedBox(height: 6),
           SelectableText(
-            _shareUrl!,
+            displayShareUrl(_shareUrl!),
             style: const TextStyle(color: AppColors.heading),
           ),
           const SizedBox(height: 8),
           OutlinedButton(
             onPressed: () async {
-              final url = _shareUrl!;
+              final url = displayShareUrl(_shareUrl!);
               await Clipboard.setData(ClipboardData(text: url));
               if (!mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
@@ -713,7 +713,9 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
                                                   ),
                                                 ] else
                                                   adminTableText(
-                                                    row.entry?.url ?? '',
+                                                    displayShareUrl(
+                                                      row.entry?.url ?? '',
+                                                    ),
                                                     maxWidth: 200,
                                                     style: const TextStyle(
                                                       color: AppColors.muted,
@@ -810,10 +812,7 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
                         hintText: 'https://www.dropbox.com/...',
                       ),
                     ),
-                    const HintText(
-                      'dl=0 is replaced with raw=1 automatically on save. '
-                      'Cache date is set so fan apps refresh.',
-                    ),
+                    const HintText(shareUrlNormalizationHint),
                   ],
                 ),
               ),
@@ -876,11 +875,17 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
                 FormRow(
                   label: 'Dropbox URL',
                   requiredField: true,
-                  child: TextField(
-                    controller: _url,
-                    decoration: const InputDecoration(
-                      hintText: 'https://www.dropbox.com/...',
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TextField(
+                        controller: _url,
+                        decoration: const InputDecoration(
+                          hintText: 'https://www.dropbox.com/...',
+                        ),
+                      ),
+                      const HintText(shareUrlNormalizationHint),
+                    ],
                   ),
                 ),
               const HintText(

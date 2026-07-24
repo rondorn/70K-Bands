@@ -32,9 +32,9 @@ class PointerService {
     var updated = workspace.copyWith(
       eventYear:
           pointer.eventYear.isNotEmpty ? pointer.eventYear : workspace.eventYear,
-      bandListUrl: pointer.artistUrl,
-      scheduleUrl: pointer.scheduleUrl,
-      descriptionMapUrl: pointer.descriptionMapUrl,
+      bandListUrl: normalizeDropboxUrl(pointer.artistUrl),
+      scheduleUrl: normalizeDropboxUrl(pointer.scheduleUrl),
+      descriptionMapUrl: normalizeDropboxUrl(pointer.descriptionMapUrl),
       allowCustomAlerts: pointer.allowCustomAlerts,
     );
     final override = updated.dataSourceYearOverride.trim();
@@ -96,12 +96,12 @@ class PointerService {
 
     return workspace.copyWith(
       dataSourceYearOverride: target,
-      bandListUrl: urls.artistUrl,
+      bandListUrl: normalizeDropboxUrl(urls.artistUrl),
       scheduleUrl: urls.scheduleUrl.isNotEmpty
-          ? urls.scheduleUrl
+          ? normalizeDropboxUrl(urls.scheduleUrl)
           : workspace.scheduleUrl,
       descriptionMapUrl: urls.descriptionMapUrl.isNotEmpty
-          ? urls.descriptionMapUrl
+          ? normalizeDropboxUrl(urls.descriptionMapUrl)
           : workspace.descriptionMapUrl,
     );
   }

@@ -36,7 +36,7 @@ When a newer version is available, update the same way you installed (Releases z
 | Area             | In plain terms                                                                                                              |
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | **Settings**     | One-time (or rare) festival setup: Dropbox login, Testing/Production links, optional announcement folder.                   |
-| **Artists**      | Build and edit the Testing lineup: add, change, or remove bands; export an HTML logo lineup. |
+| **Artists**      | Build and edit the Testing lineup: add, change, or remove bands; add or edit band descriptions; export an HTML logo lineup. |
 | **Descriptions** | Write or update the text fans read about a band (usually done when you add the band; you can also fix or add them later).   |
 | **Schedule**     | Enter shows and other events; browse the event list; preview the running-order layout; see simple stats; export PDF/HTML running order or a QR poster (official admins). |
 | **Publish**      | When Testing looks right, push your changes so most fans see them in Production. New bands can trigger a push notification. |
@@ -94,7 +94,7 @@ You’ll mainly use Settings once:
 - **Dropbox connection** — sign in with your personal account (see [Connecting Dropbox](#connecting-dropbox)).  
 - **Testing link** / **Production link** — the URLs you were given.  
 - **Alert folder** — only if your festival uses push announcements (optional). **Create alert folder on Dropbox** appears when you’re connected and the field is empty.  
-- **Festival logo** — optional image URL; a preview appears as you paste the link. Used on exported running-order pages.  
+- **Festival logo** — optional image URL; a preview appears as you paste the link. Used on exported running-order pages. Dropbox links you paste with `dl=0` are shown and saved as `raw=1` automatically.  
 - **Data files** — read-only list of the artists, schedule, and description map URLs the app is using. Festival owners with Testing-link write access also see **Testing vs Production files** controls (share or separate artists / description map) and **Add new year…**.  
 - **File access** — what you can edit (Artists, Schedule, Descriptions). Use **Refresh file access** if rights were just shared and buttons still look locked. Uncheck a row if detection is wrong or you don’t use that area.  
 - **Folder access** — (festival owners) invite collaborators by email to specific Dropbox folders (artists, schedule, descriptions, alerts, or master pointer files).  
@@ -142,7 +142,7 @@ See the Testing lineup (band, country, genre, noteworthy). Use **Refresh** if so
 4. If the app shows Metal Archives or MusicBrainz **links** (several possible matches), **open those links**, research which act is correct, paste the correct page URL into the **Metal Archives** or **MusicBrainz** field, then click **Discover** again.
 5. If you get **no usable results**, ask the band for details or do public research and fill the form yourself.
 6. Review every field. You may **edit, replace, clear, or add** any detail whenever you think it needs fixing (name, links, country, genre, noteworthy, and so on). Discover is a starting point, not the final word.
-7. Optional: check **Add description** and write the band blurb. If you have description-map write access, the text is saved and wired up for fans automatically. If not, the app saves a description file and shows a **URL to copy** — send that link to whoever maintains the description map.
+7. Optional — at the **bottom** of the form, check **Add description** and write the band blurb. If Settings → **File access** shows **write** on **Descriptions**, the text is saved for fans when you **Save to Testing**. If not, the app saves your text and shows a **link to copy** — send it to whoever maintains the description list.
 8. **Save to Testing**.
 
 ![Add Artist — Discover and fields](images/artists-add.png)
@@ -151,8 +151,22 @@ Discover will not guess when several bands share a name — that’s why step 4 
 
 ### Edit or remove a band
 
-- **Edit** — change details → **Save changes**. (To change the long description text later, use the **Descriptions** section.)  
+- **Edit** — change lineup details (name, links, country, genre, and so on). At the **bottom** of the same form you can add or change the band blurb (see below). When you’re done, **Save changes**.
 - **Delete** — remove the band from the Testing lineup (confirm first). That does not by itself send a “removed” notification to fans.
+
+#### Descriptions while you add or edit a band
+
+Scroll to the **bottom** of the add/edit form — after **Prior years**, before **Save**. You don’t have to open **Descriptions** unless you prefer that screen.
+
+| Situation | What to do |
+| --------- | ---------- |
+| **New band, no description yet** | Check **Add description**, type the blurb, then save the artist. |
+| **Existing band, no description yet** | Same — check **Add description** on the edit form. |
+| **Band already has a description** | Check **Edit description**. Then either **Edit description text** (rewrite the blurb) or **Edit description link** (point fans at a different description file on Dropbox). **Save changes** when the rest of the artist row is ready. |
+
+Both options under **Edit description** need the same **Descriptions** write access shown in Settings → **File access**. If you only have artist-list access, you can still **Add description** — the app gives you a **link to copy** for whoever maintains the description list.
+
+This is the **same text fans see** whether you write it here or under **Descriptions**. Many people add blurbs when they add the band; others batch-fix missing ones on the **Descriptions** list. Either way, fans see it in Testing after you save (and in Production after someone **Publish**es).
 
 ### Export the lineup
 
@@ -180,30 +194,33 @@ If you’ve configured a **Festival logo** under Settings, it appears at the top
 
 **Nav:** DESCRIPTIONS → **Descriptions**
 
-Use this when you need to:
+This screen lists **every artist** and whether they already have a fan-facing blurb. Use it when you want to scan the whole festival at once, or when you need **Attach Link** / **Delete** (those aren’t on the artist form).
 
-- Add a description for a band that already exists without one  
-- Fix or rewrite description text  
-- Connect an **existing** description link (instead of writing new text)  
-- Clean up bands that have a description but are no longer on the lineup  
+You can write or change the same blurbs **on the artist add/edit form** instead (see [Descriptions while you add or edit a band](#descriptions-while-you-add-or-edit-a-band)). Pick whichever screen fits your task.
 
-Most of the time, adding the description **while adding the band** is simpler — this screen is the follow-up tool.
+**When this list is handy**
 
-You’ll see who has a description and who doesn’t. Typical actions:
+- See who still needs a write-up  
+- **Attach Link** — a description file already exists on Dropbox; connect it to the right band *(Descriptions write access in Settings)*  
+- **Delete** — remove a band’s description from the festival list *(Descriptions write access)*  
+- Work straight down the lineup fixing text  
 
-- **Create Description** — write new text for an artist (always available if you can edit artists)  
-- **Attach Link** — connect a **band** to a description that **already exists** as a Dropbox link *(requires description-map write access)*  
-- **Edit** / **Delete** — change or remove a mapped description *(requires description-map write access)*  
+**Buttons on each row**
+
+- **Create Description** — write new text for an artist who doesn’t have one yet  
+- **Attach Link** — hook up an existing Dropbox description file to a band *(Descriptions write access)*  
+- **Edit** / **Delete** — change or remove a description *(Descriptions write access)*  
+
+When you **Edit** here, choose **Edit description text** or **Edit description link** — the same two choices as **Edit description** at the bottom of the artist form.
 
 ![Create Description](images/descriptions-create.png)
 
-### If you don’t have description-map write access
+### If Descriptions is locked for you
 
-Dropbox may give you edit rights on the **artist lineup** but not on the **description map** file. That is normal for split volunteer roles.
+Settings → **File access** may show **write** on **Artists** but not on **Descriptions**. That is normal when one person owns the lineup and another owns the write-ups.
 
-- You can still open **Descriptions** and use **Create Description** — the app writes a description file and shows a **share URL to copy** for the person who maintains the map.  
-- **Edit**, **Delete**, and **Attach Link** are not shown until you have map write access (or your festival contact shares that file with you and you **Refresh file access**).  
-- The same handoff applies when you check **Add description** while adding a band under **Artists**.
+- You can still use **Create Description** on this list, or **Add description** on the artist form — the app saves your text and shows a **link to copy**. Send that link to whoever maintains the description list.  
+- **Edit**, **Delete**, **Attach Link**, and **Edit description** on the artist form stay unavailable until your festival contact shares **edit** access on the description file with your Dropbox email, then you **Refresh file access** in Settings.
 
 ---
 
@@ -217,7 +234,7 @@ Saves upload to Testing in the background. On **View**, look for **Pending** / *
 
 ### Shows and band events
 
-Pick a **Band Name** from the Testing lineup, then venue, **Day**, start/end (or length), and optional **Notes**. **Date** fills from the Settings Days/Dates order and Date rollover when you pick Day or change start time — change it by hand if needed. The form remembers your last choices so you can enter several sets in a row. **Edit last entry** if you need a quick correction.
+Pick a **Band Name** from the Testing lineup, then venue, **Day**, start/end (or length), and optional **Notes**. **Length** presets include **30**, 45, 60, and 90 minutes (shows must be at least 30 minutes unless you skip validation). **Date** fills from the Settings Days/Dates order and Date rollover when you pick Day or change start time — change it by hand if needed. The form remembers your last choices so you can enter several sets in a row. **Edit last entry** if you need a quick correction.
 
 If validation complains but you’re sure the times are right, you can skip the check when that option is shown.
 
@@ -229,7 +246,7 @@ These are **not** tied to a lineup band:
 
 - Enter an **Event title** (this is the name fans see on the schedule)  
 - Pick **Event Type** (Special Event or Unofficial Event)  
-- Optional **Image URL** — paste a Dropbox or web image link; a **preview** appears below the field so you can confirm it looks right  
+- Optional **Image URL** — paste a Dropbox or web image link; a **preview** appears below the field so you can confirm it looks right. Dropbox `dl=0` links are shown and saved as `raw=1`.  
 - Optional **Description** — only if you have description-map write access; otherwise skip it or add a note elsewhere  
 - Then venue, **Day**, start/end (or length), and optional **Notes** as usual  
 
@@ -383,12 +400,11 @@ Use this only when you’ve been asked to, and only for messages that are **dire
 **Most editors**
 
 1. Connect Dropbox once; Load if links change.
-2. Add or edit **Artists** (and descriptions while adding when you can).
-3. Fix leftovers under **Descriptions** if needed.
-4. Enter **Schedule**.
-5. Use **Preview** (or export HTML) to check the running order before publishing.
-6. Preview in the fan app under Testing.
-7. Don’t touch Settings unless asked.
+2. Add or edit **Artists** — include descriptions at the bottom of the form when you’re ready, or use **Descriptions** for list-based work.
+3. Enter **Schedule**.
+4. Use **Preview** (or export HTML) to check the running order before publishing.
+5. Preview in the fan app under Testing.
+6. Don’t touch Settings unless asked.
 
 **People who Publish / send alerts**
 
@@ -410,13 +426,14 @@ Volunteers who can’t Publish still improve Testing for whoever does.
 | No Schedule **Entry**              | You can view only — need schedule edit rights.                                                                         |
 | No **Publish**                     | Need edit rights on at least Artists, Schedule, or Descriptions.                                                       |
 | **Nothing to publish**             | Testing already matches Production — make and save changes in Testing first, then try again.                           |
-| No Edit / Attach Link on Descriptions | Need **write** access on the description **map** file, not just the artist list. Create Description still works — copy the URL for your map admin. |
+| No **Edit description** on Artists      | Same as missing **Descriptions** write access in Settings → **File access**. **Add description** still works — copy the handoff link. |
+| No Edit / Attach Link on Descriptions | Need **write** on **Descriptions** in **File access**, not just **Artists**. **Create Description** and **Add description** still work — copy the URL for whoever maintains the description list. |
 | Export vs official schedule        | Promoters may publish exports as the official running order. Don’t circulate one that competes with an existing official PDF or web schedule. |
 | No **QR poster** in Export         | Your festival may not support offline QR schedule updates yet — ask your app maintainer. You still need a loaded lineup (**Load festival data**). |
 | **Preview** on Windows opens a browser | Normal — same HTML as export. Refresh the tab after changing filters in the app. |
 | QR poster won’t scan well          | Print at **100% scale**; avoid shrinking the PDF to fit. Reprint if the schedule changed after you exported. |
 | No **Send alert**                  | Festival hasn’t enabled alerts for you, or alert folder isn’t set / shared for write.                                  |
-| Description won’t “stick” for fans | Usually fixed by adding it while creating the band, or asking someone with map write access to **Attach Link** with the URL you copied. |
+| Description won’t show for fans      | Add or edit the blurb on **Artists** (**Add description** / **Edit description**) or under **Descriptions**, then save. With **Descriptions** write access it updates automatically; without it, copy the handoff link to whoever maintains that file. Someone with **Publish** rights must publish before most fans see it. |
 
 
 ---

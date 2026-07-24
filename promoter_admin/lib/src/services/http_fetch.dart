@@ -154,10 +154,59 @@ Future<void> invalidateCachedUrlText(String url) {
   return UrlTextCache.invalidate(url);
 }
 
+/// Shown on URL fields that auto-normalize Dropbox share links.
+const shareUrlNormalizationHint =
+    'Dropbox dl=0 links are shown and saved as raw=1.';
+
+bool isDropboxShareHost(String host) {
+  final h = host.toLowerCase();
+  return h == 'dropbox.com' ||
+      h.endsWith('.dropbox.com') ||
+      h.endsWith('.dropboxusercontent.com');
+}
+
+/// Normalize Dropbox share links for display and for save/fetch (dl=0 → raw=1).
+///
+/// Non-Dropbox URLs are returned unchanged.
 String normalizeDropboxUrl(String url) {
   var value = url.trim();
+  if (value.isEmpty) return value;
+
+  final lower = value.toLowerCase();
+  if (!lower.startsWith('http://') && !lower.startsWith('https://')) {
+    if (lower.startsWith('www.dropbox.com/') || lower.startsWith('dropbox.com/')) {
+      value = 'https://$value';
+    } else {
+      return value;
+    }
+  }
+
+  Uri uri;
+  try {
+    uri = Uri.parse(value);
+  } catch (_) {
+    return _legacyDropboxDlReplace(value);
+  }
+
+  if (!isDropboxShareHost(uri.host)) {
+    return value;
+  }
+
+  final params = Map<String, String>.from(uri.queryParameters);
+  if (params['dl'] == '0') {
+    params.remove('dl');
+    params['raw'] = '1';
+  }
+
+  return uri.replace(queryParameters: params).toString();
+}
+
+String _legacyDropboxDlReplace(String value) {
   if (value.contains('dl=0')) {
-    value = value.replaceAll('dl=0', 'raw=1');
+    return value.replaceAll('dl=0', 'raw=1');
   }
   return value;
 }
+
+/// Display text for share URLs in the admin UI (same rules as [normalizeDropboxUrl]).
+String displayShareUrl(String url) => normalizeDropboxUrl(url);

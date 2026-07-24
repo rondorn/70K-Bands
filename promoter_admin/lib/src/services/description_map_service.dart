@@ -285,7 +285,14 @@ class DescriptionMapService {
     for (final row in rows) {
       final band = (row['Band'] ?? '').trim();
       if (band.isEmpty || band.toLowerCase() == 'band') continue;
-      entries.add(DescriptionMapEntry.fromRow(row));
+      final parsed = DescriptionMapEntry.fromRow(row);
+      entries.add(
+        DescriptionMapEntry(
+          band: parsed.band,
+          url: normalizeDropboxUrl(parsed.url),
+          date: parsed.date,
+        ),
+      );
     }
     entries.sort((a, b) => a.band.toLowerCase().compareTo(b.band.toLowerCase()));
     return entries;

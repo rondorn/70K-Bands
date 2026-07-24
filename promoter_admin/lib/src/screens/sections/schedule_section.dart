@@ -558,7 +558,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
           : null;
       setState(() {
         _events = updated;
-        _shareUrl = handoffLink;
+        _shareUrl = handoffLink != null ? displayShareUrl(handoffLink) : null;
         _prepareNextEntry(
           saved: toSave,
           savedIndex: savedIndex,
@@ -626,7 +626,9 @@ class _ScheduleSectionState extends State<ScheduleSection> {
       if (nonBand) {
         _band = DropdownOptions.empty;
         _notes.text = e.band.trim();
-        _imageUrl.text = e.imageUrl.trim() == ' ' ? '' : e.imageUrl.trim();
+        final imageRaw = e.imageUrl.trim();
+        _imageUrl.text =
+            imageRaw.isEmpty || imageRaw == ' ' ? '' : displayShareUrl(imageRaw);
         _descriptionText.clear();
       } else {
         _band = DropdownOptions.pick(e.band, DropdownOptions.withEmpty(bands));
@@ -870,7 +872,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
           Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: Text(
-              'Working copy synced to: ${widget.workspace.scheduleUrl}',
+              'Working copy synced to: ${displayShareUrl(widget.workspace.scheduleUrl)}',
               style: const TextStyle(color: AppColors.muted, fontSize: 13),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -1244,13 +1246,13 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                     ),
                     const SizedBox(height: 6),
                     SelectableText(
-                      _shareUrl!,
+                      displayShareUrl(_shareUrl!),
                       style: const TextStyle(color: AppColors.heading),
                     ),
                     const SizedBox(height: 8),
                     OutlinedButton(
                       onPressed: () async {
-                        final url = _shareUrl!;
+                        final url = displayShareUrl(_shareUrl!);
                         await Clipboard.setData(ClipboardData(text: url));
                         if (!mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -1341,11 +1343,17 @@ class _ScheduleSectionState extends State<ScheduleSection> {
               ),
               FormRow(
                 label: 'Image URL',
-                child: TextField(
-                  controller: _imageUrl,
-                  decoration: const InputDecoration(
-                    hintText: 'https://www.dropbox.com/…?raw=1',
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: _imageUrl,
+                      decoration: const InputDecoration(
+                        hintText: 'https://www.dropbox.com/…?raw=1',
+                      ),
+                    ),
+                    const HintText(shareUrlNormalizationHint),
+                  ],
                 ),
               ),
               if (widget.workspace.canEditDescriptions)

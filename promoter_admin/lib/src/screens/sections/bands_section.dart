@@ -173,7 +173,7 @@ class _BandsSectionState extends State<BandsSection> {
     _musicBrainz.clear();
     _latestAlbum.clear();
     _site.text = (band.fields['officalSite'] ?? '').trim();
-    _image.text = (band.fields['imageUrl'] ?? '').trim();
+    _image.text = displayShareUrl((band.fields['imageUrl'] ?? '').trim());
     _youtube.text = (band.fields['youtube'] ?? '').trim();
     _wikipedia.text = (band.fields['wikipedia'] ?? '').trim();
     _country.text = band.country;
@@ -188,11 +188,23 @@ class _BandsSectionState extends State<BandsSection> {
     _discoverPickListLabel = null;
   }
 
-  /// Full US state names → two-letter codes (e.g. California → CA).
   String _normalizedState(String raw) {
     final trimmed = raw.trim();
     if (trimmed.isEmpty) return '';
     return stateNameToCode(trimmed);
+  }
+
+  String _normalizeBandImageUrl(String raw) {
+    if (raw.isEmpty) return ' ';
+    final lower = raw.toLowerCase();
+    if (lower.contains('dropbox.com')) {
+      var value = raw;
+      if (!lower.startsWith('http://') && !lower.startsWith('https://')) {
+        value = 'https://$value';
+      }
+      return normalizeDropboxUrl(value);
+    }
+    return raw;
   }
 
   void _resetDescriptionState() {
@@ -219,7 +231,7 @@ class _BandsSectionState extends State<BandsSection> {
         setState(() {
           _descriptionExists = true;
           _descriptionEntry = entry;
-          _descriptionUrl.text = entry.url;
+          _descriptionUrl.text = displayShareUrl(entry.url);
         });
         return;
       }
@@ -371,7 +383,7 @@ class _BandsSectionState extends State<BandsSection> {
     final fields = <String, String>{
       'bandName': name,
       'officalSite': _site.text.trim().isEmpty ? ' ' : _site.text.trim(),
-      'imageUrl': _image.text.trim().isEmpty ? ' ' : _image.text.trim(),
+      'imageUrl': _normalizeBandImageUrl(_image.text.trim()),
       'youtube': _youtube.text.trim().isEmpty ? ' ' : _youtube.text.trim(),
       'metalArchives': _metalArchives.text.trim(),
       'wikipedia':
@@ -542,7 +554,7 @@ class _BandsSectionState extends State<BandsSection> {
         _saving = false;
         _editingIndex = null;
         _resetDescriptionState();
-        _shareUrl = handoffLink;
+        _shareUrl = handoffLink != null ? displayShareUrl(handoffLink) : null;
         _message = editIdx != null
             ? 'Updated “$name” in Testing artists.$descriptionNote'
             : 'Saved “$name” to Testing artists.$descriptionNote';
@@ -651,7 +663,7 @@ class _BandsSectionState extends State<BandsSection> {
           Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: Text(
-              'Reading from: ${widget.workspace.bandListUrl}',
+              'Reading from: ${displayShareUrl(widget.workspace.bandListUrl)}',
               style: const TextStyle(color: AppColors.muted, fontSize: 13),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -677,13 +689,13 @@ class _BandsSectionState extends State<BandsSection> {
                 ),
                 const SizedBox(height: 6),
                 SelectableText(
-                  _shareUrl!,
+                  displayShareUrl(_shareUrl!),
                   style: const TextStyle(color: AppColors.heading),
                 ),
                 const SizedBox(height: 8),
                 OutlinedButton(
                   onPressed: () async {
-                    final url = _shareUrl!;
+                    final url = displayShareUrl(_shareUrl!);
                     await Clipboard.setData(ClipboardData(text: url));
                     if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -972,11 +984,17 @@ class _BandsSectionState extends State<BandsSection> {
             if (_editDescriptionLink)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
-                child: TextField(
-                  controller: _descriptionUrl,
-                  decoration: const InputDecoration(
-                    hintText: 'https://www.dropbox.com/...',
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: _descriptionUrl,
+                      decoration: const InputDecoration(
+                        hintText: 'https://www.dropbox.com/...',
+                      ),
+                    ),
+                    const HintText(shareUrlNormalizationHint),
+                  ],
                 ),
               ),
             if (widget.workspace.canEditDescriptions)
