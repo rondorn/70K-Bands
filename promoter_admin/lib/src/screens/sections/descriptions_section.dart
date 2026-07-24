@@ -6,6 +6,7 @@ import 'package:promoter_admin/src/services/dropbox_api.dart';
 import 'package:promoter_admin/src/services/http_fetch.dart';
 import 'package:promoter_admin/src/services/lineup_service.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
+import 'package:promoter_admin/src/widgets/admin_table_cells.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
 import 'package:promoter_admin/src/widgets/dropbox_folder_picker.dart';
 
@@ -594,15 +595,27 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
                                     horizontalMargin: 8,
                                     headingRowHeight: 40,
                                     dataRowMinHeight: 44,
-                                    dataRowMaxHeight: 56,
+                                    dataRowMaxHeight: adminTableRowHeight,
                                     headingRowColor: WidgetStateProperty.all(
                                       const Color(0xFF222222),
                                     ),
-                                    columns: const [
-                                      DataColumn(label: Text('Artist')),
-                                      DataColumn(label: Text('Status')),
-                                      DataColumn(label: Text('Cache date')),
-                                      DataColumn(label: Text('Actions')),
+                                    columns: [
+                                      DataColumn(
+                                        columnWidth: adminTableWideFlexColumn,
+                                        label: Text('Artist'),
+                                      ),
+                                      DataColumn(
+                                        columnWidth: adminTableIntrinsicColumn,
+                                        label: Text('Status'),
+                                      ),
+                                      DataColumn(
+                                        columnWidth: adminTableIntrinsicColumn,
+                                        label: Text('Cache date'),
+                                      ),
+                                      DataColumn(
+                                        columnWidth: adminTableWideActionsColumn,
+                                        label: adminTableActionsHeading(),
+                                      ),
                                     ],
                                     rows: [
                                       for (final row in _rows)
@@ -614,7 +627,7 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
                                           ),
                                           cells: [
                                             DataCell(
-                                              Text(
+                                              adminTableText(
                                                 row.name,
                                                 style: TextStyle(
                                                   color: row.hasDescription
@@ -627,12 +640,13 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
                                               ),
                                             ),
                                             DataCell(
-                                              Text(
+                                              adminTableText(
                                                 row.hasDescription
                                                     ? (row.inLineup
                                                         ? 'On map'
                                                         : 'On map (not in lineup)')
                                                     : 'No description',
+                                                maxWidth: 140,
                                                 style: TextStyle(
                                                   color: row.hasDescription
                                                       ? AppColors.label
@@ -641,8 +655,9 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
                                               ),
                                             ),
                                             DataCell(
-                                              Text(
+                                              adminTableText(
                                                 row.entry?.date ?? '—',
+                                                maxWidth: 100,
                                                 style: TextStyle(
                                                   color: row.hasDescription
                                                       ? AppColors.label
@@ -651,67 +666,60 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
                                               ),
                                             ),
                                             DataCell(
-                                              Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  if (!row.hasDescription) ...[
+                                              adminTableActionsCell(
+                                                [
+                                                if (!row.hasDescription) ...[
+                                                  OutlinedButton(
+                                                    style: _actionStyle,
+                                                    onPressed: _saving
+                                                        ? null
+                                                        : () =>
+                                                            _openAddDescription(
+                                                              row.name,
+                                                            ),
+                                                    child: const Text(
+                                                      'Create Description',
+                                                    ),
+                                                  ),
+                                                  if (_canEditMap)
                                                     OutlinedButton(
                                                       style: _actionStyle,
                                                       onPressed: _saving
                                                           ? null
                                                           : () =>
-                                                              _openAddDescription(
+                                                              _openAddLink(
                                                                 row.name,
                                                               ),
                                                       child: const Text(
-                                                        'Create Description',
+                                                        'Attach Link',
                                                       ),
                                                     ),
-                                                    if (_canEditMap) ...[
-                                                      const SizedBox(width: 6),
-                                                      OutlinedButton(
-                                                        style: _actionStyle,
-                                                        onPressed: _saving
-                                                            ? null
-                                                            : () =>
-                                                                _openAddLink(
-                                                                  row.name,
-                                                                ),
-                                                        child: const Text(
-                                                          'Attach Link',
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ] else if (_canEditMap) ...[
-                                                    OutlinedButton(
-                                                      style: _actionStyle,
-                                                      onPressed: _saving
-                                                          ? null
-                                                          : () =>
-                                                              _openEdit(row),
-                                                      child: const Text('Edit'),
+                                                ] else if (_canEditMap) ...[
+                                                  OutlinedButton(
+                                                    style: _actionStyle,
+                                                    onPressed: _saving
+                                                        ? null
+                                                        : () =>
+                                                            _openEdit(row),
+                                                    child: const Text('Edit'),
+                                                  ),
+                                                  OutlinedButton(
+                                                    style: _actionStyle,
+                                                    onPressed: _saving
+                                                        ? null
+                                                        : () =>
+                                                            _deleteRow(row),
+                                                    child: const Text('Delete'),
+                                                  ),
+                                                ] else
+                                                  adminTableText(
+                                                    row.entry?.url ?? '',
+                                                    maxWidth: 200,
+                                                    style: const TextStyle(
+                                                      color: AppColors.muted,
+                                                      fontSize: 12,
                                                     ),
-                                                    const SizedBox(width: 6),
-                                                    OutlinedButton(
-                                                      style: _actionStyle,
-                                                      onPressed: _saving
-                                                          ? null
-                                                          : () =>
-                                                              _deleteRow(row),
-                                                      child:
-                                                          const Text('Delete'),
-                                                    ),
-                                                  ] else
-                                                    Text(
-                                                      row.entry?.url ?? '',
-                                                      style: const TextStyle(
-                                                        color: AppColors.muted,
-                                                        fontSize: 12,
-                                                      ),
-                                                      maxLines: 1,
-                                                      overflow: TextOverflow
-                                                          .ellipsis,
-                                                    ),
+                                                  ),
                                                 ],
                                               ),
                                             ),

@@ -9,6 +9,7 @@ import 'package:promoter_admin/src/services/dropbox_api.dart';
 import 'package:promoter_admin/src/services/lineup_service.dart';
 import 'package:promoter_admin/src/services/location_parse.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
+import 'package:promoter_admin/src/widgets/admin_table_cells.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
 import 'package:promoter_admin/src/widgets/dropbox_folder_picker.dart';
 import 'package:promoter_admin/src/widgets/export_artists_dialog.dart';
@@ -598,7 +599,7 @@ class _BandsSectionState extends State<BandsSection> {
                                     horizontalMargin: 8,
                                     headingRowHeight: 40,
                                     dataRowMinHeight: 40,
-                                    dataRowMaxHeight: 48,
+                                    dataRowMaxHeight: adminTableRowHeight,
                                     dividerThickness: 1,
                                     border: TableBorder(
                                       horizontalInside: BorderSide(
@@ -613,72 +614,85 @@ class _BandsSectionState extends State<BandsSection> {
                                     headingRowColor: WidgetStateProperty.all(
                                       const Color(0xFF222222),
                                     ),
-                                    columns: const [
-                                      DataColumn(label: Text('Band')),
-                                      DataColumn(label: Text('Country')),
-                                      DataColumn(label: Text('Genre')),
-                                      DataColumn(label: Text('Noteworthy')),
-                                      DataColumn(label: Text('Actions')),
+                                    columns: [
+                                      DataColumn(
+                                        columnWidth: adminTableWideFlexColumn,
+                                        label: Text('Band'),
+                                      ),
+                                      DataColumn(
+                                        columnWidth: adminTableFlexColumn,
+                                        label: Text('Country'),
+                                      ),
+                                      DataColumn(
+                                        columnWidth: adminTableWideFlexColumn,
+                                        label: Text('Genre'),
+                                      ),
+                                      DataColumn(
+                                        columnWidth: adminTableWideFlexColumn,
+                                        label: Text('Noteworthy'),
+                                      ),
+                                      DataColumn(
+                                        columnWidth: adminTableActionsColumn,
+                                        label: adminTableActionsHeading(),
+                                      ),
                                     ],
                                     rows: [
                                       for (final i in order)
                                         DataRow(
                                           cells: [
-                                            DataCell(Text(_bands[i].name)),
-                                            DataCell(Text(_bands[i].country)),
-                                            DataCell(Text(_bands[i].genre)),
                                             DataCell(
-                                              Text(
+                                              adminTableText(_bands[i].name),
+                                            ),
+                                            DataCell(
+                                              adminTableText(_bands[i].country),
+                                            ),
+                                            DataCell(
+                                              adminTableText(_bands[i].genre),
+                                            ),
+                                            DataCell(
+                                              adminTableText(
                                                 _bands[i].noteworthy,
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
                                               ),
                                             ),
                                             DataCell(
-                                              Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  OutlinedButton(
-                                                    style: OutlinedButton
-                                                        .styleFrom(
-                                                      padding: const EdgeInsets
-                                                          .symmetric(
-                                                        horizontal: 12,
-                                                        vertical: 8,
-                                                      ),
-                                                      minimumSize: Size.zero,
-                                                      tapTargetSize:
-                                                          MaterialTapTargetSize
-                                                              .shrinkWrap,
+                                              adminTableActionsCell([
+                                                OutlinedButton(
+                                                  style: OutlinedButton
+                                                      .styleFrom(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 8,
                                                     ),
-                                                    onPressed: !_canEdit || _saving
-                                                        ? null
-                                                        : () => _startEdit(i),
-                                                    child: const Text('Edit'),
+                                                    minimumSize: Size.zero,
+                                                    tapTargetSize:
+                                                        MaterialTapTargetSize
+                                                            .shrinkWrap,
                                                   ),
-                                                  const SizedBox(width: 6),
-                                                  OutlinedButton(
-                                                    style: OutlinedButton
-                                                        .styleFrom(
-                                                      padding: const EdgeInsets
-                                                          .symmetric(
-                                                        horizontal: 12,
-                                                        vertical: 8,
-                                                      ),
-                                                      minimumSize: Size.zero,
-                                                      tapTargetSize:
-                                                          MaterialTapTargetSize
-                                                              .shrinkWrap,
+                                                  onPressed: !_canEdit || _saving
+                                                      ? null
+                                                      : () => _startEdit(i),
+                                                  child: const Text('Edit'),
+                                                ),
+                                                OutlinedButton(
+                                                  style: OutlinedButton
+                                                      .styleFrom(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 8,
                                                     ),
-                                                    onPressed: !_canEdit || _saving
-                                                        ? null
-                                                        : () =>
-                                                            _deleteBand(i),
-                                                    child:
-                                                        const Text('Delete'),
+                                                    minimumSize: Size.zero,
+                                                    tapTargetSize:
+                                                        MaterialTapTargetSize
+                                                            .shrinkWrap,
                                                   ),
-                                                ],
-                                              ),
+                                                  onPressed: !_canEdit || _saving
+                                                      ? null
+                                                      : () => _deleteBand(i),
+                                                  child: const Text('Delete'),
+                                                ),
+                                              ]),
                                             ),
                                           ],
                                         ),

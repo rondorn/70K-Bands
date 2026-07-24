@@ -14,6 +14,7 @@ import 'package:promoter_admin/src/services/schedule_service.dart';
 import 'package:promoter_admin/src/services/schedule_staging.dart';
 import 'package:promoter_admin/src/services/schedule_validation.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
+import 'package:promoter_admin/src/widgets/admin_table_cells.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
 import 'package:promoter_admin/src/widgets/dropbox_folder_picker.dart';
 import 'package:promoter_admin/src/widgets/export_schedule_dialog.dart';
@@ -909,7 +910,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                               horizontalMargin: 8,
                               headingRowHeight: 40,
                               dataRowMinHeight: 40,
-                              dataRowMaxHeight: 52,
+                              dataRowMaxHeight: adminTableRowHeight,
                               dividerThickness: 1,
                               border: TableBorder(
                                 horizontalInside: BorderSide(
@@ -926,16 +927,43 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                               headingRowColor: WidgetStateProperty.all(
                                 const Color(0xFF222222),
                               ),
-                              columns: const [
-                                DataColumn(label: Text('Sync')),
-                                DataColumn(label: Text('Band')),
-                                DataColumn(label: Text('Location')),
-                                DataColumn(label: Text('Date')),
-                                DataColumn(label: Text('Day')),
-                                DataColumn(label: Text('Start')),
-                                DataColumn(label: Text('End')),
-                                DataColumn(label: Text('Type')),
-                                DataColumn(label: Text('Actions')),
+                              columns: [
+                                DataColumn(
+                                  columnWidth: adminTableIntrinsicColumn,
+                                  label: Text('Sync'),
+                                ),
+                                DataColumn(
+                                  columnWidth: adminTableWideFlexColumn,
+                                  label: Text('Band'),
+                                ),
+                                DataColumn(
+                                  columnWidth: adminTableWideFlexColumn,
+                                  label: Text('Location'),
+                                ),
+                                DataColumn(
+                                  columnWidth: adminTableIntrinsicColumn,
+                                  label: Text('Date'),
+                                ),
+                                DataColumn(
+                                  columnWidth: adminTableIntrinsicColumn,
+                                  label: Text('Day'),
+                                ),
+                                DataColumn(
+                                  columnWidth: adminTableIntrinsicColumn,
+                                  label: Text('Start'),
+                                ),
+                                DataColumn(
+                                  columnWidth: adminTableIntrinsicColumn,
+                                  label: Text('End'),
+                                ),
+                                DataColumn(
+                                  columnWidth: adminTableIntrinsicColumn,
+                                  label: Text('Type'),
+                                ),
+                                DataColumn(
+                                  columnWidth: adminTableActionsColumn,
+                                  label: adminTableActionsHeading(),
+                                ),
                               ],
                               rows: [
                                 for (final i in order)
@@ -952,56 +980,81 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                                     }),
                                     cells: [
                                       DataCell(_syncChipFor(_events[i])),
-                                      DataCell(Text(_events[i].band)),
-                                      DataCell(Text(_events[i].location)),
-                                      DataCell(Text(_events[i].date)),
-                                      DataCell(Text(_events[i].day)),
-                                      DataCell(Text(_events[i].startTime)),
-                                      DataCell(Text(_events[i].endTime)),
-                                      DataCell(Text(_events[i].type)),
                                       DataCell(
-                                        Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            OutlinedButton(
-                                              style: OutlinedButton.styleFrom(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 12,
-                                                      vertical: 8,
-                                                    ),
-                                                minimumSize: Size.zero,
-                                                tapTargetSize:
-                                                    MaterialTapTargetSize
-                                                        .shrinkWrap,
-                                              ),
-                                              onPressed:
-                                                  !_canEdit || _committing
-                                                  ? null
-                                                  : () => _startEdit(i),
-                                              child: const Text('Edit'),
-                                            ),
-                                            const SizedBox(width: 6),
-                                            OutlinedButton(
-                                              style: OutlinedButton.styleFrom(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 12,
-                                                      vertical: 8,
-                                                    ),
-                                                minimumSize: Size.zero,
-                                                tapTargetSize:
-                                                    MaterialTapTargetSize
-                                                        .shrinkWrap,
-                                              ),
-                                              onPressed:
-                                                  !_canEdit || _committing
-                                                  ? null
-                                                  : () => _deleteEvent(i),
-                                              child: const Text('Delete'),
-                                            ),
-                                          ],
+                                        adminTableText(_events[i].band),
+                                      ),
+                                      DataCell(
+                                        adminTableText(_events[i].location),
+                                      ),
+                                      DataCell(
+                                        adminTableText(
+                                          _events[i].date,
+                                          maxWidth: 88,
                                         ),
+                                      ),
+                                      DataCell(
+                                        adminTableText(
+                                          _events[i].day,
+                                          maxWidth: 72,
+                                        ),
+                                      ),
+                                      DataCell(
+                                        adminTableText(
+                                          _events[i].startTime,
+                                          maxWidth: 64,
+                                        ),
+                                      ),
+                                      DataCell(
+                                        adminTableText(
+                                          _events[i].endTime,
+                                          maxWidth: 64,
+                                        ),
+                                      ),
+                                      DataCell(
+                                        adminTableText(
+                                          _events[i].type,
+                                          maxWidth: 100,
+                                        ),
+                                      ),
+                                      DataCell(
+                                        adminTableActionsCell([
+                                          OutlinedButton(
+                                            style: OutlinedButton.styleFrom(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 8,
+                                                  ),
+                                              minimumSize: Size.zero,
+                                              tapTargetSize:
+                                                  MaterialTapTargetSize
+                                                      .shrinkWrap,
+                                            ),
+                                            onPressed:
+                                                !_canEdit || _committing
+                                                ? null
+                                                : () => _startEdit(i),
+                                            child: const Text('Edit'),
+                                          ),
+                                          OutlinedButton(
+                                            style: OutlinedButton.styleFrom(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 8,
+                                                  ),
+                                              minimumSize: Size.zero,
+                                              tapTargetSize:
+                                                  MaterialTapTargetSize
+                                                      .shrinkWrap,
+                                            ),
+                                            onPressed:
+                                                !_canEdit || _committing
+                                                ? null
+                                                : () => _deleteEvent(i),
+                                            child: const Text('Delete'),
+                                          ),
+                                        ]),
                                       ),
                                     ],
                                   ),
@@ -1093,7 +1146,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                               horizontalMargin: 8,
                               headingRowHeight: 40,
                               dataRowMinHeight: 36,
-                              dataRowMaxHeight: 44,
+                              dataRowMaxHeight: adminTableRowHeight,
                               dividerThickness: 1,
                               border: TableBorder(
                                 horizontalInside: BorderSide(
@@ -1111,15 +1164,21 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                                 const Color(0xFF222222),
                               ),
                               columns: [
-                                const DataColumn(label: Text('Band')),
+                                DataColumn(
+                                  columnWidth: adminTableWideFlexColumn,
+                                  label: Text('Band'),
+                                ),
                                 for (final t in typeCols)
-                                  DataColumn(label: Text(t)),
+                                  DataColumn(
+                                    columnWidth: adminTableIntrinsicColumn,
+                                    label: Text(t),
+                                  ),
                               ],
                               rows: [
                                 for (final band in bands)
                                   DataRow(
                                     cells: [
-                                      DataCell(Text(band)),
+                                      DataCell(adminTableText(band)),
                                       for (final t in typeCols)
                                         DataCell(
                                           Text(
