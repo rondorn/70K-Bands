@@ -176,4 +176,48 @@ Alpha,Venue A,7/25/2026,Friday,20:30,21:30,Show, , ,
     expect(lines.single, contains('Beta'));
     expect(lines.single, contains('removed from Testing'));
   });
+
+  test('bandsCsvEquivalent ignores trailing comma on empty last column', () {
+    const production =
+        'bandName,country,genre,noteworthy,priorYears\n'
+        'Onslaught,UK,Thrash Metal (later)\n'
+        'Panopticon,US,Atmospheric Black/Folk Metal\n';
+    const testing =
+        'bandName,country,genre,noteworthy,priorYears\n'
+        'Onslaught,UK,Thrash Metal (later),\n'
+        'Panopticon,US,Atmospheric Black/Folk Metal,\n';
+    expect(
+      PromoteService.bandsCsvEquivalent(
+        testingCsv: testing,
+        productionCsv: production,
+      ),
+      isTrue,
+    );
+  });
+
+  test('bandsCsvEquivalent detects real field edits', () {
+    const production = 'bandName,country\nAlpha,US\n';
+    const testing = 'bandName,country\nAlpha,CA\n';
+    expect(
+      PromoteService.bandsCsvEquivalent(
+        testingCsv: testing,
+        productionCsv: production,
+      ),
+      isFalse,
+    );
+  });
+
+  test('scheduleCsvEquivalent treats header-only CRLF vs LF as equal', () {
+    const production =
+        'Band,Location,Date,Day,Start Time,End Time,Type,Description URL,Notes,ImageURL\r\n';
+    const testing =
+        'Band,Location,Date,Day,Start Time,End Time,Type,Description URL,Notes,ImageURL\n';
+    expect(
+      PromoteService.scheduleCsvEquivalent(
+        testingCsv: testing,
+        productionCsv: production,
+      ),
+      isTrue,
+    );
+  });
 }

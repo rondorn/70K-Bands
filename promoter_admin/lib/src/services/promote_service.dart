@@ -486,6 +486,39 @@ class PromoteService {
     );
   }
 
+  /// True when parsed artist rows match (ignores trailing commas, row order, etc.).
+  static bool bandsCsvEquivalent({
+    required String testingCsv,
+    required String productionCsv,
+  }) {
+    return bandChangeDetailLines(
+      testingCsv: testingCsv,
+      productionCsv: productionCsv,
+    ).isEmpty;
+  }
+
+  /// True when parsed schedule events match (ignores header/empty-file formatting).
+  static bool scheduleCsvEquivalent({
+    required String testingCsv,
+    required String productionCsv,
+  }) {
+    return scheduleChangeDetailLines(
+      testingCsv: testingCsv,
+      productionCsv: productionCsv,
+    ).isEmpty;
+  }
+
+  /// True when parsed description map rows match.
+  static bool mapCsvEquivalent({
+    required String testingCsv,
+    required String productionCsv,
+  }) {
+    return mapChangeDetailLines(
+      testingCsv: testingCsv,
+      productionCsv: productionCsv,
+    ).isEmpty;
+  }
+
   static List<String> _formatChangeGroups({
     required String label,
     required List<String> added,
@@ -675,7 +708,10 @@ class PromoteService {
       diff.bandsTesting = countCsvRows(bands.testing!);
       diff.bandsProduction = countCsvRows(bands.production!);
       diff.bandsContentDiffer = !diff.artistsShared &&
-          !_sameCsvText(bands.testing!, bands.production!);
+          !bandsCsvEquivalent(
+            testingCsv: bands.testing!,
+            productionCsv: bands.production!,
+          );
       if (includeChangeDetails) {
         diff.addedBandNames = addedBandsFromCsv(
           testingCsv: bands.testing!,
@@ -705,7 +741,10 @@ class PromoteService {
       diff.eventsTesting = countCsvRows(schedule.testing!);
       diff.eventsProduction = countCsvRows(schedule.production!);
       diff.eventsContentDiffer = !diff.scheduleShared &&
-          !_sameCsvText(schedule.testing!, schedule.production!);
+          !scheduleCsvEquivalent(
+            testingCsv: schedule.testing!,
+            productionCsv: schedule.production!,
+          );
       if (includeChangeDetails &&
           diff.eventsContentDiffer &&
           !diff.scheduleShared) {
@@ -725,7 +764,10 @@ class PromoteService {
       diff.mapRowsTesting = countCsvRows(map.testing!);
       diff.mapRowsProduction = countCsvRows(map.production!);
       diff.mapContentDiffer = !diff.mapShared &&
-          !_sameCsvText(map.testing!, map.production!);
+          !mapCsvEquivalent(
+            testingCsv: map.testing!,
+            productionCsv: map.production!,
+          );
       if (includeChangeDetails && diff.mapContentDiffer && !diff.mapShared) {
         diff.changeDetailLines.addAll(
           mapChangeDetailLines(
@@ -761,13 +803,6 @@ class PromoteService {
       artistsTestingCsvOverride: artistsTestingCsvOverride,
       descriptionMapTestingCsvOverride: descriptionMapTestingCsvOverride,
     );
-  }
-
-  /// Normalize line endings / trailing whitespace for CSV content equality.
-  static bool _sameCsvText(String a, String b) {
-    String norm(String raw) =>
-        raw.replaceAll('\r\n', '\n').replaceAll('\r', '\n').trimRight();
-    return norm(a) == norm(b);
   }
 
   /// Copy testing CSV contents onto production files in place.
