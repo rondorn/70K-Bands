@@ -41,6 +41,7 @@ class DescriptionsSection extends StatefulWidget {
     required this.onConnectDropbox,
     this.prefillLabel,
     this.onPrefillConsumed,
+    this.onTestingDataChanged,
   });
 
   final FestivalWorkspace workspace;
@@ -54,6 +55,7 @@ class DescriptionsSection extends StatefulWidget {
   final Future<void> Function() onConnectDropbox;
   final String? prefillLabel;
   final VoidCallback? onPrefillConsumed;
+  final VoidCallback? onTestingDataChanged;
 
   @override
   State<DescriptionsSection> createState() => _DescriptionsSectionState();
@@ -316,6 +318,7 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
           _shareUrl = null;
         });
         widget.onTabChanged(DescriptionsTab.list);
+        widget.onTestingDataChanged?.call();
       } else {
         shareUrl =
             await widget.descriptionMapService.writeDescriptionFileForUser(
@@ -369,6 +372,7 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
         _message = 'Added description link for $label.';
       });
       widget.onTabChanged(DescriptionsTab.list);
+      widget.onTestingDataChanged?.call();
     } catch (e) {
       setState(() {
         _saving = false;
@@ -441,6 +445,7 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
             : 'Updated description for $label.';
       });
       widget.onTabChanged(DescriptionsTab.list);
+      widget.onTestingDataChanged?.call();
     } catch (e) {
       setState(() {
         _saving = false;
@@ -491,6 +496,7 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
         _saving = false;
         _message = 'Removed “${row.name}” from the description map.';
       });
+      widget.onTestingDataChanged?.call();
     } catch (e) {
       setState(() {
         _saving = false;

@@ -29,6 +29,7 @@ class BandsSection extends StatefulWidget {
     required this.onFormModeChanged,
     required this.dropboxConnected,
     required this.onConnectDropbox,
+    this.onTestingDataChanged,
   });
 
   final FestivalWorkspace workspace;
@@ -40,6 +41,7 @@ class BandsSection extends StatefulWidget {
   final ValueChanged<bool> onFormModeChanged;
   final bool dropboxConnected;
   final Future<void> Function() onConnectDropbox;
+  final VoidCallback? onTestingDataChanged;
 
   @override
   State<BandsSection> createState() => _BandsSectionState();
@@ -560,6 +562,7 @@ class _BandsSectionState extends State<BandsSection> {
             : 'Saved “$name” to Testing artists.$descriptionNote';
       });
       widget.onTabChanged(BandsTab.list);
+      widget.onTestingDataChanged?.call();
     } catch (e) {
       setState(() {
         _saving = false;
@@ -632,6 +635,7 @@ class _BandsSectionState extends State<BandsSection> {
         _saving = false;
         _message = 'Removed “${band.name}” from Testing artists.';
       });
+      widget.onTestingDataChanged?.call();
     } catch (e) {
       setState(() {
         _saving = false;

@@ -34,7 +34,7 @@ class ScheduleEvent {
   Map<String, String> asRow() => {
         'Band': band,
         'Location': location,
-        'Date': date,
+        'Date': DayDateAlignment.normalizeDate(date),
         'Day': day,
         'Start Time': startTime,
         'End Time': endTime,
@@ -48,7 +48,7 @@ class ScheduleEvent {
     return ScheduleEvent(
       band: (row['Band'] ?? '').trim(),
       location: (row['Location'] ?? '').trim(),
-      date: (row['Date'] ?? '').trim(),
+      date: DayDateAlignment.normalizeDate((row['Date'] ?? '').trim()),
       day: (row['Day'] ?? '').trim(),
       startTime: (row['Start Time'] ?? '').trim(),
       endTime: (row['End Time'] ?? '').trim(),

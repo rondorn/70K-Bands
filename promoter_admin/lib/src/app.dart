@@ -12,6 +12,8 @@ import 'package:promoter_admin/src/services/festival_create_service.dart';
 import 'package:promoter_admin/src/services/festival_folder_path_cache.dart';
 import 'package:promoter_admin/src/services/lineup_service.dart';
 import 'package:promoter_admin/src/services/pointer_service.dart';
+import 'package:promoter_admin/src/services/promote_service.dart';
+import 'package:promoter_admin/src/services/publish_status_service.dart';
 import 'package:promoter_admin/src/services/schedule_service.dart';
 import 'package:promoter_admin/src/services/workspace_store.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
@@ -42,6 +44,17 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
   late final DescriptionMapService _descriptions = DescriptionMapService(
     pointerService: _pointers,
     dropboxApi: _dropboxApi,
+  );
+  late final PromoteService _promote = PromoteService(
+    pointerService: _pointers,
+    dropboxApi: _dropboxApi,
+  );
+  late final PublishStatusService _publishStatus = PublishStatusService(
+    promoteService: _promote,
+    pointerService: _pointers,
+    scheduleService: _schedule,
+    lineupService: _lineup,
+    descriptionMapService: _descriptions,
   );
 
   bool _dropboxConnected = false;
@@ -86,7 +99,33 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
       _dropboxLabel = label;
     });
     if (connected) {
-      unawaited(_validateFolderPathCacheInBackground(registry.activeFestivalId));
+      unawaited(_refreshFestivalDataOnLaunch(registry));
+    }
+  }
+
+  /// Re-resolve Dropbox file URLs and start a background publish-status check.
+  Future<void> _refreshFestivalDataOnLaunch(FestivalRegistry registry) async {
+    var active = registry.active;
+    if (active.testingPointerUrl.trim().isEmpty) return;
+    try {
+      active = active.productionPointerUrl.trim().isEmpty
+          ? await _pointers.applyTestingPointer(active, forceRefresh: true)
+          : await _pointers.applyPointers(active, forceRefresh: true);
+      if (!mounted) return;
+      final updated = registry.upsertActive(active);
+      await _store.saveRegistry(updated);
+      setState(() => _registry = updated);
+      _publishStatus.bind(
+        workspace: updated.active,
+        dropboxConnected: _dropboxConnected,
+      );
+      unawaited(_validateFolderPathCacheInBackground(updated.activeFestivalId));
+    } catch (_) {
+      if (!mounted) return;
+      _publishStatus.bind(
+        workspace: registry.active,
+        dropboxConnected: _dropboxConnected,
+      );
     }
   }
 
@@ -145,9 +184,16 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
         if (current.canEditSchedule && current.scheduleUrl.trim().isNotEmpty) {
           await _schedule.flushSync(current);
         }
+        if (current.canEditBands && current.bandListUrl.trim().isNotEmpty) {
+          await _lineup.flushSync(current);
+        }
+        if (current.canEditDescriptions &&
+            current.descriptionMapUrl.trim().isNotEmpty) {
+          await _descriptions.flushSync(current);
+        }
       } catch (e) {
         _messengerKey.currentState?.showSnackBar(
-          SnackBar(content: Text('Schedule sync before switch failed: $e')),
+          SnackBar(content: Text('Testing sync before switch failed: $e')),
         );
       }
       await _store.saveRegistry(
@@ -159,6 +205,11 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
     final registry = await _store.switchActive(festivalId);
     setState(() => _registry = registry);
     unawaited(_validateFolderPathCacheInBackground(festivalId));
+    final active = registry.active;
+    _publishStatus.bind(
+      workspace: active,
+      dropboxConnected: _dropboxConnected,
+    );
   }
 
   /// Re-probe Dropbox write flags for [festivalId] without blocking the UI.
@@ -214,10 +265,13 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
         _pendingDropboxOnboarding = false;
       });
       final active = _workspace;
-      if (active != null && _workspaceHasFolderUrls(active)) {
-        final festivalId = _registry?.activeFestivalId ?? active.id;
-        if (festivalId.isNotEmpty) {
-          unawaited(_validateFolderPathCacheInBackground(festivalId));
+      if (active != null) {
+        _publishStatus.bind(workspace: active, dropboxConnected: true);
+        if (_workspaceHasFolderUrls(active)) {
+          final festivalId = _registry?.activeFestivalId ?? active.id;
+          if (festivalId.isNotEmpty) {
+            unawaited(_validateFolderPathCacheInBackground(festivalId));
+          }
         }
       }
       if (!finishingOnboarding) {
@@ -291,6 +345,7 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
                   lineupService: _lineup,
                   scheduleService: _schedule,
                   descriptionMapService: _descriptions,
+                  publishStatusService: _publishStatus,
                   dropboxConnected: _dropboxConnected,
                   dropboxLabel: _dropboxLabel,
                   dropboxConnecting: _connecting,

@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:promoter_admin/src/models/festival_workspace.dart';
+import 'package:promoter_admin/src/services/csv_staging.dart';
 import 'package:promoter_admin/src/services/csv_util.dart';
 import 'package:promoter_admin/src/services/dropbox_api.dart';
 import 'package:promoter_admin/src/services/http_fetch.dart';
@@ -36,11 +38,49 @@ class DescriptionMapService {
     required this.pointerService,
     required this.dropboxApi,
     UserDescriptionFolderStore? userFolderStore,
-  }) : userFolderStore = userFolderStore ?? UserDescriptionFolderStore();
+    CsvStagingCoordinator? staging,
+  })  : userFolderStore = userFolderStore ?? UserDescriptionFolderStore(),
+        staging = staging ??
+            CsvStagingCoordinator(
+              dropboxApi: dropboxApi,
+              channelSuffix: 'description_map',
+              displayName: 'Description map',
+              resolveUrl: (workspace) async {
+                var url = workspace.descriptionMapUrl.trim();
+                if (url.isEmpty) {
+                  final refreshed = await pointerService.applyTestingPointer(
+                    workspace,
+                  );
+                  url = refreshed.descriptionMapUrl.trim();
+                }
+                if (url.isEmpty) {
+                  throw StateError(
+                    'Testing pointer has no Current::descriptionMap.',
+                  );
+                }
+                return url;
+              },
+              pendingChangeCounter: (stagingCsv, syncedCsv) async {
+                return CsvStagingCoordinator.pendingRowKeyCount(
+                  stagingCsv: stagingCsv,
+                  syncedCsv: syncedCsv,
+                  keyColumn: 'Band',
+                  skipKeyLower: 'band',
+                );
+              },
+            );
 
   final PointerService pointerService;
   final DropboxApi dropboxApi;
   final UserDescriptionFolderStore userFolderStore;
+  final CsvStagingCoordinator staging;
+
+  CsvSyncStatus get syncStatus => staging.status;
+
+  void addSyncListener(VoidCallback listener) => staging.addListener(listener);
+
+  void removeSyncListener(VoidCallback listener) =>
+      staging.removeListener(listener);
 
   static const columns = ['Band', 'URL', 'Date'];
 
@@ -48,18 +88,30 @@ class DescriptionMapService {
     FestivalWorkspace workspace, {
     bool forceRefresh = false,
   }) async {
-    final url = await _mapUrl(workspace, forceRefresh: forceRefresh);
-    final text = await fetchUrlText(url, forceRefresh: forceRefresh);
+    final text = forceRefresh
+        ? await staging.reloadFromPublished(
+            workspace,
+            forceRefresh: true,
+          )
+        : await staging.loadWorkingCsv(workspace);
     return parseEntries(text);
   }
 
+  /// Save map CSV locally and queue background Dropbox sync.
+  ///
+  /// Individual description `.txt` files still upload immediately via
+  /// [writeDescriptionFile] and related helpers.
   Future<void> save(
     FestivalWorkspace workspace,
     List<DescriptionMapEntry> entries,
   ) async {
-    final url = await _mapUrl(workspace);
-    await dropboxApi.uploadTextInPlace(url, toCsv(entries));
+    await staging.saveLocalAndQueue(workspace, toCsv(entries));
   }
+
+  Future<void> flushSync(FestivalWorkspace workspace) =>
+      staging.flushSync(workspace);
+
+  void dispose() => staging.dispose();
 
   /// Writes a description .txt beside the map file and returns a share URL.
   Future<String> writeDescriptionFile({
@@ -185,7 +237,6 @@ class DescriptionMapService {
       url: url,
       bumpDate: true,
       explicitDate: newDate,
-      forceRefreshMap: true,
     );
     await putCachedUrlText(descriptionTextCacheKey(url, newDate), text);
     await invalidateCachedUrlText(url);
@@ -207,7 +258,7 @@ class DescriptionMapService {
     }
     final entries = await load(
       workspace,
-      forceRefresh: bumpDate && forceRefreshMap,
+      forceRefresh: forceRefreshMap,
     );
     final updated = List<DescriptionMapEntry>.from(entries);
     final idx = updated.indexWhere(

@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:promoter_admin/src/models/festival_workspace.dart';
+import 'package:promoter_admin/src/services/csv_staging.dart';
 import 'package:promoter_admin/src/services/csv_util.dart';
 import 'package:promoter_admin/src/services/dropbox_api.dart';
 import 'package:promoter_admin/src/services/pointer_service.dart';
@@ -8,10 +10,45 @@ class LineupService {
   LineupService({
     required this.pointerService,
     required this.dropboxApi,
-  });
+    CsvStagingCoordinator? staging,
+  }) : staging = staging ??
+            CsvStagingCoordinator(
+              dropboxApi: dropboxApi,
+              channelSuffix: 'artists',
+              displayName: 'Artists',
+              resolveUrl: (workspace) async {
+                var url = workspace.bandListUrl.trim();
+                if (url.isEmpty) {
+                  final refreshed = await pointerService.applyTestingPointer(
+                    workspace,
+                  );
+                  url = refreshed.bandListUrl.trim();
+                }
+                if (url.isEmpty) {
+                  throw StateError('Testing pointer has no Current::artistUrl.');
+                }
+                return url;
+              },
+              pendingChangeCounter: (stagingCsv, syncedCsv) async {
+                return CsvStagingCoordinator.pendingRowKeyCount(
+                  stagingCsv: stagingCsv,
+                  syncedCsv: syncedCsv,
+                  keyColumn: 'bandName',
+                  skipKeyLower: 'bandname',
+                );
+              },
+            );
 
   final PointerService pointerService;
   final DropboxApi dropboxApi;
+  final CsvStagingCoordinator staging;
+
+  CsvSyncStatus get syncStatus => staging.status;
+
+  void addSyncListener(VoidCallback listener) => staging.addListener(listener);
+
+  void removeSyncListener(VoidCallback listener) =>
+      staging.removeListener(listener);
 
   static const fields = [
     'bandName',
@@ -36,36 +73,30 @@ class LineupService {
     FestivalWorkspace workspace, {
     bool forceRefresh = false,
   }) async {
-    final url = await _lineupUrl(workspace, forceRefresh: forceRefresh);
-    return pointerService.fetchLineup(url, forceRefresh: forceRefresh);
+    final text = forceRefresh
+        ? await staging.reloadFromPublished(
+            workspace,
+            forceRefresh: true,
+          )
+        : await staging.loadWorkingCsv(workspace);
+    return PointerService.parseLineupCsv(text);
   }
 
+  /// Save locally immediately and queue a background Dropbox sync.
   Future<void> save(FestivalWorkspace workspace, List<BandRow> bands) async {
-    final url = await _lineupUrl(workspace);
-    final csv = toCsv(
-      bands,
-      useCityState: workspace.useCityStateField,
+    await staging.saveLocalAndQueue(
+      workspace,
+      toCsv(
+        bands,
+        useCityState: workspace.useCityStateField,
+      ),
     );
-    await dropboxApi.uploadTextInPlace(url, csv);
   }
 
-  Future<String> _lineupUrl(
-    FestivalWorkspace workspace, {
-    bool forceRefresh = false,
-  }) async {
-    var url = workspace.bandListUrl.trim();
-    if (url.isEmpty) {
-      final refreshed = await pointerService.applyTestingPointer(
-        workspace,
-        forceRefresh: forceRefresh,
-      );
-      url = refreshed.bandListUrl.trim();
-    }
-    if (url.isEmpty) {
-      throw StateError('Testing pointer has no Current::artistUrl.');
-    }
-    return url;
-  }
+  Future<void> flushSync(FestivalWorkspace workspace) =>
+      staging.flushSync(workspace);
+
+  void dispose() => staging.dispose();
 
   static String toCsv(
     List<BandRow> bands, {

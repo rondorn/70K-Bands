@@ -10,7 +10,9 @@ import 'package:promoter_admin/src/services/dropbox_api.dart';
 import 'package:promoter_admin/src/services/lineup_service.dart';
 import 'package:promoter_admin/src/services/portal_navigation_store.dart';
 import 'package:promoter_admin/src/services/pointer_service.dart';
+import 'package:promoter_admin/src/services/publish_status_service.dart';
 import 'package:promoter_admin/src/services/schedule_service.dart';
+import 'package:promoter_admin/src/services/csv_staging.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
 
 class PortalScreen extends StatefulWidget {
@@ -24,6 +26,7 @@ class PortalScreen extends StatefulWidget {
     required this.lineupService,
     required this.scheduleService,
     required this.descriptionMapService,
+    required this.publishStatusService,
     required this.dropboxConnected,
     required this.dropboxLabel,
     required this.dropboxConnecting,
@@ -43,6 +46,7 @@ class PortalScreen extends StatefulWidget {
   final LineupService lineupService;
   final ScheduleService scheduleService;
   final DescriptionMapService descriptionMapService;
+  final PublishStatusService publishStatusService;
   final bool dropboxConnected;
   final String dropboxLabel;
   final bool dropboxConnecting;
@@ -75,7 +79,43 @@ class _PortalScreenState extends State<PortalScreen> {
   @override
   void initState() {
     super.initState();
+    widget.publishStatusService.bind(
+      workspace: widget.workspace,
+      dropboxConnected: widget.dropboxConnected,
+    );
+    widget.scheduleService.addSyncListener(_onCsvSyncChanged);
+    widget.lineupService.addSyncListener(_onCsvSyncChanged);
+    widget.descriptionMapService.addSyncListener(_onCsvSyncChanged);
+    widget.publishStatusService.addListener(_onPublishStatusChanged);
     _restoreNavigation();
+  }
+
+  @override
+  void dispose() {
+    widget.scheduleService.removeSyncListener(_onCsvSyncChanged);
+    widget.lineupService.removeSyncListener(_onCsvSyncChanged);
+    widget.descriptionMapService.removeSyncListener(_onCsvSyncChanged);
+    widget.publishStatusService.removeListener(_onPublishStatusChanged);
+    super.dispose();
+  }
+
+  void _onCsvSyncChanged() {
+    final statuses = [
+      widget.scheduleService.syncStatus,
+      widget.lineupService.syncStatus,
+      widget.descriptionMapService.syncStatus,
+    ];
+    final anySyncing = statuses.any((s) => s.state == CsvSyncState.syncing);
+    final anyUnsynced = statuses.any((s) => s.hasUnsynced);
+    if (!anyUnsynced && !anySyncing) {
+      widget.publishStatusService.notifyTestingDataChanged();
+      return;
+    }
+    widget.publishStatusService.refreshPendingSyncState();
+  }
+
+  void _onPublishStatusChanged() {
+    if (mounted) setState(() {});
   }
 
   Future<void> _restoreNavigation() async {
@@ -141,6 +181,7 @@ class _PortalScreenState extends State<PortalScreen> {
       if (clearDescriptionPrefill) _descriptionPrefillLabel = null;
     });
     _persistNavigation();
+    widget.publishStatusService.requestCheck();
   }
 
   String get _festivalName => _ws.festivalName.trim();
@@ -287,6 +328,13 @@ class _PortalScreenState extends State<PortalScreen> {
   @override
   void didUpdateWidget(covariant PortalScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.workspace.id != widget.workspace.id ||
+        oldWidget.dropboxConnected != widget.dropboxConnected) {
+      widget.publishStatusService.bind(
+        workspace: widget.workspace,
+        dropboxConnected: widget.dropboxConnected,
+      );
+    }
     if (oldWidget.activeFestivalId != widget.activeFestivalId) {
       _restoreNavigation();
       return;
@@ -297,13 +345,17 @@ class _PortalScreenState extends State<PortalScreen> {
   @override
   Widget build(BuildContext context) {
     final titles = _titles;
+    final publishStatus = widget.publishStatusService.snapshot;
     final shell = AppShell(
       festivalName: _festivalName,
       heading: titles.heading,
       subheading: titles.subheading,
       metaLine: _metaLine,
+      publishStatus: publishStatus,
       section: _section,
       settingsPromoteSelected: _showPromote,
+      publishNavEnabled: publishStatus.canOpenPublish,
+      publishNavHighlight: publishStatus.canPublish,
       canEditBands: _ws.canEditBands,
       canEditSchedule: _ws.canEditSchedule,
       canEditDescriptions: _ws.canEditDescriptions,
@@ -347,6 +399,7 @@ class _PortalScreenState extends State<PortalScreen> {
   }
 
   Widget _buildBody() {
+    final publishStatus = widget.publishStatusService.snapshot;
     switch (_section) {
       case AppSection.settings:
         return SettingsSection(
@@ -356,10 +409,14 @@ class _PortalScreenState extends State<PortalScreen> {
           pointerService: widget.pointerService,
           dropboxApi: widget.dropboxApi,
           scheduleService: widget.scheduleService,
+          lineupService: widget.lineupService,
+          descriptionMapService: widget.descriptionMapService,
           dropboxConnected: widget.dropboxConnected,
           dropboxLabel: widget.dropboxLabel,
           dropboxConnecting: widget.dropboxConnecting,
           showPromote: _showPromote,
+          publishStatus: publishStatus,
+          publishStatusService: widget.publishStatusService,
           onShowPromote: (v) => setState(() => _showPromote = v),
           onWorkspaceChanged: widget.onWorkspaceChanged,
           onSwitchFestival: widget.onSwitchFestival,
@@ -385,6 +442,7 @@ class _PortalScreenState extends State<PortalScreen> {
           }),
           dropboxConnected: widget.dropboxConnected,
           onConnectDropbox: widget.onConnectDropbox,
+          onTestingDataChanged: widget.publishStatusService.notifyRecordSaved,
         );
       case AppSection.schedule:
         return ScheduleSection(
@@ -410,6 +468,7 @@ class _PortalScreenState extends State<PortalScreen> {
           dropboxConnected: widget.dropboxConnected,
           onConnectDropbox: widget.onConnectDropbox,
           onWorkspaceChanged: widget.onWorkspaceChanged,
+          onTestingDataChanged: widget.publishStatusService.notifyRecordSaved,
         );
       case AppSection.descriptions:
         return DescriptionsSection(
@@ -431,6 +490,7 @@ class _PortalScreenState extends State<PortalScreen> {
               setState(() => _descriptionPrefillLabel = null);
             }
           },
+          onTestingDataChanged: widget.publishStatusService.notifyRecordSaved,
         );
       case AppSection.alerts:
         return AlertsSection(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:promoter_admin/src/branding.dart';
+import 'package:promoter_admin/src/models/publish_status.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
 
 enum AppSection { settings, bands, schedule, descriptions, alerts }
@@ -15,10 +16,13 @@ class AppShell extends StatelessWidget {
     required this.heading,
     required this.subheading,
     required this.metaLine,
+    this.publishStatus = PublishStatusSnapshot.initial,
     required this.section,
     required this.onSectionChanged,
     required this.child,
     this.settingsPromoteSelected = false,
+    this.publishNavEnabled = true,
+    this.publishNavHighlight = false,
     this.onPromoteTap,
     this.canEditBands = true,
     this.canEditSchedule = true,
@@ -35,10 +39,13 @@ class AppShell extends StatelessWidget {
   final String heading;
   final String subheading;
   final String metaLine;
+  final PublishStatusSnapshot publishStatus;
   final AppSection section;
   final ValueChanged<AppSection> onSectionChanged;
   final Widget child;
   final bool settingsPromoteSelected;
+  final bool publishNavEnabled;
+  final bool publishNavHighlight;
   final VoidCallback? onPromoteTap;
   final bool canEditBands;
   final bool canEditSchedule;
@@ -75,12 +82,15 @@ class AppShell extends StatelessWidget {
                     heading: heading,
                     subheading: subheading,
                     metaLine: metaLine,
+                    publishStatus: publishStatus,
                   ),
                   const SizedBox(height: 12),
                   _NavBar(
                     section: section,
                     onSectionChanged: onSectionChanged,
                     settingsPromoteSelected: settingsPromoteSelected,
+                    publishNavEnabled: publishNavEnabled,
+                    publishNavHighlight: publishNavHighlight,
                     onPromoteTap: onPromoteTap,
                     canEditBands: canEditBands,
                     canEditSchedule: canEditSchedule,
@@ -110,12 +120,14 @@ class _Header extends StatelessWidget {
     required this.heading,
     required this.subheading,
     required this.metaLine,
+    required this.publishStatus,
   });
 
   final String festivalName;
   final String heading;
   final String subheading;
   final String metaLine;
+  final PublishStatusSnapshot publishStatus;
 
   @override
   Widget build(BuildContext context) {
@@ -144,6 +156,7 @@ class _Header extends StatelessWidget {
           ),
           const SizedBox(width: 18),
           Expanded(
+            flex: 3,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -191,9 +204,107 @@ class _Header extends StatelessWidget {
               ],
             ),
           ),
+          if (publishStatus.headline.isNotEmpty) ...[
+            const SizedBox(width: 16),
+            Expanded(
+              flex: 2,
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: _PublishStatusBadge(status: publishStatus),
+              ),
+            ),
+          ],
         ],
       ),
     );
+  }
+}
+
+class _PublishStatusBadge extends StatelessWidget {
+  const _PublishStatusBadge({required this.status});
+
+  final PublishStatusSnapshot status;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = _colorsFor(status.kind);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: colors.background,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: colors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            status.headline,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: colors.text,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              height: 1.35,
+            ),
+          ),
+          if (status.detail != null && status.detail!.trim().isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              status.detail!,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: colors.detail,
+                fontSize: 12,
+                height: 1.35,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  ({Color background, Color border, Color text, Color detail}) _colorsFor(
+    PublishStatusKind kind,
+  ) {
+    switch (kind) {
+      case PublishStatusKind.readyToPublish:
+      case PublishStatusKind.yearRollReady:
+        return (
+          background: AppColors.accent.withValues(alpha: 0.12),
+          border: AppColors.accent.withValues(alpha: 0.55),
+          text: AppColors.accent,
+          detail: AppColors.muted,
+        );
+      case PublishStatusKind.upToDate:
+        return (
+          background: AppColors.successBg,
+          border: AppColors.successBorder.withValues(alpha: 0.6),
+          text: AppColors.successText,
+          detail: AppColors.muted,
+        );
+      case PublishStatusKind.error:
+      case PublishStatusKind.blocked:
+        return (
+          background: AppColors.errorBg,
+          border: AppColors.errorBorder.withValues(alpha: 0.6),
+          text: AppColors.errorText,
+          detail: AppColors.muted,
+        );
+      case PublishStatusKind.checking:
+      case PublishStatusKind.scheduleSaving:
+      case PublishStatusKind.unknown:
+      case PublishStatusKind.notConfigured:
+        return (
+          background: AppColors.navPanel,
+          border: AppColors.navBorder,
+          text: AppColors.label,
+          detail: AppColors.muted,
+        );
+    }
   }
 }
 
@@ -202,6 +313,8 @@ class _NavBar extends StatelessWidget {
     required this.section,
     required this.onSectionChanged,
     required this.settingsPromoteSelected,
+    required this.publishNavEnabled,
+    required this.publishNavHighlight,
     required this.onPromoteTap,
     required this.canEditBands,
     required this.canEditSchedule,
@@ -217,6 +330,8 @@ class _NavBar extends StatelessWidget {
   final AppSection section;
   final ValueChanged<AppSection> onSectionChanged;
   final bool settingsPromoteSelected;
+  final bool publishNavEnabled;
+  final bool publishNavHighlight;
   final VoidCallback? onPromoteTap;
   final bool canEditBands;
   final bool canEditSchedule;
@@ -247,6 +362,8 @@ class _NavBar extends StatelessWidget {
               secondary: true,
               selected:
                   section == AppSection.settings && settingsPromoteSelected,
+              emphasized: publishNavHighlight,
+              enabled: publishNavEnabled,
               onTap: () {
                 onSectionChanged(AppSection.settings);
                 onPromoteTap?.call();
@@ -405,31 +522,39 @@ class _NavLink extends StatelessWidget {
     required this.onTap,
     this.selected = false,
     this.secondary = false,
+    this.emphasized = false,
+    this.enabled = true,
   });
 
   final String label;
   final VoidCallback onTap;
   final bool selected;
   final bool secondary;
+  final bool emphasized;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
-    final bg = selected
-        ? AppColors.accentHover
-        : (secondary ? AppColors.secondaryBtn : AppColors.accent);
+    final bg = !enabled
+        ? AppColors.secondaryBtn.withValues(alpha: 0.45)
+        : selected
+            ? AppColors.accentHover
+            : emphasized
+                ? AppColors.accent
+                : (secondary ? AppColors.secondaryBtn : AppColors.accent);
     return Material(
       color: bg,
       borderRadius: BorderRadius.circular(6),
       child: InkWell(
-        onTap: onTap,
+        onTap: enabled ? onTap : null,
         borderRadius: BorderRadius.circular(6),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           child: Text(
             label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w500,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: enabled ? 1 : 0.55),
+              fontWeight: emphasized ? FontWeight.w700 : FontWeight.w500,
               fontSize: 14,
             ),
           ),

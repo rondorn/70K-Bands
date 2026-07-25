@@ -53,6 +53,17 @@ class DayDateAlignment {
   /// Format as M/D/YYYY with no leading zeros on month/day.
   static String formatDate(DateTime dt) => '${dt.month}/${dt.day}/${dt.year}';
 
+  /// Single schedule CSV date: M/D/YYYY without leading zeros.
+  ///
+  /// Blank / whitespace-only values are returned unchanged. Unparseable
+  /// strings are trimmed but otherwise preserved.
+  static String normalizeDate(String raw) {
+    if (raw.trim().isEmpty) return raw;
+    final dt = parseDate(raw);
+    if (dt == null) return raw.trim();
+    return formatDate(dt);
+  }
+
   /// Dedupe 01/13 vs 1/13, keep short form, sort chronologically.
   /// Unparseable lines are dropped (they cannot participate in alignment).
   static List<String> normalizeDates(Iterable<String> raw) {

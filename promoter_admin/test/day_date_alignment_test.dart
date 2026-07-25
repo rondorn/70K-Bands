@@ -3,6 +3,45 @@ import 'package:promoter_admin/src/services/day_date_alignment.dart';
 import 'package:promoter_admin/src/services/schedule_service.dart';
 
 void main() {
+  group('normalizeDate', () {
+    test('strips leading zeros from M/D/Y', () {
+      expect(DayDateAlignment.normalizeDate('06/05/2026'), '6/5/2026');
+      expect(DayDateAlignment.normalizeDate('6/5/2026'), '6/5/2026');
+    });
+
+    test('preserves blank values', () {
+      expect(DayDateAlignment.normalizeDate(' '), ' ');
+      expect(DayDateAlignment.normalizeDate(''), '');
+    });
+  });
+
+  group('ScheduleService.toCsv', () {
+    test('writes dates without leading zeros', () {
+      final csv = ScheduleService.toCsv([
+        ScheduleEvent(
+          band: 'Dirt',
+          location: 'Blue Grape Music Stage',
+          date: '06/05/2026',
+          day: 'Day 1',
+          startTime: '14:10',
+          endTime: '14:35',
+          type: 'Show',
+        ),
+      ]);
+      expect(csv, contains('6/5/2026'));
+      expect(csv, isNot(contains('06/05/2026')));
+    });
+
+    test('parseEvents normalizes loaded dates', () {
+      const raw = '''
+Band,Location,Date,Day,Start Time,End Time,Type,Description URL,Notes,ImageURL
+Dirt,Blue Grape Music Stage,06/05/2026,Day 1,14:10,14:35,Show, , , 
+''';
+      final events = ScheduleService.parseEvents(raw);
+      expect(events.single.date, '6/5/2026');
+    });
+  });
+
   group('normalizeDates', () {
     test('uses single-digit month/day and drops padded duplicates', () {
       final out = DayDateAlignment.normalizeDates([

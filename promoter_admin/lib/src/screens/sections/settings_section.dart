@@ -6,10 +6,14 @@ import 'package:promoter_admin/src/services/dropbox_api.dart';
 import 'package:promoter_admin/src/services/dropbox_folder_access_service.dart';
 import 'package:promoter_admin/src/services/festival_create_service.dart';
 import 'package:promoter_admin/src/services/festival_year_service.dart';
+import 'package:promoter_admin/src/models/publish_status.dart';
 import 'package:promoter_admin/src/services/pointer_service.dart';
 import 'package:promoter_admin/src/services/promote_service.dart';
+import 'package:promoter_admin/src/services/publish_status_service.dart';
 import 'package:promoter_admin/src/services/day_date_alignment.dart';
+import 'package:promoter_admin/src/services/description_map_service.dart';
 import 'package:promoter_admin/src/services/http_fetch.dart';
+import 'package:promoter_admin/src/services/lineup_service.dart';
 import 'package:promoter_admin/src/services/schedule_service.dart';
 import 'package:promoter_admin/src/services/schedule_validation.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
@@ -28,10 +32,14 @@ class SettingsSection extends StatefulWidget {
     required this.pointerService,
     required this.dropboxApi,
     required this.scheduleService,
+    required this.lineupService,
+    required this.descriptionMapService,
     required this.dropboxConnected,
     required this.dropboxLabel,
     required this.dropboxConnecting,
     required this.showPromote,
+    required this.publishStatus,
+    required this.publishStatusService,
     required this.onShowPromote,
     required this.onWorkspaceChanged,
     required this.onSwitchFestival,
@@ -47,10 +55,14 @@ class SettingsSection extends StatefulWidget {
   final PointerService pointerService;
   final DropboxApi dropboxApi;
   final ScheduleService scheduleService;
+  final LineupService lineupService;
+  final DescriptionMapService descriptionMapService;
   final bool dropboxConnected;
   final String dropboxLabel;
   final bool dropboxConnecting;
   final bool showPromote;
+  final PublishStatusSnapshot publishStatus;
+  final PublishStatusService publishStatusService;
   final ValueChanged<bool> onShowPromote;
   final Future<void> Function(FestivalWorkspace) onWorkspaceChanged;
   final Future<void> Function(String festivalId) onSwitchFestival;
@@ -685,6 +697,10 @@ class _SettingsSectionState extends State<SettingsSection> {
         updated = await _probeAccess(updated);
       }
       await widget.onWorkspaceChanged(updated);
+      widget.publishStatusService.bind(
+        workspace: updated,
+        dropboxConnected: widget.dropboxConnected,
+      );
       if (!mounted) return;
       DataFileShareStatus? shareStatus;
       try {
@@ -1204,6 +1220,10 @@ class _SettingsSectionState extends State<SettingsSection> {
         dropboxApi: widget.dropboxApi,
         pointerService: widget.pointerService,
         scheduleService: widget.scheduleService,
+        lineupService: widget.lineupService,
+        descriptionMapService: widget.descriptionMapService,
+        publishStatusService: widget.publishStatusService,
+        publishStatus: widget.publishStatus,
         dropboxConnected: widget.dropboxConnected,
         onConnectDropbox: widget.onConnectDropbox,
         onBack: () => widget.onShowPromote(false),
@@ -1874,6 +1894,10 @@ class _PromotePanel extends StatefulWidget {
     required this.dropboxApi,
     required this.pointerService,
     required this.scheduleService,
+    required this.lineupService,
+    required this.descriptionMapService,
+    required this.publishStatusService,
+    required this.publishStatus,
     required this.dropboxConnected,
     required this.onConnectDropbox,
     required this.onBack,
@@ -1883,6 +1907,10 @@ class _PromotePanel extends StatefulWidget {
   final DropboxApi dropboxApi;
   final PointerService pointerService;
   final ScheduleService scheduleService;
+  final LineupService lineupService;
+  final DescriptionMapService descriptionMapService;
+  final PublishStatusService publishStatusService;
+  final PublishStatusSnapshot publishStatus;
   final bool dropboxConnected;
   final Future<void> Function() onConnectDropbox;
   final VoidCallback onBack;
@@ -1921,9 +1949,26 @@ class _PromotePanelState extends State<_PromotePanel> {
     }
   }
 
+  Future<void> _flushTestingCsvs({String? statusMessage}) async {
+    final ws = widget.workspace;
+    if (statusMessage != null) {
+      setState(() => _status = statusMessage);
+    }
+    if (ws.canEditSchedule && ws.scheduleUrl.trim().isNotEmpty) {
+      await widget.scheduleService.flushSync(ws);
+    }
+    if (ws.canEditBands && ws.bandListUrl.trim().isNotEmpty) {
+      await widget.lineupService.flushSync(ws);
+    }
+    if (ws.canEditDescriptions && ws.descriptionMapUrl.trim().isNotEmpty) {
+      await widget.descriptionMapService.flushSync(ws);
+    }
+  }
+
   Future<void> _loadPreview({
     String? keepStatus,
-    bool forceRefresh = false,
+    bool forceRefresh = true,
+    bool includeChangeDetails = true,
   }) async {
     setState(() {
       _loadingPreview = true;
@@ -1932,16 +1977,17 @@ class _PromotePanelState extends State<_PromotePanel> {
       _diff = null;
     });
     try {
-      if (widget.workspace.canEditSchedule &&
-          widget.workspace.scheduleUrl.trim().isNotEmpty) {
-        if (keepStatus == null) {
-          setState(() => _status = 'Flushing local schedule to Dropbox…');
-        }
-        await widget.scheduleService.flushSync(widget.workspace);
+      if (keepStatus == null) {
+        await _flushTestingCsvs(
+          statusMessage: 'Flushing local Testing files to Dropbox…',
+        );
+      } else {
+        await _flushTestingCsvs();
       }
       final diff = await _promote.preview(
         widget.workspace,
         forceRefresh: forceRefresh,
+        includeChangeDetails: includeChangeDetails,
       );
       if (!mounted) return;
       setState(() {
@@ -1993,13 +2039,10 @@ class _PromotePanelState extends State<_PromotePanel> {
     setState(() {
       _promoting = true;
       _error = null;
-      _status = 'Flushing local schedule to Dropbox…';
+      _status = 'Flushing local Testing files to Dropbox…';
     });
     try {
-      if (widget.workspace.canEditSchedule &&
-          widget.workspace.scheduleUrl.trim().isNotEmpty) {
-        await widget.scheduleService.flushSync(widget.workspace);
-      }
+      await _flushTestingCsvs();
       setState(() => _status = 'Publishing…');
       final diff = await _promote.promote(widget.workspace);
       if (!mounted) return;
@@ -2029,6 +2072,10 @@ class _PromotePanelState extends State<_PromotePanel> {
       );
       if (!mounted) return;
 
+      widget.publishStatusService.notifyTestingDataChanged(
+        forceRefresh: true,
+        immediate: true,
+      );
       // Refresh counts so Testing → Production preview reflects the publish.
       await _loadPreview(keepStatus: status);
     } catch (e) {
@@ -2180,6 +2227,42 @@ class _PromotePanelState extends State<_PromotePanel> {
                     ),
                   ),
                 ),
+              if (_diff!.changeDetailLines.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                const Text(
+                  'What will change in Production',
+                  style: TextStyle(
+                    color: AppColors.label,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Row counts can match when events were edited or reordered. '
+                  'These are the differences Publish will copy:',
+                  style: TextStyle(color: AppColors.muted, fontSize: 13),
+                ),
+                const SizedBox(height: 8),
+                for (final line in _diff!.changeDetailLines)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Text(
+                      '• $line',
+                      style: const TextStyle(
+                        color: AppColors.heading,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+              ] else if (_diff!.hasPublishableChanges &&
+                  !_diff!.scheduleShared) ...[
+                const SizedBox(height: 12),
+                const StatusBanner(
+                  text:
+                      'Testing and Production look different, but the app could '
+                      'not list specific adds/removes/edits. Try Refresh preview.',
+                ),
+              ],
               if (workspace.canEditBands &&
                   alertFolder.isNotEmpty &&
                   _diff!.addedBandNames.isNotEmpty) ...[

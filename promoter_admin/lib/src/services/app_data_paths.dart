@@ -156,4 +156,9 @@ class AppDataPaths {
     }
     return staging;
   }
+
+  /// Unified local staging for Testing CSV files (schedule, artists, map).
+  static Future<Directory> testingCsvStagingDir() async {
+    return scheduleStagingDir();
+  }
 }

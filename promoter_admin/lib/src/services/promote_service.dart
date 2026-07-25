@@ -1,9 +1,12 @@
 import 'package:promoter_admin/src/models/festival_workspace.dart';
 import 'package:promoter_admin/src/models/pointer_file.dart';
+import 'package:promoter_admin/src/services/csv_util.dart';
 import 'package:promoter_admin/src/services/dropbox_api.dart';
 import 'package:promoter_admin/src/services/festival_year_service.dart';
 import 'package:promoter_admin/src/services/http_fetch.dart';
 import 'package:promoter_admin/src/services/pointer_service.dart';
+import 'package:promoter_admin/src/services/schedule_service.dart';
+import 'package:promoter_admin/src/services/schedule_staging.dart';
 
 /// Whether Testing and Production Current data files resolve to the same Dropbox file.
 class DataFileShareStatus {
@@ -37,8 +40,10 @@ class PromoteDiff {
     this.bandsContentDiffer = false,
     this.eventsContentDiffer = false,
     this.mapContentDiffer = false,
+    List<String>? changeDetailLines,
     List<String>? messages,
-  }) : messages = messages ?? <String>[];
+  })  : changeDetailLines = changeDetailLines ?? <String>[],
+        messages = messages ?? <String>[];
 
   int bandsTesting;
   int bandsProduction;
@@ -61,6 +66,9 @@ class PromoteDiff {
 
   /// True when Testing description map CSV text differs from the Production target.
   bool mapContentDiffer;
+
+  /// Plain-language summary of adds/removes/edits (may be non-empty when row counts match).
+  final List<String> changeDetailLines;
 
   final List<String> messages;
 
@@ -301,6 +309,207 @@ class PromoteService {
     return added;
   }
 
+  static String _bandFingerprint(BandRow band) {
+    final keys = band.fields.keys.toList()..sort();
+    return keys.map((k) => '$k=${(band.fields[k] ?? '').trim()}').join('\u001f');
+  }
+
+  static List<String> bandChangeDetailLines({
+    required String testingCsv,
+    required String productionCsv,
+    int maxNames = 8,
+  }) {
+    final testing = PointerService.parseLineupCsvPreservingOrder(testingCsv);
+    final production = PointerService.parseLineupCsvPreservingOrder(productionCsv);
+    final prodByName = {
+      for (final b in production) b.name.toLowerCase(): b,
+    };
+    final testByName = {
+      for (final b in testing) b.name.toLowerCase(): b,
+    };
+
+    final added = <String>[];
+    final removed = <String>[];
+    final updated = <String>[];
+    for (final b in testing) {
+      final key = b.name.toLowerCase();
+      final prod = prodByName[key];
+      if (prod == null) {
+        added.add(b.name);
+      } else if (_bandFingerprint(b) != _bandFingerprint(prod)) {
+        updated.add(b.name);
+      }
+    }
+    for (final b in production) {
+      if (!testByName.containsKey(b.name.toLowerCase())) {
+        removed.add(b.name);
+      }
+    }
+
+    added.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    removed.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    updated.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+
+    return _formatChangeGroups(
+      label: 'Artists',
+      added: added,
+      removed: removed,
+      updated: updated,
+      maxNames: maxNames,
+    );
+  }
+
+  static String _scheduleEventLabel(ScheduleEvent event) {
+    final parts = <String>[event.band.trim()];
+    if (event.day.trim().isNotEmpty) {
+      parts.add(event.day.trim());
+    } else if (event.date.trim().isNotEmpty) {
+      parts.add(event.date.trim());
+    }
+    if (event.startTime.trim().isNotEmpty) {
+      parts.add(event.startTime.trim());
+    }
+    if (event.location.trim().isNotEmpty) {
+      parts.add('@ ${event.location.trim()}');
+    }
+    return parts.join(' · ');
+  }
+
+  static List<String> scheduleChangeDetailLines({
+    required String testingCsv,
+    required String productionCsv,
+    int maxNames = 10,
+  }) {
+    final testing = ScheduleService.parseEvents(testingCsv);
+    final production = ScheduleService.parseEvents(productionCsv);
+
+    String keyOf(ScheduleEvent e) => ScheduleStagingCoordinator.eventKey(
+          band: e.band,
+          location: e.location,
+          date: e.date,
+          startTime: e.startTime,
+        );
+
+    String fingerprint(ScheduleEvent e) =>
+        ScheduleStagingCoordinator.eventFingerprintFromCsvRow(e.asRow());
+
+    final prodByKey = {for (final e in production) keyOf(e): e};
+    final testByKey = {for (final e in testing) keyOf(e): e};
+
+    final added = <String>[];
+    final removed = <String>[];
+    final updated = <String>[];
+    for (final e in testing) {
+      final key = keyOf(e);
+      final prod = prodByKey[key];
+      if (prod == null) {
+        added.add(_scheduleEventLabel(e));
+      } else if (fingerprint(e) != fingerprint(prod)) {
+        updated.add(_scheduleEventLabel(e));
+      }
+    }
+    for (final e in production) {
+      if (!testByKey.containsKey(keyOf(e))) {
+        removed.add(_scheduleEventLabel(e));
+      }
+    }
+
+    added.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    removed.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    updated.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+
+    return _formatChangeGroups(
+      label: 'Schedule',
+      added: added,
+      removed: removed,
+      updated: updated,
+      maxNames: maxNames,
+    );
+  }
+
+  static List<String> mapChangeDetailLines({
+    required String testingCsv,
+    required String productionCsv,
+    int maxNames = 8,
+  }) {
+    final testingRows = parseCsvMaps(testingCsv);
+    final productionRows = parseCsvMaps(productionCsv);
+
+    String bandOf(Map<String, String> row) => (row['Band'] ?? '').trim();
+    String fingerprint(Map<String, String> row) => [
+          bandOf(row).toLowerCase(),
+          (row['URL'] ?? '').trim(),
+          (row['Date'] ?? '').trim(),
+        ].join('\u001f');
+
+    final prodByBand = <String, Map<String, String>>{};
+    for (final row in productionRows) {
+      final band = bandOf(row);
+      if (band.isEmpty || band.toLowerCase() == 'band') continue;
+      prodByBand[band.toLowerCase()] = row;
+    }
+    final testByBand = <String, Map<String, String>>{};
+    for (final row in testingRows) {
+      final band = bandOf(row);
+      if (band.isEmpty || band.toLowerCase() == 'band') continue;
+      testByBand[band.toLowerCase()] = row;
+    }
+
+    final added = <String>[];
+    final removed = <String>[];
+    final updated = <String>[];
+    for (final entry in testByBand.entries) {
+      final band = bandOf(entry.value);
+      final prod = prodByBand[entry.key];
+      if (prod == null) {
+        added.add(band);
+      } else if (fingerprint(entry.value) != fingerprint(prod)) {
+        updated.add(band);
+      }
+    }
+    for (final entry in prodByBand.entries) {
+      if (!testByBand.containsKey(entry.key)) {
+        removed.add(bandOf(entry.value));
+      }
+    }
+
+    added.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    removed.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    updated.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+
+    return _formatChangeGroups(
+      label: 'Descriptions',
+      added: added,
+      removed: removed,
+      updated: updated,
+      maxNames: maxNames,
+    );
+  }
+
+  static List<String> _formatChangeGroups({
+    required String label,
+    required List<String> added,
+    required List<String> removed,
+    required List<String> updated,
+    required int maxNames,
+  }) {
+    final lines = <String>[];
+    void addGroup(String verb, List<String> names) {
+      if (names.isEmpty) return;
+      final shown = names.take(maxNames).toList();
+      final tail = names.length - shown.length;
+      final suffix = tail > 0 ? ' (and $tail more)' : '';
+      lines.add(
+        '$label — ${names.length} $verb: ${shown.join('; ')}$suffix',
+      );
+    }
+
+    addGroup('added in Testing', added);
+    addGroup('removed from Testing', removed);
+    addGroup('edited in Testing', updated);
+    return lines;
+  }
+
   static String bandAnnouncementText({
     required String festivalName,
     required List<String> bands,
@@ -335,6 +544,10 @@ class PromoteService {
   Future<PromoteDiff> preview(
     FestivalWorkspace workspace, {
     bool forceRefresh = false,
+    bool includeChangeDetails = true,
+    String? scheduleTestingCsvOverride,
+    String? artistsTestingCsvOverride,
+    String? descriptionMapTestingCsvOverride,
   }) async {
     final testingUrl = workspace.testingPointerUrl.trim();
     final productionUrl = workspace.productionPointerUrl.trim();
@@ -400,37 +613,59 @@ class PromoteService {
       );
     }
 
-    await noteShare('band_list_url', 'Artists');
-    await noteShare('schedule_url', 'Schedule');
-    await noteShare('description_map_url', 'Description map');
+    await Future.wait([
+      noteShare('band_list_url', 'Artists'),
+      noteShare('schedule_url', 'Schedule'),
+      noteShare('description_map_url', 'Description map'),
+    ]);
 
     Future<({String? testing, String? production, String? error})> loadPair(
       String key,
-    ) async {
+      String label, {
+      String? testingOverride,
+    }) async {
       final tUrl = testUrls[key] ?? '';
       final pUrl = destUrls[key] ?? '';
       if (tUrl.isEmpty || pUrl.isEmpty) {
         return (
           testing: null,
           production: null,
-          error: 'Missing URL for $key on testing or production target.',
+          error: 'Missing URL for $label on testing or production target.',
         );
       }
       try {
-        final pair = await Future.wait([
-          fetchUrlText(tUrl, forceRefresh: forceRefresh),
+        final texts = await Future.wait([
+          testingOverride != null
+              ? Future<String>.value(testingOverride)
+              : fetchUrlText(tUrl, forceRefresh: forceRefresh),
           fetchUrlText(pUrl, forceRefresh: forceRefresh),
         ]);
-        return (testing: pair[0], production: pair[1], error: null);
+        return (testing: texts[0], production: texts[1], error: null);
       } catch (e) {
-        return (testing: null, production: null, error: 'Could not fetch $key: $e');
+        return (
+          testing: null,
+          production: null,
+          error: 'Could not fetch $label: $e',
+        );
       }
     }
 
     final loaded = await Future.wait([
-      loadPair('band_list_url'),
-      loadPair('schedule_url'),
-      loadPair('description_map_url'),
+      loadPair(
+        'band_list_url',
+        'artists',
+        testingOverride: artistsTestingCsvOverride,
+      ),
+      loadPair(
+        'schedule_url',
+        'schedule',
+        testingOverride: scheduleTestingCsvOverride,
+      ),
+      loadPair(
+        'description_map_url',
+        'description map',
+        testingOverride: descriptionMapTestingCsvOverride,
+      ),
     ]);
 
     final bands = loaded[0];
@@ -441,15 +676,25 @@ class PromoteService {
       diff.bandsProduction = countCsvRows(bands.production!);
       diff.bandsContentDiffer = !diff.artistsShared &&
           !_sameCsvText(bands.testing!, bands.production!);
-      diff.addedBandNames = addedBandsFromCsv(
-        testingCsv: bands.testing!,
-        productionCsv: bands.production!,
-      );
-      if (diff.addedBandNames.isNotEmpty) {
-        diff.messages.add(
-          '${diff.addedBandNames.length} new band(s) vs production target '
-          '(will be announced if alert folder is configured).',
+      if (includeChangeDetails) {
+        diff.addedBandNames = addedBandsFromCsv(
+          testingCsv: bands.testing!,
+          productionCsv: bands.production!,
         );
+        if (diff.bandsContentDiffer && !diff.artistsShared) {
+          diff.changeDetailLines.addAll(
+            bandChangeDetailLines(
+              testingCsv: bands.testing!,
+              productionCsv: bands.production!,
+            ),
+          );
+        }
+        if (diff.addedBandNames.isNotEmpty) {
+          diff.messages.add(
+            '${diff.addedBandNames.length} new band(s) vs production target '
+            '(will be announced if alert folder is configured).',
+          );
+        }
       }
     }
 
@@ -461,6 +706,16 @@ class PromoteService {
       diff.eventsProduction = countCsvRows(schedule.production!);
       diff.eventsContentDiffer = !diff.scheduleShared &&
           !_sameCsvText(schedule.testing!, schedule.production!);
+      if (includeChangeDetails &&
+          diff.eventsContentDiffer &&
+          !diff.scheduleShared) {
+        diff.changeDetailLines.addAll(
+          scheduleChangeDetailLines(
+            testingCsv: schedule.testing!,
+            productionCsv: schedule.production!,
+          ),
+        );
+      }
     }
 
     final map = loaded[2];
@@ -471,6 +726,14 @@ class PromoteService {
       diff.mapRowsProduction = countCsvRows(map.production!);
       diff.mapContentDiffer = !diff.mapShared &&
           !_sameCsvText(map.testing!, map.production!);
+      if (includeChangeDetails && diff.mapContentDiffer && !diff.mapShared) {
+        diff.changeDetailLines.addAll(
+          mapChangeDetailLines(
+            testingCsv: map.testing!,
+            productionCsv: map.production!,
+          ),
+        );
+      }
     }
 
     if (!diff.hasPublishableChanges && !diff.scheduleShared) {
@@ -480,6 +743,24 @@ class PromoteService {
     }
 
     return diff;
+  }
+
+  /// Header badge / background check: row counts and differ flags only.
+  Future<PromoteDiff> previewQuick(
+    FestivalWorkspace workspace, {
+    bool forceRefresh = false,
+    String? scheduleTestingCsvOverride,
+    String? artistsTestingCsvOverride,
+    String? descriptionMapTestingCsvOverride,
+  }) {
+    return preview(
+      workspace,
+      forceRefresh: forceRefresh,
+      includeChangeDetails: false,
+      scheduleTestingCsvOverride: scheduleTestingCsvOverride,
+      artistsTestingCsvOverride: artistsTestingCsvOverride,
+      descriptionMapTestingCsvOverride: descriptionMapTestingCsvOverride,
+    );
   }
 
   /// Normalize line endings / trailing whitespace for CSV content equality.

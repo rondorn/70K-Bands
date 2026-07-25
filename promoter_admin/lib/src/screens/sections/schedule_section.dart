@@ -35,6 +35,7 @@ class ScheduleSection extends StatefulWidget {
     required this.dropboxConnected,
     required this.onConnectDropbox,
     required this.onWorkspaceChanged,
+    this.onTestingDataChanged,
   });
 
   final FestivalWorkspace workspace;
@@ -47,6 +48,7 @@ class ScheduleSection extends StatefulWidget {
   final bool dropboxConnected;
   final Future<void> Function() onConnectDropbox;
   final Future<void> Function(FestivalWorkspace) onWorkspaceChanged;
+  final VoidCallback? onTestingDataChanged;
 
   @override
   State<ScheduleSection> createState() => _ScheduleSectionState();
@@ -489,7 +491,9 @@ class _ScheduleSectionState extends State<ScheduleSection> {
       final event = ScheduleEvent(
         band: band,
         location: (_venue ?? ' ').trim().isEmpty ? ' ' : (_venue ?? ' ').trim(),
-        date: (_date ?? ' ').trim().isEmpty ? ' ' : (_date ?? ' ').trim(),
+        date: (_date ?? ' ').trim().isEmpty
+            ? ' '
+            : DayDateAlignment.normalizeDate((_date ?? ' ').trim()),
         day: (_day ?? ' ').trim().isEmpty ? ' ' : (_day ?? ' ').trim(),
         startTime: start,
         endTime: end,
@@ -571,6 +575,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
         );
       });
       await _refreshOutstanding();
+      widget.onTestingDataChanged?.call();
     } catch (e) {
       setState(() {
         _committing = false;
@@ -697,6 +702,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
         }
       });
       await _refreshOutstanding();
+      widget.onTestingDataChanged?.call();
     } catch (err) {
       setState(() {
         _committing = false;
@@ -791,6 +797,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                         await widget.scheduleService.flushSync(
                           widget.workspace,
                         );
+                        widget.onTestingDataChanged?.call();
                       } catch (e) {
                         if (!mounted) return;
                         // Keep the soft sync banner; avoid a second raw exception dump.

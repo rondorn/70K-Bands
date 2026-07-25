@@ -163,15 +163,36 @@ void main() {
       stagingCsv: stagingCsv,
       syncedCsv: synced,
     );
-    expect(pending.contains('B|Rail|07/11/2026|13:00'), isTrue);
-    expect(pending.contains('C|Rail|07/11/2026|15:00'), isTrue);
-    expect(pending.contains('A|Rail|07/11/2026|12:00'), isFalse);
+    expect(pending.contains('B|Rail|7/11/2026|13:00'), isTrue);
+    expect(pending.contains('C|Rail|7/11/2026|15:00'), isTrue);
+    expect(pending.contains('A|Rail|7/11/2026|12:00'), isFalse);
 
     final withDelete = ScheduleService.toCsv([event('A', '12:00')]);
     final deleted = ScheduleStagingCoordinator.pendingKeysFromCsv(
       stagingCsv: withDelete,
       syncedCsv: synced,
     );
-    expect(deleted.contains('B|Rail|07/11/2026|13:00'), isTrue);
+    expect(deleted.contains('B|Rail|7/11/2026|13:00'), isTrue);
+  });
+
+  test('deleted events stay deleted after sync and reload', () async {
+    final synced = ScheduleService.toCsv([
+      event('Keep', '12:00'),
+      event('Remove', '13:00'),
+    ]);
+    final csv = File('${tempDir.path}/fest-70k_schedule.csv');
+    await csv.writeAsString(synced);
+    final snapshot = File('${tempDir.path}/fest-70k_schedule.synced.csv');
+    await snapshot.writeAsString(synced);
+
+    final afterDelete = ScheduleService.toCsv([event('Keep', '12:00')]);
+    await staging.saveLocalAndQueue(workspace, afterDelete);
+    await staging.flushSync(workspace);
+
+    final reloaded = ScheduleService.parseEvents(
+      await staging.loadWorkingCsv(workspace),
+    );
+    expect(reloaded.map((e) => e.band), ['Keep']);
+    expect(await staging.outstandingEventKeys(workspace), isEmpty);
   });
 }

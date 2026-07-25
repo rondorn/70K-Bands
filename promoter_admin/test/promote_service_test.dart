@@ -145,4 +145,35 @@ void main() {
       'customAlert-2026-07-14-09-01-02.pending',
     );
   });
+
+  test('scheduleChangeDetailLines lists removed and edited events', () {
+    const production = '''
+Band,Location,Date,Day,Start Time,End Time,Type,Description URL,Notes,ImageURL
+Alpha,Venue A,7/25/2026,Friday,20:00,21:00,Show, , , 
+Beta,Venue B,7/25/2026,Friday,22:00,23:00,Show, , , 
+''';
+    const testing = '''
+Band,Location,Date,Day,Start Time,End Time,Type,Description URL,Notes,ImageURL
+Alpha,Venue A,7/25/2026,Friday,20:30,21:30,Show, , , 
+''';
+    final lines = PromoteService.scheduleChangeDetailLines(
+      testingCsv: testing,
+      productionCsv: production,
+    );
+    expect(lines.any((l) => l.contains('removed from Testing')), isTrue);
+    expect(lines.any((l) => l.contains('Beta')), isTrue);
+    expect(lines.any((l) => l.contains('added in Testing')), isTrue);
+    expect(lines.any((l) => l.contains('Alpha')), isTrue);
+  });
+
+  test('bandChangeDetailLines lists removed bands', () {
+    const production = 'bandName,country\nAlpha,US\nBeta,DE\n';
+    const testing = 'bandName,country\nAlpha,US\n';
+    final lines = PromoteService.bandChangeDetailLines(
+      testingCsv: testing,
+      productionCsv: production,
+    );
+    expect(lines.single, contains('Beta'));
+    expect(lines.single, contains('removed from Testing'));
+  });
 }
