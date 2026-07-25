@@ -10,11 +10,13 @@ Someone who releases or maintains the festival apps will give you the **Testing*
 
 ## Install (download the app)
 
-| Platform | Where to get it |
-| -------- | --------------- |
-| **Mac** | [GitHub Releases](https://github.com/rondorn/70K-Bands/releases) → **omf-admin-macos** release → download the zip under **Assets** |
-| **Windows** | Same [Releases](https://github.com/rondorn/70K-Bands/releases) page → **omf-admin-windows** release → download the zip |
-| **iPad** | **App Store** — search for **Open Metal Fest Admin** |
+
+| Platform    | Where to get it                                                                                                                    |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **Mac**     | [GitHub Releases](https://github.com/rondorn/70K-Bands/releases) → **omf-admin-macos** release → download the zip under **Assets** |
+| **Windows** | Same [Releases](https://github.com/rondorn/70K-Bands/releases) page → **omf-admin-windows** release → download the zip             |
+| **iPad**    | **App Store** — search for **Open Metal Fest Admin**                                                                               |
+
 
 **Mac:** Unzip, drag **Open Metal Fest Admin** into **Applications**, then open it. The first time, macOS may ask to confirm a download from the internet — choose **Open**.
 
@@ -33,14 +35,14 @@ When a newer version is available, update the same way you installed (Releases z
 ## What this app is for
 
 
-| Area             | In plain terms                                                                                                              |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| **Settings**     | One-time (or rare) festival setup: Dropbox login, Testing/Production links, optional announcement folder.                   |
-| **Artists**      | Build and edit the Testing lineup: add, change, or remove bands; add or edit band descriptions; export an HTML logo lineup. |
-| **Descriptions** | Write or update the text fans read about a band (usually done when you add the band; you can also fix or add them later).   |
+| Area             | In plain terms                                                                                                                                                           |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Settings**     | One-time (or rare) festival setup: Dropbox login, Testing/Production links, optional announcement folder.                                                                |
+| **Artists**      | Build and edit the Testing lineup: add, change, or remove bands; add or edit band descriptions; export an HTML logo lineup.                                              |
+| **Descriptions** | Write or update the text fans read about a band (usually done when you add the band; you can also fix or add them later).                                                |
 | **Schedule**     | Enter shows and other events; browse the event list; preview the running-order layout; see simple stats; export PDF/HTML running order or a QR poster (official admins). |
-| **Publish**      | When Testing looks right, push your changes so most fans see them in Production. New bands can trigger a push notification. |
-| **Send alert**   | Optional: type a message and send it to **everyone** who uses that festival’s app.                                          |
+| **Publish**      | When Testing looks right, push your changes so most fans see them in Production. New bands can trigger a push notification.                                              |
+| **Send alert**   | Optional: type a message and send it to **everyone** who uses that festival’s app.                                                                                       |
 
 
 ---
@@ -51,13 +53,15 @@ When a newer version is available, update the same way you installed (Releases z
 
 **Production** is what most fans see by default when they open the festival app.
 
-| | Testing | Production |
-|---|---------|------------|
-| **Who sees it** | People with access to Testing (often via Advanced → Testing; can be locked down) | Most attendees |
-| **What you do here** | Add/edit artists, descriptions, schedule | Live lineup and schedule after Publish |
-| **Risk** | Low — experiment and fix freely | Higher — fans see it; hard to undo quickly |
 
-**Shared files (intentional):** Some festivals (for example when an automated promoter feed writes the lineup) point Testing **artists** at the same Dropbox file as Production. That is allowed: edits are live, and Publish skips copying artists. **Schedule must stay a separate Testing file.** Description map may be shared or separate. Festival owners can switch this under Settings → **Data files** → **Testing vs Production files** (**Share artists with Production**, **Share description map with Production**, and the reverse “use separate Testing …” buttons).
+|                      | Testing                                                                          | Production                                 |
+| -------------------- | -------------------------------------------------------------------------------- | ------------------------------------------ |
+| **Who sees it**      | People with access to Testing (often via Advanced → Testing; can be locked down) | Most attendees                             |
+| **What you do here** | Add/edit artists, descriptions, schedule                                         | Live lineup and schedule after Publish     |
+| **Risk**             | Low — experiment and fix freely                                                  | Higher — fans see it; hard to undo quickly |
+
+
+**Shared files (intentional):** Some festivals (for example when an automated feed writes the lineup) point Testing **artists** at the same Dropbox file as Production. That is allowed: edits are live, and Publish skips copying artists. **Description map** may be shared or separate. **Schedule** is usually a separate Testing file that you copy on Publish (see [Publish](#publish-testing--what-fans-see)). Shared schedule feeds may be supported later; **for now** the app still requires separate Testing and Production schedule files. Festival owners can switch share/separate for artists and description map under Settings → **Data files** → **Testing vs Production files**.
 
 Before anyone Publishes, open the **festival (fan) app**, turn on **Advanced → Testing**, and confirm the lineup, descriptions, and schedule look right. That preview is how you use Testing as a safety net.
 
@@ -85,7 +89,7 @@ You can keep several festivals in the app (for example 70K and MDF) and switch t
 
 **Nav:** CONFIG → **Settings**
 
-![Festival Configuration — Settings](images/settings.png)
+Festival Configuration — Settings
 
 You’ll mainly use Settings once:
 
@@ -103,7 +107,8 @@ You’ll mainly use Settings once:
 - **Days / Dates** — keep them in matching order (first Day with first Date, and so on). You need **one more date than days** so late-night sets that spill past midnight still land on the right calendar day. **Date rollover** (default 8:00 AM) is the cutoff: times before that still count as the previous festival day. Schedule Entry fills **Date** for you when you pick **Day** and start time; change Date by hand if needed.  
 - **Load festival data** — pull Testing/Production file URLs and fill empty Venues / Days / Dates / Event types from Production. Existing lists are kept (not overwritten).  
 - **Save configuration** — saves your local settings. The button stays dim until something changed; a reminder appears when you have unsaved edits. Changing Venues / Days / Dates / Event types refreshes Schedule Entry menus.  
-- **Publish to Production…** — shortcut to the Publish screen (same as CONFIG → **Publish**).
+- **Publish to Production…** — shortcut to the Publish screen (same as CONFIG → **Publish**).  
+- **App version** — small text under the buttons (for example `Open Metal Fest Admin · Version 1.0.6 (3)`). Use it to confirm you’re on the build your festival contact asked for.
 
 ### Connecting Dropbox
 
@@ -112,7 +117,7 @@ The app never asks for a festival password. You sign in with **your own Dropbox 
 1. In Settings, click **Connect Dropbox**.
 2. **Mac or Windows:** your web browser opens the Dropbox sign-in page. Sign in, approve access, then close the browser tab when it says you’re connected. Return to the app.
 3. **iPad:** a sign-in sheet opens inside the app. Complete sign-in there — you stay in the app the whole time.
-4. Settings shows **Connected: your@email.com** (or your Dropbox name).
+4. Settings shows **Connected: [your@email.com](mailto:your@email.com)** (or your Dropbox name).
 
 You stay signed in between sessions. Use **Disconnect** only if you need to switch to a different Dropbox account, then **Connect Dropbox** again.
 
@@ -130,7 +135,7 @@ If saves suddenly fail or the app says you’re not connected, try **Disconnect*
 
 See the Testing lineup (band, country, genre, noteworthy). Use **Refresh** if someone else changed Dropbox data.
 
-![Artists — Testing lineup](images/artists-list.png)
+Artists — Testing lineup
 
 ### Add a band
 
@@ -145,7 +150,9 @@ See the Testing lineup (band, country, genre, noteworthy). Use **Refresh** if so
 7. Optional — at the **bottom** of the form, check **Add description** and write the band blurb. If Settings → **File access** shows **write** on **Descriptions**, the text is saved for fans when you **Save to Testing**. If not, the app saves your text and shows a **link to copy** — send it to whoever maintains the description list.
 8. **Save to Testing**.
 
-![Add Artist — Discover and fields](images/artists-add.png)
+Saves are applied locally right away, then uploaded to Dropbox in the background. If sync is still running, the header badge may say **…still saving to Testing…** — wait for that to clear before you **Publish** (see [Do I need to Publish?](#do-i-need-to-publish)).
+
+Add Artist — Discover and fields
 
 Discover will not guess when several bands share a name — that’s why step 4 uses a page URL.
 
@@ -158,11 +165,13 @@ Discover will not guess when several bands share a name — that’s why step 4 
 
 Scroll to the **bottom** of the add/edit form — after **Prior years**, before **Save**. You don’t have to open **Descriptions** unless you prefer that screen.
 
-| Situation | What to do |
-| --------- | ---------- |
-| **New band, no description yet** | Check **Add description**, type the blurb, then save the artist. |
-| **Existing band, no description yet** | Same — check **Add description** on the edit form. |
-| **Band already has a description** | Check **Edit description**. Then either **Edit description text** (rewrite the blurb) or **Edit description link** (point fans at a different description file on Dropbox). **Save changes** when the rest of the artist row is ready. |
+
+| Situation                             | What to do                                                                                                                                                                                                                             |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **New band, no description yet**      | Check **Add description**, type the blurb, then save the artist.                                                                                                                                                                       |
+| **Existing band, no description yet** | Same — check **Add description** on the edit form.                                                                                                                                                                                     |
+| **Band already has a description**    | Check **Edit description**. Then either **Edit description text** (rewrite the blurb) or **Edit description link** (point fans at a different description file on Dropbox). **Save changes** when the rest of the artist row is ready. |
+
 
 Both options under **Edit description** need the same **Descriptions** write access shown in Settings → **File access**. If you only have artist-list access, you can still **Add description** — the app gives you a **link to copy** for whoever maintains the description list.
 
@@ -203,17 +212,17 @@ You can write or change the same blurbs **on the artist add/edit form** instead 
 - See who still needs a write-up  
 - **Attach Link** — a description file already exists on Dropbox; connect it to the right band *(Descriptions write access in Settings)*  
 - **Delete** — remove a band’s description from the festival list *(Descriptions write access)*  
-- Work straight down the lineup fixing text  
+- Work straight down the lineup fixing text
 
 **Buttons on each row**
 
 - **Create Description** — write new text for an artist who doesn’t have one yet  
 - **Attach Link** — hook up an existing Dropbox description file to a band *(Descriptions write access)*  
-- **Edit** / **Delete** — change or remove a description *(Descriptions write access)*  
+- **Edit** / **Delete** — change or remove a description *(Descriptions write access)*
 
 When you **Edit** here, choose **Edit description text** or **Edit description link** — the same two choices as **Edit description** at the bottom of the artist form.
 
-![Create Description](images/descriptions-create.png)
+Create Description
 
 ### If Descriptions is locked for you
 
@@ -230,7 +239,7 @@ Settings → **File access** may show **write** on **Artists** but not on **Desc
 
 Common event types: **Show**, **Clinic**, **Meet and Greet**, **Special Event**, **Unofficial Event** (festivals can add more).
 
-Saves upload to Testing in the background. On **View**, look for **Pending** / **Synced**; use **Sync now** or **Retry sync** if something stuck.
+Saves are applied locally right away, then uploaded to Dropbox in the background. On **View**, look for **Pending** / **Synced**; use **Sync now** or **Retry sync** if something stuck. The header badge also shows **…still saving to Testing…** while any artists, schedule, or description-map save is still uploading.
 
 ### Shows and band events
 
@@ -238,7 +247,7 @@ Pick a **Band Name** from the Testing lineup, then venue, **Day**, start/end (or
 
 If validation complains but you’re sure the times are right, you can skip the check when that option is shown.
 
-![Schedule Entry](images/schedule-entry.png)
+Schedule Entry
 
 ### Special Events and Unofficial Events
 
@@ -249,7 +258,6 @@ These are **not** tied to a lineup band:
 - Optional **Image URL** — paste a Dropbox or web image link; a **preview** appears below the field so you can confirm it looks right. Dropbox `dl=0` links are shown and saved as `raw=1`.  
 - Optional **Description** — only if you have description-map write access; otherwise skip it or add a note elsewhere  
 - Then venue, **Day**, start/end (or length), and optional **Notes** as usual  
-
 - **Special Event** = official non-band programming  
 - **Unofficial Event** = fan meetups and similar
 
@@ -259,7 +267,7 @@ These are **not** tied to a lineup band:
 - **Stats** — how many of each event type each artist has  
 - **Preview** — see what the **HTML running order** will look like before you export or publish (see below)
 
-![Schedule View](images/schedule-view.png)
+Schedule View
 
 ### Preview the running order (before you export)
 
@@ -358,28 +366,103 @@ If you’ve configured a **Festival logo** under Settings, it appears automatica
 
 **Nav:** CONFIG → **Publish** (or **Publish to Production…** on the Settings screen)
 
-![Publish to Production](images/publish.png)
+Publish to Production
 
-Publish copies your reviewed **Testing** work into **Production** so most attendees see it. Until you Publish, fans keep seeing the previous Production version — Testing stays your safe staging ground (see [Testing vs Production](#testing-vs-production-the-one-idea-to-learn)).
+Publish copies selected **Testing** Dropbox files into their **Production** counterparts so most attendees see your latest work. Until you Publish, fans keep the previous Production version — Testing is your staging area (see [Testing vs Production](#testing-vs-production-the-one-idea-to-learn)).
 
-Only people with edit rights on Artists, Schedule, and/or Descriptions can publish — and only those parts they’re allowed to change will update.
+Only people with edit rights on Artists, Schedule, and/or Descriptions can publish. Each run only touches the data types you’re allowed to edit.
 
-The Publish button shows **Nothing to publish** when Testing already matches Production (nothing new to copy). That is normal between publish cycles.
+**When to Publish:** Publish whenever you are ready to **release your Testing data for public use** — when the artists, schedule, or descriptions you have saved and checked in Testing should become what most fans see in Production. You do not need everything done at once; many festivals publish in stages (bands as they are announced, descriptions when ready, schedule when it is finalized).
 
-You don’t need to wait until everything is finished before publishing. Festivals often publish in **stages**. For example, new bands may go live through the year as they are announced, descriptions can be published when they’re ready, and the schedule is often published once it’s finalized. Publish whenever a meaningful set of changes has been checked in Testing.
+### What gets copied?
 
-Before you publish:
+Publish replaces whole CSV files on Dropbox **in place** (share links stay the same):
+
+
+| Data                | What happens                                                                                   |
+| ------------------- | ---------------------------------------------------------------------------------------------- |
+| **Artists**         | Testing lineup CSV → Production lineup file                                                    |
+| **Schedule**        | Testing schedule CSV → Production schedule file                                                |
+| **Description map** | Testing map CSV → Production map file (the index that links each band to its description file) |
+
+
+The Publish preview shows row counts and, when something really changed, **What will change in Production** (adds, removes, edits). Trust that list and the header badge — counts can match when rows were edited in place.
+
+Publish does **not** re-upload individual band **description text** (`.txt` files). Those go to Dropbox when you save the description in Artists or Descriptions.
+
+### What does *not* get copied?
+
+- **Artists** or **description map** when Testing and Production already use the **same** Dropbox file — Publish skips them (see below)  
+- **Schedule** when Testing and Production point at the same file — **today** Publish is **blocked**; shared schedule feeds may be supported later  
+- Anything not **saved to Testing** yet (including work still **saving to Testing…** in the header)  
+- Admin **Settings** stored only in the app (festival name, venues/days/dates, links) — not a normal Publish  
+- Testing and Production **pointer** files themselves (except a special **new festival year** setup — ask your app maintainer)
+
+### Shared artists (or description map)
+
+Some festivals point Testing **artists** (and sometimes the **description map**) at the **same** Dropbox file as Production — often when an automated feed writes the lineup.
+
+
+|                           | Separate Testing file                | Shared with Production                              |
+| ------------------------- | ------------------------------------ | --------------------------------------------------- |
+| **When fans see edits**   | After you **Publish**                | As soon as you **save** to Testing                  |
+| **What Publish does**     | Copies Testing CSV → Production file | Skips copy — preview notes *share the same file*    |
+| **Header when caught up** | **Production is up to date**         | May note *already live in Production (shared file)* |
+
+
+You may still **Publish** to push a **separate** schedule (or separate description map). Shared lineup changes do **not** wait for Publish.
+
+**Schedule today:** Most festivals use a **separate** Testing schedule file. If Testing and Production schedule URLs resolve to the same Dropbox file, Publish is **blocked** until the Testing pointer is fixed. An automated schedule feed (like some shared artist lineups) **may** be offered in the future — it is not a general option yet, and your maintainer will say when one is trusted for your festival.
+
+Festival owners can switch share/separate for **artists** and **description map** under Settings → **Data files** → **Testing vs Production files**. There is no schedule share toggle today.
+
+### How long does it take?
+
+
+| Step                                 | Typical timing                                                                                                            |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| **Publish button**                   | Seconds to about a minute — uploads one complete CSV per file being copied; wait for the success dialog                   |
+| **Fan apps pick up Production data** | On the app’s next refresh (not always instant; depends on caching and network)                                            |
+| **“New band” push notifications**    | Often within about **10 minutes** after Publish, if your festival uses them — see **Recent alerts** on the Publish screen |
+
+
+Publish waits for any pending **saving to Testing…** uploads to finish before it copies.
+
+### Can fans see partial updates?
+
+- **During one Publish:** the app copies each file it needs to update in a single operation. There is no setting to publish “only these rows.”  
+- **Across the season:** you can Publish in stages — artists when announced, descriptions when ready, schedule when finalized. Fans see each part after **that** Publish completes (and after their app refreshes).  
+- **Shared artists:** fans can see lineup changes **before** you open Publish, because saves already wrote the shared Production file.
+
+### Do I need to Publish?
+
+Look at the **status badge** in the top-right of the header (on every screen):
+
+
+| Badge                                                                   | What it means                                                              |
+| ----------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| **Production is up to date** (green)                                    | Nothing waiting to go live — you’re done for now                           |
+| **Ready to publish — fans don’t have your latest changes yet** (orange) | Saved Testing changes fans don’t have yet — open **Publish** when approved |
+| **Schedule still saving to Testing…** (or Artists / Description map)    | Wait — your last save is still uploading to Dropbox                        |
+| **Checking whether Production is up to date…**                          | Wait — the app is comparing Testing and Production                         |
+
+
+When Publish is needed, **CONFIG → Publish** in the nav is **highlighted** in orange. The main **Publish Testing → Production** button stays disabled when there is nothing to copy or while saves are still uploading.
+
+The orange **Ready to publish** badge means Testing has changes that are not public yet — open **Publish** when you are ready to release them.
+
+### Before you confirm
 
 1. Check Testing in the **fan app** (Advanced → Testing).
-2. Open **Publish** and read the **preview**.
-3. Note any **bands that will be announced** (new bands vs what’s already live).
-4. Confirm only when you’re sure. Changes can be restored if necessary, but attendees may already have seen or received them.
+2. Open **Publish** and read the preview and **What will change in Production**.
+3. Note **bands that will be announced** (new vs already live).
+4. Confirm only when sure — attendees may see or receive changes quickly; recovery is possible but not instant.
 
 ### When new bands notify fans
 
-If your festival uses announcements and you can edit artists, publishing **new** bands can automatically queue a push like “these bands were just added.” Removals are **not** auto-announced. Everyone with the festival app can get that push — spell-check names and preview the list.
+If your festival uses announcements and you can edit artists, publishing **new** bands (on a **separate** lineup file) can queue a push like “these bands were just added.” Removals are **not** auto-announced. Everyone with the festival app can get that push — spell-check names and preview the list.
 
-Pushes often go out within about **10 minutes** after Publish (depends on the festival’s backend Mac/monitor). **Recent alerts** on the Publish screen shows pending vs sent.
+**Recent alerts** on the Publish screen shows pending vs sent.
 
 ---
 
@@ -387,7 +470,7 @@ Pushes often go out within about **10 minutes** after Publish (depends on the fe
 
 **Nav:** ALERTS → **Send alert** (only if your festival turned this on for you)
 
-![Send Alert](images/send-alert.png)
+Send Alert
 
 Type a plain message, confirm that it goes to **all** app users, and queue it. There is no “take it back” in the app after you confirm.
 
@@ -408,8 +491,9 @@ Use this only when you’ve been asked to, and only for messages that are **dire
 
 **People who Publish / send alerts**
 
-1. Publish when Testing is approved.
-2. Send a custom alert only when intentionally messaging all users.
+1. Glance at the header badge — **Ready to publish** means it’s time; **Production is up to date** means skip it.
+2. **Publish** when Testing is ready for public release (review **What will change in Production** on the Publish screen).
+3. Send a custom alert only when intentionally messaging all users.
 
 Volunteers who can’t Publish still improve Testing for whoever does.
 
@@ -418,22 +502,23 @@ Volunteers who can’t Publish still improve Testing for whoever does.
 ## Quick help: “Why can’t I …?”
 
 
-| Symptom                            | Likely fix                                                                                                             |
-| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| No Add / Edit / Delete             | Ask for **edit** share on those Dropbox files to your personal account, then **Refresh file access**.                  |
-| Dropbox says not connected         | Settings → **Connect Dropbox**. If it still fails, **Disconnect** then connect again. On Mac/Windows, complete sign-in in the browser tab. |
-| Discover didn’t find my band       | Verify spelling. If multiple matches exist, use the Metal Archives or MusicBrainz page URL. Otherwise enter the information manually. |
-| No Schedule **Entry**              | You can view only — need schedule edit rights.                                                                         |
-| No **Publish**                     | Need edit rights on at least Artists, Schedule, or Descriptions.                                                       |
-| **Nothing to publish**             | Testing already matches Production — make and save changes in Testing first, then try again.                           |
-| No **Edit description** on Artists      | Same as missing **Descriptions** write access in Settings → **File access**. **Add description** still works — copy the handoff link. |
-| No Edit / Attach Link on Descriptions | Need **write** on **Descriptions** in **File access**, not just **Artists**. **Create Description** and **Add description** still work — copy the URL for whoever maintains the description list. |
-| Export vs official schedule        | Promoters may publish exports as the official running order. Don’t circulate one that competes with an existing official PDF or web schedule. |
-| No **QR poster** in Export         | Your festival may not support offline QR schedule updates yet — ask your app maintainer. You still need a loaded lineup (**Load festival data**). |
-| **Preview** on Windows opens a browser | Normal — same HTML as export. Refresh the tab after changing filters in the app. |
-| QR poster won’t scan well          | Print at **100% scale**; avoid shrinking the PDF to fit. Reprint if the schedule changed after you exported. |
-| No **Send alert**                  | Festival hasn’t enabled alerts for you, or alert folder isn’t set / shared for write.                                  |
-| Description won’t show for fans      | Add or edit the blurb on **Artists** (**Add description** / **Edit description**) or under **Descriptions**, then save. With **Descriptions** write access it updates automatically; without it, copy the handoff link to whoever maintains that file. Someone with **Publish** rights must publish before most fans see it. |
+| Symptom                                                     | Likely fix                                                                                                                                                                                                                                                                                                                   |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| No Add / Edit / Delete                                      | Ask for **edit** share on those Dropbox files to your personal account, then **Refresh file access**.                                                                                                                                                                                                                        |
+| Dropbox says not connected                                  | Settings → **Connect Dropbox**. If it still fails, **Disconnect** then connect again. On Mac/Windows, complete sign-in in the browser tab.                                                                                                                                                                                   |
+| Discover didn’t find my band                                | Verify spelling. If multiple matches exist, use the Metal Archives or MusicBrainz page URL. Otherwise enter the information manually.                                                                                                                                                                                        |
+| No Schedule **Entry**                                       | You can view only — need schedule edit rights.                                                                                                                                                                                                                                                                               |
+| No **Publish**                                              | Need edit rights on at least Artists, Schedule, or Descriptions.                                                                                                                                                                                                                                                             |
+| **Nothing to publish** / green **Production is up to date** | Testing matches Production — make and save changes in Testing first, or wait for **…still saving…** to finish.                                                                                                                                                                                                               |
+| Orange **Ready to publish** badge                           | You have unpublished Testing changes — open **Publish** and review **What will change in Production** before confirming.                                                                                                                                                                                                     |
+| No **Edit description** on Artists                          | Same as missing **Descriptions** write access in Settings → **File access**. **Add description** still works — copy the handoff link.                                                                                                                                                                                        |
+| No Edit / Attach Link on Descriptions                       | Need **write** on **Descriptions** in **File access**, not just **Artists**. **Create Description** and **Add description** still work — copy the URL for whoever maintains the description list.                                                                                                                            |
+| Export vs official schedule                                 | Promoters may publish exports as the official running order. Don’t circulate one that competes with an existing official PDF or web schedule.                                                                                                                                                                                |
+| No **QR poster** in Export                                  | Your festival may not support offline QR schedule updates yet — ask your app maintainer. You still need a loaded lineup (**Load festival data**).                                                                                                                                                                            |
+| **Preview** on Windows opens a browser                      | Normal — same HTML as export. Refresh the tab after changing filters in the app.                                                                                                                                                                                                                                             |
+| QR poster won’t scan well                                   | Print at **100% scale**; avoid shrinking the PDF to fit. Reprint if the schedule changed after you exported.                                                                                                                                                                                                                 |
+| No **Send alert**                                           | Festival hasn’t enabled alerts for you, or alert folder isn’t set / shared for write.                                                                                                                                                                                                                                        |
+| Description won’t show for fans                             | Add or edit the blurb on **Artists** (**Add description** / **Edit description**) or under **Descriptions**, then save. With **Descriptions** write access it updates automatically; without it, copy the handoff link to whoever maintains that file. Someone with **Publish** rights must publish before most fans see it. |
 
 
 ---

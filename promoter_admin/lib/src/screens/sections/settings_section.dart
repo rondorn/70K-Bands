@@ -17,6 +17,7 @@ import 'package:promoter_admin/src/services/lineup_service.dart';
 import 'package:promoter_admin/src/services/schedule_service.dart';
 import 'package:promoter_admin/src/services/schedule_validation.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
+import 'package:promoter_admin/src/widgets/app_version_footer.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
 import 'package:promoter_admin/src/widgets/folder_access_dialog.dart';
 import 'package:promoter_admin/src/widgets/portal_dropdown.dart';
@@ -1855,6 +1856,7 @@ class _SettingsSectionState extends State<SettingsSection> {
                   ),
               ],
             ),
+            const AppVersionFooter(),
             if (!_busy && _hasUnsavedChanges)
               const Padding(
                 padding: EdgeInsets.only(top: 8),
