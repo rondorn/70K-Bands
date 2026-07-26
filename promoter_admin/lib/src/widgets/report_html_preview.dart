@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:promoter_admin/src/services/http_fetch.dart';
 import 'package:promoter_admin/src/services/embedded_html_webview.dart';
+import 'package:promoter_admin/src/services/report_html_windows_sanitize.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
 import 'package:promoter_admin/src/widgets/embedded_html_webview_frame.dart';
@@ -76,7 +77,9 @@ class _ReportHtmlPreviewState extends State<ReportHtmlPreview> {
         throw StateError('Downloaded report HTML was empty.');
       }
 
-      final controller = await createEmbeddedHtmlWebViewController(html);
+      final controller = await createEmbeddedHtmlWebViewController(
+        prepareReportHtmlForPlatform(html),
+      );
       if (!mounted) return;
       setState(() {
         _controller = controller;
