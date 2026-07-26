@@ -3,7 +3,7 @@ import 'package:promoter_admin/src/branding.dart';
 import 'package:promoter_admin/src/models/publish_status.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
 
-enum AppSection { settings, bands, schedule, descriptions, alerts }
+enum AppSection { settings, bands, schedule, descriptions, alerts, reports }
 
 enum BandsTab { list, add }
 enum ScheduleTab { entry, view, stats, preview }
@@ -28,6 +28,7 @@ class AppShell extends StatelessWidget {
     this.canEditSchedule = true,
     this.canEditDescriptions = true,
     this.allowCustomAlerts = false,
+    this.reportsUiEnabled = false,
     this.bandsTab = BandsTab.list,
     this.onBandsTabChanged,
     this.scheduleTab = ScheduleTab.view,
@@ -51,6 +52,7 @@ class AppShell extends StatelessWidget {
   final bool canEditSchedule;
   final bool canEditDescriptions;
   final bool allowCustomAlerts;
+  final bool reportsUiEnabled;
   final BandsTab bandsTab;
   final ValueChanged<BandsTab>? onBandsTabChanged;
   final ScheduleTab scheduleTab;
@@ -96,6 +98,7 @@ class AppShell extends StatelessWidget {
                     canEditSchedule: canEditSchedule,
                     canEditDescriptions: canEditDescriptions,
                     allowCustomAlerts: allowCustomAlerts,
+                    reportsUiEnabled: reportsUiEnabled,
                     bandsTab: bandsTab,
                     onBandsTabChanged: onBandsTabChanged,
                     scheduleTab: scheduleTab,
@@ -320,6 +323,7 @@ class _NavBar extends StatelessWidget {
     required this.canEditSchedule,
     required this.canEditDescriptions,
     required this.allowCustomAlerts,
+    this.reportsUiEnabled = false,
     required this.bandsTab,
     required this.onBandsTabChanged,
     required this.scheduleTab,
@@ -337,6 +341,7 @@ class _NavBar extends StatelessWidget {
   final bool canEditSchedule;
   final bool canEditDescriptions;
   final bool allowCustomAlerts;
+  final bool reportsUiEnabled;
   final BandsTab bandsTab;
   final ValueChanged<BandsTab>? onBandsTabChanged;
   final ScheduleTab scheduleTab;
@@ -442,6 +447,17 @@ class _NavBar extends StatelessWidget {
           ),
         ],
       ),
+      if (reportsUiEnabled)
+        _NavSection(
+          label: 'Reports',
+          children: [
+            _NavLink(
+              label: 'View',
+              selected: section == AppSection.reports,
+              onTap: () => onSectionChanged(AppSection.reports),
+            ),
+          ],
+        ),
       if (allowCustomAlerts)
         _NavSection(
           label: 'Alerts',

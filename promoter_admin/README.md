@@ -65,7 +65,15 @@ Committed file **`native/AppVersion.xcconfig`** carries that version into iOS an
 
 **When bumping version:** edit `pubspec.yaml` only — the Runner scheme pre-action updates `AppVersion.xcconfig` automatically on the next Xcode build or archive. Commit both files together (optional: run `./tool/install-git-hooks.sh` once so commits that touch `pubspec.yaml` also stage `AppVersion.xcconfig`).
 
-After **git pull**, no extra steps are required if both files were committed together.
+After **git pull**, if `pubspec.yaml` or `pubspec.lock` changed (new packages, version bumps), refresh dependencies before archiving:
+
+```bash
+cd promoter_admin
+flutter pub get
+flutter build ios --config-only
+```
+
+If Xcode still reports **Invalid depfile** or **Couldn't resolve the package**, run `flutter clean`, then `flutter pub get` and `flutter build ios --config-only` again.
 
 Confirm an archive shows **1.0.4 (16)** (or whatever is in `pubspec.yaml`).
 

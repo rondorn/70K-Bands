@@ -390,6 +390,7 @@ class DropboxApi {
     final mapUrl = workspace.descriptionMapUrl.trim();
     final testingPointer = workspace.testingPointerUrl.trim();
     final alertFolder = workspace.alertFolderUrl.trim();
+    final reportsFolder = workspace.reportsFolderUrl.trim();
 
     final results = await Future.wait([
       bandUrl.isEmpty
@@ -407,6 +408,9 @@ class DropboxApi {
       alertFolder.isEmpty
           ? Future<bool>.value(false)
           : canWriteFolderShareUrl(alertFolder),
+      reportsFolder.isEmpty
+          ? Future<bool>.value(false)
+          : canWriteFolderShareUrl(reportsFolder),
     ]);
 
     return workspace.copyWith(
@@ -416,6 +420,7 @@ class DropboxApi {
       // Year-roll only edits the testing pointer; production stays via Promote.
       canEditPointers: results[3],
       canEditAlerts: results[4],
+      canViewReports: results[5],
     );
   }
 

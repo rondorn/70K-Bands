@@ -12,6 +12,7 @@ import 'package:promoter_admin/src/services/location_parse.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
 import 'package:promoter_admin/src/widgets/admin_table_cells.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
+import 'package:promoter_admin/src/widgets/centered_when_wrapped.dart';
 import 'package:promoter_admin/src/widgets/dropbox_folder_picker.dart';
 import 'package:promoter_admin/src/widgets/export_artists_dialog.dart';
 import 'package:promoter_admin/src/widgets/url_image_preview.dart';
@@ -1250,8 +1251,9 @@ class _BandsSectionState extends State<BandsSection> {
             ),
             _buildDescriptionSection(),
             const SizedBox(height: 8),
-            Wrap(
+            CenteredWhenWrapped(
               spacing: 10,
+              runSpacing: 10,
               children: [
                 FilledButton(
                   onPressed: !_canEdit || _saving ? null : _saveBand,

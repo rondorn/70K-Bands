@@ -1,3 +1,4 @@
+
 /// Local workspace config for one festival (pointers from app maintainer).
 class FestivalWorkspace {
   const FestivalWorkspace({
@@ -6,12 +7,17 @@ class FestivalWorkspace {
     this.testingPointerUrl = '',
     this.productionPointerUrl = '',
     this.alertFolderUrl = '',
+    this.reportsFolderUrl = '',
     this.festivalLogoUrl = '',
     this.eventYear = '',
     this.dataSourceYearOverride = '',
     this.bandListUrl = '',
     this.scheduleUrl = '',
     this.descriptionMapUrl = '',
+    this.reportUrl = '',
+    this.reportUrlFull = '',
+    this.reportDiscoveryEventYear = '',
+    this.reportDiscoveryFolderUrl = '',
     this.venues = const [],
     this.dates = const [],
     this.days = const [],
@@ -22,12 +28,14 @@ class FestivalWorkspace {
     this.canEditDescriptions = true,
     this.canEditPointers = false,
     this.canEditAlerts = false,
+    this.canViewReports = false,
     this.allowCustomAlerts = false,
     this.useCityStateField = false,
     this.artistFilesFolderPath = '',
     this.scheduleFilesFolderPath = '',
     this.descriptionFilesFolderPath = '',
     this.alertFilesFolderPath = '',
+    this.reportFilesFolderPath = '',
     this.masterFilesFolderPath = '',
     this.ownsArtistFilesFolder = false,
     this.ownsScheduleFilesFolder = false,
@@ -46,6 +54,10 @@ class FestivalWorkspace {
   /// Pasted manually in Settings (not created by festival bootstrap).
   final String alertFolderUrl;
 
+  /// Dropbox folder where generated HTML stats reports are stored.
+  /// Write access to this folder gates the Reports UI (access control only).
+  final String reportsFolderUrl;
+
   /// Optional image URL (typically a Dropbox share link) used only in
   /// PDF/HTML running-order exports, where it replaces the festival name.
   final String festivalLogoUrl;
@@ -60,6 +72,20 @@ class FestivalWorkspace {
   final String bandListUrl;
   final String scheduleUrl;
   final String descriptionMapUrl;
+
+  /// End-user dashboard URL — English (`reportUrl-en`) from Production pointer,
+  /// or discovered from [reportsFolderUrl] (`report_dashboard-en*.html`).
+  final String reportUrl;
+
+  /// Full dashboard URL — discovered from [reportsFolderUrl] only (admin-only;
+  /// never published on the Production pointer). Persisted with discovery cache.
+  final String reportUrlFull;
+
+  /// [eventYear] when [reportsFolderUrl] was last scanned for report files.
+  final String reportDiscoveryEventYear;
+
+  /// Normalized [reportsFolderUrl] from the last successful discovery scan.
+  final String reportDiscoveryFolderUrl;
 
   /// Schedule vocabulary (venues/types from production pointer load).
   final List<String> venues;
@@ -83,6 +109,10 @@ class FestivalWorkspace {
   /// Write access to [alertFolderUrl] (Dropbox probe on save / refresh).
   final bool canEditAlerts;
 
+  /// Write access to [reportsFolderUrl] — used only to gate who may open
+  /// the full stats report in the admin app (not for editing reports).
+  final bool canViewReports;
+
   /// From Production pointer `Current::allowCustomAlerts` (festival-wide grant).
   final bool allowCustomAlerts;
 
@@ -96,6 +126,9 @@ class FestivalWorkspace {
 
   /// Dropbox API path for [alertFolderUrl] (resolved from the folder share link).
   final String alertFilesFolderPath;
+
+  /// Dropbox API path for [reportsFolderUrl].
+  final String reportFilesFolderPath;
 
   /// Dropbox API path for testing/production pointer files (`/{Name}_MasterFiles`).
   final String masterFilesFolderPath;
@@ -112,6 +145,7 @@ class FestivalWorkspace {
       scheduleFilesFolderPath.trim().isNotEmpty ||
       descriptionFilesFolderPath.trim().isNotEmpty ||
       alertFilesFolderPath.trim().isNotEmpty ||
+      reportFilesFolderPath.trim().isNotEmpty ||
       masterFilesFolderPath.trim().isNotEmpty;
 
   bool get canManageAnyFolderAccess =>
@@ -143,9 +177,36 @@ class FestivalWorkspace {
       alertFolderUrl.trim().isNotEmpty &&
       (allowCustomAlerts || canEditPointers);
 
+  /// Show the Reports section when a reports folder is configured and this
+  /// Dropbox user has write access to it (used as an access-control gate).
+  bool get reportsUiEnabled =>
+      reportsFolderUrl.trim().isNotEmpty && canViewReports;
+
+  /// End-user stats report URL (Production pointer or reports folder).
+  String get effectiveReportUrl => reportUrl.trim();
+
+  /// Full stats report URL (reports folder only).
+  String get effectiveReportUrlFull => reportUrlFull.trim();
+
   String get displayName {
     final n = festivalName.trim();
     return n.isEmpty ? (id.isEmpty ? 'Untitled Festival' : id) : n;
+  }
+
+  /// Keep cached report discovery when a background pointer/probe refresh
+  /// returns a stale workspace snapshot.
+  FestivalWorkspace preservingSessionReportFields(FestivalWorkspace refreshed) {
+    var merged = refreshed;
+    if (reportUrlFull.trim().isNotEmpty) {
+      merged = merged.copyWith(reportUrlFull: reportUrlFull);
+    }
+    if (reportDiscoveryEventYear.trim().isNotEmpty) {
+      merged = merged.copyWith(
+        reportDiscoveryEventYear: reportDiscoveryEventYear,
+        reportDiscoveryFolderUrl: reportDiscoveryFolderUrl,
+      );
+    }
+    return merged;
   }
 
   FestivalWorkspace copyWith({
@@ -154,6 +215,7 @@ class FestivalWorkspace {
     String? testingPointerUrl,
     String? productionPointerUrl,
     String? alertFolderUrl,
+    String? reportsFolderUrl,
     String? festivalLogoUrl,
     String? eventYear,
     String? dataSourceYearOverride,
@@ -161,6 +223,10 @@ class FestivalWorkspace {
     String? bandListUrl,
     String? scheduleUrl,
     String? descriptionMapUrl,
+    String? reportUrl,
+    String? reportUrlFull,
+    String? reportDiscoveryEventYear,
+    String? reportDiscoveryFolderUrl,
     List<String>? venues,
     List<String>? dates,
     List<String>? days,
@@ -171,12 +237,14 @@ class FestivalWorkspace {
     bool? canEditDescriptions,
     bool? canEditPointers,
     bool? canEditAlerts,
+    bool? canViewReports,
     bool? allowCustomAlerts,
     bool? useCityStateField,
     String? artistFilesFolderPath,
     String? scheduleFilesFolderPath,
     String? descriptionFilesFolderPath,
     String? alertFilesFolderPath,
+    String? reportFilesFolderPath,
     String? masterFilesFolderPath,
     bool? ownsArtistFilesFolder,
     bool? ownsScheduleFilesFolder,
@@ -190,6 +258,7 @@ class FestivalWorkspace {
       testingPointerUrl: testingPointerUrl ?? this.testingPointerUrl,
       productionPointerUrl: productionPointerUrl ?? this.productionPointerUrl,
       alertFolderUrl: alertFolderUrl ?? this.alertFolderUrl,
+      reportsFolderUrl: reportsFolderUrl ?? this.reportsFolderUrl,
       festivalLogoUrl: festivalLogoUrl ?? this.festivalLogoUrl,
       eventYear: eventYear ?? this.eventYear,
       dataSourceYearOverride: clearDataSourceYearOverride
@@ -198,6 +267,12 @@ class FestivalWorkspace {
       bandListUrl: bandListUrl ?? this.bandListUrl,
       scheduleUrl: scheduleUrl ?? this.scheduleUrl,
       descriptionMapUrl: descriptionMapUrl ?? this.descriptionMapUrl,
+      reportUrl: reportUrl ?? this.reportUrl,
+      reportUrlFull: reportUrlFull ?? this.reportUrlFull,
+      reportDiscoveryEventYear:
+          reportDiscoveryEventYear ?? this.reportDiscoveryEventYear,
+      reportDiscoveryFolderUrl:
+          reportDiscoveryFolderUrl ?? this.reportDiscoveryFolderUrl,
       venues: venues ?? this.venues,
       dates: dates ?? this.dates,
       days: days ?? this.days,
@@ -208,6 +283,7 @@ class FestivalWorkspace {
       canEditDescriptions: canEditDescriptions ?? this.canEditDescriptions,
       canEditPointers: canEditPointers ?? this.canEditPointers,
       canEditAlerts: canEditAlerts ?? this.canEditAlerts,
+      canViewReports: canViewReports ?? this.canViewReports,
       allowCustomAlerts: allowCustomAlerts ?? this.allowCustomAlerts,
       useCityStateField: useCityStateField ?? this.useCityStateField,
       artistFilesFolderPath:
@@ -217,6 +293,8 @@ class FestivalWorkspace {
       descriptionFilesFolderPath:
           descriptionFilesFolderPath ?? this.descriptionFilesFolderPath,
       alertFilesFolderPath: alertFilesFolderPath ?? this.alertFilesFolderPath,
+      reportFilesFolderPath:
+          reportFilesFolderPath ?? this.reportFilesFolderPath,
       masterFilesFolderPath:
           masterFilesFolderPath ?? this.masterFilesFolderPath,
       ownsArtistFilesFolder:
@@ -237,12 +315,17 @@ class FestivalWorkspace {
     'testingPointerUrl': testingPointerUrl,
     'productionPointerUrl': productionPointerUrl,
     'alertFolderUrl': alertFolderUrl,
+    'reportsFolderUrl': reportsFolderUrl,
     'festivalLogoUrl': festivalLogoUrl,
     'eventYear': eventYear,
     'dataSourceYearOverride': dataSourceYearOverride,
     'bandListUrl': bandListUrl,
     'scheduleUrl': scheduleUrl,
     'descriptionMapUrl': descriptionMapUrl,
+    'reportUrl': reportUrl,
+    'reportUrlFull': reportUrlFull,
+    'reportDiscoveryEventYear': reportDiscoveryEventYear,
+    'reportDiscoveryFolderUrl': reportDiscoveryFolderUrl,
     'venues': venues.join('\n'),
     'dates': dates.join('\n'),
     'days': days.join('\n'),
@@ -253,12 +336,14 @@ class FestivalWorkspace {
     'canEditDescriptions': canEditDescriptions ? '1' : '0',
     'canEditPointers': canEditPointers ? '1' : '0',
     'canEditAlerts': canEditAlerts ? '1' : '0',
+    'canViewReports': canViewReports ? '1' : '0',
     'allowCustomAlerts': allowCustomAlerts ? '1' : '0',
     'useCityStateField': useCityStateField ? '1' : '0',
     'artistFilesFolderPath': artistFilesFolderPath,
     'scheduleFilesFolderPath': scheduleFilesFolderPath,
     'descriptionFilesFolderPath': descriptionFilesFolderPath,
     'alertFilesFolderPath': alertFilesFolderPath,
+    'reportFilesFolderPath': reportFilesFolderPath,
     'masterFilesFolderPath': masterFilesFolderPath,
   };
 
@@ -288,6 +373,7 @@ class FestivalWorkspace {
       testingPointerUrl: map['testingPointerUrl'] ?? '',
       productionPointerUrl: map['productionPointerUrl'] ?? '',
       alertFolderUrl: map['alertFolderUrl'] ?? '',
+      reportsFolderUrl: map['reportsFolderUrl'] ?? '',
       festivalLogoUrl: (map['festivalLogoUrl'] ?? '').trim().isNotEmpty
           ? (map['festivalLogoUrl'] ?? '').trim()
           : (map['festivalLogoPath'] ?? '').trim(),
@@ -296,6 +382,10 @@ class FestivalWorkspace {
       bandListUrl: map['bandListUrl'] ?? '',
       scheduleUrl: map['scheduleUrl'] ?? '',
       descriptionMapUrl: map['descriptionMapUrl'] ?? '',
+      reportUrl: map['reportUrl'] ?? '',
+      reportUrlFull: map['reportUrlFull'] ?? '',
+      reportDiscoveryEventYear: map['reportDiscoveryEventYear'] ?? '',
+      reportDiscoveryFolderUrl: map['reportDiscoveryFolderUrl'] ?? '',
       venues: list('venues'),
       dates: list('dates'),
       days: list('days'),
@@ -308,12 +398,14 @@ class FestivalWorkspace {
       canEditDescriptions: _boolPref(map, 'canEditDescriptions'),
       canEditPointers: _boolPref(map, 'canEditPointers', fallback: false),
       canEditAlerts: _boolPref(map, 'canEditAlerts', fallback: false),
+      canViewReports: _boolPref(map, 'canViewReports', fallback: false),
       allowCustomAlerts: _boolPref(map, 'allowCustomAlerts', fallback: false),
       useCityStateField: _boolPref(map, 'useCityStateField', fallback: false),
       artistFilesFolderPath: map['artistFilesFolderPath'] ?? '',
       scheduleFilesFolderPath: map['scheduleFilesFolderPath'] ?? '',
       descriptionFilesFolderPath: map['descriptionFilesFolderPath'] ?? '',
       alertFilesFolderPath: map['alertFilesFolderPath'] ?? '',
+      reportFilesFolderPath: map['reportFilesFolderPath'] ?? '',
       masterFilesFolderPath: map['masterFilesFolderPath'] ?? '',
     );
   }

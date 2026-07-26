@@ -16,9 +16,11 @@ import 'package:promoter_admin/src/services/http_fetch.dart';
 import 'package:promoter_admin/src/services/lineup_service.dart';
 import 'package:promoter_admin/src/services/schedule_service.dart';
 import 'package:promoter_admin/src/services/schedule_validation.dart';
+import 'package:promoter_admin/src/services/report_discovery_service.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
 import 'package:promoter_admin/src/widgets/app_version_footer.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
+import 'package:promoter_admin/src/widgets/centered_when_wrapped.dart';
 import 'package:promoter_admin/src/widgets/folder_access_dialog.dart';
 import 'package:promoter_admin/src/widgets/portal_dropdown.dart';
 import 'package:promoter_admin/src/widgets/recent_alerts_list.dart';
@@ -84,6 +86,7 @@ class _SettingsSectionState extends State<SettingsSection> {
   late final TextEditingController _testing;
   late final TextEditingController _production;
   late final TextEditingController _alertFolder;
+  late final TextEditingController _reportsFolder;
   late final TextEditingController _venues;
   late final TextEditingController _dates;
   late final TextEditingController _days;
@@ -95,6 +98,7 @@ class _SettingsSectionState extends State<SettingsSection> {
   late bool _canEditDescriptions;
   late bool _canEditPointers;
   late bool _canEditAlerts;
+  late bool _canViewReports;
   late bool _useCityStateField;
   String? _status;
   String? _error;
@@ -121,6 +125,9 @@ class _SettingsSectionState extends State<SettingsSection> {
     _alertFolder = TextEditingController(
       text: displayShareUrl(widget.workspace.alertFolderUrl),
     );
+    _reportsFolder = TextEditingController(
+      text: displayShareUrl(widget.workspace.reportsFolderUrl),
+    );
     _venues = TextEditingController(text: widget.workspace.venues.join('\n'));
     _dates = TextEditingController(text: widget.workspace.dates.join('\n'));
     _days = TextEditingController(text: widget.workspace.days.join('\n'));
@@ -142,12 +149,14 @@ class _SettingsSectionState extends State<SettingsSection> {
     _canEditDescriptions = widget.workspace.canEditDescriptions;
     _canEditPointers = widget.workspace.canEditPointers;
     _canEditAlerts = widget.workspace.canEditAlerts;
+    _canViewReports = widget.workspace.canViewReports;
     _useCityStateField = widget.workspace.useCityStateField;
     for (final c in [
       _name,
       _testing,
       _production,
       _alertFolder,
+      _reportsFolder,
       _venues,
       _dates,
       _days,
@@ -189,6 +198,9 @@ class _SettingsSectionState extends State<SettingsSection> {
     if (_alertFolder.text != displayShareUrl(w.alertFolderUrl)) {
       _alertFolder.text = displayShareUrl(w.alertFolderUrl);
     }
+    if (_reportsFolder.text != displayShareUrl(w.reportsFolderUrl)) {
+      _reportsFolder.text = displayShareUrl(w.reportsFolderUrl);
+    }
     final v = w.venues.join('\n');
     if (_venues.text != v) _venues.text = v;
     final d = w.dates.join('\n');
@@ -209,6 +221,7 @@ class _SettingsSectionState extends State<SettingsSection> {
     _canEditDescriptions = w.canEditDescriptions;
     _canEditPointers = w.canEditPointers;
     _canEditAlerts = w.canEditAlerts;
+    _canViewReports = w.canViewReports;
     _useCityStateField = w.useCityStateField;
     if (w.hasDataSourceYearOverride) {
       _showDemoYearControls = true;
@@ -222,6 +235,7 @@ class _SettingsSectionState extends State<SettingsSection> {
       _testing,
       _production,
       _alertFolder,
+      _reportsFolder,
       _venues,
       _dates,
       _days,
@@ -268,6 +282,7 @@ class _SettingsSectionState extends State<SettingsSection> {
         d.testingPointerUrl != w.testingPointerUrl.trim() ||
         d.productionPointerUrl != w.productionPointerUrl.trim() ||
         d.alertFolderUrl != w.alertFolderUrl.trim() ||
+        d.reportsFolderUrl != w.reportsFolderUrl.trim() ||
         d.festivalLogoUrl != baselineLogo ||
         !_sameStringList(d.venues, w.venues) ||
         !_sameStringList(d.dates, baselineDates) ||
@@ -279,6 +294,7 @@ class _SettingsSectionState extends State<SettingsSection> {
         d.canEditDescriptions != w.canEditDescriptions ||
         d.canEditPointers != w.canEditPointers ||
         d.canEditAlerts != w.canEditAlerts ||
+        d.canViewReports != w.canViewReports ||
         d.useCityStateField != w.useCityStateField;
   }
 
@@ -298,6 +314,7 @@ class _SettingsSectionState extends State<SettingsSection> {
       testingPointerUrl: normalizeDropboxUrl(_testing.text.trim()),
       productionPointerUrl: normalizeDropboxUrl(_production.text.trim()),
       alertFolderUrl: normalizeDropboxUrl(_alertFolder.text.trim()),
+      reportsFolderUrl: normalizeDropboxUrl(_reportsFolder.text.trim()),
       festivalLogoUrl: normalizeDropboxUrl(_festivalLogo.text.trim()),
       venues: _lines(_venues.text),
       dates: dates,
@@ -311,6 +328,7 @@ class _SettingsSectionState extends State<SettingsSection> {
       canEditDescriptions: _canEditDescriptions,
       canEditPointers: _canEditPointers,
       canEditAlerts: _canEditAlerts,
+      canViewReports: _canViewReports,
       useCityStateField: _useCityStateField,
     );
   }
@@ -320,6 +338,18 @@ class _SettingsSectionState extends State<SettingsSection> {
     return FestivalCreateService.probeFullWorkspaceAccess(
       workspace,
       widget.dropboxApi,
+    );
+  }
+
+  Future<FestivalWorkspace> _applyReportDiscovery(
+    FestivalWorkspace workspace, {
+    bool forceRefresh = false,
+  }) async {
+    if (!widget.dropboxConnected) return workspace;
+    return ReportDiscoveryService.apply(
+      workspace,
+      widget.dropboxApi,
+      forceRefresh: forceRefresh,
     );
   }
 
@@ -361,6 +391,9 @@ class _SettingsSectionState extends State<SettingsSection> {
     parts.add(w.canEditPointers ? 'Links ✓' : 'Links ✗');
     if (w.alertFolderUrl.trim().isNotEmpty) {
       parts.add(w.canEditAlerts ? 'Alerts ✓' : 'Alerts ✗');
+    }
+    if (w.reportsFolderUrl.trim().isNotEmpty) {
+      parts.add(w.canViewReports ? 'Reports ✓' : 'Reports ✗');
     }
     return parts.join(' · ');
   }
@@ -499,6 +532,7 @@ class _SettingsSectionState extends State<SettingsSection> {
         _canEditDescriptions = draft.canEditDescriptions;
         _canEditPointers = draft.canEditPointers;
         _canEditAlerts = draft.canEditAlerts;
+        _canViewReports = draft.canViewReports;
         _error = null;
         final vocabNote = _scheduleVocabChanged(before, draft)
             ? ' Schedule menus will use the updated venues / days / dates / types.'
@@ -696,6 +730,8 @@ class _SettingsSectionState extends State<SettingsSection> {
       if (widget.dropboxConnected) {
         setState(() => _status = 'Checking Dropbox write access…');
         updated = await _probeAccess(updated);
+        setState(() => _status = 'Scanning reports folder…');
+        updated = await _applyReportDiscovery(updated);
       }
       await widget.onWorkspaceChanged(updated);
       widget.publishStatusService.bind(
@@ -758,6 +794,7 @@ class _SettingsSectionState extends State<SettingsSection> {
         _canEditDescriptions = updated.canEditDescriptions;
         _canEditPointers = updated.canEditPointers;
         _canEditAlerts = updated.canEditAlerts;
+        _canViewReports = updated.canViewReports;
         _status =
             'Loaded testing data files + production vocabulary '
             '(year ${updated.eventYear}). '
@@ -882,7 +919,7 @@ class _SettingsSectionState extends State<SettingsSection> {
       _status = 'Checking Dropbox write access…';
     });
     try {
-      final updated = await _probeAccess(_draft());
+      final updated = await _applyReportDiscovery(await _probeAccess(_draft()));
       await widget.onWorkspaceChanged(updated);
       if (!mounted) return;
       setState(() {
@@ -891,6 +928,7 @@ class _SettingsSectionState extends State<SettingsSection> {
         _canEditDescriptions = updated.canEditDescriptions;
         _canEditPointers = updated.canEditPointers;
         _canEditAlerts = updated.canEditAlerts;
+        _canViewReports = updated.canViewReports;
         _status =
             'Write access: ${_accessSummary(updated)}. '
             'Admin sections without access are hidden.';
@@ -1010,6 +1048,7 @@ class _SettingsSectionState extends State<SettingsSection> {
         _canEditDescriptions = probed.canEditDescriptions;
         _canEditPointers = probed.canEditPointers;
         _canEditAlerts = probed.canEditAlerts;
+        _canViewReports = probed.canViewReports;
         _status = target.isEmpty
             ? 'Restored Testing Current (year ${probed.eventYear}).'
             : 'Demo/test data source: $target '
@@ -1197,6 +1236,7 @@ class _SettingsSectionState extends State<SettingsSection> {
         _canEditDescriptions = updated.canEditDescriptions;
         _canEditPointers = updated.canEditPointers;
         _canEditAlerts = updated.canEditAlerts;
+        _canViewReports = updated.canViewReports;
         _busy = false;
         _status =
             'Rolled Testing to ${updated.eventYear} '
@@ -1284,7 +1324,7 @@ class _SettingsSectionState extends State<SettingsSection> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  Wrap(
+                  CenteredWhenWrapped(
                     spacing: 8,
                     runSpacing: 8,
                     children: [
@@ -1325,7 +1365,7 @@ class _SettingsSectionState extends State<SettingsSection> {
                     style: const TextStyle(color: AppColors.heading),
                   ),
                   const SizedBox(height: 10),
-                  Wrap(
+                  CenteredWhenWrapped(
                     spacing: 8,
                     children: [
                       if (widget.dropboxConnected)
@@ -1417,6 +1457,29 @@ class _SettingsSectionState extends State<SettingsSection> {
                 ],
               ),
             ),
+            FormRow(
+              label: 'Reports folder',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: _reportsFolder,
+                    maxLines: 2,
+                    decoration: const InputDecoration(
+                      hintText:
+                          'https://www.dropbox.com/scl/fo/…/70K_Reports?rlkey=…&raw=1',
+                    ),
+                  ),
+                  const HintText(
+                    'Dropbox folder where generated HTML stats reports are stored '
+                    '(e.g. ~/Dropbox/70K_Reports). Write access to this folder '
+                    'controls who sees the Reports section — it is not used to '
+                    'edit report files from the admin app.',
+                  ),
+                  const HintText(shareUrlNormalizationHint),
+                ],
+              ),
+            ),
             UrlImagePreview(
               controller: _festivalLogo,
               padding: const EdgeInsets.only(bottom: 8),
@@ -1457,6 +1520,13 @@ class _SettingsSectionState extends State<SettingsSection> {
                   ),
                   if (widget.workspace.eventYear.isNotEmpty)
                     _ReadonlyLine('Event year', widget.workspace.eventYear),
+                  if (widget.workspace.reportsFolderUrl.trim().isNotEmpty)
+                    _StatusLine(
+                      'Stats reports',
+                      widget.workspace.reportUrl.isNotEmpty
+                          ? 'End-user report loaded — open Reports in the sidebar'
+                          : 'Not found yet — Load festival data',
+                    ),
                   if (widget.workspace.hasDataSourceYearOverride)
                     _ReadonlyLine(
                       'Data source',
@@ -1539,7 +1609,7 @@ class _SettingsSectionState extends State<SettingsSection> {
                       ),
                     ),
                     const SizedBox(height: 6),
-                    Wrap(
+                    CenteredWhenWrapped(
                       spacing: 8,
                       runSpacing: 8,
                       children: [
@@ -1680,6 +1750,27 @@ class _SettingsSectionState extends State<SettingsSection> {
                         : (v) =>
                               setState(() => _canEditDescriptions = v ?? false),
                   ),
+                  if (widget.workspace.reportsFolderUrl.trim().isNotEmpty)
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      title: const Text('Stats reports'),
+                      subtitle: Text(
+                        _canViewReports
+                            ? 'Write access to reports folder — Reports section shown'
+                            : 'No write access — Reports section hidden',
+                        style: const TextStyle(
+                          color: AppColors.muted,
+                          fontSize: 12,
+                        ),
+                      ),
+                      value: _canViewReports,
+                      onChanged: _busy
+                          ? null
+                          : (v) =>
+                                setState(() => _canViewReports = v ?? false),
+                    ),
                   Padding(
                     padding: const EdgeInsets.only(top: 4, bottom: 4),
                     child: Text(
@@ -1831,7 +1922,7 @@ class _SettingsSectionState extends State<SettingsSection> {
               ),
             ),
             const SizedBox(height: 8),
-            Wrap(
+            CenteredWhenWrapped(
               spacing: 10,
               runSpacing: 10,
               children: [
@@ -1884,6 +1975,24 @@ class _ReadonlyLine extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: SelectableText(
         '$label: ${value.isEmpty ? '(not set)' : displayShareUrl(value)}',
+        style: const TextStyle(color: AppColors.muted, fontSize: 13),
+      ),
+    );
+  }
+}
+
+class _StatusLine extends StatelessWidget {
+  const _StatusLine(this.label, this.value);
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        '$label: $value',
         style: const TextStyle(color: AppColors.muted, fontSize: 13),
       ),
     );
@@ -2303,7 +2412,7 @@ class _PromotePanelState extends State<_PromotePanel> {
                       'Testing and Production are already aligned — nothing to publish.',
                 ),
               ),
-            Wrap(
+            CenteredWhenWrapped(
               spacing: 10,
               runSpacing: 10,
               children: [
@@ -2883,7 +2992,7 @@ class _FolderAccessControls extends StatelessWidget {
             style: const TextStyle(color: AppColors.muted, fontSize: 12),
           ),
           const SizedBox(height: 6),
-          Wrap(
+          CenteredWhenWrapped(
             spacing: 8,
             runSpacing: 8,
             children: [

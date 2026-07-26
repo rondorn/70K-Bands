@@ -16,6 +16,7 @@ import 'package:promoter_admin/src/services/schedule_validation.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
 import 'package:promoter_admin/src/widgets/admin_table_cells.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
+import 'package:promoter_admin/src/widgets/centered_when_wrapped.dart';
 import 'package:promoter_admin/src/widgets/dropbox_folder_picker.dart';
 import 'package:promoter_admin/src/widgets/export_schedule_dialog.dart';
 import 'package:promoter_admin/src/widgets/portal_dropdown.dart';
@@ -1518,8 +1519,9 @@ class _ScheduleSectionState extends State<ScheduleSection> {
               ),
             ),
             const SizedBox(height: 8),
-            Wrap(
+            CenteredWhenWrapped(
               spacing: 10,
+              runSpacing: 10,
               children: [
                 FilledButton(
                   onPressed: !_canEdit || _committing ? null : _saveEvent,
@@ -1574,7 +1576,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                       style: const TextStyle(color: AppColors.label),
                     ),
                     const SizedBox(height: 12),
-                    Wrap(
+                    CenteredWhenWrapped(
                       spacing: 10,
                       runSpacing: 8,
                       children: [

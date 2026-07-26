@@ -200,7 +200,8 @@ class FestivalCreateService {
         workspace.descriptionMapUrl.trim().isNotEmpty ||
         workspace.testingPointerUrl.trim().isNotEmpty ||
         workspace.productionPointerUrl.trim().isNotEmpty ||
-        workspace.alertFolderUrl.trim().isNotEmpty;
+        workspace.alertFolderUrl.trim().isNotEmpty ||
+        workspace.reportsFolderUrl.trim().isNotEmpty;
     if (!hasUrls) return workspace;
 
     var updated = await inferSplitFoldersFromUrls(workspace, dropboxApi);

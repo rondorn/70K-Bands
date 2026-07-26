@@ -141,6 +141,7 @@ class PointerService {
         await fetchPointer(productionUrl, forceRefresh: forceRefresh);
     updated = updated.copyWith(
       allowCustomAlerts: production.allowCustomAlerts,
+      reportUrl: normalizeDropboxUrl(production.endUserReportUrl),
     );
 
     final vocabScheduleUrl = production.scheduleUrlForVocabulary;

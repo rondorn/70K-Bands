@@ -8,6 +8,7 @@ import 'package:promoter_admin/src/services/lineup_service.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
 import 'package:promoter_admin/src/widgets/admin_table_cells.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
+import 'package:promoter_admin/src/widgets/centered_when_wrapped.dart';
 import 'package:promoter_admin/src/widgets/dropbox_folder_picker.dart';
 
 enum _FormMode { addDescription, addLink, edit }
@@ -901,7 +902,7 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
               ),
             ],
             const SizedBox(height: 12),
-            Wrap(
+            CenteredWhenWrapped(
               spacing: 10,
               runSpacing: 10,
               children: [

@@ -4,6 +4,7 @@ import 'package:promoter_admin/src/services/dropbox_api.dart';
 import 'package:promoter_admin/src/services/promote_service.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
+import 'package:promoter_admin/src/widgets/centered_when_wrapped.dart';
 import 'package:promoter_admin/src/widgets/recent_alerts_list.dart';
 
 /// Freeform push alert composer.
@@ -174,7 +175,7 @@ class _AlertsSectionState extends State<AlertsSection> {
               ),
             ),
             const SizedBox(height: 8),
-            Wrap(
+            CenteredWhenWrapped(
               spacing: 10,
               runSpacing: 10,
               children: [

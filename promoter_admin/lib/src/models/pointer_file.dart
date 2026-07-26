@@ -29,6 +29,22 @@ class PointerFile {
   String get descriptionMapUrl => (current['descriptionMap'] ?? '').trim();
   String get eventYear => (current['eventYear'] ?? '').trim();
 
+  /// English end-user dashboard (`Current::reportUrl-en`).
+  String get reportUrlEn => (current['reportUrl-en'] ?? '').trim();
+
+  /// End-user stats dashboard — English when published, else generic [reportUrl].
+  String get endUserReportUrl {
+    final en = reportUrlEn;
+    if (en.isNotEmpty) return en;
+    return reportUrl;
+  }
+
+  /// End-user stats dashboard (`Current::reportUrl`).
+  String get reportUrl => (current['reportUrl'] ?? '').trim();
+
+  /// Full stats dashboard (`Current::reportUrlFull`).
+  String get reportUrlFull => (current['reportUrlFull'] ?? '').trim();
+
   /// Festival-wide grant for freeform push alerts (`Current::allowCustomAlerts::1`).
   /// Pointer writers also get the Alerts UI without this flag.
   bool get allowCustomAlerts => isTruthyFlag(current['allowCustomAlerts']);

@@ -112,14 +112,25 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
           ? await _pointers.applyTestingPointer(active, forceRefresh: true)
           : await _pointers.applyPointers(active, forceRefresh: true);
       if (!mounted) return;
-      final updated = registry.upsertActive(active);
-      await _store.saveRegistry(updated);
-      setState(() => _registry = updated);
+      var registryToSave = registry.upsertActive(active);
+      final live = _registry;
+      if (live != null && live.activeFestivalId == registry.activeFestivalId) {
+        final merged = live.active.preservingSessionReportFields(
+          registryToSave.active,
+        );
+        if (merged != registryToSave.active) {
+          registryToSave = registryToSave.upsertActive(merged);
+        }
+      }
+      await _store.saveRegistry(registryToSave);
+      setState(() => _registry = registryToSave);
       _publishStatus.bind(
-        workspace: updated.active,
+        workspace: registryToSave.active,
         dropboxConnected: _dropboxConnected,
       );
-      unawaited(_validateFolderPathCacheInBackground(updated.activeFestivalId));
+      unawaited(
+        _validateFolderPathCacheInBackground(registryToSave.activeFestivalId),
+      );
     } catch (_) {
       if (!mounted) return;
       _publishStatus.bind(
@@ -160,8 +171,9 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
       if (!FestivalFolderPathCache.backgroundProbeDiffers(before, probed)) {
         return;
       }
-      final registry = current.upsertActive(probed);
-      if (FestivalFolderPathCache.persistedProbeDiffers(before, probed)) {
+      final merged = current.active.preservingSessionReportFields(probed);
+      final registry = current.upsertActive(merged);
+      if (FestivalFolderPathCache.persistedProbeDiffers(before, merged)) {
         await _store.saveRegistry(registry);
       }
       setState(() => _registry = registry);
@@ -171,7 +183,13 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
   }
 
   Future<void> _save(FestivalWorkspace workspace) async {
-    final registry = (_registry ?? await _store.loadRegistry()).upsertActive(workspace);
+    var toSave = workspace;
+    final current = _registry?.active;
+    if (current != null && current.id == workspace.id) {
+      toSave = current.preservingSessionReportFields(workspace);
+    }
+    final registry =
+        (_registry ?? await _store.loadRegistry()).upsertActive(toSave);
     await _store.saveRegistry(registry);
     setState(() => _registry = registry);
   }

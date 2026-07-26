@@ -4,6 +4,7 @@ import 'package:promoter_admin/src/screens/sections/alerts_section.dart';
 import 'package:promoter_admin/src/screens/sections/bands_section.dart';
 import 'package:promoter_admin/src/screens/sections/descriptions_section.dart';
 import 'package:promoter_admin/src/screens/sections/schedule_section.dart';
+import 'package:promoter_admin/src/screens/sections/reports_section.dart';
 import 'package:promoter_admin/src/screens/sections/settings_section.dart';
 import 'package:promoter_admin/src/services/description_map_service.dart';
 import 'package:promoter_admin/src/services/dropbox_api.dart';
@@ -11,6 +12,7 @@ import 'package:promoter_admin/src/services/lineup_service.dart';
 import 'package:promoter_admin/src/services/portal_navigation_store.dart';
 import 'package:promoter_admin/src/services/pointer_service.dart';
 import 'package:promoter_admin/src/services/publish_status_service.dart';
+import 'package:promoter_admin/src/services/report_discovery_service.dart';
 import 'package:promoter_admin/src/services/schedule_service.dart';
 import 'package:promoter_admin/src/services/csv_staging.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
@@ -253,6 +255,11 @@ class _PortalScreenState extends State<PortalScreen> {
           heading: 'Send Alert',
           subheading: 'Queue a push notification for all festival app users',
         );
+      case AppSection.reports:
+        return (
+          heading: 'Stats Reports',
+          subheading: 'End-user and full festival dashboards from Production',
+        );
     }
   }
 
@@ -290,6 +297,13 @@ class _PortalScreenState extends State<PortalScreen> {
     // Artists / Schedule / Descriptions stay visible without write —
     // mutation controls are disabled or narrowed inside each section.
     if (_section == AppSection.alerts && !_ws.customAlertsUiEnabled) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _applyNavigation(section: AppSection.settings, showPromote: false);
+      });
+      return;
+    }
+    if (_section == AppSection.reports && !_ws.reportsUiEnabled) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         _applyNavigation(section: AppSection.settings, showPromote: false);
@@ -360,6 +374,7 @@ class _PortalScreenState extends State<PortalScreen> {
       canEditSchedule: _ws.canEditSchedule,
       canEditDescriptions: _ws.canEditDescriptions,
       allowCustomAlerts: _ws.customAlertsUiEnabled,
+      reportsUiEnabled: _ws.reportsUiEnabled,
       onPromoteTap: () =>
           _applyNavigation(section: AppSection.settings, showPromote: true),
       onSectionChanged: (s) => _applyNavigation(
@@ -477,7 +492,8 @@ class _PortalScreenState extends State<PortalScreen> {
           lineupService: widget.lineupService,
           dropboxApi: widget.dropboxApi,
           tab: _descriptionsTab,
-          onTabChanged: (t) => setState(() => _descriptionsTab = t),
+          onTabChanged: (DescriptionsTab t) =>
+              setState(() => _descriptionsTab = t),
           onFormModeChanged: (heading) => setState(() {
             _descriptionFormHeading = heading;
             _descriptionsTab = DescriptionsTab.form;
@@ -498,6 +514,22 @@ class _PortalScreenState extends State<PortalScreen> {
           dropboxApi: widget.dropboxApi,
           dropboxConnected: widget.dropboxConnected,
           onConnectDropbox: widget.onConnectDropbox,
+        );
+      case AppSection.reports:
+        return ReportsSection(
+          workspace: _ws,
+          dropboxConnected: widget.dropboxConnected,
+          onDiscoverReports: widget.dropboxConnected
+              ? ({bool forceRefresh = false}) async {
+                  final updated = await ReportDiscoveryService.apply(
+                    _ws,
+                    widget.dropboxApi,
+                    forceRefresh: forceRefresh,
+                  );
+                  await widget.onWorkspaceChanged(updated);
+                  return updated;
+                }
+              : null,
         );
     }
   }

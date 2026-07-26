@@ -1,20 +1,19 @@
-import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:promoter_admin/src/models/festival_workspace.dart';
-import 'package:promoter_admin/src/services/schedule_export/running_order_browser_preview.dart';
+import 'package:promoter_admin/src/services/embedded_html_webview.dart';
 import 'package:promoter_admin/src/services/schedule_export/running_order_export_config.dart';
 import 'package:promoter_admin/src/services/schedule_service.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
+import 'package:promoter_admin/src/widgets/centered_when_wrapped.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
+import 'package:promoter_admin/src/widgets/embedded_html_webview_frame.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 /// In-app preview of the HTML running-order export for review and comparison.
 ///
-/// macOS uses an embedded WebView. Windows opens the same HTML in the default
-/// browser (no [webview_flutter] implementation on Windows).
+/// macOS uses WKWebView; Windows uses WebView2 via [webview_win_floating].
 class ScheduleRunningOrderPreview extends StatefulWidget {
   const ScheduleRunningOrderPreview({
     super.key,
@@ -33,13 +32,8 @@ class ScheduleRunningOrderPreview extends StatefulWidget {
 class _ScheduleRunningOrderPreviewState extends State<ScheduleRunningOrderPreview> {
   late RunningOrderExportConfig _config;
   WebViewController? _controller;
-  String? _browserPreviewPath;
   bool _loading = true;
   String? _error;
-  Timer? _browserOpenTimer;
-  File? _pendingBrowserFile;
-
-  bool get _useBrowserPreview => RunningOrderBrowserPreview.useExternalBrowser;
 
   @override
   void initState() {
@@ -49,12 +43,6 @@ class _ScheduleRunningOrderPreviewState extends State<ScheduleRunningOrderPrevie
       events: widget.events,
     );
     _reloadPreview();
-  }
-
-  @override
-  void dispose() {
-    _browserOpenTimer?.cancel();
-    super.dispose();
   }
 
   @override
@@ -82,33 +70,20 @@ class _ScheduleRunningOrderPreviewState extends State<ScheduleRunningOrderPrevie
         setState(() {
           _loading = false;
           _controller = null;
-          _browserPreviewPath = null;
         });
         return;
       }
       final bytes = await _config.buildHtmlBytes();
       if (!mounted) return;
 
-      if (_useBrowserPreview) {
-        final file = await RunningOrderBrowserPreview.writePreviewFile(bytes);
-        if (!mounted) return;
-        setState(() {
-          _browserPreviewPath = file.path;
-          _controller = null;
-          _loading = false;
-        });
-        _scheduleBrowserOpen(file);
-        return;
-      }
-
       final html = utf8.decode(bytes);
-      final controller = WebViewController()
-        ..setJavaScriptMode(JavaScriptMode.disabled);
-      await controller.loadHtmlString(html);
+      final controller = await createEmbeddedHtmlWebViewController(
+        html,
+        javaScriptMode: JavaScriptMode.disabled,
+      );
       if (!mounted) return;
       setState(() {
         _controller = controller;
-        _browserPreviewPath = null;
         _loading = false;
       });
     } catch (error) {
@@ -116,35 +91,8 @@ class _ScheduleRunningOrderPreviewState extends State<ScheduleRunningOrderPrevie
       setState(() {
         _loading = false;
         _controller = null;
-        _browserPreviewPath = null;
         _error = _cleanError(error);
       });
-    }
-  }
-
-  void _scheduleBrowserOpen(File file) {
-    _pendingBrowserFile = file;
-    _browserOpenTimer?.cancel();
-    _browserOpenTimer = Timer(const Duration(milliseconds: 400), () async {
-      final target = _pendingBrowserFile;
-      if (target == null || !mounted) return;
-      try {
-        await RunningOrderBrowserPreview.openInDefaultBrowser(target);
-      } catch (error) {
-        if (!mounted) return;
-        setState(() => _error = _cleanError(error));
-      }
-    });
-  }
-
-  Future<void> _openBrowserPreviewNow() async {
-    final path = _browserPreviewPath;
-    if (path == null) return;
-    try {
-      await RunningOrderBrowserPreview.openInDefaultBrowser(File(path));
-    } catch (error) {
-      if (!mounted) return;
-      setState(() => _error = _cleanError(error));
     }
   }
 
@@ -170,22 +118,16 @@ class _ScheduleRunningOrderPreviewState extends State<ScheduleRunningOrderPrevie
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                _useBrowserPreview
-                    ? Icons.open_in_browser
-                    : Icons.visibility_outlined,
-                color: const Color(0xFFFFD280),
+              const Icon(
+                Icons.visibility_outlined,
+                color: Color(0xFFFFD280),
                 size: 18,
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  _useBrowserPreview
-                      ? 'Same layout as HTML export — opens in your default browser '
-                          'on Windows. Change filters here; the preview file updates '
-                          'automatically (refresh the browser tab or use Open again).'
-                      : 'Same layout as HTML export — scroll to review days, venues, '
-                          'and times. Compare with your source schedule before publishing.',
+                  'Same layout as HTML export — scroll to review days, venues, '
+                  'and times. Compare with your source schedule before publishing.',
                   style: const TextStyle(
                     color: Color(0xFFFFD280),
                     fontSize: 12.5,
@@ -197,7 +139,7 @@ class _ScheduleRunningOrderPreviewState extends State<ScheduleRunningOrderPrevie
           ),
         ),
         const SizedBox(height: 12),
-        Wrap(
+        CenteredWhenWrapped(
           spacing: 16,
           runSpacing: 10,
           crossAxisAlignment: WrapCrossAlignment.center,
@@ -294,9 +236,6 @@ class _ScheduleRunningOrderPreviewState extends State<ScheduleRunningOrderPrevie
         child: CircularProgressIndicator(color: AppColors.accent),
       );
     }
-    if (_useBrowserPreview) {
-      return _buildBrowserPreviewPanel();
-    }
     final controller = _controller;
     if (controller == null) {
       return const Center(
@@ -306,57 +245,7 @@ class _ScheduleRunningOrderPreviewState extends State<ScheduleRunningOrderPrevie
         ),
       );
     }
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: ColoredBox(
-        color: Colors.white,
-        child: WebViewWidget(controller: controller),
-      ),
-    );
-  }
-
-  Widget _buildBrowserPreviewPanel() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.open_in_browser,
-                size: 48,
-                color: AppColors.accent,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Schedule preview is open in your browser.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColors.heading,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'This is the same HTML as Schedule export. Adjust event types or '
-                'color above — the preview file updates automatically.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.muted, height: 1.35),
-              ),
-              const SizedBox(height: 20),
-              FilledButton.icon(
-                onPressed: _browserPreviewPath == null ? null : _openBrowserPreviewNow,
-                icon: const Icon(Icons.open_in_new, size: 18),
-                label: const Text('Open in browser again'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    return EmbeddedHtmlWebViewFrame(controller: controller);
   }
 
   static String _cleanError(Object error) {

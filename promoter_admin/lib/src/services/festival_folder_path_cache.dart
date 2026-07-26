@@ -29,7 +29,8 @@ class FestivalFolderPathCache {
           before.descriptionFilesFolderPath,
           after.descriptionFilesFolderPath,
         ) ||
-        !equal(before.alertFilesFolderPath, after.alertFilesFolderPath);
+        !equal(before.alertFilesFolderPath, after.alertFilesFolderPath) ||
+        !equal(before.reportFilesFolderPath, after.reportFilesFolderPath);
   }
 
   static bool writeAccessDiffers(
@@ -40,7 +41,8 @@ class FestivalFolderPathCache {
         before.canEditSchedule != after.canEditSchedule ||
         before.canEditDescriptions != after.canEditDescriptions ||
         before.canEditPointers != after.canEditPointers ||
-        before.canEditAlerts != after.canEditAlerts;
+        before.canEditAlerts != after.canEditAlerts ||
+        before.canViewReports != after.canViewReports;
   }
 
   static bool ownershipDiffers(
@@ -122,6 +124,16 @@ class FestivalFolderPathCache {
       }
     }
 
+    String? reports;
+    final reportsUrl = workspace.reportsFolderUrl.trim();
+    if (reportsUrl.isNotEmpty) {
+      try {
+        reports = await dropboxApi.resolveApiPath(reportsUrl);
+      } catch (_) {
+        reports = null;
+      }
+    }
+
     String? master;
     for (final url in [
       workspace.testingPointerUrl,
@@ -153,6 +165,9 @@ class FestivalFolderPathCache {
       ),
       alertFilesFolderPath:
           alertUrl.isEmpty ? '' : (alert ?? workspace.alertFilesFolderPath),
+      reportFilesFolderPath: reportsUrl.isEmpty
+          ? ''
+          : (reports ?? workspace.reportFilesFolderPath),
     );
   }
 
