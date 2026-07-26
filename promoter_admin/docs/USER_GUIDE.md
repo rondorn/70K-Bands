@@ -41,6 +41,7 @@ When a newer version is available, update the same way you installed (Releases z
 | **Artists**      | Build and edit the Testing lineup: add, change, or remove bands; add or edit band descriptions; export an HTML logo lineup.                                              |
 | **Descriptions** | Write or update the text fans read about a band (usually done when you add the band; you can also fix or add them later).                                                |
 | **Schedule**     | Enter shows and other events; browse the event list; preview the running-order layout; see simple stats; export PDF/HTML running order or a QR poster (official admins). |
+| **Reports**      | View festival app usage stats (band rankings, countries, platforms, and more) when your festival sets up a reports folder.                                               |
 | **Publish**      | When Testing looks right, push your changes so most fans see them in Production. New bands can trigger a push notification.                                              |
 | **Send alert**   | Optional: type a message and send it to **everyone** who uses that festival’s app.                                                                                       |
 
@@ -97,10 +98,11 @@ You’ll mainly use Settings once:
 - **Festival name** — label in the header.  
 - **Dropbox connection** — sign in with your personal account (see [Connecting Dropbox](#connecting-dropbox)).  
 - **Testing link** / **Production link** — the URLs you were given.  
+- **Reports folder** — optional Dropbox folder where HTML stats reports are stored (see [Stats reports](#stats-reports)). Only people with access to this folder see **Reports** in the sidebar.  
 - **Alert folder** — only if your festival uses push announcements (optional). **Create alert folder on Dropbox** appears when you’re connected and the field is empty.  
 - **Festival logo** — optional image URL; a preview appears as you paste the link. Used on exported running-order pages. Dropbox links you paste with `dl=0` are shown and saved as `raw=1` automatically.  
 - **Data files** — read-only list of the artists, schedule, and description map URLs the app is using. Festival owners with Testing-link write access also see **Testing vs Production files** controls (share or separate artists / description map) and **Add new year…**.  
-- **File access** — what you can edit (Artists, Schedule, Descriptions). Use **Refresh file access** if rights were just shared and buttons still look locked. Uncheck a row if detection is wrong or you don’t use that area.  
+- **File access** — what you can edit (Artists, Schedule, Descriptions). Use **Refresh file access** if rights were just shared and buttons still look locked. Uncheck a row if detection is wrong or you don’t use that area. When a **Reports folder** is set, a **Stats reports** row shows whether you can open the Reports section (based on write access to that folder).  
 - **Folder access** — (festival owners) invite collaborators by email to specific Dropbox folders (artists, schedule, descriptions, alerts, or master pointer files).  
 - **Lineup options** — **Use city/state fields** for festivals that track local artist location.  
 - **Venues / Days / Dates / Date rollover / Event types** — vocabulary for Schedule Entry (filled once by Load when empty; you edit afterward).  
@@ -199,6 +201,43 @@ If you’ve configured a **Festival logo** under Settings, it appears at the top
 
 ---
 
+## Stats reports
+
+**Nav:** REPORTS → **View** (only if your festival configured a reports folder and you have access)
+
+Some festivals generate HTML **stats dashboards** from app usage data (band rankings, countries, platforms, daily usage, and similar). The admin app can **view** those reports — it does not create or edit them here.
+
+### One-time setup (Settings)
+
+Your festival contact or app maintainer will tell you the Dropbox **folder link** where report HTML files live (for example a shared `70K_Reports` folder).
+
+1. **CONFIG → Settings**
+2. Paste that link into **Reports folder** (a Dropbox shared-folder URL).
+3. **Connect Dropbox** if you aren’t already.
+4. **Load festival data**, then **Save configuration**.
+
+Under **Data files**, **Stats reports** should eventually show *End-user report loaded — open Reports in the sidebar*. If it says *Not found yet*, the folder may be empty or reports for the current event year haven’t been generated yet — ask your festival contact.
+
+**Who can see Reports?** The app shows **Reports** in the sidebar only when:
+
+- A **Reports folder** URL is saved, and  
+- Dropbox confirms you have **write access** to that folder (same idea as other file access — your festival contact shares the folder with your Dropbox email).
+
+You don’t need write access to change report files; it is only used to decide who may open the viewer. If **Reports** is missing, ask for share access to the reports folder, then **Refresh file access** in Settings.
+
+### Viewing reports
+
+Under most circumstances, the HTML files in the reports folder are **regenerated about four times a day** from live app data. What you see is always a snapshot — use **↻** if you want the latest copy from Dropbox right now.
+
+1. Open **REPORTS → View**.
+2. The **end-user report (English)** opens by default — the same English dashboard fans can see in the festival app.
+3. If you’re allowed the admin view, tap **Full report** for extra detail (more tabs and breakdowns). Use **End-user report** to switch back.
+4. Tap **↻** (refresh) to rescan the reports folder and reload after new HTML files appear on Dropbox.
+
+The report opens inside the app. Reports are read-only here — updating stats is done outside the app by whoever maintains the festival data.
+
+---
+
 ## Descriptions
 
 **Nav:** DESCRIPTIONS → **Descriptions**
@@ -277,11 +316,7 @@ Use **Preview** when you want to double-check days, venues, and times against yo
 
 1. Choose **Color** or **Black & white** (same choices as HTML export).
 2. Turn event types on or off with the chips — **Show** and **Special Event** are selected by default, same as export.
-3. Scroll through the layout and compare it to your source material.
-
-**Mac and iPad:** the preview appears inside the app (same scrollable page as HTML export).
-
-**Windows:** the app builds the same HTML and opens it in your **default web browser** automatically. Change filters or color in the app, then **refresh the browser tab** (or use **Open in browser again**) to see updates.
+3. Scroll through the layout inside the app and compare it to your source material. Change **Color** / **Black & white** or event-type filters anytime — the preview updates automatically.
 
 Preview does **not** change your schedule data and does **not** publish anything — it is only for review.
 
@@ -337,7 +372,7 @@ The **QR poster** option appears in **Export…** only when your festival is set
 - **Unofficial Event** and **Cruiser Organized** rows are left out on purpose.
 - The artist **lineup must be loaded** — the app needs band names in lineup order to build the QR. If export is disabled or errors, try **Load festival data** on Settings first.
 
-**What fans do with the poster**
+**What fans do with the posterReRepo**
 
 1. Open the **70K Bands** app (or your festival’s app if it supports QR schedule import).
 2. Go to **Preferences → Scan QR Code Schedule**.
@@ -515,10 +550,12 @@ Volunteers who can’t Publish still improve Testing for whoever does.
 | No Edit / Attach Link on Descriptions                       | Need **write** on **Descriptions** in **File access**, not just **Artists**. **Create Description** and **Add description** still work — copy the URL for whoever maintains the description list.                                                                                                                            |
 | Export vs official schedule                                 | Promoters may publish exports as the official running order. Don’t circulate one that competes with an existing official PDF or web schedule.                                                                                                                                                                                |
 | No **QR poster** in Export                                  | Your festival may not support offline QR schedule updates yet — ask your app maintainer. You still need a loaded lineup (**Load festival data**).                                                                                                                                                                            |
-| **Preview** on Windows opens a browser                      | Normal — same HTML as export. Refresh the tab after changing filters in the app.                                                                                                                                                                                                                                             |
 | QR poster won’t scan well                                   | Print at **100% scale**; avoid shrinking the PDF to fit. Reprint if the schedule changed after you exported.                                                                                                                                                                                                                 |
 | No **Send alert**                                           | Festival hasn’t enabled alerts for you, or alert folder isn’t set / shared for write.                                                                                                                                                                                                                                        |
 | Description won’t show for fans                             | Add or edit the blurb on **Artists** (**Add description** / **Edit description**) or under **Descriptions**, then save. With **Descriptions** write access it updates automatically; without it, copy the handoff link to whoever maintains that file. Someone with **Publish** rights must publish before most fans see it. |
+| No **Reports** in the sidebar                               | Settings needs a **Reports folder** URL, and your Dropbox account needs access to that folder — ask your festival contact, then **Refresh file access**.                                                                                                                                                                     |
+| Reports says no report found                                | Reports may not exist yet for this event year, or **Load festival data** hasn’t run since the folder was set. Try **↻** on the Reports screen after new HTML files land in the folder.                                                                                                                                       |
+| Can’t open **Full report**                                  | The full admin HTML file may not be in the reports folder yet — you can still use the end-user report.                                                                                                                                                                                                                       |
 
 
 ---
@@ -534,5 +571,6 @@ Coordinate once with whoever ships the apps:
 - [ ] If using pushes: shared alert folder, and the machine that sends notifications can reach it  
 - [ ] If volunteers should send freeform alerts: turn that on with the app maintainer  
 - [ ] **Folder access** (Settings) used to invite editors to the right Dropbox folders when needed  
+- [ ] If using stats dashboards: **Reports folder** link in Settings and share access for the people who should view them  
 
 After that, most people only need Artists, Descriptions, Schedule, and (when authorized) Publish.
