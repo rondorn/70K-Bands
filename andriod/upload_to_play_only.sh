@@ -87,11 +87,9 @@ fi
 # Single-line JSON avoids edge cases with newlines in shell → fastlane
 RELEASE_NOTES_JSON="$(python3 -c "import json; print(json.dumps(json.load(open('release_notes.json'))))")"
 
-if [ -f "Gemfile" ] && command -v bundle >/dev/null 2>&1; then
-    FASTLANE=(bundle exec fastlane)
-else
-    FASTLANE=(fastlane)
-fi
+# shellcheck source=fastlane_env.sh
+source "$(dirname "$0")/fastlane_env.sh"
+resolve_fastlane_command || exit 1
 
 echo "Upload only — versionCode ${VERSION_CODE}, track ${TRACK}, rollout ${ROLLOUT}, apps: ${APP_NAMES_FOR_FASTLANE}"
 echo "AABs expected under app/build/outputs/bundle/"

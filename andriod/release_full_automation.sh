@@ -393,11 +393,9 @@ echo ""
 
 RELEASE_NOTES_JSON="$(python3 -c "import json; print(json.dumps(json.load(open('release_notes.json'))))")"
 
-if [ -f "Gemfile" ] && command -v bundle >/dev/null 2>&1; then
-    FASTLANE=(bundle exec fastlane)
-else
-    FASTLANE=(fastlane)
-fi
+# shellcheck source=fastlane_env.sh
+source "$(dirname "$0")/fastlane_env.sh"
+resolve_fastlane_command || exit 1
 
 "${FASTLANE[@]}" release_all_apps \
     version_name:"$VERSION_NAME" \

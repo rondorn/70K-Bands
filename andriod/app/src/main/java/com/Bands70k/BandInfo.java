@@ -411,6 +411,34 @@ public class BandInfo {
         }
     }
 
+    /** True when a band-detail link field has a non-empty URL value. */
+    static boolean isNonEmptyWebLink(String url) {
+        return url != null && !url.trim().isEmpty();
+    }
+
+    public static boolean hasOfficalWebLink(String bandName) {
+        return isNonEmptyWebLink(getBandDetailsData(bandName, "officalSite"));
+    }
+
+    public static boolean hasMetalArchivesWebLink(String bandName) {
+        return isNonEmptyWebLink(getBandDetailsData(bandName, "metalArchives"));
+    }
+
+    public static boolean hasWikipediaWebLink(String bandName) {
+        return isNonEmptyWebLink(getBandDetailsData(bandName, "wikipedia"));
+    }
+
+    public static boolean hasYouTubeWebLink(String bandName) {
+        return isNonEmptyWebLink(getBandDetailsData(bandName, "youtube"));
+    }
+
+    public static boolean hasAnyWebLink(String bandName) {
+        return hasOfficalWebLink(bandName)
+                || hasMetalArchivesWebLink(bandName)
+                || hasWikipediaWebLink(bandName)
+                || hasYouTubeWebLink(bandName);
+    }
+
     /**
      * Gets the country for a band.
      * @param bandName The name of the band.

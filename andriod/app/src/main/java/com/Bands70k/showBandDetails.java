@@ -3235,12 +3235,25 @@ public class showBandDetails extends Activity {
     private void setupLinksSection() {
         String viewType = getViewType();
         boolean showLinks = !viewType.equals("landscape_with_schedule");
-        
-        if (BandInfo.getMetalArchivesWebLink(bandName).contains("metal") && showLinks) {
+
+        if (!showLinks) {
+            linksSection.setVisibility(View.GONE);
+            return;
+        }
+
+        boolean hasOfficial = BandInfo.hasOfficalWebLink(bandName);
+        boolean hasMetalArchives = BandInfo.hasMetalArchivesWebLink(bandName);
+        boolean hasWikipedia = BandInfo.hasWikipediaWebLink(bandName);
+        boolean hasYoutube = BandInfo.hasYouTubeWebLink(bandName);
+
+        websiteLink.setVisibility(hasOfficial ? View.VISIBLE : View.GONE);
+        metalArchivesLink.setVisibility(hasMetalArchives ? View.VISIBLE : View.GONE);
+        wikipediaLink.setVisibility(hasWikipedia ? View.VISIBLE : View.GONE);
+        youtubeLink.setVisibility(hasYoutube ? View.VISIBLE : View.GONE);
+
+        if (BandInfo.hasAnyWebLink(bandName)) {
             linksLabel.setText("Links:");
             linksSection.setVisibility(View.VISIBLE);
-            
-            // Set up dynamic spacing for link icons
             setupDynamicLinkSpacing();
         } else {
             linksSection.setVisibility(View.GONE);
@@ -3251,6 +3264,17 @@ public class showBandDetails extends Activity {
      * Sets up dynamic spacing for link icons based on screen width
      */
     private void setupDynamicLinkSpacing() {
+        ImageView[] linkIcons = {websiteLink, metalArchivesLink, wikipediaLink, youtubeLink};
+        int visibleIconCount = 0;
+        for (ImageView icon : linkIcons) {
+            if (icon != null && icon.getVisibility() == View.VISIBLE) {
+                visibleIconCount++;
+            }
+        }
+        if (visibleIconCount == 0) {
+            return;
+        }
+
         // Get screen width
         android.util.DisplayMetrics displayMetrics = new android.util.DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
@@ -3261,23 +3285,26 @@ public class showBandDetails extends Activity {
         int labelWidth = (int) (120 * density); // Links label width: 120dp
         int sectionMargins = (int) (32 * density); // Total left/right margins: 16dp each
         int iconWidth = (int) (43 * density); // Each icon width: 43dp
-        int totalIconsWidth = iconWidth * 4; // 4 icons total
+        int totalIconsWidth = iconWidth * visibleIconCount;
         
         // Calculate available space for spacing
         int availableSpace = screenWidth - labelWidth - sectionMargins - totalIconsWidth;
         
         // Calculate spacing between icons (distribute evenly, but make last icon closer to edge)
-        int spacingBetweenIcons = Math.max((int) (12 * density), availableSpace / 4); // Minimum 12dp, or dynamic
+        int spacingBetweenIcons = Math.max((int) (12 * density), availableSpace / visibleIconCount);
         int lastIconMargin = Math.max((int) (8 * density), availableSpace / 6); // Less margin for last icon
         
         Log.d("DynamicSpacing", "Screen width: " + screenWidth + ", Available space: " + availableSpace + 
               ", Icon spacing: " + spacingBetweenIcons + ", Last margin: " + lastIconMargin);
         
-        // Apply dynamic margins to icons
-        setIconMargin(websiteLink, 0, spacingBetweenIcons);
-        setIconMargin(metalArchivesLink, 0, spacingBetweenIcons);
-        setIconMargin(wikipediaLink, 0, spacingBetweenIcons);
-        setIconMargin(youtubeLink, 0, lastIconMargin); // Last icon has smaller right margin
+        int visibleIndex = 0;
+        for (ImageView icon : linkIcons) {
+            if (icon != null && icon.getVisibility() == View.VISIBLE) {
+                visibleIndex++;
+                int rightMargin = visibleIndex == visibleIconCount ? lastIconMargin : spacingBetweenIcons;
+                setIconMargin(icon, 0, rightMargin);
+            }
+        }
     }
     
     /**
