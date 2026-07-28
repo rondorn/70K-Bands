@@ -90,7 +90,7 @@ You can keep several festivals in the app (for example 70K and MDF) and switch t
 
 **Nav:** CONFIG → **Settings**
 
-Festival Configuration — Settings
+![Festival Configuration — Settings](./images/settings.png)
 
 You’ll mainly use Settings once:
 
@@ -137,7 +137,7 @@ If saves suddenly fail or the app says you’re not connected, try **Disconnect*
 
 See the Testing lineup (band, country, genre, noteworthy). Use **Refresh** if someone else changed Dropbox data.
 
-Artists — Testing lineup
+![Artists — Testing lineup](./images/artists-list.png)
 
 ### Add a band
 
@@ -154,7 +154,7 @@ Artists — Testing lineup
 
 Saves are applied locally right away, then uploaded to Dropbox in the background. If sync is still running, the header badge may say **…still saving to Testing…** — wait for that to clear before you **Publish** (see [Do I need to Publish?](#do-i-need-to-publish)).
 
-Add Artist — Discover and fields
+![Add Artist — Discover and fields](./images/artists-add.png)
 
 Discover will not guess when several bands share a name — that’s why step 4 uses a page URL.
 
@@ -261,7 +261,7 @@ You can write or change the same blurbs **on the artist add/edit form** instead 
 
 When you **Edit** here, choose **Edit description text** or **Edit description link** — the same two choices as **Edit description** at the bottom of the artist form.
 
-Create Description
+![Create Description](./images/descriptions-create.png)
 
 ### If Descriptions is locked for you
 
@@ -286,7 +286,7 @@ Pick a **Band Name** from the Testing lineup, then venue, **Day**, start/end (or
 
 If validation complains but you’re sure the times are right, you can skip the check when that option is shown.
 
-Schedule Entry
+![Schedule Entry](./images/schedule-entry.png)
 
 ### Special Events and Unofficial Events
 
@@ -306,7 +306,7 @@ These are **not** tied to a lineup band:
 - **Stats** — how many of each event type each artist has  
 - **Preview** — see what the **HTML running order** will look like before you export or publish (see below)
 
-Schedule View
+![Schedule View](./images/schedule-view.png)
 
 ### Preview the running order (before you export)
 
@@ -401,7 +401,7 @@ If you’ve configured a **Festival logo** under Settings, it appears automatica
 
 **Nav:** CONFIG → **Publish** (or **Publish to Production…** on the Settings screen)
 
-Publish to Production
+![Publish to Production](./images/publish.png)
 
 Publish copies selected **Testing** Dropbox files into their **Production** counterparts so most attendees see your latest work. Until you Publish, fans keep the previous Production version — Testing is your staging area (see [Testing vs Production](#testing-vs-production-the-one-idea-to-learn)).
 
@@ -505,7 +505,7 @@ If your festival uses announcements and you can edit artists, publishing **new**
 
 **Nav:** ALERTS → **Send alert** (only if your festival turned this on for you)
 
-Send Alert
+![Send Alert](./images/send-alert.png)
 
 Type a plain message, confirm that it goes to **all** app users, and queue it. There is no “take it back” in the app after you confirm.
 
