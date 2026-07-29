@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:promoter_admin/src/services/festival_create_service.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
+import 'package:promoter_admin/src/widgets/layout_breakpoints.dart';
 
 class CreateFestivalResult {
   const CreateFestivalResult({
@@ -35,7 +36,7 @@ Future<CreateFestivalResult?> showCreateFestivalDialog({
       backgroundColor: AppColors.panel,
       title: const Text('Create festival'),
       content: SizedBox(
-        width: 520,
+        width: dialogContentWidth(context, desktop: 520),
         child: CreateFestivalForm(
           dropboxConnected: dropboxConnected,
           onSubmit: (result) => Navigator.pop(context, result),

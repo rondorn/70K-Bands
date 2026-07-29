@@ -10,6 +10,7 @@ import 'package:promoter_admin/src/widgets/admin_table_cells.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
 import 'package:promoter_admin/src/widgets/centered_when_wrapped.dart';
 import 'package:promoter_admin/src/widgets/dropbox_folder_picker.dart';
+import 'package:promoter_admin/src/widgets/layout_breakpoints.dart';
 
 enum _FormMode { addDescription, addLink, edit }
 
@@ -578,7 +579,7 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
         if (_saving) const LinearProgressIndicator(color: AppColors.accent),
         Expanded(
           child: PortalPanel(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+            padding: listPanelPadding(context),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -742,13 +743,10 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
                           },
                         ),
                 ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton.icon(
-                    onPressed: _saving ? null : () => _load(forceRefresh: true),
-                    icon: const Icon(Icons.refresh, size: 18),
-                    label: Text('${_rows.length} artist(s) — Refresh'),
-                  ),
+                SectionRefreshFooter(
+                  label: '${_rows.length} artist(s) — Refresh',
+                  enabled: !_saving,
+                  onRefresh: () => _load(forceRefresh: true),
                 ),
               ],
             ),

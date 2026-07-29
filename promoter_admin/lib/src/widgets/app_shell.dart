@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:promoter_admin/src/branding.dart';
 import 'package:promoter_admin/src/models/publish_status.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
+import 'package:promoter_admin/src/widgets/layout_breakpoints.dart';
 
 enum AppSection { settings, bands, schedule, descriptions, alerts, reports }
 
@@ -61,6 +62,13 @@ class AppShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compact = isCompactLayout(context);
+    final outerPadding = compact
+        ? const EdgeInsets.fromLTRB(10, 6, 10, 10)
+        : const EdgeInsets.fromLTRB(24, 16, 24, 28);
+    final chromeSpacing = compact ? 8.0 : 12.0;
+    final bodySpacing = compact ? 8.0 : 14.0;
+
     return DecoratedBox(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -71,43 +79,47 @@ class AppShell extends StatelessWidget {
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        body: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1320),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 28),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _Header(
-                    festivalName: festivalName,
-                    heading: heading,
-                    subheading: subheading,
-                    metaLine: metaLine,
-                    publishStatus: publishStatus,
-                  ),
-                  const SizedBox(height: 12),
-                  _NavBar(
-                    section: section,
-                    onSectionChanged: onSectionChanged,
-                    settingsPromoteSelected: settingsPromoteSelected,
-                    publishNavEnabled: publishNavEnabled,
-                    publishNavHighlight: publishNavHighlight,
-                    onPromoteTap: onPromoteTap,
-                    canEditBands: canEditBands,
-                    canEditSchedule: canEditSchedule,
-                    canEditDescriptions: canEditDescriptions,
-                    allowCustomAlerts: allowCustomAlerts,
-                    reportsUiEnabled: reportsUiEnabled,
-                    bandsTab: bandsTab,
-                    onBandsTabChanged: onBandsTabChanged,
-                    scheduleTab: scheduleTab,
-                    onScheduleTabChanged: onScheduleTabChanged,
-                    onDescriptionsTabChanged: onDescriptionsTabChanged,
-                  ),
-                  const SizedBox(height: 14),
-                  Expanded(child: child),
-                ],
+        body: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1320),
+              child: Padding(
+                padding: outerPadding,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _Header(
+                      festivalName: festivalName,
+                      heading: heading,
+                      subheading: subheading,
+                      metaLine: metaLine,
+                      publishStatus: publishStatus,
+                      compact: compact,
+                    ),
+                    SizedBox(height: chromeSpacing),
+                    _NavBar(
+                      section: section,
+                      onSectionChanged: onSectionChanged,
+                      settingsPromoteSelected: settingsPromoteSelected,
+                      publishNavEnabled: publishNavEnabled,
+                      publishNavHighlight: publishNavHighlight,
+                      onPromoteTap: onPromoteTap,
+                      canEditBands: canEditBands,
+                      canEditSchedule: canEditSchedule,
+                      canEditDescriptions: canEditDescriptions,
+                      allowCustomAlerts: allowCustomAlerts,
+                      reportsUiEnabled: reportsUiEnabled,
+                      bandsTab: bandsTab,
+                      onBandsTabChanged: onBandsTabChanged,
+                      scheduleTab: scheduleTab,
+                      onScheduleTabChanged: onScheduleTabChanged,
+                      onDescriptionsTabChanged: onDescriptionsTabChanged,
+                      compact: compact,
+                    ),
+                    SizedBox(height: bodySpacing),
+                    Expanded(child: child),
+                  ],
+                ),
               ),
             ),
           ),
@@ -124,6 +136,7 @@ class _Header extends StatelessWidget {
     required this.subheading,
     required this.metaLine,
     required this.publishStatus,
+    this.compact = false,
   });
 
   final String festivalName;
@@ -131,109 +144,158 @@ class _Header extends StatelessWidget {
   final String subheading;
   final String metaLine;
   final PublishStatusSnapshot publishStatus;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final hasFestival = festivalName.trim().isNotEmpty &&
         festivalName.trim() != AppBrand.name;
+    final logoSize = compact ? 56.0 : 112.0;
+    final panelPadding = compact
+        ? const EdgeInsets.symmetric(horizontal: 12, vertical: 10)
+        : const EdgeInsets.symmetric(horizontal: 18, vertical: 14);
+    final titleSize = compact ? 20.0 : 24.0;
+    final sectionTitleSize = compact ? 15.0 : 17.0;
+
+    final titleBlock = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          AppBrand.name,
+          style: TextStyle(
+            color: AppColors.brandSteel,
+            fontSize: compact ? 11 : 13,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.2,
+          ),
+        ),
+        SizedBox(height: compact ? 2 : 4),
+        Text(
+          hasFestival ? festivalName : heading,
+          style: TextStyle(
+            color: AppColors.accent,
+            fontSize: titleSize,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        if (hasFestival) ...[
+          const SizedBox(height: 2),
+          Text(
+            heading,
+            style: TextStyle(
+              color: AppColors.heading,
+              fontSize: sectionTitleSize,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+        SizedBox(height: compact ? 2 : 4),
+        Text(
+          subheading,
+          style: TextStyle(
+            color: AppColors.muted,
+            fontSize: compact ? 12 : 14,
+          ),
+        ),
+        if (metaLine.isNotEmpty) ...[
+          SizedBox(height: compact ? 4 : 8),
+          Text(
+            metaLine,
+            maxLines: compact ? 3 : null,
+            overflow: compact ? TextOverflow.ellipsis : null,
+            style: TextStyle(
+              color: const Color(0xFF7A7A7A),
+              fontSize: compact ? 11 : 13,
+            ),
+          ),
+        ],
+      ],
+    );
+
+    final badge = publishStatus.headline.isNotEmpty
+        ? _PublishStatusBadge(status: publishStatus, compact: compact)
+        : null;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      padding: panelPadding,
       decoration: BoxDecoration(
         color: AppColors.panel,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: AppColors.navBorder),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: Image.asset(
-              AppBrand.logoAsset,
-              width: 112,
-              height: 112,
-              fit: BoxFit.cover,
-              filterQuality: FilterQuality.high,
-            ),
-          ),
-          const SizedBox(width: 18),
-          Expanded(
-            flex: 3,
-            child: Column(
+      child: compact
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: Image.asset(
+                        AppBrand.logoAsset,
+                        width: logoSize,
+                        height: logoSize,
+                        fit: BoxFit.cover,
+                        filterQuality: FilterQuality.high,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(child: titleBlock),
+                  ],
+                ),
+                if (badge != null) ...[
+                  const SizedBox(height: 8),
+                  badge,
+                ],
+              ],
+            )
+          : Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  AppBrand.name,
-                  style: const TextStyle(
-                    color: AppColors.brandSteel,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.2,
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: Image.asset(
+                    AppBrand.logoAsset,
+                    width: logoSize,
+                    height: logoSize,
+                    fit: BoxFit.cover,
+                    filterQuality: FilterQuality.high,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  hasFestival ? festivalName : heading,
-                  style: const TextStyle(
-                    color: AppColors.accent,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                if (hasFestival) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    heading,
-                    style: const TextStyle(
-                      color: AppColors.heading,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600,
+                const SizedBox(width: 18),
+                Expanded(flex: 3, child: titleBlock),
+                if (badge != null) ...[
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 2,
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: badge,
                     ),
-                  ),
-                ],
-                const SizedBox(height: 4),
-                Text(
-                  subheading,
-                  style: const TextStyle(color: AppColors.muted, fontSize: 14),
-                ),
-                if (metaLine.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    metaLine,
-                    style: const TextStyle(color: Color(0xFF7A7A7A), fontSize: 13),
                   ),
                 ],
               ],
             ),
-          ),
-          if (publishStatus.headline.isNotEmpty) ...[
-            const SizedBox(width: 16),
-            Expanded(
-              flex: 2,
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: _PublishStatusBadge(status: publishStatus),
-              ),
-            ),
-          ],
-        ],
-      ),
     );
   }
 }
 
 class _PublishStatusBadge extends StatelessWidget {
-  const _PublishStatusBadge({required this.status});
+  const _PublishStatusBadge({required this.status, this.compact = false});
 
   final PublishStatusSnapshot status;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final colors = _colorsFor(status.kind);
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 10 : 14,
+        vertical: compact ? 8 : 10,
+      ),
       decoration: BoxDecoration(
         color: colors.background,
         borderRadius: BorderRadius.circular(8),
@@ -329,6 +391,7 @@ class _NavBar extends StatelessWidget {
     required this.scheduleTab,
     required this.onScheduleTabChanged,
     required this.onDescriptionsTabChanged,
+    this.compact = false,
   });
 
   final AppSection section;
@@ -347,6 +410,7 @@ class _NavBar extends StatelessWidget {
   final ScheduleTab scheduleTab;
   final ValueChanged<ScheduleTab>? onScheduleTabChanged;
   final ValueChanged<DescriptionsTab>? onDescriptionsTabChanged;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -355,15 +419,18 @@ class _NavBar extends StatelessWidget {
     final sections = <Widget>[
       _NavSection(
         label: 'Config',
+        compact: compact,
         children: [
           _NavLink(
             label: 'Settings',
+            compact: compact,
             selected: section == AppSection.settings && !settingsPromoteSelected,
             onTap: () => onSectionChanged(AppSection.settings),
           ),
           if (showPromote)
             _NavLink(
               label: 'Publish',
+              compact: compact,
               secondary: true,
               selected:
                   section == AppSection.settings && settingsPromoteSelected,
@@ -378,9 +445,11 @@ class _NavBar extends StatelessWidget {
       ),
       _NavSection(
         label: 'Artists',
+        compact: compact,
         children: [
           _NavLink(
             label: 'Artists',
+            compact: compact,
             selected: section == AppSection.bands,
             onTap: () {
               onSectionChanged(AppSection.bands);
@@ -391,9 +460,11 @@ class _NavBar extends StatelessWidget {
       ),
       _NavSection(
         label: 'Descriptions',
+        compact: compact,
         children: [
           _NavLink(
             label: 'Descriptions',
+            compact: compact,
             selected: section == AppSection.descriptions,
             onTap: () {
               onSectionChanged(AppSection.descriptions);
@@ -404,10 +475,12 @@ class _NavBar extends StatelessWidget {
       ),
       _NavSection(
         label: 'Schedule',
+        compact: compact,
         children: [
           if (canEditSchedule)
             _NavLink(
               label: 'Entry',
+              compact: compact,
               selected: section == AppSection.schedule &&
                   scheduleTab == ScheduleTab.entry,
               onTap: () {
@@ -417,6 +490,7 @@ class _NavBar extends StatelessWidget {
             ),
           _NavLink(
             label: 'View',
+            compact: compact,
             secondary: canEditSchedule,
             selected: section == AppSection.schedule &&
                 scheduleTab == ScheduleTab.view,
@@ -427,6 +501,7 @@ class _NavBar extends StatelessWidget {
           ),
           _NavLink(
             label: 'Stats',
+            compact: compact,
             secondary: true,
             selected: section == AppSection.schedule &&
                 scheduleTab == ScheduleTab.stats,
@@ -437,6 +512,7 @@ class _NavBar extends StatelessWidget {
           ),
           _NavLink(
             label: 'Preview',
+            compact: compact,
             secondary: true,
             selected: section == AppSection.schedule &&
                 scheduleTab == ScheduleTab.preview,
@@ -450,9 +526,11 @@ class _NavBar extends StatelessWidget {
       if (reportsUiEnabled)
         _NavSection(
           label: 'Reports',
+          compact: compact,
           children: [
             _NavLink(
               label: 'View',
+              compact: compact,
               selected: section == AppSection.reports,
               onTap: () => onSectionChanged(AppSection.reports),
             ),
@@ -461,9 +539,11 @@ class _NavBar extends StatelessWidget {
       if (allowCustomAlerts)
         _NavSection(
           label: 'Alerts',
+          compact: compact,
           children: [
             _NavLink(
               label: 'Send Alert',
+              compact: compact,
               selected: section == AppSection.alerts,
               onTap: () => onSectionChanged(AppSection.alerts),
             ),
@@ -476,8 +556,8 @@ class _NavBar extends StatelessWidget {
         return SizedBox(
           width: constraints.maxWidth,
           child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: compact ? 6 : 8,
+            runSpacing: compact ? 6 : 8,
             alignment: WrapAlignment.spaceBetween,
             crossAxisAlignment: WrapCrossAlignment.start,
             children: sections,
@@ -489,15 +569,25 @@ class _NavBar extends StatelessWidget {
 }
 
 class _NavSection extends StatelessWidget {
-  const _NavSection({required this.label, required this.children});
+  const _NavSection({
+    required this.label,
+    required this.children,
+    this.compact = false,
+  });
 
   final String label;
   final List<Widget> children;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+      padding: EdgeInsets.fromLTRB(
+        compact ? 8 : 10,
+        compact ? 6 : 8,
+        compact ? 8 : 10,
+        compact ? 6 : 8,
+      ),
       decoration: BoxDecoration(
         color: AppColors.navPanel,
         borderRadius: BorderRadius.circular(8),
@@ -509,19 +599,19 @@ class _NavSection extends StatelessWidget {
         children: [
           Text(
             label.toUpperCase(),
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.accent,
-              fontSize: 12,
+              fontSize: compact ? 10 : 12,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: compact ? 4 : 6),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               for (var i = 0; i < children.length; i++) ...[
-                if (i > 0) const SizedBox(width: 6),
+                if (i > 0) SizedBox(width: compact ? 4 : 6),
                 children[i],
               ],
             ],
@@ -540,6 +630,7 @@ class _NavLink extends StatelessWidget {
     this.secondary = false,
     this.emphasized = false,
     this.enabled = true,
+    this.compact = false,
   });
 
   final String label;
@@ -548,6 +639,7 @@ class _NavLink extends StatelessWidget {
   final bool secondary;
   final bool emphasized;
   final bool enabled;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -565,13 +657,16 @@ class _NavLink extends StatelessWidget {
         onTap: enabled ? onTap : null,
         borderRadius: BorderRadius.circular(6),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          padding: EdgeInsets.symmetric(
+            horizontal: compact ? 8 : 12,
+            vertical: compact ? 5 : 7,
+          ),
           child: Text(
             label,
             style: TextStyle(
               color: Colors.white.withValues(alpha: enabled ? 1 : 0.55),
               fontWeight: emphasized ? FontWeight.w700 : FontWeight.w500,
-              fontSize: 14,
+              fontSize: compact ? 12 : 14,
             ),
           ),
         ),
@@ -588,9 +683,13 @@ class PortalPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compact = isCompactLayout(context);
     return Container(
       width: double.infinity,
-      padding: padding ?? const EdgeInsets.fromLTRB(28, 24, 28, 24),
+      padding: padding ??
+          (compact
+              ? const EdgeInsets.fromLTRB(14, 14, 14, 12)
+              : const EdgeInsets.fromLTRB(28, 24, 28, 24)),
       decoration: BoxDecoration(
         color: AppColors.panel,
         borderRadius: BorderRadius.circular(10),
@@ -624,12 +723,13 @@ class FormRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compact = isCompactLayout(context);
     Widget labelWidget = RichText(
       text: TextSpan(
-        style: const TextStyle(
+        style: TextStyle(
           color: AppColors.label,
           fontWeight: FontWeight.w600,
-          fontSize: 15,
+          fontSize: compact ? 14 : 15,
         ),
         children: [
           TextSpan(text: label),
@@ -646,6 +746,22 @@ class FormRow extends StatelessWidget {
         onTap: onLabelTap,
         behavior: HitTestBehavior.opaque,
         child: labelWidget,
+      );
+    }
+
+    if (compact) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: labelWidget,
+            ),
+            child,
+          ],
+        ),
       );
     }
 

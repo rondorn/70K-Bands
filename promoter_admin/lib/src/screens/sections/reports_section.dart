@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:promoter_admin/src/models/festival_workspace.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
+import 'package:promoter_admin/src/widgets/layout_breakpoints.dart';
 import 'package:promoter_admin/src/widgets/report_html_preview.dart';
 
 enum ReportVariant { endUser, full }
@@ -115,6 +116,50 @@ class _ReportsSectionState extends State<ReportsSection> {
   @override
   Widget build(BuildContext context) {
     final showingFull = _variant == ReportVariant.full;
+    final compact = isCompactLayout(context);
+
+    final titleBlock = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          showingFull ? 'Full report (admin)' : 'End-user report (English)',
+          style: TextStyle(
+            color: AppColors.heading,
+            fontSize: compact ? 16 : 18,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          showingFull
+              ? 'Admin-only dashboard — view here only, not shareable.'
+              : 'Same English dashboard published to festival-goers.',
+          style: TextStyle(
+            color: AppColors.muted,
+            fontSize: compact ? 12 : 13,
+            height: 1.35,
+          ),
+        ),
+      ],
+    );
+
+    final actions = [
+      if (showingFull)
+        TextButton(
+          onPressed: _discovering ? null : _showEndUserReport,
+          child: const Text('End-user report'),
+        )
+      else if (_canShowFull)
+        TextButton(
+          onPressed: _discovering ? null : _showFullReport,
+          child: const Text('Full report'),
+        ),
+      IconButton(
+        tooltip: 'Rescan reports folder and reload',
+        onPressed: _discovering ? null : _refreshReport,
+        icon: const Icon(Icons.refresh),
+      ),
+    ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -123,62 +168,34 @@ class _ReportsSectionState extends State<ReportsSection> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              compact
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Text(
-                          showingFull
-                              ? 'Full report (admin)'
-                              : 'End-user report (English)',
-                          style: const TextStyle(
-                            color: AppColors.heading,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          showingFull
-                              ? 'Admin-only dashboard — view here only, not shareable.'
-                              : 'Same English dashboard published to festival-goers.',
-                          style: const TextStyle(
-                            color: AppColors.muted,
-                            fontSize: 13,
-                            height: 1.35,
-                          ),
+                        titleBlock,
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 4,
+                          runSpacing: 4,
+                          children: actions,
                         ),
                       ],
-                    ),
-                  ),
-                  if (showingFull)
-                    TextButton(
-                      onPressed: _discovering ? null : _showEndUserReport,
-                      child: const Text('End-user report'),
                     )
-                  else if (_canShowFull)
-                    TextButton(
-                      onPressed: _discovering ? null : _showFullReport,
-                      child: const Text('Full report'),
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(child: titleBlock),
+                        ...actions,
+                      ],
                     ),
-                  IconButton(
-                    tooltip: 'Rescan reports folder and reload',
-                    onPressed: _discovering ? null : _refreshReport,
-                    icon: const Icon(Icons.refresh),
-                  ),
-                ],
-              ),
               if (_discovering) ...[
-                const SizedBox(height: 10),
+                SizedBox(height: compact ? 8 : 10),
                 const LinearProgressIndicator(minHeight: 2),
               ],
             ],
           ),
         ),
-        const SizedBox(height: 14),
+        SizedBox(height: compact ? 8 : 14),
         Expanded(
           child: ReportHtmlPreview(
             key: ValueKey(

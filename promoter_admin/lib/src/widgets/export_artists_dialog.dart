@@ -5,6 +5,7 @@ import 'package:promoter_admin/src/services/artists_export/html_exporter.dart';
 import 'package:promoter_admin/src/services/artists_export/logo_fetcher.dart';
 import 'package:promoter_admin/src/services/export_file_saver.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
+import 'package:promoter_admin/src/widgets/layout_breakpoints.dart';
 
 enum ArtistsExportColorMode { color, blackAndWhite }
 
@@ -128,7 +129,7 @@ class _ExportArtistsDialogState extends State<ExportArtistsDialog> {
     return AlertDialog(
       title: const Text('Export lineup'),
       content: SizedBox(
-        width: 480,
+        width: dialogContentWidth(context),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,

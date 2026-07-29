@@ -5,6 +5,7 @@ import 'package:promoter_admin/src/services/promote_service.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
 import 'package:promoter_admin/src/widgets/centered_when_wrapped.dart';
+import 'package:promoter_admin/src/widgets/layout_breakpoints.dart';
 import 'package:promoter_admin/src/widgets/recent_alerts_list.dart';
 
 /// Freeform push alert composer.
@@ -229,7 +230,7 @@ class _CustomAlertConfirmDialogState extends State<_CustomAlertConfirmDialog> {
       backgroundColor: AppColors.panel,
       title: const Text('Confirm push to all users'),
       content: SizedBox(
-        width: 480,
+        width: dialogContentWidth(context),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,

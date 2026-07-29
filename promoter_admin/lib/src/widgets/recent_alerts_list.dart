@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:promoter_admin/src/services/dropbox_api.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
+import 'package:promoter_admin/src/widgets/layout_breakpoints.dart';
 
 enum AlertQueueStatus { pending, completed, failed, other }
 
@@ -507,7 +508,7 @@ class _AlertTextDialogState extends State<_AlertTextDialog> {
       backgroundColor: AppColors.panel,
       title: Text(item.fileName),
       content: SizedBox(
-        width: 520,
+        width: dialogContentWidth(context, desktop: 520),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,

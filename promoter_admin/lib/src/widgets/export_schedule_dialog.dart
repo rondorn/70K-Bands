@@ -9,6 +9,7 @@ import 'package:promoter_admin/src/services/schedule_export/running_order_export
 import 'package:promoter_admin/src/services/schedule_qr/schedule_qr_export.dart';
 import 'package:promoter_admin/src/services/schedule_service.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
+import 'package:promoter_admin/src/widgets/layout_breakpoints.dart';
 
 export 'package:promoter_admin/src/services/schedule_export/running_order_export_config.dart'
     show ScheduleExportColorMode;
@@ -219,7 +220,7 @@ class _ExportScheduleDialogState extends State<ExportScheduleDialog> {
     return AlertDialog(
       title: Text(isQrPoster ? 'Export schedule QR poster' : 'Export running order'),
       content: SizedBox(
-        width: 560,
+        width: dialogContentWidth(context, desktop: 560),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,

@@ -15,6 +15,7 @@ import 'package:promoter_admin/src/widgets/app_shell.dart';
 import 'package:promoter_admin/src/widgets/centered_when_wrapped.dart';
 import 'package:promoter_admin/src/widgets/dropbox_folder_picker.dart';
 import 'package:promoter_admin/src/widgets/export_artists_dialog.dart';
+import 'package:promoter_admin/src/widgets/layout_breakpoints.dart';
 import 'package:promoter_admin/src/widgets/url_image_preview.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -664,16 +665,6 @@ class _BandsSectionState extends State<BandsSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (widget.workspace.bandListUrl.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Text(
-              'Reading from: ${displayShareUrl(widget.workspace.bandListUrl)}',
-              style: const TextStyle(color: AppColors.muted, fontSize: 13),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
         if (_message != null) StatusBanner(text: _message!),
         if (_error != null) StatusBanner(text: _error!, isError: true),
         if (_shareUrl != null)
@@ -723,10 +714,25 @@ class _BandsSectionState extends State<BandsSection> {
         if (_saving) const LinearProgressIndicator(color: AppColors.accent),
         Expanded(
           child: PortalPanel(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+            padding: listPanelPadding(context),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                if (widget.workspace.bandListUrl.isNotEmpty)
+                  Padding(
+                    padding: EdgeInsets.only(
+                      bottom: listPanelSectionGap(context),
+                    ),
+                    child: Text(
+                      'Reading from: ${displayShareUrl(widget.workspace.bandListUrl)}',
+                      style: TextStyle(
+                        color: AppColors.muted,
+                        fontSize: isCompactLayout(context) ? 12 : 13,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 Row(
                   children: [
                     FilledButton(
@@ -747,7 +753,7 @@ class _BandsSectionState extends State<BandsSection> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: listPanelSectionGap(context)),
                 Expanded(
                   child: _bands.isEmpty
                       ? const Text(
@@ -873,13 +879,9 @@ class _BandsSectionState extends State<BandsSection> {
                           },
                         ),
                 ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton.icon(
-                    onPressed: () => _load(forceRefresh: true),
-                    icon: const Icon(Icons.refresh, size: 18),
-                    label: Text('${_bands.length} artist(s) — Refresh'),
-                  ),
+                SectionRefreshFooter(
+                  label: '${_bands.length} artist(s) — Refresh',
+                  onRefresh: () => _load(forceRefresh: true),
                 ),
               ],
             ),

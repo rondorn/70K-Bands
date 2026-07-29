@@ -7,6 +7,7 @@ import 'package:promoter_admin/src/services/festival_create_service.dart';
 import 'package:promoter_admin/src/services/pointer_service.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
+import 'package:promoter_admin/src/widgets/layout_breakpoints.dart';
 
 enum _OnboardingStep { createFestival, connectDropbox }
 
@@ -130,6 +131,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final compact = isCompactLayout(context);
     return DecoratedBox(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -145,30 +147,36 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 560),
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                padding: EdgeInsets.symmetric(
+                  horizontal: compact ? 14 : 24,
+                  vertical: compact ? 16 : 32,
+                ),
                 children: [
                   Image.asset(
                     AppBrand.logoAsset,
-                    height: 72,
+                    height: compact ? 56 : 72,
                     fit: BoxFit.contain,
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: compact ? 12 : 16),
                   Text(
                     AppBrand.name,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.heading,
-                      fontSize: 22,
+                      fontSize: compact ? 20 : 22,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Set up Testing and Production links, then connect Dropbox.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: AppColors.muted, fontSize: 14),
+                    style: TextStyle(
+                      color: AppColors.muted,
+                      fontSize: compact ? 13 : 14,
+                    ),
                   ),
-                  const SizedBox(height: 28),
+                  SizedBox(height: compact ? 20 : 28),
                   _StepHeader(
                     step: 1,
                     title: 'Create festival',
@@ -198,7 +206,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       border: Border.all(color: AppColors.panelBorder),
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.all(20),
+                      padding: EdgeInsets.all(compact ? 14 : 20),
                       child: _busy
                           ? const Padding(
                               padding: EdgeInsets.symmetric(vertical: 40),

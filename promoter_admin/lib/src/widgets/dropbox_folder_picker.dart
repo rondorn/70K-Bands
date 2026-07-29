@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:promoter_admin/src/services/dropbox_api.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
+import 'package:promoter_admin/src/widgets/layout_breakpoints.dart';
 
 /// Browse Dropbox folders and return the selected API path (or null if cancelled).
 Future<String?> showDropboxFolderPicker({
@@ -117,7 +118,7 @@ class _DropboxFolderPickerDialogState extends State<_DropboxFolderPickerDialog> 
       backgroundColor: AppColors.panel,
       title: Text(widget.title),
       content: SizedBox(
-        width: 480,
+        width: dialogContentWidth(context),
         height: 420,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

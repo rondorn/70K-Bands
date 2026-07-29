@@ -19,6 +19,7 @@ import 'package:promoter_admin/src/widgets/app_shell.dart';
 import 'package:promoter_admin/src/widgets/centered_when_wrapped.dart';
 import 'package:promoter_admin/src/widgets/dropbox_folder_picker.dart';
 import 'package:promoter_admin/src/widgets/export_schedule_dialog.dart';
+import 'package:promoter_admin/src/widgets/layout_breakpoints.dart';
 import 'package:promoter_admin/src/widgets/portal_dropdown.dart';
 import 'package:promoter_admin/src/widgets/schedule_running_order_preview.dart';
 import 'package:promoter_admin/src/widgets/url_image_preview.dart';
@@ -780,36 +781,51 @@ class _ScheduleSectionState extends State<ScheduleSection> {
       return const SizedBox.shrink();
     }
     final isError = sync.state == ScheduleSyncState.error;
+    final compact = isCompactLayout(context);
+    final showAction = isError || sync.state == ScheduleSyncState.pending;
+    final banner = StatusBanner(text: sync.label, isError: isError);
+    final action = showAction
+        ? OutlinedButton(
+            onPressed: _committing
+                ? null
+                : () async {
+                    try {
+                      await widget.scheduleService.flushSync(
+                        widget.workspace,
+                      );
+                      widget.onTestingDataChanged?.call();
+                    } catch (e) {
+                      if (!mounted) return;
+                      setState(() {});
+                    }
+                  },
+            child: Text(isError ? 'Retry sync' : 'Sync now'),
+          )
+        : null;
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: StatusBanner(text: sync.label, isError: isError),
-          ),
-          if (isError || sync.state == ScheduleSyncState.pending) ...[
-            const SizedBox(width: 8),
-            OutlinedButton(
-              onPressed: _committing
-                  ? null
-                  : () async {
-                      try {
-                        await widget.scheduleService.flushSync(
-                          widget.workspace,
-                        );
-                        widget.onTestingDataChanged?.call();
-                      } catch (e) {
-                        if (!mounted) return;
-                        // Keep the soft sync banner; avoid a second raw exception dump.
-                        setState(() {});
-                      }
-                    },
-              child: Text(isError ? 'Retry sync' : 'Sync now'),
+      padding: EdgeInsets.only(bottom: compact ? 8 : 10),
+      child: compact
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                banner,
+                if (action != null) ...[
+                  const SizedBox(height: 8),
+                  Align(alignment: Alignment.centerLeft, child: action),
+                ],
+              ],
+            )
+          : Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: banner),
+                if (action != null) ...[
+                  const SizedBox(width: 8),
+                  action,
+                ],
+              ],
             ),
-          ],
-        ],
-      ),
     );
   }
 
@@ -862,30 +878,6 @@ class _ScheduleSectionState extends State<ScheduleSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _syncStatusBar(),
-        Align(
-          alignment: Alignment.centerRight,
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: OutlinedButton.icon(
-              onPressed: _events.isEmpty
-                  ? null
-                  : () => _openExportDialog(),
-              icon: const Icon(Icons.ios_share_outlined, size: 18),
-              label: const Text('Export…'),
-            ),
-          ),
-        ),
-        if (widget.workspace.scheduleUrl.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Text(
-              'Working copy synced to: ${displayShareUrl(widget.workspace.scheduleUrl)}',
-              style: const TextStyle(color: AppColors.muted, fontSize: 13),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
         if (_message != null) StatusBanner(text: _message!),
         if (_error != null) StatusBanner(text: _error!, isError: true),
         if (!_canEdit)
@@ -900,22 +892,51 @@ class _ScheduleSectionState extends State<ScheduleSection> {
         if (_committing) const LinearProgressIndicator(color: AppColors.accent),
         Expanded(
           child: PortalPanel(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-            child: _events.isEmpty
-                ? const Text(
-                    'No schedule events yet.',
-                    style: TextStyle(color: AppColors.muted),
-                  )
-                : LayoutBuilder(
-                    builder: (context, constraints) {
-                      return SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            minWidth: constraints.maxWidth,
-                          ),
-                          child: SingleChildScrollView(
-                            child: DataTable(
+            padding: listPanelPadding(context),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _syncStatusBar(),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: OutlinedButton.icon(
+                    onPressed: _events.isEmpty ? null : () => _openExportDialog(),
+                    icon: const Icon(Icons.ios_share_outlined, size: 18),
+                    label: const Text('Export…'),
+                  ),
+                ),
+                if (widget.workspace.scheduleUrl.isNotEmpty)
+                  Padding(
+                    padding: EdgeInsets.only(
+                      bottom: listPanelSectionGap(context),
+                    ),
+                    child: Text(
+                      'Working copy synced to: '
+                      '${displayShareUrl(widget.workspace.scheduleUrl)}',
+                      style: TextStyle(
+                        color: AppColors.muted,
+                        fontSize: isCompactLayout(context) ? 12 : 13,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                Expanded(
+                  child: _events.isEmpty
+                      ? const Text(
+                          'No schedule events yet.',
+                          style: TextStyle(color: AppColors.muted),
+                        )
+                      : LayoutBuilder(
+                          builder: (context, constraints) {
+                            return SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minWidth: constraints.maxWidth,
+                                ),
+                                child: SingleChildScrollView(
+                                  child: DataTable(
                               columnSpacing: 14,
                               horizontalMargin: 8,
                               headingRowHeight: 40,
@@ -1075,14 +1096,13 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                       );
                     },
                   ),
-          ),
-        ),
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton.icon(
-            onPressed: () => _load(forceRefresh: true),
-            icon: const Icon(Icons.refresh, size: 18),
-            label: Text('${_events.length} event(s) — Refresh'),
+                ),
+                SectionRefreshFooter(
+                  label: '${_events.length} event(s) — Refresh',
+                  onRefresh: () => _load(forceRefresh: true),
+                ),
+              ],
+            ),
           ),
         ),
       ],
@@ -1093,20 +1113,23 @@ class _ScheduleSectionState extends State<ScheduleSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _syncStatusBar(),
         if (_error != null) StatusBanner(text: _error!, isError: true),
         Expanded(
-          child: ScheduleRunningOrderPreview(
-            workspace: widget.workspace,
-            events: _events,
-          ),
-        ),
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton.icon(
-            onPressed: () => _load(forceRefresh: true),
-            icon: const Icon(Icons.refresh, size: 18),
-            label: Text('${_events.length} event(s) — Refresh'),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _syncStatusBar(),
+              Expanded(
+                child: ScheduleRunningOrderPreview(
+                  workspace: widget.workspace,
+                  events: _events,
+                ),
+              ),
+              SectionRefreshFooter(
+                label: '${_events.length} event(s) — Refresh',
+                onRefresh: () => _load(forceRefresh: true),
+              ),
+            ],
           ),
         ),
       ],
@@ -1128,30 +1151,37 @@ class _ScheduleSectionState extends State<ScheduleSection> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (_error != null) StatusBanner(text: _error!, isError: true),
-        Text(
-          '${_events.length} total events — counts by band and event type '
-          '(use this to confirm each band has the expected shows / meet & greets).',
-          style: const TextStyle(color: AppColors.muted, fontSize: 13),
-        ),
-        const SizedBox(height: 12),
         Expanded(
           child: PortalPanel(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-            child: bands.isEmpty
-                ? const Text(
-                    'No artists or schedule events to summarize yet.',
-                    style: TextStyle(color: AppColors.muted),
-                  )
-                : LayoutBuilder(
-                    builder: (context, constraints) {
-                      return SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            minWidth: constraints.maxWidth,
-                          ),
-                          child: SingleChildScrollView(
-                            child: DataTable(
+            padding: listPanelPadding(context),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  '${_events.length} total events — counts by band and event type '
+                  '(use this to confirm each band has the expected shows / meet & greets).',
+                  style: TextStyle(
+                    color: AppColors.muted,
+                    fontSize: isCompactLayout(context) ? 12 : 13,
+                  ),
+                ),
+                SizedBox(height: listPanelSectionGap(context)),
+                Expanded(
+                  child: bands.isEmpty
+                      ? const Text(
+                          'No artists or schedule events to summarize yet.',
+                          style: TextStyle(color: AppColors.muted),
+                        )
+                      : LayoutBuilder(
+                          builder: (context, constraints) {
+                            return SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minWidth: constraints.maxWidth,
+                                ),
+                                child: SingleChildScrollView(
+                                  child: DataTable(
                               columnSpacing: 18,
                               horizontalMargin: 8,
                               headingRowHeight: 40,
@@ -1213,14 +1243,13 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                       );
                     },
                   ),
-          ),
-        ),
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton.icon(
-            onPressed: () => _load(forceRefresh: true),
-            icon: const Icon(Icons.refresh, size: 18),
-            label: Text('${_events.length} event(s) — Refresh'),
+                ),
+                SectionRefreshFooter(
+                  label: '${_events.length} event(s) — Refresh',
+                  onRefresh: () => _load(forceRefresh: true),
+                ),
+              ],
+            ),
           ),
         ),
       ],

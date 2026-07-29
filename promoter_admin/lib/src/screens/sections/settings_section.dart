@@ -22,6 +22,7 @@ import 'package:promoter_admin/src/widgets/app_version_footer.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
 import 'package:promoter_admin/src/widgets/centered_when_wrapped.dart';
 import 'package:promoter_admin/src/widgets/folder_access_dialog.dart';
+import 'package:promoter_admin/src/widgets/layout_breakpoints.dart';
 import 'package:promoter_admin/src/widgets/portal_dropdown.dart';
 import 'package:promoter_admin/src/widgets/recent_alerts_list.dart';
 import 'package:promoter_admin/src/widgets/url_image_preview.dart';
@@ -2465,7 +2466,7 @@ class _PublishResultDialog extends StatelessWidget {
       backgroundColor: AppColors.panel,
       title: const Text('Publish complete'),
       content: SizedBox(
-        width: 480,
+        width: dialogContentWidth(context),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -2588,7 +2589,7 @@ class _PromoteConfirmDialogState extends State<_PromoteConfirmDialog> {
             : 'Confirm publish to Production',
       ),
       content: SizedBox(
-        width: 480,
+        width: dialogContentWidth(context),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -2854,7 +2855,7 @@ class _AddNewYearDialogState extends State<_AddNewYearDialog> {
       backgroundColor: AppColors.panel,
       title: const Text('Add new year'),
       content: SizedBox(
-        width: 480,
+        width: dialogContentWidth(context),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

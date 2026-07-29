@@ -4,6 +4,7 @@ import 'package:promoter_admin/src/models/festival_workspace.dart';
 import 'package:promoter_admin/src/services/dropbox_folder_access_service.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
+import 'package:promoter_admin/src/widgets/layout_breakpoints.dart';
 
 Future<void> showGrantFolderAccessDialog({
   required BuildContext context,
@@ -197,7 +198,7 @@ Future<void> showFolderMembersDialog({
           backgroundColor: AppColors.panel,
           title: Text('${kind.settingsLabel} folder access'),
           content: SizedBox(
-            width: 480,
+            width: dialogContentWidth(context),
             child: loading
                 ? const Padding(
                     padding: EdgeInsets.all(24),
