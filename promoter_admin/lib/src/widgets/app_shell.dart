@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:promoter_admin/src/branding.dart';
 import 'package:promoter_admin/src/models/publish_status.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
+import 'package:promoter_admin/src/widgets/app_navigation.dart';
 import 'package:promoter_admin/src/widgets/layout_breakpoints.dart';
+import 'package:promoter_admin/src/widgets/phone_shell_chrome.dart';
 
-enum AppSection { settings, bands, schedule, descriptions, alerts, reports }
-
-enum BandsTab { list, add }
-enum ScheduleTab { entry, view, stats, preview }
-enum DescriptionsTab { list, form }
+export 'app_navigation.dart';
 
 class AppShell extends StatelessWidget {
   const AppShell({
@@ -62,12 +60,15 @@ class AppShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final compact = isCompactLayout(context);
-    final outerPadding = compact
-        ? const EdgeInsets.fromLTRB(10, 6, 10, 10)
-        : const EdgeInsets.fromLTRB(24, 16, 24, 28);
-    final chromeSpacing = compact ? 8.0 : 12.0;
-    final bodySpacing = compact ? 8.0 : 14.0;
+    final phone = isPhoneDevice(context);
+    final compact = isCompactLayout(context) && !phone;
+    final outerPadding = phone
+        ? const EdgeInsets.fromLTRB(8, 4, 8, 8)
+        : compact
+            ? const EdgeInsets.fromLTRB(10, 6, 10, 10)
+            : const EdgeInsets.fromLTRB(24, 16, 24, 28);
+    final chromeSpacing = phone ? 6.0 : (compact ? 8.0 : 12.0);
+    final bodySpacing = phone ? 6.0 : (compact ? 8.0 : 14.0);
 
     return DecoratedBox(
       decoration: const BoxDecoration(
@@ -88,34 +89,63 @@ class AppShell extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _Header(
-                      festivalName: festivalName,
-                      heading: heading,
-                      subheading: subheading,
-                      metaLine: metaLine,
-                      publishStatus: publishStatus,
-                      compact: compact,
-                    ),
+                    if (phone)
+                      PhoneShellHeader(
+                        festivalName: festivalName,
+                        heading: heading,
+                        subheading: subheading,
+                        metaLine: metaLine,
+                        publishStatus: publishStatus,
+                      )
+                    else
+                      _Header(
+                        festivalName: festivalName,
+                        heading: heading,
+                        subheading: subheading,
+                        metaLine: metaLine,
+                        publishStatus: publishStatus,
+                        compact: compact,
+                      ),
                     SizedBox(height: chromeSpacing),
-                    _NavBar(
-                      section: section,
-                      onSectionChanged: onSectionChanged,
-                      settingsPromoteSelected: settingsPromoteSelected,
-                      publishNavEnabled: publishNavEnabled,
-                      publishNavHighlight: publishNavHighlight,
-                      onPromoteTap: onPromoteTap,
-                      canEditBands: canEditBands,
-                      canEditSchedule: canEditSchedule,
-                      canEditDescriptions: canEditDescriptions,
-                      allowCustomAlerts: allowCustomAlerts,
-                      reportsUiEnabled: reportsUiEnabled,
-                      bandsTab: bandsTab,
-                      onBandsTabChanged: onBandsTabChanged,
-                      scheduleTab: scheduleTab,
-                      onScheduleTabChanged: onScheduleTabChanged,
-                      onDescriptionsTabChanged: onDescriptionsTabChanged,
-                      compact: compact,
-                    ),
+                    if (phone)
+                      PhoneAccordionNav(
+                        section: section,
+                        onSectionChanged: onSectionChanged,
+                        settingsPromoteSelected: settingsPromoteSelected,
+                        publishNavEnabled: publishNavEnabled,
+                        publishNavHighlight: publishNavHighlight,
+                        onPromoteTap: onPromoteTap,
+                        canEditBands: canEditBands,
+                        canEditSchedule: canEditSchedule,
+                        canEditDescriptions: canEditDescriptions,
+                        allowCustomAlerts: allowCustomAlerts,
+                        reportsUiEnabled: reportsUiEnabled,
+                        bandsTab: bandsTab,
+                        onBandsTabChanged: onBandsTabChanged,
+                        scheduleTab: scheduleTab,
+                        onScheduleTabChanged: onScheduleTabChanged,
+                        onDescriptionsTabChanged: onDescriptionsTabChanged,
+                      )
+                    else
+                      _NavBar(
+                        section: section,
+                        onSectionChanged: onSectionChanged,
+                        settingsPromoteSelected: settingsPromoteSelected,
+                        publishNavEnabled: publishNavEnabled,
+                        publishNavHighlight: publishNavHighlight,
+                        onPromoteTap: onPromoteTap,
+                        canEditBands: canEditBands,
+                        canEditSchedule: canEditSchedule,
+                        canEditDescriptions: canEditDescriptions,
+                        allowCustomAlerts: allowCustomAlerts,
+                        reportsUiEnabled: reportsUiEnabled,
+                        bandsTab: bandsTab,
+                        onBandsTabChanged: onBandsTabChanged,
+                        scheduleTab: scheduleTab,
+                        onScheduleTabChanged: onScheduleTabChanged,
+                        onDescriptionsTabChanged: onDescriptionsTabChanged,
+                        compact: compact,
+                      ),
                     SizedBox(height: bodySpacing),
                     Expanded(child: child),
                   ],

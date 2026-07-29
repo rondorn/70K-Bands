@@ -17,6 +17,7 @@ import 'package:promoter_admin/src/services/publish_status_service.dart';
 import 'package:promoter_admin/src/services/schedule_service.dart';
 import 'package:promoter_admin/src/services/workspace_store.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
+import 'package:promoter_admin/src/widgets/layout_breakpoints.dart';
 
 class PromoterAdminApp extends StatefulWidget {
   const PromoterAdminApp({super.key});
@@ -327,6 +328,11 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
       debugShowCheckedModeBanner: false,
       scaffoldMessengerKey: _messengerKey,
       theme: buildPromoterTheme(),
+      builder: (context, child) {
+        return CompactPhoneOrientationScope(
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       home: workspace == null || registry == null
           ? DecoratedBox(
               decoration: const BoxDecoration(

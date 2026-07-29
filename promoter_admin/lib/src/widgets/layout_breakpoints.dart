@@ -1,11 +1,68 @@
+import 'dart:io' show Platform;
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-/// Width below which the admin UI switches to a compact (phone) layout.
-const kCompactLayoutWidth = 700.0;
+/// Shortest-side below which the admin UI switches to a compact (phone) layout.
+/// Uses shortest side so iPhone landscape stays compact (width alone would not).
+const kCompactLayoutShortestSide = 700.0;
 
-/// True on narrow screens (e.g. iPhone) where the Mac/iPad layout would overflow.
+/// Shortest-side below which the device is treated as a phone (portrait lock).
+const kPhoneShortestSide = 600.0;
+
+/// True on phone-sized screens where the Mac/iPad table layout would overflow.
 bool isCompactLayout(BuildContext context) {
-  return MediaQuery.sizeOf(context).width < kCompactLayoutWidth;
+  return MediaQuery.sizeOf(context).shortestSide <
+      kCompactLayoutShortestSide;
+}
+
+/// True on phone-class devices (iPhone, not iPad).
+bool isPhoneDevice(BuildContext context) {
+  return MediaQuery.sizeOf(context).shortestSide < kPhoneShortestSide;
+}
+
+/// Locks portrait on phones; iPad and desktop keep all orientations.
+class CompactPhoneOrientationScope extends StatefulWidget {
+  const CompactPhoneOrientationScope({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  State<CompactPhoneOrientationScope> createState() =>
+      _CompactPhoneOrientationScopeState();
+}
+
+class _CompactPhoneOrientationScopeState
+    extends State<CompactPhoneOrientationScope> {
+  @override
+  void dispose() {
+    if (_supportsOrientationLock) {
+      SystemChrome.setPreferredOrientations(DeviceOrientation.values);
+    }
+    super.dispose();
+  }
+
+  bool get _supportsOrientationLock =>
+      !kIsWeb && (Platform.isIOS || Platform.isAndroid);
+
+  void _applyOrientations(BuildContext context) {
+    if (!_supportsOrientationLock) return;
+    if (isPhoneDevice(context)) {
+      SystemChrome.setPreferredOrientations(const [
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ]);
+    } else {
+      SystemChrome.setPreferredOrientations(DeviceOrientation.values);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    _applyOrientations(context);
+    return widget.child;
+  }
 }
 
 /// Padding for list/table panels (Artists, Schedule, Descriptions, etc.).

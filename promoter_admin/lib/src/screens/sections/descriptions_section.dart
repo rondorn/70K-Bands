@@ -9,6 +9,7 @@ import 'package:promoter_admin/src/theme/app_theme.dart';
 import 'package:promoter_admin/src/widgets/admin_table_cells.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
 import 'package:promoter_admin/src/widgets/centered_when_wrapped.dart';
+import 'package:promoter_admin/src/widgets/compact_section_list.dart';
 import 'package:promoter_admin/src/widgets/dropbox_folder_picker.dart';
 import 'package:promoter_admin/src/widgets/layout_breakpoints.dart';
 
@@ -589,7 +590,9 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
                           'No artists in the Testing lineup yet.',
                           style: TextStyle(color: AppColors.muted),
                         )
-                      : LayoutBuilder(
+                      : isCompactLayout(context)
+                          ? _buildCompactDescriptionsList()
+                          : LayoutBuilder(
                           builder: (context, constraints) {
                             return SingleChildScrollView(
                               scrollDirection: Axis.horizontal,
@@ -754,6 +757,64 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
         ),
       ],
     );
+  }
+
+  Widget _buildCompactDescriptionsList() {
+    return CompactSectionList(
+      children: [
+        for (final row in _rows)
+          CompactSectionListRow(
+            title: row.name,
+            titleStyle: TextStyle(
+              color: row.hasDescription ? AppColors.heading : AppColors.muted,
+              fontSize: 15,
+              fontWeight:
+                  row.hasDescription ? FontWeight.w600 : FontWeight.w400,
+            ),
+            backgroundColor:
+                row.hasDescription ? null : const Color(0xFF1E1E1E),
+            actions: _compactDescriptionActions(row),
+          ),
+      ],
+    );
+  }
+
+  List<Widget> _compactDescriptionActions(_ListRow row) {
+    if (!row.hasDescription) {
+      return [
+        OutlinedButton(
+          style: _actionStyle,
+          onPressed: _saving ? null : () => _openAddDescription(row.name),
+          child: const Text('Create Description'),
+        ),
+        if (_canEditMap)
+          OutlinedButton(
+            style: _actionStyle,
+            onPressed: _saving ? null : () => _openAddLink(row.name),
+            child: const Text('Attach Link'),
+          ),
+      ];
+    }
+    if (_canEditMap) {
+      return [
+        OutlinedButton(
+          style: _actionStyle,
+          onPressed: _saving ? null : () => _openEdit(row),
+          child: const Text('Edit'),
+        ),
+        OutlinedButton(
+          style: _actionStyle,
+          onPressed: _saving ? null : () => _deleteRow(row),
+          child: const Text('Delete'),
+        ),
+      ];
+    }
+    return [
+      Text(
+        displayShareUrl(row.entry?.url ?? ''),
+        style: const TextStyle(color: AppColors.muted, fontSize: 12),
+      ),
+    ];
   }
 
   ButtonStyle get _actionStyle => OutlinedButton.styleFrom(

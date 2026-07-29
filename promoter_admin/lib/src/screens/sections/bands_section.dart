@@ -13,6 +13,7 @@ import 'package:promoter_admin/src/theme/app_theme.dart';
 import 'package:promoter_admin/src/widgets/admin_table_cells.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
 import 'package:promoter_admin/src/widgets/centered_when_wrapped.dart';
+import 'package:promoter_admin/src/widgets/compact_section_list.dart';
 import 'package:promoter_admin/src/widgets/dropbox_folder_picker.dart';
 import 'package:promoter_admin/src/widgets/export_artists_dialog.dart';
 import 'package:promoter_admin/src/widgets/layout_breakpoints.dart';
@@ -760,7 +761,9 @@ class _BandsSectionState extends State<BandsSection> {
                           'No artists in the Testing lineup yet.',
                           style: TextStyle(color: AppColors.muted),
                         )
-                      : LayoutBuilder(
+                      : isCompactLayout(context)
+                          ? _buildCompactBandsList(order)
+                          : LayoutBuilder(
                           builder: (context, constraints) {
                             return SingleChildScrollView(
                               scrollDirection: Axis.horizontal,
@@ -887,6 +890,30 @@ class _BandsSectionState extends State<BandsSection> {
             ),
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildCompactBandsList(List<int> order) {
+    final actionStyle = compactListActionStyle();
+    return CompactSectionList(
+      children: [
+        for (final i in order)
+          CompactSectionListRow(
+            title: _bands[i].name,
+            actions: [
+              OutlinedButton(
+                style: actionStyle,
+                onPressed: !_canEdit || _saving ? null : () => _startEdit(i),
+                child: const Text('Edit'),
+              ),
+              OutlinedButton(
+                style: actionStyle,
+                onPressed: !_canEdit || _saving ? null : () => _deleteBand(i),
+                child: const Text('Delete'),
+              ),
+            ],
+          ),
       ],
     );
   }

@@ -17,6 +17,7 @@ import 'package:promoter_admin/src/theme/app_theme.dart';
 import 'package:promoter_admin/src/widgets/admin_table_cells.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
 import 'package:promoter_admin/src/widgets/centered_when_wrapped.dart';
+import 'package:promoter_admin/src/widgets/compact_section_list.dart';
 import 'package:promoter_admin/src/widgets/dropbox_folder_picker.dart';
 import 'package:promoter_admin/src/widgets/export_schedule_dialog.dart';
 import 'package:promoter_admin/src/widgets/layout_breakpoints.dart';
@@ -927,7 +928,9 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                           'No schedule events yet.',
                           style: TextStyle(color: AppColors.muted),
                         )
-                      : LayoutBuilder(
+                      : isCompactLayout(context)
+                          ? _buildCompactScheduleList(order)
+                          : LayoutBuilder(
                           builder: (context, constraints) {
                             return SingleChildScrollView(
                               scrollDirection: Axis.horizontal,
@@ -1109,6 +1112,40 @@ class _ScheduleSectionState extends State<ScheduleSection> {
     );
   }
 
+  Widget _buildCompactScheduleList(List<int> order) {
+    final actionStyle = compactListActionStyle();
+    return CompactSectionList(
+      children: [
+        for (final i in order)
+          CompactSectionListRow(
+            title: _events[i].band,
+            subtitle: _compactScheduleSubtitle(_events[i]),
+            actions: [
+              OutlinedButton(
+                style: actionStyle,
+                onPressed: !_canEdit || _committing ? null : () => _startEdit(i),
+                child: const Text('Edit'),
+              ),
+              OutlinedButton(
+                style: actionStyle,
+                onPressed:
+                    !_canEdit || _committing ? null : () => _deleteEvent(i),
+                child: const Text('Delete'),
+              ),
+            ],
+          ),
+      ],
+    );
+  }
+
+  String _compactScheduleSubtitle(ScheduleEvent event) {
+    final parts = <String>[
+      if (event.day.trim().isNotEmpty) event.day.trim(),
+      if (event.location.trim().isNotEmpty) event.location.trim(),
+    ];
+    return parts.join(' · ');
+  }
+
   Widget _buildPreview() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1172,7 +1209,9 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                           'No artists or schedule events to summarize yet.',
                           style: TextStyle(color: AppColors.muted),
                         )
-                      : LayoutBuilder(
+                      : isCompactLayout(context)
+                          ? _buildCompactStatsList(bands, typeCols, stats)
+                          : LayoutBuilder(
                           builder: (context, constraints) {
                             return SingleChildScrollView(
                               scrollDirection: Axis.horizontal,
@@ -1252,6 +1291,25 @@ class _ScheduleSectionState extends State<ScheduleSection> {
             ),
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildCompactStatsList(
+    List<String> bands,
+    List<String> typeCols,
+    Map<String, Map<String, int>> stats,
+  ) {
+    return CompactSectionList(
+      children: [
+        for (final band in bands)
+          CompactSectionListRow(
+            title: band,
+            subtitle: typeCols
+                .map((t) => '$t: ${stats[band]?[t] ?? 0}')
+                .join(' · '),
+            actions: const [],
+          ),
       ],
     );
   }
