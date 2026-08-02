@@ -10,6 +10,7 @@ import 'package:promoter_admin/src/widgets/admin_table_cells.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
 import 'package:promoter_admin/src/widgets/centered_when_wrapped.dart';
 import 'package:promoter_admin/src/widgets/compact_section_list.dart';
+import 'package:promoter_admin/src/widgets/description_editor_indicator.dart';
 import 'package:promoter_admin/src/widgets/dropbox_folder_picker.dart';
 import 'package:promoter_admin/src/widgets/layout_breakpoints.dart';
 
@@ -42,6 +43,7 @@ class DescriptionsSection extends StatefulWidget {
     required this.onFormModeChanged,
     required this.dropboxConnected,
     required this.onConnectDropbox,
+    this.currentAccountLabel = '',
     this.prefillLabel,
     this.onPrefillConsumed,
     this.onTestingDataChanged,
@@ -56,6 +58,7 @@ class DescriptionsSection extends StatefulWidget {
   final ValueChanged<String> onFormModeChanged;
   final bool dropboxConnected;
   final Future<void> Function() onConnectDropbox;
+  final String currentAccountLabel;
   final String? prefillLabel;
   final VoidCallback? onPrefillConsumed;
   final VoidCallback? onTestingDataChanged;
@@ -81,6 +84,58 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
   bool _loadingText = false;
 
   bool get _canEditMap => widget.workspace.canEditDescriptions;
+
+  DescriptionEditorKind _editorKind(DescriptionMapEntry? entry) {
+    if (entry == null || entry.url.trim().isEmpty) {
+      return DescriptionEditorKind.unknown;
+    }
+    return descriptionEditorKind(
+      updatedBy: entry.updatedBy,
+      currentAccount: widget.currentAccountLabel,
+    );
+  }
+
+  Color? _rowBackground(_ListRow row) {
+    if (!row.hasDescription) return const Color(0xFF1E1E1E);
+    if (_editorKind(row.entry) == DescriptionEditorKind.mine) {
+      return const Color(0xFF1E2A1E);
+    }
+    return null;
+  }
+
+  ({int mine, int other, int unknown}) _editorCounts() {
+    var mine = 0;
+    var other = 0;
+    var unknown = 0;
+    for (final row in _rows) {
+      if (!row.hasDescription) continue;
+      switch (_editorKind(row.entry)) {
+        case DescriptionEditorKind.mine:
+          mine++;
+        case DescriptionEditorKind.other:
+          other++;
+        case DescriptionEditorKind.unknown:
+          unknown++;
+      }
+    }
+    return (mine: mine, other: other, unknown: unknown);
+  }
+
+  Widget _editorSummaryLine() {
+    final counts = _editorCounts();
+    if (counts.mine + counts.other + counts.unknown == 0) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Text(
+        '${counts.mine} saved by you · '
+        '${counts.other} by others · '
+        '${counts.unknown} unknown',
+        style: const TextStyle(color: AppColors.muted, fontSize: 12),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -578,6 +633,16 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
             ),
           ),
         if (_saving) const LinearProgressIndicator(color: AppColors.accent),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const DescriptionEditorLegend(),
+              _editorSummaryLine(),
+            ],
+          ),
+        ),
         Expanded(
           child: PortalPanel(
             padding: listPanelPadding(context),
@@ -624,6 +689,10 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
                                         label: Text('Cache date'),
                                       ),
                                       DataColumn(
+                                        columnWidth: adminTableIntrinsicColumn,
+                                        label: Text('Last editor'),
+                                      ),
+                                      DataColumn(
                                         columnWidth: adminTableWideActionsColumn,
                                         label: adminTableActionsHeading(),
                                       ),
@@ -632,9 +701,7 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
                                       for (final row in _rows)
                                         DataRow(
                                           color: WidgetStateProperty.all(
-                                            row.hasDescription
-                                                ? null
-                                                : const Color(0xFF1E1E1E),
+                                            _rowBackground(row),
                                           ),
                                           cells: [
                                             DataCell(
@@ -675,6 +742,22 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
                                                       : AppColors.muted,
                                                 ),
                                               ),
+                                            ),
+                                            DataCell(
+                                              row.hasDescription
+                                                  ? DescriptionEditorIndicator(
+                                                      updatedBy:
+                                                          row.entry?.updatedBy,
+                                                      currentAccount: widget
+                                                          .currentAccountLabel,
+                                                      compact: true,
+                                                    )
+                                                  : adminTableText(
+                                                      '—',
+                                                      style: const TextStyle(
+                                                        color: AppColors.muted,
+                                                      ),
+                                                    ),
                                             ),
                                             DataCell(
                                               adminTableActionsCell(
@@ -765,18 +848,30 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
         for (final row in _rows)
           CompactSectionListRow(
             title: row.name,
+            subtitle: row.hasDescription
+                ? _compactEditorSubtitle(row.entry)
+                : 'No description',
             titleStyle: TextStyle(
               color: row.hasDescription ? AppColors.heading : AppColors.muted,
               fontSize: 15,
               fontWeight:
                   row.hasDescription ? FontWeight.w600 : FontWeight.w400,
             ),
-            backgroundColor:
-                row.hasDescription ? null : const Color(0xFF1E1E1E),
+            backgroundColor: _rowBackground(row),
             actions: _compactDescriptionActions(row),
           ),
       ],
     );
+  }
+
+  String? _compactEditorSubtitle(DescriptionMapEntry? entry) {
+    if (entry == null) return null;
+    final kind = _editorKind(entry);
+    final label = descriptionEditorShortLabel(entry.updatedBy);
+    if (kind == DescriptionEditorKind.unknown) {
+      return 'Last editor unknown';
+    }
+    return 'Last saved by $label';
   }
 
   List<Widget> _compactDescriptionActions(_ListRow row) {

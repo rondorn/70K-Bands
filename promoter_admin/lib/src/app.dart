@@ -45,6 +45,7 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
   late final DescriptionMapService _descriptions = DescriptionMapService(
     pointerService: _pointers,
     dropboxApi: _dropboxApi,
+    dropboxAuth: _auth,
   );
   late final PromoteService _promote = PromoteService(
     pointerService: _pointers,

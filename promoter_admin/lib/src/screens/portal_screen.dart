@@ -500,6 +500,7 @@ class _PortalScreenState extends State<PortalScreen> {
           }),
           dropboxConnected: widget.dropboxConnected,
           onConnectDropbox: widget.onConnectDropbox,
+          currentAccountLabel: widget.dropboxLabel,
           prefillLabel: _descriptionPrefillLabel,
           onPrefillConsumed: () {
             if (_descriptionPrefillLabel != null) {

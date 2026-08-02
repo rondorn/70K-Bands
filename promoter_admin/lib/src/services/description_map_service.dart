@@ -3,6 +3,7 @@ import 'package:promoter_admin/src/models/festival_workspace.dart';
 import 'package:promoter_admin/src/services/csv_staging.dart';
 import 'package:promoter_admin/src/services/csv_util.dart';
 import 'package:promoter_admin/src/services/dropbox_api.dart';
+import 'package:promoter_admin/src/services/dropbox_auth.dart';
 import 'package:promoter_admin/src/services/http_fetch.dart';
 import 'package:promoter_admin/src/services/pointer_service.dart';
 import 'package:promoter_admin/src/services/user_description_folder_store.dart';
@@ -12,16 +13,19 @@ class DescriptionMapEntry {
     required this.band,
     required this.url,
     required this.date,
+    this.updatedBy = '',
   });
 
   final String band;
   final String url;
   final String date;
+  final String updatedBy;
 
   Map<String, String> asRow() => {
         'Band': band,
         'URL': url,
         'Date': date,
+        'UpdatedBy': updatedBy,
       };
 
   static DescriptionMapEntry fromRow(Map<String, String> row) {
@@ -29,6 +33,7 @@ class DescriptionMapEntry {
       band: (row['Band'] ?? '').trim(),
       url: (row['URL'] ?? '').trim(),
       date: (row['Date'] ?? '').trim(),
+      updatedBy: DescriptionMapService.normalizeUpdatedBy(row['UpdatedBy']),
     );
   }
 }
@@ -37,6 +42,7 @@ class DescriptionMapService {
   DescriptionMapService({
     required this.pointerService,
     required this.dropboxApi,
+    this.dropboxAuth,
     UserDescriptionFolderStore? userFolderStore,
     CsvStagingCoordinator? staging,
   })  : userFolderStore = userFolderStore ?? UserDescriptionFolderStore(),
@@ -72,6 +78,7 @@ class DescriptionMapService {
 
   final PointerService pointerService;
   final DropboxApi dropboxApi;
+  final DropboxAuth? dropboxAuth;
   final UserDescriptionFolderStore userFolderStore;
   final CsvStagingCoordinator staging;
 
@@ -82,7 +89,27 @@ class DescriptionMapService {
   void removeSyncListener(VoidCallback listener) =>
       staging.removeListener(listener);
 
-  static const columns = ['Band', 'URL', 'Date'];
+  static const baseColumns = ['Band', 'URL', 'Date'];
+  static const updatedByColumn = 'UpdatedBy';
+
+  /// CSV columns for [entries]. [UpdatedBy] is omitted unless at least one row
+  /// has an editor (automated maps are typically Band/URL/Date only).
+  static List<String> columnsFor(List<DescriptionMapEntry> entries) {
+    final hasUpdatedBy = entries.any(
+      (e) => normalizeUpdatedBy(e.updatedBy).isNotEmpty,
+    );
+    if (hasUpdatedBy) return [...baseColumns, updatedByColumn];
+    return baseColumns;
+  }
+
+  /// Treats missing, blank, literal "null", and null-character values as empty.
+  static String normalizeUpdatedBy(String? value) {
+    if (value == null) return '';
+    final stripped = value.replaceAll('\x00', '').trim();
+    if (stripped.isEmpty) return '';
+    if (stripped.toLowerCase() == 'null') return '';
+    return stripped;
+  }
 
   Future<List<DescriptionMapEntry>> load(
     FestivalWorkspace workspace, {
@@ -265,15 +292,21 @@ class DescriptionMapService {
       (e) => e.band.toLowerCase() == label.toLowerCase(),
     );
     final previousDate = idx >= 0 ? updated[idx].date : '';
+    final previousUpdatedBy = idx >= 0 ? updated[idx].updatedBy : '';
     final date = explicitDate?.trim().isNotEmpty == true
         ? explicitDate!.trim()
         : (bumpDate
             ? nextCacheDate(previousDate)
             : (previousDate.isEmpty ? cacheDateToday() : previousDate));
+    final shouldStampEditor = bumpDate || idx < 0;
+    final updatedBy = normalizeUpdatedBy(
+      shouldStampEditor ? await _currentEditorLabel() : previousUpdatedBy,
+    );
     final entry = DescriptionMapEntry(
       band: label,
       url: normalizedUrl,
       date: date,
+      updatedBy: updatedBy,
     );
     if (idx >= 0) {
       updated[idx] = entry;
@@ -342,6 +375,7 @@ class DescriptionMapService {
           band: parsed.band,
           url: normalizeDropboxUrl(parsed.url),
           date: parsed.date,
+          updatedBy: parsed.updatedBy,
         ),
       );
     }
@@ -350,7 +384,8 @@ class DescriptionMapService {
   }
 
   static String toCsv(List<DescriptionMapEntry> entries) {
-    return mapsToCsv(columns, entries.map((e) => e.asRow()).toList());
+    final fields = columnsFor(entries);
+    return mapsToCsv(fields, entries.map((e) => e.asRow()).toList());
   }
 
   static String cacheDateToday() {
@@ -386,6 +421,12 @@ class DescriptionMapService {
         .replaceAll(RegExp(r'[^\w\s\-.]'), '')
         .replaceAll(RegExp(r'\s+'), '_')
         .replaceAll(RegExp(r'_+'), '_');
+  }
+
+  Future<String> _currentEditorLabel() async {
+    final auth = dropboxAuth;
+    if (auth == null) return '';
+    return (await auth.accountLabel()).trim();
   }
 
   Future<String> _mapUrl(

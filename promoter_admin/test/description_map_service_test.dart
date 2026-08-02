@@ -56,6 +56,107 @@ void main() {
     });
   });
 
+  group('DescriptionMapService.parseEntries', () {
+    test('reads UpdatedBy when present', () {
+      const csv = '''
+Band,URL,Date,UpdatedBy
+Amorphis,https://example.com/a.txt,07-14-2025,bot@example.com
+Dark Tranquillity,https://example.com/d.txt,07-16-2025,
+''';
+      final entries = DescriptionMapService.parseEntries(csv);
+      expect(entries, hasLength(2));
+      expect(entries[0].updatedBy, 'bot@example.com');
+      expect(entries[1].updatedBy, isEmpty);
+    });
+
+    test('tolerates maps without UpdatedBy column', () {
+      const csv = '''
+Band,URL,Date
+Amorphis,https://example.com/a.txt,07-14-2025
+''';
+      final entries = DescriptionMapService.parseEntries(csv);
+      expect(entries.single.updatedBy, isEmpty);
+    });
+  });
+
+  group('DescriptionMapService.normalizeUpdatedBy', () {
+    test('treats null literal and null characters as empty', () {
+      expect(DescriptionMapService.normalizeUpdatedBy(null), isEmpty);
+      expect(DescriptionMapService.normalizeUpdatedBy(''), isEmpty);
+      expect(DescriptionMapService.normalizeUpdatedBy('null'), isEmpty);
+      expect(DescriptionMapService.normalizeUpdatedBy('NULL'), isEmpty);
+      expect(DescriptionMapService.normalizeUpdatedBy('\x00'), isEmpty);
+      expect(
+        DescriptionMapService.normalizeUpdatedBy('bot@example.com'),
+        'bot@example.com',
+      );
+    });
+  });
+
+  group('DescriptionMapService.toCsv', () {
+    test('omits UpdatedBy header when no row has an editor', () {
+      final csv = DescriptionMapService.toCsv([
+        DescriptionMapEntry(
+          band: 'Amorphis',
+          url: 'https://example.com/a.txt',
+          date: '07-14-2025',
+        ),
+      ]);
+      expect(csv.split('\n').first.trim(), 'Band,URL,Date');
+      expect(csv, isNot(contains('UpdatedBy')));
+    });
+
+    test('includes UpdatedBy header when any row has an editor', () {
+      final csv = DescriptionMapService.toCsv([
+        DescriptionMapEntry(
+          band: 'Amorphis',
+          url: 'https://example.com/a.txt',
+          date: '07-14-2025',
+          updatedBy: 'editor@example.com',
+        ),
+      ]);
+      expect(csv.split('\n').first.trim(), 'Band,URL,Date,UpdatedBy');
+      expect(csv, contains('editor@example.com'));
+    });
+
+    test('adds UpdatedBy header when upgrading a 3-column automated map', () {
+      const original = '''
+Band,URL,Date
+Amorphis,https://example.com/a.txt,07-14-2025
+Dark Tranquillity,https://example.com/d.txt,07-16-2025
+''';
+      final entries = DescriptionMapService.parseEntries(original);
+      entries[0] = DescriptionMapEntry(
+        band: entries[0].band,
+        url: entries[0].url,
+        date: entries[0].date,
+        updatedBy: 'editor@example.com',
+      );
+      final csv = DescriptionMapService.toCsv(entries);
+      expect(csv.split('\n').first.trim(), 'Band,URL,Date,UpdatedBy');
+      final lines = csv
+          .split('\n')
+          .map((l) => l.trim())
+          .where((l) => l.isNotEmpty)
+          .toList();
+      expect(lines[1], endsWith('editor@example.com'));
+      expect(lines[2], endsWith(','));
+    });
+  });
+
+  group('DescriptionMapService.parseEntries', () {
+    test('treats null literal UpdatedBy as empty', () {
+      const csv = '''
+Band,URL,Date,UpdatedBy
+Amorphis,https://example.com/a.txt,07-14-2025,null
+''';
+      expect(
+        DescriptionMapService.parseEntries(csv).single.updatedBy,
+        isEmpty,
+      );
+    });
+  });
+
   group('DescriptionMapService.descriptionTextCacheKey', () {
     test('includes opaque map date string in cache key', () {
       const url = 'https://www.dropbox.com/s/abc/band.txt?raw=1';
