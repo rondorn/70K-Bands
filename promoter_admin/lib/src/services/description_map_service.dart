@@ -4,7 +4,9 @@ import 'package:promoter_admin/src/services/csv_staging.dart';
 import 'package:promoter_admin/src/services/csv_util.dart';
 import 'package:promoter_admin/src/services/dropbox_api.dart';
 import 'package:promoter_admin/src/services/dropbox_auth.dart';
+import 'package:promoter_admin/src/services/emergency_local_mode_support.dart';
 import 'package:promoter_admin/src/services/http_fetch.dart';
+import 'package:promoter_admin/src/services/local_content_store.dart';
 import 'package:promoter_admin/src/services/pointer_service.dart';
 import 'package:promoter_admin/src/services/user_description_folder_store.dart';
 
@@ -52,6 +54,16 @@ class DescriptionMapService {
               channelSuffix: 'description_map',
               displayName: 'Description map',
               resolveUrl: (workspace) async {
+                if (workspace.usesEmergencyLocalMode) {
+                  final path =
+                      workspace.emergencyLocalPaths.descriptionMapCsv.trim();
+                  if (path.isEmpty) {
+                    throw StateError(
+                      'Description map CSV path is not configured.',
+                    );
+                  }
+                  return path;
+                }
                 var url = workspace.descriptionMapUrl.trim();
                 if (url.isEmpty) {
                   final refreshed = await pointerService.applyTestingPointer(
@@ -146,6 +158,14 @@ class DescriptionMapService {
     required String labelName,
     required String text,
   }) async {
+    if (workspace.usesEmergencyLocalMode) {
+      final path = LocalContentStore.descriptionFilePath(
+        paths: workspace.emergencyLocalPaths,
+        labelName: labelName,
+      );
+      await LocalContentStore.writeText(path, text);
+      return path;
+    }
     final mapUrl = await _mapUrl(workspace);
     final mapPath = await dropboxApi.resolveApiPath(mapUrl);
     final parent = mapPath.contains('/')
@@ -240,10 +260,13 @@ class DescriptionMapService {
     required String text,
   }) async {
     final label = labelName.trim();
-    final url = normalizeDropboxUrl(shareUrl.trim());
-    if (label.isEmpty || url.isEmpty) {
+    final rawUrl = shareUrl.trim();
+    if (label.isEmpty || rawUrl.isEmpty) {
       throw StateError('Band name and description URL are required.');
     }
+    final url = LocalContentStore.isLocalLocator(rawUrl)
+        ? LocalContentStore.expandPath(rawUrl)
+        : normalizeDropboxUrl(rawUrl);
     final entries = await load(workspace);
     final idx = entries.indexWhere(
       (e) => e.band.toLowerCase() == label.toLowerCase(),
@@ -256,7 +279,11 @@ class DescriptionMapService {
     if (previousText == text) {
       return;
     }
-    await dropboxApi.uploadTextInPlace(url, text);
+    if (LocalContentStore.isLocalLocator(url)) {
+      await LocalContentStore.writeText(url, text);
+    } else {
+      await dropboxApi.uploadTextInPlace(url, text);
+    }
     final newDate = nextCacheDate(previousDate);
     await upsertMapEntry(
       workspace: workspace,
@@ -279,10 +306,13 @@ class DescriptionMapService {
     bool forceRefreshMap = false,
   }) async {
     final label = labelName.trim();
-    final normalizedUrl = normalizeDropboxUrl(url.trim());
+    final normalizedUrl = url.trim();
     if (label.isEmpty || normalizedUrl.isEmpty) {
-      throw StateError('Band / event name and Dropbox URL are required.');
+      throw StateError('Band / event name and description location are required.');
     }
+    final storedUrl = LocalContentStore.isLocalLocator(normalizedUrl)
+        ? LocalContentStore.expandPath(normalizedUrl)
+        : normalizeDropboxUrl(normalizedUrl);
     final entries = await load(
       workspace,
       forceRefresh: forceRefreshMap,
@@ -304,7 +334,7 @@ class DescriptionMapService {
     );
     final entry = DescriptionMapEntry(
       band: label,
-      url: normalizedUrl,
+      url: storedUrl,
       date: date,
       updatedBy: updatedBy,
     );
@@ -352,13 +382,17 @@ class DescriptionMapService {
     required String mapDate,
     bool forceRefresh = false,
   }) async {
-    final url = normalizeDropboxUrl(shareUrl.trim());
+    final url = shareUrl.trim();
     if (url.isEmpty) {
       throw StateError('Description URL is required.');
     }
+    if (LocalContentStore.isLocalLocator(url)) {
+      return LocalContentStore.readText(url);
+    }
+    final normalized = normalizeDropboxUrl(url);
     return fetchUrlText(
-      url,
-      cacheKey: descriptionTextCacheKey(url, mapDate),
+      normalized,
+      cacheKey: descriptionTextCacheKey(normalized, mapDate),
       forceRefresh: forceRefresh,
     );
   }
@@ -373,7 +407,9 @@ class DescriptionMapService {
       entries.add(
         DescriptionMapEntry(
           band: parsed.band,
-          url: normalizeDropboxUrl(parsed.url),
+          url: LocalContentStore.isLocalLocator(parsed.url)
+              ? LocalContentStore.expandPath(parsed.url)
+              : normalizeDropboxUrl(parsed.url),
           date: parsed.date,
           updatedBy: parsed.updatedBy,
         ),
@@ -433,6 +469,13 @@ class DescriptionMapService {
     FestivalWorkspace workspace, {
     bool forceRefresh = false,
   }) async {
+    if (workspace.usesEmergencyLocalMode) {
+      final path = workspace.emergencyLocalPaths.descriptionMapCsv.trim();
+      if (path.isEmpty) {
+        throw StateError('Description map CSV path is not configured.');
+      }
+      return path;
+    }
     var url = workspace.descriptionMapUrl.trim();
     if (url.isEmpty) {
       final refreshed = await pointerService.applyTestingPointer(

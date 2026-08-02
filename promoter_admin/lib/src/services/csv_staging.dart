@@ -8,6 +8,7 @@ import 'package:promoter_admin/src/services/app_data_paths.dart';
 import 'package:promoter_admin/src/services/csv_util.dart';
 import 'package:promoter_admin/src/services/dropbox_api.dart';
 import 'package:promoter_admin/src/services/http_fetch.dart';
+import 'package:promoter_admin/src/services/local_content_store.dart';
 
 /// Sync lifecycle for a local Testing CSV staging file.
 enum CsvSyncState {
@@ -343,8 +344,14 @@ class CsvStagingCoordinator extends ChangeNotifier {
     FestivalWorkspace workspace, {
     bool forceRefresh = false,
   }) async {
-    final url = normalizeDropboxUrl(await resolveUrl(workspace));
-    final text = await fetchUrlText(url, forceRefresh: forceRefresh);
+    final url = await resolveUrl(workspace);
+    final text = await _fetchPublishedContent(
+      url,
+      forceRefresh: forceRefresh,
+    );
+    final publishedLocator = LocalContentStore.isLocalLocator(url)
+        ? LocalContentStore.expandPath(url)
+        : normalizeDropboxUrl(url);
     final csv = await _csvFile(workspace);
     await csv.parent.create(recursive: true);
     await csv.writeAsString(text);
@@ -352,12 +359,45 @@ class CsvStagingCoordinator extends ChangeNotifier {
     final now = DateTime.now().toUtc().toIso8601String();
     await _writeMeta(workspace, {
       'state': 'synced',
-      'publishedUrl': url,
+      'publishedUrl': publishedLocator,
       'lastSyncedAt': now,
       'lastSavedAt': now,
       'lastError': '',
     });
     return text;
+  }
+
+  Future<String> _fetchPublishedContent(
+    String locator, {
+    bool forceRefresh = false,
+  }) async {
+    if (LocalContentStore.isLocalLocator(locator)) {
+      return LocalContentStore.readText(locator);
+    }
+    return fetchUrlText(
+      normalizeDropboxUrl(locator),
+      forceRefresh: forceRefresh,
+    );
+  }
+
+  Future<void> _publishContent(String locator, String text) async {
+    if (LocalContentStore.isLocalLocator(locator)) {
+      await LocalContentStore.writeText(locator, text);
+      return;
+    }
+    final upload = _uploadOverride;
+    if (upload != null) {
+      await upload(locator, text);
+      return;
+    }
+    await dropboxApi.uploadTextInPlace(normalizeDropboxUrl(locator), text);
+  }
+
+  String _normalizePublishedLocator(String locator) {
+    if (LocalContentStore.isLocalLocator(locator)) {
+      return LocalContentStore.expandPath(locator);
+    }
+    return normalizeDropboxUrl(locator);
   }
 
   /// Ensure local CSV exists. Seeds from Dropbox only when missing — never
@@ -443,7 +483,8 @@ class CsvStagingCoordinator extends ChangeNotifier {
     final csv = await _csvFile(workspace);
     await csv.parent.create(recursive: true);
     await csv.writeAsString(csvText);
-    final url = normalizeDropboxUrl(await resolveUrl(workspace));
+    final rawUrl = await resolveUrl(workspace);
+    final url = _normalizePublishedLocator(rawUrl);
     final now = DateTime.now().toUtc().toIso8601String();
     await _writeMeta(workspace, {
       'state': 'pending',
@@ -522,7 +563,8 @@ class CsvStagingCoordinator extends ChangeNotifier {
     if (!await csv.exists()) {
       await _seedFromDropbox(workspace);
     }
-    final url = normalizeDropboxUrl(await resolveUrl(workspace));
+    final urlRaw = await resolveUrl(workspace);
+    final url = _normalizePublishedLocator(urlRaw);
     final text = await csv.readAsString();
     final rowCount = countDataRows(text);
     final snapshot = await _syncedSnapshotFile(workspace);
@@ -546,13 +588,10 @@ class CsvStagingCoordinator extends ChangeNotifier {
     });
 
     try {
-      final upload = _uploadOverride;
-      if (upload != null) {
-        await upload(url, text);
-      } else {
-        await dropboxApi.uploadTextInPlace(url, text);
+      await _publishContent(urlRaw, text);
+      if (!LocalContentStore.isLocalLocator(urlRaw)) {
+        await invalidateCachedUrlText(normalizeDropboxUrl(urlRaw));
       }
-      await invalidateCachedUrlText(url);
       final now = DateTime.now().toUtc();
       await _writeSyncedSnapshot(workspace, text);
 
@@ -620,8 +659,12 @@ class CsvStagingCoordinator extends ChangeNotifier {
     bool forceRefresh = true,
   }) async {
     _debounceTimer?.cancel();
-    final url = normalizeDropboxUrl(await resolveUrl(workspace));
-    final text = await fetchUrlText(url, forceRefresh: forceRefresh);
+    final rawUrl = await resolveUrl(workspace);
+    final url = _normalizePublishedLocator(rawUrl);
+    final text = await _fetchPublishedContent(
+      rawUrl,
+      forceRefresh: forceRefresh,
+    );
     final csv = await _csvFile(workspace);
     await csv.parent.create(recursive: true);
     await csv.writeAsString(text);

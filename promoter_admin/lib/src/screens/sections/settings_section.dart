@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:promoter_admin/src/models/emergency_local_paths.dart';
 import 'package:promoter_admin/src/models/festival_workspace.dart';
 import 'package:promoter_admin/src/models/dropbox_folder_access.dart';
 import 'package:promoter_admin/src/screens/create_festival_dialog.dart';
@@ -13,12 +14,15 @@ import 'package:promoter_admin/src/services/publish_status_service.dart';
 import 'package:promoter_admin/src/services/day_date_alignment.dart';
 import 'package:promoter_admin/src/services/description_map_service.dart';
 import 'package:promoter_admin/src/services/http_fetch.dart';
+import 'package:promoter_admin/src/services/emergency_local_mode_support.dart';
+import 'package:promoter_admin/src/services/local_content_store.dart';
 import 'package:promoter_admin/src/services/lineup_service.dart';
 import 'package:promoter_admin/src/services/schedule_service.dart';
 import 'package:promoter_admin/src/services/schedule_validation.dart';
 import 'package:promoter_admin/src/services/report_discovery_service.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
 import 'package:promoter_admin/src/widgets/app_version_footer.dart';
+import 'package:promoter_admin/src/widgets/emergency_local_mode_panel.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
 import 'package:promoter_admin/src/widgets/centered_when_wrapped.dart';
 import 'package:promoter_admin/src/widgets/folder_access_dialog.dart';
@@ -113,9 +117,14 @@ class _SettingsSectionState extends State<SettingsSection> {
   bool _loadingDemoYears = false;
   DataFileShareStatus? _shareStatus;
 
+  bool _emergencyLocalMode = false;
+  EmergencyLocalPaths _emergencyLocalPaths = const EmergencyLocalPaths();
+
   @override
   void initState() {
     super.initState();
+    _emergencyLocalMode = widget.workspace.emergencyLocalMode;
+    _emergencyLocalPaths = widget.workspace.emergencyLocalPaths;
     _name = TextEditingController(text: widget.workspace.festivalName);
     _testing = TextEditingController(
       text: displayShareUrl(widget.workspace.testingPointerUrl),
@@ -224,6 +233,8 @@ class _SettingsSectionState extends State<SettingsSection> {
     _canEditAlerts = w.canEditAlerts;
     _canViewReports = w.canViewReports;
     _useCityStateField = w.useCityStateField;
+    _emergencyLocalMode = w.emergencyLocalMode;
+    _emergencyLocalPaths = w.emergencyLocalPaths;
     if (w.hasDataSourceYearOverride) {
       _showDemoYearControls = true;
     }
@@ -296,7 +307,9 @@ class _SettingsSectionState extends State<SettingsSection> {
         d.canEditPointers != w.canEditPointers ||
         d.canEditAlerts != w.canEditAlerts ||
         d.canViewReports != w.canViewReports ||
-        d.useCityStateField != w.useCityStateField;
+        d.useCityStateField != w.useCityStateField ||
+        d.emergencyLocalMode != w.emergencyLocalMode ||
+        d.emergencyLocalPaths != w.emergencyLocalPaths;
   }
 
   bool get _canSaveConfiguration => !_busy && _hasUnsavedChanges;
@@ -331,6 +344,22 @@ class _SettingsSectionState extends State<SettingsSection> {
       canEditAlerts: _canEditAlerts,
       canViewReports: _canViewReports,
       useCityStateField: _useCityStateField,
+      emergencyLocalMode: _emergencyLocalMode,
+      emergencyLocalPaths: _emergencyLocalPaths,
+    );
+  }
+
+  FestivalWorkspace _applyEmergencyEditFlags(FestivalWorkspace draft) {
+    if (!draft.usesEmergencyLocalMode) return draft;
+    return draft.copyWith(
+      canEditBands: draft.emergencyLocalPaths.artistsCsv.trim().isNotEmpty,
+      canEditSchedule: draft.emergencyLocalPaths.scheduleCsv.trim().isNotEmpty,
+      canEditDescriptions:
+          draft.emergencyLocalPaths.descriptionMapCsv.trim().isNotEmpty,
+      canEditAlerts: draft.emergencyLocalPaths.alertsDir.trim().isNotEmpty,
+      allowCustomAlerts: draft.emergencyLocalPaths.alertsDir.trim().isNotEmpty,
+      canEditPointers: false,
+      canViewReports: false,
     );
   }
 
@@ -403,6 +432,19 @@ class _SettingsSectionState extends State<SettingsSection> {
   Future<FestivalWorkspace> _verifyAlertFolderAccess(
     FestivalWorkspace draft,
   ) async {
+    if (draft.usesEmergencyLocalMode) {
+      final dir = draft.emergencyLocalPaths.alertsDir.trim();
+      if (dir.isEmpty) {
+        return draft.copyWith(canEditAlerts: false, allowCustomAlerts: false);
+      }
+      final check = await LocalContentStore.checkPath(dir, directory: true);
+      if (!check.writable) {
+        throw StateError(
+          'Alerts folder is not writable: ${check.summary}',
+        );
+      }
+      return draft.copyWith(canEditAlerts: true, allowCustomAlerts: true);
+    }
     final folder = draft.alertFolderUrl.trim();
     if (folder.isEmpty) {
       return draft.copyWith(
@@ -503,8 +545,11 @@ class _SettingsSectionState extends State<SettingsSection> {
     try {
       final before = widget.workspace;
       var draft = await _draftReadyToPersist();
+      draft = _applyEmergencyEditFlags(draft);
 
-      if (draft.testingPointerUrl.isNotEmpty && draft.bandListUrl.isEmpty) {
+      if (!draft.usesEmergencyLocalMode &&
+          draft.testingPointerUrl.isNotEmpty &&
+          draft.bandListUrl.isEmpty) {
         if (draft.productionPointerUrl.isNotEmpty) {
           draft = await widget.pointerService.applyPointers(draft);
         } else {
@@ -521,7 +566,7 @@ class _SettingsSectionState extends State<SettingsSection> {
         }
       }
       draft = await _verifyAlertFolderAccess(draft);
-      if (widget.dropboxConnected) {
+      if (!draft.usesEmergencyLocalMode && widget.dropboxConnected) {
         draft = await _probeAccess(draft);
       }
       await _purgeScheduleCacheIfVocabChanged(before, draft);
@@ -538,9 +583,11 @@ class _SettingsSectionState extends State<SettingsSection> {
         final vocabNote = _scheduleVocabChanged(before, draft)
             ? ' Schedule menus will use the updated venues / days / dates / types.'
             : '';
-        _status = draft.alertFolderUrl.trim().isEmpty
-            ? 'Configuration saved.$vocabNote'
-            : 'Configuration saved. Alert folder write access verified.$vocabNote';
+        _status = draft.usesEmergencyLocalMode
+            ? 'Local File Mode configuration saved.$vocabNote'
+            : draft.alertFolderUrl.trim().isEmpty
+                ? 'Configuration saved.$vocabNote'
+                : 'Configuration saved. Alert folder write access verified.$vocabNote';
         _busy = false;
       });
     } catch (e) {
@@ -1257,20 +1304,29 @@ class _SettingsSectionState extends State<SettingsSection> {
   @override
   Widget build(BuildContext context) {
     if (widget.showPromote) {
-      return _PromotePanel(
-        workspace: widget.workspace,
-        dropboxApi: widget.dropboxApi,
-        pointerService: widget.pointerService,
-        scheduleService: widget.scheduleService,
-        lineupService: widget.lineupService,
-        descriptionMapService: widget.descriptionMapService,
-        publishStatusService: widget.publishStatusService,
-        publishStatus: widget.publishStatus,
-        dropboxConnected: widget.dropboxConnected,
-        onConnectDropbox: widget.onConnectDropbox,
-        onBack: () => widget.onShowPromote(false),
-      );
+      if (widget.workspace.usesEmergencyLocalMode) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) widget.onShowPromote(false);
+        });
+      } else {
+        return _PromotePanel(
+          workspace: widget.workspace,
+          dropboxApi: widget.dropboxApi,
+          pointerService: widget.pointerService,
+          scheduleService: widget.scheduleService,
+          lineupService: widget.lineupService,
+          descriptionMapService: widget.descriptionMapService,
+          publishStatusService: widget.publishStatusService,
+          publishStatus: widget.publishStatus,
+          dropboxConnected: widget.dropboxConnected,
+          onConnectDropbox: widget.onConnectDropbox,
+          onBack: () => widget.onShowPromote(false),
+        );
+      }
     }
+
+    final emergencyMode =
+        emergencyLocalFileModeSupported && _emergencyLocalMode;
 
     return SingleChildScrollView(
       child: PortalPanel(
@@ -1289,13 +1345,20 @@ class _SettingsSectionState extends State<SettingsSection> {
               ),
             if (_status != null) StatusBanner(text: _status!),
             if (_error != null) StatusBanner(text: _error!, isError: true),
-            const Text(
-              'All files live on Dropbox. Edit against Testing '
-              '(Advanced → Testing in the fan app). '
-              'Publish to Production updates what most attendees see. '
-              'Your app developer may ask you to copy the Testing and Production links below.',
-              style: TextStyle(color: AppColors.muted),
-            ),
+            if (emergencyMode)
+              EmergencyLocalModePanel(
+                paths: _emergencyLocalPaths,
+                enabled: !_busy,
+                onChanged: (paths) => setState(() => _emergencyLocalPaths = paths),
+              )
+            else
+              const Text(
+                'All files live on Dropbox. Edit against Testing '
+                '(Advanced → Testing in the fan app). '
+                'Publish to Production updates what most attendees see. '
+                'Your app developer may ask you to copy the Testing and Production links below.',
+                style: TextStyle(color: AppColors.muted),
+              ),
             const SizedBox(height: 16),
             FormRow(
               label: 'Festival',
@@ -1353,6 +1416,7 @@ class _SettingsSectionState extends State<SettingsSection> {
               label: 'Festival name',
               child: TextField(controller: _name),
             ),
+            if (!emergencyMode) ...[
             FormRow(
               label: 'Dropbox connection',
               requiredField: true,
@@ -1507,6 +1571,8 @@ class _SettingsSectionState extends State<SettingsSection> {
                 ],
               ),
             ),
+            ],
+            if (!emergencyMode) ...[
             FormRow(
               label: 'Data files',
               onLabelTap: _onDataFilesLabelTap,
@@ -1827,6 +1893,7 @@ class _SettingsSectionState extends State<SettingsSection> {
                   ],
                 ),
               ),
+            ],
             FormRow(
               label: 'Lineup options',
               child: Column(
@@ -1923,28 +1990,52 @@ class _SettingsSectionState extends State<SettingsSection> {
               ),
             ),
             const SizedBox(height: 8),
-            CenteredWhenWrapped(
-              spacing: 10,
-              runSpacing: 10,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                OutlinedButton(
-                  onPressed: _busy ? null : _loadFromPointer,
-                  child: Text(_busy ? 'Working…' : 'Load festival data'),
-                ),
-                FilledButton(
-                  onPressed: _canSaveConfiguration ? _save : null,
-                  child: Text(
-                    _busy
-                        ? 'Saving…'
-                        : (_hasUnsavedChanges
-                              ? 'Save configuration'
-                              : 'No changes to save'),
+                Expanded(
+                  child: CenteredWhenWrapped(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      if (!emergencyMode)
+                        OutlinedButton(
+                          onPressed: _busy ? null : _loadFromPointer,
+                          child: Text(_busy ? 'Working…' : 'Load festival data'),
+                        ),
+                      FilledButton(
+                        onPressed: _canSaveConfiguration ? _save : null,
+                        child: Text(
+                          _busy
+                              ? 'Saving…'
+                              : (_hasUnsavedChanges
+                                    ? 'Save configuration'
+                                    : 'No changes to save'),
+                        ),
+                      ),
+                      if (!emergencyMode &&
+                          (_canEditBands ||
+                              _canEditSchedule ||
+                              _canEditDescriptions))
+                        OutlinedButton(
+                          onPressed: _busy
+                              ? null
+                              : () => widget.onShowPromote(true),
+                          child: const Text('Publish to Production…'),
+                        ),
+                    ],
                   ),
                 ),
-                if (_canEditBands || _canEditSchedule || _canEditDescriptions)
-                  OutlinedButton(
-                    onPressed: _busy ? null : () => widget.onShowPromote(true),
-                    child: const Text('Publish to Production…'),
+                if (emergencyLocalFileModeSupported)
+                  EmergencyLocalModeToggleButton(
+                    emergencyLocalMode: _emergencyLocalMode,
+                    enabled: !_busy,
+                    onToggleEmergencyMode: (enable) async {
+                      setState(() => _emergencyLocalMode = enable);
+                      if (!enable) {
+                        await _save();
+                      }
+                    },
                   ),
               ],
             ),

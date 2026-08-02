@@ -1,9 +1,13 @@
+import 'package:promoter_admin/src/models/emergency_local_paths.dart';
+import 'package:promoter_admin/src/services/emergency_local_mode_support.dart';
 
 /// Local workspace config for one festival (pointers from app maintainer).
 class FestivalWorkspace {
   const FestivalWorkspace({
     this.id = '',
     this.festivalName = '',
+    this.emergencyLocalMode = false,
+    this.emergencyLocalPaths = const EmergencyLocalPaths(),
     this.testingPointerUrl = '',
     this.productionPointerUrl = '',
     this.alertFolderUrl = '',
@@ -47,6 +51,13 @@ class FestivalWorkspace {
   /// Stable id within the local multi-festival registry.
   final String id;
   final String festivalName;
+
+  /// Emergency bypass when Dropbox is unavailable. Off by default. UI: Local File Mode.
+  final bool emergencyLocalMode;
+
+  /// Explicit local paths — used only when [emergencyLocalMode] is true.
+  final EmergencyLocalPaths emergencyLocalPaths;
+
   final String testingPointerUrl;
   final String productionPointerUrl;
 
@@ -157,9 +168,14 @@ class FestivalWorkspace {
 
   bool get hasTestingPointer => testingPointerUrl.trim().isNotEmpty;
 
-  /// True once the festival has a name and testing pointer (ready for normal use).
-  bool get isConfigured =>
-      festivalName.trim().isNotEmpty && testingPointerUrl.trim().isNotEmpty;
+  /// True once the festival has a name and storage is ready for normal use.
+  bool get isConfigured {
+    if (festivalName.trim().isEmpty) return false;
+    if (usesEmergencyLocalMode) {
+      return emergencyLocalPaths.hasAnyPath;
+    }
+    return testingPointerUrl.trim().isNotEmpty;
+  }
 
   bool get hasAnyEditAccess =>
       canEditBands || canEditSchedule || canEditDescriptions;
@@ -212,6 +228,8 @@ class FestivalWorkspace {
   FestivalWorkspace copyWith({
     String? id,
     String? festivalName,
+    bool? emergencyLocalMode,
+    EmergencyLocalPaths? emergencyLocalPaths,
     String? testingPointerUrl,
     String? productionPointerUrl,
     String? alertFolderUrl,
@@ -255,6 +273,8 @@ class FestivalWorkspace {
     return FestivalWorkspace(
       id: id ?? this.id,
       festivalName: festivalName ?? this.festivalName,
+      emergencyLocalMode: emergencyLocalMode ?? this.emergencyLocalMode,
+      emergencyLocalPaths: emergencyLocalPaths ?? this.emergencyLocalPaths,
       testingPointerUrl: testingPointerUrl ?? this.testingPointerUrl,
       productionPointerUrl: productionPointerUrl ?? this.productionPointerUrl,
       alertFolderUrl: alertFolderUrl ?? this.alertFolderUrl,
@@ -312,6 +332,8 @@ class FestivalWorkspace {
   Map<String, String> toPrefs() => {
     'id': id,
     'festivalName': festivalName,
+    'emergencyLocalMode': emergencyLocalMode ? '1' : '0',
+    ...emergencyLocalPaths.toPrefs(),
     'testingPointerUrl': testingPointerUrl,
     'productionPointerUrl': productionPointerUrl,
     'alertFolderUrl': alertFolderUrl,
@@ -370,6 +392,8 @@ class FestivalWorkspace {
     return FestivalWorkspace(
       id: map['id'] ?? '',
       festivalName: map['festivalName'] ?? '',
+      emergencyLocalMode: _boolPref(map, 'emergencyLocalMode', fallback: false),
+      emergencyLocalPaths: EmergencyLocalPaths.fromPrefs(map),
       testingPointerUrl: map['testingPointerUrl'] ?? '',
       productionPointerUrl: map['productionPointerUrl'] ?? '',
       alertFolderUrl: map['alertFolderUrl'] ?? '',

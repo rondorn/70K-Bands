@@ -9,6 +9,8 @@ import 'package:promoter_admin/src/screens/sections/settings_section.dart';
 import 'package:promoter_admin/src/services/description_map_service.dart';
 import 'package:promoter_admin/src/services/dropbox_api.dart';
 import 'package:promoter_admin/src/services/lineup_service.dart';
+import 'package:promoter_admin/src/services/emergency_local_mode_support.dart';
+import 'package:promoter_admin/src/services/local_content_store.dart';
 import 'package:promoter_admin/src/services/portal_navigation_store.dart';
 import 'package:promoter_admin/src/services/pointer_service.dart';
 import 'package:promoter_admin/src/services/publish_status_service.dart';
@@ -200,8 +202,9 @@ class _PortalScreenState extends State<PortalScreen> {
         }
         return (
           heading: 'Festival Configuration',
-          subheading:
-              'Testing & Production links, Dropbox, venues, and festival vocabulary',
+          subheading: _ws.usesEmergencyLocalMode
+              ? 'Local File Mode — map paths and save valid CSV files'
+              : 'Testing & Production links, Dropbox, venues, and festival vocabulary',
         );
       case AppSection.bands:
         return _bandsTab == BandsTab.add
@@ -243,7 +246,9 @@ class _PortalScreenState extends State<PortalScreen> {
             ? (
                 heading: _descriptionFormHeading,
                 subheading: _ws.canEditDescriptions
-                    ? 'Save to Dropbox and update the description map'
+                    ? (_ws.usesEmergencyLocalMode
+                        ? 'Save description files locally and update the map CSV'
+                        : 'Save to Dropbox and update the description map')
                     : 'Save a Dropbox file and share the link with the description admin',
               )
             : (
@@ -265,26 +270,35 @@ class _PortalScreenState extends State<PortalScreen> {
 
   String get _metaLine {
     final parts = <String>[];
+    if (_ws.usesEmergencyLocalMode) {
+      parts.add('Local File Mode');
+    }
     if (_ws.eventYear.isNotEmpty) parts.add('Year ${_ws.eventYear}');
     if (_ws.hasDataSourceYearOverride) {
       parts.add('Demo data ${_ws.dataSourceYearOverride}');
     }
-    if (widget.dropboxConnected) {
-      parts.add(
-        widget.dropboxLabel.isEmpty
-            ? 'Dropbox connected'
-            : 'Dropbox: ${widget.dropboxLabel}',
-      );
+    if (_ws.usesEmergencyLocalMode) {
+      if (_ws.hasArtistsLocalPath) parts.add('artists path set');
+      if (_ws.hasScheduleLocalPath) parts.add('schedule path set');
+      if (_ws.hasDescriptionMapLocalPath) parts.add('map path set');
     } else {
-      parts.add('Dropbox not connected');
-    }
-    if (_ws.testingPointerUrl.isNotEmpty) {
-      parts.add('Testing link set');
+      if (widget.dropboxConnected) {
+        parts.add(
+          widget.dropboxLabel.isEmpty
+              ? 'Dropbox connected'
+              : 'Dropbox: ${widget.dropboxLabel}',
+        );
+      } else {
+        parts.add('Dropbox not connected');
+      }
+      if (_ws.testingPointerUrl.isNotEmpty) {
+        parts.add('Testing link set');
+      }
     }
     final edit = <String>[];
-    if (_ws.canEditBands) edit.add('artists');
-    if (_ws.canEditSchedule) edit.add('schedule');
-    if (_ws.canEditDescriptions) edit.add('descriptions');
+    if (_ws.effectiveCanEditBands) edit.add('artists');
+    if (_ws.effectiveCanEditSchedule) edit.add('schedule');
+    if (_ws.effectiveCanEditDescriptions) edit.add('descriptions');
     if (edit.isEmpty) {
       parts.add('View only (no write access)');
     } else if (edit.length < 3) {
@@ -296,14 +310,14 @@ class _PortalScreenState extends State<PortalScreen> {
   void _ensureSectionAllowed() {
     // Artists / Schedule / Descriptions stay visible without write —
     // mutation controls are disabled or narrowed inside each section.
-    if (_section == AppSection.alerts && !_ws.customAlertsUiEnabled) {
+    if (_section == AppSection.alerts && !_ws.effectiveCustomAlertsUiEnabled) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         _applyNavigation(section: AppSection.settings, showPromote: false);
       });
       return;
     }
-    if (_section == AppSection.reports && !_ws.reportsUiEnabled) {
+    if (_section == AppSection.reports && !_ws.effectiveReportsUiEnabled) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         _applyNavigation(section: AppSection.settings, showPromote: false);
@@ -313,7 +327,7 @@ class _PortalScreenState extends State<PortalScreen> {
     final denied = _showPromote && !_ws.hasAnyEditAccess;
     if (!denied) {
       if (_section == AppSection.schedule &&
-          !_ws.canEditSchedule &&
+          !_ws.effectiveCanEditSchedule &&
           _scheduleTab == ScheduleTab.entry) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
@@ -321,7 +335,7 @@ class _PortalScreenState extends State<PortalScreen> {
         });
       }
       if (_section == AppSection.bands &&
-          !_ws.canEditBands &&
+          !_ws.effectiveCanEditBands &&
           _bandsTab == BandsTab.add) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
@@ -368,13 +382,15 @@ class _PortalScreenState extends State<PortalScreen> {
       publishStatus: publishStatus,
       section: _section,
       settingsPromoteSelected: _showPromote,
-      publishNavEnabled: publishStatus.canOpenPublish,
-      publishNavHighlight: publishStatus.canPublish,
-      canEditBands: _ws.canEditBands,
-      canEditSchedule: _ws.canEditSchedule,
-      canEditDescriptions: _ws.canEditDescriptions,
-      allowCustomAlerts: _ws.customAlertsUiEnabled,
-      reportsUiEnabled: _ws.reportsUiEnabled,
+      publishNavEnabled:
+          !_ws.usesEmergencyLocalMode && publishStatus.canOpenPublish,
+      publishNavHighlight:
+          !_ws.usesEmergencyLocalMode && publishStatus.canPublish,
+      canEditBands: _ws.effectiveCanEditBands,
+      canEditSchedule: _ws.effectiveCanEditSchedule,
+      canEditDescriptions: _ws.effectiveCanEditDescriptions,
+      allowCustomAlerts: _ws.effectiveCustomAlertsUiEnabled,
+      reportsUiEnabled: _ws.effectiveReportsUiEnabled,
       onPromoteTap: () =>
           _applyNavigation(section: AppSection.settings, showPromote: true),
       onSectionChanged: (s) => _applyNavigation(

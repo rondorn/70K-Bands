@@ -3,6 +3,7 @@ import 'package:promoter_admin/src/models/festival_workspace.dart';
 import 'package:promoter_admin/src/services/csv_staging.dart';
 import 'package:promoter_admin/src/services/csv_util.dart';
 import 'package:promoter_admin/src/services/dropbox_api.dart';
+import 'package:promoter_admin/src/services/emergency_local_mode_support.dart';
 import 'package:promoter_admin/src/services/pointer_service.dart';
 
 /// Lineup read/write against the testing band list URL (edit in place via Dropbox).
@@ -17,6 +18,13 @@ class LineupService {
               channelSuffix: 'artists',
               displayName: 'Artists',
               resolveUrl: (workspace) async {
+                if (workspace.usesEmergencyLocalMode) {
+                  final path = workspace.emergencyLocalPaths.artistsCsv.trim();
+                  if (path.isEmpty) {
+                    throw StateError('Artists CSV path is not configured.');
+                  }
+                  return path;
+                }
                 var url = workspace.bandListUrl.trim();
                 if (url.isEmpty) {
                   final refreshed = await pointerService.applyTestingPointer(

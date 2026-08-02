@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:promoter_admin/src/models/festival_workspace.dart';
 import 'package:promoter_admin/src/services/dropbox_api.dart';
+import 'package:promoter_admin/src/services/emergency_local_mode_support.dart';
+import 'package:promoter_admin/src/services/local_content_store.dart';
 import 'package:promoter_admin/src/services/promote_service.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
@@ -54,21 +56,32 @@ class _AlertsSectionState extends State<AlertsSection> {
       return;
     }
 
-    if (!widget.dropboxConnected) {
+    if (!widget.workspace.usesEmergencyLocalMode && !widget.dropboxConnected) {
       await widget.onConnectDropbox();
       return;
     }
 
-    final folder = widget.workspace.alertFolderUrl.trim();
-    if (folder.isEmpty) {
-      setState(() {
-        _error =
-            'Set an Alert folder URL in Settings and Save (write access required).';
-        _status = null;
-      });
-      return;
+    if (widget.workspace.usesEmergencyLocalMode) {
+      final dir = widget.workspace.emergencyLocalPaths.alertsDir.trim();
+      if (dir.isEmpty) {
+        setState(() {
+          _error = 'Set an Alerts folder path in Settings and Save.';
+          _status = null;
+        });
+        return;
+      }
+    } else {
+      final folder = widget.workspace.alertFolderUrl.trim();
+      if (folder.isEmpty) {
+        setState(() {
+          _error =
+              'Set an Alert folder URL in Settings and Save (write access required).';
+          _status = null;
+        });
+        return;
+      }
     }
-    if (!widget.workspace.canEditAlerts) {
+    if (!widget.workspace.effectiveCanEditAlerts) {
       setState(() {
         _error =
             'No write access to the alert folder. Fix access in Settings, then Save.';
@@ -95,11 +108,19 @@ class _AlertsSectionState extends State<AlertsSection> {
     try {
       final fileName =
           PromoteService.customAlertPendingFileName(DateTime.now());
-      await widget.dropboxApi.uploadTextInFolder(
-        folderShareUrl: folder,
-        fileName: fileName,
-        text: '$text\n',
-      );
+      if (widget.workspace.usesEmergencyLocalMode) {
+        await LocalContentStore.writeAlertPendingFile(
+          alertsDir: widget.workspace.emergencyLocalPaths.alertsDir,
+          fileName: fileName,
+          text: '$text\n',
+        );
+      } else {
+        await widget.dropboxApi.uploadTextInFolder(
+          folderShareUrl: widget.workspace.alertFolderUrl.trim(),
+          fileName: fileName,
+          text: '$text\n',
+        );
+      }
       if (!mounted) return;
       setState(() {
         _busy = false;
@@ -121,8 +142,11 @@ class _AlertsSectionState extends State<AlertsSection> {
 
   @override
   Widget build(BuildContext context) {
-    final hasFolder = widget.workspace.alertFolderUrl.trim().isNotEmpty;
-    final canWrite = widget.workspace.canEditAlerts;
+    final emergency = widget.workspace.usesEmergencyLocalMode;
+    final hasFolder = emergency
+        ? widget.workspace.emergencyLocalPaths.alertsDir.trim().isNotEmpty
+        : widget.workspace.alertFolderUrl.trim().isNotEmpty;
+    final canWrite = widget.workspace.effectiveCanEditAlerts;
 
     return SingleChildScrollView(
       child: PortalPanel(
@@ -140,27 +164,29 @@ class _AlertsSectionState extends State<AlertsSection> {
             ),
             const Text(
               'The text below is sent exactly as written (plain text). '
-              'Queueing writes a pending file to your alert Dropbox folder; '
+              'Queueing writes a pending file to your alert folder; '
               'delivery happens on the push machine shortly after.',
               style: TextStyle(color: AppColors.muted),
             ),
             const SizedBox(height: 16),
-            if (!widget.dropboxConnected)
+            if (!emergency && !widget.dropboxConnected)
               const StatusBanner(
                 text: 'Connect Dropbox in Settings before sending an alert.',
                 isError: true,
               ),
             if (!hasFolder)
-              const StatusBanner(
-                text:
-                    'Set Alert folder in Settings and Save before sending alerts.',
+              StatusBanner(
+                text: emergency
+                    ? 'Set Alerts folder path in Settings and Save before sending alerts.'
+                    : 'Set Alert folder in Settings and Save before sending alerts.',
                 isError: true,
               )
             else if (!canWrite)
-              const StatusBanner(
-                text:
-                    'Alert folder is set but write access was not verified. '
-                    'Connect Dropbox and Save configuration in Settings.',
+              StatusBanner(
+                text: emergency
+                    ? 'Alerts folder path is set but was not verified as writable. Save configuration in Settings.'
+                    : 'Alert folder is set but write access was not verified. '
+                        'Connect Dropbox and Save configuration in Settings.',
                 isError: true,
               ),
             FormRow(
@@ -182,7 +208,7 @@ class _AlertsSectionState extends State<AlertsSection> {
               children: [
                 FilledButton(
                   onPressed: _busy ||
-                          !widget.dropboxConnected ||
+                          (!emergency && !widget.dropboxConnected) ||
                           !hasFolder ||
                           !canWrite
                       ? null
@@ -191,13 +217,20 @@ class _AlertsSectionState extends State<AlertsSection> {
                 ),
               ],
             ),
-            if (hasFolder) ...[
+            if (hasFolder && !emergency) ...[
               const SizedBox(height: 28),
               RecentAlertsList(
                 dropboxApi: widget.dropboxApi,
                 folderShareUrl: widget.workspace.alertFolderUrl,
                 dropboxConnected: widget.dropboxConnected,
                 refreshToken: _alertsRefreshToken,
+              ),
+            ] else if (hasFolder && emergency) ...[
+              const SizedBox(height: 28),
+              const Text(
+                'Recent alerts are not listed in Local File Mode. '
+                'Check pending files in your mapped alerts folder.',
+                style: TextStyle(color: AppColors.muted, fontSize: 13),
               ),
             ],
           ],

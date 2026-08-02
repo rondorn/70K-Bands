@@ -7,6 +7,7 @@ import 'package:promoter_admin/src/services/csv_staging.dart';
 import 'package:promoter_admin/src/services/csv_util.dart';
 import 'package:promoter_admin/src/services/day_date_alignment.dart';
 import 'package:promoter_admin/src/services/dropbox_api.dart';
+import 'package:promoter_admin/src/services/emergency_local_mode_support.dart';
 import 'package:promoter_admin/src/services/pointer_service.dart';
 
 export 'package:promoter_admin/src/services/csv_staging.dart'
@@ -35,6 +36,13 @@ class ScheduleStagingCoordinator extends ChangeNotifier {
           stagingRoot: stagingRoot,
           uploadOverride: uploadOverride,
           resolveUrl: (workspace) async {
+            if (workspace.usesEmergencyLocalMode) {
+              final path = workspace.emergencyLocalPaths.scheduleCsv.trim();
+              if (path.isEmpty) {
+                throw StateError('Schedule CSV path is not configured.');
+              }
+              return path;
+            }
             var url = workspace.scheduleUrl.trim();
             if (url.isEmpty) {
               final refreshed = await pointerService.applyTestingPointer(
@@ -146,6 +154,13 @@ class ScheduleStagingCoordinator extends ChangeNotifier {
   }
 
   Future<String> resolveScheduleUrl(FestivalWorkspace workspace) async {
+    if (workspace.usesEmergencyLocalMode) {
+      final path = workspace.emergencyLocalPaths.scheduleCsv.trim();
+      if (path.isEmpty) {
+        throw StateError('Schedule CSV path is not configured.');
+      }
+      return path;
+    }
     var url = workspace.scheduleUrl.trim();
     if (url.isEmpty) {
       final refreshed = await pointerService.applyTestingPointer(workspace);

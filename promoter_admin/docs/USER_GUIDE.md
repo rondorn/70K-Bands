@@ -110,6 +110,7 @@ You’ll mainly use Settings once:
 - **Load festival data** — pull Testing/Production file URLs and fill empty Venues / Days / Dates / Event types from Production. Existing lists are kept (not overwritten).  
 - **Save configuration** — saves your local settings. The button stays dim until something changed; a reminder appears when you have unsaved edits. Changing Venues / Days / Dates / Event types refreshes Schedule Entry menus.  
 - **Publish to Production…** — shortcut to the Publish screen (same as CONFIG → **Publish**).  
+- **Local File Mode** — small button on the **right** side of the button row (Mac and Windows only). Not recommended for normal use — see [Local File Mode](#local-file-mode) below. **Not shown on iPad or iPhone.**  
 - **App version** — small text under the buttons (for example `Open Metal Fest Admin · Version 1.0.6 (3)`). Use it to confirm you’re on the build your festival contact asked for.
 
 ### Connecting Dropbox
@@ -126,6 +127,126 @@ You stay signed in between sessions. Use **Disconnect** only if you need to swit
 If saves suddenly fail or the app says you’re not connected, try **Disconnect** → **Connect Dropbox** once. If Dropbox permissions were changed on the developer side, your festival contact may ask everyone to reconnect.
 
 **File access** (below the links) shows whether Dropbox recognizes **write** access on artists, schedule, and description map files. That controls which Add / Edit / Publish actions appear — not whether you’re signed in.
+
+---
+
+## Local File Mode
+
+**Mac and Windows only.** This feature is not available on iPad or iPhone. On mobile, continue using **Connect Dropbox** and your Testing/Production links as usual.
+
+**Local File Mode is not recommended for normal use.** For most festivals, **Dropbox remains the recommended and easiest solution**. Use Local File Mode only if your festival chooses not to use Dropbox or can no longer use Dropbox.
+
+### What is Local File Mode?
+
+**Local File Mode** is a compatibility mode for festivals that **choose not to use Dropbox or can no longer use Dropbox**.
+
+Normally the Admin app edits files directly in Dropbox. In Local File Mode, the Admin app edits the same festival files, but stores them in **folders and files on your computer** that you choose in Settings.
+
+The Admin app does not care what eventually hosts those files. They may later be synchronized or published **by another application** using **Dropbox Desktop**, **GitHub**, **Google Drive**, **OneDrive**, a **web server**, or any other system capable of serving static files.
+
+### What the Admin app does
+
+While Local File Mode is enabled, the Admin app is responsible for:
+
+- Editing artist, schedule, and description data.  
+- Writing valid festival CSV and text files.  
+- Reading those files back for future edits.
+
+From the Admin app’s point of view, these are simply local files on your computer.
+
+### What the Admin app does NOT do
+
+Local File Mode does **not** publish files to the internet.
+
+Someone must still make those files available at **public URLs** so the festival apps can download them. This might be done using:
+
+- GitHub  
+- Dropbox Desktop  
+- Google Drive  
+- OneDrive  
+- A web server  
+- Another hosting solution  
+
+The Admin app is intentionally independent of the publishing method.
+
+### Publishing requirements
+
+Festival apps work in two steps: they load the **Production pointer file** first, then download artists, schedule, descriptions, and other data from the **URLs listed inside that file**.
+
+**Two kinds of URLs — different rules**
+
+| | URLs **inside** the pointer file | The **pointer file itself** |
+| --- | --- | --- |
+| **What it is** | Where each data file lives (`artistUrl`, `scheduleUrl`, description map, etc.) | The public address of the pointer file — what the fan app loads first |
+| **Can you change it?** | **Yes.** Edit the pointer file and point an entry at a new URL when a data file moves. | **Not for existing installs.** Each fan app build is configured to load **one** pointer address. Changing the pointer file’s location or URL requires a **new app release**; users must install and use that new version. |
+| **What fans see** | On their next refresh, apps use the **updated** URLs from the same pointer file. | Users still on an older app version keep loading the **old** pointer URL. Only users who update to the new release load the new pointer location. |
+
+**Rule 1 — Prefer stable data file URLs when you can**
+
+Whenever possible, **update the existing published file in place** so its public URL stays the same. You then do **not** need to touch the pointer file.
+
+Do **not** delete a published file and upload a replacement that creates a **different** public URL unless you are also ready to **update the matching entry in the pointer file** (see Rule 2).
+
+**Tip:** Path-based hosting systems (for example Git repositories or traditional web servers) naturally keep URLs stable when a file is updated. File-sharing services that generate links based on an internal file ID may require extra care to ensure existing public links continue to work.
+
+**Rule 2 — Update pointer entries when a data file’s URL changes**
+
+When a CSV, description, or other data file **must** move to a new public URL, **edit the pointer file** and change the corresponding entry to the new link.
+
+End users do **not** need a new app version for this — they already load the same pointer file; on refresh they follow the updated URLs inside it.
+
+**Rule 3 — Moving the pointer file requires a new app release**
+
+The pointer file’s **own** location is not read from the pointer file — it is baked into each fan app build. Existing installs always load the **same** pointer URL they shipped with.
+
+To change the pointer file’s location or URL, your app maintainer must **release a new version of the festival app** configured for the new address. Users must **install and start using that new version** before they will load the pointer from its new location.
+
+Until they update, they keep using the old pointer URL and will **not** see data tied to a pointer file hosted elsewhere. Plan pointer moves with your maintainer before switching hosting.
+
+### Typical workflow
+
+1. Edit festival data in the Admin app.  
+2. Save your changes.  
+3. Publish or synchronize the updated files **without changing their public URLs**, using your chosen hosting solution.  
+4. Verify the existing public URLs now serve the updated files.  
+5. If a data file’s public URL changed, update the matching entry in the Production pointer file (fans pick this up on refresh — no app update needed). If the **pointer file’s own URL** changed, coordinate a new app release with your maintainer instead.
+
+### Choosing a hosting solution
+
+The hosting system is responsible only for making the generated files available on the internet.
+
+The Admin app does not require any particular provider.
+
+Any system is suitable if it can:
+
+- Store the generated files.  
+- Provide permanent public URLs.  
+- Allow those files to be updated **without changing their URLs**.
+
+### How to turn Local File Mode on or off
+
+1. **CONFIG → Settings** (Mac or Windows).  
+2. Click **Local File Mode** (small button on the **right**, opposite **Save configuration**). Read the warning and confirm.  
+3. Map each path with **Browse** or by typing the full path; use **Check path** to verify:  
+   - **Artists CSV**  
+   - **Schedule CSV**  
+   - **Description map CSV**  
+   - **Descriptions folder** (individual `.txt` files)  
+   - **Alerts folder** (optional)  
+4. **Save configuration**. Edit **Artists**, **Schedule**, and **Descriptions** as usual.  
+
+To return to Dropbox: click **Local File Mode on** (same button), confirm, then **Connect Dropbox** and use your Testing/Production links again. Mapped paths are remembered but hidden until you turn on Local File Mode again.
+
+### What changes in the app
+
+While Local File Mode is on:
+
+- **Connect Dropbox**, Testing/Production links, **Load festival data**, and **Publish to Production** are hidden.  
+- The orange **Ready to publish** badge does not apply the same way — publishing is handled outside the app.  
+- **Reports** are not available.  
+- **Alerts** can still write **`.pending` files** to your mapped alerts folder if your push pipeline watches that folder.
+
+While Local File Mode is off, the app behaves exactly as before.
 
 ---
 
@@ -556,6 +677,9 @@ Volunteers who can’t Publish still improve Testing for whoever does.
 | No **Reports** in the sidebar                               | Settings needs a **Reports folder** URL, and your Dropbox account needs access to that folder — ask your festival contact, then **Refresh file access**.                                                                                                                                                                     |
 | Reports says no report found                                | Reports may not exist yet for this event year, or **Load festival data** hasn’t run since the folder was set. Try **↻** on the Reports screen after new HTML files land in the folder.                                                                                                                                       |
 | Can’t open **Full report**                                  | The full admin HTML file may not be in the reports folder yet — you can still use the end-user report.                                                                                                                                                                                                                       |
+| No **Local File Mode** button                               | **Local File Mode** is **Mac and Windows only** — not on iPad or iPhone. Use normal Dropbox on mobile.                                                                                                                                                                                                                        |
+| Local File Mode on but fans see old data                    | The Admin app only writes files on your computer. Publish/sync via your host and verify public URLs serve the new content. If a **data file** moved, update its entry in the **Production pointer file**. If the **pointer file’s own URL** changed, fans need a **new app version** — ask your maintainer. |
+| Turn off Local File Mode                                    | Settings → **Local File Mode on** (small button, right side) → confirm → **Connect Dropbox** and use Testing/Production links again.                                                                                                                                                                                         |
 
 
 ---
@@ -572,5 +696,7 @@ Coordinate once with whoever ships the apps:
 - [ ] If volunteers should send freeform alerts: turn that on with the app maintainer  
 - [ ] **Folder access** (Settings) used to invite editors to the right Dropbox folders when needed  
 - [ ] If using stats dashboards: **Reports folder** link in Settings and share access for the people who should view them  
+- [ ] If Dropbox might fail: document Local File Mode folder paths on Mac/Windows, who publishes files to public URLs, and who updates the **Production pointer file** when a file’s public location changes
+- [ ] If the **main pointer file URL** ever changes: release a **new version of the festival app** and get users onto it — existing installs cannot change pointer location on their own
 
 After that, most people only need Artists, Descriptions, Schedule, and (when authorized) Publish.

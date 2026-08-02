@@ -11,10 +11,12 @@ import 'package:promoter_admin/src/services/dropbox_auth.dart';
 import 'package:promoter_admin/src/services/festival_create_service.dart';
 import 'package:promoter_admin/src/services/festival_folder_path_cache.dart';
 import 'package:promoter_admin/src/services/lineup_service.dart';
+import 'package:promoter_admin/src/services/local_content_store.dart';
 import 'package:promoter_admin/src/services/pointer_service.dart';
 import 'package:promoter_admin/src/services/promote_service.dart';
 import 'package:promoter_admin/src/services/publish_status_service.dart';
 import 'package:promoter_admin/src/services/schedule_service.dart';
+import 'package:promoter_admin/src/services/emergency_local_mode_support.dart';
 import 'package:promoter_admin/src/services/workspace_store.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
 import 'package:promoter_admin/src/widgets/layout_breakpoints.dart';
@@ -72,6 +74,7 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
     final registry = _registry;
     if (registry == null) return false;
     if (registry.needsFestivalSetup) return true;
+    if (_workspace?.usesEmergencyLocalMode == true) return false;
     return _pendingDropboxOnboarding && !_dropboxConnected;
   }
 
@@ -84,7 +87,9 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
   Future<void> _bootstrap() async {
     var registry = await _store.loadRegistry();
     var active = registry.active;
-    if (active.testingPointerUrl.isNotEmpty && active.bandListUrl.isEmpty) {
+    if (!active.usesEmergencyLocalMode &&
+        active.testingPointerUrl.isNotEmpty &&
+        active.bandListUrl.isEmpty) {
       try {
         active = active.productionPointerUrl.trim().isEmpty
             ? await _pointers.applyTestingPointer(active)
@@ -108,6 +113,7 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
   /// Re-resolve Dropbox file URLs and start a background publish-status check.
   Future<void> _refreshFestivalDataOnLaunch(FestivalRegistry registry) async {
     var active = registry.active;
+    if (active.usesEmergencyLocalMode) return;
     if (active.testingPointerUrl.trim().isEmpty) return;
     try {
       active = active.productionPointerUrl.trim().isEmpty
@@ -201,15 +207,27 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
     // Persist any in-memory identity; settings save handles form fields.
     if (current != null) {
       try {
-        if (current.canEditSchedule && current.scheduleUrl.trim().isNotEmpty) {
-          await _schedule.flushSync(current);
-        }
-        if (current.canEditBands && current.bandListUrl.trim().isNotEmpty) {
-          await _lineup.flushSync(current);
-        }
-        if (current.canEditDescriptions &&
-            current.descriptionMapUrl.trim().isNotEmpty) {
-          await _descriptions.flushSync(current);
+        if (current.usesEmergencyLocalMode) {
+          if (current.hasScheduleLocalPath) {
+            await _schedule.flushSync(current);
+          }
+          if (current.hasArtistsLocalPath) {
+            await _lineup.flushSync(current);
+          }
+          if (current.hasDescriptionMapLocalPath) {
+            await _descriptions.flushSync(current);
+          }
+        } else {
+          if (current.canEditSchedule && current.scheduleUrl.trim().isNotEmpty) {
+            await _schedule.flushSync(current);
+          }
+          if (current.canEditBands && current.bandListUrl.trim().isNotEmpty) {
+            await _lineup.flushSync(current);
+          }
+          if (current.canEditDescriptions &&
+              current.descriptionMapUrl.trim().isNotEmpty) {
+            await _descriptions.flushSync(current);
+          }
         }
       } catch (e) {
         _messengerKey.currentState?.showSnackBar(

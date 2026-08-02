@@ -91,6 +91,9 @@ Confirm an archive shows **1.0.4 (16)** (or whatever is in `pubspec.yaml`).
 | Default event types: Show, Clinic, Meet and Greet, Special Event, Unofficial Event | Done |
 | Descriptions list (Create Description / Attach Link / Edit / Delete; date cache bump) | Done |
 | Publish Testing → Production (scoped by write access) | Done |
+| Local File Mode (desktop; map local CSV paths when not using Dropbox) | Done |
+
+See [docs/USER_GUIDE.md — Local File Mode](docs/USER_GUIDE.md#local-file-mode) for operator documentation.
 
 ## Dropbox console (one-time)
 
