@@ -95,10 +95,9 @@ public class FireBaseBandDataWrite {
                     batchUpdate.put(sanitizedBandName, bandData);
                 }
                 
-                Log.d("FireBaseBandDataWrite", "🔥 BATCH_WRITE: Writing " + batchUpdate.size() + " band entries in single batch");
+                Log.d("FireBaseBandDataWrite", "🔥 BATCH_WRITE: Writing " + batchUpdate.size() + " lineup band entries (setValue replaces stale entries)");
                 try {
-                    // Single batch write for all band data
-                    bandDataRef.updateChildren(batchUpdate, (error, ref) -> {
+                    bandDataRef.setValue(batchUpdate, (error, ref) -> {
                         if (error != null) {
                             Log.e("FireBaseBandDataWrite", "Batch write failed: " + error.getMessage());
                             FirebaseWriteMonitor.recordWriteFailure("band_batch");

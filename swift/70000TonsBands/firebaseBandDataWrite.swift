@@ -98,6 +98,11 @@ class firebaseBandDataWrite {
             let uid = (UIDevice.current.identifierForVendor?.uuidString)!
             print("🔥 [FIREBASE_BAND] writeSingleRecord: uid=\(uid), eventYear=\(eventYear), bandName='\(bandName)'")
             
+            guard self.isBandInLineup(bandName, year: eventYear) else {
+                print("⏭️ [FIREBASE_BAND] writeSingleRecord: SKIPPING '\(bandName)' — not in \(eventYear) lineup")
+                return
+            }
+            
             //exit if things look wrong
             if (bandName == nil || bandName.isEmpty == true){
                 print("❌ [FIREBASE_BAND] writeSingleRecord: BLOCKED - Invalid bandName (nil or empty)")
@@ -169,74 +174,45 @@ class firebaseBandDataWrite {
                 print("✅ [FIREBASE_BAND] writeData: UID is valid, proceeding with band data processing")
                 
                 self.buildBandRankArray()
-                print("🔥 [FIREBASE_BAND] writeData: Processing \(self.bandRank.count) bands from bandRank array")
+                print("🔥 [FIREBASE_BAND] writeData: Built \(self.bandRank.count) lineup bands for year \(eventYear)")
                 
-                // CRITICAL: Firebase reporting should ONLY use Default profile
-                let firebaseProfileName = "Default"
-                print("🔥 [FIREBASE_BAND] writeData: CRITICAL - Using ONLY '\(firebaseProfileName)' profile for Firebase reporting")
-                
-                var bandsChecked = 0
-                var bandsWritten = 0
-                var bandsSkipped = 0
-                var bandsWithChanges = 0
-                
-                for bandName in self.bandRank.keys {
-                    bandsChecked += 1
-                    
-                    let priorityManager = SQLitePriorityManager.shared
-                    // CRITICAL: Explicitly use "Default" profile for Firebase reporting
-                    let rankingInteger = priorityManager.getPriority(for: bandName, eventYear: eventYear, profileName: firebaseProfileName)
-                    let ranking = resolvePriorityNumber(priority: String(rankingInteger)) ?? "Unknown"
-                    
-                    let cachedRanking = firebaseBandAttendedArray[bandName]
-                    let cachedRankingStr = cachedRanking ?? "nil (not in cache)"
-                    let rankingFromBandRank = self.bandRank[bandName] ?? "nil"
-                    let isNewBand = cachedRanking == nil
-                    
-                    print("🔥 [FIREBASE_BAND] writeData: [\(bandsChecked)/\(self.bandRank.count)] Checking band: '\(bandName)'")
-                    print("   - Profile used: '\(firebaseProfileName)' (CRITICAL: Firebase always uses Default)")
-                    print("   - Priority integer: \(rankingInteger)")
-                    print("   - Current ranking: '\(ranking)'")
-                    print("   - Cached ranking: '\(cachedRankingStr)'")
-                    print("   - Is new band (not in cache): \(isNewBand)")
-                    print("   - Ranking from bandRank: '\(rankingFromBandRank)'")
-                    print("   - didVersionChange: \(didVersionChange)")
-                    
-                    // CRITICAL FIX: Always write new bands (not in cache) even if ranking is "Unknown"
-                    // This ensures newly added bands like "Ad Infinitum" get written to Firebase
-                    let rankingChanged = cachedRanking != ranking
-                    let shouldWrite = isNewBand || rankingChanged || didVersionChange
-                    
-                    print("   - Comparison: cachedRanking != ranking = \(rankingChanged)")
-                    print("   - Should write: \(shouldWrite) (isNewBand=\(isNewBand) OR rankingChanged=\(rankingChanged) OR didVersionChange=\(didVersionChange))")
-                    
-                    if shouldWrite {
-                        bandsWithChanges += 1
-                        let writeReason: String
-                        if isNewBand {
-                            writeReason = "NEW BAND (not in cache)"
-                        } else if rankingChanged {
-                            writeReason = "ranking changed from '\(cachedRankingStr)' to '\(ranking)'"
-                        } else {
-                            writeReason = "version changed"
-                        }
-                        print("✅ [FIREBASE_BAND] writeData: WRITING band '\(bandName)' - \(writeReason) (from '\(firebaseProfileName)' profile)")
-                        let sanitizedName = getSanitizedNameForBand(bandName)
-                        print("🔥 [FIREBASE_BAND] writeData: Sanitized name for '\(bandName)': '\(sanitizedName)'")
-                        writeSingleRecord(bandName: bandName, ranking: ranking, sanitizedName: sanitizedName)
-                        bandsWritten += 1
-                    } else {
-                        bandsSkipped += 1
-                        print("⏭️ [FIREBASE_BAND] writeData: SKIPPING band '\(bandName)' - no change (cached: '\(cachedRankingStr)', current: '\(ranking)' from '\(firebaseProfileName)' profile)")
-                    }
+                let cachedRankings = firebaseBandAttendedArray
+                if cachedRankings == self.bandRank && didVersionChange == false {
+                    print("⏭️ [FIREBASE_BAND] writeData: No lineup band ranking changes — skipping Firebase write")
+                    print("🔥 [FIREBASE_BAND] writeData: ========== EXIT ==========")
+                    return
                 }
                 
-                print("🔥 [FIREBASE_BAND] writeData: ========== SUMMARY ==========")
-                print("🔥 [FIREBASE_BAND] writeData: Total bands checked: \(bandsChecked)")
-                print("🔥 [FIREBASE_BAND] writeData: Bands with changes: \(bandsWithChanges)")
-                print("🔥 [FIREBASE_BAND] writeData: Bands written: \(bandsWritten)")
-                print("🔥 [FIREBASE_BAND] writeData: Bands skipped: \(bandsSkipped)")
-                print("🔥 [FIREBASE_BAND] writeData: =============================")
+                guard let firebaseRef = self.ensureReference() else {
+                    print("❌ [FIREBASE_BAND] writeData: BLOCKED - Firebase reference not initialized")
+                    return
+                }
+                
+                var batchUpdate = [String: [String: Any]]()
+                for (bandName, ranking) in self.bandRank {
+                    let sanitizedName = sanitizeBandNameForFirebase(bandName)
+                    batchUpdate[sanitizedName] = [
+                        "bandName": bandName,
+                        "sanitizedKey": sanitizedName,
+                        "ranking": ranking,
+                        "userID": uid,
+                        "year": String(eventYear)
+                    ]
+                }
+                
+                print("🔥 [FIREBASE_BAND] writeData: BATCH setValue for \(batchUpdate.count) lineup bands at bandData/\(uid)/\(eventYear)")
+                firebaseRef.child("bandData").child(uid).child(String(eventYear)).setValue(batchUpdate) { error, _ in
+                    if let error = error {
+                        print("❌ [FIREBASE_BAND] writeData: Batch write failed: \(error.localizedDescription)")
+                        FirebaseWriteMonitor.shared.recordWriteFailure(context: "band_batch")
+                    } else {
+                        print("✅ [FIREBASE_BAND] writeData: Batch write succeeded — stale non-lineup entries pruned")
+                        FirebaseWriteMonitor.shared.recordWriteSuccess(context: "band_batch")
+                        self.firebaseBandAttendedArray = self.bandRank
+                        self.variableStoreHandle.storeDataToDisk(data: self.firebaseBandAttendedArray, fileName: self.bandCompareFile)
+                    }
+                    FirebaseConnectionHelper.goOffline(reason: "band_batch_write_complete")
+                }
                 
             } else {
                 print("❌ [FIREBASE_BAND] writeData: BLOCKED - UID is empty, cannot write band data")
@@ -270,25 +246,22 @@ class firebaseBandDataWrite {
             return
         }
         
-        // Upload ALL priorities for the year (lineup + unofficial/special entries),
-        // not only lineup bands. This keeps Firebase stats aligned with user choices.
-        let allPriorities = SQLitePriorityManager.shared.getAllPriorities(
-            eventYear: currentYear,
-            profileName: firebaseProfileName
-        )
-        print("🔥 [FIREBASE_BAND] buildBandRankArray: Found \(allPriorities.count) priority records in SQLite for year \(currentYear) (all entries)")
+        // Restrict Firebase reporting to lineup bands for the current year (matches Android getBandNames()).
+        let lineupBandNames = bandNamesHandler.shared.getBandNames()
+        print("🔥 [FIREBASE_BAND] buildBandRankArray: Found \(lineupBandNames.count) lineup bands for year \(currentYear)")
         
-        if allPriorities.isEmpty {
-            print("⚠️ [FIREBASE_BAND] buildBandRankArray: WARNING - No priorities found in SQLite for year \(currentYear)")
+        if lineupBandNames.isEmpty {
+            print("⚠️ [FIREBASE_BAND] buildBandRankArray: WARNING - No lineup bands found for year \(currentYear)")
             print("🔥 [FIREBASE_BAND] buildBandRankArray: ========== EXIT (EMPTY) ==========")
             return
         }
         
+        let priorityManager = SQLitePriorityManager.shared
         var bandsProcessed = 0
         var bandsSkipped = 0
         var priorityCounts: [String: Int] = ["Must": 0, "Might": 0, "Wont": 0, "Unknown": 0]
         
-        for (bandName, priorityInteger) in allPriorities {
+        for bandName in lineupBandNames {
             if bandName.isEmpty {
                 bandsSkipped += 1
                 print("⚠️ [FIREBASE_BAND] buildBandRankArray: Skipping band with empty bandName")
@@ -296,15 +269,15 @@ class firebaseBandDataWrite {
             }
             
             bandsProcessed += 1
+            let priorityInteger = priorityManager.getPriority(for: bandName, eventYear: currentYear, profileName: firebaseProfileName)
             let rankingNumber = String(priorityInteger)
             let rankingString = resolvePriorityNumber(priority: rankingNumber)
             
             bandRank[bandName] = rankingString
             priorityCounts[rankingString, default: 0] += 1
             
-            // Log every 50th band to avoid spam, but always log specific bands if needed
             if bandsProcessed % 50 == 0 || bandName.lowercased().contains("ad infinitum") {
-                print("🔥 [FIREBASE_BAND] buildBandRankArray: [\(bandsProcessed)] '\(bandName)' -> priority=\(priorityInteger) (from '\(firebaseProfileName)' profile), ranking='\(rankingString)'")
+                print("🔥 [FIREBASE_BAND] buildBandRankArray: [\(bandsProcessed)] '\(bandName)' -> priority=\(priorityInteger), ranking='\(rankingString)'")
             }
         }
         
@@ -319,11 +292,19 @@ class firebaseBandDataWrite {
             print("✅ [FIREBASE_BAND] buildBandRankArray: 'Ad Infinitum' found in bandRank with ranking: '\(adInfinitumRanking)'")
         } else {
             print("❌ [FIREBASE_BAND] buildBandRankArray: 'Ad Infinitum' NOT found in bandRank array!")
-            let hasRawPriority = allPriorities.keys.contains { $0.lowercased() == "ad infinitum" }
-            print("🔥 [FIREBASE_BAND] buildBandRankArray: Raw priority entry exists for 'Ad Infinitum': \(hasRawPriority)")
+            let inLineup = lineupBandNames.contains { $0.lowercased() == "ad infinitum" }
+            print("🔥 [FIREBASE_BAND] buildBandRankArray: 'Ad Infinitum' in lineup: \(inLineup)")
         }
         
         print("🔥 [FIREBASE_BAND] buildBandRankArray: ========== EXIT ==========")
+    }
+    
+    private func isBandInLineup(_ bandName: String, year: Int) -> Bool {
+        if year == eventYear {
+            return bandNamesHandler.shared.getBandNames().contains(bandName)
+        }
+        return DataManager.shared.fetchBands(forYear: year)
+            .contains { $0.lineIndex != nil && $0.bandName == bandName }
     }
     
     
