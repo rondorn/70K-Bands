@@ -13,7 +13,10 @@ import FirebaseCore
 import FirebaseMessaging
 import Foundation
 
-let appDelegate : AppDelegate? = UIApplication.shared.delegate as? AppDelegate
+/// Resolved at use time — must not call `UIApplication.shared` during module load (crashes before UIApplicationMain).
+var appDelegate: AppDelegate? {
+    UIApplication.shared.delegate as? AppDelegate
+}
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDelegate {
@@ -36,6 +39,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     // Flag to track if pointer file download has been attempted on this launch
     private var hasAttemptedPointerDownloadOnLaunch = false
+    
+    /// Prevents duplicate Firebase sync when both AppDelegate and SceneDelegate receive background callbacks.
+    private var lastBackgroundSyncTrigger: Date?
+    private let backgroundSyncDebounceSeconds: TimeInterval = 2.0
+    private var lastForegroundRecoveryTrigger: Date?
+    private let foregroundRecoveryDebounceSeconds: TimeInterval = 2.0
+    private var firebaseSyncInFlight = false
+    private var bulkDownloadInFlight = false
+    private let bulkDownloadLock = NSLock()
+    private var lastBulkRecoveryTrigger: Date?
+    private let bulkRecoveryDebounceSeconds: TimeInterval = 2.0
+    private let firebaseSyncLock = NSLock()
     
     // Flag to track if Firebase has been configured
     // Must be static so it can be accessed from other classes
@@ -330,46 +345,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         UserDefaults.standard.set(false, forKey: "CustomPointerUrlErrorShown")
         UserDefaults.standard.synchronize()
         
-        // Manually create the window and set the root view controller from the storyboard.
-        self.window = UIWindow(frame: UIScreen.main.bounds)
-        let storyboard = UIStoryboard(name: "Main", bundle: nil)
-        
-        // Use split view controller on all devices. System collapses to one column when
-        // horizontal size class is compact (e.g. iPhone portrait); regular width (e.g. iPad,
-        // iPhone 17 Pro Max landscape) shows master/detail side-by-side.
-        if let splitViewController = storyboard.instantiateInitialViewController() as? UISplitViewController {
-            self.window?.rootViewController = splitViewController
-
-            splitViewController.delegate = self
-            splitViewController.preferredDisplayMode = .oneBesideSecondary
-
-            self.window?.makeKeyAndVisible()
-
-            if let masterNavigationController = splitViewController.viewControllers.first as? UINavigationController,
-               masterNavigationController.viewControllers.first is MasterViewController {
-                setupDefaults()
-            } else {
-                print("Error: Could not get MasterViewController from navigation stack.")
-            }
-
-            let placeholderDetailController = createPlaceholderDetailViewController()
-            let detailNavigationController = UINavigationController(rootViewController: placeholderDetailController)
-
-            detailNavigationController.navigationBar.isTranslucent = true
-            detailNavigationController.navigationBar.backgroundColor = UIColor.clear
-            detailNavigationController.navigationBar.barTintColor = UIColor.clear
-            detailNavigationController.navigationBar.shadowImage = UIImage()
-            detailNavigationController.navigationBar.setBackgroundImage(UIImage(), for: .default)
-            detailNavigationController.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
-
-            if splitViewController.viewControllers.count > 1 {
-                splitViewController.viewControllers = [splitViewController.viewControllers[0], detailNavigationController]
-            } else {
-                splitViewController.viewControllers.append(detailNavigationController)
-            }
-        } else {
-            print("Error: Could not instantiate UISplitViewController from storyboard.")
-        }
+        // Window and root view controller are configured in SceneDelegate.configureMainWindow(for:).
         
         // Register default UserDefaults values including iCloud setting
         let defaults = ["artistUrl": FestivalConfig.current.artistUrlDefault,
@@ -534,14 +510,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         //generate user data
         print ("Firebase, calling ")
 
-        // DEFERRED NOTIFICATION SETUP: Set up notifications after app launch is complete
-        // This prevents deadlock during launch by deferring the notification setup
-        DispatchQueue.global(qos: .background).asyncAfter(deadline: .now() + 2.0) {
-            print("🔔 [NOTIFICATION_DEFER] Setting up deferred notifications after app launch")
-            LocalNotificationRebuildCoordinator.shared.requestRebuild(reason: "app-launch-deferred", debounceSeconds: 1.0)
-            print("🔔 [NOTIFICATION_DEFER] Deferred notification setup completed")
-        }
-
         return true
     
     }
@@ -572,7 +540,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         let alertCtrl = UIAlertController(title: FestivalConfig.current.appName, message: message, preferredStyle: UIAlertController.Style.alert)
         alertCtrl.addAction(UIAlertAction(title: "OK", style: UIAlertAction.Style.default, handler: nil))
         
-        var presentedVC = self.window?.rootViewController
+        var presentedVC = keyWindowRootViewController
         while let nextVC = presentedVC?.presentedViewController {
             presentedVC = nextVC
         }
@@ -749,6 +717,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         let becameActiveTime = Date()
         print("📱 [TIMING] applicationDidBecomeActive CALLED at \(becameActiveTime.timeIntervalSince1970)")
         print("📱 [TIMING] Firebase configured flag = \(AppDelegate.isFirebaseConfigured)")
+
+        // Retry deferred background work when returning to foreground (Firebase, local alerts, bulk downloads).
+        recoverDeferredBackgroundWorkOnForeground()
         
         // SAFETY: Defer Firebase operations to ensure Firebase is configured
         // Firebase is configured with 3.5s delay in didFinishLaunching
@@ -782,22 +753,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                 print("⚠️ [TIMING] Firebase NOT configured yet, skipping Firebase user write")
             }
             
-            // Set up notifications when app becomes active (in case they weren't set up during launch)
-            print("🔔 [NOTIFICATION_DEFER] Setting up notifications on app become active")
-            LocalNotificationRebuildCoordinator.shared.requestRebuild(reason: "applicationDidBecomeActive", debounceSeconds: 1.0)
-            
             // Post refresh notification on main thread after background operations complete
             DispatchQueue.main.async {
                 print("iCloud: Background sync complete, posting refresh notification")
                 NotificationCenter.default.post(name: Notification.Name(rawValue: "RefreshDisplay"), object: nil)
-            }
-            
-            // If local Firebase data is pending sync, try a gated full sync when app becomes active.
-            // This handles offline -> online recovery even when background path was skipped.
-            if FirebaseWriteMonitor.shared.shouldRunFullSync() {
-                print("📱 [TIMING] Pending Firebase sync state on app active - requesting parallel Firebase sync (no description bulk — that runs on background)")
-                self.startFirebaseSyncIfNeeded()
-                self.performBulkOperationsWithNetworkGating(includeDescriptionBulkDownload: false)
             }
         }
     }
@@ -832,16 +791,32 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     //end push functions
     
-    func reportData(completion: (() -> Void)? = nil){
+    func reportData(completion: (() -> Void)? = nil, prioritizeBandFirst: Bool = false){
         print("🔥 [APP_DELEGATE] reportData: ========== ENTRY ==========")
         print("🔥 [APP_DELEGATE] reportData: Called from thread: \(Thread.isMainThread ? "main" : "background")")
         
         internetAvailble = isInternetAvailable();
         print("🔥 [APP_DELEGATE] reportData: Internet available: \(internetAvailble)")
         
+        let runBand = FirebaseWriteMonitor.shared.shouldRunBandSync()
+        let runShow = FirebaseWriteMonitor.shared.shouldRunShowSync()
+        
+        if prioritizeBandFirst && runBand && runShow {
+            FirebaseSyncTrace.log("reportData sequential", "band then show")
+            let bandWrite = firebaseBandDataWrite()
+            bandWrite.writeData {
+                let showWrite = firebaseEventDataWrite()
+                showWrite.writeData {
+                    print("🔥 [APP_DELEGATE] reportData: ========== EXIT ==========")
+                    completion?()
+                }
+            }
+            return
+        }
+        
         let group = DispatchGroup()
         
-        if FirebaseWriteMonitor.shared.shouldRunBandSync() {
+        if runBand {
             group.enter()
             print("🔥 [APP_DELEGATE] reportData: Creating firebaseBandDataWrite instance...")
             let bandWrite = firebaseBandDataWrite()
@@ -854,7 +829,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             print("⏭️ [APP_DELEGATE] reportData: No pending band sync — skipping bandData upload")
         }
         
-        if FirebaseWriteMonitor.shared.shouldRunShowSync() {
+        if runShow {
             group.enter()
             print("🔥 [APP_DELEGATE] reportData: Creating firebaseEventDataWrite instance...")
             let showWrite = firebaseEventDataWrite()
@@ -884,15 +859,22 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     }
     
     func applicationDidEnterBackground(_ application: UIApplication) {
+        handleAppEnteringBackground(application: application)
+    }
+
+    /// Shared background handler — called from AppDelegate and SceneDelegate.
+    func handleAppEnteringBackground(application: UIApplication) {
+        if let lastTrigger = lastBackgroundSyncTrigger,
+           Date().timeIntervalSince(lastTrigger) < backgroundSyncDebounceSeconds {
+            FirebaseSyncTrace.log("SKIP handleAppEnteringBackground", "debounced")
+            return
+        }
+        lastBackgroundSyncTrigger = Date()
+
+        FirebaseSyncTrace.snapshot("enterBackground-start")
         print("🔄 App entering background - starting bulk loading process")
         print("🔍 DEBUG: App state: \(application.applicationState.rawValue)")
         print("🔍 DEBUG: Active scenes: \(UIApplication.shared.connectedScenes.count)")
-        
-        // Add safeguard: Only proceed if app is actually in background
-        guard application.applicationState == .background else {
-            print("⚠️ BLOCKED: applicationDidEnterBackground called but app state is not background (\(application.applicationState.rawValue))")
-            return
-        }
         
         // Modal sheets must not block Firebase sync — only bulk image/description downloads.
         let modalPresented = isModalPresented()
@@ -900,22 +882,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             print("⚠️ Modal view controller is presented — skipping bulk downloads, Firebase sync still allowed")
         }
         
-        // Request background execution time from iOS for bulk downloads
-        var backgroundTask: UIBackgroundTaskIdentifier = .invalid
-        backgroundTask = application.beginBackgroundTask(withName: "BulkDataLoading") {
-            // This block is called if the background task is about to expire
-            print("⚠️ Background task time expired, ending task")
-            if backgroundTask != .invalid {
-                application.endBackgroundTask(backgroundTask)
-                backgroundTask = .invalid
-            }
-        }
-        
-        // Alarms/notifications: own background task, highest priority — never gated on Firebase.
-        LocalNotificationRebuildCoordinator.shared.requestBackgroundRebuild(
+        // Local schedule alerts: own background task — never gated on Firebase or bulk downloads.
+        LocalNotificationRebuildCoordinator.shared.runBackgroundRebuildIfNeeded(
             application: application,
-            reason: "applicationDidEnterBackground",
-            debounceSeconds: 0.5
+            reason: "applicationDidEnterBackground"
         )
         
         // iCloud data sync (using SQLiteiCloudSync - Default profile only)
@@ -930,52 +900,214 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         startFirebaseSyncIfNeeded(application: application)
         
         if modalPresented == false {
-            print("🌐 GATED BULK OPERATIONS: Testing network before bulk downloads")
-            self.performBulkOperationsWithNetworkGating()
-        }
-        
-        // End background task after a delay (give time for operations to complete)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 30) {
-            if backgroundTask != .invalid {
-                print("🔄 Ending background task")
-                application.endBackgroundTask(backgroundTask)
-                backgroundTask = .invalid
-            }
+            startBulkDownloadIfNeeded(application: application)
         }
         
         //Messaging.messaging().disconnect()
         print("Disconnected from FCM.")
-        // reportData() is now gated behind network test in performBulkOperationsWithNetworkGating()
+    }
+
+    /// Retries Firebase sync, local alert rebuilds, and bulk downloads after foreground return.
+    func recoverDeferredBackgroundWorkOnForeground() {
+        recoverPendingFirebaseSyncOnForeground()
+        LocalNotificationRebuildCoordinator.shared.recoverLocalAlertsOnForeground()
+        recoverPendingBulkDownloadOnForeground()
+    }
+
+    private static func canRunBulkDownloadNow() -> Bool {
+        LocalNotificationRebuildCoordinator.canRebuildLocalAlertsNow()
+    }
+
+    /// Prefetch band images and notes while the app is open (not first launch).
+    /// Background bulk on app exit is unchanged — this is an additional foreground pass.
+    func startBulkDownloadOnLaunchIfNeeded(reason: String) {
+        if reason.lowercased().contains("first launch") {
+            print("📦 [BULK_DOWNLOAD] skip launch bulk — first launch (\(reason))")
+            return
+        }
+        guard UserDefaults.standard.bool(forKey: "hasRunBefore") else {
+            print("📦 [BULK_DOWNLOAD] skip launch bulk — first install session")
+            return
+        }
+        startBulkDownloadWork(application: nil, context: "launch:\(reason)")
+    }
+
+    func startBulkDownloadIfNeeded(application: UIApplication) {
+        _ = startBulkDownloadWork(application: application, context: "background")
+    }
+
+    @discardableResult
+    private func startBulkDownloadWork(application: UIApplication?, context: String) -> Bool {
+        guard Self.canRunBulkDownloadNow() else {
+            print("📦 [BULK_DOWNLOAD] skip bulk (\(context)) — not ready")
+            return false
+        }
+
+        bulkDownloadLock.lock()
+        if bulkDownloadInFlight {
+            bulkDownloadLock.unlock()
+            print("📦 [BULK_DOWNLOAD] skip (\(context)) — already in flight")
+            return false
+        }
+        bulkDownloadInFlight = true
+        bulkDownloadLock.unlock()
+
+        var bulkTask: UIBackgroundTaskIdentifier = .invalid
+        if let application = application {
+            bulkTask = application.beginBackgroundTask(withName: "BulkDataDownload") { [weak self] in
+                print("⚠️ Bulk download background task expiring")
+                BackgroundWorkMonitor.shared.markBulkDownloadPending(context: "bg-task-expired")
+                self?.bulkDownloadLock.lock()
+                self?.bulkDownloadInFlight = false
+                self?.bulkDownloadLock.unlock()
+                if bulkTask != .invalid {
+                    application.endBackgroundTask(bulkTask)
+                }
+            }
+        }
+
+        print("📦 [BULK_DOWNLOAD] starting bulk downloads (\(context))")
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            defer {
+                self?.bulkDownloadLock.lock()
+                self?.bulkDownloadInFlight = false
+                self?.bulkDownloadLock.unlock()
+                if bulkTask != .invalid, let application = application {
+                    application.endBackgroundTask(bulkTask)
+                }
+            }
+            self?.performBulkOperationsWithNetworkGating()
+            if application != nil {
+                BackgroundWorkMonitor.shared.clearBulkDownloadPending()
+            }
+        }
+        return true
+    }
+
+    func recoverPendingBulkDownloadOnForeground() {
+        guard BackgroundWorkMonitor.shared.hasPendingBulkDownload() else { return }
+
+        if let lastTrigger = lastBulkRecoveryTrigger,
+           Date().timeIntervalSince(lastTrigger) < bulkRecoveryDebounceSeconds {
+            return
+        }
+        lastBulkRecoveryTrigger = Date()
+
+        if startBulkDownloadWork(application: nil, context: "foreground-recovery") {
+            BackgroundWorkMonitor.shared.clearBulkDownloadPending()
+        }
+    }
+
+    /// Start sync while app is still active/inactive (Home button) — avoids tight iOS background time limits.
+    func startFirebaseSyncEarlyIfNeeded() {
+        LocalNotificationRebuildCoordinator.shared.startLocalAlertsEarlyIfNeeded()
+        guard FirebaseWriteMonitor.shared.shouldRunFullSync() else { return }
+        FirebaseSyncTrace.log("early sync on resignActive", "before background suspension")
+        startFirebaseSyncIfNeeded(application: nil)
+    }
+
+    /// Retries band/show upload after foreground return when background sync did not finish.
+    func recoverPendingFirebaseSyncOnForeground() {
+        guard FirebaseWriteMonitor.shared.shouldRunFullSync() else { return }
+
+        if let lastTrigger = lastForegroundRecoveryTrigger,
+           Date().timeIntervalSince(lastTrigger) < foregroundRecoveryDebounceSeconds {
+            FirebaseSyncTrace.log("SKIP foreground recovery", "debounced")
+            return
+        }
+        lastForegroundRecoveryTrigger = Date()
+
+        FirebaseSyncTrace.snapshot("foreground-recovery-start")
+
+        // A background attempt may still be marked in-flight after iOS suspended the app — allow a fresh run.
+        firebaseSyncLock.lock()
+        if firebaseSyncInFlight {
+            FirebaseSyncTrace.log("foreground recovery", "resetting stale in-flight sync")
+            firebaseSyncInFlight = false
+        }
+        firebaseSyncLock.unlock()
+
+        let startSync = { [weak self] in
+            guard let self = self else { return }
+            guard FirebaseWriteMonitor.shared.shouldRunFullSync() else { return }
+            FirebaseSyncTrace.log("foreground recovery", "starting sync")
+            self.startFirebaseSyncIfNeeded(application: nil)
+        }
+
+        if AppDelegate.isFirebaseConfigured {
+            startSync()
+        } else {
+            FirebaseSyncTrace.log("foreground recovery", "deferring 5s until Firebase configured")
+            DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 5.0) {
+                guard AppDelegate.isFirebaseConfigured else {
+                    FirebaseSyncTrace.log("foreground recovery", "aborted — Firebase still not configured")
+                    return
+                }
+                startSync()
+            }
+        }
     }
 
     /// Starts band/show Firebase sync on a dedicated background task and queue.
     /// Does not block notifications, iCloud, or bulk downloads.
-    private func startFirebaseSyncIfNeeded(application: UIApplication? = nil) {
-        guard FirebaseWriteMonitor.shared.shouldRunFullSync() else { return }
+    func startFirebaseSyncIfNeeded(application: UIApplication? = nil) {
+        FirebaseSyncTrace.snapshot("startFirebaseSyncIfNeeded-entry")
+        guard FirebaseWriteMonitor.shared.shouldRunFullSync() else {
+            FirebaseSyncTrace.log("SKIP startFirebaseSyncIfNeeded", "shouldRunFullSync=false")
+            return
+        }
+
+        firebaseSyncLock.lock()
+        if firebaseSyncInFlight {
+            firebaseSyncLock.unlock()
+            FirebaseSyncTrace.log("SKIP startFirebaseSyncIfNeeded", "sync already in flight")
+            return
+        }
+        firebaseSyncInFlight = true
+        firebaseSyncLock.unlock()
         
+        FirebaseSyncTrace.log("START Firebase sync task", application == nil ? "foreground-recovery" : "background")
         var firebaseBackgroundTask: UIBackgroundTaskIdentifier = .invalid
         if let application = application {
-            firebaseBackgroundTask = application.beginBackgroundTask(withName: "FirebaseSync") {
+            firebaseBackgroundTask = application.beginBackgroundTask(withName: "FirebaseSync") { [weak self] in
+                FirebaseSyncTrace.log("WARNING Firebase background task EXPIRING")
                 print("⚠️ Firebase sync background task expiring")
-                if firebaseBackgroundTask != .invalid {
-                    application.endBackgroundTask(firebaseBackgroundTask)
-                    firebaseBackgroundTask = .invalid
+                if FirebaseWriteMonitor.shared.hasPendingBandChanges() {
+                    FirebaseWriteMonitor.shared.recordWriteFailure(context: "band_batch_bg_expired")
                 }
+                if FirebaseWriteMonitor.shared.hasPendingShowChanges() {
+                    FirebaseWriteMonitor.shared.recordWriteFailure(context: "event_batch_bg_expired")
+                }
+                self?.firebaseSyncLock.lock()
+                self?.firebaseSyncInFlight = false
+                self?.firebaseSyncLock.unlock()
+                FirebaseSyncTrace.log("foreground recovery", "will retry on next becomeActive")
             }
         }
         
-        DispatchQueue.global(qos: .utility).async { [weak self] in
+        let isBackground = application != nil
+        let hasDirtyChanges = FirebaseWriteMonitor.shared.hasPendingLocalChanges()
+        DispatchQueue.global(qos: hasDirtyChanges ? .userInitiated : .utility).async { [weak self] in
             defer {
                 if firebaseBackgroundTask != .invalid, let application = application {
                     application.endBackgroundTask(firebaseBackgroundTask)
                 }
+                self?.firebaseSyncLock.lock()
+                self?.firebaseSyncInFlight = false
+                self?.firebaseSyncLock.unlock()
             }
             guard let self = self else { return }
-            guard self.performRobustNetworkTest() else {
+            if hasDirtyChanges {
+                FirebaseSyncTrace.log("SKIP network test", "dirty sync")
+            } else if !self.performRobustNetworkTest() {
+                FirebaseSyncTrace.log("BLOCKED network test failed")
                 print("🔥 FIREBASE REPORTING: Skipped — network test failed")
                 return
+            } else {
+                FirebaseSyncTrace.log("network test passed — calling performFirebaseReporting")
             }
-            self.performFirebaseReporting()
+            self.performFirebaseReporting(isBackground: isBackground)
+            FirebaseSyncTrace.snapshot("startFirebaseSyncIfNeeded-done")
         }
     }
 
@@ -1150,12 +1282,23 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     /// Performs Firebase reporting - only called after network test passes
     private static let bandEventSyncMaxJitterMs = 20_000
+    private static let bandEventSyncBackgroundMaxJitterMs = 5_000
 
-    private func performFirebaseReporting() {
-        print("🔥 FIREBASE REPORTING: Starting Firebase reporting (network verified)")
+    private func performFirebaseReporting(isBackground: Bool = false) {
+        let started = Date()
+        FirebaseSyncTrace.snapshot("performFirebaseReporting-start")
+        print("🔥 FIREBASE REPORTING: Starting Firebase reporting (network verified, background=\(isBackground))")
         
+        let hasDirtyChanges = FirebaseWriteMonitor.shared.hasPendingLocalChanges()
         let uid = UIDevice.current.identifierForVendor?.uuidString ?? ""
-        let delayMs = FirebaseConnectionHelper.jitterDelayMs(for: uid, maxJitterMs: Self.bandEventSyncMaxJitterMs)
+        let maxJitterMs: Int
+        if hasDirtyChanges {
+            maxJitterMs = 0
+        } else {
+            maxJitterMs = isBackground ? Self.bandEventSyncBackgroundMaxJitterMs : Self.bandEventSyncMaxJitterMs
+        }
+        let delayMs = maxJitterMs > 0 ? FirebaseConnectionHelper.jitterDelayMs(for: uid, maxJitterMs: maxJitterMs) : 0
+        FirebaseSyncTrace.log("jitter scheduled", "delayMs=\(delayMs) background=\(isBackground) dirty=\(hasDirtyChanges)")
         if delayMs > 0 {
             print("🔥 FIREBASE REPORTING: Waiting \(delayMs)ms deterministic jitter before band/show sync")
             Thread.sleep(forTimeInterval: Double(delayMs) / 1000.0)
@@ -1165,15 +1308,28 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         FirebaseWriteMonitor.shared.beginFullSyncAttempt()
         
         let syncSemaphore = DispatchSemaphore(value: 0)
-        reportData {
+        let prioritizeBandFirst = FirebaseWriteMonitor.shared.hasPendingBandChanges()
+            && FirebaseWriteMonitor.shared.shouldRunShowSync()
+        reportData(completion: {
             syncSemaphore.signal()
-        }
+        }, prioritizeBandFirst: prioritizeBandFirst)
         let waitResult = syncSemaphore.wait(timeout: .now() + 60)
         if waitResult == .timedOut {
+            FirebaseSyncTrace.log("TIMEOUT waiting for reportData completion", "waited=60s")
             print("⚠️ FIREBASE REPORTING: Timed out waiting for band/show writes to finish")
+            if FirebaseWriteMonitor.shared.hasPendingBandChanges() {
+                FirebaseWriteMonitor.shared.recordWriteFailure(context: "band_batch_timeout")
+            }
+            if FirebaseWriteMonitor.shared.hasPendingShowChanges() {
+                FirebaseWriteMonitor.shared.recordWriteFailure(context: "event_batch_timeout")
+            }
+        } else {
+            FirebaseSyncTrace.log("reportData completed", "elapsedMs=\(Int(Date().timeIntervalSince(started) * 1000))")
         }
         
-        _ = FirebaseWriteMonitor.shared.finalizeFullSyncAttempt()
+        let finalized = FirebaseWriteMonitor.shared.finalizeFullSyncAttempt()
+        FirebaseSyncTrace.log("finalizeFullSyncAttempt", "clearedFailures=\(finalized)")
+        FirebaseSyncTrace.snapshot("performFirebaseReporting-end")
         print("🔥 Firebase reporting sync completed")
     }
 
@@ -1427,6 +1583,66 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         }
         
         return true
+    }
+
+    // MARK: - UIScene lifecycle
+
+    func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
+        UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
+    }
+
+    /// Creates the main window and split-view hierarchy for the given scene.
+    func configureMainWindow(for windowScene: UIWindowScene) {
+        window = UIWindow(windowScene: windowScene)
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+
+        // Use split view controller on all devices. System collapses to one column when
+        // horizontal size class is compact (e.g. iPhone portrait); regular width (e.g. iPad,
+        // iPhone 17 Pro Max landscape) shows master/detail side-by-side.
+        if let splitViewController = storyboard.instantiateInitialViewController() as? UISplitViewController {
+            window?.rootViewController = splitViewController
+
+            splitViewController.delegate = self
+            splitViewController.preferredDisplayMode = .oneBesideSecondary
+
+            window?.makeKeyAndVisible()
+
+            if let masterNavigationController = splitViewController.viewControllers.first as? UINavigationController,
+               masterNavigationController.viewControllers.first is MasterViewController {
+                setupDefaults()
+            } else {
+                print("Error: Could not get MasterViewController from navigation stack.")
+            }
+
+            let placeholderDetailController = createPlaceholderDetailViewController()
+            let detailNavigationController = UINavigationController(rootViewController: placeholderDetailController)
+
+            detailNavigationController.navigationBar.isTranslucent = true
+            detailNavigationController.navigationBar.backgroundColor = UIColor.clear
+            detailNavigationController.navigationBar.barTintColor = UIColor.clear
+            detailNavigationController.navigationBar.shadowImage = UIImage()
+            detailNavigationController.navigationBar.setBackgroundImage(UIImage(), for: .default)
+            detailNavigationController.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
+
+            if splitViewController.viewControllers.count > 1 {
+                splitViewController.viewControllers = [splitViewController.viewControllers[0], detailNavigationController]
+            } else {
+                splitViewController.viewControllers.append(detailNavigationController)
+            }
+        } else {
+            print("Error: Could not instantiate UISplitViewController from storyboard.")
+        }
+    }
+
+    private var keyWindowRootViewController: UIViewController? {
+        if let rootViewController = window?.rootViewController {
+            return rootViewController
+        }
+        return UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .first { $0.isKeyWindow }?
+            .rootViewController
     }
 
 }

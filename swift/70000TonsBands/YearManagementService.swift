@@ -123,10 +123,8 @@ class YearManagementService {
     
     /// Seeds year wait state from an existing on-disk pointer cache at launch (no network).
     func warmYearFromCachedPointerIfAvailable() {
-        let year = resolveStorageEventYearFromPointerOnly()
-        guard year > 0 else { return }
-        let yearString = getPointerUrlData(keyValue: "eventYear")
-        applyYearAfterPointerUpdate(pointerEventYear: yearString, reason: "launch-cached-pointer")
+        guard let pointerYear = pointerConfigCurrentEventYearInt() else { return }
+        applyYearAfterPointerUpdate(pointerEventYear: String(pointerYear), reason: "launch-cached-pointer")
     }
     
     /// True when the production pointer file exists on disk with non-empty content.

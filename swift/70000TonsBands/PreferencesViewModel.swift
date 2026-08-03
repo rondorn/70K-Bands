@@ -47,7 +47,7 @@ class PreferencesViewModel: ObservableObject {
         didSet { 
             setOnlyAlertForAttendedValue(alertOnlyForWillAttend)
             writeFiltersFile()  // Immediately persist to prevent reversion
-            LocalNotificationRebuildCoordinator.shared.requestRebuild(reason: "pref-alertOnlyForWillAttend", debounceSeconds: 0.8)
+            LocalNotificationRebuildCoordinator.shared.markLocalAlertsPending(reason: "pref-alertOnlyForWillAttend")
         }
     }
     @Published var minutesBeforeAlert: Int = 10 {
@@ -65,7 +65,7 @@ class PreferencesViewModel: ObservableObject {
                 print("🎯 Minutes before alert changed: \(previousValue) -> \(minutesBeforeAlert)")
                 setMinBeforeAlertValue(minutesBeforeAlert)
                 writeFiltersFile()  // Immediately persist to prevent reversion
-                LocalNotificationRebuildCoordinator.shared.requestRebuild(reason: "pref-minutesBeforeAlert", debounceSeconds: 0.8)
+                LocalNotificationRebuildCoordinator.shared.markLocalAlertsPending(reason: "pref-minutesBeforeAlert")
             } else {
                 // Revert to previous valid value
                 print("🚫 Invalid minutes value: \(minutesBeforeAlert), reverting to: \(previousValue)")
@@ -356,7 +356,7 @@ class PreferencesViewModel: ObservableObject {
         // This method now only refreshes notifications and updates UI from cache.
         
         // Final cleanup - request a coalesced full notification rebuild
-        LocalNotificationRebuildCoordinator.shared.requestRebuild(reason: "preferences-closed", debounceSeconds: 0.8)
+        LocalNotificationRebuildCoordinator.shared.markLocalAlertsPending(reason: "preferences-closed")
         
         // Cache-only UI refresh (no network)
         DispatchQueue.main.async {

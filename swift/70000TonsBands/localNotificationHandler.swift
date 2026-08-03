@@ -10,6 +10,8 @@ import Foundation
 import UIKit
 import UserNotifications
 
+/// Rebuilds local UNUserNotificationCenter show-time alerts (Must/Might/Wont timers).
+/// Does not handle FCM push announcements.
 final class LocalNotificationRebuildCoordinator {
     static let shared = LocalNotificationRebuildCoordinator()
 
@@ -17,58 +19,118 @@ final class LocalNotificationRebuildCoordinator {
     private var pendingWorkItem: DispatchWorkItem?
     private var rebuildInProgress = false
     private var rerunRequested = false
+    private var lastForegroundRecoveryTrigger: Date?
+    private let foregroundRecoveryDebounceSeconds: TimeInterval = 2.0
 
     private init() {}
 
-    func requestRebuild(reason: String, debounceSeconds: TimeInterval = 1.5) {
-        coordinatorQueue.async {
-            self.pendingWorkItem?.cancel()
-            let workItem = DispatchWorkItem { [weak self] in
-                self?.performRebuild(reason: reason, completion: nil)
-            }
-            self.pendingWorkItem = workItem
-            self.coordinatorQueue.asyncAfter(deadline: .now() + debounceSeconds, execute: workItem)
-            print("🔔 [ALERT_REBUILD] queued reason='\(reason)' debounce=\(String(format: "%.1f", debounceSeconds))s")
-        }
+    /// Schedule alerts changed — rebuild on next background (not immediately).
+    func markLocalAlertsPending(reason: String) {
+        BackgroundWorkMonitor.shared.markLocalAlertsPending(context: reason)
+        print("🔔 [LOCAL_ALERTS] deferred reason='\(reason)'")
     }
-    
-    /// Schedules alarm rebuild on its own iOS background task — never blocked by Firebase or bulk downloads.
-    func requestBackgroundRebuild(application: UIApplication, reason: String, debounceSeconds: TimeInterval = 0.5) {
+
+    static func canRebuildLocalAlertsNow() -> Bool {
+        if !UserDefaults.standard.bool(forKey: "hasRunBefore") {
+            return false
+        }
+        if MasterViewController.isYearChangeInProgress {
+            return false
+        }
+        if MasterViewController.isCsvDownloadInProgress {
+            return false
+        }
+        if scheduleHandler.shared.schedulingData.isEmpty {
+            return false
+        }
+        let currentYearFromPointer = Int(getPointerUrlData(keyValue: "eventYear")) ?? eventYear
+        if eventYear != currentYearFromPointer {
+            return false
+        }
+        return true
+    }
+
+    /// Home button — start while app is still active if work is pending.
+    func startLocalAlertsEarlyIfNeeded() {
+        runForegroundRebuildIfNeeded(reason: "resign-active")
+    }
+
+    /// After background task was killed or app returns with pending work.
+    func recoverLocalAlertsOnForeground() {
+        if let lastTrigger = lastForegroundRecoveryTrigger,
+           Date().timeIntervalSince(lastTrigger) < foregroundRecoveryDebounceSeconds {
+            return
+        }
+        lastForegroundRecoveryTrigger = Date()
+        runForegroundRebuildIfNeeded(reason: "foreground-recovery")
+    }
+
+    private func runForegroundRebuildIfNeeded(reason: String) {
+        guard BackgroundWorkMonitor.shared.hasPendingLocalAlerts() else { return }
+        guard Self.canRebuildLocalAlertsNow() else {
+            print("🔔 [LOCAL_ALERTS] foreground rebuild skipped — not ready (\(reason))")
+            return
+        }
+        if rebuildInProgress {
+            print("🔔 [LOCAL_ALERTS] resetting stale in-flight rebuild for \(reason)")
+            rebuildInProgress = false
+        }
+        print("🔔 [LOCAL_ALERTS] foreground rebuild starting reason='\(reason)'")
+        performRebuild(reason: reason, completion: nil)
+    }
+
+    /// Called from AppDelegate when entering background.
+    func runBackgroundRebuildIfNeeded(application: UIApplication, reason: String) {
+        guard BackgroundWorkMonitor.shared.hasPendingLocalAlerts() else {
+            print("🔔 [LOCAL_ALERTS] skip background rebuild — not pending")
+            return
+        }
+        guard Self.canRebuildLocalAlertsNow() else {
+            print("🔔 [LOCAL_ALERTS] skip background rebuild — not ready")
+            return
+        }
+
         var backgroundTask: UIBackgroundTaskIdentifier = .invalid
-        backgroundTask = application.beginBackgroundTask(withName: "NotificationRebuild") {
-            print("⚠️ Notification rebuild background task expiring")
+        backgroundTask = application.beginBackgroundTask(withName: "LocalAlertRebuild") { [weak self] in
+            print("⚠️ Local alert rebuild background task expiring")
+            BackgroundWorkMonitor.shared.markLocalAlertsPending(context: "bg-task-expired")
+            self?.coordinatorQueue.async {
+                self?.rebuildInProgress = false
+            }
             if backgroundTask != .invalid {
                 application.endBackgroundTask(backgroundTask)
                 backgroundTask = .invalid
             }
         }
-        
-        coordinatorQueue.async {
+
+        coordinatorQueue.async { [weak self] in
+            guard let self = self else { return }
             self.pendingWorkItem?.cancel()
-            let workItem = DispatchWorkItem { [weak self] in
-                self?.performRebuild(reason: reason) {
-                    if backgroundTask != .invalid {
-                        application.endBackgroundTask(backgroundTask)
-                        backgroundTask = .invalid
-                    }
+            self.performRebuild(reason: reason) {
+                if backgroundTask != .invalid {
+                    application.endBackgroundTask(backgroundTask)
                 }
             }
-            self.pendingWorkItem = workItem
-            self.coordinatorQueue.asyncAfter(deadline: .now() + debounceSeconds, execute: workItem)
-            print("🔔 [ALERT_REBUILD] background task queued reason='\(reason)' debounce=\(String(format: "%.1f", debounceSeconds))s")
         }
+        print("🔔 [LOCAL_ALERTS] background rebuild queued reason='\(reason)'")
     }
 
     private func performRebuild(reason: String, completion: (() -> Void)? = nil) {
         if rebuildInProgress {
             rerunRequested = true
-            print("🔔 [ALERT_REBUILD] rebuild already in progress; rerun requested reason='\(reason)'")
+            print("🔔 [LOCAL_ALERTS] rebuild already in progress; rerun requested reason='\(reason)'")
+            completion?()
+            return
+        }
+
+        guard Self.canRebuildLocalAlertsNow() else {
+            print("🔔 [LOCAL_ALERTS] rebuild skipped — schedule not ready reason='\(reason)'")
             completion?()
             return
         }
 
         rebuildInProgress = true
-        print("🔔 [ALERT_REBUILD] starting reason='\(reason)'")
+        print("🔔 [LOCAL_ALERTS] starting reason='\(reason)'")
 
         DispatchQueue.global(qos: .userInitiated).async {
             let localNotification = localNoticationHandler()
@@ -77,13 +139,14 @@ final class LocalNotificationRebuildCoordinator {
 
             self.coordinatorQueue.async {
                 self.rebuildInProgress = false
-                print("🔔 [ALERT_REBUILD] completed reason='\(reason)'")
+                BackgroundWorkMonitor.shared.clearLocalAlertsPending()
+                print("🔔 [LOCAL_ALERTS] completed reason='\(reason)'")
                 completion?()
 
                 if self.rerunRequested {
                     self.rerunRequested = false
-                    print("🔔 [ALERT_REBUILD] running queued rerun")
-                    self.requestRebuild(reason: "coalesced-rerun", debounceSeconds: 0.8)
+                    print("🔔 [LOCAL_ALERTS] coalesced rerun — marking pending for next background")
+                    self.markLocalAlertsPending(reason: "coalesced-rerun")
                 }
             }
         }
@@ -105,11 +168,11 @@ class localNoticationHandler {
     }
 
     /**
-     Refreshes alerts by asynchronously adding notifications, depending on iOS version.
+     Refreshes alerts by marking them pending for the next background rebuild.
      */
     func refreshAlerts(){
         if #available(iOS 10.0, *) {
-            LocalNotificationRebuildCoordinator.shared.requestRebuild(reason: "localNotificationHandler.refreshAlerts")
+            LocalNotificationRebuildCoordinator.shared.markLocalAlertsPending(reason: "localNotificationHandler.refreshAlerts")
         } else {
             // Fallback on earlier versions
         }

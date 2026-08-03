@@ -66,16 +66,22 @@ class firebaseBandDataWrite {
     
     /// Lineup bands for the pointer storage year (SQLite when UI year differs).
     private func lineupBandNames(for storageYear: Int) -> [String] {
+        let sqliteLineup = DataManager.shared.fetchBands(forYear: storageYear)
+            .filter { $0.lineIndex != nil }
+            .map { $0.bandName }
+            .sorted()
+        if !sqliteLineup.isEmpty {
+            return sqliteLineup
+        }
+
         if storageYear == eventYear {
             let names = bandNamesHandler.shared.getBandNames()
             if !names.isEmpty {
                 return names
             }
         }
-        return DataManager.shared.fetchBands(forYear: storageYear)
-            .filter { $0.lineIndex != nil }
-            .map { $0.bandName }
-            .sorted()
+
+        return []
     }
     
     func writeSingleRecord(bandName: String, ranking: String, sanitizedName: String? = nil){
@@ -148,6 +154,7 @@ class firebaseBandDataWrite {
         print("🔥 [FIREBASE_BAND] writeData: Called on \(threadInfo) thread")
 
         guard FirebaseWriteMonitor.shared.shouldRunBandSync() else {
+            FirebaseSyncTrace.log("BLOCKED band writeData", "shouldRunBandSync=false")
             print("⏭️ [FIREBASE_BAND] writeData: No pending band sync — skipping bandData upload")
             finish()
             return
@@ -158,12 +165,14 @@ class firebaseBandDataWrite {
         print("🔥 [FIREBASE_BAND] writeData: storageYear=\(storageYear), uiEventYear=\(eventYear), inTestEnvironment=\(inTestEnvironment), didVersionChange=\(didVersionChange)")
         
         guard storageYear > 2000 else {
+            FirebaseSyncTrace.log("BLOCKED band writeData", "storageYear unavailable")
             print("❌ [FIREBASE_BAND] writeData: BLOCKED - pointer Current event year unavailable; refusing invalid write")
             finish()
             return
         }
         
         guard ensureReference() != nil else {
+            FirebaseSyncTrace.log("BLOCKED band writeData", "firebaseRef=nil configured=\(AppDelegate.isFirebaseConfigured)")
             print("❌ [FIREBASE_BAND] writeData: BLOCKED - Firebase reference not initialized")
             finish()
             return
@@ -181,9 +190,16 @@ class firebaseBandDataWrite {
             firebaseBandAttendedArray = self.loadCompareFile()
             
             buildBandRankArray(storageYear: storageYear)
+            if bandRank.isEmpty {
+                FirebaseSyncTrace.log("RETRY band lineup", "waiting 5s for pointer year \(storageYear) band data")
+                Thread.sleep(forTimeInterval: 5.0)
+                buildBandRankArray(storageYear: storageYear)
+            }
             
             guard bandRank.isEmpty == false else {
+                FirebaseSyncTrace.log("BLOCKED band writeData", "lineup empty for pointer year \(storageYear) uiEventYear=\(eventYear)")
                 print("❌ [FIREBASE_BAND] writeData: BLOCKED - no lineup bands for pointer year \(storageYear); refusing invalid write")
+                FirebaseWriteMonitor.shared.recordWriteFailure(context: "band_lineup_empty:\(storageYear)")
                 finish()
                 return
             }
@@ -214,11 +230,15 @@ class firebaseBandDataWrite {
             }
             
             print("🔥 [FIREBASE_BAND] writeData: BATCH setValue for \(batchUpdate.count) lineup bands at bandData/\(uid)/\(storageYear)")
+            FirebaseSyncTrace.log("BAND setValue START", "path=bandData/\(uid)/\(storageYear) count=\(batchUpdate.count)")
+            FirebaseConnectionHelper.goOnline(reason: "band_batch_write_start")
             firebaseRef.child("bandData").child(uid).child(String(storageYear)).setValue(batchUpdate) { error, _ in
                 if let error = error {
+                    FirebaseSyncTrace.log("BAND setValue FAILED", error.localizedDescription)
                     print("❌ [FIREBASE_BAND] writeData: Batch write failed: \(error.localizedDescription)")
                     FirebaseWriteMonitor.shared.recordWriteFailure(context: "band_batch")
                 } else {
+                    FirebaseSyncTrace.log("BAND setValue OK", "path=bandData/\(uid)/\(storageYear) count=\(batchUpdate.count)")
                     print("✅ [FIREBASE_BAND] writeData: Batch write succeeded for pointer year \(storageYear)")
                     FirebaseWriteMonitor.shared.recordWriteSuccess(context: "band_batch")
                     self.firebaseBandAttendedArray = self.bandRank

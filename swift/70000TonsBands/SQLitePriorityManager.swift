@@ -248,6 +248,8 @@ class SQLitePriorityManager {
                 
                 if currentProfile == "Default" {
                     FirebaseWriteMonitor.shared.markLocalChangePendingSync(context: "priority:\(bandNameStr)")
+                } else {
+                    FirebaseSyncTrace.log("SKIP dirty (non-Default profile)", "band=\(bandNameStr) profile=\(currentProfile)")
                 }
                 
                 // Call completion directly to avoid deadlock with semaphores

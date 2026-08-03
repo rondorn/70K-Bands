@@ -41,10 +41,13 @@ final class FirebaseWriteMonitor {
             }
             if context.hasPrefix("band_batch") {
                 defaults.set(false, forKey: self.bandDirtyFlagKey)
+                FirebaseSyncTrace.log("SUCCESS band_batch — cleared bandDirty")
             }
             if context.hasPrefix("event_batch") {
                 defaults.set(false, forKey: self.showDirtyFlagKey)
+                FirebaseSyncTrace.log("SUCCESS event_batch — cleared showDirty")
             }
+            FirebaseSyncTrace.log("WRITE_SUCCESS", context)
             print("✅ [FIREBASE_MONITOR] Success recorded (\(context)). Total successes: \(current + 1)")
         }
     }
@@ -59,6 +62,7 @@ final class FirebaseWriteMonitor {
                 defaults.set(true, forKey: self.fullSyncHadFailureKey)
             }
             print("❌ [FIREBASE_MONITOR] Failure recorded (\(context)). Total failures: \(current + 1). Full sync required.")
+            FirebaseSyncTrace.log("WRITE_FAILURE", context)
         }
     }
     
@@ -69,9 +73,11 @@ final class FirebaseWriteMonitor {
             if context.hasPrefix("priority:") {
                 defaults.set(true, forKey: self.bandDirtyFlagKey)
                 print("📝 [FIREBASE_MONITOR] Band change marked dirty (\(context)).")
+                FirebaseSyncTrace.log("DIRTY band", "\(context) — background app or return to foreground to sync")
             } else if context.hasPrefix("attendance:") || context.hasPrefix("attendance_clear") {
                 defaults.set(true, forKey: self.showDirtyFlagKey)
                 print("📝 [FIREBASE_MONITOR] Show change marked dirty (\(context)).")
+                FirebaseSyncTrace.log("DIRTY show", context)
             } else {
                 defaults.set(true, forKey: self.bandDirtyFlagKey)
                 defaults.set(true, forKey: self.showDirtyFlagKey)

@@ -239,7 +239,7 @@ class firebaseEventDataWrite {
                     print("🔥 firebase EVENT_WRITE: UID is valid, getting attended events from SQLite")
                     
                     // Use pointer Current::eventYear — never UI browse year or calendar fallback.
-                    let storageYear = FirebaseConnectionHelper.firebaseStorageEventYear(maxWaitSeconds: 15)
+                    let storageYear = FirebaseConnectionHelper.firebaseStorageEventYear(maxWaitSeconds: 2)
                     guard storageYear > 2000 else {
                         print("🔥 firebase EVENT_WRITE: ❌ BLOCKED - pointer Current event year unavailable")
                         return

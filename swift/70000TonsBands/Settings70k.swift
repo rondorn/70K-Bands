@@ -669,7 +669,7 @@ private func readFiltersFileInternal(){
         alertTracker = [String]()
         // Use centralized coordinator to avoid overlapping clear+rebuild storms.
         print("🔔 [NOTIFICATION_DEFER] Queueing notification rebuild after timezone change")
-        LocalNotificationRebuildCoordinator.shared.requestRebuild(reason: "timezone-change", debounceSeconds: 1.2)
+        LocalNotificationRebuildCoordinator.shared.markLocalAlertsPending(reason: "timezone-change")
     }
 }
 
