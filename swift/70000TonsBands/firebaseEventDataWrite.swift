@@ -20,31 +20,15 @@ class firebaseEventDataWrite {
     
     // Use SQLite AttendanceManager to read attendance data
     let attendanceManager = SQLiteAttendanceManager.shared
-    private var initializationAttempts = 0
-    private let maxInitAttempts = 3
     
     init(){
-        initializeFirebaseReference()
     }
-    
-    /// Attempts to initialize Firebase Database reference with retry logic
-    private func initializeFirebaseReference(attempt: Int = 1) {
-        // Check if Firebase is configured
-        if AppDelegate.isFirebaseConfigured {
-            ref = Database.database().reference()
-            print("✅ [FIREBASE_EVENT] Firebase Database reference initialized successfully")
-        } else {
-            print("⚠️ [FIREBASE_EVENT] Firebase not yet configured (attempt \(attempt)/\(maxInitAttempts))")
-            
-            if attempt < maxInitAttempts {
-                // Retry after 2 second delay
-                DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 2.0) { [weak self] in
-                    self?.initializeFirebaseReference(attempt: attempt + 1)
-                }
-            } else {
-                print("❌ [FIREBASE_EVENT] Failed to initialize Firebase after \(maxInitAttempts) attempts - will skip analytics")
-            }
+
+    private func ensureReference() -> DatabaseReference? {
+        if ref == nil {
+            ref = FirebaseConnectionHelper.databaseReference()
         }
+        return ref
     }
     
     func loadCompareFile()->[String:String]{
@@ -110,7 +94,7 @@ class firebaseEventDataWrite {
             print("🔥 firebase EVENT_WRITE: Background write started for \(bandName)")
             
             // Check if Firebase reference is initialized
-            guard let firebaseRef = self.ref else {
+            guard let firebaseRef = self.ensureReference() else {
                 print("⚠️ [FIREBASE_EVENT] Cannot write event data: Firebase reference not initialized, skipping analytics")
                 FirebaseWriteMonitor.shared.recordWriteFailure(context: "event_ref_nil:\(index)")
                 return
@@ -145,6 +129,7 @@ class firebaseEventDataWrite {
                         FirebaseWriteMonitor.shared.recordWriteSuccess(context: "event:\(index)")
                         self.firebaseShowsAttendedArray[index] = status
                         self.variableStoreHandle.storeDataToDisk(data: self.firebaseShowsAttendedArray, fileName: self.eventCompareFile)
+                        FirebaseConnectionHelper.goOffline(reason: "event_single_write_complete")
                     }
                 }
             
@@ -157,7 +142,7 @@ class firebaseEventDataWrite {
         print("🔥 firebase EVENT_WRITE: inTestEnvironment = \(inTestEnvironment)")
         
         // Check if Firebase reference is initialized
-        guard self.ref != nil else {
+        guard ensureReference() != nil else {
             print("⚠️ [FIREBASE_EVENT] Firebase reference not initialized, skipping event analytics reporting")
             return
         }

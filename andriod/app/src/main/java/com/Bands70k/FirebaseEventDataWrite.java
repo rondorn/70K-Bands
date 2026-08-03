@@ -23,15 +23,9 @@ import java.util.Map;
 public class FirebaseEventDataWrite {
 
 
-    private DatabaseReference mDatabase;
     private File eventDataCacheFile = new File(showBands.newRootDir + FileHandler70k.directoryName + "eventDataCacheFile.data");
 
-
-    /**
-     * Constructs a FirebaseEventDataWrite and initializes the database reference.
-     */
     FirebaseEventDataWrite(){
-        mDatabase = FirebaseDatabase.getInstance().getReference();
     }
 
     /**
@@ -64,8 +58,10 @@ public class FirebaseEventDataWrite {
 
     /**
      * Writes attended event data to Firebase if data has changed.
+     * @param onComplete Called after the batch write finishes (or not at all if skipped).
+     * @return 1 if a Firebase callback will fire, otherwise 0.
      */
-    public void writeData(){
+    public int writeData(Runnable onComplete){
 
         if (staticVariables.isTestingEnv == false && staticVariables.userID.isEmpty() == false) {
             // CRITICAL FIX: Use existing attended handler instead of creating new instance
@@ -73,7 +69,7 @@ public class FirebaseEventDataWrite {
             // Use the static handler which is already initialized with data
             if (staticVariables.attendedHandler == null) {
                 Log.e("FirebaseEventDataWrite", "❌ ERROR: staticVariables.attendedHandler is null! Cannot upload attended data.");
-                return;
+                return 0;
             }
             Map<String, String> showsAttendedArray = staticVariables.attendedHandler.getShowsAttended();
             
@@ -83,7 +79,7 @@ public class FirebaseEventDataWrite {
             int storageYear = staticVariables.resolveStorageEventYear();
             if (storageYear <= 0) {
                 Log.e("FirebaseEventDataWrite", "Missing eventYear in production pointer file");
-                return;
+                return 0;
             }
             String currentYear = String.valueOf(storageYear);
             Log.d("FirebaseEventDataWrite", "🔥 firebase EVENT_WRITE: Filtering for current year: " + currentYear);
@@ -135,12 +131,12 @@ public class FirebaseEventDataWrite {
                 Log.e("FirebaseEventDataWrite", "❌ ERROR: No events to upload after filtering! Original: " + 
                         totalEvents + ", CurrentYear: " + currentYearEvents.size() + 
                         ", Known: " + knownEventsOnly.size() + ". Skipping Firebase upload.");
-                return;
+                return 0;
             }
 
             if (checkIfDataHasChanged(knownEventsOnly)) {
-                // OPTIMIZATION: Use batch write instead of individual writes
-                DatabaseReference showDataRef = mDatabase.child("showData/").child(staticVariables.userID).child(currentYear);
+                DatabaseReference showDataRef = FirebaseConnectionHelper.databaseReference()
+                        .child("showData/").child(staticVariables.userID).child(currentYear);
                 
                 Map<String, Object> batchUpdate = new HashMap<>();
                 
@@ -189,14 +185,26 @@ public class FirebaseEventDataWrite {
                             Log.d("FirebaseEventDataWrite", "Batch write successful for " + batchUpdate.size() + " events");
                             FirebaseWriteMonitor.recordWriteSuccess("event_batch");
                         }
+                        if (onComplete != null) {
+                            onComplete.run();
+                        }
                     });
+                    return 1;
                 } catch (Exception error){
                     Log.e("FirebaseEventDataWrite", "Batch write exception: " + error.toString());
                     FirebaseWriteMonitor.recordWriteFailure("event_batch_exception");
+                    if (onComplete != null) {
+                        onComplete.run();
+                    }
+                    return 1;
                 }
-                //FirebaseDatabase.getInstance().goOffline();
             }
         }
+        return 0;
+    }
+
+    public void writeData() {
+        writeData(null);
     }
 
 

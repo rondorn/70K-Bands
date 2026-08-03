@@ -9,28 +9,22 @@ import java.util.concurrent.Future;
 public class FirbaseAsyncUserWrite {
 
     /**
-     * Executes the Firebase user write operation in the background.
-     * @return Future representing the background task.
+     * Schedules the Firebase user write with deterministic jitter.
+     * @return Future representing the background task (may complete immediately after scheduling).
      */
     public Future<?> execute() {
-        return ThreadManager.getInstance().executeNetwork(() -> {
-            FirebaseUserWrite userDataWrite = new FirebaseUserWrite();
-            userDataWrite.writeData();
-        });
+        return ThreadManager.getInstance().executeNetwork(FirebaseUserWriteScheduler::scheduleWriteIfNeeded);
     }
-    
+
     /**
-     * Executes the Firebase user write operation with callbacks.
-     * @param onComplete Optional callback to run when operation completes.
+     * Schedules the Firebase user write with deterministic jitter.
+     * @param onComplete Optional callback to run when scheduling completes.
      * @return Future representing the background task.
      */
     public Future<?> execute(Runnable onComplete) {
         return ThreadManager.getInstance().executeNetworkWithCallbacks(
-            () -> {
-                FirebaseUserWrite userDataWrite = new FirebaseUserWrite();
-                userDataWrite.writeData();
-            },
-            null, // no pre-execute needed
+            FirebaseUserWriteScheduler::scheduleWriteIfNeeded,
+            null,
             onComplete
         );
     }

@@ -337,6 +337,7 @@ public class Bands70k extends Application implements Application.ActivityLifecyc
             
             // CRITICAL FIX: Upload Firebase data when app goes to background
             // This ensures attendance data is uploaded even if user doesn't manually refresh
+            FirebaseUserWriteScheduler.flushPendingWriteOnBackground();
             uploadFirebaseDataOnBackground();
         }
         Log.d("AppLifecycle", "Activity stopped: " + activity.getClass().getSimpleName() + " (active count: " + activityCount + ")");

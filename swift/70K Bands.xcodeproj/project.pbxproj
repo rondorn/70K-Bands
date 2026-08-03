@@ -509,6 +509,12 @@
 		11D5EA132F74C58400F498DE /* FirebaseWriteMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D5EA122F74C58400F498DE /* FirebaseWriteMonitor.swift */; };
 		11D5EA142F74C58400F498DE /* FirebaseWriteMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D5EA122F74C58400F498DE /* FirebaseWriteMonitor.swift */; };
 		11D5EA152F74C58400F498DE /* FirebaseWriteMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D5EA122F74C58400F498DE /* FirebaseWriteMonitor.swift */; };
+		11F1CONN3F74C58400F498DE /* FirebaseConnectionHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F1CONN2F74C58400F498DE /* FirebaseConnectionHelper.swift */; };
+		11F1CONN4F74C58400F498DE /* FirebaseConnectionHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F1CONN2F74C58400F498DE /* FirebaseConnectionHelper.swift */; };
+		11F1CONN5F74C58400F498DE /* FirebaseConnectionHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F1CONN2F74C58400F498DE /* FirebaseConnectionHelper.swift */; };
+		11F1CONN6F74C58400F498DE /* FirebaseConnectionHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F1CONN2F74C58400F498DE /* FirebaseConnectionHelper.swift */; };
+		11F1CONN7F74C58400F498DE /* FirebaseConnectionHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F1CONN2F74C58400F498DE /* FirebaseConnectionHelper.swift */; };
+		11F1CONN8F74C58400F498DE /* FirebaseConnectionHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F1CONN2F74C58400F498DE /* FirebaseConnectionHelper.swift */; };
 		11DAB49B1A5DDA9400A8B12E /* dataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DAB49A1A5DDA9400A8B12E /* dataHandler.swift */; };
 		11DCE9B41A856EE600A25FB8 /* mainListController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DCE9B31A856EE600A25FB8 /* mainListController.swift */; };
 		11DCE9B61A85B9FF00A25FB8 /* localNotificationHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DCE9B51A85B9FF00A25FB8 /* localNotificationHandler.swift */; };
@@ -908,6 +914,7 @@
 		11D4844A2241DA0C00910878 /* firebaseBandDataWrite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = firebaseBandDataWrite.swift; sourceTree = "<group>"; };
 		11D4844D2241DED700910878 /* firebaseEventDataWrite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = firebaseEventDataWrite.swift; sourceTree = "<group>"; };
 		11D5EA122F74C58400F498DE /* FirebaseWriteMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseWriteMonitor.swift; sourceTree = "<group>"; };
+		11F1CONN2F74C58400F498DE /* FirebaseConnectionHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseConnectionHelper.swift; sourceTree = "<group>"; };
 		11DAB49A1A5DDA9400A8B12E /* dataHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = dataHandler.swift; sourceTree = "<group>"; };
 		11DCE9B31A856EE600A25FB8 /* mainListController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = mainListController.swift; sourceTree = "<group>"; };
 		11DCE9B51A85B9FF00A25FB8 /* localNotificationHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = localNotificationHandler.swift; sourceTree = "<group>"; };
@@ -1188,6 +1195,7 @@
 				11D4844D2241DED700910878 /* firebaseEventDataWrite.swift */,
 				C0C1C2D3E4F5061728394B0C /* firebaseSharedCommentsWrite.swift */,
 				11D4844422418A9E00910878 /* firebaseUserWrite.swift */,
+				11F1CONN2F74C58400F498DE /* FirebaseConnectionHelper.swift */,
 				11D5EA122F74C58400F498DE /* FirebaseWriteMonitor.swift */,
 				1156B4F21A660BE500D48D12 /* guiIcons.swift */,
 				11C8BDC71A7D264F00037F2B /* httpHandler.swift */,
@@ -2184,6 +2192,7 @@
 				29EC6AF2BCA8A12239CBE201 /* ProfilePickerViewController.swift in Sources */,
 				31BA99733FDAE4BB78AD4B5F /* ProfileTutorialOverlay.swift in Sources */,
 				11D5EA142F74C58400F498DE /* FirebaseWriteMonitor.swift in Sources */,
+				11F1CONN4F74C58400F498DE /* FirebaseConnectionHelper.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2296,6 +2305,7 @@
 				11D4844F2241DED700910878 /* firebaseEventDataWrite.swift in Sources */,
 				1147D7102E63E33C000A98B0 /* PriorityManager.swift in Sources */,
 				11D5EA152F74C58400F498DE /* FirebaseWriteMonitor.swift in Sources */,
+				11F1CONN5F74C58400F498DE /* FirebaseConnectionHelper.swift in Sources */,
 				1145F0D72E69ED1A002B7511 /* CellDataCache.swift in Sources */,
 				11C62E812E64B9EE000D9AF2 /* DataCollectionCoordinator.swift in Sources */,
 				11C62E822E64B9EE000D9AF2 /* ScheduleCSVImporter.swift in Sources */,
@@ -2427,6 +2437,7 @@
 				112913A32EE7D8B2008472A3 /* ProfileTutorialOverlay.swift in Sources */,
 				1172EE262E5A1C4D006E3596 /* scheduleHandler.swift in Sources */,
 				11D5EA132F74C58400F498DE /* FirebaseWriteMonitor.swift in Sources */,
+				11F1CONN3F74C58400F498DE /* FirebaseConnectionHelper.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2548,6 +2559,7 @@
 				192CBA22FFE55769F02A2F5C /* ProfileTutorialOverlay.swift in Sources */,
 				D72549891EDE231CD5683190 /* scheduleHandler.swift in Sources */,
 				B3C642CB9EC6C01E105300CA /* FirebaseWriteMonitor.swift in Sources */,
+				11F1CONN6F74C58400F498DE /* FirebaseConnectionHelper.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2669,6 +2681,7 @@
 				115C12E93000A5EF007EA9A1 /* ProfileTutorialOverlay.swift in Sources */,
 				115C12EA3000A5EF007EA9A1 /* scheduleHandler.swift in Sources */,
 				115C12EB3000A5EF007EA9A1 /* FirebaseWriteMonitor.swift in Sources */,
+				11F1CONN7F74C58400F498DE /* FirebaseConnectionHelper.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

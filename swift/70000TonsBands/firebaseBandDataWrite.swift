@@ -17,37 +17,16 @@ class firebaseBandDataWrite {
     var firebaseBandAttendedArray = [String : String]();
     var bandRank: [String : String] = [String : String]();
     let variableStoreHandle = variableStore();
-    private var initializationAttempts = 0
-    private let maxInitAttempts = 3
     
     init(){
         print("🔥 [FIREBASE_BAND] init: Creating firebaseBandDataWrite instance")
-        print("🔥 [FIREBASE_BAND] init: AppDelegate.isFirebaseConfigured = \(AppDelegate.isFirebaseConfigured)")
-        initializeFirebaseReference()
     }
-    
-    /// Attempts to initialize Firebase Database reference with retry logic
-    private func initializeFirebaseReference(attempt: Int = 1) {
-        print("🔥 [FIREBASE_BAND] initializeFirebaseReference: Attempt \(attempt)/\(maxInitAttempts)")
-        
-        // Check if Firebase is configured
-        if AppDelegate.isFirebaseConfigured {
-            ref = Database.database().reference()
-            print("✅ [FIREBASE_BAND] initializeFirebaseReference: Firebase Database reference initialized successfully")
-            print("✅ [FIREBASE_BAND] initializeFirebaseReference: ref is \(ref != nil ? "set" : "nil")")
-        } else {
-            print("⚠️ [FIREBASE_BAND] initializeFirebaseReference: Firebase not yet configured (attempt \(attempt)/\(maxInitAttempts))")
-            
-            if attempt < maxInitAttempts {
-                // Retry after 2 second delay
-                print("🔥 [FIREBASE_BAND] initializeFirebaseReference: Scheduling retry in 2 seconds...")
-                DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 2.0) { [weak self] in
-                    self?.initializeFirebaseReference(attempt: attempt + 1)
-                }
-            } else {
-                print("❌ [FIREBASE_BAND] initializeFirebaseReference: Failed to initialize Firebase after \(maxInitAttempts) attempts - will skip analytics")
-            }
+
+    private func ensureReference() -> DatabaseReference? {
+        if ref == nil {
+            ref = FirebaseConnectionHelper.databaseReference()
         }
+        return ref
     }
     
     
@@ -106,7 +85,7 @@ class firebaseBandDataWrite {
             print("🔥 [FIREBASE_BAND] writeSingleRecord: Inside background queue for '\(bandName)'")
             
             // Check if Firebase reference is initialized
-            guard let firebaseRef = self.ref else {
+            guard let firebaseRef = self.ensureReference() else {
                 print("❌ [FIREBASE_BAND] writeSingleRecord: BLOCKED - Firebase reference not initialized for '\(bandName)'")
                 FirebaseWriteMonitor.shared.recordWriteFailure(context: "band_ref_nil:\(bandName)")
                 return
@@ -156,6 +135,7 @@ class firebaseBandDataWrite {
                         print("🔥 [FIREBASE_BAND] writeSingleRecord: Updating local cache for '\(bandName)' to '\(ranking)'")
                         self.variableStoreHandle.storeDataToDisk(data: self.firebaseBandAttendedArray, fileName: self.bandCompareFile)
                         print("✅ [FIREBASE_BAND] writeSingleRecord: Local cache updated and saved to disk")
+                        FirebaseConnectionHelper.goOffline(reason: "band_single_write_complete")
                     }
                 }
 
@@ -169,7 +149,7 @@ class firebaseBandDataWrite {
         print("🔥 [FIREBASE_BAND] writeData: eventYear=\(eventYear), inTestEnvironment=\(inTestEnvironment), didVersionChange=\(didVersionChange)")
         
         // Check if Firebase reference is initialized
-        guard self.ref != nil else {
+        guard ensureReference() != nil else {
             print("❌ [FIREBASE_BAND] writeData: BLOCKED - Firebase reference not initialized, skipping band analytics reporting")
             return
         }

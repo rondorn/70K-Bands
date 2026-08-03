@@ -776,12 +776,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             
             // SAFETY: Only use Firebase if it's actually configured
             if AppDelegate.isFirebaseConfigured {
-                print("🔥 [TIMING] About to create firebaseUserWrite instance")
-                let userDataReportHandle = firebaseUserWrite()
-                print("🔥 [TIMING] firebaseUserWrite instance created successfully")
-                userDataReportHandle.writeData()
+                print("🔥 [TIMING] Scheduling Firebase user write with jitter")
+                firebaseUserWrite.scheduleWriteIfNeeded()
             } else {
-                print("⚠️ [TIMING] Firebase NOT configured yet, skipping Firebase operations")
+                print("⚠️ [TIMING] Firebase NOT configured yet, skipping Firebase user write")
             }
             
             // Set up notifications when app becomes active (in case they weren't set up during launch)
@@ -901,6 +899,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
         // Gate bulk operations behind network test - never run heavy operations in bad network
         print("🌐 GATED BULK OPERATIONS: Testing network before bulk downloads")
+        firebaseUserWrite.flushPendingWriteOnBackground()
         self.performBulkOperationsWithNetworkGating()
         
         // End background task after a delay (give time for operations to complete)
@@ -1105,6 +1104,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             // Firebase writes are async. Finalize after a short settling window.
             DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 8.0) {
                 _ = FirebaseWriteMonitor.shared.finalizeFullSyncAttempt()
+                FirebaseConnectionHelper.goOffline(reason: "full_sync_complete")
             }
             print("🔥 Firebase reporting completed")
         }

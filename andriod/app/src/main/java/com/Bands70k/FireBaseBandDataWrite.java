@@ -20,16 +20,10 @@ import java.util.Map;
  */
 public class FireBaseBandDataWrite {
 
-    private DatabaseReference mDatabase;
-
     private Map<String,String> bandRanks = new HashMap<>();
     private File bandRankCacheFile = new File(showBands.newRootDir + FileHandler70k.directoryName + "bandRankCacheFile.data");
 
-    /**
-     * Constructs a FireBaseBandDataWrite and initializes the database reference.
-     */
     FireBaseBandDataWrite(){
-            mDatabase = FirebaseDatabase.getInstance().getReference();
     }
 
     /**
@@ -62,8 +56,10 @@ public class FireBaseBandDataWrite {
 
     /**
      * Writes band ranking data to Firebase if data has changed.
+     * @param onComplete Called after the batch write finishes (or not at all if skipped).
+     * @return 1 if a Firebase callback will fire, otherwise 0.
      */
-    public void writeData(){
+    public int writeData(Runnable onComplete) {
 
         Log.d("FireBaseBandDataWrite", "In write routine");
 
@@ -72,15 +68,14 @@ public class FireBaseBandDataWrite {
             Log.d("FireBaseBandDataWrite", "has data changed");
 
             if (checkIfDataHasChanged() == true) {
-                //FirebaseDatabase.getInstance().goOnline();
-                
                 int storageYear = staticVariables.resolveStorageEventYear();
                 if (storageYear <= 0) {
                     Log.e("FireBaseBandDataWrite", "Missing eventYear in production pointer file");
-                    return;
+                    return 0;
                 }
                 String eventYear = String.valueOf(storageYear);
-                DatabaseReference bandDataRef = mDatabase.child("bandData/").child(staticVariables.userID).child(eventYear);
+                DatabaseReference bandDataRef = FirebaseConnectionHelper.databaseReference()
+                        .child("bandData/").child(staticVariables.userID).child(eventYear);
                 
                 Map<String, Object> batchUpdate = new HashMap<>();
                 
@@ -111,14 +106,26 @@ public class FireBaseBandDataWrite {
                             Log.d("FireBaseBandDataWrite", "Batch write successful for " + batchUpdate.size() + " bands");
                             FirebaseWriteMonitor.recordWriteSuccess("band_batch");
                         }
+                        if (onComplete != null) {
+                            onComplete.run();
+                        }
                     });
+                    return 1;
                 } catch (Exception error){
                     Log.e("FireBaseBandDataWrite", "Batch write exception: " + error.toString());
                     FirebaseWriteMonitor.recordWriteFailure("band_batch_exception");
+                    if (onComplete != null) {
+                        onComplete.run();
+                    }
+                    return 1;
                 }
-                //FirebaseDatabase.getInstance().goOffline();
             }
         }
+        return 0;
+    }
+
+    public void writeData() {
+        writeData(null);
     }
 
     /**
