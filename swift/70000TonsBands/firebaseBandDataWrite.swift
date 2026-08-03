@@ -141,13 +141,15 @@ class firebaseBandDataWrite {
         }
     }
     
-    func writeData (){
+    func writeData(completion: (() -> Void)? = nil) {
+        let finish: () -> Void = { completion?() }
         let threadInfo = Thread.isMainThread ? "main" : "background"
         print("🔥 [FIREBASE_BAND] writeData: ========== ENTRY ==========")
         print("🔥 [FIREBASE_BAND] writeData: Called on \(threadInfo) thread")
 
         guard FirebaseWriteMonitor.shared.shouldRunBandSync() else {
             print("⏭️ [FIREBASE_BAND] writeData: No pending band sync — skipping bandData upload")
+            finish()
             return
         }
 
@@ -157,11 +159,13 @@ class firebaseBandDataWrite {
         
         guard storageYear > 2000 else {
             print("❌ [FIREBASE_BAND] writeData: BLOCKED - pointer Current event year unavailable; refusing invalid write")
+            finish()
             return
         }
         
         guard ensureReference() != nil else {
             print("❌ [FIREBASE_BAND] writeData: BLOCKED - Firebase reference not initialized")
+            finish()
             return
         }
         
@@ -170,6 +174,7 @@ class firebaseBandDataWrite {
             
             guard uid.isEmpty == false else {
                 print("❌ [FIREBASE_BAND] writeData: BLOCKED - UID is empty")
+                finish()
                 return
             }
             
@@ -179,17 +184,22 @@ class firebaseBandDataWrite {
             
             guard bandRank.isEmpty == false else {
                 print("❌ [FIREBASE_BAND] writeData: BLOCKED - no lineup bands for pointer year \(storageYear); refusing invalid write")
+                finish()
                 return
             }
             
             let forceFullBandSync = FirebaseWriteMonitor.shared.shouldRunBandSync()
             if firebaseBandAttendedArray == bandRank && didVersionChange == false && !forceFullBandSync {
                 print("⏭️ [FIREBASE_BAND] writeData: No lineup band ranking changes — skipping Firebase write")
+                finish()
                 return
             }
             print("🔥 [FIREBASE_BAND] writeData: Sending full lineup (\(bandRank.count) bands) for pointer year \(storageYear)")
             
-            guard let firebaseRef = ensureReference() else { return }
+            guard let firebaseRef = ensureReference() else {
+                finish()
+                return
+            }
             
             var batchUpdate = [String: [String: Any]]()
             for (bandName, ranking) in bandRank {
@@ -215,7 +225,10 @@ class firebaseBandDataWrite {
                     self.variableStoreHandle.storeDataToDisk(data: self.firebaseBandAttendedArray, fileName: self.bandCompareFile)
                 }
                 FirebaseConnectionHelper.goOffline(reason: "band_batch_write_complete")
+                finish()
             }
+        } else {
+            finish()
         }
         
         print("🔥 [FIREBASE_BAND] writeData: ========== EXIT ==========")

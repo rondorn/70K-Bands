@@ -24,25 +24,53 @@ final class LocalNotificationRebuildCoordinator {
         coordinatorQueue.async {
             self.pendingWorkItem?.cancel()
             let workItem = DispatchWorkItem { [weak self] in
-                self?.performRebuild(reason: reason)
+                self?.performRebuild(reason: reason, completion: nil)
             }
             self.pendingWorkItem = workItem
             self.coordinatorQueue.asyncAfter(deadline: .now() + debounceSeconds, execute: workItem)
             print("🔔 [ALERT_REBUILD] queued reason='\(reason)' debounce=\(String(format: "%.1f", debounceSeconds))s")
         }
     }
+    
+    /// Schedules alarm rebuild on its own iOS background task — never blocked by Firebase or bulk downloads.
+    func requestBackgroundRebuild(application: UIApplication, reason: String, debounceSeconds: TimeInterval = 0.5) {
+        var backgroundTask: UIBackgroundTaskIdentifier = .invalid
+        backgroundTask = application.beginBackgroundTask(withName: "NotificationRebuild") {
+            print("⚠️ Notification rebuild background task expiring")
+            if backgroundTask != .invalid {
+                application.endBackgroundTask(backgroundTask)
+                backgroundTask = .invalid
+            }
+        }
+        
+        coordinatorQueue.async {
+            self.pendingWorkItem?.cancel()
+            let workItem = DispatchWorkItem { [weak self] in
+                self?.performRebuild(reason: reason) {
+                    if backgroundTask != .invalid {
+                        application.endBackgroundTask(backgroundTask)
+                        backgroundTask = .invalid
+                    }
+                }
+            }
+            self.pendingWorkItem = workItem
+            self.coordinatorQueue.asyncAfter(deadline: .now() + debounceSeconds, execute: workItem)
+            print("🔔 [ALERT_REBUILD] background task queued reason='\(reason)' debounce=\(String(format: "%.1f", debounceSeconds))s")
+        }
+    }
 
-    private func performRebuild(reason: String) {
+    private func performRebuild(reason: String, completion: (() -> Void)? = nil) {
         if rebuildInProgress {
             rerunRequested = true
             print("🔔 [ALERT_REBUILD] rebuild already in progress; rerun requested reason='\(reason)'")
+            completion?()
             return
         }
 
         rebuildInProgress = true
         print("🔔 [ALERT_REBUILD] starting reason='\(reason)'")
 
-        DispatchQueue.global(qos: .utility).async {
+        DispatchQueue.global(qos: .userInitiated).async {
             let localNotification = localNoticationHandler()
             localNotification.clearNotifications()
             localNotification.addNotifications()
@@ -50,6 +78,7 @@ final class LocalNotificationRebuildCoordinator {
             self.coordinatorQueue.async {
                 self.rebuildInProgress = false
                 print("🔔 [ALERT_REBUILD] completed reason='\(reason)'")
+                completion?()
 
                 if self.rerunRequested {
                     self.rerunRequested = false

@@ -203,25 +203,30 @@ class firebaseEventDataWrite {
         }
     }
 
-    func writeData (){
+    func writeData(completion: (() -> Void)? = nil) {
+        let finish: () -> Void = { completion?() }
         
         print("🔥 firebase EVENT_WRITE: writeData() called - Starting event data write process")
         print("🔥 firebase EVENT_WRITE: inTestEnvironment = \(inTestEnvironment)")
         
         guard FirebaseWriteMonitor.shared.shouldRunShowSync() else {
             print("⏭️ firebase EVENT_WRITE: No pending show sync — skipping showData upload")
+            finish()
             return
         }
         
         // Check if Firebase reference is initialized
         guard ensureReference() != nil else {
             print("⚠️ [FIREBASE_EVENT] Firebase reference not initialized, skipping event analytics reporting")
+            finish()
             return
         }
         
         if (inTestEnvironment == false){
             print("🔥 firebase EVENT_WRITE: Not in test environment, proceeding with write")
+            let syncSemaphore = DispatchSemaphore(value: 0)
             DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
+                defer { syncSemaphore.signal() }
                 
                 print("🔥 firebase EVENT_WRITE: Background queue started")
                 self.firebaseShowsAttendedArray = self.loadCompareFile();
@@ -327,6 +332,7 @@ class firebaseEventDataWrite {
                         }
                         
                         print("🔥 firebase EVENT_WRITE: BATCH updateChildren for \(batchUpdate.count) shows at showData/\(uid)/\(currentYear)")
+                        let writeSemaphore = DispatchSemaphore(value: 0)
                         firebaseRef.child("showData").child(uid).child(String(currentYear)).updateChildValues(batchUpdate) { error, _ in
                             if let error = error {
                                 print("🔥 firebase EVENT_WRITE: ❌ Batch write failed: \(error.localizedDescription)")
@@ -338,7 +344,9 @@ class firebaseEventDataWrite {
                                 self.variableStoreHandle.storeDataToDisk(data: self.firebaseShowsAttendedArray, fileName: self.eventCompareFile)
                             }
                             FirebaseConnectionHelper.goOffline(reason: "event_batch_write_complete")
+                            writeSemaphore.signal()
                         }
+                        _ = writeSemaphore.wait(timeout: .now() + 30)
                     } else {
                         print("🔥 firebase EVENT_WRITE: ❌ BLOCKED - Schedule data is empty! Cannot write events.")
                     }
@@ -346,10 +354,12 @@ class firebaseEventDataWrite {
                     print("🔥 firebase EVENT_WRITE: ❌ BLOCKED - UID is empty!")
                 }
             }
+            _ = syncSemaphore.wait(timeout: .now() + 45)
         } else {
             //this is being done soley to prevent capturing garbage stats data within my app!
             print("🔥 firebase EVENT_WRITE: ❌ BLOCKED - Bypassed firebase event data writes due to being in simulator!!!")
         }
+        finish()
     }
     
 }

@@ -795,7 +795,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             // If local Firebase data is pending sync, try a gated full sync when app becomes active.
             // This handles offline -> online recovery even when background path was skipped.
             if FirebaseWriteMonitor.shared.shouldRunFullSync() {
-                print("📱 [TIMING] Pending Firebase sync state on app active - requesting gated full sync (no description bulk — that runs on background)")
+                print("📱 [TIMING] Pending Firebase sync state on app active - requesting parallel Firebase sync (no description bulk — that runs on background)")
+                self.startFirebaseSyncIfNeeded()
                 self.performBulkOperationsWithNetworkGating(includeDescriptionBulkDownload: false)
             }
         }
@@ -831,34 +832,55 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     //end push functions
     
-    func reportData(){
+    func reportData(completion: (() -> Void)? = nil){
         print("🔥 [APP_DELEGATE] reportData: ========== ENTRY ==========")
         print("🔥 [APP_DELEGATE] reportData: Called from thread: \(Thread.isMainThread ? "main" : "background")")
         
         internetAvailble = isInternetAvailable();
         print("🔥 [APP_DELEGATE] reportData: Internet available: \(internetAvailble)")
         
+        let group = DispatchGroup()
+        
         if FirebaseWriteMonitor.shared.shouldRunBandSync() {
+            group.enter()
             print("🔥 [APP_DELEGATE] reportData: Creating firebaseBandDataWrite instance...")
-            let bandWrite  = firebaseBandDataWrite();
+            let bandWrite = firebaseBandDataWrite()
             print("🔥 [APP_DELEGATE] reportData: Calling bandWrite.writeData()...")
-            bandWrite.writeData();
-            print("🔥 [APP_DELEGATE] reportData: bandWrite.writeData() call completed")
+            bandWrite.writeData {
+                print("🔥 [APP_DELEGATE] reportData: bandWrite.writeData() finished")
+                group.leave()
+            }
         } else {
             print("⏭️ [APP_DELEGATE] reportData: No pending band sync — skipping bandData upload")
         }
         
         if FirebaseWriteMonitor.shared.shouldRunShowSync() {
+            group.enter()
             print("🔥 [APP_DELEGATE] reportData: Creating firebaseEventDataWrite instance...")
             let showWrite = firebaseEventDataWrite()
             print("🔥 [APP_DELEGATE] reportData: Calling showWrite.writeData()...")
-            showWrite.writeData();
-            print("🔥 [APP_DELEGATE] reportData: showWrite.writeData() call completed")
+            showWrite.writeData {
+                print("🔥 [APP_DELEGATE] reportData: showWrite.writeData() finished")
+                group.leave()
+            }
         } else {
             print("⏭️ [APP_DELEGATE] reportData: No pending show sync — skipping showData upload")
         }
         
-        print("🔥 [APP_DELEGATE] reportData: ========== EXIT ==========")
+        group.notify(queue: DispatchQueue.global(qos: .utility)) {
+            print("🔥 [APP_DELEGATE] reportData: ========== EXIT ==========")
+            completion?()
+        }
+    }
+    
+    private func isModalPresented() -> Bool {
+        if let rootViewController = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .flatMap({ $0.windows })
+            .first(where: { $0.isKeyWindow })?.rootViewController {
+            return rootViewController.presentedViewController != nil
+        }
+        return false
     }
     
     func applicationDidEnterBackground(_ application: UIApplication) {
@@ -872,15 +894,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             return
         }
         
-        // Additional check: Don't run bulk loading if there's a modal presented
-        if let rootViewController = application.windows.first?.rootViewController {
-            if rootViewController.presentedViewController != nil {
-                print("⚠️ BLOCKED: Modal view controller is presented - not truly in background")
-                return
-            }
+        // Modal sheets must not block Firebase sync — only bulk image/description downloads.
+        let modalPresented = isModalPresented()
+        if modalPresented {
+            print("⚠️ Modal view controller is presented — skipping bulk downloads, Firebase sync still allowed")
         }
         
-        // Request background execution time from iOS for all bulk operations
+        // Request background execution time from iOS for bulk downloads
         var backgroundTask: UIBackgroundTaskIdentifier = .invalid
         backgroundTask = application.beginBackgroundTask(withName: "BulkDataLoading") {
             // This block is called if the background task is about to expire
@@ -891,11 +911,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             }
         }
         
-        // Move notification processing to background to avoid blocking main thread
-        DispatchQueue.global(qos: .utility).async {
-            LocalNotificationRebuildCoordinator.shared.requestRebuild(reason: "applicationDidEnterBackground", debounceSeconds: 0.5)
-            print("📱 Local notifications processing completed")
-        }
+        // Alarms/notifications: own background task, highest priority — never gated on Firebase.
+        LocalNotificationRebuildCoordinator.shared.requestBackgroundRebuild(
+            application: application,
+            reason: "applicationDidEnterBackground",
+            debounceSeconds: 0.5
+        )
         
         // iCloud data sync (using SQLiteiCloudSync - Default profile only)
         DispatchQueue.global(qos: .userInitiated).async {
@@ -905,10 +926,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             print("☁️ iCloud sync completed (Default profile only)")
         }
         
-        // Gate bulk operations behind network test - never run heavy operations in bad network
-        print("🌐 GATED BULK OPERATIONS: Testing network before bulk downloads")
         firebaseUserWrite.flushPendingWriteOnBackground()
-        self.performBulkOperationsWithNetworkGating()
+        startFirebaseSyncIfNeeded(application: application)
+        
+        if modalPresented == false {
+            print("🌐 GATED BULK OPERATIONS: Testing network before bulk downloads")
+            self.performBulkOperationsWithNetworkGating()
+        }
         
         // End background task after a delay (give time for operations to complete)
         DispatchQueue.main.asyncAfter(deadline: .now() + 30) {
@@ -924,11 +948,41 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         // reportData() is now gated behind network test in performBulkOperationsWithNetworkGating()
     }
 
+    /// Starts band/show Firebase sync on a dedicated background task and queue.
+    /// Does not block notifications, iCloud, or bulk downloads.
+    private func startFirebaseSyncIfNeeded(application: UIApplication? = nil) {
+        guard FirebaseWriteMonitor.shared.shouldRunFullSync() else { return }
+        
+        var firebaseBackgroundTask: UIBackgroundTaskIdentifier = .invalid
+        if let application = application {
+            firebaseBackgroundTask = application.beginBackgroundTask(withName: "FirebaseSync") {
+                print("⚠️ Firebase sync background task expiring")
+                if firebaseBackgroundTask != .invalid {
+                    application.endBackgroundTask(firebaseBackgroundTask)
+                    firebaseBackgroundTask = .invalid
+                }
+            }
+        }
+        
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            defer {
+                if firebaseBackgroundTask != .invalid, let application = application {
+                    application.endBackgroundTask(firebaseBackgroundTask)
+                }
+            }
+            guard let self = self else { return }
+            guard self.performRobustNetworkTest() else {
+                print("🔥 FIREBASE REPORTING: Skipped — network test failed")
+                return
+            }
+            self.performFirebaseReporting()
+        }
+    }
+
     // MARK: - Network-Gated Bulk Operations
     
-    /// Performs network test first, then executes bulk operations (images, notes, Firebase) only if network is good
-    /// This prevents heavy operations from running in poor network conditions and consuming resources
-    /// - Parameter includeDescriptionBulkDownload: When false, skips per-band note prefetch (e.g. on app become active). Description bodies still load lazily in the details screen; batch prefetch runs on `applicationDidEnterBackground`.
+    /// Performs network test first, then executes bulk image/description downloads if network is good.
+    /// Firebase sync is intentionally separate — see `startFirebaseSyncIfNeeded`.
     private func performBulkOperationsWithNetworkGating(includeDescriptionBulkDownload: Bool = true) {
         print("🌐 NETWORK GATING: Starting REAL network test before bulk operations (description bulk: \(includeDescriptionBulkDownload))")
         
@@ -948,12 +1002,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
                     self.performBulkDescriptionDownload()
                 } else {
                     print("🌐 NETWORK GATING: Skipping bulk description download (not requested for this entry point)")
-                }
-                if FirebaseWriteMonitor.shared.shouldRunFullSync() {
-                    print("🌐 NETWORK GATING: Pending Firebase sync state detected (dirty/failure) - running full Firebase resync")
-                    self.performFirebaseReporting()
-                } else {
-                    print("🌐 NETWORK GATING: No pending Firebase sync state - skipping full Firebase resync")
                 }
             } else {
                 print("🌐 NETWORK GATING: ❌ Network is poor/down - skipping ALL bulk operations")
@@ -1106,25 +1154,27 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     private func performFirebaseReporting() {
         print("🔥 FIREBASE REPORTING: Starting Firebase reporting (network verified)")
         
-        DispatchQueue.global(qos: .utility).async {
-            let uid = UIDevice.current.identifierForVendor?.uuidString ?? ""
-            let delayMs = FirebaseConnectionHelper.jitterDelayMs(for: uid, maxJitterMs: Self.bandEventSyncMaxJitterMs)
-            if delayMs > 0 {
-                print("🔥 FIREBASE REPORTING: Waiting \(delayMs)ms deterministic jitter before band/show sync")
-                Thread.sleep(forTimeInterval: Double(delayMs) / 1000.0)
-            }
-
-            print("🔥 Firebase reporting background queue started")
-            FirebaseWriteMonitor.shared.beginFullSyncAttempt()
-            // Since network was already verified, we can proceed directly
-            self.reportData()
-            // Firebase writes are async. Finalize after a short settling window.
-            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 8.0) {
-                _ = FirebaseWriteMonitor.shared.finalizeFullSyncAttempt()
-                FirebaseConnectionHelper.goOffline(reason: "full_sync_complete")
-            }
-            print("🔥 Firebase reporting completed")
+        let uid = UIDevice.current.identifierForVendor?.uuidString ?? ""
+        let delayMs = FirebaseConnectionHelper.jitterDelayMs(for: uid, maxJitterMs: Self.bandEventSyncMaxJitterMs)
+        if delayMs > 0 {
+            print("🔥 FIREBASE REPORTING: Waiting \(delayMs)ms deterministic jitter before band/show sync")
+            Thread.sleep(forTimeInterval: Double(delayMs) / 1000.0)
         }
+
+        print("🔥 Firebase reporting sync started")
+        FirebaseWriteMonitor.shared.beginFullSyncAttempt()
+        
+        let syncSemaphore = DispatchSemaphore(value: 0)
+        reportData {
+            syncSemaphore.signal()
+        }
+        let waitResult = syncSemaphore.wait(timeout: .now() + 60)
+        if waitResult == .timedOut {
+            print("⚠️ FIREBASE REPORTING: Timed out waiting for band/show writes to finish")
+        }
+        
+        _ = FirebaseWriteMonitor.shared.finalizeFullSyncAttempt()
+        print("🔥 Firebase reporting sync completed")
     }
 
 

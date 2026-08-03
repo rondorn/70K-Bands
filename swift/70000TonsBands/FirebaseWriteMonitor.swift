@@ -64,7 +64,7 @@ final class FirebaseWriteMonitor {
     
     /// Marks that local data changed and should be fully synced later.
     func markLocalChangePendingSync(context: String) {
-        queue.async {
+        queue.sync {
             let defaults = UserDefaults.standard
             if context.hasPrefix("priority:") {
                 defaults.set(true, forKey: self.bandDirtyFlagKey)
