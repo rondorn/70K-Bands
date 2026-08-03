@@ -619,6 +619,8 @@ open class ShowsAttended {
         
         // Keep old system for backward compatibility (legacy cache)
         mutateShowsAttendedArray { arr in arr[index] = status }
+        let firebaseEventWrite = firebaseEventDataWrite();
+        firebaseEventWrite.writeEvent(index: index, status: status)
         // cacheVariables setters are thread-safe
         cacheVariables.attendedStaticCache[index] = status
         saveShowsAttended()
@@ -657,6 +659,8 @@ open class ShowsAttended {
         }
         attendanceManager.setAttendanceStatusByIndex(index: index, status: numericStatus, timestamp: Date().timeIntervalSince1970)
         mutateShowsAttendedArray { arr in arr[index] = status }
+        let firebaseEventWrite = firebaseEventDataWrite();
+        firebaseEventWrite.writeEvent(index: index, status: status)
         cacheVariables.attendedStaticCache[index] = status
         saveShowsAttended()
         

@@ -24,30 +24,40 @@ final class LocalNotificationRebuildCoordinator {
 
     private init() {}
 
-    /// Schedule alerts changed — rebuild on next background (not immediately).
+    /// Schedule alerts changed — rebuild on next background (not immediately while using the app).
     func markLocalAlertsPending(reason: String) {
         BackgroundWorkMonitor.shared.markLocalAlertsPending(context: reason)
         print("🔔 [LOCAL_ALERTS] deferred reason='\(reason)'")
     }
 
+    /// After CSV/schedule refresh: schedule is authoritative — rebuild as soon as gates allow.
+    func rebuildWhenScheduleReady(reason: String) {
+        BackgroundWorkMonitor.shared.markLocalAlertsPending(context: reason)
+        print("🔔 [LOCAL_ALERTS] schedule ready — will rebuild when gates allow reason='\(reason)'")
+        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            self?.tryRebuildIfPending(reason: reason)
+        }
+    }
+
+    /// Foreground/background recovery entry — rebuild if work is pending and schedule is ready.
+    func tryRebuildIfPending(reason: String) {
+        guard BackgroundWorkMonitor.shared.hasPendingLocalAlerts() else { return }
+        runForegroundRebuildIfNeeded(reason: reason)
+    }
+
+    static func rebuildReadinessSnapshot() -> String {
+        if MasterViewController.isYearChangeInProgress { return "yearChangeInProgress" }
+        if MasterViewController.isCsvDownloadInProgress { return "csvDownloadInProgress" }
+        if scheduleHandler.shared.schedulingData.isEmpty { return "schedulingDataEmpty" }
+        let currentYearFromPointer = getCachedPointerEventYear()
+        if eventYear > 0, currentYearFromPointer > 0, eventYear != currentYearFromPointer {
+            return "nonCurrentYear(eventYear=\(eventYear),pointer=\(currentYearFromPointer))"
+        }
+        return "ready"
+    }
+
     static func canRebuildLocalAlertsNow() -> Bool {
-        if !UserDefaults.standard.bool(forKey: "hasRunBefore") {
-            return false
-        }
-        if MasterViewController.isYearChangeInProgress {
-            return false
-        }
-        if MasterViewController.isCsvDownloadInProgress {
-            return false
-        }
-        if scheduleHandler.shared.schedulingData.isEmpty {
-            return false
-        }
-        let currentYearFromPointer = Int(getPointerUrlData(keyValue: "eventYear")) ?? eventYear
-        if eventYear != currentYearFromPointer {
-            return false
-        }
-        return true
+        rebuildReadinessSnapshot() == "ready"
     }
 
     /// Home button — start while app is still active if work is pending.
@@ -68,7 +78,7 @@ final class LocalNotificationRebuildCoordinator {
     private func runForegroundRebuildIfNeeded(reason: String) {
         guard BackgroundWorkMonitor.shared.hasPendingLocalAlerts() else { return }
         guard Self.canRebuildLocalAlertsNow() else {
-            print("🔔 [LOCAL_ALERTS] foreground rebuild skipped — not ready (\(reason))")
+            print("🔔 [LOCAL_ALERTS] foreground rebuild skipped — \(Self.rebuildReadinessSnapshot()) (\(reason))")
             return
         }
         if rebuildInProgress {
@@ -86,7 +96,8 @@ final class LocalNotificationRebuildCoordinator {
             return
         }
         guard Self.canRebuildLocalAlertsNow() else {
-            print("🔔 [LOCAL_ALERTS] skip background rebuild — not ready")
+            print("🔔 [LOCAL_ALERTS] skip background rebuild — \(Self.rebuildReadinessSnapshot())")
+            scheduleBackgroundRebuildRetry(application: application, reason: reason)
             return
         }
 
@@ -124,7 +135,7 @@ final class LocalNotificationRebuildCoordinator {
         }
 
         guard Self.canRebuildLocalAlertsNow() else {
-            print("🔔 [LOCAL_ALERTS] rebuild skipped — schedule not ready reason='\(reason)'")
+            print("🔔 [LOCAL_ALERTS] rebuild skipped — \(Self.rebuildReadinessSnapshot()) reason='\(reason)'")
             completion?()
             return
         }
@@ -149,6 +160,20 @@ final class LocalNotificationRebuildCoordinator {
                     self.markLocalAlertsPending(reason: "coalesced-rerun")
                 }
             }
+        }
+    }
+
+    /// CSV/import flags may still be set when iOS backgrounds us — retry once after a short delay.
+    private func scheduleBackgroundRebuildRetry(application: UIApplication, reason: String) {
+        coordinatorQueue.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+            guard let self = self else { return }
+            guard BackgroundWorkMonitor.shared.hasPendingLocalAlerts() else { return }
+            guard Self.canRebuildLocalAlertsNow() else {
+                print("🔔 [LOCAL_ALERTS] background retry still blocked — \(Self.rebuildReadinessSnapshot())")
+                return
+            }
+            print("🔔 [LOCAL_ALERTS] background retry proceeding reason='\(reason)'")
+            self.runBackgroundRebuildIfNeeded(application: application, reason: "\(reason)-retry")
         }
     }
 }
@@ -416,6 +441,12 @@ class localNoticationHandler {
         // Clear cache at start of notification generation
         clearAlertCache()
 
+        var eventsScanned = 0
+        var eventsEligible = 0
+        var alertsScheduled = 0
+        var skippedPast = 0
+        var parseFallbackUsed = 0
+
         // YEAR CHANGE / CSV DOWNLOAD GUARD:
         // Avoid generating notifications while the year-change pipeline is importing schedule/band data.
         // This prevents lock contention and “deadlock-like” hangs during year switches.
@@ -431,17 +462,19 @@ class localNoticationHandler {
         // CURRENT YEAR ONLY:
         // Notifications are only meaningful for the current sailing year.
         // If the user is browsing a past year, skip notification generation entirely.
-        let currentYearFromPointer = Int(getPointerUrlData(keyValue: "eventYear")) ?? eventYear
-        if eventYear != currentYearFromPointer {
+        let currentYearFromPointer = getCachedPointerEventYear()
+        if eventYear > 0, currentYearFromPointer > 0, eventYear != currentYearFromPointer {
             print("🚫 [ALERTS] addNotifications: Skipping - non-current year selected (eventYear=\(eventYear), current=\(currentYearFromPointer))")
             return
         }
         
         // Don't add notifications if schedule data is empty or inconsistent
+        let bandCount = schedule.schedulingData.count
         if schedule.schedulingData.isEmpty {
             print("[YEAR_CHANGE_DEBUG] addNotifications: Skipping - schedule data is empty")
             return
         }
+        print("🔔 [LOCAL_ALERTS] addNotifications scanning \(bandCount) bands")
         
         // ✅ DEADLOCK FIX: Removed scheduleQueue.sync - SQLite is thread-safe, no blocking needed
         if (schedule.schedulingData.isEmpty == false){
@@ -452,6 +485,7 @@ class localNoticationHandler {
                     }
                     
                     for startTime in bandSchedule{
+                        eventsScanned += 1
                         //print ("Adding notificaiton \(bandName) Date provided is \(alertTime)")
                         if (startTime.0.isZero == false && bandName.0.isEmpty == false && typeField.isEmpty == false){
                             
@@ -466,8 +500,12 @@ class localNoticationHandler {
                             }
                             
                             // TIMEZONE FIX: Recalculate alert time using CURRENT timezone, not stored timeIndex
-                            // This ensures the notification fires at the correct local time
-                            let recalculatedTimeIndex = calculateTimeIndexForAlert(date: dateValue, time: startTimeValue)
+                            // Fall back to the dictionary key (authoritative SQLite timeIndex) when parse fails.
+                            var recalculatedTimeIndex = calculateTimeIndexForAlert(date: dateValue, time: startTimeValue)
+                            if recalculatedTimeIndex == -1 {
+                                recalculatedTimeIndex = startTime.0
+                                parseFallbackUsed += 1
+                            }
                             
                             // Skip if we couldn't parse the time
                             if recalculatedTimeIndex == -1 {
@@ -479,17 +517,30 @@ class localNoticationHandler {
                             let addToNoticication = willAddToNotifications(bandName.0, eventType: eventTypeValue, startTime: startTimeValue, location:locationValue)
                             
                             if (addToNoticication == true){
+                                eventsEligible += 1
                                 let compareResult = alertTime.compare(NSDate() as Date)
                                 if compareResult == ComparisonResult.orderedDescending {
                                     getAlertMessage(bandName.0, indexValue: alertTime as Date)
+                                    let beforeCount = alertTracker.count
                                     addNotification(message: alertTextMessage, showTime: alertTime)
-
+                                    if alertTracker.count > beforeCount {
+                                        alertsScheduled += 1
+                                    }
+                                } else {
+                                    skippedPast += 1
+                                    if bandName.0 == "Dirt" {
+                                        print("🔔 [LOCAL_ALERTS] Dirt skipped — show already passed (show=\(alertTime), now=\(Date()))")
+                                    }
                                 }
+                            } else if bandName.0 == "Dirt" {
+                                let priority = SQLitePriorityManager.shared.getPriority(for: bandName.0)
+                                print("🔔 [LOCAL_ALERTS] Dirt not eligible — type=\(eventTypeValue) priority=\(priority) shows=\(getAlertForShowsValue()) mustSee=\(getMustSeeAlertValue())")
                             }
                         }
                     }
                 }
             }
+        print("🔔 [LOCAL_ALERTS] addNotifications summary: bands=\(bandCount) scanned=\(eventsScanned) eligible=\(eventsEligible) scheduled=\(alertsScheduled) skippedPast=\(skippedPast) parseFallback=\(parseFallbackUsed)")
         // ✅ DEADLOCK FIX: Removed closing brace of scheduleQueue.sync block
     }
     
@@ -525,6 +576,8 @@ class localNoticationHandler {
                 UNUserNotificationCenter.current().add(request)
                 
                 print ("sendLocalAlert! Adding alert \(message) for alert at \(alertTimeInSeconds) -n\(getMinBeforeAlertValue())")
+            } else if message.contains("Dirt") {
+                print("🔔 [LOCAL_ALERTS] Dirt alert skipped — lead time already passed (seconds=\(alertTimeInSeconds))")
             }
         }
         
@@ -560,6 +613,7 @@ class localNoticationHandler {
             "yyyy-MM-dd HH:mm",
             "yyyy-MM-dd H:mm",
             "yyyy-MM-dd h:mm a",
+            "yyyy-MM-dd h:mma",
             "yyyy-M-d HH:mm",
             "M/d/yyyy HH:mm",      // Single digit month/day + 24-hour (e.g., "1/26/2026 15:00")
             "MM/dd/yyyy HH:mm",    // Padded + 24-hour (e.g., "01/26/2026 15:00")
@@ -567,6 +621,8 @@ class localNoticationHandler {
             "MM/dd/yyyy H:mm",     // Padded date + single digit hour
             "M/d/yyyy h:mm a",     // 12-hour with AM/PM
             "MM/dd/yyyy h:mm a",   // Padded + 12-hour with AM/PM
+            "M/d/yyyy h:mma",      // 12-hour without space before AM/PM (e.g., "8/3/2026 2:40pm")
+            "yyyy-MM-dd h:mma",
         ]
         
         for format in formats {

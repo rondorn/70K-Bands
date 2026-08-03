@@ -202,6 +202,42 @@ func getDocumentsDirectory() -> NSString {
     return FilePaths.getDocumentsDirectory()
 }
 
+/// Reads the festival event year from memory or cached pointer file only — never clears caches.
+/// Use for alert rebuild gates instead of `getPointerUrlData`, which can wipe schedule data on pointer mismatch.
+func getCachedPointerEventYear() -> Int {
+    let pointerIndex = getScheduleUrl()
+    let cacheKey = "\(pointerIndex):eventYear"
+    var yearString = ""
+    storePointerLock.sync {
+        if let cached = cacheVariables.storePointerData[cacheKey], !cached.isEmpty {
+            yearString = cached
+        } else if let current = cacheVariables.storePointerData["Current:eventYear"], !current.isEmpty {
+            yearString = current
+        }
+    }
+    if yearString.isEmpty {
+        let cachedPointerFile = FilePaths.cachedPointerFile
+        if FileManager.default.fileExists(atPath: cachedPointerFile),
+           let cachedData = try? String(contentsOfFile: cachedPointerFile, encoding: .utf8) {
+            var pointerValues: [String: [String: String]] = [:]
+            pointerValues = readPointDataOptimized(
+                dataArray: cachedData.components(separatedBy: "\n"),
+                pointerValues: pointerValues,
+                pointerIndex: pointerIndex,
+                targetKeyValue: "eventYear"
+            )
+            yearString = pointerValues[pointerIndex]?["eventYear"]
+                ?? pointerValues["Current"]?["eventYear"]
+                ?? pointerValues["Default"]?["eventYear"]
+                ?? ""
+        }
+    }
+    if let year = Int(yearString.trimmingCharacters(in: .whitespacesAndNewlines)), year > 2000 {
+        return year
+    }
+    return eventYear > 0 ? eventYear : 0
+}
+
 /// Retrieves pointer URL data for a given key, using cache if available, otherwise fetching and parsing remote data.
 /// Handles special logic for the "eventYear" key with robust fallback mechanisms.
 /// - Parameter keyValue: The key for which to retrieve pointer data.

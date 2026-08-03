@@ -2082,6 +2082,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @objc func refreshAlerts(){
 
+        if BackgroundWorkMonitor.shared.shouldSuppressRefreshAlertsObserver() {
+            return
+        }
+
         // REENTRANCY GUARD:
         // getPointerUrlData(...) can clear data and synchronously trigger observers that call refreshAlerts again.
         // Without this guard we can infinite-recurse on startup and stack-overflow.
@@ -2107,8 +2111,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // CURRENT YEAR ONLY:
         // If the user is browsing a past year, skip notification generation.
-        let currentYearFromPointer = Int(getPointerUrlData(keyValue: "eventYear")) ?? eventYear
-        if eventYear != currentYearFromPointer {
+        let currentYearFromPointer = getCachedPointerEventYear()
+        if eventYear > 0, currentYearFromPointer > 0, eventYear != currentYearFromPointer {
             print("🚫 [ALERTS] refreshAlerts: Skipping alert regeneration - non-current year selected (eventYear=\(eventYear), current=\(currentYearFromPointer))")
             return
         }
@@ -6484,6 +6488,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 // Fake bands (like "All Star Jam") are filtered in UI display logic, not deleted from database
                 print("🧹 [CLEANUP] Skipping orphaned band cleanup - bands and events are separate entities")
                 
+                UserDefaults.standard.set(defaultStorageUrl, forKey: "LastUsedPointerUrl")
+                print("🔄 [UNIFIED_REFRESH] Updated LastUsedPointerUrl to '\(defaultStorageUrl)'")
+                
                 // Now update the display on main thread (images may fill in as the map updates)
                 DispatchQueue.main.async {
                     print("🎉 [UNIFIED_REFRESH] All data complete (CSVs + description map) - updating display")
@@ -6496,8 +6503,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     
                     print("✅ [UNIFIED_REFRESH] Display updated - refresh complete")
 
+                    if reason.lowercased().contains("first launch"),
+                       !UserDefaults.standard.bool(forKey: "hasRunBefore") {
+                        UserDefaults.standard.set(true, forKey: "hasRunBefore")
+                        print("[MasterViewController] First launch data load complete — hasRunBefore set")
+                    }
+
                     if !self.schedule.schedulingData.isEmpty {
-                        LocalNotificationRebuildCoordinator.shared.markLocalAlertsPending(reason: "schedule-ready:\(reason)")
+                        LocalNotificationRebuildCoordinator.shared.rebuildWhenScheduleReady(reason: "schedule-ready:\(reason)")
                         self.triggerLaunchBulkDownloadIfScheduleReady(reason: "schedule-ready:\(reason)")
                     }
                 }

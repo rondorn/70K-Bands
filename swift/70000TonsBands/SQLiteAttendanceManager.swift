@@ -324,10 +324,6 @@ class SQLiteAttendanceManager {
                 
                 try db.run(insert)
                 print("✅ SQLiteAttendanceManager: Set attendance for \(bandNameStr) = \(statusValue) (profile: \(currentProfile))")
-                
-                if currentProfile == "Default" {
-                    FirebaseWriteMonitor.shared.markLocalChangePendingSync(context: "attendance:\(index)")
-                }
             } catch {
                 print("❌ SQLiteAttendanceManager: Failed to set attendance: \(error)")
             }

@@ -11,49 +11,103 @@ import Foundation
 final class BackgroundWorkMonitor {
     static let shared = BackgroundWorkMonitor()
 
-    private let queue = DispatchQueue(label: "BackgroundWorkMonitor.queue")
+    private let lock = NSLock()
     private let localAlertsPendingKey = "BackgroundWork.localAlertsPending"
     private let bulkDownloadPendingKey = "BackgroundWork.bulkDownloadPending"
+    private var localAlertsPending = false
+    private var bulkDownloadPending = false
+    /// Prevents UserDefaults.didChangeNotification → refreshAlerts feedback when we persist pending flags.
+    private(set) var suppressRefreshAlertsObserver = false
 
-    private init() {}
+    private init() {
+        localAlertsPending = UserDefaults.standard.bool(forKey: localAlertsPendingKey)
+        bulkDownloadPending = UserDefaults.standard.bool(forKey: bulkDownloadPendingKey)
+    }
 
     func markLocalAlertsPending(context: String) {
-        queue.sync {
-            UserDefaults.standard.set(true, forKey: localAlertsPendingKey)
-            print("🔔 [LOCAL_ALERTS] Marked pending (\(context))")
+        lock.lock()
+        if localAlertsPending {
+            lock.unlock()
+            return
         }
+        localAlertsPending = true
+        lock.unlock()
+
+        print("🔔 [LOCAL_ALERTS] Marked pending (\(context))")
+        persistLocalAlertsPending(true)
     }
 
     func hasPendingLocalAlerts() -> Bool {
-        queue.sync {
-            UserDefaults.standard.bool(forKey: localAlertsPendingKey)
-        }
+        lock.lock()
+        defer { lock.unlock() }
+        return localAlertsPending
     }
 
     func clearLocalAlertsPending() {
-        queue.sync {
-            UserDefaults.standard.set(false, forKey: localAlertsPendingKey)
-            print("🔔 [LOCAL_ALERTS] Cleared pending flag")
+        lock.lock()
+        if !localAlertsPending {
+            lock.unlock()
+            return
         }
+        localAlertsPending = false
+        lock.unlock()
+
+        print("🔔 [LOCAL_ALERTS] Cleared pending flag")
+        persistLocalAlertsPending(false)
+    }
+
+    func shouldSuppressRefreshAlertsObserver() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return suppressRefreshAlertsObserver
     }
 
     func markBulkDownloadPending(context: String) {
-        queue.sync {
-            UserDefaults.standard.set(true, forKey: bulkDownloadPendingKey)
-            print("📦 [BULK_DOWNLOAD] Marked pending (\(context))")
+        lock.lock()
+        if bulkDownloadPending {
+            lock.unlock()
+            return
         }
+        bulkDownloadPending = true
+        lock.unlock()
+
+        print("📦 [BULK_DOWNLOAD] Marked pending (\(context))")
+        persistBulkDownloadPending(true)
     }
 
     func hasPendingBulkDownload() -> Bool {
-        queue.sync {
-            UserDefaults.standard.bool(forKey: bulkDownloadPendingKey)
-        }
+        lock.lock()
+        defer { lock.unlock() }
+        return bulkDownloadPending
     }
 
     func clearBulkDownloadPending() {
-        queue.sync {
-            UserDefaults.standard.set(false, forKey: bulkDownloadPendingKey)
-            print("📦 [BULK_DOWNLOAD] Cleared pending flag")
+        lock.lock()
+        if !bulkDownloadPending {
+            lock.unlock()
+            return
+        }
+        bulkDownloadPending = false
+        lock.unlock()
+
+        print("📦 [BULK_DOWNLOAD] Cleared pending flag")
+        persistBulkDownloadPending(false)
+    }
+
+    /// UserDefaults writes post `didChangeNotification` synchronously — never do that under lock or on a serial queue we might re-enter.
+    private func persistLocalAlertsPending(_ value: Bool) {
+        DispatchQueue.main.async {
+            self.suppressRefreshAlertsObserver = true
+            UserDefaults.standard.set(value, forKey: self.localAlertsPendingKey)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                self.suppressRefreshAlertsObserver = false
+            }
+        }
+    }
+
+    private func persistBulkDownloadPending(_ value: Bool) {
+        DispatchQueue.global(qos: .utility).async {
+            UserDefaults.standard.set(value, forKey: self.bulkDownloadPendingKey)
         }
     }
 }

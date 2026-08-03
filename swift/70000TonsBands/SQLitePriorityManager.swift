@@ -248,8 +248,20 @@ class SQLitePriorityManager {
                 
                 if currentProfile == "Default" {
                     FirebaseWriteMonitor.shared.markLocalChangePendingSync(context: "priority:\(bandNameStr)")
-                } else {
-                    FirebaseSyncTrace.log("SKIP dirty (non-Default profile)", "band=\(bandNameStr) profile=\(currentProfile)")
+                }
+                
+                // Keep Firebase band analytics in sync for live user edits on Default profile.
+                // Bulk/reporting writes still run separately, but this prevents stale values
+                // (e.g., Must -> Might not reflecting until app background/report cycle).
+                if currentProfile == "Default" && AppDelegate.isFirebaseConfigured {
+                    let rankingLabel = resolvePriorityNumber(priority: String(priorityValue))
+                    DispatchQueue.global(qos: .utility).async {
+                        let firebaseBandWriter = firebaseBandDataWrite()
+                        firebaseBandWriter.writeSingleRecord(
+                            bandName: bandNameStr,
+                            ranking: rankingLabel
+                        )
+                    }
                 }
                 
                 // Call completion directly to avoid deadlock with semaphores
