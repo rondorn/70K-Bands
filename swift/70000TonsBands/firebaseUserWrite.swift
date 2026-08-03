@@ -70,7 +70,7 @@ class firebaseUserWrite {
 
             let workItem = DispatchWorkItem { [weak self] in
                 self?.pendingWorkItem = nil
-                self.performWrite(markDedupBeforeWrite: true)
+                self?.performWrite(markDedupBeforeWrite: true)
             }
             self.pendingWorkItem = workItem
             self.schedulerQueue.asyncAfter(deadline: .now() + .milliseconds(delayMs), execute: workItem)
