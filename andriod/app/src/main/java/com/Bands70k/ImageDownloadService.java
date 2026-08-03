@@ -660,55 +660,28 @@ public class ImageDownloadService extends Service {
         }
         
         /**
-         * Performs Firebase reporting in the background.
+         * Performs Firebase reporting — waits for band/show sync to finish before continuing.
          */
         private void performFirebaseReporting() {
             if (!isRunning.get()) return;
-            
+
             try {
                 Log.d(TAG, "Starting Firebase reporting phase");
                 currentTask = "Uploading data to Firebase";
                 currentDetails = "Uploading data to Firebase";
-                // Firebase upload is a single operation - don't show progress indicator (only 1 record)
                 currentTotal.set(1);
                 currentProgress.set(0);
                 updateNotificationStatic(0, 1, "Uploading data to Firebase");
-                // Don't show floating progress for Firebase - it's only 1 record, not worth displaying
-                
-                // CRITICAL FIX: Ensure schedule data is loaded before Firebase reporting
-                // Firebase event upload filters events based on scheduleRecords. If scheduleRecords 
-                // is null/empty, ALL attended events will be filtered out as "unknown" and nothing
-                // will be uploaded. This was causing missing data for Android.
-                if ((BandInfo.scheduleRecords == null || BandInfo.scheduleRecords.isEmpty()) && FileHandler70k.schedule.exists()) {
-                    Log.d(TAG, "⚠️ Firebase reporting: scheduleRecords not loaded, loading from cache first");
-                    try {
-                        scheduleInfo schedule = new scheduleInfo();
-                        // Parse cached schedule file to populate scheduleRecords
-                        BandInfo.scheduleRecords = schedule.ParseScheduleCSV();
-                        Log.d(TAG, "✅ Firebase reporting: scheduleRecords loaded from cache, size: " + 
-                                (BandInfo.scheduleRecords != null ? BandInfo.scheduleRecords.size() : "null"));
-                    } catch (Exception e) {
-                        Log.e(TAG, "❌ Firebase reporting: Failed to load schedule from cache: " + e.getMessage());
-                    }
-                } else {
-                    Log.d(TAG, "✅ Firebase reporting: scheduleRecords already loaded, size: " + 
-                            (BandInfo.scheduleRecords != null ? BandInfo.scheduleRecords.size() : "null"));
-                }
-                
-                // Perform Firebase writes
-                FireBaseAsyncBandEventWrite firebaseTask = new FireBaseAsyncBandEventWrite();
-                firebaseTask.execute();
-                
-                // Wait a bit for Firebase operations to complete
-                Thread.sleep(5000);
-                
+
+                FirebaseSyncCoordinator.performFirebaseSyncAndAwait(
+                        FirebaseSyncCoordinator.Trigger.BULK_DOWNLOAD);
+
                 Log.d(TAG, "Firebase reporting phase completed");
                 tasksCompleted.incrementAndGet();
                 currentTask = "Complete";
                 currentDetails = "All downloads completed";
-                // Don't show completion for Firebase - it's only 1 record, not worth displaying
                 updateNotificationStatic(1, 1, "Uploading data to Firebase");
-                
+
             } catch (Exception e) {
                 Log.e(TAG, "Error in Firebase reporting", e);
             }

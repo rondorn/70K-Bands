@@ -32,7 +32,12 @@ public final class FirebaseUserWriteScheduler {
     }
 
     private void scheduleInternal(boolean immediate) {
-        if (staticVariables.isTestingEnv || staticVariables.userID.isEmpty()) {
+        if (staticVariables.isTestingEnv) {
+            Log.d("FirebaseUserWriteScheduler", "Skipping user write — Testing pointer environment disables RTDB writes");
+            return;
+        }
+        if (staticVariables.userID.isEmpty()) {
+            Log.w("FirebaseUserWriteScheduler", "Skipping user write — userID empty");
             return;
         }
 

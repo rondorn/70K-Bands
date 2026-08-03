@@ -53,74 +53,84 @@ public class FireBaseBandDataWrite {
 
         Log.d("FireBaseBandDataWrite", "In write routine");
 
-        if (staticVariables.isTestingEnv == false && staticVariables.userID.isEmpty() == false) {
-            if (!FirebaseWriteMonitor.shouldRunBandSync()) {
-                Log.d("FireBaseBandDataWrite", "No pending band sync — skipping bandData upload");
-                return 0;
+        if (staticVariables.isTestingEnv) {
+            Log.d("FireBaseBandDataWrite", "Skipping band write — Testing pointer environment disables RTDB writes");
+            return 0;
+        }
+        if (staticVariables.userID.isEmpty()) {
+            Log.w("FireBaseBandDataWrite", "Skipping band write — userID empty");
+            return 0;
+        }
+
+        if (!FirebaseWriteMonitor.shouldRunBandSync()) {
+            Log.d("FireBaseBandDataWrite", "No pending band sync — skipping bandData upload");
+            return 0;
+        }
+
+        int storageYear = FirebaseConnectionHelper.firebaseStorageEventYear();
+        if (storageYear <= 0) {
+            Log.e("FireBaseBandDataWrite", "BLOCKED - pointer Current event year unavailable; refusing invalid write");
+            return 0;
+        }
+
+        buildBandRankArray(storageYear);
+
+        if (bandRanks.isEmpty()) {
+            Log.e("FireBaseBandDataWrite", "BLOCKED - no lineup bands for pointer year " + storageYear + "; refusing invalid write");
+            return 0;
+        }
+
+        if (checkIfDataHasChanged() == true) {
+            String eventYear = String.valueOf(storageYear);
+            DatabaseReference bandDataRef = FirebaseConnectionHelper.databaseReference()
+                    .child("bandData/").child(staticVariables.userID).child(eventYear);
+            
+            Map<String, Object> batchUpdate = new HashMap<>();
+            
+            for (String bandName : bandRanks.keySet()) {
+                HashMap<String, Object> bandData = new HashMap<>();
+
+                String ranking = bandRanks.get(bandName);
+                String sanitizedBandName = sanitizeBandNameForFirebase(bandName);
+
+                bandData.put("bandName", bandName);
+                bandData.put("sanitizedKey", sanitizedBandName);
+                bandData.put("ranking", ranking);
+                bandData.put("userID", staticVariables.userID);
+                bandData.put("year", eventYear);
+
+                batchUpdate.put(sanitizedBandName, bandData);
             }
-
-            int storageYear = FirebaseConnectionHelper.firebaseStorageEventYear();
-            if (storageYear <= 0) {
-                Log.e("FireBaseBandDataWrite", "BLOCKED - pointer Current event year unavailable; refusing invalid write");
-                return 0;
-            }
-
-            buildBandRankArray(storageYear);
-
-            if (bandRanks.isEmpty()) {
-                Log.e("FireBaseBandDataWrite", "BLOCKED - no lineup bands for pointer year " + storageYear + "; refusing invalid write");
-                return 0;
-            }
-
-            if (checkIfDataHasChanged() == true) {
-                String eventYear = String.valueOf(storageYear);
-                DatabaseReference bandDataRef = FirebaseConnectionHelper.databaseReference()
-                        .child("bandData/").child(staticVariables.userID).child(eventYear);
-                
-                Map<String, Object> batchUpdate = new HashMap<>();
-                
-                for (String bandName : bandRanks.keySet()) {
-                    HashMap<String, Object> bandData = new HashMap<>();
-
-                    String ranking = bandRanks.get(bandName);
-                    String sanitizedBandName = sanitizeBandNameForFirebase(bandName);
-
-                    bandData.put("bandName", bandName);
-                    bandData.put("sanitizedKey", sanitizedBandName);
-                    bandData.put("ranking", ranking);
-                    bandData.put("userID", staticVariables.userID);
-                    bandData.put("year", eventYear);
-
-                    batchUpdate.put(sanitizedBandName, bandData);
-                }
-                
-                Log.d("FireBaseBandDataWrite", "Sending full lineup (" + batchUpdate.size()
-                        + " bands) at bandData/" + staticVariables.userID + "/" + eventYear
-                        + " (uiEventYear=" + staticVariables.eventYear + ")");
-                try {
-                    bandDataRef.setValue(batchUpdate, (DatabaseError error, DatabaseReference ref) -> {
-                        if (error != null) {
-                            Log.e("FireBaseBandDataWrite", "Batch write failed: " + error.getMessage());
-                            FirebaseWriteMonitor.recordWriteFailure("band_batch");
-                        } else {
-                            Log.d("FireBaseBandDataWrite", "Batch write successful for pointer year " + eventYear);
-                            FirebaseWriteMonitor.recordWriteSuccess("band_batch");
-                        }
-                        if (onComplete != null) {
-                            onComplete.run();
-                        }
-                    });
-                    return 1;
-                } catch (Exception error){
-                    Log.e("FireBaseBandDataWrite", "Batch write exception: " + error.toString());
-                    FirebaseWriteMonitor.recordWriteFailure("band_batch_exception");
+            
+            Log.d("FireBaseBandDataWrite", "Sending full lineup (" + batchUpdate.size()
+                    + " bands) at bandData/" + staticVariables.userID + "/" + eventYear
+                    + " (uiEventYear=" + staticVariables.eventYear + ")");
+            try {
+                FirebaseConnectionHelper.goOnline("band_batch_write_start");
+                bandDataRef.setValue(batchUpdate, (DatabaseError error, DatabaseReference ref) -> {
+                    if (error != null) {
+                        Log.e("FireBaseBandDataWrite", "Batch write failed: " + error.getMessage());
+                        FirebaseWriteMonitor.recordWriteFailure("band_batch");
+                    } else {
+                        Log.d("FireBaseBandDataWrite", "Batch write successful for pointer year " + eventYear);
+                        FirebaseWriteMonitor.recordWriteSuccess("band_batch");
+                    }
                     if (onComplete != null) {
                         onComplete.run();
                     }
-                    return 1;
+                });
+                return 1;
+            } catch (Exception error){
+                Log.e("FireBaseBandDataWrite", "Batch write exception: " + error.toString());
+                FirebaseWriteMonitor.recordWriteFailure("band_batch_exception");
+                if (onComplete != null) {
+                    onComplete.run();
                 }
+                return 1;
             }
         }
+
+        Log.d("FireBaseBandDataWrite", "Band data unchanged — no Firebase write");
         return 0;
     }
 

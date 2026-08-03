@@ -6,22 +6,24 @@ import java.util.concurrent.atomic.AtomicInteger;
 import android.util.Log;
 
 /**
- * Modern replacement for AsyncTask - writes band and event data to Firebase in the background.
- * Uses ThreadManager instead of deprecated AsyncTask.
+ * Writes band and event data to Firebase on a background thread.
+ * Orchestration (in-flight lock, tiered jitter, entry points) lives in {@link FirebaseSyncCoordinator}.
  */
 public class FireBaseAsyncBandEventWrite {
     private static final String TAG = "FireBaseAsyncBandEventWrite";
-    private static final int MAX_JITTER_MS = 20_000;
 
-    private static void waitForBandEventSyncJitter() {
+    private static void waitForBandEventSyncJitter(int maxJitterMs) {
+        if (maxJitterMs <= 0) {
+            return;
+        }
         if (staticVariables.userID == null || staticVariables.userID.isEmpty()) {
             return;
         }
-        int delayMs = FirebaseConnectionHelper.jitterDelayMs(staticVariables.userID, MAX_JITTER_MS);
+        int delayMs = FirebaseConnectionHelper.jitterDelayMs(staticVariables.userID, maxJitterMs);
         if (delayMs <= 0) {
             return;
         }
-        Log.d(TAG, "Waiting " + delayMs + "ms deterministic jitter before band/show sync");
+        Log.d(TAG, "Waiting " + delayMs + "ms deterministic jitter (cap=" + maxJitterMs + "ms) before band/show sync");
         try {
             Thread.sleep(delayMs);
         } catch (InterruptedException e) {
@@ -31,36 +33,56 @@ public class FireBaseAsyncBandEventWrite {
     }
 
     /**
-     * Executes the Firebase band and event write operations in the background.
-     * @return Future representing the background task.
+     * @deprecated Use {@link FirebaseSyncCoordinator#startFirebaseSyncIfNeeded}.
      */
+    @Deprecated
     public Future<?> execute() {
-        return ThreadManager.getInstance().executeNetwork(this::runBandAndEventWrites);
+        int maxJitterMs = FirebaseSyncCoordinator.computeMaxJitterMs(false);
+        return ThreadManager.getInstance().executeNetwork(() -> runSync(maxJitterMs, null));
     }
 
     /**
-     * Executes the Firebase write operations with callbacks.
-     * @param onComplete Optional callback to run when operation completes.
-     * @return Future representing the background task.
+     * @deprecated Use {@link FirebaseSyncCoordinator#startFirebaseSyncIfNeeded}.
      */
+    @Deprecated
     public Future<?> execute(Runnable onComplete) {
+        int maxJitterMs = FirebaseSyncCoordinator.computeMaxJitterMs(false);
         return ThreadManager.getInstance().executeNetworkWithCallbacks(
-            this::runBandAndEventWrites,
+            () -> runSync(maxJitterMs, onComplete),
             null,
-            onComplete
+            null
         );
     }
 
-    private void runBandAndEventWrites() {
-        if (!FirebaseWriteMonitor.shouldRunFullSync()) {
-            Log.d(TAG, "No pending Firebase sync state — skipping band/event upload");
-            FirebaseConnectionHelper.goOffline("band_event_sync_noop");
+    /**
+     * Runs band/show sync on the calling thread. Invokes {@code onAllComplete} when fully finished
+     * (including {@link FirebaseWriteMonitor#finalizeFullSyncAttempt()}).
+     */
+    void runSync(int maxJitterMs, Runnable onAllComplete) {
+        Runnable signalComplete = () -> {
+            if (onAllComplete != null) {
+                onAllComplete.run();
+            }
+        };
+
+        if (staticVariables.isTestingEnv) {
+            Log.d(TAG, "Skipping band/show Firebase sync — Testing pointer environment disables RTDB writes");
+            FirebaseConnectionHelper.goOffline("band_event_sync_testing_env");
+            signalComplete.run();
             return;
         }
 
-        waitForBandEventSyncJitter();
+        if (!FirebaseWriteMonitor.shouldRunFullSync()) {
+            Log.d(TAG, "No pending Firebase sync state — skipping band/event upload");
+            FirebaseConnectionHelper.goOffline("band_event_sync_noop");
+            signalComplete.run();
+            return;
+        }
+
+        waitForBandEventSyncJitter(maxJitterMs);
         if (Thread.currentThread().isInterrupted()) {
             FirebaseConnectionHelper.goOffline("band_event_sync_jitter_interrupted");
+            signalComplete.run();
             return;
         }
 
@@ -77,6 +99,7 @@ public class FireBaseAsyncBandEventWrite {
                         Thread.currentThread().interrupt();
                     }
                     FirebaseWriteMonitor.finalizeFullSyncAttempt();
+                    signalComplete.run();
                 });
             }
         };
@@ -99,8 +122,17 @@ public class FireBaseAsyncBandEventWrite {
 
         pendingCallbacks.set(bandCallbacks + eventCallbacks);
         if (pendingCallbacks.get() == 0) {
+            if (FirebaseWriteMonitor.shouldRunBandSync()) {
+                Log.e(TAG, "Band sync expected but produced no Firebase callbacks");
+                FirebaseWriteMonitor.recordWriteFailure("band_sync_no_callbacks");
+            }
+            if (FirebaseWriteMonitor.shouldRunShowSync()) {
+                Log.e(TAG, "Show sync expected but produced no Firebase callbacks");
+                FirebaseWriteMonitor.recordWriteFailure("show_sync_no_callbacks");
+            }
             FirebaseConnectionHelper.goOffline("band_event_sync_noop");
             FirebaseWriteMonitor.finalizeFullSyncAttempt();
+            signalComplete.run();
         }
     }
 }

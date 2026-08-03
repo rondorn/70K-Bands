@@ -24,7 +24,12 @@ public class FirebaseUserWrite {
      * Opens the RTDB connection lazily and closes it after the write completes.
      */
     public void performScheduledWrite() {
-        if (staticVariables.isTestingEnv || staticVariables.userID.isEmpty()) {
+        if (staticVariables.isTestingEnv) {
+            Log.d("FirebaseUserWrite", "Skipping user write — Testing pointer environment disables RTDB writes");
+            return;
+        }
+        if (staticVariables.userID.isEmpty()) {
+            Log.w("FirebaseUserWrite", "Skipping user write — userID empty");
             return;
         }
 
@@ -48,14 +53,7 @@ public class FirebaseUserWrite {
 
         DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy", Locale.US);
         String dateOnly = formatter.format(new Date());
-        String currentUserdata = country + '-' + language + '-' + version70k + dateOnly;
-
-        if (currentUserdata.equals(staticVariables.userDataForCompareAndWriteBlock)) {
-            Log.d("FirebaseUserWrite", "NOT Writing user data — dedup match");
-            return;
-        }
-
-        staticVariables.userDataForCompareAndWriteBlock = currentUserdata;
+        staticVariables.userDataForCompareAndWriteBlock = country + '-' + language + '-' + version70k + dateOnly;
 
         int activeProfileCount = SQLiteProfileManager.getInstance().getAllProfiles().size();
 
@@ -74,6 +72,7 @@ public class FirebaseUserWrite {
         batchUpdate.put(staticVariables.userID, userData);
 
         Log.d("FirebaseUserWrite", "Writing user data " + userData);
+        FirebaseConnectionHelper.goOnline("user_write_start");
         database.child("userData/").updateChildren(batchUpdate, (DatabaseError error, DatabaseReference ref) -> {
             if (error != null) {
                 Log.e("FirebaseUserWrite", "Batch write failed: " + error.getMessage());

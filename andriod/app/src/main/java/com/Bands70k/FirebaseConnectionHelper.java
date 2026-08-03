@@ -18,6 +18,15 @@ public final class FirebaseConnectionHelper {
         return FirebaseDatabase.getInstance().getReference();
     }
 
+    public static void goOnline(String reason) {
+        try {
+            FirebaseDatabase.getInstance().goOnline();
+            Log.d("FirebaseConnectionHelper", "goOnline (" + reason + ")");
+        } catch (Exception error) {
+            Log.w("FirebaseConnectionHelper", "goOnline failed (" + reason + "): " + error.getMessage());
+        }
+    }
+
     public static void goOffline(String reason) {
         try {
             FirebaseDatabase.getInstance().goOffline();
