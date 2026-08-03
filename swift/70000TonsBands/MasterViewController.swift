@@ -2082,6 +2082,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     @objc func refreshAlerts(){
 
+        if BackgroundWorkMonitor.shared.shouldSuppressRefreshAlertsObserver() {
+            return
+        }
+
         // REENTRANCY GUARD:
         // getPointerUrlData(...) can clear data and synchronously trigger observers that call refreshAlerts again.
         // Without this guard we can infinite-recurse on startup and stack-overflow.
@@ -2107,15 +2111,22 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // CURRENT YEAR ONLY:
         // If the user is browsing a past year, skip notification generation.
-        let currentYearFromPointer = Int(getPointerUrlData(keyValue: "eventYear")) ?? eventYear
-        if eventYear != currentYearFromPointer {
+        let currentYearFromPointer = getCachedPointerEventYear()
+        if eventYear > 0, currentYearFromPointer > 0, eventYear != currentYearFromPointer {
             print("🚫 [ALERTS] refreshAlerts: Skipping alert regeneration - non-current year selected (eventYear=\(eventYear), current=\(currentYearFromPointer))")
             return
         }
 
         print("FCM alert")
-        LocalNotificationRebuildCoordinator.shared.requestRebuild(reason: "masterView.refreshAlerts", debounceSeconds: 1.0)
+        LocalNotificationRebuildCoordinator.shared.markLocalAlertsPending(reason: "masterView.refreshAlerts")
     
+    }
+
+    /// Kick off image/note prefetch when schedule data is present (non-first launch).
+    private func triggerLaunchBulkDownloadIfScheduleReady(reason: String) {
+        guard !schedule.schedulingData.isEmpty else { return }
+        guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else { return }
+        appDelegate.startBulkDownloadOnLaunchIfNeeded(reason: reason)
     }
     
     // Centralized refresh method for band list
@@ -6339,6 +6350,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             // Update UI on main thread with database data
             DispatchQueue.main.async {
                 self.refreshBandList(reason: "Subsequent launch - immediate database display", skipDataLoading: true)
+                self.triggerLaunchBulkDownloadIfScheduleReady(reason: "Subsequent launch - immediate display")
             }
             
             // Step 2: Launch parallel download threads (with throttling check)
@@ -6476,6 +6488,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 // Fake bands (like "All Star Jam") are filtered in UI display logic, not deleted from database
                 print("🧹 [CLEANUP] Skipping orphaned band cleanup - bands and events are separate entities")
                 
+                UserDefaults.standard.set(defaultStorageUrl, forKey: "LastUsedPointerUrl")
+                print("🔄 [UNIFIED_REFRESH] Updated LastUsedPointerUrl to '\(defaultStorageUrl)'")
+                
                 // Now update the display on main thread (images may fill in as the map updates)
                 DispatchQueue.main.async {
                     print("🎉 [UNIFIED_REFRESH] All data complete (CSVs + description map) - updating display")
@@ -6487,6 +6502,17 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     self.refreshBandList(reason: "\(reason) - all data refreshed")
                     
                     print("✅ [UNIFIED_REFRESH] Display updated - refresh complete")
+
+                    if reason.lowercased().contains("first launch"),
+                       !UserDefaults.standard.bool(forKey: "hasRunBefore") {
+                        UserDefaults.standard.set(true, forKey: "hasRunBefore")
+                        print("[MasterViewController] First launch data load complete — hasRunBefore set")
+                    }
+
+                    if !self.schedule.schedulingData.isEmpty {
+                        LocalNotificationRebuildCoordinator.shared.rebuildWhenScheduleReady(reason: "schedule-ready:\(reason)")
+                        self.triggerLaunchBulkDownloadIfScheduleReady(reason: "schedule-ready:\(reason)")
+                    }
                 }
             }
         }
@@ -6533,9 +6559,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     private func applyPointerYearAfterDownload(reason: String) {
-        let pointerYear = getPointerUrlData(keyValue: "eventYear")
+        let pointerYearString: String
+        if let pointerYear = pointerConfigCurrentEventYearInt() {
+            pointerYearString = String(pointerYear)
+        } else {
+            pointerYearString = getPointerUrlData(keyValue: "eventYear")
+        }
         YearManagementService.shared.applyYearAfterPointerUpdate(
-            pointerEventYear: pointerYear,
+            pointerEventYear: pointerYearString,
             reason: reason
         )
         DispatchQueue.main.async {

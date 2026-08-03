@@ -1,12 +1,14 @@
 import Foundation
 
 /// Tracks Firebase write outcomes and determines when a full resync is needed.
-/// The failure flag persists until a full sync is triggered.
+/// Band and show dirty flags are tracked separately so a band edit does not touch showData.
 final class FirebaseWriteMonitor {
     static let shared = FirebaseWriteMonitor()
 
     private let queue = DispatchQueue(label: "FirebaseWriteMonitor.queue")
-    private let dirtyFlagKey = "FirebaseWriteMonitor.hasPendingLocalChanges"
+    private let legacyDirtyFlagKey = "FirebaseWriteMonitor.hasPendingLocalChanges"
+    private let bandDirtyFlagKey = "FirebaseWriteMonitor.hasPendingBandChanges"
+    private let showDirtyFlagKey = "FirebaseWriteMonitor.hasPendingShowChanges"
     private let failureFlagKey = "FirebaseWriteMonitor.hasPendingFailures"
     private let failureCountKey = "FirebaseWriteMonitor.failureCount"
     private let successCountKey = "FirebaseWriteMonitor.successCount"
@@ -14,7 +16,20 @@ final class FirebaseWriteMonitor {
     private let fullSyncSawSuccessKey = "FirebaseWriteMonitor.fullSyncSawSuccess"
     private let fullSyncHadFailureKey = "FirebaseWriteMonitor.fullSyncHadFailure"
 
-    private init() {}
+    private init() {
+        migrateLegacyDirtyFlagIfNeeded()
+    }
+
+    private func migrateLegacyDirtyFlagIfNeeded() {
+        queue.sync {
+            let defaults = UserDefaults.standard
+            if defaults.bool(forKey: legacyDirtyFlagKey) {
+                defaults.set(true, forKey: bandDirtyFlagKey)
+                defaults.set(true, forKey: showDirtyFlagKey)
+                defaults.set(false, forKey: legacyDirtyFlagKey)
+            }
+        }
+    }
 
     func recordWriteSuccess(context: String) {
         queue.async {
@@ -24,6 +39,15 @@ final class FirebaseWriteMonitor {
             if defaults.bool(forKey: self.fullSyncInProgressKey) {
                 defaults.set(true, forKey: self.fullSyncSawSuccessKey)
             }
+            if context.hasPrefix("band_batch") {
+                defaults.set(false, forKey: self.bandDirtyFlagKey)
+                FirebaseSyncTrace.log("SUCCESS band_batch — cleared bandDirty")
+            }
+            if context.hasPrefix("event_batch") {
+                defaults.set(false, forKey: self.showDirtyFlagKey)
+                FirebaseSyncTrace.log("SUCCESS event_batch — cleared showDirty")
+            }
+            FirebaseSyncTrace.log("WRITE_SUCCESS", context)
             print("✅ [FIREBASE_MONITOR] Success recorded (\(context)). Total successes: \(current + 1)")
         }
     }
@@ -38,27 +62,50 @@ final class FirebaseWriteMonitor {
                 defaults.set(true, forKey: self.fullSyncHadFailureKey)
             }
             print("❌ [FIREBASE_MONITOR] Failure recorded (\(context)). Total failures: \(current + 1). Full sync required.")
+            FirebaseSyncTrace.log("WRITE_FAILURE", context)
         }
     }
     
     /// Marks that local data changed and should be fully synced later.
-    /// This persists across app restarts and is independent from write-failure callbacks.
     func markLocalChangePendingSync(context: String) {
-        queue.async {
-            UserDefaults.standard.set(true, forKey: self.dirtyFlagKey)
-            print("📝 [FIREBASE_MONITOR] Local change marked dirty (\(context)). Full sync required.")
+        queue.sync {
+            let defaults = UserDefaults.standard
+            if context.hasPrefix("priority:") {
+                defaults.set(true, forKey: self.bandDirtyFlagKey)
+                print("📝 [FIREBASE_MONITOR] Band change marked dirty (\(context)).")
+                FirebaseSyncTrace.log("DIRTY band", "\(context) — background app or return to foreground to sync")
+            } else if context.hasPrefix("attendance:") || context.hasPrefix("attendance_clear") {
+                defaults.set(true, forKey: self.showDirtyFlagKey)
+                print("📝 [FIREBASE_MONITOR] Show change marked dirty (\(context)).")
+                FirebaseSyncTrace.log("DIRTY show", context)
+            } else {
+                defaults.set(true, forKey: self.bandDirtyFlagKey)
+                defaults.set(true, forKey: self.showDirtyFlagKey)
+                print("📝 [FIREBASE_MONITOR] Local change marked dirty (\(context)).")
+            }
         }
     }
     
-    func hasPendingLocalChanges() -> Bool {
+    func hasPendingBandChanges() -> Bool {
         var result = false
         queue.sync {
-            result = UserDefaults.standard.bool(forKey: dirtyFlagKey)
+            result = UserDefaults.standard.bool(forKey: bandDirtyFlagKey)
         }
         return result
     }
+    
+    func hasPendingShowChanges() -> Bool {
+        var result = false
+        queue.sync {
+            result = UserDefaults.standard.bool(forKey: showDirtyFlagKey)
+        }
+        return result
+    }
+    
+    func hasPendingLocalChanges() -> Bool {
+        return hasPendingBandChanges() || hasPendingShowChanges()
+    }
 
-    /// Returns true if a full Firebase resync should run.
     func hasPendingFailures() -> Bool {
         var result = false
         queue.sync {
@@ -67,12 +114,18 @@ final class FirebaseWriteMonitor {
         return result
     }
     
-    /// Returns true when either local changes are pending or failures were observed.
     func shouldRunFullSync() -> Bool {
         return hasPendingLocalChanges() || hasPendingFailures()
     }
+    
+    func shouldRunBandSync() -> Bool {
+        return hasPendingBandChanges() || hasPendingFailures()
+    }
+    
+    func shouldRunShowSync() -> Bool {
+        return hasPendingShowChanges() || hasPendingFailures()
+    }
 
-    /// Marks the beginning of a full-sync attempt.
     func beginFullSyncAttempt() {
         queue.async {
             let defaults = UserDefaults.standard
@@ -83,8 +136,6 @@ final class FirebaseWriteMonitor {
         }
     }
     
-    /// Finalizes a full-sync attempt.
-    /// Pending state is cleared only when at least one write succeeded and no writes failed.
     @discardableResult
     func finalizeFullSyncAttempt() -> Bool {
         var cleared = false
@@ -94,11 +145,10 @@ final class FirebaseWriteMonitor {
             let hadFailure = defaults.bool(forKey: self.fullSyncHadFailureKey)
             
             if sawSuccess && !hadFailure {
-                defaults.set(false, forKey: self.dirtyFlagKey)
                 defaults.set(false, forKey: self.failureFlagKey)
                 defaults.set(0, forKey: self.failureCountKey)
                 cleared = true
-                print("✅ [FIREBASE_MONITOR] Full sync succeeded. Cleared pending dirty/failure flags.")
+                print("✅ [FIREBASE_MONITOR] Full sync succeeded. Cleared pending failure flags.")
             } else {
                 print("⚠️ [FIREBASE_MONITOR] Full sync not confirmed successful (sawSuccess=\(sawSuccess), hadFailure=\(hadFailure)). Keeping pending flags.")
             }
@@ -110,12 +160,11 @@ final class FirebaseWriteMonitor {
         return cleared
     }
     
-    /// Force-clears pending-sync state after a known-good full sync trigger.
-    /// Prefer finalizeFullSyncAttempt() for normal flow.
     func clearPendingStateAfterFullSyncTriggered() {
         queue.async {
             let defaults = UserDefaults.standard
-            defaults.set(false, forKey: self.dirtyFlagKey)
+            defaults.set(false, forKey: self.bandDirtyFlagKey)
+            defaults.set(false, forKey: self.showDirtyFlagKey)
             defaults.set(false, forKey: self.failureFlagKey)
             defaults.set(0, forKey: self.failureCountKey)
             print("🔄 [FIREBASE_MONITOR] Cleared pending dirty/failure flags after full sync trigger.")

@@ -471,6 +471,10 @@
 		11B20C441ECDE4EE0031FD3A /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11B20C431ECDE4ED0031FD3A /* UserNotifications.framework */; };
 		11BE68F51A59C45100602EC7 /* webViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11BE68F41A59C45100602EC7 /* webViewController.swift */; };
 		11BEEA0E300141FA004F14F5 /* GoogleService-Info-MMF.plist in Resources */ = {isa = PBXBuildFile; fileRef = 623E8E20310107DE3AB5199E /* GoogleService-Info-MMF.plist */; };
+		11BGWRK22F74C58400F498DE /* BackgroundWorkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11BGWRK12F74C58400F498DE /* BackgroundWorkMonitor.swift */; };
+		11BGWRK32F74C58400F498DE /* BackgroundWorkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11BGWRK12F74C58400F498DE /* BackgroundWorkMonitor.swift */; };
+		11BGWRK42F74C58400F498DE /* BackgroundWorkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11BGWRK12F74C58400F498DE /* BackgroundWorkMonitor.swift */; };
+		11BGWRK52F74C58400F498DE /* BackgroundWorkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11BGWRK12F74C58400F498DE /* BackgroundWorkMonitor.swift */; };
 		11C061ED2F55FDAA0037A875 /* AutoChooseAttendanceWizardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C061EC2F55FDAA0037A875 /* AutoChooseAttendanceWizardView.swift */; };
 		11C061EE2F55FDAA0037A875 /* AutoChooseAttendanceWizardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C061EC2F55FDAA0037A875 /* AutoChooseAttendanceWizardView.swift */; };
 		11C061EF2F55FDAA0037A875 /* AutoChooseAttendanceWizardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C061EC2F55FDAA0037A875 /* AutoChooseAttendanceWizardView.swift */; };
@@ -566,6 +570,15 @@
 		11ED61811A9103C100D29A5B /* UtilityHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ED61801A9103C100D29A5B /* UtilityHandler.swift */; };
 		11ED61821A91105000D29A5B /* UtilityHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ED61801A9103C100D29A5B /* UtilityHandler.swift */; };
 		11F0333E1AB3B26D00AA29B8 /* scheduleHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C8BDC51A7D25E700037F2B /* scheduleHandler.swift */; };
+		11F1A2B32E5A30000000002 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F1A2B32E5A30000000001 /* SceneDelegate.swift */; };
+		11F1A2B32E5A30000000004 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F1A2B32E5A30000000001 /* SceneDelegate.swift */; };
+		11F1A2B32E5A30000000005 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F1A2B32E5A30000000001 /* SceneDelegate.swift */; };
+		11F1A2B32E5A30000000006 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F1A2B32E5A30000000001 /* SceneDelegate.swift */; };
+		11F1CONN3F74C58400F498DE /* FirebaseConnectionHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F1CONN2F74C58400F498DE /* FirebaseConnectionHelper.swift */; };
+		11F1CONN4F74C58400F498DE /* FirebaseConnectionHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F1CONN2F74C58400F498DE /* FirebaseConnectionHelper.swift */; };
+		11F1CONN5F74C58400F498DE /* FirebaseConnectionHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F1CONN2F74C58400F498DE /* FirebaseConnectionHelper.swift */; };
+		11F1CONN6F74C58400F498DE /* FirebaseConnectionHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F1CONN2F74C58400F498DE /* FirebaseConnectionHelper.swift */; };
+		11F1CONN7F74C58400F498DE /* FirebaseConnectionHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F1CONN2F74C58400F498DE /* FirebaseConnectionHelper.swift */; };
 		11FAC0022E5A1C4D006E3596 /* DetailProfileBypassBandNames.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11FAC0012FEF20260507A001 /* DetailProfileBypassBandNames.swift */; };
 		11FAC0032E4D2C5A0074E2F2 /* DetailProfileBypassBandNames.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11FAC0012FEF20260507A001 /* DetailProfileBypassBandNames.swift */; };
 		11FAC0042E4D2C5A0074E2F2 /* DetailProfileBypassBandNames.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11FAC0012FEF20260507A001 /* DetailProfileBypassBandNames.swift */; };
@@ -679,6 +692,7 @@
 		B1C7AD7374833933703C378E /* SwiftUITranslationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111A936C2E4F8FAB00EA4ABD /* SwiftUITranslationHelper.swift */; };
 		B314652515A8A14BDD7006B3 /* SQLiteDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11895B9B2EE4D4F1008CC4A9 /* SQLiteDataManager.swift */; };
 		B3B9B6A68244159AB74975A3 /* ScheduleQRCodeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E8A0112EE8A10008472A3 /* ScheduleQRCodeViewController.swift */; };
+		B3BGWRK62EC6C01E105300CA /* BackgroundWorkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11BGWRK12F74C58400F498DE /* BackgroundWorkMonitor.swift */; };
 		B3C642CB9EC6C01E105300CA /* FirebaseWriteMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D5EA122F74C58400F498DE /* FirebaseWriteMonitor.swift */; };
 		B6068448536BDC6C38AB3B70 /* UILaunchScreen-MDF.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1172EE652E5A3486006E3596 /* UILaunchScreen-MDF.xib */; };
 		B7C547FDF6B7E8F410EBD7D8 /* PortraitFilterSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119C803C2F4CEB5700304A1D /* PortraitFilterSheetView.swift */; };
@@ -891,6 +905,7 @@
 		11AE985220CDFE890007C4E1 /* ShowsAttended.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ShowsAttended.swift; sourceTree = "<group>"; };
 		11B20C431ECDE4ED0031FD3A /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
 		11BE68F41A59C45100602EC7 /* webViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = webViewController.swift; sourceTree = "<group>"; };
+		11BGWRK12F74C58400F498DE /* BackgroundWorkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundWorkMonitor.swift; sourceTree = "<group>"; };
 		11C061EC2F55FDAA0037A875 /* AutoChooseAttendanceWizardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoChooseAttendanceWizardView.swift; sourceTree = "<group>"; };
 		11C62E7B2E64B9EE000D9AF2 /* DataCollectionCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataCollectionCoordinator.swift; sourceTree = "<group>"; };
 		11C62E7C2E64B9EE000D9AF2 /* ScheduleCSVImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleCSVImporter.swift; sourceTree = "<group>"; };
@@ -932,6 +947,8 @@
 		11EB86D02F364100007D5AD0 /* about-robert-photo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "about-robert-photo.png"; sourceTree = "<group>"; };
 		11EB86E02F364200007D5AD0 /* about-leah-photo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "about-leah-photo.png"; sourceTree = "<group>"; };
 		11ED61801A9103C100D29A5B /* UtilityHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UtilityHandler.swift; sourceTree = "<group>"; };
+		11F1A2B32E5A30000000001 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+		11F1CONN2F74C58400F498DE /* FirebaseConnectionHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseConnectionHelper.swift; sourceTree = "<group>"; };
 		11F4AB231B61673000C52BE0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Base; path = Base.lproj/Localizable.strings; sourceTree = "<group>"; };
 		11FAC0012FEF20260507A001 /* DetailProfileBypassBandNames.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailProfileBypassBandNames.swift; sourceTree = "<group>"; };
 		11FBBE1D232F26E000109035 /* NotificationPayload.apns */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = NotificationPayload.apns; sourceTree = "<group>"; };
@@ -1136,6 +1153,7 @@
 				115F0DCA2F551A76003CD82C /* AIScheduleBuilder.swift */,
 				115F0DD22F551DE7003CD82C /* AIScheduleStorage.swift */,
 				1154F60B1A575893003F4764 /* AppDelegate.swift */,
+				11F1A2B32E5A30000000001 /* SceneDelegate.swift */,
 				116C9D792F415D370036743C /* AppState.swift */,
 				11E2F2432E8D78530004D6F4 /* AttendanceManager.swift */,
 				11C061EC2F55FDAA0037A875 /* AutoChooseAttendanceWizardView.swift */,
@@ -1188,7 +1206,9 @@
 				11D4844D2241DED700910878 /* firebaseEventDataWrite.swift */,
 				C0C1C2D3E4F5061728394B0C /* firebaseSharedCommentsWrite.swift */,
 				11D4844422418A9E00910878 /* firebaseUserWrite.swift */,
+				11F1CONN2F74C58400F498DE /* FirebaseConnectionHelper.swift */,
 				11D5EA122F74C58400F498DE /* FirebaseWriteMonitor.swift */,
+				11BGWRK12F74C58400F498DE /* BackgroundWorkMonitor.swift */,
 				1156B4F21A660BE500D48D12 /* guiIcons.swift */,
 				11C8BDC71A7D264F00037F2B /* httpHandler.swift */,
 				116C9D7D2F415D370036743C /* iCloudConstants.swift */,
@@ -2146,6 +2166,7 @@
 				11C061EE2F55FDAA0037A875 /* AutoChooseAttendanceWizardView.swift in Sources */,
 				11615BB82E4644ED007BD3D5 /* PreferencesView.swift in Sources */,
 				1154F60C1A575893003F4764 /* AppDelegate.swift in Sources */,
+				11F1A2B32E5A30000000002 /* SceneDelegate.swift in Sources */,
 				1169374520F555CD00038DA5 /* Reachability.swift in Sources */,
 				112913972EE77518008472A3 /* ProfileColorManager.swift in Sources */,
 				1154F6331A5758D3003F4764 /* bandNamesHandler.swift in Sources */,
@@ -2184,6 +2205,8 @@
 				29EC6AF2BCA8A12239CBE201 /* ProfilePickerViewController.swift in Sources */,
 				31BA99733FDAE4BB78AD4B5F /* ProfileTutorialOverlay.swift in Sources */,
 				11D5EA142F74C58400F498DE /* FirebaseWriteMonitor.swift in Sources */,
+				11BGWRK42F74C58400F498DE /* BackgroundWorkMonitor.swift in Sources */,
+				11F1CONN4F74C58400F498DE /* FirebaseConnectionHelper.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2296,6 +2319,8 @@
 				11D4844F2241DED700910878 /* firebaseEventDataWrite.swift in Sources */,
 				1147D7102E63E33C000A98B0 /* PriorityManager.swift in Sources */,
 				11D5EA152F74C58400F498DE /* FirebaseWriteMonitor.swift in Sources */,
+				11BGWRK52F74C58400F498DE /* BackgroundWorkMonitor.swift in Sources */,
+				11F1CONN5F74C58400F498DE /* FirebaseConnectionHelper.swift in Sources */,
 				1145F0D72E69ED1A002B7511 /* CellDataCache.swift in Sources */,
 				11C62E812E64B9EE000D9AF2 /* DataCollectionCoordinator.swift in Sources */,
 				11C62E822E64B9EE000D9AF2 /* ScheduleCSVImporter.swift in Sources */,
@@ -2390,6 +2415,7 @@
 				1172EE152E5A1C4D006E3596 /* PreferencesViewModel.swift in Sources */,
 				1172EE162E5A1C4D006E3596 /* PreferencesView.swift in Sources */,
 				1172EE172E5A1C4D006E3596 /* AppDelegate.swift in Sources */,
+				11F1A2B32E5A30000000005 /* SceneDelegate.swift in Sources */,
 				1172EE182E5A1C4D006E3596 /* Reachability.swift in Sources */,
 				112913992EE77518008472A3 /* ProfileColorManager.swift in Sources */,
 				1172EE192E5A1C4D006E3596 /* bandNamesHandler.swift in Sources */,
@@ -2427,6 +2453,8 @@
 				112913A32EE7D8B2008472A3 /* ProfileTutorialOverlay.swift in Sources */,
 				1172EE262E5A1C4D006E3596 /* scheduleHandler.swift in Sources */,
 				11D5EA132F74C58400F498DE /* FirebaseWriteMonitor.swift in Sources */,
+				11BGWRK32F74C58400F498DE /* BackgroundWorkMonitor.swift in Sources */,
+				11F1CONN3F74C58400F498DE /* FirebaseConnectionHelper.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2511,6 +2539,7 @@
 				A1042054388DCAB86C9A2AB4 /* PreferencesViewModel.swift in Sources */,
 				56E9FEE0E9B1E41F85D18345 /* PreferencesView.swift in Sources */,
 				E490DEFAACF6C57A03375E7A /* AppDelegate.swift in Sources */,
+				11F1A2B32E5A30000000006 /* SceneDelegate.swift in Sources */,
 				EAADED5E18FAE85DA34E1B99 /* Reachability.swift in Sources */,
 				B1A940881E5294F08760B414 /* ProfileColorManager.swift in Sources */,
 				644E5E830B5338E15CBBE8FE /* bandNamesHandler.swift in Sources */,
@@ -2548,6 +2577,8 @@
 				192CBA22FFE55769F02A2F5C /* ProfileTutorialOverlay.swift in Sources */,
 				D72549891EDE231CD5683190 /* scheduleHandler.swift in Sources */,
 				B3C642CB9EC6C01E105300CA /* FirebaseWriteMonitor.swift in Sources */,
+				B3BGWRK62EC6C01E105300CA /* BackgroundWorkMonitor.swift in Sources */,
+				11F1CONN6F74C58400F498DE /* FirebaseConnectionHelper.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2632,6 +2663,7 @@
 				115C12C43000A5EF007EA9A1 /* PreferencesViewModel.swift in Sources */,
 				115C12C53000A5EF007EA9A1 /* PreferencesView.swift in Sources */,
 				115C12C63000A5EF007EA9A1 /* AppDelegate.swift in Sources */,
+				11F1A2B32E5A30000000004 /* SceneDelegate.swift in Sources */,
 				115C12C73000A5EF007EA9A1 /* Reachability.swift in Sources */,
 				115C12C83000A5EF007EA9A1 /* ProfileColorManager.swift in Sources */,
 				115C12C93000A5EF007EA9A1 /* bandNamesHandler.swift in Sources */,
@@ -2669,6 +2701,8 @@
 				115C12E93000A5EF007EA9A1 /* ProfileTutorialOverlay.swift in Sources */,
 				115C12EA3000A5EF007EA9A1 /* scheduleHandler.swift in Sources */,
 				115C12EB3000A5EF007EA9A1 /* FirebaseWriteMonitor.swift in Sources */,
+				11BGWRK22F74C58400F498DE /* BackgroundWorkMonitor.swift in Sources */,
+				11F1CONN7F74C58400F498DE /* FirebaseConnectionHelper.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2891,7 +2925,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260710002;
+				CURRENT_PROJECT_VERSION = 20260803006;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -2920,7 +2954,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260710002;
+				MARKETING_VERSION = 20260803006;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -2976,7 +3010,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260710002;
+				CURRENT_PROJECT_VERSION = 20260803006;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -3001,7 +3035,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260710002;
+				MARKETING_VERSION = 20260803006;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -3198,7 +3232,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260710002;
+				CURRENT_PROJECT_VERSION = 20260803006;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -3220,7 +3254,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260710002;
+				MARKETING_VERSION = 20260803006;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -3276,7 +3310,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260710002;
+				CURRENT_PROJECT_VERSION = 20260803006;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -3301,7 +3335,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260710002;
+				MARKETING_VERSION = 20260803006;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -3359,7 +3393,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260710001;
+				CURRENT_PROJECT_VERSION = 20260803006;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -3381,7 +3415,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260710002;
+				MARKETING_VERSION = 20260803006;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -3440,7 +3474,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260710001;
+				CURRENT_PROJECT_VERSION = 20260803006;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -3465,7 +3499,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260710002;
+				MARKETING_VERSION = 20260803006;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -3525,7 +3559,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260710002;
+				CURRENT_PROJECT_VERSION = 20260803006;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -3547,7 +3581,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260710002;
+				MARKETING_VERSION = 20260803006;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -3606,7 +3640,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260710002;
+				CURRENT_PROJECT_VERSION = 20260803006;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -3631,7 +3665,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260710002;
+				MARKETING_VERSION = 20260803006;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",

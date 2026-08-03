@@ -9,82 +9,135 @@
 import Foundation
 import Firebase
 
-
 class firebaseUserWrite {
-    
-    var ref: DatabaseReference? // Changed to optional
-    private let maxAttempts = 3
-    private let retryDelay: TimeInterval = 2.0
-    
-    init(){
-        initializeFirebaseReference()
+
+    static let shared = firebaseUserWrite()
+
+    private static let dedupDefaultsKey = "firebaseUserWrite.compareBlock"
+    private static let maxJitterMs = 20_000
+
+    private let schedulerQueue = DispatchQueue(label: "firebaseUserWrite.scheduler")
+    private var pendingWorkItem: DispatchWorkItem?
+    private var writeInProgress = false
+
+    private init() {}
+
+    /// Legacy entry point — schedules a jittered write when data changed.
+    func writeData() {
+        firebaseUserWrite.scheduleWriteIfNeeded()
     }
-    
-    private func initializeFirebaseReference(attempt: Int = 1) {
-        guard AppDelegate.isFirebaseConfigured else {
-            print("⚠️ Firebase not yet configured for User Data (attempt \(attempt)/\(maxAttempts))")
-            if attempt < maxAttempts {
-                DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + retryDelay) { [weak self] in
-                    self?.initializeFirebaseReference(attempt: attempt + 1)
-                }
-            } else {
-                print("❌ Failed to initialize Firebase User Data reference after \(maxAttempts) attempts")
+
+    /// Schedules a user-data write with deterministic 0–20s jitter.
+    static func scheduleWriteIfNeeded() {
+        shared.scheduleWriteIfNeededInternal(immediate: false)
+    }
+
+    /// Cancels any pending schedule and writes immediately (e.g. app entering background).
+    static func flushPendingWriteOnBackground() {
+        shared.scheduleWriteIfNeededInternal(immediate: true)
+    }
+
+    private func scheduleWriteIfNeededInternal(immediate: Bool) {
+        guard inTestEnvironment == false else { return }
+
+        schedulerQueue.async {
+            let hadPendingWrite = self.pendingWorkItem != nil
+            if let pending = self.pendingWorkItem {
+                pending.cancel()
+                self.pendingWorkItem = nil
             }
+
+            let userDataHandle = userDataHandler()
+            guard userDataHandle.uid.isEmpty == false else { return }
+
+            if immediate {
+                if hadPendingWrite || self.shouldSkipDueToDedup(for: userDataHandle) == false {
+                    print("🔥 [USER_WRITE] Flushing pending user write immediately on background")
+                    self.performWrite(markDedupBeforeWrite: true)
+                } else {
+                    print("🔥 [USER_WRITE] Background flush skipped — already written today with same metadata")
+                }
+                return
+            }
+
+            if self.shouldSkipDueToDedup(for: userDataHandle) {
+                print("🔥 [USER_WRITE] Skipping — already sent today with same metadata")
+                return
+            }
+
+            let delayMs = FirebaseConnectionHelper.jitterDelayMs(for: userDataHandle.uid, maxJitterMs: Self.maxJitterMs)
+            print("🔥 [USER_WRITE] Scheduling write after \(delayMs)ms deterministic jitter")
+
+            let workItem = DispatchWorkItem { [weak self] in
+                self?.pendingWorkItem = nil
+                self?.performWrite(markDedupBeforeWrite: true)
+            }
+            self.pendingWorkItem = workItem
+            self.schedulerQueue.asyncAfter(deadline: .now() + .milliseconds(delayMs), execute: workItem)
+        }
+    }
+
+    private func shouldSkipDueToDedup(for userDataHandle: userDataHandler) -> Bool {
+        let compareBlock = buildCompareBlock(for: userDataHandle)
+        return compareBlock == UserDefaults.standard.string(forKey: Self.dedupDefaultsKey)
+    }
+
+    private func buildCompareBlock(for userDataHandle: userDataHandler) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "dd/MM/yyyy"
+        let dateOnly = formatter.string(from: Date())
+        return "\(userDataHandle.country)-\(userDataHandle.language)-\(userDataHandle.bandsVersion)-\(dateOnly)"
+    }
+
+    private func performWrite(markDedupBeforeWrite: Bool) {
+        guard writeInProgress == false else {
+            print("🔥 [USER_WRITE] Write already in progress — skipping duplicate request")
             return
         }
-        
-        ref = Database.database().reference()
-        print("✅ Firebase User Data reference initialized successfully")
-    }
-    
-    func writeData (){
-        let writeDataTime = Date()
-        print("🔥 [TIMING] firebaseUserWrite.writeData() CALLED at \(writeDataTime.timeIntervalSince1970)")
-        
-        //NSLog("", "USER_WRITE_DATA: Starting User Write data code")
-        if (inTestEnvironment == false){
-            DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
-                
-                // Guard against Firebase not being configured
-                guard let firebaseRef = self.ref else {
-                    print("⚠️ Firebase User Data reference not initialized, skipping write")
-                    FirebaseWriteMonitor.shared.recordWriteFailure(context: "user_ref_nil")
-                    return
+        writeInProgress = true
+
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            defer { self?.writeInProgress = false }
+
+            guard let self = self else { return }
+
+            let userDataHandle = userDataHandler()
+            guard userDataHandle.uid.isEmpty == false else { return }
+
+            if markDedupBeforeWrite {
+                let compareBlock = self.buildCompareBlock(for: userDataHandle)
+                UserDefaults.standard.set(compareBlock, forKey: Self.dedupDefaultsKey)
+            }
+
+            guard let firebaseRef = FirebaseConnectionHelper.databaseReference() else {
+                print("⚠️ [USER_WRITE] Firebase reference unavailable, skipping write")
+                FirebaseWriteMonitor.shared.recordWriteFailure(context: "user_ref_nil")
+                return
+            }
+
+            let allProfiles = SQLiteProfileManager.shared.getAllProfiles()
+            let activeProfileCount = allProfiles.count
+
+            print("🔥 [USER_WRITE] Writing userData for \(userDataHandle.uid)")
+            firebaseRef.child("userData/").child(userDataHandle.uid).setValue([
+                "userID": userDataHandle.uid,
+                "country": userDataHandle.country,
+                "language": userDataHandle.language,
+                "platform": "iOS",
+                "osVersion": userDataHandle.iosVersion,
+                "70kVersion": userDataHandle.bandsVersion,
+                "lastLaunch": userDataHandle.getCurrentDateString(),
+                "activeProfiles": activeProfileCount
+            ]) { error, _ in
+                if let error = error {
+                    print("🔥 [USER_WRITE] Write failed: \(error)")
+                    FirebaseWriteMonitor.shared.recordWriteFailure(context: "user:\(userDataHandle.uid)")
+                } else {
+                    print("🔥 [USER_WRITE] Write succeeded")
+                    FirebaseWriteMonitor.shared.recordWriteSuccess(context: "user:\(userDataHandle.uid)")
                 }
-                
-                let randomInt = Int.random(in: 5..<25)
-                print ("🔥 [TIMING] Writing Firebase sleeping \(randomInt) seconds");
-                sleep(UInt32(randomInt))
-                let userDataHandle = userDataHandler()
-                print ("Writing Firebase  UserID is \(userDataHandle.uid)");
-                //("Writing Firebase data new userData Id is 1 " + userDataHandle.uid)
-                if (userDataHandle.uid.isEmpty == false){
-                    NSLog("Writing Firebase data new userData Id is 2 " + userDataHandle.uid)
-                    
-                    print ("Writing Firebase  firebase data to userData start");
-                    
-                    // Count active profiles (non-deleted profiles in the database)
-                    let allProfiles = SQLiteProfileManager.shared.getAllProfiles()
-                    let activeProfileCount = allProfiles.count
-                    
-                    firebaseRef.child("userData/").child(userDataHandle.uid).setValue(["userID": userDataHandle.uid,
-                                                                                    "country": userDataHandle.country,
-                                                                                    "language": userDataHandle.language,
-                                                                                    "platform": "iOS",
-                                                                                    "osVersion" : userDataHandle.iosVersion,
-                                                                                    "70kVersion" : userDataHandle.bandsVersion,
-                                                                                    "lastLaunch": userDataHandle.getCurrentDateString(),
-                                                                                    "activeProfiles": activeProfileCount]) {
-                        (error:Error?, ref:DatabaseReference) in
-                        if let error = error {
-                            print("Writing Firebase data could not be saved: \(error).")
-                            FirebaseWriteMonitor.shared.recordWriteFailure(context: "user:\(userDataHandle.uid)")
-                        } else {
-                            print("Writing Firebase data saved successfully!")
-                            FirebaseWriteMonitor.shared.recordWriteSuccess(context: "user:\(userDataHandle.uid)")
-                        }
-                    }
-                }
+                FirebaseConnectionHelper.goOffline(reason: "user_write_complete")
             }
         }
     }
