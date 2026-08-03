@@ -685,7 +685,7 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
                                         label: Text('Status'),
                                       ),
                                       DataColumn(
-                                        columnWidth: adminTableIntrinsicColumn,
+                                        columnWidth: adminTableCacheDateColumn,
                                         label: Text('Cache date'),
                                       ),
                                       DataColumn(
@@ -735,7 +735,7 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
                                             DataCell(
                                               adminTableText(
                                                 row.entry?.date ?? '—',
-                                                maxWidth: 100,
+                                                maxWidth: adminTableCacheDateWidth,
                                                 style: TextStyle(
                                                   color: row.hasDescription
                                                       ? AppColors.label

@@ -7,6 +7,11 @@ const adminTableActionsColumn = IntrinsicColumnWidth();
 const adminTableWideActionsColumn = IntrinsicColumnWidth();
 
 const adminTableIntrinsicColumn = IntrinsicColumnWidth();
+
+/// Cache dates like `08-03-2026-12` on one line (same-day bump suffix).
+const adminTableCacheDateWidth = 120.0;
+const adminTableCacheDateColumn = FixedColumnWidth(adminTableCacheDateWidth);
+
 const adminTableFlexColumn = FlexColumnWidth(1);
 const adminTableWideFlexColumn = FlexColumnWidth(2);
 
