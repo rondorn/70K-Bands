@@ -54,6 +54,11 @@ public class FireBaseBandDataWrite {
         Log.d("FireBaseBandDataWrite", "In write routine");
 
         if (staticVariables.isTestingEnv == false && staticVariables.userID.isEmpty() == false) {
+            if (!FirebaseWriteMonitor.shouldRunBandSync()) {
+                Log.d("FireBaseBandDataWrite", "No pending band sync — skipping bandData upload");
+                return 0;
+            }
+
             int storageYear = FirebaseConnectionHelper.firebaseStorageEventYear();
             if (storageYear <= 0) {
                 Log.e("FireBaseBandDataWrite", "BLOCKED - pointer Current event year unavailable; refusing invalid write");
@@ -89,8 +94,8 @@ public class FireBaseBandDataWrite {
                     batchUpdate.put(sanitizedBandName, bandData);
                 }
                 
-                Log.d("FireBaseBandDataWrite", "BATCH setValue for " + batchUpdate.size()
-                        + " lineup bands at bandData/" + staticVariables.userID + "/" + eventYear
+                Log.d("FireBaseBandDataWrite", "Sending full lineup (" + batchUpdate.size()
+                        + " bands) at bandData/" + staticVariables.userID + "/" + eventYear
                         + " (uiEventYear=" + staticVariables.eventYear + ")");
                 try {
                     bandDataRef.setValue(batchUpdate, (DatabaseError error, DatabaseReference ref) -> {
@@ -168,6 +173,11 @@ public class FireBaseBandDataWrite {
     }
 
     private Boolean checkIfDataHasChanged(){
+        if (FirebaseWriteMonitor.shouldRunBandSync()) {
+            Log.d("FireBaseBandDataWrite", "Pending band sync — sending full lineup");
+            return true;
+        }
+
         Boolean result = true;
         Map<String,String> bandRankCache = new HashMap<>();
 

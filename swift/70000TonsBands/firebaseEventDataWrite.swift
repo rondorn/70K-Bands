@@ -68,30 +68,91 @@ class firebaseEventDataWrite {
         // This is more efficient than storing redundant data
         return sanitizeForFirebase(originalIndex)
     }
+    /// Parses attendance storage keys (band names may contain colons; time is hour:min).
+    private struct ParsedAttendanceKey {
+        let band: String
+        let location: String
+        let startTime: String
+        let eventType: String
+        let yearPlain: String
+        let scheduleDaySuffix: String?
+    }
+    
+    private func parseAttendanceStorageKey(_ index: String) -> ParsedAttendanceKey? {
+        let parts = index.split(separator: ":", omittingEmptySubsequences: false).map(String.init)
+        guard parts.count >= 6 else { return nil }
+        
+        let last = parts[parts.count - 1]
+        let yearPlain: String
+        let scheduleDaySuffix: String?
+        if let separatorRange = last.range(of: "__") {
+            yearPlain = String(last[..<separatorRange.lowerBound])
+            scheduleDaySuffix = String(last[separatorRange.upperBound...])
+        } else {
+            yearPlain = last
+            scheduleDaySuffix = nil
+        }
+        
+        let eventType = parts[parts.count - 2]
+        let startTime = parts[parts.count - 4] + ":" + parts[parts.count - 3]
+        let location = parts[parts.count - 5]
+        let band = parts[0..<(parts.count - 5)].joined(separator: ":")
+        return ParsedAttendanceKey(
+            band: band,
+            location: location,
+            startTime: startTime,
+            eventType: eventType,
+            yearPlain: yearPlain,
+            scheduleDaySuffix: scheduleDaySuffix
+        )
+    }
+    
+    private func buildEventBatchEntry(index: String, status: String) -> (sanitizedKey: String, payload: [String: Any])? {
+        guard let parsed = parseAttendanceStorageKey(index) else {
+            print("🔥 firebase EVENT_WRITE: ⚠️ Skipping invalid index format: \(index)")
+            return nil
+        }
+        
+        let timeParts = parsed.startTime.split(separator: ":", maxSplits: 1).map(String.init)
+        let startTimeHour = timeParts.first ?? ""
+        let startTimeMin = timeParts.count > 1 ? timeParts[1] : ""
+        let sanitizedIndex = sanitizeForFirebase(index)
+        
+        var payload: [String: Any] = [
+            "originalIdentifier": index,
+            "sanitizedKey": sanitizedIndex,
+            "bandName": parsed.band,
+            "location": parsed.location,
+            "startTimeHour": startTimeHour,
+            "startTimeMin": startTimeMin,
+            "eventType": parsed.eventType,
+            "eventYear": parsed.yearPlain,
+            "status": status
+        ]
+        if let scheduleDay = parsed.scheduleDaySuffix, !scheduleDay.isEmpty {
+            payload["scheduleDay"] = scheduleDay
+        }
+        return (sanitizedIndex, payload)
+    }
             
     func writeEvent(index: String, status: String){
         
         print("🔥 firebase EVENT_WRITE: writeEvent() called for index: \(index), status: \(status)")
         
-        let indexArray = index.split(separator: ":")
-        
-        guard indexArray.count >= 6 else {
-            print("🔥 firebase EVENT_WRITE: ❌ ERROR - Invalid index format: \(index) (parts: \(indexArray.count), expected: 6)")
+        guard let parsed = parseAttendanceStorageKey(index) else {
+            print("🔥 firebase EVENT_WRITE: ❌ ERROR - Invalid index format: \(index)")
             return
         }
-    
-        let bandName = String(indexArray[0])
-        let location = String(indexArray[1])
-        let startTimeHour = String(indexArray[2])
-        let startTimeMin = String(indexArray[3])
-        let eventType = String(indexArray[4])
-        let year = String(indexArray[5])
         
-        print("🔥 firebase EVENT_WRITE: Parsed - Band: \(bandName), Location: \(location), Time: \(startTimeHour):\(startTimeMin), Type: \(eventType), Year: \(year)")
+        let timeParts = parsed.startTime.split(separator: ":", maxSplits: 1).map(String.init)
+        let startTimeHour = timeParts.first ?? ""
+        let startTimeMin = timeParts.count > 1 ? timeParts[1] : ""
+        
+        print("🔥 firebase EVENT_WRITE: Parsed - Band: \(parsed.band), Location: \(parsed.location), Time: \(parsed.startTime), Type: \(parsed.eventType), Year: \(parsed.yearPlain)")
         
         DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
             
-            print("🔥 firebase EVENT_WRITE: Background write started for \(bandName)")
+            print("🔥 firebase EVENT_WRITE: Background write started for \(parsed.band)")
             
             // Check if Firebase reference is initialized
             guard let firebaseRef = self.ensureReference() else {
@@ -105,27 +166,33 @@ class firebaseEventDataWrite {
             let uid = (UIDevice.current.identifierForVendor?.uuidString)!
             
             // Get sanitized identifier from SQLite, fallback to computation
-            let sanitizedIndex = self.getSanitizedIdentifierForEvent(index)
+            let sanitizedIndex = self.sanitizeForFirebase(index)
             print("🔥 firebase EVENT_WRITE: Sanitized index: \(sanitizedIndex)")
             
-            let firebasePath = "showData/\(uid)/\(year)/\(sanitizedIndex)"
+            let firebasePath = "showData/\(uid)/\(parsed.yearPlain)/\(sanitizedIndex)"
             print("🔥 firebase EVENT_WRITE: Writing to path: \(firebasePath)")
             
-            firebaseRef.child("showData/").child(uid).child(String(year)).child(sanitizedIndex).setValue([
-                "originalIdentifier": index, // Store original for reference
-                "sanitizedKey": sanitizedIndex, // Store sanitized for debugging
-                "bandName": bandName,
-                "location": location,
+            var payload: [String: Any] = [
+                "originalIdentifier": index,
+                "sanitizedKey": sanitizedIndex,
+                "bandName": parsed.band,
+                "location": parsed.location,
                 "startTimeHour": startTimeHour,
                 "startTimeMin": startTimeMin,
-                "eventType": eventType,
-                "status": status]){
+                "eventType": parsed.eventType,
+                "status": status
+            ]
+            if let scheduleDay = parsed.scheduleDaySuffix, !scheduleDay.isEmpty {
+                payload["scheduleDay"] = scheduleDay
+            }
+            
+            firebaseRef.child("showData/").child(uid).child(parsed.yearPlain).child(sanitizedIndex).setValue(payload){
                     (error:Error?, ref:DatabaseReference) in
                     if let error = error {
                         print("🔥 firebase EVENT_WRITE: ❌ Writing firebase event data could not be saved: \(error)")
                         FirebaseWriteMonitor.shared.recordWriteFailure(context: "event:\(index)")
                     } else {
-                        print("🔥 firebase EVENT_WRITE: ✅ Writing firebase event data saved successfully for \(bandName)!")
+                        print("🔥 firebase EVENT_WRITE: ✅ Writing firebase event data saved successfully for \(parsed.band)!")
                         FirebaseWriteMonitor.shared.recordWriteSuccess(context: "event:\(index)")
                         self.firebaseShowsAttendedArray[index] = status
                         self.variableStoreHandle.storeDataToDisk(data: self.firebaseShowsAttendedArray, fileName: self.eventCompareFile)
@@ -140,6 +207,11 @@ class firebaseEventDataWrite {
         
         print("🔥 firebase EVENT_WRITE: writeData() called - Starting event data write process")
         print("🔥 firebase EVENT_WRITE: inTestEnvironment = \(inTestEnvironment)")
+        
+        guard FirebaseWriteMonitor.shared.shouldRunShowSync() else {
+            print("⏭️ firebase EVENT_WRITE: No pending show sync — skipping showData upload")
+            return
+        }
         
         // Check if Firebase reference is initialized
         guard ensureReference() != nil else {
@@ -214,6 +286,11 @@ class firebaseEventDataWrite {
                     }
                     print("🔥 firebase EVENT_WRITE: Filtered to \(showsAttendedArray.count) events for year \(currentYear) (excluded \(filteredOutCount) from other years)")
                     
+                    guard showsAttendedArray.isEmpty == false else {
+                        print("⏭️ firebase EVENT_WRITE: No show attendance for pointer year \(currentYear) — skipping showData upload")
+                        return
+                    }
+                    
                     self.schedule.buildTimeSortedSchedulingData();
                     print("🔥 firebase EVENT_WRITE: Built time-sorted schedule data")
                     
@@ -221,28 +298,47 @@ class firebaseEventDataWrite {
                     print("🔥 firebase EVENT_WRITE: Schedule data count = \(scheduleCount)")
                     
                     if (scheduleCount > 0){
-                        print("🔥 firebase EVENT_WRITE: Schedule data exists, processing \(showsAttendedArray.count) events")
-                        var processedCount = 0
-                        var skippedCount = 0
-                        var writtenCount = 0
-                        
-                        for index in showsAttendedArray {
-                            processedCount += 1
-                            let cachedValue = self.firebaseShowsAttendedArray[index.key]
-                            let currentValue = index.value
-                            
-                            if (cachedValue != currentValue || didVersionChange == true){
-                                print("🔥 firebase EVENT_WRITE: Event \(processedCount)/\(showsAttendedArray.count): \(index.key) - Writing (cached: \(cachedValue ?? "nil"), current: \(currentValue), versionChanged: \(didVersionChange))")
-                                self.writeEvent(index: index.key, status: index.value)
-                                writtenCount += 1
-                            } else {
-                                skippedCount += 1
-                                if skippedCount <= 3 {
-                                    print("🔥 firebase EVENT_WRITE: Event \(processedCount)/\(showsAttendedArray.count): \(index.key) - Skipped (already written)")
-                                }
-                            }
+                        let forceFullShowSync = FirebaseWriteMonitor.shared.hasPendingShowChanges()
+                        if forceFullShowSync {
+                            print("🔥 firebase EVENT_WRITE: Pending show changes — syncing \(showsAttendedArray.count) current-year shows")
+                        } else if self.firebaseShowsAttendedArray == showsAttendedArray && didVersionChange == false {
+                            print("⏭️ firebase EVENT_WRITE: No show attendance changes — skipping Firebase write")
+                            return
                         }
-                        print("🔥 firebase EVENT_WRITE: Processing complete - Written: \(writtenCount), Skipped: \(skippedCount), Total: \(processedCount)")
+                        
+                        guard let firebaseRef = self.ensureReference() else {
+                            print("⚠️ [FIREBASE_EVENT] Firebase reference not initialized, skipping batch write")
+                            return
+                        }
+                        
+                        var batchUpdate = [String: [String: Any]]()
+                        var skippedInvalid = 0
+                        for (index, status) in showsAttendedArray {
+                            guard let entry = self.buildEventBatchEntry(index: index, status: status) else {
+                                skippedInvalid += 1
+                                continue
+                            }
+                            batchUpdate[entry.sanitizedKey] = entry.payload
+                        }
+                        
+                        guard batchUpdate.isEmpty == false else {
+                            print("🔥 firebase EVENT_WRITE: ❌ BLOCKED - No valid show records to upload (skipped \(skippedInvalid) invalid indices)")
+                            return
+                        }
+                        
+                        print("🔥 firebase EVENT_WRITE: BATCH updateChildren for \(batchUpdate.count) shows at showData/\(uid)/\(currentYear)")
+                        firebaseRef.child("showData").child(uid).child(String(currentYear)).updateChildValues(batchUpdate) { error, _ in
+                            if let error = error {
+                                print("🔥 firebase EVENT_WRITE: ❌ Batch write failed: \(error.localizedDescription)")
+                                FirebaseWriteMonitor.shared.recordWriteFailure(context: "event_batch")
+                            } else {
+                                print("🔥 firebase EVENT_WRITE: ✅ Batch write succeeded for \(batchUpdate.count) shows")
+                                FirebaseWriteMonitor.shared.recordWriteSuccess(context: "event_batch")
+                                self.firebaseShowsAttendedArray = showsAttendedArray
+                                self.variableStoreHandle.storeDataToDisk(data: self.firebaseShowsAttendedArray, fileName: self.eventCompareFile)
+                            }
+                            FirebaseConnectionHelper.goOffline(reason: "event_batch_write_complete")
+                        }
                     } else {
                         print("🔥 firebase EVENT_WRITE: ❌ BLOCKED - Schedule data is empty! Cannot write events.")
                     }

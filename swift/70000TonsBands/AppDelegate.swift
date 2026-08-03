@@ -838,17 +838,25 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         internetAvailble = isInternetAvailable();
         print("🔥 [APP_DELEGATE] reportData: Internet available: \(internetAvailble)")
         
-        print("🔥 [APP_DELEGATE] reportData: Creating firebaseBandDataWrite instance...")
-        let bandWrite  = firebaseBandDataWrite();
-        print("🔥 [APP_DELEGATE] reportData: Calling bandWrite.writeData()...")
-        bandWrite.writeData();
-        print("🔥 [APP_DELEGATE] reportData: bandWrite.writeData() call completed")
+        if FirebaseWriteMonitor.shared.shouldRunBandSync() {
+            print("🔥 [APP_DELEGATE] reportData: Creating firebaseBandDataWrite instance...")
+            let bandWrite  = firebaseBandDataWrite();
+            print("🔥 [APP_DELEGATE] reportData: Calling bandWrite.writeData()...")
+            bandWrite.writeData();
+            print("🔥 [APP_DELEGATE] reportData: bandWrite.writeData() call completed")
+        } else {
+            print("⏭️ [APP_DELEGATE] reportData: No pending band sync — skipping bandData upload")
+        }
         
-        print("🔥 [APP_DELEGATE] reportData: Creating firebaseEventDataWrite instance...")
-        let showWrite = firebaseEventDataWrite()
-        print("🔥 [APP_DELEGATE] reportData: Calling showWrite.writeData()...")
-        showWrite.writeData();
-        print("🔥 [APP_DELEGATE] reportData: showWrite.writeData() call completed")
+        if FirebaseWriteMonitor.shared.shouldRunShowSync() {
+            print("🔥 [APP_DELEGATE] reportData: Creating firebaseEventDataWrite instance...")
+            let showWrite = firebaseEventDataWrite()
+            print("🔥 [APP_DELEGATE] reportData: Calling showWrite.writeData()...")
+            showWrite.writeData();
+            print("🔥 [APP_DELEGATE] reportData: showWrite.writeData() call completed")
+        } else {
+            print("⏭️ [APP_DELEGATE] reportData: No pending show sync — skipping showData upload")
+        }
         
         print("🔥 [APP_DELEGATE] reportData: ========== EXIT ==========")
     }
@@ -1093,10 +1101,19 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     }
     
     /// Performs Firebase reporting - only called after network test passes
+    private static let bandEventSyncMaxJitterMs = 20_000
+
     private func performFirebaseReporting() {
         print("🔥 FIREBASE REPORTING: Starting Firebase reporting (network verified)")
         
         DispatchQueue.global(qos: .utility).async {
+            let uid = UIDevice.current.identifierForVendor?.uuidString ?? ""
+            let delayMs = FirebaseConnectionHelper.jitterDelayMs(for: uid, maxJitterMs: Self.bandEventSyncMaxJitterMs)
+            if delayMs > 0 {
+                print("🔥 FIREBASE REPORTING: Waiting \(delayMs)ms deterministic jitter before band/show sync")
+                Thread.sleep(forTimeInterval: Double(delayMs) / 1000.0)
+            }
+
             print("🔥 Firebase reporting background queue started")
             FirebaseWriteMonitor.shared.beginFullSyncAttempt()
             // Since network was already verified, we can proceed directly

@@ -146,6 +146,11 @@ class firebaseBandDataWrite {
         print("🔥 [FIREBASE_BAND] writeData: ========== ENTRY ==========")
         print("🔥 [FIREBASE_BAND] writeData: Called on \(threadInfo) thread")
 
+        guard FirebaseWriteMonitor.shared.shouldRunBandSync() else {
+            print("⏭️ [FIREBASE_BAND] writeData: No pending band sync — skipping bandData upload")
+            return
+        }
+
         // Bulk sync may run before pointer download finishes — wait briefly for Current::eventYear.
         let storageYear = FirebaseConnectionHelper.firebaseStorageEventYear(maxWaitSeconds: 15)
         print("🔥 [FIREBASE_BAND] writeData: storageYear=\(storageYear), uiEventYear=\(eventYear), inTestEnvironment=\(inTestEnvironment), didVersionChange=\(didVersionChange)")
@@ -177,10 +182,12 @@ class firebaseBandDataWrite {
                 return
             }
             
-            if firebaseBandAttendedArray == bandRank && didVersionChange == false {
+            let forceFullBandSync = FirebaseWriteMonitor.shared.shouldRunBandSync()
+            if firebaseBandAttendedArray == bandRank && didVersionChange == false && !forceFullBandSync {
                 print("⏭️ [FIREBASE_BAND] writeData: No lineup band ranking changes — skipping Firebase write")
                 return
             }
+            print("🔥 [FIREBASE_BAND] writeData: Sending full lineup (\(bandRank.count) bands) for pointer year \(storageYear)")
             
             guard let firebaseRef = ensureReference() else { return }
             

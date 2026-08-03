@@ -310,6 +310,12 @@ public class Bands70k extends Application implements Application.ActivityLifecyc
             // Core data refresh (pointer -> band -> schedule -> descriptionMap).
             // Runs ONLY on true background -> foreground transitions.
             CoreDataRefreshManager.startCoreRefreshFromBackground();
+
+            // Offline -> online recovery: full Firebase sync when local data changed while away.
+            if (FirebaseWriteMonitor.shouldRunFullSync()) {
+                Log.i("AppLifecycle", "Pending Firebase sync on foreground — requesting upload");
+                uploadFirebaseDataOnBackground();
+            }
         }
         Log.d("AppLifecycle", "Activity started: " + activity.getClass().getSimpleName() + " (active count: " + activityCount + ")");
     }
@@ -350,7 +356,12 @@ public class Bands70k extends Application implements Application.ActivityLifecyc
     private void uploadFirebaseDataOnBackground() {
         ThreadManager.getInstance().executeNetwork(() -> {
             try {
-                Log.i("AppLifecycle", "🔥 BACKGROUND UPLOAD: Starting Firebase upload");
+                if (!FirebaseWriteMonitor.shouldRunFullSync()) {
+                    Log.d("AppLifecycle", "🔥 BACKGROUND UPLOAD: No pending Firebase sync — skipping");
+                    return;
+                }
+
+                Log.i("AppLifecycle", "🔥 BACKGROUND UPLOAD: Starting Firebase upload (dirty/failure pending)");
                 
                 // Safety check: Ensure attended handler is initialized
                 if (staticVariables.attendedHandler == null) {

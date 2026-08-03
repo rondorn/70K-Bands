@@ -64,6 +64,11 @@ public class FirebaseEventDataWrite {
     public int writeData(Runnable onComplete){
 
         if (staticVariables.isTestingEnv == false && staticVariables.userID.isEmpty() == false) {
+            if (!FirebaseWriteMonitor.shouldRunShowSync()) {
+                Log.d("FirebaseEventDataWrite", "No pending show sync — skipping showData upload");
+                return 0;
+            }
+
             // CRITICAL FIX: Use existing attended handler instead of creating new instance
             // Creating new instance loads data asynchronously, so getShowsAttended() returns empty map
             // Use the static handler which is already initialized with data
@@ -101,6 +106,11 @@ public class FirebaseEventDataWrite {
             Log.d("FirebaseEventDataWrite", "🔥 firebase EVENT_WRITE: Filtered to " + currentYearEvents.size() + 
                     " events for year " + currentYear + " (excluded " + filteredOutCount + " from other years)");
 
+            if (currentYearEvents.isEmpty()) {
+                Log.d("FirebaseEventDataWrite", "No show attendance for pointer year " + currentYear + " — skipping showData upload");
+                return 0;
+            }
+
             // Build set of known events from schedule (events the app knows about)
             Set<String> knownEventIdentifiers = buildKnownEventIdentifiers(currentYear);
             Log.d("FirebaseEventDataWrite", "🔥 firebase EVENT_WRITE: Found " + knownEventIdentifiers.size() + " known events in schedule");
@@ -127,11 +137,9 @@ public class FirebaseEventDataWrite {
             Log.d("FirebaseEventDataWrite", "🔥 firebase EVENT_WRITE: Filtered to " + knownEventsOnly.size() + 
                     " known events (excluded " + unknownEventCount + " unknown events)");
             
-            // Final check before upload
+            // Final check before upload — only write when current-year show data exists
             if (knownEventsOnly.isEmpty()) {
-                Log.e("FirebaseEventDataWrite", "❌ ERROR: No events to upload after filtering! Original: " + 
-                        totalEvents + ", CurrentYear: " + currentYearEvents.size() + 
-                        ", Known: " + knownEventsOnly.size() + ". Skipping Firebase upload.");
+                Log.d("FirebaseEventDataWrite", "No current-year show data to upload after filtering. Skipping showData upload.");
                 return 0;
             }
 
@@ -215,6 +223,11 @@ public class FirebaseEventDataWrite {
      * @return True if data has changed, false otherwise.
      */
     private Boolean checkIfDataHasChanged(Map<String, String> showsAttendedArray){
+
+        if (FirebaseWriteMonitor.hasPendingShowChanges()) {
+            Log.d("FirebaseEventDataWrite", "Pending show changes — syncing current-year show data");
+            return true;
+        }
 
         Boolean result = true;
 

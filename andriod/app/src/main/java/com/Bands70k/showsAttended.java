@@ -133,6 +133,12 @@ public class showsAttended {
         scheduleLoadForActiveProfile();
     }
     
+    private void markDirtyIfDefaultProfile(String context) {
+        if ("Default".equals(SharedPreferencesManager.getInstance().getActivePreferenceSource())) {
+            FirebaseWriteMonitor.markLocalChangePendingSync(context);
+        }
+    }
+    
     /**
      * Gets the correct file path based on active profile
      */
@@ -226,6 +232,7 @@ public class showsAttended {
         }
         showsAttendedHash = current;
         saveShowsAttendedSync(current);
+        markDirtyIfDefaultProfile("attendance_clear_year:" + year);
     }
 
     /** Set all attendance data for the active profile to Not Attended (sawNone). Keeps records so sync does not bring data back.
@@ -241,6 +248,7 @@ public class showsAttended {
         showsAttendedHash = current;
         currentLoadedProfile = SharedPreferencesManager.getInstance().getActivePreferenceSource();
         saveShowsAttendedSync(current);
+        markDirtyIfDefaultProfile("attendance_clear_all");
     }
 
     public void saveShowsAttended(Map<String,String> showsAttendedHash){
@@ -593,6 +601,8 @@ public class showsAttended {
 
         this.saveShowsAttended(showsAttendedHash);
 
+        markDirtyIfDefaultProfile("attendance:" + index);
+
         return value;
     }
 
@@ -733,6 +743,7 @@ public class showsAttended {
     private void changeShowAttendedStatus(String index, String status) {
         showsAttendedHash.put(index, status);
         saveShowsAttended(showsAttendedHash);
+        markDirtyIfDefaultProfile("attendance:" + index);
     }
 
     /**

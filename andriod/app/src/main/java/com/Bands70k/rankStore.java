@@ -130,6 +130,10 @@ public class rankStore {
         bandRankings.put(bandName, ranking);
 
         saveBandRankingToFile();
+
+        if ("Default".equals(SharedPreferencesManager.getInstance().getActivePreferenceSource())) {
+            FirebaseWriteMonitor.markLocalChangePendingSync("priority:" + bandName);
+        }
     }
 
     public static void saveBandRankingToFile(){
