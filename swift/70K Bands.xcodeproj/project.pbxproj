@@ -509,12 +509,6 @@
 		11D5EA132F74C58400F498DE /* FirebaseWriteMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D5EA122F74C58400F498DE /* FirebaseWriteMonitor.swift */; };
 		11D5EA142F74C58400F498DE /* FirebaseWriteMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D5EA122F74C58400F498DE /* FirebaseWriteMonitor.swift */; };
 		11D5EA152F74C58400F498DE /* FirebaseWriteMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D5EA122F74C58400F498DE /* FirebaseWriteMonitor.swift */; };
-		11F1CONN3F74C58400F498DE /* FirebaseConnectionHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F1CONN2F74C58400F498DE /* FirebaseConnectionHelper.swift */; };
-		11F1CONN4F74C58400F498DE /* FirebaseConnectionHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F1CONN2F74C58400F498DE /* FirebaseConnectionHelper.swift */; };
-		11F1CONN5F74C58400F498DE /* FirebaseConnectionHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F1CONN2F74C58400F498DE /* FirebaseConnectionHelper.swift */; };
-		11F1CONN6F74C58400F498DE /* FirebaseConnectionHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F1CONN2F74C58400F498DE /* FirebaseConnectionHelper.swift */; };
-		11F1CONN7F74C58400F498DE /* FirebaseConnectionHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F1CONN2F74C58400F498DE /* FirebaseConnectionHelper.swift */; };
-		11F1CONN8F74C58400F498DE /* FirebaseConnectionHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F1CONN2F74C58400F498DE /* FirebaseConnectionHelper.swift */; };
 		11DAB49B1A5DDA9400A8B12E /* dataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DAB49A1A5DDA9400A8B12E /* dataHandler.swift */; };
 		11DCE9B41A856EE600A25FB8 /* mainListController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DCE9B31A856EE600A25FB8 /* mainListController.swift */; };
 		11DCE9B61A85B9FF00A25FB8 /* localNotificationHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DCE9B51A85B9FF00A25FB8 /* localNotificationHandler.swift */; };
@@ -572,6 +566,11 @@
 		11ED61811A9103C100D29A5B /* UtilityHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ED61801A9103C100D29A5B /* UtilityHandler.swift */; };
 		11ED61821A91105000D29A5B /* UtilityHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ED61801A9103C100D29A5B /* UtilityHandler.swift */; };
 		11F0333E1AB3B26D00AA29B8 /* scheduleHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C8BDC51A7D25E700037F2B /* scheduleHandler.swift */; };
+		11F1CONN3F74C58400F498DE /* FirebaseConnectionHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F1CONN2F74C58400F498DE /* FirebaseConnectionHelper.swift */; };
+		11F1CONN4F74C58400F498DE /* FirebaseConnectionHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F1CONN2F74C58400F498DE /* FirebaseConnectionHelper.swift */; };
+		11F1CONN5F74C58400F498DE /* FirebaseConnectionHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F1CONN2F74C58400F498DE /* FirebaseConnectionHelper.swift */; };
+		11F1CONN6F74C58400F498DE /* FirebaseConnectionHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F1CONN2F74C58400F498DE /* FirebaseConnectionHelper.swift */; };
+		11F1CONN7F74C58400F498DE /* FirebaseConnectionHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F1CONN2F74C58400F498DE /* FirebaseConnectionHelper.swift */; };
 		11FAC0022E5A1C4D006E3596 /* DetailProfileBypassBandNames.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11FAC0012FEF20260507A001 /* DetailProfileBypassBandNames.swift */; };
 		11FAC0032E4D2C5A0074E2F2 /* DetailProfileBypassBandNames.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11FAC0012FEF20260507A001 /* DetailProfileBypassBandNames.swift */; };
 		11FAC0042E4D2C5A0074E2F2 /* DetailProfileBypassBandNames.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11FAC0012FEF20260507A001 /* DetailProfileBypassBandNames.swift */; };
@@ -914,7 +913,6 @@
 		11D4844A2241DA0C00910878 /* firebaseBandDataWrite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = firebaseBandDataWrite.swift; sourceTree = "<group>"; };
 		11D4844D2241DED700910878 /* firebaseEventDataWrite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = firebaseEventDataWrite.swift; sourceTree = "<group>"; };
 		11D5EA122F74C58400F498DE /* FirebaseWriteMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseWriteMonitor.swift; sourceTree = "<group>"; };
-		11F1CONN2F74C58400F498DE /* FirebaseConnectionHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseConnectionHelper.swift; sourceTree = "<group>"; };
 		11DAB49A1A5DDA9400A8B12E /* dataHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = dataHandler.swift; sourceTree = "<group>"; };
 		11DCE9B31A856EE600A25FB8 /* mainListController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = mainListController.swift; sourceTree = "<group>"; };
 		11DCE9B51A85B9FF00A25FB8 /* localNotificationHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = localNotificationHandler.swift; sourceTree = "<group>"; };
@@ -939,6 +937,7 @@
 		11EB86D02F364100007D5AD0 /* about-robert-photo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "about-robert-photo.png"; sourceTree = "<group>"; };
 		11EB86E02F364200007D5AD0 /* about-leah-photo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "about-leah-photo.png"; sourceTree = "<group>"; };
 		11ED61801A9103C100D29A5B /* UtilityHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UtilityHandler.swift; sourceTree = "<group>"; };
+		11F1CONN2F74C58400F498DE /* FirebaseConnectionHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseConnectionHelper.swift; sourceTree = "<group>"; };
 		11F4AB231B61673000C52BE0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Base; path = Base.lproj/Localizable.strings; sourceTree = "<group>"; };
 		11FAC0012FEF20260507A001 /* DetailProfileBypassBandNames.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailProfileBypassBandNames.swift; sourceTree = "<group>"; };
 		11FBBE1D232F26E000109035 /* NotificationPayload.apns */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = NotificationPayload.apns; sourceTree = "<group>"; };
@@ -2904,7 +2903,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260710002;
+				CURRENT_PROJECT_VERSION = 20260803004;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -2933,7 +2932,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260710002;
+				MARKETING_VERSION = 20260803004;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -2989,7 +2988,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260710002;
+				CURRENT_PROJECT_VERSION = 20260803004;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -3014,7 +3013,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260710002;
+				MARKETING_VERSION = 20260803004;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -3211,7 +3210,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260710002;
+				CURRENT_PROJECT_VERSION = 20260803004;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -3233,7 +3232,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260710002;
+				MARKETING_VERSION = 20260803004;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -3289,7 +3288,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260710002;
+				CURRENT_PROJECT_VERSION = 20260803004;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -3314,7 +3313,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260710002;
+				MARKETING_VERSION = 20260803004;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -3372,7 +3371,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260710001;
+				CURRENT_PROJECT_VERSION = 20260803004;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -3394,7 +3393,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260710002;
+				MARKETING_VERSION = 20260803004;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -3453,7 +3452,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260710001;
+				CURRENT_PROJECT_VERSION = 20260803004;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -3478,7 +3477,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260710002;
+				MARKETING_VERSION = 20260803004;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -3538,7 +3537,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260710002;
+				CURRENT_PROJECT_VERSION = 20260803004;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -3560,7 +3559,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260710002;
+				MARKETING_VERSION = 20260803004;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -3619,7 +3618,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260710002;
+				CURRENT_PROJECT_VERSION = 20260803004;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -3644,7 +3643,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260710002;
+				MARKETING_VERSION = 20260803004;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
