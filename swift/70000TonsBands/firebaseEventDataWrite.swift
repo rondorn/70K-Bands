@@ -161,9 +161,14 @@ class firebaseEventDataWrite {
                 if (uid.isEmpty == false){
                     print("🔥 firebase EVENT_WRITE: UID is valid, getting attended events from SQLite")
                     
-                    // Get current year from global eventYear variable
-                    let currentYear = eventYear
-                    print("🔥 firebase EVENT_WRITE: Filtering for current year: \(currentYear)")
+                    // Use pointer Current::eventYear — never UI browse year or calendar fallback.
+                    let storageYear = FirebaseConnectionHelper.firebaseStorageEventYear(maxWaitSeconds: 15)
+                    guard storageYear > 2000 else {
+                        print("🔥 firebase EVENT_WRITE: ❌ BLOCKED - pointer Current event year unavailable")
+                        return
+                    }
+                    let currentYear = storageYear
+                    print("🔥 firebase EVENT_WRITE: Filtering for pointer storage year: \(currentYear) (uiEventYear=\(eventYear))")
                     
                     // Read attendance data from SQLite instead of old file system
                     let attendanceData = self.attendanceManager.getAllAttendanceDataByIndex()

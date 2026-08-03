@@ -76,13 +76,14 @@ public class FirebaseEventDataWrite {
             Log.d("FirebaseEventDataWrite", "🔥 firebase EVENT_WRITE: Starting writeData - total attended events: " + 
                     showsAttendedArray.size());
             
-            int storageYear = staticVariables.resolveStorageEventYear();
+            int storageYear = FirebaseConnectionHelper.firebaseStorageEventYear();
             if (storageYear <= 0) {
-                Log.e("FirebaseEventDataWrite", "Missing eventYear in production pointer file");
+                Log.e("FirebaseEventDataWrite", "BLOCKED - pointer Current event year unavailable; refusing invalid write");
                 return 0;
             }
             String currentYear = String.valueOf(storageYear);
-            Log.d("FirebaseEventDataWrite", "🔥 firebase EVENT_WRITE: Filtering for current year: " + currentYear);
+            Log.d("FirebaseEventDataWrite", "Filtering for pointer storage year: " + currentYear
+                    + " (uiEventYear=" + staticVariables.eventYear + ")");
             
             // Filter events to only include current year
             Map<String, String> currentYearEvents = new HashMap<>();

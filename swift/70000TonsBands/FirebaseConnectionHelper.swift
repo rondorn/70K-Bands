@@ -32,4 +32,36 @@ enum FirebaseConnectionHelper {
         let hash = abs(userId.hashValue)
         return hash % (maxJitterMs + 1)
     }
+
+    /// Festival year for Firebase paths: always `Current::eventYear` from the pointer file,
+    /// never UI browse year or calendar fallback. Returns 0 when unknown — callers must skip writes.
+    static func firebaseStorageEventYear(maxWaitSeconds: TimeInterval = 0) -> Int {
+        let deadline = Date().addingTimeInterval(maxWaitSeconds)
+        repeat {
+            if let year = pointerConfigCurrentEventYearInt(), year > 2000 {
+                return year
+            }
+
+            var memoryYear: Int?
+            storePointerLock.sync {
+                if let value = cacheVariables.storePointerData["Current:eventYear"],
+                   let year = Int(value.trimmingCharacters(in: .whitespacesAndNewlines)),
+                   year > 2000 {
+                    memoryYear = year
+                }
+            }
+            if let year = memoryYear {
+                return year
+            }
+
+            if maxWaitSeconds > 0, Date() < deadline {
+                Thread.sleep(forTimeInterval: 0.5)
+            } else {
+                break
+            }
+        } while Date() < deadline
+
+        print("❌ [FIREBASE_CONN] Unable to resolve pointer Current event year for Firebase storage")
+        return 0
+    }
 }
