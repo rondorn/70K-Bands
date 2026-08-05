@@ -59,8 +59,9 @@ String sharedFolderMemberAccessTag(Map<String, dynamic> raw) {
 
 DropboxFolderMember? memberFromUserInfo(
   Map<String, dynamic> user,
-  String accessTag,
-) {
+  String accessTag, {
+  bool isPendingInvite = false,
+}) {
   final email = (user['email'] ?? '').toString();
   final displayName = (user['display_name'] ?? email).toString();
   final dropboxId = (user['account_id'] ?? '').toString();
@@ -72,7 +73,8 @@ DropboxFolderMember? memberFromUserInfo(
     displayName: displayName.isNotEmpty ? displayName : email,
     dropboxId: dropboxId,
     accessLevel: accessTag.isEmpty ? 'editor' : accessTag,
-    isOwner: accessTag == 'owner',
+    isOwner: !isPendingInvite && accessTag == 'owner',
+    isPendingInvite: isPendingInvite,
   );
 }
 
@@ -86,7 +88,11 @@ DropboxFolderMember? parseInviteeMembershipInfo(Map<String, dynamic> raw) {
   final accessTag = sharedFolderMemberAccessTag(raw);
   final user = raw['user'];
   if (user is Map<String, dynamic>) {
-    return memberFromUserInfo(user, accessTag);
+    return memberFromUserInfo(
+      user,
+      accessTag,
+      isPendingInvite: true,
+    );
   }
   final invitee = raw['invitee'];
   if (invitee is Map<String, dynamic>) {
@@ -99,6 +105,7 @@ DropboxFolderMember? parseInviteeMembershipInfo(Map<String, dynamic> raw) {
         displayName: email,
         dropboxId: '',
         accessLevel: accessTag.isEmpty ? 'editor' : accessTag,
+        isPendingInvite: true,
       );
     }
   }
@@ -140,6 +147,23 @@ List<DropboxFolderMember> parseSharedFolderMembersResponse(
     if (member != null) members.add(member);
   }
   return members;
+}
+
+/// Shared-folder id from a Dropbox `ShareFolderLaunch` / `ShareFolderJobStatus`
+/// `complete` payload.
+///
+/// Stone encodes the `complete` union arm by placing [SharedFolderMetadata]
+/// fields at the top level beside `.tag: "complete"` (not nested under
+/// `"complete"`). Nested `"complete"` maps are accepted as a fallback.
+String? parseShareFolderSharedFolderId(Map<String, dynamic> data) {
+  final topLevel = (data['shared_folder_id'] ?? '').toString().trim();
+  if (topLevel.isNotEmpty) return topLevel;
+  final nested = data['complete'];
+  if (nested is Map<String, dynamic>) {
+    final id = (nested['shared_folder_id'] ?? '').toString().trim();
+    if (id.isNotEmpty) return id;
+  }
+  return null;
 }
 
 /// Dropbox void sharing RPCs (`add_folder_member`, `remove_folder_member`) often
@@ -194,7 +218,10 @@ class DropboxApi {
       );
     }
     final data = jsonDecode(resp.body) as Map<String, dynamic>;
-    var path = (data['path_lower'] ?? data['path_display'] ?? '').toString().trim();
+    // Prefer path_display so mutating APIs (upload, share_folder) keep the
+    // user's casing. path_lower is only a stable case-insensitive key.
+    var path =
+        (data['path_display'] ?? data['path_lower'] ?? '').toString().trim();
     if (path.isEmpty) {
       throw StateError(
         'Dropbox did not return a file path for this link. '
@@ -900,6 +927,29 @@ class DropboxApi {
     return null;
   }
 
+  /// Prefer folder `id:…` (or `path_display`) so [share_folder] does not rewrite
+  /// display casing when the caller only has a lowercased path.
+  Future<String> _shareFolderPathArg(String apiPath) async {
+    final token = await auth.accessToken();
+    final metaResp = await http.post(
+      Uri.parse('https://api.dropboxapi.com/2/files/get_metadata'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'path': apiPath, 'include_media_info': false}),
+    );
+    if (metaResp.statusCode < 200 || metaResp.statusCode >= 300) {
+      return apiPath;
+    }
+    final meta = jsonDecode(metaResp.body) as Map<String, dynamic>;
+    final id = (meta['id'] ?? '').toString().trim();
+    if (id.isNotEmpty) return id;
+    final display = (meta['path_display'] ?? '').toString().trim();
+    if (display.isEmpty) return apiPath;
+    return display.startsWith('/') ? display : '/$display';
+  }
+
   /// Ensure [apiPath] is a shared folder and return its shared_folder_id.
   Future<String> ensureSharedFolder(String apiPath) async {
     var path = apiPath.trim().replaceAll('\\', '/');
@@ -914,6 +964,7 @@ class DropboxApi {
       return existing.sharedFolderId;
     }
 
+    final sharePath = await _shareFolderPathArg(path);
     final token = await auth.accessToken();
     final resp = await http.post(
       Uri.parse('https://api.dropboxapi.com/2/sharing/share_folder'),
@@ -921,7 +972,7 @@ class DropboxApi {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       },
-      body: jsonEncode({'path': path, 'force_async': false}),
+      body: jsonEncode({'path': sharePath, 'force_async': false}),
     );
     if (resp.statusCode < 200 || resp.statusCode >= 300) {
       throw StateError(
@@ -931,9 +982,8 @@ class DropboxApi {
     final data = jsonDecode(resp.body) as Map<String, dynamic>;
     final tag = (data['.tag'] ?? '').toString();
     if (tag == 'complete') {
-      final complete = data['complete'] as Map<String, dynamic>? ?? const {};
-      final id = (complete['shared_folder_id'] ?? '').toString();
-      if (id.isEmpty) {
+      final id = parseShareFolderSharedFolderId(data);
+      if (id == null || id.isEmpty) {
         throw StateError('Dropbox did not return a shared folder id for $path');
       }
       return id;
@@ -952,7 +1002,9 @@ class DropboxApi {
     for (var attempt = 0; attempt < 30; attempt++) {
       final token = await auth.accessToken();
       final resp = await http.post(
-        Uri.parse('https://api.dropboxapi.com/2/sharing/check_job_status'),
+        Uri.parse(
+          'https://api.dropboxapi.com/2/sharing/check_share_job_status',
+        ),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -967,9 +1019,8 @@ class DropboxApi {
       final data = jsonDecode(resp.body) as Map<String, dynamic>;
       final tag = (data['.tag'] ?? '').toString();
       if (tag == 'complete') {
-        final complete = data['complete'] as Map<String, dynamic>? ?? const {};
-        final id = (complete['shared_folder_id'] ?? '').toString();
-        if (id.isEmpty) {
+        final id = parseShareFolderSharedFolderId(data);
+        if (id == null || id.isEmpty) {
           throw StateError('Dropbox share job completed without a folder id.');
         }
         return id;

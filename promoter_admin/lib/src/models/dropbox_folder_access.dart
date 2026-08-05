@@ -6,6 +6,7 @@ class DropboxFolderMember {
     required this.dropboxId,
     required this.accessLevel,
     this.isOwner = false,
+    this.isPendingInvite = false,
   });
 
   final String email;
@@ -13,6 +14,19 @@ class DropboxFolderMember {
   final String dropboxId;
   final String accessLevel;
   final bool isOwner;
+
+  /// True when Dropbox listed this person under `invitees` (invite sent, not
+  /// accepted yet). False for accepted `users` and groups.
+  final bool isPendingInvite;
+
+  /// Short status for Settings member lists.
+  String get accessStatusLabel {
+    if (isOwner) return 'Owner';
+    if (isPendingInvite) return 'Invite pending';
+    if (accessLevel.isEmpty) return 'Member';
+    // Dropbox tags are lowercase (editor, viewer); title-case for display.
+    return '${accessLevel[0].toUpperCase()}${accessLevel.substring(1)}';
+  }
 }
 
 /// Resolved sharing metadata for a Dropbox folder path.

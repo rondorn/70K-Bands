@@ -230,7 +230,7 @@ Future<void> showFolderMembersDialog({
                             subtitle: Text(
                               [
                                 if (m.email.isNotEmpty) m.email,
-                                m.isOwner ? 'Owner' : m.accessLevel,
+                                m.accessStatusLabel,
                               ].join(' · '),
                               style: const TextStyle(
                                 color: AppColors.muted,

@@ -41,6 +41,37 @@ void main() {
     });
   });
 
+  group('parseShareFolderSharedFolderId', () {
+    test('reads top-level shared_folder_id from Stone complete payload', () {
+      expect(
+        parseShareFolderSharedFolderId({
+          '.tag': 'complete',
+          'name': 'Artists',
+          'path_lower': '/festival/artists',
+          'shared_folder_id': '84528192421',
+        }),
+        '84528192421',
+      );
+    });
+
+    test('falls back to nested complete map', () {
+      expect(
+        parseShareFolderSharedFolderId({
+          '.tag': 'complete',
+          'complete': {'shared_folder_id': 'nested-id'},
+        }),
+        'nested-id',
+      );
+    });
+
+    test('returns null when id is missing', () {
+      expect(
+        parseShareFolderSharedFolderId({'.tag': 'complete'}),
+        isNull,
+      );
+    });
+  });
+
   group('parseSharedFolderMembersResponse', () {
     test('parses Dropbox UserMembershipInfo (user fields are not nested)', () {
       final members = parseSharedFolderMembersResponse({
@@ -71,8 +102,12 @@ void main() {
       expect(members, hasLength(2));
       expect(members[0].displayName, 'Ron Dorn');
       expect(members[0].isOwner, isTrue);
+      expect(members[0].isPendingInvite, isFalse);
+      expect(members[0].accessStatusLabel, 'Owner');
       expect(members[1].email, 'aacopeland@gmail.com');
       expect(members[1].accessLevel, 'editor');
+      expect(members[1].isPendingInvite, isFalse);
+      expect(members[1].accessStatusLabel, 'Editor');
     });
 
     test('parses pending invitees and groups', () {
@@ -97,7 +132,11 @@ void main() {
 
       expect(members, hasLength(2));
       expect(members[0].displayName, 'Promoter team');
+      expect(members[0].isPendingInvite, isFalse);
+      expect(members[0].accessStatusLabel, 'Editor');
       expect(members[1].email, 'pending@example.com');
+      expect(members[1].isPendingInvite, isTrue);
+      expect(members[1].accessStatusLabel, 'Invite pending');
     });
   });
 }
