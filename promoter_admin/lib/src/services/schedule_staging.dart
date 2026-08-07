@@ -11,7 +11,7 @@ import 'package:promoter_admin/src/services/emergency_local_mode_support.dart';
 import 'package:promoter_admin/src/services/pointer_service.dart';
 
 export 'package:promoter_admin/src/services/csv_staging.dart'
-    show CsvSyncState, CsvSyncStatus;
+    show CsvStagingSoftLoad, CsvSyncState, CsvSyncStatus;
 
 typedef ScheduleSyncState = CsvSyncState;
 typedef ScheduleSyncStatus = CsvSyncStatus;
@@ -177,6 +177,15 @@ class ScheduleStagingCoordinator extends ChangeNotifier {
 
   Future<String> loadWorkingCsv(FestivalWorkspace workspace) =>
       _inner.loadWorkingCsv(workspace);
+
+  Future<CsvStagingSoftLoad> loadWorkingCsvSoft(FestivalWorkspace workspace) =>
+      _inner.loadWorkingCsvSoft(workspace);
+
+  Future<bool> isPublishedCacheExpired(FestivalWorkspace workspace) =>
+      _inner.isPublishedCacheExpired(workspace);
+
+  Future<String?> refreshPublishedInBackground(FestivalWorkspace workspace) =>
+      _inner.refreshPublishedInBackground(workspace);
 
   Future<String?> readLocalCsvIfPresent(FestivalWorkspace workspace) =>
       _inner.readLocalCsvIfPresent(workspace);

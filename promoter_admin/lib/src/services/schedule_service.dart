@@ -132,6 +132,25 @@ class ScheduleService {
     return parseEvents(text);
   }
 
+  /// Local staging only — no network seed. See [CsvStagingSoftLoad].
+  Future<({List<ScheduleEvent> events, bool shouldRefreshInBackground})>
+      loadSoft(FestivalWorkspace workspace) async {
+    final soft = await staging.loadWorkingCsvSoft(workspace);
+    return (
+      events: parseEvents(soft.csvText),
+      shouldRefreshInBackground: soft.shouldRefreshInBackground,
+    );
+  }
+
+  /// Background Dropbox reload when safe. Null if skipped (unsynced edits).
+  Future<List<ScheduleEvent>?> refreshInBackground(
+    FestivalWorkspace workspace,
+  ) async {
+    final text = await staging.refreshPublishedInBackground(workspace);
+    if (text == null) return null;
+    return parseEvents(text);
+  }
+
   /// Save locally immediately and queue a background Dropbox sync.
   ///
   /// Does **not** wait for Dropbox — safe for rapid bulk entry.

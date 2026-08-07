@@ -19,6 +19,19 @@ enum CsvSyncState {
   error,
 }
 
+/// Soft load of local staging: show immediately, optionally refresh in background.
+class CsvStagingSoftLoad {
+  const CsvStagingSoftLoad({
+    required this.csvText,
+    required this.shouldRefreshInBackground,
+  });
+
+  final String csvText;
+
+  /// True when local data is missing/expired and safe to overwrite from Dropbox.
+  final bool shouldRefreshInBackground;
+}
+
 class CsvSyncStatus {
   const CsvSyncStatus({
     this.state = CsvSyncState.idle,
@@ -158,6 +171,9 @@ class CsvStagingCoordinator extends ChangeNotifier {
   final Duration debounce;
   final Directory? _stagingRootOverride;
   final Future<void> Function(String url, String text)? _uploadOverride;
+
+  /// How long a published fetch stays fresh before background revalidation.
+  static const Duration publishedCacheTtl = Duration(minutes: 10);
 
   CsvSyncStatus _status = const CsvSyncStatus();
   CsvSyncStatus get status => _status;
@@ -340,6 +356,23 @@ class CsvStagingCoordinator extends ChangeNotifier {
     await snapshot.writeAsString(csvText);
   }
 
+  Future<DateTime?> lastFetchedAt(FestivalWorkspace workspace) async {
+    final meta = await _readMeta(workspace);
+    return _parseTime(meta['lastFetchedAt']);
+  }
+
+  /// True when there is no local CSV, no fetch timestamp, or age exceeds TTL.
+  ///
+  /// Expired caches are kept on disk; callers may still display them.
+  Future<bool> isPublishedCacheExpired(FestivalWorkspace workspace) async {
+    final csv = await _csvFile(workspace);
+    if (!await csv.exists()) return true;
+    final fetched = await lastFetchedAt(workspace);
+    if (fetched == null) return true;
+    final age = DateTime.now().toUtc().difference(fetched.toUtc());
+    return age > publishedCacheTtl;
+  }
+
   Future<String> _seedFromDropbox(
     FestivalWorkspace workspace, {
     bool forceRefresh = false,
@@ -362,6 +395,7 @@ class CsvStagingCoordinator extends ChangeNotifier {
       'publishedUrl': publishedLocator,
       'lastSyncedAt': now,
       'lastSavedAt': now,
+      'lastFetchedAt': now,
       'lastError': '',
     });
     return text;
@@ -414,6 +448,37 @@ class CsvStagingCoordinator extends ChangeNotifier {
   Future<String> loadWorkingCsv(FestivalWorkspace workspace) async {
     final csv = await ensureStaging(workspace);
     return csv.readAsString();
+  }
+
+  /// Read local staging without network seed. Flags background refresh when
+  /// cache is missing/expired and there are no unsynced local edits.
+  Future<CsvStagingSoftLoad> loadWorkingCsvSoft(
+    FestivalWorkspace workspace,
+  ) async {
+    final csv = await _csvFile(workspace);
+    var text = '';
+    if (await csv.exists()) {
+      text = await csv.readAsString();
+      await _refreshStatusFromDisk(workspace, softenStaleErrors: true);
+    } else {
+      _applyStatus(CsvSyncStatus(displayName: displayName));
+    }
+    final expired = await isPublishedCacheExpired(workspace);
+    final shouldRefresh = expired && !_status.hasUnsynced;
+    return CsvStagingSoftLoad(
+      csvText: text,
+      shouldRefreshInBackground: shouldRefresh,
+    );
+  }
+
+  /// Reload from Dropbox when safe (no unsynced local edits). Returns null if
+  /// skipped to preserve pending changes.
+  Future<String?> refreshPublishedInBackground(
+    FestivalWorkspace workspace,
+  ) async {
+    await _refreshStatusFromDisk(workspace, softenStaleErrors: true);
+    if (_status.hasUnsynced) return null;
+    return reloadFromPublished(workspace, forceRefresh: true);
   }
 
   /// Read the on-disk staging CSV without refreshing sync status (for compare-only).
@@ -623,6 +688,8 @@ class CsvStagingCoordinator extends ChangeNotifier {
         'state': 'synced',
         'publishedUrl': url,
         'lastSyncedAt': now.toIso8601String(),
+        // Local upload matches published — treat as a fresh fetch clock too.
+        'lastFetchedAt': now.toIso8601String(),
         'lastError': '',
       });
       _applyStatus(
@@ -675,6 +742,7 @@ class CsvStagingCoordinator extends ChangeNotifier {
       'publishedUrl': url,
       'lastSyncedAt': now,
       'lastSavedAt': now,
+      'lastFetchedAt': now,
       'lastError': '',
     });
     await _refreshStatusFromDisk(workspace);

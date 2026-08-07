@@ -90,6 +90,26 @@ class LineupService {
     return PointerService.parseLineupCsv(text);
   }
 
+  /// Local staging only — no network seed. See [CsvStagingSoftLoad].
+  Future<({List<BandRow> bands, bool shouldRefreshInBackground})> loadSoft(
+    FestivalWorkspace workspace,
+  ) async {
+    final soft = await staging.loadWorkingCsvSoft(workspace);
+    return (
+      bands: PointerService.parseLineupCsv(soft.csvText),
+      shouldRefreshInBackground: soft.shouldRefreshInBackground,
+    );
+  }
+
+  /// Background Dropbox reload when safe. Null if skipped (unsynced edits).
+  Future<List<BandRow>?> refreshInBackground(
+    FestivalWorkspace workspace,
+  ) async {
+    final text = await staging.refreshPublishedInBackground(workspace);
+    if (text == null) return null;
+    return PointerService.parseLineupCsv(text);
+  }
+
   /// Save locally immediately and queue a background Dropbox sync.
   Future<void> save(FestivalWorkspace workspace, List<BandRow> bands) async {
     await staging.saveLocalAndQueue(

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -407,24 +408,60 @@ class _BandsSectionState extends State<BandsSection> {
   }
 
   Future<void> _load({bool forceRefresh = false}) async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    try {
-      final bands = await widget.lineupService.load(
-        widget.workspace,
-        forceRefresh: forceRefresh,
-      );
+    if (forceRefresh) {
       setState(() {
-        _bands = bands;
+        _loading = true;
+        _error = null;
+      });
+      try {
+        final bands = await widget.lineupService.load(
+          widget.workspace,
+          forceRefresh: true,
+        );
+        if (!mounted) return;
+        setState(() {
+          _bands = bands;
+          _loading = false;
+        });
+      } catch (e) {
+        if (!mounted) return;
+        setState(() {
+          _error = e.toString();
+          _loading = false;
+        });
+      }
+      return;
+    }
+
+    // Soft load: show local cache immediately; refresh expired/missing in background.
+    setState(() => _error = null);
+    try {
+      final soft = await widget.lineupService.loadSoft(widget.workspace);
+      if (!mounted) return;
+      setState(() {
+        _bands = soft.bands;
         _loading = false;
       });
+      if (soft.shouldRefreshInBackground) {
+        unawaited(_refreshInBackground());
+      }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = e.toString();
         _loading = false;
       });
+    }
+  }
+
+  Future<void> _refreshInBackground() async {
+    try {
+      final bands =
+          await widget.lineupService.refreshInBackground(widget.workspace);
+      if (!mounted || bands == null) return;
+      setState(() => _bands = bands);
+    } catch (_) {
+      // Keep showing stale/empty; user can tap Refresh.
     }
   }
 

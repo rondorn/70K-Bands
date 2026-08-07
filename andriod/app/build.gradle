@@ -12,11 +12,11 @@ android {
     defaultConfig {
         // applicationId will be set by product flavors
         minSdkVersion 26
-        targetSdkVersion 35
-        // Android versionCode 2026080301must fit in signed 32-bit int.
+        targetSdkVersion 36
+        // Android versionCode 2026080601must fit in signed 32-bit int.
         //noinspection HighAppVersionCode
-        versionCode 2026080301
-        versionName "2026080301"
+        versionCode 2026080601
+        versionName "2026080601"
         android.compileOptions.incremental = false
         multiDexEnabled false
     }
@@ -79,8 +79,11 @@ android {
         unitTests.returnDefaultValues = true
     }
     // Use legacy DSL name for compatibility with older AGP invocations.
-    compileSdkVersion 35
+    compileSdkVersion 36
     namespace 'com.Bands70k'
+    buildFeatures {
+        buildConfig true
+    }
 }
 
 def festivalsRoot = file("${rootDir}/../config/festivals")

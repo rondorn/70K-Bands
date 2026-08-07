@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:promoter_admin/src/models/festival_workspace.dart';
@@ -29,6 +31,48 @@ class _ListRow {
 
   bool get hasDescription =>
       entry != null && entry!.url.trim().isNotEmpty;
+}
+
+/// Builds the merged description list from map entries + lineup names.
+List<_ListRow> _buildDescriptionListRows({
+  required List<DescriptionMapEntry> entries,
+  required Set<String> lineupNames,
+}) {
+  final byName = <String, DescriptionMapEntry>{};
+  for (final e in entries) {
+    if (e.band.trim().isEmpty) continue;
+    byName[e.band.trim().toLowerCase()] = e;
+  }
+
+  final rows = <_ListRow>[];
+  final seen = <String>{};
+  for (final name in lineupNames) {
+    final key = name.toLowerCase();
+    seen.add(key);
+    rows.add(
+      _ListRow(
+        name: name,
+        entry: byName[key],
+        inLineup: true,
+      ),
+    );
+  }
+  for (final e in entries) {
+    final key = e.band.trim().toLowerCase();
+    if (key.isEmpty || seen.contains(key)) continue;
+    seen.add(key);
+    rows.add(
+      _ListRow(
+        name: e.band.trim(),
+        entry: e,
+        inLineup: false,
+      ),
+    );
+  }
+  rows.sort(
+    (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+  );
+  return rows;
 }
 
 class DescriptionsSection extends StatefulWidget {
@@ -167,71 +211,55 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
   }
 
   Future<void> _load({bool forceRefresh = false}) async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    try {
-      List<DescriptionMapEntry> entries = [];
+    if (forceRefresh) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
       try {
-        entries = await widget.descriptionMapService.load(
-          widget.workspace,
-          forceRefresh: forceRefresh,
-        );
+        await _loadForced();
       } catch (e) {
-        // Still show lineup even if map is missing / unreadable.
+        if (!mounted) return;
+        setState(() {
+          _error = e.toString();
+          _loading = false;
+        });
+      }
+      return;
+    }
+
+    // Soft load: show local cache immediately; refresh expired/missing in background.
+    setState(() => _error = null);
+    try {
+      var entries = <DescriptionMapEntry>[];
+      var refreshMap = false;
+      try {
+        final soft =
+            await widget.descriptionMapService.loadSoft(widget.workspace);
+        entries = soft.entries;
+        refreshMap = soft.shouldRefreshInBackground;
+      } catch (e) {
         if (widget.workspace.descriptionMapUrl.trim().isNotEmpty) {
           _error = e.toString();
         }
       }
 
-      final lineupNames = <String>{};
+      var lineupNames = <String>{};
+      var refreshLineup = false;
       try {
-        final bands = await widget.lineupService.load(
-          widget.workspace,
-          forceRefresh: forceRefresh,
-        );
-        for (final b in bands) {
+        final soft = await widget.lineupService.loadSoft(widget.workspace);
+        refreshLineup = soft.shouldRefreshInBackground;
+        for (final b in soft.bands) {
           if (b.name.trim().isNotEmpty) lineupNames.add(b.name.trim());
         }
       } catch (_) {}
 
-      final byName = <String, DescriptionMapEntry>{};
-      for (final e in entries) {
-        if (e.band.trim().isEmpty) continue;
-        byName[e.band.trim().toLowerCase()] = e;
-      }
-
-      final rows = <_ListRow>[];
-      final seen = <String>{};
-      for (final name in lineupNames) {
-        final key = name.toLowerCase();
-        seen.add(key);
-        rows.add(
-          _ListRow(
-            name: name,
-            entry: byName[key],
-            inLineup: true,
-          ),
-        );
-      }
-      for (final e in entries) {
-        final key = e.band.trim().toLowerCase();
-        if (key.isEmpty || seen.contains(key)) continue;
-        seen.add(key);
-        rows.add(
-          _ListRow(
-            name: e.band.trim(),
-            entry: e,
-            inLineup: false,
-          ),
-        );
-      }
-      rows.sort(
-        (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+      final rows = _buildDescriptionListRows(
+        entries: entries,
+        lineupNames: lineupNames,
       );
-
       final prefill = widget.prefillLabel?.trim();
+      if (!mounted) return;
       setState(() {
         _rows = rows;
         _loading = false;
@@ -240,11 +268,100 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
         _openAddDescription(prefill);
         widget.onPrefillConsumed?.call();
       }
+      if (refreshMap || refreshLineup) {
+        unawaited(
+          _refreshDescriptionsInBackground(
+            refreshMap: refreshMap,
+            refreshLineup: refreshLineup,
+            entries: entries,
+            lineupNames: lineupNames,
+          ),
+        );
+      }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = e.toString();
         _loading = false;
       });
+    }
+  }
+
+  Future<void> _loadForced() async {
+    List<DescriptionMapEntry> entries = [];
+    try {
+      entries = await widget.descriptionMapService.load(
+        widget.workspace,
+        forceRefresh: true,
+      );
+    } catch (e) {
+      if (widget.workspace.descriptionMapUrl.trim().isNotEmpty) {
+        _error = e.toString();
+      }
+    }
+
+    final lineupNames = <String>{};
+    try {
+      final bands = await widget.lineupService.load(
+        widget.workspace,
+        forceRefresh: true,
+      );
+      for (final b in bands) {
+        if (b.name.trim().isNotEmpty) lineupNames.add(b.name.trim());
+      }
+    } catch (_) {}
+
+    final rows = _buildDescriptionListRows(
+      entries: entries,
+      lineupNames: lineupNames,
+    );
+    final prefill = widget.prefillLabel?.trim();
+    if (!mounted) return;
+    setState(() {
+      _rows = rows;
+      _loading = false;
+    });
+    if (prefill != null && prefill.isNotEmpty) {
+      _openAddDescription(prefill);
+      widget.onPrefillConsumed?.call();
+    }
+  }
+
+  Future<void> _refreshDescriptionsInBackground({
+    required bool refreshMap,
+    required bool refreshLineup,
+    required List<DescriptionMapEntry> entries,
+    required Set<String> lineupNames,
+  }) async {
+    var nextEntries = entries;
+    var nextNames = lineupNames;
+    try {
+      if (refreshMap) {
+        final refreshed =
+            await widget.descriptionMapService.refreshInBackground(
+          widget.workspace,
+        );
+        if (refreshed != null) nextEntries = refreshed;
+      }
+      if (refreshLineup) {
+        final refreshed =
+            await widget.lineupService.refreshInBackground(widget.workspace);
+        if (refreshed != null) {
+          nextNames = {
+            for (final b in refreshed)
+              if (b.name.trim().isNotEmpty) b.name.trim(),
+          };
+        }
+      }
+      if (!mounted) return;
+      setState(() {
+        _rows = _buildDescriptionListRows(
+          entries: nextEntries,
+          lineupNames: nextNames,
+        );
+      });
+    } catch (_) {
+      // Keep showing stale/empty; user can tap Refresh.
     }
   }
 

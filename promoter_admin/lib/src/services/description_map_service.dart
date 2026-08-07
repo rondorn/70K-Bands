@@ -136,6 +136,25 @@ class DescriptionMapService {
     return parseEntries(text);
   }
 
+  /// Local staging only — no network seed. See [CsvStagingSoftLoad].
+  Future<({List<DescriptionMapEntry> entries, bool shouldRefreshInBackground})>
+      loadSoft(FestivalWorkspace workspace) async {
+    final soft = await staging.loadWorkingCsvSoft(workspace);
+    return (
+      entries: parseEntries(soft.csvText),
+      shouldRefreshInBackground: soft.shouldRefreshInBackground,
+    );
+  }
+
+  /// Background Dropbox reload when safe. Null if skipped (unsynced edits).
+  Future<List<DescriptionMapEntry>?> refreshInBackground(
+    FestivalWorkspace workspace,
+  ) async {
+    final text = await staging.refreshPublishedInBackground(workspace);
+    if (text == null) return null;
+    return parseEntries(text);
+  }
+
   /// Save map CSV locally and queue background Dropbox sync.
   ///
   /// Individual description `.txt` files still upload immediately via

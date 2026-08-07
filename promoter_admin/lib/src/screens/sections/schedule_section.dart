@@ -240,44 +240,166 @@ class _ScheduleSectionState extends State<ScheduleSection> {
   );
 
   Future<void> _load({bool forceRefresh = false}) async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    try {
-      final sync = widget.scheduleService.syncStatus;
-      final hasLocalPending =
-          sync.state == ScheduleSyncState.pending ||
-          sync.state == ScheduleSyncState.syncing ||
-          sync.pendingCount > 0;
-
-      final List<ScheduleEvent> events;
-      if (forceRefresh && !hasLocalPending) {
-        events = await widget.scheduleService.reloadFromPublished(
-          widget.workspace,
-          forceRefresh: true,
-        );
-      } else {
-        events = await widget.scheduleService.load(widget.workspace);
-      }
-
-      List<String> bands = [];
+    if (forceRefresh) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
       try {
-        final lineup = await widget.lineupService.load(
-          widget.workspace,
-          forceRefresh: forceRefresh,
+        final sync = widget.scheduleService.syncStatus;
+        final hasLocalPending =
+            sync.state == ScheduleSyncState.pending ||
+            sync.state == ScheduleSyncState.syncing ||
+            sync.pendingCount > 0;
+
+        final List<ScheduleEvent> events;
+        if (!hasLocalPending) {
+          events = await widget.scheduleService.reloadFromPublished(
+            widget.workspace,
+            forceRefresh: true,
+          );
+        } else {
+          events = await widget.scheduleService.load(widget.workspace);
+        }
+
+        List<String> bands = [];
+        try {
+          final lineup = await widget.lineupService.load(
+            widget.workspace,
+            forceRefresh: true,
+          );
+          bands =
+              lineup.map((b) => b.name).where((n) => n.isNotEmpty).toList();
+        } catch (_) {}
+
+        await _applyLoadedSchedule(
+          events: events,
+          bands: bands,
+          forceRefreshPendingMessage: hasLocalPending,
         );
-        bands = lineup.map((b) => b.name).where((n) => n.isNotEmpty).toList();
+      } catch (e) {
+        if (!mounted) return;
+        setState(() {
+          _error = e.toString();
+          _loading = false;
+        });
+      }
+      return;
+    }
+
+    // Soft load: show local cache immediately; refresh expired/missing in background.
+    setState(() => _error = null);
+    try {
+      final soft = await widget.scheduleService.loadSoft(widget.workspace);
+      var bands = <String>[];
+      var refreshLineup = false;
+      try {
+        final lineupSoft =
+            await widget.lineupService.loadSoft(widget.workspace);
+        refreshLineup = lineupSoft.shouldRefreshInBackground;
+        bands = lineupSoft.bands
+            .map((b) => b.name)
+            .where((n) => n.isNotEmpty)
+            .toList();
       } catch (_) {}
 
-      // Seed vocabulary from the schedule only when Settings lists are empty.
+      await _applyLoadedSchedule(events: soft.events, bands: bands);
+      if (soft.shouldRefreshInBackground || refreshLineup) {
+        unawaited(
+          _refreshScheduleInBackground(
+            refreshSchedule: soft.shouldRefreshInBackground,
+            refreshLineup: refreshLineup,
+            events: soft.events,
+            bands: bands,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _applyLoadedSchedule({
+    required List<ScheduleEvent> events,
+    required List<String> bands,
+    bool forceRefreshPendingMessage = false,
+  }) async {
+    // Seed vocabulary from the schedule only when Settings lists are empty.
+    var ws = widget.workspace;
+    final needVenues = DayDateAlignment.meaningful(ws.venues).isEmpty;
+    final needDates = DayDateAlignment.meaningful(ws.dates).isEmpty;
+    final needDays = DayDateAlignment.meaningful(ws.days).isEmpty;
+    final needTypes = DayDateAlignment.meaningful(ws.eventTypes).isEmpty;
+    if (needVenues || needDates || needDays || needTypes) {
+      final hints = ScheduleService.hintsFromEvents(events);
+      ws = PointerService.mergeScheduleVocabulary(
+        workspace: ws,
+        venues: hints.venues,
+        dates: hints.dates,
+        days: hints.days,
+        eventTypes: hints.eventTypes,
+      );
+      await widget.onWorkspaceChanged(ws);
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _events = events;
+      _bandNames = bands;
+      _band = DropdownOptions.empty;
+      _type = DropdownOptions.empty;
+      _venue = DropdownOptions.empty;
+      _day = DropdownOptions.empty;
+      _date = DropdownOptions.empty;
+      _startHour = DropdownOptions.pick('12', _hourOptions);
+      _startMin = DropdownOptions.pick('00', _minOptions);
+      _length = DropdownOptions.pick('60', _lengthOptions);
+      _applyLengthToEnd();
+      _loading = false;
+      if (forceRefreshPendingMessage) {
+        _message =
+            'Refreshed lineup; schedule kept local because unsynced edits '
+            'are still pending. Sync or discard those first to reload from Dropbox.';
+      }
+    });
+    await _refreshOutstanding();
+  }
+
+  Future<void> _refreshScheduleInBackground({
+    required bool refreshSchedule,
+    required bool refreshLineup,
+    required List<ScheduleEvent> events,
+    required List<String> bands,
+  }) async {
+    var nextEvents = events;
+    var nextBands = bands;
+    try {
+      if (refreshSchedule) {
+        final refreshed =
+            await widget.scheduleService.refreshInBackground(widget.workspace);
+        if (refreshed != null) nextEvents = refreshed;
+      }
+      if (refreshLineup) {
+        final refreshed =
+            await widget.lineupService.refreshInBackground(widget.workspace);
+        if (refreshed != null) {
+          nextBands =
+              refreshed.map((b) => b.name).where((n) => n.isNotEmpty).toList();
+        }
+      }
+      if (!mounted) return;
+
       var ws = widget.workspace;
       final needVenues = DayDateAlignment.meaningful(ws.venues).isEmpty;
       final needDates = DayDateAlignment.meaningful(ws.dates).isEmpty;
       final needDays = DayDateAlignment.meaningful(ws.days).isEmpty;
       final needTypes = DayDateAlignment.meaningful(ws.eventTypes).isEmpty;
       if (needVenues || needDates || needDays || needTypes) {
-        final hints = ScheduleService.hintsFromEvents(events);
+        final hints = ScheduleService.hintsFromEvents(nextEvents);
         ws = PointerService.mergeScheduleVocabulary(
           workspace: ws,
           venues: hints.venues,
@@ -288,31 +410,14 @@ class _ScheduleSectionState extends State<ScheduleSection> {
         await widget.onWorkspaceChanged(ws);
       }
 
+      if (!mounted) return;
       setState(() {
-        _events = events;
-        _bandNames = bands;
-        _band = DropdownOptions.empty;
-        _type = DropdownOptions.empty;
-        _venue = DropdownOptions.empty;
-        _day = DropdownOptions.empty;
-        _date = DropdownOptions.empty;
-        _startHour = DropdownOptions.pick('12', _hourOptions);
-        _startMin = DropdownOptions.pick('00', _minOptions);
-        _length = DropdownOptions.pick('60', _lengthOptions);
-        _applyLengthToEnd();
-        _loading = false;
-        if (forceRefresh && hasLocalPending) {
-          _message =
-              'Refreshed lineup; schedule kept local because unsynced edits '
-              'are still pending. Sync or discard those first to reload from Dropbox.';
-        }
+        _events = nextEvents;
+        _bandNames = nextBands;
       });
       await _refreshOutstanding();
-    } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _loading = false;
-      });
+    } catch (_) {
+      // Keep showing stale/empty; user can tap Refresh.
     }
   }
 
