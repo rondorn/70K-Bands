@@ -100,6 +100,7 @@ You’ll mainly use Settings once:
 - **Festival** — which festival you’re working on; add, export, or delete a saved festival config.  
   - **Add New Festival** — same three choices as first launch (setup link, paste links, or create from scratch).  
   - **Export festival setup…** — saves a setup file (venues, days, dates, event types, Testing/Production links, and more). Upload it to Dropbox and share that one link with a helper. Optionally include the **Reports** folder link, the **Alerts** folder link, or both.  
+  - **Update from setup link…** — paste a setup link to refresh **this** festival’s configuration (keeps the same festival entry). Reports/Alerts change only if the file includes them.  
 - **Festival name** — label in the header.  
 - **Dropbox connection** — sign in with your personal account (see [Connecting Dropbox](#connecting-dropbox)).  
 - **Testing link** / **Production link** — the URLs you were given (or that came from a setup import).  

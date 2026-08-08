@@ -764,6 +764,69 @@ class _SettingsSectionState extends State<SettingsSection> {
     }
   }
 
+  Future<void> _updateFestivalFromSetupLink() async {
+    final url = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.panel,
+        title: const Text('Update from setup link'),
+        content: SizedBox(
+          width: dialogContentWidth(context, desktop: 520),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Replace this festival’s configuration (“${widget.workspace.displayName}”) '
+                'with a setup file. Testing/Production links, venues, days, dates, '
+                'event types, and other package fields are updated.\n\n'
+                'Reports and Alerts folder links are only changed if the setup file '
+                'includes them. Local File Mode paths are kept.',
+                style: const TextStyle(color: AppColors.muted, fontSize: 13),
+              ),
+              const SizedBox(height: 16),
+              JoinFestivalSetupForm(
+                submitLabel: 'Update festival',
+                onSubmit: (u) => Navigator.pop(context, u),
+                onBack: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (url == null || url.trim().isEmpty || !mounted) return;
+
+    setState(() {
+      _busy = true;
+      _error = null;
+      _status = 'Updating festival from setup link…';
+    });
+    try {
+      final updated = await _festivalSetup.updateFromUrl(
+        url.trim(),
+        current: widget.workspace,
+        dropboxConnected: widget.dropboxConnected,
+      );
+      await widget.onWorkspaceChanged(updated);
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _status =
+            'Updated “${updated.festivalName}” from setup link'
+            '${updated.eventYear.trim().isEmpty ? '' : ' (year ${updated.eventYear})'}.';
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = _cleanError(e);
+        _status = null;
+      });
+    }
+  }
+
   Future<void> _addFestival() async {
     final choice = await showAddFestivalSetupDialog(
       context: context,
@@ -1528,6 +1591,13 @@ class _SettingsSectionState extends State<SettingsSection> {
                         child: const Text('Export festival setup…'),
                       ),
                       OutlinedButton(
+                        onPressed: _busy ||
+                                widget.workspace.festivalName.trim().isEmpty
+                            ? null
+                            : _updateFestivalFromSetupLink,
+                        child: const Text('Update from setup link…'),
+                      ),
+                      OutlinedButton(
                         onPressed: _busy || widget.festivalChoices.length <= 1
                             ? null
                             : _deleteActiveFestival,
@@ -1539,8 +1609,8 @@ class _SettingsSectionState extends State<SettingsSection> {
                     'Each festival has its own Testing/Production links and vocabulary. '
                     'Add New Festival: join with a setup link, paste links by hand, '
                     'or create Dropbox files from scratch. '
-                    'Export festival setup makes a shareable file for helpers. '
-                    'Switching saves the current form first.',
+                    'Export / Update from setup link share or refresh this festival’s '
+                    'config. Switching saves the current form first.',
                   ),
                 ],
               ),

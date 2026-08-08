@@ -60,6 +60,8 @@ class FestivalSetupService {
   ///
   /// Vocabulary from the package is preserved; pointer load only fills empty
   /// lists. When [dropboxConnected], probes write access afterward.
+  ///
+  /// Dropbox share links with `dl=0` are normalized to `raw=1` by [fetchUrlText].
   Future<FestivalWorkspace> importFromUrl(
     String setupUrl, {
     required bool dropboxConnected,
@@ -76,6 +78,61 @@ class FestivalSetupService {
       dropboxConnected: dropboxConnected,
       id: id,
     );
+  }
+
+  /// Replace the active festival’s config from a setup link, keeping [current].id.
+  ///
+  /// Reports / Alerts folder URLs from [current] are kept when the package did
+  /// not include those fields. Local File Mode paths and data-source year
+  /// override are also preserved.
+  Future<FestivalWorkspace> updateFromUrl(
+    String setupUrl, {
+    required FestivalWorkspace current,
+    required bool dropboxConnected,
+  }) async {
+    final url = setupUrl.trim();
+    if (url.isEmpty) {
+      throw ArgumentError('Setup link is required.');
+    }
+    final text = await fetchUrlText(url, forceRefresh: true);
+    final package = FestivalSetupPackage.parse(text);
+    var draft = await materializePackage(
+      package,
+      dropboxConnected: dropboxConnected,
+      id: current.id,
+    );
+    draft = draft.copyWith(
+      emergencyLocalMode: current.emergencyLocalMode,
+      emergencyLocalPaths: current.emergencyLocalPaths,
+      dataSourceYearOverride: current.dataSourceYearOverride,
+    );
+    if (!package.includesReports) {
+      draft = draft.copyWith(
+        reportsFolderUrl: current.reportsFolderUrl,
+        reportUrl: current.reportUrl,
+        reportUrlFull: current.reportUrlFull,
+        reportDiscoveryEventYear: current.reportDiscoveryEventYear,
+        reportDiscoveryFolderUrl: current.reportDiscoveryFolderUrl,
+        reportFilesFolderPath: current.reportFilesFolderPath,
+        canViewReports: current.canViewReports,
+      );
+    }
+    if (!package.includesAlerts) {
+      draft = draft.copyWith(
+        alertFolderUrl: current.alertFolderUrl,
+        alertFilesFolderPath: current.alertFilesFolderPath,
+        canEditAlerts: current.canEditAlerts,
+        ownsAlertFilesFolder: current.ownsAlertFilesFolder,
+      );
+    }
+    if (dropboxConnected &&
+        (!package.includesReports || !package.includesAlerts)) {
+      draft = await FestivalCreateService.probeFullWorkspaceAccess(
+        draft,
+        dropboxApi,
+      );
+    }
+    return draft;
   }
 
   /// Turn a parsed package into a ready workspace (pointers + optional probe).
