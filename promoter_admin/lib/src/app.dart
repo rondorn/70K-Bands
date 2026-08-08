@@ -65,17 +65,12 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
   String _dropboxLabel = '';
   bool _connecting = false;
 
-  /// After first-launch festival create, keep onboarding until Dropbox links.
-  bool _pendingDropboxOnboarding = false;
-
   FestivalWorkspace? get _workspace => _registry?.active;
 
   bool get _showOnboarding {
     final registry = _registry;
     if (registry == null) return false;
-    if (registry.needsFestivalSetup) return true;
-    if (_workspace?.usesEmergencyLocalMode == true) return false;
-    return _pendingDropboxOnboarding && !_dropboxConnected;
+    return registry.needsFestivalSetup;
   }
 
   @override
@@ -268,17 +263,11 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
       final id = current.activeFestivalId;
       final registry = current.upsertActive(workspace.copyWith(id: id));
       await _store.saveRegistry(registry);
-      setState(() {
-        _registry = registry;
-        _pendingDropboxOnboarding = !_dropboxConnected;
-      });
+      setState(() => _registry = registry);
       return;
     }
     final registry = await _store.addFestival(seed: workspace);
-    setState(() {
-      _registry = registry;
-      _pendingDropboxOnboarding = !_dropboxConnected;
-    });
+    setState(() => _registry = registry);
   }
 
   Future<void> _deleteFestival(String festivalId) async {
@@ -296,11 +285,9 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
     setState(() => _connecting = true);
     try {
       final label = await _auth.connectInteractive();
-      final finishingOnboarding = _pendingDropboxOnboarding;
       setState(() {
         _dropboxConnected = true;
         _dropboxLabel = label;
-        _pendingDropboxOnboarding = false;
       });
       final active = _workspace;
       if (active != null) {
@@ -312,7 +299,7 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
           }
         }
       }
-      if (!finishingOnboarding) {
+      if (!_showOnboarding) {
         _messengerKey.currentState?.showSnackBar(
           SnackBar(
             content: Text(

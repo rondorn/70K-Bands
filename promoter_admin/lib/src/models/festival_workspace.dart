@@ -169,10 +169,13 @@ class FestivalWorkspace {
   bool get hasTestingPointer => testingPointerUrl.trim().isNotEmpty;
 
   /// True once the festival has a name and storage is ready for normal use.
+  ///
+  /// Local File Mode only requires a name so first-launch can enter Settings
+  /// to map paths; Dropbox mode requires a Testing link.
   bool get isConfigured {
     if (festivalName.trim().isEmpty) return false;
     if (usesEmergencyLocalMode) {
-      return emergencyLocalPaths.hasAnyPath;
+      return true;
     }
     return testingPointerUrl.trim().isNotEmpty;
   }

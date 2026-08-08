@@ -27,15 +27,17 @@ Other one-off tools (for example the 70K schedule QR poster) remain under
 - In the **fan app**, most attendees see **Production**. **Testing** is available
   under Advanced preferences (most users never switch).
 
-## Two setup paths
+## Setup paths
 
-**Path 1 (usual):** Install → paste Testing + Production links from the app
-developer → Connect Dropbox → **Load festival data** → work.
+**First launch:** Connect Dropbox (your own account) → choose one of:
 
-**Path 2 (new festival / handoff):** Install → create festival links on Dropbox →
-send those URLs to the app developer. They may use that data to fill the official
-pointers the fan app uses (the created links are not always wired into the app
-directly).
+1. **Join an existing festival** — paste one setup link from **Export festival setup** (usual for helpers).
+2. **Set up with festival links** — paste Testing + Production yourself (Reports/Alerts optional).
+3. **Create a brand-new festival** — bootstrap Dropbox folders/pointers for a new app release.
+
+**Owner handoff:** Settings → **Export festival setup…** → upload the JSON to Dropbox → share that single link (optionally include Reports and/or Alerts).
+
+Mac/Windows only: Dropbox screen offers **Use files on this computer only** (Local File Mode — not recommended for normal festivals).
 
 ## Run on this Mac
 
@@ -85,7 +87,8 @@ Confirm an archive shows **1.0.4 (16)** (or whatever is in `pubspec.yaml`).
 | Load festival data from Testing/Production links → Artists / Schedule / Description map URLs | Done |
 | Connect Dropbox (PKCE, local callback) | Done |
 | File-access gating (Artists / Schedule / Descriptions viewable; map write gated) | Done |
-| Create festival (existing links or bootstrap new Dropbox files) | Done |
+| Create festival (setup link, paste links, or bootstrap Dropbox) | Done |
+| Export / import festival setup package (optional reports/alerts) | Done |
 | Artists list + add/edit (Discover; optional city/state; inline description) | Done |
 | Schedule entry / view / stats (local staging + background Dropbox sync) | Done |
 | Default event types: Show, Clinic, Meet and Greet, Special Event, Unofficial Event | Done |
@@ -117,9 +120,10 @@ After changing scopes in the Dropbox developer console, users must
 
 ## How to use
 
-1. **Settings** — paste Testing + Production links (or **Add New Festival**),
-   Connect Dropbox, then **Load festival data**. Your app developer may ask you
-   to copy those links back to them.
+1. **Settings** — Connect Dropbox if needed; **Add New Festival** (setup link, paste
+   links, or create from scratch) or **Export festival setup…** for helpers; then
+   **Load festival data** when refreshing file URLs. Your app developer may ask you
+   to copy Testing/Production links back to them.
 2. **Artists** — Discover from Metal Archives / MusicBrainz; save to the Testing
    lineup. Optional **Add description** writes the file (and updates the map when
    you have description write access).

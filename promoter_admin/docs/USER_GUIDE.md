@@ -4,7 +4,7 @@ For official festival staff **and unofficial volunteers**.
 
 You use **your own Dropbox account**. Either you already own the festival’s Dropbox files, or — more often — someone shares **edit access** to the files you need with your Dropbox email. There is no shared festival password.
 
-Someone who releases or maintains the festival apps will give you the **Testing** and **Production** links for first-time setup. After that, settings rarely change. Most people spend their time on artists, descriptions, schedule, and — if authorized — publishing and notifications.
+Someone who releases or maintains the festival apps will usually give you either a **single festival setup link**, or the **Testing** and **Production** links for first-time setup. After that, settings rarely change. Most people spend their time on artists, descriptions, schedule, and — if authorized — publishing and notifications.
 
 ---
 
@@ -24,7 +24,7 @@ Someone who releases or maintains the festival apps will give you the **Testing*
 
 **iPad:** Install from the App Store like any other app.
 
-You do **not** need to install anything else. After the app opens, continue with [Getting started](#getting-started) (festival name, Testing/Production links, Dropbox).
+You do **not** need to install anything else. After the app opens, continue with [Getting started](#getting-started) (Connect Dropbox, then join with a setup link or enter Testing/Production links).
 
 When a newer version is available, update the same way you installed (Releases zip for Mac/Windows, App Store for iPad). Festival settings and your Dropbox sign-in are stored separately — updating the app does **not** wipe them. You do not need to re-enter Testing/Production links or sign in to Dropbox again after a normal update.
 
@@ -75,14 +75,17 @@ If a button is missing or grayed out (for example you can view Artists but not A
 ## Getting started
 
 1. [Install the app](#install-download-the-app) if you don’t have it yet.
-2. Get the festival **name**, **Testing link**, and usually **Production link** from your festival contact.
-3. Ask them to share **edit** access (on Dropbox) to the files you’re supposed to work on — using **your Dropbox email**.
-4. In the admin app: enter the festival, paste the links, **[Connect Dropbox](#connecting-dropbox)** with your personal account, then **Load festival data**.
-5. You’re in. Work under **Artists**, **Descriptions**, and **Schedule** as needed.
+2. Ask your festival contact to share **edit** access (on Dropbox) to the files you’re supposed to work on — using **your Dropbox email**.
+3. Open the admin app. First screen: **[Connect Dropbox](#connecting-dropbox)** with a Dropbox account **you own and can sign into**. The primary festival administrator grants write access using that same email — do not ask anyone for their Dropbox password.
+4. Choose how to set up the festival:
+   - **Join an existing festival** — paste the **single setup link** they sent you (most common for helpers).
+   - **Set up with festival links** — paste Testing and Production links yourself (Reports / Alerts optional).
+   - **Create a brand-new festival** — owners/maintainers only, when bootstrapping Dropbox for a new app.
+5. You’re in. Work under **Artists**, **Descriptions**, and **Schedule** as needed. Use **Load festival data** on Settings if file URLs need a refresh.
 
-Creating a brand-new festival from scratch (new empty Dropbox files) is for festival owners / the person who maintains the apps — not a typical volunteer first step.
+On Mac/Windows only, the Dropbox screen also has a small **Use files on this computer only** option (Local File Mode). That is not recommended for normal festivals — see [Local File Mode](#local-file-mode).
 
-You can keep several festivals in the app (for example 70K and MDF) and switch them under Settings → **Festival**.
+You can keep several festivals in the app (for example 70K and MDF) and switch them under Settings → **Festival**. Owners can **Export festival setup…** from Settings to create a shareable setup file for helpers (optionally including Reports and Alerts folder links).
 
 ---
 
@@ -94,10 +97,12 @@ You can keep several festivals in the app (for example 70K and MDF) and switch t
 
 You’ll mainly use Settings once:
 
-- **Festival** — which festival you’re working on; add or delete a saved festival config.  
+- **Festival** — which festival you’re working on; add, export, or delete a saved festival config.  
+  - **Add New Festival** — same three choices as first launch (setup link, paste links, or create from scratch).  
+  - **Export festival setup…** — saves a setup file (venues, days, dates, event types, Testing/Production links, and more). Upload it to Dropbox and share that one link with a helper. Optionally include the **Reports** folder link, the **Alerts** folder link, or both.  
 - **Festival name** — label in the header.  
 - **Dropbox connection** — sign in with your personal account (see [Connecting Dropbox](#connecting-dropbox)).  
-- **Testing link** / **Production link** — the URLs you were given.  
+- **Testing link** / **Production link** — the URLs you were given (or that came from a setup import).  
 - **Reports folder** — optional Dropbox folder where HTML stats reports are stored (see [Stats reports](#stats-reports)). Only people with access to this folder see **Reports** in the sidebar.  
 - **Alert folder** — only if your festival uses push announcements (optional). **Create alert folder on Dropbox** appears when you’re connected and the field is empty.  
 - **Festival logo** — optional image URL; a preview appears as you paste the link. Used on exported running-order pages. Dropbox links you paste with `dl=0` are shown and saved as `raw=1` automatically.  
@@ -105,7 +110,7 @@ You’ll mainly use Settings once:
 - **File access** — what you can edit (Artists, Schedule, Descriptions). Use **Refresh file access** if rights were just shared and buttons still look locked. Uncheck a row if detection is wrong or you don’t use that area. When a **Reports folder** is set, a **Stats reports** row shows whether you can open the Reports section (based on write access to that folder).  
 - **Folder access** — (festival owners) invite collaborators by email to specific Dropbox folders (artists, schedule, descriptions, alerts, or master pointer files).  
 - **Lineup options** — **Use city/state fields** for festivals that track local artist location.  
-- **Venues / Days / Dates / Date rollover / Event types** — vocabulary for Schedule Entry (filled once by Load when empty; you edit afterward).  
+- **Venues / Days / Dates / Date rollover / Event types** — vocabulary for Schedule Entry (filled from a setup import, or once by Load when empty; you edit afterward).  
 - **Days / Dates** — keep them in matching order (first Day with first Date, and so on). You need **one more date than days** so late-night sets that spill past midnight still land on the right calendar day. **Date rollover** (default 8:00 AM) is the cutoff: times before that still count as the previous festival day. Schedule Entry fills **Date** for you when you pick **Day** and start time; change Date by hand if needed.  
 - **Load festival data** — pull Testing/Production file URLs and fill empty Venues / Days / Dates / Event types from Production. Existing lists are kept (not overwritten).  
 - **Save configuration** — saves your local settings. The button stays dim until something changed; a reminder appears when you have unsaved edits. Changing Venues / Days / Dates / Event types refreshes Schedule Entry menus.  
@@ -115,12 +120,14 @@ You’ll mainly use Settings once:
 
 ### Connecting Dropbox
 
-The app never asks for a festival password. You sign in with **your own Dropbox account** — the same email your festival contact used when they shared edit access to the files.
+The app never asks for a festival password. You sign in with **your own Dropbox account** — one you own and can sign into. The primary festival administrator can grant this account write access to the needed files using your Dropbox login email.
 
-1. In Settings, click **Connect Dropbox**.
+On first launch, Connect Dropbox is the **first** screen (before festival setup).
+
+1. Click **Connect Dropbox** (first-launch screen or Settings).
 2. **Mac or Windows:** your web browser opens the Dropbox sign-in page. Sign in, approve access, then close the browser tab when it says you’re connected. Return to the app.
 3. **iPad:** a sign-in sheet opens inside the app. Complete sign-in there — you stay in the app the whole time.
-4. Settings shows **Connected: [your@email.com](mailto:your@email.com)** (or your Dropbox name).
+4. The app shows **Connected: [your@email.com](mailto:your@email.com)** (or your Dropbox name).
 
 You stay signed in between sessions. Use **Disconnect** only if you need to switch to a different Dropbox account, then **Connect Dropbox** again.
 

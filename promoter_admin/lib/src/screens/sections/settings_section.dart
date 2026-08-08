@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:promoter_admin/src/models/emergency_local_paths.dart';
 import 'package:promoter_admin/src/models/festival_workspace.dart';
 import 'package:promoter_admin/src/models/dropbox_folder_access.dart';
-import 'package:promoter_admin/src/screens/create_festival_dialog.dart';
+import 'package:promoter_admin/src/screens/festival_setup_choice.dart';
 import 'package:promoter_admin/src/services/dropbox_api.dart';
 import 'package:promoter_admin/src/services/dropbox_folder_access_service.dart';
 import 'package:promoter_admin/src/services/festival_create_service.dart';
+import 'package:promoter_admin/src/services/festival_setup_service.dart';
 import 'package:promoter_admin/src/services/festival_year_service.dart';
 import 'package:promoter_admin/src/models/publish_status.dart';
 import 'package:promoter_admin/src/services/pointer_service.dart';
@@ -641,71 +642,194 @@ class _SettingsSectionState extends State<SettingsSection> {
     }
   }
 
-  Future<void> _addFestival() async {
-    final result = await showCreateFestivalDialog(
-      context: context,
-      dropboxConnected: widget.dropboxConnected,
-    );
-    if (result == null || !mounted) return;
+  FestivalSetupService get _festivalSetup => FestivalSetupService(
+        pointerService: widget.pointerService,
+        dropboxApi: widget.dropboxApi,
+      );
 
-    if (result.createPointerFiles && !widget.dropboxConnected) {
-      setState(() {
-        _error =
-            'Connect Dropbox before creating new festival links and data files.';
-        _status = null;
-      });
-      return;
-    }
+  Future<void> _exportFestivalSetup() async {
+    final box = context.findRenderObject() as RenderBox?;
+    final origin = box == null
+        ? null
+        : (box.localToGlobal(Offset.zero) & box.size);
+    var includeReports = false;
+    var includeAlerts = false;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setLocal) => AlertDialog(
+          backgroundColor: AppColors.panel,
+          title: const Text('Export festival setup'),
+          content: SizedBox(
+            width: dialogContentWidth(context, desktop: 440),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Creates a setup file you can upload to Dropbox and share as '
+                  'one link. It includes Testing and Production links, venues, '
+                  'days, dates, event types, and other schedule vocabulary.\n\n'
+                  'Anyone with the link can use these settings in the admin app. '
+                  'Only share with people you trust.',
+                ),
+                const SizedBox(height: 12),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  value: includeReports,
+                  onChanged: (v) => setLocal(() {
+                    includeReports = v ?? false;
+                  }),
+                  title: const Text(
+                    'Include Reports folder link',
+                    style: TextStyle(color: AppColors.heading, fontSize: 14),
+                  ),
+                  subtitle: const Text(
+                    'Only for helpers who should open the Reports section.',
+                    style: TextStyle(color: AppColors.muted, fontSize: 12),
+                  ),
+                ),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  value: includeAlerts,
+                  onChanged: (v) => setLocal(() {
+                    includeAlerts = v ?? false;
+                  }),
+                  title: const Text(
+                    'Include Alerts folder link',
+                    style: TextStyle(color: AppColors.heading, fontSize: 14),
+                  ),
+                  subtitle: const Text(
+                    'Only for helpers who should send push announcements.',
+                    style: TextStyle(color: AppColors.muted, fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Export…'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (confirmed != true || !mounted) return;
 
     setState(() {
       _busy = true;
       _error = null;
-      _status = result.createPointerFiles
-          ? 'Creating festival on Dropbox…'
-          : 'Loading festival from links…';
+      _status = 'Exporting festival setup…';
+    });
+    try {
+      final draft = await _draftReadyToPersist();
+      await widget.onWorkspaceChanged(draft);
+      final saved = await _festivalSetup.exportToFile(
+        draft,
+        includeReports: includeReports,
+        includeAlerts: includeAlerts,
+        sharePositionOrigin: origin,
+      );
+      if (!mounted) return;
+      if (saved == null) {
+        setState(() {
+          _busy = false;
+          _status = null;
+        });
+        return;
+      }
+      setState(() {
+        _busy = false;
+        _status = saved.shared
+            ? 'Festival setup ready to share. Upload it to Dropbox if needed, '
+                'then send the Dropbox link to your helper.'
+            : 'Festival setup saved to ${saved.path}. Upload it to Dropbox and '
+                'share that single link with your helper.';
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = _cleanError(e);
+        _status = null;
+      });
+    }
+  }
+
+  Future<void> _addFestival() async {
+    final choice = await showAddFestivalSetupDialog(
+      context: context,
+      dropboxConnected: widget.dropboxConnected,
+    );
+    if (choice == null || !mounted) return;
+
+    setState(() {
+      _busy = true;
+      _error = null;
+      _status = switch (choice) {
+        AddFestivalFromSetupLink() => 'Loading festival setup…',
+        AddFestivalFromCreateForm(:final result) => result.createPointerFiles
+            ? 'Creating festival on Dropbox…'
+            : 'Loading festival from links…',
+      };
     });
     try {
       final draft = await _draftReadyToPersist();
       await widget.onWorkspaceChanged(draft);
       late final FestivalWorkspace created;
-      if (result.createPointerFiles) {
-        created = await FestivalCreateService(widget.dropboxApi).createFestival(
-          festivalName: result.name,
-          eventYear: result.eventYear,
-          filePrefix: result.filePrefix,
-        );
-      } else {
-        var draft = FestivalWorkspace(
-          festivalName: result.name,
-          testingPointerUrl: result.testingPointerUrl,
-          productionPointerUrl: result.productionPointerUrl,
-        );
-        if (draft.productionPointerUrl.trim().isNotEmpty) {
-          draft = await widget.pointerService.applyPointers(draft);
-        } else {
-          draft = await widget.pointerService.applyTestingPointer(draft);
-        }
-        if (widget.dropboxConnected) {
-          draft = await FestivalCreateService.probeFullWorkspaceAccess(
-            draft,
-            widget.dropboxApi,
+      var createdFromScratch = false;
+      switch (choice) {
+        case AddFestivalFromSetupLink(:final setupUrl):
+          created = await _festivalSetup.importFromUrl(
+            setupUrl,
+            dropboxConnected: widget.dropboxConnected,
           );
-        }
-        created = draft;
+        case AddFestivalFromCreateForm(:final result):
+          if (result.createPointerFiles && !widget.dropboxConnected) {
+            throw StateError(
+              'Connect Dropbox before creating new festival links and data files.',
+            );
+          }
+          if (result.createPointerFiles) {
+            createdFromScratch = true;
+            created =
+                await FestivalCreateService(widget.dropboxApi).createFestival(
+              festivalName: result.name,
+              eventYear: result.eventYear,
+              filePrefix: result.filePrefix,
+            );
+          } else {
+            created = await _festivalSetup.materializeManualLinks(
+              festivalName: result.name,
+              testingPointerUrl: result.testingPointerUrl,
+              productionPointerUrl: result.productionPointerUrl,
+              reportsFolderUrl: result.reportsFolderUrl,
+              alertFolderUrl: result.alertFolderUrl,
+              dropboxConnected: widget.dropboxConnected,
+            );
+          }
       }
       await widget.onAddFestival(created);
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _status = result.createPointerFiles
+        _status = createdFromScratch
             ? 'Created “${created.festivalName}” with split Dropbox folders '
-                  '(artist, schedule, description, and alert). '
-                  'Testing and Production links are ready — send them to your '
-                  'app developer if needed. '
-                  'Set message_queue.config.yaml dropbox_dir to '
-                  '${FestivalCreateService.localAlertSyncPathHint(created.festivalName)}.'
-            : 'Added “${created.festivalName}” from existing links '
-                  '(year ${created.eventYear}).';
+                '(artist, schedule, description, and alert). '
+                'Testing and Production links are ready — send them to your '
+                'app developer if needed. '
+                'Set message_queue.config.yaml dropbox_dir to '
+                '${FestivalCreateService.localAlertSyncPathHint(created.festivalName)}.'
+            : 'Added “${created.festivalName}”'
+                '${created.eventYear.trim().isEmpty ? '' : ' (year ${created.eventYear})'}.';
       });
     } catch (e) {
       setState(() {
@@ -1397,6 +1521,13 @@ class _SettingsSectionState extends State<SettingsSection> {
                         child: const Text('Add New Festival'),
                       ),
                       OutlinedButton(
+                        onPressed: _busy ||
+                                widget.workspace.festivalName.trim().isEmpty
+                            ? null
+                            : _exportFestivalSetup,
+                        child: const Text('Export festival setup…'),
+                      ),
+                      OutlinedButton(
                         onPressed: _busy || widget.festivalChoices.length <= 1
                             ? null
                             : _deleteActiveFestival,
@@ -1406,8 +1537,10 @@ class _SettingsSectionState extends State<SettingsSection> {
                   ),
                   const HintText(
                     'Each festival has its own Testing/Production links and vocabulary. '
-                    'Add New Festival uses existing links by default, or can '
-                    'create new Dropbox files. Switching saves the current form first.',
+                    'Add New Festival: join with a setup link, paste links by hand, '
+                    'or create Dropbox files from scratch. '
+                    'Export festival setup makes a shareable file for helpers. '
+                    'Switching saves the current form first.',
                   ),
                 ],
               ),

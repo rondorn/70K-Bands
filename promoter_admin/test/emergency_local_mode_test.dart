@@ -33,6 +33,19 @@ void main() {
     expect(configured.isConfigured, isTrue);
   });
 
+  test('isConfigured allows Local File Mode with name only', () {
+    const ws = FestivalWorkspace(
+      festivalName: 'Local Fest',
+      emergencyLocalMode: true,
+    );
+    if (emergencyLocalFileModeSupported) {
+      expect(ws.isConfigured, isTrue);
+    } else {
+      expect(ws.usesEmergencyLocalMode, isFalse);
+      expect(ws.isConfigured, isFalse);
+    }
+  });
+
   test('LocalContentStore read/write round trip', () async {
     final dir = await Directory.systemTemp.createTemp('omf_local_test_');
     final file = File('${dir.path}/lineup.csv');

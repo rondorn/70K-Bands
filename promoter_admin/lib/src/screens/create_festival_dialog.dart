@@ -4,6 +4,14 @@ import 'package:promoter_admin/src/theme/app_theme.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
 import 'package:promoter_admin/src/widgets/layout_breakpoints.dart';
 
+enum CreateFestivalMode {
+  /// Paste Testing / Production (+ optional reports/alerts).
+  pasteLinks,
+
+  /// Bootstrap new Dropbox folders and pointers.
+  createNew,
+}
+
 class CreateFestivalResult {
   const CreateFestivalResult({
     required this.name,
@@ -12,6 +20,8 @@ class CreateFestivalResult {
     this.filePrefix = '',
     this.testingPointerUrl = '',
     this.productionPointerUrl = '',
+    this.reportsFolderUrl = '',
+    this.alertFolderUrl = '',
   });
 
   final String name;
@@ -22,23 +32,31 @@ class CreateFestivalResult {
   final String filePrefix;
   final String testingPointerUrl;
   final String productionPointerUrl;
+  final String reportsFolderUrl;
+  final String alertFolderUrl;
 }
 
 Future<CreateFestivalResult?> showCreateFestivalDialog({
   required BuildContext context,
   required bool dropboxConnected,
   bool allowCancel = true,
+  CreateFestivalMode mode = CreateFestivalMode.pasteLinks,
 }) {
   return showDialog<CreateFestivalResult>(
     context: context,
     barrierDismissible: false,
     builder: (context) => AlertDialog(
       backgroundColor: AppColors.panel,
-      title: const Text('Create festival'),
+      title: Text(
+        mode == CreateFestivalMode.createNew
+            ? 'Create a brand-new festival'
+            : 'Set up with festival links',
+      ),
       content: SizedBox(
         width: dialogContentWidth(context, desktop: 520),
         child: CreateFestivalForm(
           dropboxConnected: dropboxConnected,
+          mode: mode,
           onSubmit: (result) => Navigator.pop(context, result),
           onCancel: allowCancel ? () => Navigator.pop(context) : null,
           compactActions: true,
@@ -54,6 +72,7 @@ class CreateFestivalForm extends StatefulWidget {
     super.key,
     required this.dropboxConnected,
     required this.onSubmit,
+    this.mode = CreateFestivalMode.pasteLinks,
     this.onCancel,
     this.onConnectDropbox,
     this.dropboxConnecting = false,
@@ -62,6 +81,7 @@ class CreateFestivalForm extends StatefulWidget {
   });
 
   final bool dropboxConnected;
+  final CreateFestivalMode mode;
   final ValueChanged<CreateFestivalResult> onSubmit;
   final VoidCallback? onCancel;
   final Future<void> Function()? onConnectDropbox;
@@ -79,12 +99,14 @@ class _CreateFestivalFormState extends State<CreateFestivalForm> {
   late final TextEditingController _prefix;
   late final TextEditingController _testingPointer;
   late final TextEditingController _productionPointer;
+  late final TextEditingController _reportsFolder;
+  late final TextEditingController _alertFolder;
 
-  /// Default false = provide existing pointers.
-  bool _createPointerFiles = false;
   String? _error;
   bool _prefixTouched = false;
   String _lastAutoPrefix = '';
+
+  bool get _createPointerFiles => widget.mode == CreateFestivalMode.createNew;
 
   @override
   void initState() {
@@ -95,6 +117,8 @@ class _CreateFestivalFormState extends State<CreateFestivalForm> {
     _prefix = TextEditingController(text: 'fest');
     _testingPointer = TextEditingController();
     _productionPointer = TextEditingController();
+    _reportsFolder = TextEditingController();
+    _alertFolder = TextEditingController();
     _lastAutoPrefix = _prefix.text;
     _name.addListener(_onNameChanged);
     _year.addListener(() => setState(() {}));
@@ -120,6 +144,8 @@ class _CreateFestivalFormState extends State<CreateFestivalForm> {
     _prefix.dispose();
     _testingPointer.dispose();
     _productionPointer.dispose();
+    _reportsFolder.dispose();
+    _alertFolder.dispose();
     super.dispose();
   }
 
@@ -167,6 +193,8 @@ class _CreateFestivalFormState extends State<CreateFestivalForm> {
         createPointerFiles: false,
         testingPointerUrl: testing,
         productionPointerUrl: _productionPointer.text.trim(),
+        reportsFolderUrl: _reportsFolder.text.trim(),
+        alertFolderUrl: _alertFolder.text.trim(),
       ),
     );
   }
@@ -183,7 +211,8 @@ class _CreateFestivalFormState extends State<CreateFestivalForm> {
         FestivalCreateService.scheduleName(prefix, year, testing: true);
     final sampleMap =
         FestivalCreateService.descriptionMapName(prefix, year, testing: true);
-    final festivalName = _name.text.trim().isEmpty ? 'Festival' : _name.text.trim();
+    final festivalName =
+        _name.text.trim().isEmpty ? 'Festival' : _name.text.trim();
     final artistFolder =
         FestivalCreateService.artistFilesFolderForName(festivalName);
     final scheduleFolder =
@@ -195,18 +224,21 @@ class _CreateFestivalFormState extends State<CreateFestivalForm> {
     final masterFolder =
         FestivalCreateService.masterFilesFolderForName(festivalName);
     final submitLabel = widget.submitLabel ??
-        (_createPointerFiles ? 'Create festival files' : 'Add festival');
+        (_createPointerFiles ? 'Create festival files' : 'Continue');
 
     final fields = Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
-          'Add a festival configuration. By default, paste the Testing and '
-          'Production links from your app developer (Dropbox pointer files). '
-          'Check the box only when you need new Dropbox files created from scratch '
-          '(you can send those new links to your developer afterward).',
-          style: TextStyle(color: AppColors.muted, fontSize: 13),
+        Text(
+          _createPointerFiles
+              ? 'Creates Dropbox folders, pointer files, and empty CSV '
+                  'placeholders for Testing and Production. Send the new links '
+                  'to your app developer if they need them for a new app release.'
+              : 'Paste the Testing and Production links from your festival contact. '
+                  'Reports and Alerts folder links are optional — add them if you '
+                  'were given access.',
+          style: const TextStyle(color: AppColors.muted, fontSize: 13),
         ),
         const SizedBox(height: 16),
         if (_error != null) ...[
@@ -222,28 +254,7 @@ class _CreateFestivalFormState extends State<CreateFestivalForm> {
           ),
           onSubmitted: (_) => _submit(),
         ),
-        const SizedBox(height: 8),
-        CheckboxListTile(
-          contentPadding: EdgeInsets.zero,
-          controlAffinity: ListTileControlAffinity.leading,
-          value: _createPointerFiles,
-          onChanged: (v) => setState(() {
-            _createPointerFiles = v ?? false;
-            _error = null;
-          }),
-          title: const Text(
-            'Create new Testing & Production links',
-            style: TextStyle(color: AppColors.heading, fontSize: 15),
-          ),
-          subtitle: const Text(
-            'Creates five root-level Dropbox folders (master, artists, schedule, '
-            'descriptions, alerts) plus pointer files and empty CSV placeholders '
-            '(Testing + Production). Your app developer may use these links '
-            'even if they wire different official pointers later.',
-            style: TextStyle(color: AppColors.muted, fontSize: 12),
-          ),
-        ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         if (!_createPointerFiles) ...[
           TextField(
             controller: _testingPointer,
@@ -266,10 +277,27 @@ class _CreateFestivalFormState extends State<CreateFestivalForm> {
           ),
           const SizedBox(height: 6),
           const Text(
-            'Production link is used for venues / dates / event types. '
-            'Optional if you only have a Testing link. '
-            'Your app developer may ask you for these URLs.',
+            'Production link is used for venues / dates / event types when those '
+            'are not already set. Optional if you only have a Testing link.',
             style: TextStyle(color: AppColors.muted, fontSize: 12),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _reportsFolder,
+            maxLines: 2,
+            decoration: const InputDecoration(
+              labelText: 'Reports folder URL (optional)',
+              hintText: 'https://www.dropbox.com/scl/fo/...',
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _alertFolder,
+            maxLines: 2,
+            decoration: const InputDecoration(
+              labelText: 'Alert folder URL (optional)',
+              hintText: 'https://www.dropbox.com/scl/fo/...',
+            ),
           ),
         ] else ...[
           if (!widget.dropboxConnected) ...[
@@ -357,7 +385,7 @@ class _CreateFestivalFormState extends State<CreateFestivalForm> {
             const SizedBox(height: 8),
             TextButton(
               onPressed: widget.onCancel,
-              child: const Text('Cancel'),
+              child: const Text('Back'),
             ),
           ],
         ],

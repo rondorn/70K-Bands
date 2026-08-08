@@ -155,8 +155,7 @@ class DropboxAuth {
     final ttl = expiresInSeconds != null && expiresInSeconds > 0
         ? expiresInSeconds
         : 14400; // Dropbox default when omitted
-    final expiresAt =
-        DateTime.now().add(Duration(seconds: ttl));
+    final expiresAt = DateTime.now().add(Duration(seconds: ttl));
     _cachedAccess = access;
     _cachedExpiresAt = expiresAt;
     await _store.setString(_kAccess, access);
@@ -253,7 +252,8 @@ class DropboxAuth {
   Future<String> _waitForCodeLoopback(Uri authUrl, String expectedState) async {
     HttpServer server;
     try {
-      server = await HttpServer.bind(InternetAddress.loopbackIPv4, _callbackPort);
+      server =
+          await HttpServer.bind(InternetAddress.loopbackIPv4, _callbackPort);
     } on SocketException catch (e) {
       throw StateError(
         'Could not start local Dropbox callback on port $_callbackPort ($e). '

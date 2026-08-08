@@ -2,16 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:promoter_admin/src/branding.dart';
 import 'package:promoter_admin/src/models/festival_workspace.dart';
 import 'package:promoter_admin/src/screens/create_festival_dialog.dart';
+import 'package:promoter_admin/src/screens/festival_setup_choice.dart';
 import 'package:promoter_admin/src/services/dropbox_api.dart';
+import 'package:promoter_admin/src/services/emergency_local_mode_support.dart';
 import 'package:promoter_admin/src/services/festival_create_service.dart';
+import 'package:promoter_admin/src/services/festival_setup_service.dart';
 import 'package:promoter_admin/src/services/pointer_service.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
 import 'package:promoter_admin/src/widgets/layout_breakpoints.dart';
 
-enum _OnboardingStep { createFestival, connectDropbox }
+enum _OnboardingStep { connectDropbox, choosePath, configure }
 
-/// First-launch gate: create a festival, then connect Dropbox, before the portal.
+/// First-launch gate: connect Dropbox, then choose how to set up a festival.
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({
     super.key,
@@ -37,25 +40,167 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  _OnboardingStep _step = _OnboardingStep.createFestival;
+  late _OnboardingStep _step;
+  FestivalSetupPath? _path;
   bool _busy = false;
   String? _error;
   String? _status;
 
+  FestivalSetupService get _setup => FestivalSetupService(
+        pointerService: widget.pointerService,
+        dropboxApi: widget.dropboxApi,
+      );
+
+  @override
+  void initState() {
+    super.initState();
+    _step = widget.dropboxConnected
+        ? _OnboardingStep.choosePath
+        : _OnboardingStep.connectDropbox;
+  }
+
   @override
   void didUpdateWidget(covariant OnboardingScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (_step == _OnboardingStep.connectDropbox &&
-        !oldWidget.dropboxConnected &&
-        widget.dropboxConnected) {
-      // Parent will swap to the portal once both gates pass.
+    if (!oldWidget.dropboxConnected &&
+        widget.dropboxConnected &&
+        _step == _OnboardingStep.connectDropbox) {
+      setState(() {
+        _step = _OnboardingStep.choosePath;
+        _error = null;
+        _status = null;
+      });
+    }
+  }
+
+  Future<void> _connectDropbox() async {
+    setState(() {
+      _error = null;
+      _status = null;
+    });
+    try {
+      await widget.onConnectDropbox();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.toString());
+    }
+  }
+
+  Future<void> _useLocalFileMode() async {
+    final nameController = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.panel,
+        title: const Text('Use files on this computer only?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Local File Mode is not recommended for normal use. Only enable '
+              'it if your festival chooses not to use Dropbox or can no longer '
+              'use Dropbox.\n\n'
+              'You will map CSV files and folders yourself in Settings.',
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: nameController,
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: 'Festival name',
+                hintText: 'Maryland Deathfest',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('I understand — continue'),
+          ),
+        ],
+      ),
+    );
+    final name = nameController.text.trim();
+    nameController.dispose();
+    if (ok != true || !mounted) return;
+    if (name.isEmpty) {
+      setState(() => _error = 'Festival name is required for Local File Mode.');
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+      _status = 'Starting Local File Mode…';
+    });
+    try {
+      await widget.onCreateFestival(
+        FestivalWorkspace(
+          festivalName: name,
+          emergencyLocalMode: true,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = e.toString();
+        _status = null;
+      });
+    }
+  }
+
+  void _choosePath(FestivalSetupPath path) {
+    setState(() {
+      _path = path;
+      _step = _OnboardingStep.configure;
+      _error = null;
+      _status = null;
+    });
+  }
+
+  void _backToChoices() {
+    setState(() {
+      _path = null;
+      _step = _OnboardingStep.choosePath;
+      _error = null;
+      _status = null;
+    });
+  }
+
+  Future<void> _joinWithSetupLink(String url) async {
+    setState(() {
+      _busy = true;
+      _error = null;
+      _status = 'Loading festival setup…';
+    });
+    try {
+      final created = await _setup.importFromUrl(
+        url,
+        dropboxConnected: widget.dropboxConnected,
+      );
+      await widget.onCreateFestival(created);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = e.toString();
+        _status = null;
+      });
     }
   }
 
   Future<void> _handleCreate(CreateFestivalResult result) async {
     if (result.createPointerFiles && !widget.dropboxConnected) {
       setState(() {
-        _error = 'Connect Dropbox before creating new festival links and data files.';
+        _error =
+            'Connect Dropbox before creating new festival links and data files.';
         _status = null;
       });
       return;
@@ -77,35 +222,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           filePrefix: result.filePrefix,
         );
       } else {
-        var draft = FestivalWorkspace(
+        created = await _setup.materializeManualLinks(
           festivalName: result.name,
           testingPointerUrl: result.testingPointerUrl,
           productionPointerUrl: result.productionPointerUrl,
+          reportsFolderUrl: result.reportsFolderUrl,
+          alertFolderUrl: result.alertFolderUrl,
+          dropboxConnected: widget.dropboxConnected,
         );
-        if (draft.productionPointerUrl.trim().isNotEmpty) {
-          draft = await widget.pointerService.applyPointers(draft);
-        } else {
-          draft = await widget.pointerService.applyTestingPointer(draft);
-        }
-        if (widget.dropboxConnected) {
-          draft = await FestivalCreateService.inferSplitFoldersFromUrls(
-            draft,
-            widget.dropboxApi,
-          );
-          draft = await FestivalCreateService.probeFullWorkspaceAccess(
-            draft,
-            widget.dropboxApi,
-          );
-        }
-        created = draft;
       }
       await widget.onCreateFestival(created);
-      if (!mounted) return;
-      setState(() {
-        _busy = false;
-        _status = null;
-        _step = _OnboardingStep.connectDropbox;
-      });
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -116,16 +242,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
   }
 
-  Future<void> _connectDropbox() async {
-    setState(() {
-      _error = null;
-      _status = null;
-    });
-    try {
-      await widget.onConnectDropbox();
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _error = e.toString());
+  String get _subtitle {
+    switch (_step) {
+      case _OnboardingStep.connectDropbox:
+        return 'Connect Dropbox to get started.';
+      case _OnboardingStep.choosePath:
+        return 'Choose how to set up your festival.';
+      case _OnboardingStep.configure:
+        switch (_path) {
+          case FestivalSetupPath.joinWithSetupLink:
+            return 'Join with a setup link.';
+          case FestivalSetupPath.pasteLinks:
+            return 'Enter your festival links.';
+          case FestivalSetupPath.createNew:
+            return 'Create a brand-new festival.';
+          case null:
+            return 'Set up your festival.';
+        }
     }
   }
 
@@ -169,7 +302,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Set up Testing and Production links, then connect Dropbox.',
+                    _subtitle,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: AppColors.muted,
@@ -179,15 +312,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   SizedBox(height: compact ? 20 : 28),
                   _StepHeader(
                     step: 1,
-                    title: 'Create festival',
-                    active: _step == _OnboardingStep.createFestival,
-                    done: _step == _OnboardingStep.connectDropbox,
+                    title: 'Connect Dropbox',
+                    active: _step == _OnboardingStep.connectDropbox,
+                    done: _step != _OnboardingStep.connectDropbox,
                   ),
                   const SizedBox(height: 10),
                   _StepHeader(
                     step: 2,
-                    title: 'Connect Dropbox',
-                    active: _step == _OnboardingStep.connectDropbox,
+                    title: 'Set up festival',
+                    active: _step != _OnboardingStep.connectDropbox,
                     done: false,
                   ),
                   const SizedBox(height: 24),
@@ -216,20 +349,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 ),
                               ),
                             )
-                          : _step == _OnboardingStep.createFestival
-                              ? CreateFestivalForm(
-                                  dropboxConnected: widget.dropboxConnected,
-                                  dropboxConnecting: widget.dropboxConnecting,
-                                  onConnectDropbox: widget.onConnectDropbox,
-                                  submitLabel: 'Continue',
-                                  onSubmit: _handleCreate,
-                                )
-                              : _DropboxStep(
+                          : switch (_step) {
+                              _OnboardingStep.connectDropbox => _DropboxStep(
                                   connected: widget.dropboxConnected,
                                   label: widget.dropboxLabel,
                                   connecting: widget.dropboxConnecting,
                                   onConnect: _connectDropbox,
+                                  onUseLocalFileMode:
+                                      emergencyLocalFileModeSupported
+                                          ? _useLocalFileMode
+                                          : null,
                                 ),
+                              _OnboardingStep.choosePath =>
+                                FestivalSetupChoiceList(
+                                  onChosen: _choosePath,
+                                ),
+                              _OnboardingStep.configure =>
+                                _buildConfigureBody(),
+                            },
                     ),
                   ),
                 ],
@@ -239,6 +376,34 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildConfigureBody() {
+    switch (_path) {
+      case FestivalSetupPath.joinWithSetupLink:
+        return JoinFestivalSetupForm(
+          onSubmit: _joinWithSetupLink,
+          onBack: _backToChoices,
+        );
+      case FestivalSetupPath.pasteLinks:
+        return CreateFestivalForm(
+          dropboxConnected: widget.dropboxConnected,
+          mode: CreateFestivalMode.pasteLinks,
+          submitLabel: 'Continue',
+          onSubmit: _handleCreate,
+          onCancel: _backToChoices,
+        );
+      case FestivalSetupPath.createNew:
+        return CreateFestivalForm(
+          dropboxConnected: widget.dropboxConnected,
+          mode: CreateFestivalMode.createNew,
+          submitLabel: 'Create festival files',
+          onSubmit: _handleCreate,
+          onCancel: _backToChoices,
+        );
+      case null:
+        return FestivalSetupChoiceList(onChosen: _choosePath);
+    }
   }
 }
 
@@ -302,12 +467,14 @@ class _DropboxStep extends StatelessWidget {
     required this.label,
     required this.connecting,
     required this.onConnect,
+    this.onUseLocalFileMode,
   });
 
   final bool connected;
   final String label;
   final bool connecting;
   final Future<void> Function() onConnect;
+  final Future<void> Function()? onUseLocalFileMode;
 
   @override
   Widget build(BuildContext context) {
@@ -315,9 +482,19 @@ class _DropboxStep extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const Text(
-          'Dropbox is required to load and save lineup, schedule, and '
-          'description files.',
-          style: TextStyle(color: AppColors.muted, fontSize: 13),
+          'Connect your Dropbox account',
+          style: TextStyle(
+            color: AppColors.heading,
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 10),
+        const Text(
+          'Use a Dropbox account you own and can sign into. This account can '
+          'be granted write access to all needed files by the primary festival '
+          'administrator with your Dropbox login email.',
+          style: TextStyle(color: AppColors.muted, fontSize: 13, height: 1.4),
         ),
         const SizedBox(height: 16),
         Text(
@@ -334,8 +511,56 @@ class _DropboxStep extends StatelessWidget {
           )
         else
           const StatusBanner(
-            text: 'Dropbox connected — opening the festival workspace…',
+            text: 'Dropbox connected — continue to festival setup…',
           ),
+        if (!connected) ...[
+          if (onUseLocalFileMode != null) ...[
+            const SizedBox(height: 20),
+            Center(
+              child: TextButton(
+                onPressed: connecting ? null : () => onUseLocalFileMode!(),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.muted,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  textStyle: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    decoration: TextDecoration.underline,
+                    decorationColor: AppColors.muted,
+                  ),
+                ),
+                child: const Text('Use files on this computer only'),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Local File Mode is available on Mac and Windows. '
+              'It is not available on iPad or iPhone.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppColors.muted,
+                fontSize: 11,
+                height: 1.35,
+              ),
+            ),
+          ] else ...[
+            const SizedBox(height: 20),
+            const Text(
+              'Local File Mode (files on this computer only) is available on '
+              'Mac and Windows. It is not available on iPad or iPhone — '
+              'use Dropbox on this device.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppColors.muted,
+                fontSize: 11,
+                height: 1.35,
+              ),
+            ),
+          ],
+        ],
       ],
     );
   }
