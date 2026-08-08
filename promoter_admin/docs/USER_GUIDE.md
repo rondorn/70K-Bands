@@ -95,7 +95,9 @@ You can keep several festivals in the app (for example 70K and MDF) and switch t
 
 ![Festival Configuration — Settings](./images/settings.png)
 
-You’ll mainly use Settings once:
+If you joined with a **festival setup link** (import), Settings is usually already filled in — you can **skip this section** and go straight to Artists, Descriptions, or Schedule. Open Settings only when something needs a change (for example Refresh file access, a new festival, or an updated setup link).
+
+Otherwise you’ll mainly use Settings once:
 
 - **Festival** — which festival you’re working on; add, export, or delete a saved festival config.  
   - **Add New Festival** — same three choices as first launch (setup link, paste links, or create from scratch).  
