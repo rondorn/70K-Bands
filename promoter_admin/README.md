@@ -96,7 +96,7 @@ Confirm an archive shows **1.0.4 (16)** (or whatever is in `pubspec.yaml`).
 | Publish Testing → Production (scoped by write access) | Done |
 | Local File Mode (desktop; map local CSV paths when not using Dropbox) | Done |
 
-See [docs/USER_GUIDE.md — Local File Mode](docs/USER_GUIDE.md#local-file-mode) for operator documentation.
+See [docs/USER_GUIDE.md — Appendix: Local File Mode](docs/USER_GUIDE.md#appendix-local-file-mode-most-users-can-skip) for operator documentation (most users can skip).
 
 ## Dropbox console (one-time)
 
