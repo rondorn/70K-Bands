@@ -1,14 +1,26 @@
-import 'dart:convert';
-import 'dart:typed_data';
-import 'dart:ui' show Rect;
-
 import 'package:promoter_admin/src/models/festival_setup_package.dart';
 import 'package:promoter_admin/src/models/festival_workspace.dart';
 import 'package:promoter_admin/src/services/dropbox_api.dart';
-import 'package:promoter_admin/src/services/export_file_saver.dart';
 import 'package:promoter_admin/src/services/festival_create_service.dart';
 import 'package:promoter_admin/src/services/http_fetch.dart';
 import 'package:promoter_admin/src/services/pointer_service.dart';
+
+/// Result of uploading a festival setup file to Dropbox.
+class FestivalSetupDropboxExport {
+  const FestivalSetupDropboxExport({
+    required this.shareUrl,
+    required this.apiPath,
+    required this.fileName,
+  });
+
+  /// Dropbox share link (normalized, typically `raw=1`).
+  final String shareUrl;
+
+  /// Dropbox API path where the file was written.
+  final String apiPath;
+
+  final String fileName;
+}
 
 /// Export / import portable festival admin setup packages.
 class FestivalSetupService {
@@ -20,40 +32,89 @@ class FestivalSetupService {
   final PointerService pointerService;
   final DropboxApi dropboxApi;
 
-  /// Build JSON bytes for [workspace], optionally including reports/alerts URLs.
-  Uint8List encodeExportBytes(
+  /// True when the signed-in user can write the Testing pointer (same folder
+  /// as master pointer files) and a master folder location can be resolved.
+  static bool canExportToMasterFolder(FestivalWorkspace workspace) {
+    if (!workspace.canEditPointers) return false;
+    if (workspace.festivalName.trim().isEmpty) return false;
+    return workspace.masterFilesFolderPath.trim().isNotEmpty ||
+        workspace.testingPointerUrl.trim().isNotEmpty;
+  }
+
+  /// Build JSON text for [workspace], optionally including reports/alerts URLs.
+  String encodeExportJson(
     FestivalWorkspace workspace, {
     required bool includeReports,
     required bool includeAlerts,
   }) {
-    final package = FestivalSetupPackage.fromWorkspace(
+    return FestivalSetupPackage.fromWorkspace(
+      workspace,
+      includeReports: includeReports,
+      includeAlerts: includeAlerts,
+    ).toPrettyJson();
+  }
+
+  /// Upload the setup JSON next to the Testing/Production pointer files and
+  /// return a share link (overwrites the same filename on re-export).
+  Future<FestivalSetupDropboxExport> exportToDropboxMaster(
+    FestivalWorkspace workspace, {
+    required bool includeReports,
+    required bool includeAlerts,
+  }) async {
+    if (!canExportToMasterFolder(workspace)) {
+      throw StateError(
+        'Export requires write access to the festival’s master pointer folder. '
+        'Ask the primary festival administrator to share that folder with you.',
+      );
+    }
+    final folder = await resolveMasterFolderPath(workspace);
+    final fileName =
+        FestivalSetupPackage.suggestedFileName(workspace.festivalName);
+    final apiPath = _joinDropboxPath(folder, fileName);
+    final json = encodeExportJson(
       workspace,
       includeReports: includeReports,
       includeAlerts: includeAlerts,
     );
-    return Uint8List.fromList(utf8.encode(package.toPrettyJson()));
+    final shareUrl =
+        await dropboxApi.uploadNewTextFileAndShare(apiPath, json);
+    return FestivalSetupDropboxExport(
+      shareUrl: shareUrl,
+      apiPath: apiPath,
+      fileName: fileName,
+    );
   }
 
-  /// Save a setup file via desktop Save As or mobile share sheet.
-  Future<SavedExport?> exportToFile(
-    FestivalWorkspace workspace, {
-    required bool includeReports,
-    required bool includeAlerts,
-    Rect? sharePositionOrigin,
-  }) {
-    final name = FestivalSetupPackage.suggestedFileName(workspace.festivalName);
-    return saveExportBytes(
-      bytes: encodeExportBytes(
-        workspace,
-        includeReports: includeReports,
-        includeAlerts: includeAlerts,
-      ),
-      suggestedName: name,
-      extension: 'json',
-      mimeType: 'application/json',
-      typeLabel: 'Festival setup',
-      sharePositionOrigin: sharePositionOrigin,
-    );
+  /// Dropbox folder that holds Testing/Production pointer files.
+  Future<String> resolveMasterFolderPath(FestivalWorkspace workspace) async {
+    final cached = workspace.masterFilesFolderPath.trim();
+    if (cached.isNotEmpty) {
+      return cached.endsWith('/')
+          ? cached.substring(0, cached.length - 1)
+          : cached;
+    }
+    final pointerUrl = workspace.testingPointerUrl.trim();
+    if (pointerUrl.isEmpty) {
+      throw StateError(
+        'Cannot find the master pointer folder. Set a Testing link and '
+        'Load festival data, then try Export again.',
+      );
+    }
+    final pointerPath = await dropboxApi.resolveApiPath(pointerUrl);
+    final slash = pointerPath.lastIndexOf('/');
+    if (slash <= 0) {
+      throw StateError(
+        'Cannot determine the folder for Testing link path: $pointerPath',
+      );
+    }
+    return pointerPath.substring(0, slash);
+  }
+
+  static String _joinDropboxPath(String folder, String fileName) {
+    var root = folder.trim().replaceAll('\\', '/');
+    if (!root.startsWith('/')) root = '/$root';
+    root = root.replaceAll(RegExp(r'/+$'), '');
+    return '$root/$fileName';
   }
 
   /// Fetch a Dropbox (or HTTP) setup link and apply it into a workspace.

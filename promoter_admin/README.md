@@ -35,7 +35,7 @@ Other one-off tools (for example the 70K schedule QR poster) remain under
 2. **Set up with festival links** — paste Testing + Production yourself (Reports/Alerts optional).
 3. **Create a brand-new festival** — bootstrap Dropbox folders/pointers for a new app release.
 
-**Owner handoff:** Settings → **Export festival setup…** → upload the JSON to Dropbox → share that single link (optionally include Reports and/or Alerts).
+**Owner handoff:** Settings → **Export festival setup…** → file is saved to Dropbox next to the pointer files and the share link is copied → paste that link to your helper (optionally include Reports and/or Alerts).
 
 Mac/Windows only: Dropbox screen offers **Use files on this computer only** (Local File Mode — not recommended for normal festivals).
 

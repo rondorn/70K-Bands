@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:promoter_admin/src/models/emergency_local_paths.dart';
 import 'package:promoter_admin/src/models/festival_workspace.dart';
 import 'package:promoter_admin/src/models/dropbox_folder_access.dart';
@@ -648,10 +649,20 @@ class _SettingsSectionState extends State<SettingsSection> {
       );
 
   Future<void> _exportFestivalSetup() async {
-    final box = context.findRenderObject() as RenderBox?;
-    final origin = box == null
-        ? null
-        : (box.localToGlobal(Offset.zero) & box.size);
+    final exportWorkspace = widget.workspace.copyWith(
+      canEditPointers: _canEditPointers,
+    );
+    if (!FestivalSetupService.canExportToMasterFolder(exportWorkspace)) {
+      setState(() {
+        _error =
+            'Export requires Dropbox write access to the festival’s master '
+            'pointer folder (same place as the Testing link). '
+            'Ask the primary festival administrator to share that folder with you.';
+        _status = null;
+      });
+      return;
+    }
+
     var includeReports = false;
     var includeAlerts = false;
     final confirmed = await showDialog<bool>(
@@ -667,11 +678,13 @@ class _SettingsSectionState extends State<SettingsSection> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text(
-                  'Creates a setup file you can upload to Dropbox and share as '
-                  'one link. It includes Testing and Production links, venues, '
-                  'days, dates, event types, and other schedule vocabulary.\n\n'
-                  'Anyone with the link can use these settings in the admin app. '
-                  'Only share with people you trust.',
+                  'Saves a setup file to Dropbox next to the Testing and '
+                  'Production pointer files, then copies the share link to your '
+                  'clipboard so you can send it to a helper.\n\n'
+                  'It includes Testing/Production links, venues, days, dates, '
+                  'event types, and other schedule vocabulary. Anyone with the '
+                  'link can use these settings in the admin app — only share '
+                  'with people you trust.',
                 ),
                 const SizedBox(height: 12),
                 CheckboxListTile(
@@ -716,7 +729,7 @@ class _SettingsSectionState extends State<SettingsSection> {
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Export…'),
+              child: const Text('Export to Dropbox'),
             ),
           ],
         ),
@@ -727,32 +740,25 @@ class _SettingsSectionState extends State<SettingsSection> {
     setState(() {
       _busy = true;
       _error = null;
-      _status = 'Exporting festival setup…';
+      _status = 'Saving festival setup to Dropbox…';
     });
     try {
       final draft = await _draftReadyToPersist();
       await widget.onWorkspaceChanged(draft);
-      final saved = await _festivalSetup.exportToFile(
-        draft,
+      final exported = await _festivalSetup.exportToDropboxMaster(
+        draft.copyWith(canEditPointers: _canEditPointers),
         includeReports: includeReports,
         includeAlerts: includeAlerts,
-        sharePositionOrigin: origin,
       );
+      await Clipboard.setData(ClipboardData(text: exported.shareUrl));
       if (!mounted) return;
-      if (saved == null) {
-        setState(() {
-          _busy = false;
-          _status = null;
-        });
-        return;
-      }
       setState(() {
         _busy = false;
-        _status = saved.shared
-            ? 'Festival setup ready to share. Upload it to Dropbox if needed, '
-                'then send the Dropbox link to your helper.'
-            : 'Festival setup saved to ${saved.path}. Upload it to Dropbox and '
-                'share that single link with your helper.';
+        _status =
+            'Festival setup saved to Dropbox as ${exported.fileName} '
+            '(next to the pointer files). The share link is on your clipboard — '
+            'paste it to send to your helper.\n\n'
+            '${exported.shareUrl}';
       });
     } catch (e) {
       if (!mounted) return;
@@ -1585,7 +1591,12 @@ class _SettingsSectionState extends State<SettingsSection> {
                       ),
                       OutlinedButton(
                         onPressed: _busy ||
-                                widget.workspace.festivalName.trim().isEmpty
+                                !widget.dropboxConnected ||
+                                !FestivalSetupService.canExportToMasterFolder(
+                                  widget.workspace.copyWith(
+                                    canEditPointers: _canEditPointers,
+                                  ),
+                                )
                             ? null
                             : _exportFestivalSetup,
                         child: const Text('Export festival setup…'),
@@ -1609,8 +1620,10 @@ class _SettingsSectionState extends State<SettingsSection> {
                     'Each festival has its own Testing/Production links and vocabulary. '
                     'Add New Festival: join with a setup link, paste links by hand, '
                     'or create Dropbox files from scratch. '
-                    'Export / Update from setup link share or refresh this festival’s '
-                    'config. Switching saves the current form first.',
+                    'Export festival setup (requires master-folder write access) saves '
+                    'the file to Dropbox and copies the link. '
+                    'Update from setup link refreshes this festival. '
+                    'Switching saves the current form first.',
                   ),
                 ],
               ),

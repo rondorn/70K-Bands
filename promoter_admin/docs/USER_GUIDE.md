@@ -85,7 +85,7 @@ If a button is missing or grayed out (for example you can view Artists but not A
 
 On Mac/Windows only, the Dropbox screen also has a small **Use files on this computer only** option (Local File Mode). That is not recommended for normal festivals — see [Local File Mode](#local-file-mode).
 
-You can keep several festivals in the app (for example 70K and MDF) and switch them under Settings → **Festival**. Owners can **Export festival setup…** from Settings to create a shareable setup file for helpers (optionally including Reports and Alerts folder links).
+You can keep several festivals in the app (for example 70K and MDF) and switch them under Settings → **Festival**. Owners with master-folder write access can **Export festival setup…** (saves to Dropbox and copies the link) for helpers.
 
 ---
 
@@ -99,7 +99,7 @@ You’ll mainly use Settings once:
 
 - **Festival** — which festival you’re working on; add, export, or delete a saved festival config.  
   - **Add New Festival** — same three choices as first launch (setup link, paste links, or create from scratch).  
-  - **Export festival setup…** — saves a setup file (venues, days, dates, event types, Testing/Production links, and more). Upload it to Dropbox and share that one link with a helper. Optionally include the **Reports** folder link, the **Alerts** folder link, or both.  
+  - **Export festival setup…** — (requires write access to the master pointer folder) saves the setup JSON to Dropbox next to the Testing/Production pointer files and **copies the share link to the clipboard**. Optionally include the **Reports** folder link, the **Alerts** folder link, or both.  
   - **Update from setup link…** — paste a setup link to refresh **this** festival’s configuration (keeps the same festival entry). Reports/Alerts change only if the file includes them.  
 - **Festival name** — label in the header.  
 - **Dropbox connection** — sign in with your personal account (see [Connecting Dropbox](#connecting-dropbox)).  
