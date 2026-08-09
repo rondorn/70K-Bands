@@ -22,10 +22,15 @@ Future<void> showArtistsExportDialog(
     ),
   );
   if (result == null || !context.mounted) return;
+  final missing = result.missingLogoCount;
+  final missingNote = missing == 0
+      ? ''
+      : ' ($missing logo${missing == 1 ? '' : 's'} unavailable)';
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Text(
-        'Exported ${result.artistCount} artist(s) to ${result.path}',
+        'Exported ${result.artistCount} artist(s) to ${result.path}'
+        '$missingNote',
       ),
     ),
   );
@@ -67,7 +72,7 @@ class _ExportArtistsDialogState extends State<ExportArtistsDialog> {
     setState(() {
       _saving = true;
       _error = null;
-      _status = 'Downloading logos…';
+      _status = 'Downloading logos (may take ~15–20s)…';
     });
     try {
       const extension = 'html';
@@ -79,6 +84,9 @@ class _ExportArtistsDialogState extends State<ExportArtistsDialog> {
       final festivalLogoUrl = widget.workspace.festivalLogoUrl.trim();
       final festivalLogo = await LogoFetcher.fetchBytes(festivalLogoUrl);
       final withLogos = await LogoFetcher.attachBandLogos(entries);
+      final missingLogos = withLogos
+          .where((e) => e.imageUrl.isNotEmpty && e.imageBytes == null)
+          .length;
 
       if (mounted) setState(() => _status = 'Building HTML…');
       final bytes = ArtistsHtmlExporter.build(
@@ -111,6 +119,7 @@ class _ExportArtistsDialogState extends State<ExportArtistsDialog> {
         _ArtistsExportResult(
           path: saved.snackbarLocation,
           artistCount: withLogos.length,
+          missingLogoCount: missingLogos,
         ),
       );
     } catch (error) {
@@ -217,8 +226,13 @@ class _ExportArtistsDialogState extends State<ExportArtistsDialog> {
 }
 
 class _ArtistsExportResult {
-  const _ArtistsExportResult({required this.path, required this.artistCount});
+  const _ArtistsExportResult({
+    required this.path,
+    required this.artistCount,
+    this.missingLogoCount = 0,
+  });
 
   final String path;
   final int artistCount;
+  final int missingLogoCount;
 }
