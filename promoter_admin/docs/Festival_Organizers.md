@@ -258,4 +258,4 @@ There is no expectation that a festival commit to managing the entire system its
 
 We can start with something as simple as discussing how your lineup and schedule are currently maintained and determine whether the Suite would be useful for your attendees.
 
-**Contact:** YOUR_EMAIL_ADDRESS
+**Contact:** ron_dorn_1@yahoo.com
