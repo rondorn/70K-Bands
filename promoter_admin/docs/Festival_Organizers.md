@@ -194,7 +194,9 @@ These statistics are intended to provide another view of attendee interest, not 
 
 70K Bands has been developed and used by attendees of 70,000 Tons of Metal for more than a decade.
 
-The app was the original project from which the broader Open Metal Fest Suite developed.
+The app was the original project from which the broader Open Metal Fest Suite developed and has provided years of real-world experience developing and maintaining a festival app around an active event.
+
+70K Bands is an unofficial community project and is not an official app of 70,000 Tons of Metal.
 
 ### MDF Bands
 
@@ -258,4 +260,4 @@ There is no expectation that a festival commit to managing the entire system its
 
 We can start with something as simple as discussing how your lineup and schedule are currently maintained and determine whether the Suite would be useful for your attendees.
 
-**Contact:** YOUR_EMAIL_ADDRESS
+**Contact:** ron_dorn_1@yahoo.com
