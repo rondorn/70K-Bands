@@ -69,6 +69,41 @@
         "daily": "daily_usage_history.json",
         "monthly": "monthly_usage_history.json"
       }
+    },
+    "mmf": {
+      "name": "MMF Bands",
+      "pointer_url": "https://www.dropbox.com/scl/fi/YOUR_FILE/mmf_productionPointer.txt?rlkey=YOUR_RLKEY&raw=1",
+      "pointer_path": "~/Dropbox/MMF_Reports/mmf_productionPointer.txt",
+      "public_data_dir": "~/Dropbox/MMF_Reports/public_data",
+      "data_dir": "~/Dropbox/MMF_Reports/work",
+      "output_dir": "~/Dropbox/MMF_Reports",
+      "firebase_database_url": "https://mmf-bands-default-rtdb.firebaseio.com",
+      "firebase_export_name": "mmf-bands-export.json",
+      "json_backup_filename": "MMFBandsData.json",
+      "csv_files": {
+        "user_data": "~/Dropbox/MMF_Reports/userData.csv",
+        "ranking_data": "~/Dropbox/MMF_Reports/rankingData.csv",
+        "event_data": "~/Dropbox/MMF_Reports/eventData.csv"
+      },
+      "reports": {
+        "main": "report_dashboard.html",
+        "full": "report_dashboard_full.html",
+        "languages": {
+          "en": "report_dashboard-en.html",
+          "da": "report_dashboard-da.html",
+          "de": "report_dashboard-de.html",
+          "es": "report_dashboard-es.html",
+          "fi": "report_dashboard-fi.html",
+          "fr": "report_dashboard-fr.html",
+          "pt": "report_dashboard-pt.html"
+        }
+      },
+      "min_votes": 15,
+      "total_user_base_for_attendance": 2920,
+      "usage_history": {
+        "daily": "daily_usage_history.json",
+        "monthly": "monthly_usage_history.json"
+      }
     }
   }
 }

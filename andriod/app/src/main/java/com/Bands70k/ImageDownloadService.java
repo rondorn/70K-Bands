@@ -265,7 +265,7 @@ public class ImageDownloadService extends Service {
                             continue;
                         }
                         BandNotes bandNoteHandler = new BandNotes(bandName);
-                        if (!bandNoteHandler.fileExists()) {
+                        if (!bandNoteHandler.hasCurrentOfficialCache()) {
                             pendingNotes++;
                         }
                     }
@@ -529,7 +529,7 @@ public class ImageDownloadService extends Service {
                 staticVariables.notesLoaded = true;
                 
                 // IMPORTANT: Do NOT download/refresh the descriptionMap here.
-                // - The startup/pull-to-refresh pipeline already downloads it (1 of the 4 expected startup callouts).
+                // - The startup/pull-to-refresh pipeline already downloads it in parallel with band/schedule.
                 // - Internal flows like bulk note checks should use the cached file only.
                 // This prevents an extra network call (and temp-file hash check download) during the notes phase.
                 if (!FileHandler70k.descriptionMapFile.exists()) {
@@ -565,7 +565,7 @@ public class ImageDownloadService extends Service {
                     }
                     
                     // Check if cached note exists with current date
-                    if (!bandNoteHandler.fileExists()) {
+                    if (!bandNoteHandler.hasCurrentOfficialCache()) {
                         needsUpdate++;
                     }
                 }
@@ -624,7 +624,7 @@ public class ImageDownloadService extends Service {
                     }
                     
                     // Check if cached note exists with current date
-                    if (!bandNoteHandler.fileExists()) {
+                    if (!bandNoteHandler.hasCurrentOfficialCache()) {
                         Log.d(TAG, "Downloading note for " + bandName);
                         descriptionHandler.loadNoteFromURL(bandName);
                         

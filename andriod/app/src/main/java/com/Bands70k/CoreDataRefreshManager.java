@@ -9,9 +9,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Runs the "core data refresh" pipeline:
  * 1) pointer file
- * 2) band CSV
- * 3) schedule CSV
- * 4) descriptionMap CSV
+ * 2) band CSV, schedule CSV, and descriptionMap CSV in parallel
  *
  * Triggered only on true background -> foreground transitions (Application-level),
  * never on internal navigation between screens.

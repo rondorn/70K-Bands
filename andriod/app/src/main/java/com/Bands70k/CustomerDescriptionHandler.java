@@ -619,11 +619,22 @@ public class CustomerDescriptionHandler {
 
         BandNotes bandNoteHandler = new BandNotes(bandName);
 
-        // PATCH: Always check for a custom note, even if band is not in descriptionMapData
-        String customNote = bandNoteHandler.getBandNoteFromFile();
-        if (customNote != null && !customNote.trim().isEmpty()) {
-            Log.d("70K_NOTE_DEBUG", "Returning custom note for " + bandName + ": " + customNote);
-            return customNote;
+        // Custom note always wins
+        if (bandNoteHandler.hasCustomNoteFile()) {
+            String customNote = bandNoteHandler.getCurrentMarkerNoteFromFile();
+            if (customNote != null && !customNote.trim().isEmpty()) {
+                Log.d("70K_NOTE_DEBUG", "Returning custom note for " + bandName + ": " + customNote);
+                return customNote;
+            }
+        }
+
+        // Current-date official cache hit — no download
+        if (bandNoteHandler.hasCurrentOfficialCache()) {
+            String currentNote = bandNoteHandler.getCurrentMarkerNoteFromFile();
+            if (currentNote != null && !currentNote.trim().isEmpty()) {
+                Log.d("70K_NOTE_DEBUG", "Returning current-date cached note for " + bandName);
+                return removeSpecialCharsFromString(currentNote);
+            }
         }
 
         // Check if year has changed and reload description map if needed
@@ -639,7 +650,11 @@ public class CustomerDescriptionHandler {
         }
 
         if (descriptionMapData.containsKey(normalizedBandName) == false) {
-            Log.d("70K_NOTE_DEBUG", "No descriptionMap entry for " + normalizedBandName + ", returning default note");
+            Log.d("70K_NOTE_DEBUG", "No descriptionMap entry for " + normalizedBandName + ", returning best available cache/default");
+            String best = bandNoteHandler.getBandNoteFromFile();
+            if (best != null && !best.trim().isEmpty()) {
+                return removeSpecialCharsFromString(best);
+            }
             return bandNoteDefault;
         }
 
@@ -667,6 +682,11 @@ public class CustomerDescriptionHandler {
                     return bandNote;
                 }
             }
+            String best = bandNoteHandler.getBandNoteFromFile();
+            if (best != null && !best.trim().isEmpty()) {
+                return removeSpecialCharsFromString(best);
+            }
+            return bandNoteDefault;
         }
 
         Log.d("70K_NOTE_DEBUG", "Calling loadNoteFromURL for " + bandNameValue);
@@ -744,11 +764,22 @@ public class CustomerDescriptionHandler {
 
         BandNotes bandNoteHandler = new BandNotes(bandName);
 
-        // Always check for a custom note first
-        String customNote = bandNoteHandler.getBandNoteFromFile();
-        if (customNote != null && !customNote.trim().isEmpty()) {
-            Log.d("70K_NOTE_DEBUG", "Returning custom note for " + bandName + ": " + customNote);
-            return customNote;
+        // Custom note always wins
+        if (bandNoteHandler.hasCustomNoteFile()) {
+            String customNote = bandNoteHandler.getCurrentMarkerNoteFromFile();
+            if (customNote != null && !customNote.trim().isEmpty()) {
+                Log.d("70K_NOTE_DEBUG", "Returning custom note for " + bandName + ": " + customNote);
+                return customNote;
+            }
+        }
+
+        // Current-date official cache — return without network
+        if (bandNoteHandler.hasCurrentOfficialCache()) {
+            String currentNote = bandNoteHandler.getCurrentMarkerNoteFromFile();
+            if (currentNote != null && !currentNote.trim().isEmpty()) {
+                Log.d("70K_NOTE_DEBUG", "Returning current-date cached note for " + bandName);
+                return removeSpecialCharsFromString(currentNote);
+            }
         }
 
         // Cache-first: read description map from disk; one download only if the file is missing.
@@ -764,18 +795,10 @@ public class CustomerDescriptionHandler {
         }
 
         if (descriptionMapData.containsKey(normalizedBandName) == false) {
-            Log.d("70K_NOTE_DEBUG", "No descriptionMap entry for " + normalizedBandName + ", returning default note");
-            // SKILTRON DEBUG: Log all available keys if this is Skiltron
-            if (bandName.toLowerCase().contains("skiltron")) {
-                Log.d("SKILTRON_DEBUG", "Skiltron not found! Available keys in descriptionMapData:");
-                for (String key : descriptionMapData.keySet()) {
-                    if (key.toLowerCase().contains("skil")) {
-                        Log.d("SKILTRON_DEBUG", "Similar key found: '" + key + "'");
-                    }
-                }
-                Log.d("SKILTRON_DEBUG", "Total entries in descriptionMapData: " + descriptionMapData.size());
-                Log.d("SKILTRON_DEBUG", "Looking for normalized: '" + normalizedBandName + "'");
-                Log.d("SKILTRON_DEBUG", "Original band name: '" + bandName + "'");
+            Log.d("70K_NOTE_DEBUG", "No descriptionMap entry for " + normalizedBandName + ", returning best available cache/default");
+            String best = bandNoteHandler.getBandNoteFromFile();
+            if (best != null && !best.trim().isEmpty()) {
+                return removeSpecialCharsFromString(best);
             }
             return bandNoteDefault;
         }
@@ -827,9 +850,8 @@ public class CustomerDescriptionHandler {
                 return;
             }
             
-            // Check if we have a cached note with the current date
-            // fileExists() automatically cleans up obsolete cache and returns true only if current date cache exists
-            if (bandNoteHandler.fileExists() == true) {
+            // Check if we have a cached note with the current date (never purges older files here)
+            if (bandNoteHandler.hasCurrentOfficialCache()) {
                 Log.d("70K_NOTE_DEBUG", "getDescription, cached note exists with current date for " + bandName + ", skipping download");
                 return;
             } else {
@@ -944,9 +966,8 @@ public class CustomerDescriptionHandler {
                 return;
             }
             
-            // Check if we have a cached note with the current date
-            // fileExists() automatically cleans up obsolete cache and returns true only if current date cache exists
-            if (bandNoteHandler.fileExists() == true) {
+            // Check if we have a cached note with the current date (never purges older files here)
+            if (bandNoteHandler.hasCurrentOfficialCache()) {
                 Log.d("70K_NOTE_DEBUG", "getDescription, cached note exists with current date for " + bandName + ", skipping download");
                 return;
             } else {

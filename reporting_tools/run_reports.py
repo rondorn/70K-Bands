@@ -88,7 +88,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     setup = auth_sub.add_parser(
         "setup",
-        help="Save Firebase database secrets to festivals.secrets.json",
+        help="Save Firebase database secrets or a service-account JSON path",
     )
     setup.add_argument(
         "--festivals",
@@ -98,10 +98,20 @@ def build_parser() -> argparse.ArgumentParser:
     )
     setup.add_argument("--config", type=Path, default=None)
     setup.add_argument("--secrets", type=Path, default=None)
+    setup.add_argument(
+        "--service-account",
+        type=Path,
+        default=None,
+        help=(
+            "Path to a Firebase service-account JSON file "
+            "(same file used for alerts). Writes firebase_service_account "
+            "for the single --festivals id."
+        ),
+    )
 
     auth_sub.add_parser(
         "google",
-        help="Run gcloud application-default login (optional Google OAuth ADC)",
+        help="Run gcloud application-default login (used for all festival Firebase downloads)",
     )
 
     status = auth_sub.add_parser("status", help="Show configured auth state")
@@ -157,7 +167,12 @@ def run_auth(args: argparse.Namespace) -> int:
     secrets_path = args.secrets or default_secrets_path()
 
     if args.auth_command == "setup":
-        return setup_firebase_secrets(args.festivals, config_path, secrets_path)
+        return setup_firebase_secrets(
+            args.festivals,
+            config_path,
+            secrets_path,
+            service_account=args.service_account,
+        )
     if args.auth_command == "google":
         return setup_google_adc()
     if args.auth_command == "status":

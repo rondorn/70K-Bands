@@ -17,6 +17,7 @@ class FestivalConfig:
     data_dir: Path
     output_dir: Path
     firebase_export_url: str
+    firebase_service_account: Path | None
     json_backup_path: Path
     reports_main: str
     reports_full: str
@@ -33,6 +34,8 @@ class FestivalConfig:
     event_year: str = ""
     artist_lineup_path: Path | None = None
     artist_schedule_path: Path | None = None
+    firebase_use_adc: bool = False
+    firebase_project_id: str = ""
 
 
 @dataclass

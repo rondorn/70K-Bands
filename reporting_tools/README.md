@@ -9,9 +9,9 @@ cd reporting_tools
 cp festivals.example.json festivals.json
 cp festivals.secrets.example.json festivals.secrets.json
 # Edit festivals.json (paths, pointer URL, firebase_database_url)
-# Edit festivals.secrets.json (firebase_auth_secret) OR run auth setup below
+# Firebase auth: python3 run_reports.py auth google  (uses ~/.config/gcloud ADC)
 pip install -r requirements.txt
-python3 run_reports.py auth setup --festivals 70k
+python3 run_reports.py auth google
 python3 run_reports.py --festivals 70k
 ```
 
@@ -22,8 +22,7 @@ Reports are written with the **event year from the production pointer** in filen
 One-time credential setup:
 
 ```bash
-python3 run_reports.py auth setup --festivals 70k   # Firebase database secret → festivals.secrets.json
-python3 run_reports.py auth google                  # optional: gcloud ADC OAuth
+python3 run_reports.py auth google                  # gcloud ADC → all festival Firebase downloads
 python3 run_reports.py auth status                  # verify setup
 chmod +x run_from_cron.sh
 ```
@@ -41,7 +40,7 @@ Logs: `~/70k_reports.cron.log`
 For each selected festival, the pipeline:
 
 1. **Syncs the production pointer** — downloads pointer + lineup/schedule CSVs; reads `Current::eventYear`.
-2. **Downloads the Firebase JSON export** — saved as backup using the secret from `festivals.secrets.json`.
+2. **Downloads the Firebase JSON export** — saved as backup using Google Application Default Credentials (`~/.config/gcloud/application_default_credentials.json`), the same login alerts fall back to.
 3. **Organizes data in memory** — users, rankings, events filtered against lineup/schedule.
 4. **Updates usage history** — daily/monthly active-user JSON files.
 5. **Generates HTML reports** — main, full, and localized dashboards with event year in titles and filenames.
@@ -55,16 +54,16 @@ Two files, both **gitignored** and meant to stay on your machine:
 | `festivals.example.json` | Yes | No — placeholders only |
 | `festivals.secrets.example.json` | Yes | No — placeholders only |
 | `festivals.json` | **No** | **Mostly yes** — see below |
-| `festivals.secrets.json` | **No** | **Yes** — Firebase database secret |
+| `festivals.secrets.json` | **No** | **Yes** — optional Dropbox token; optional Firebase overrides |
 
-**`festivals.secrets.json` is clearly confidential.** It holds the Firebase Realtime Database secret used to download the full JSON export. Never commit it.
+**`festivals.secrets.json` is clearly confidential** if it still holds a Dropbox token or leftover Firebase secrets. Firebase report downloads default to Google ADC, not this file.
 
 **`festivals.json` is open to interpretation:**
 
 - **Treat as confidential (recommended):** Dropbox pointer URLs include `rlkey` tokens that grant access to production festival files. Your machine-specific paths also reveal your Dropbox layout. Keeping `festivals.json` local avoids leaking production links if the repo is ever public or shared broadly.
 - **Could be checked in:** If you replace pointer URLs with non-secret public CDN URLs and use only relative/generic paths, the non-secret parts (report names, vote thresholds, directory structure) are safe to share. Secrets still belong in `festivals.secrets.json`.
 
-**Google OAuth (ADC):** Optional. Stored by `gcloud` at `~/.config/gcloud/application_default_credentials.json` (never in the repo). The current Firebase download uses the database secret, not OAuth — but `auth google` is available for future Google Cloud API use and matches the pattern used elsewhere in this monorepo.
+**Google OAuth (ADC):** Default Firebase auth for all festivals. Stored by `gcloud` at `~/.config/gcloud/application_default_credentials.json` (never in the repo). One login covers 70K, MDF, and MMF as long as that Google account is a member of each Firebase project. Run `python3 run_reports.py auth google` once (and again if a download returns 401). This is a user refresh token: it does not need weekly reauth, but Google can revoke it (password change, unused for months, or admin policy).
 
 ## Configuration fields
 
@@ -75,17 +74,19 @@ Two files, both **gitignored** and meant to stay on your machine:
 | `public_data_dir` | festivals.json | Downloaded lineup/schedule CSVs |
 | `output_dir` | festivals.json | Reports, JSON backup, CSVs, history |
 | `firebase_database_url` | festivals.json | Firebase RTDB base URL (no secret) |
-| `firebase_auth_secret` | festivals.secrets.json | Firebase database secret |
+| `firebase_auth_secret` | festivals.secrets.json | Optional fallback if ADC is missing |
+| `firebase_service_account` | festivals.secrets.json | Optional per-festival JSON override |
 | `dropbox_access_token` | festivals.secrets.json | Optional override; default is promoter_admin OAuth token |
 | `reports` | festivals.json | Base HTML filenames (year appended automatically) |
+
+Auth order for each festival: `firebase_service_account` if set, else Google ADC if `~/.config/gcloud/application_default_credentials.json` exists, else `firebase_auth_secret`. Existing 70K/MDF database secrets are left unused while ADC is present.
 
 ## CLI
 
 ```bash
 python3 run_reports.py --festivals 70k          # generate reports
 python3 run_reports.py --list                   # list festival ids
-python3 run_reports.py auth setup --festivals 70k
-python3 run_reports.py auth google
+python3 run_reports.py auth google              # ADC login for all festivals
 python3 run_reports.py auth status
 python3 run_reports.py --skip-pointer --skip-firebase --festivals 70k   # fast re-run
 ```

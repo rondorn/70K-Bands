@@ -6318,9 +6318,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // NEW: Use the unified refresh function that does:
         // 1. Download pointer file first
-        // 2. Check for year changes
-        // 3. Parallel download of bands, events, and iCloud data
-        // 4. Single UI refresh when ALL data is ready
+        // 2. Parallel: bands+schedule (serial imports), description map, iCloud
+        // 3. Single UI refresh when ALL data is ready
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             
@@ -6364,16 +6363,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
     }
     
-    // MARK: - Unified Data Refresh (Pointer First, Then 3 Parallel Threads)
+    // MARK: - Unified Data Refresh (Pointer First, Then Parallel Downloads)
     
     /// Unified data refresh function that:
     /// STEP 1: Downloads and updates pointer file (synchronously)
     /// STEP 2: Checks if year changed and handles it
-    /// STEP 3: Launches 3 parallel threads to download:
-    ///   - Thread 1: Bands CSV
-    ///   - Thread 2: Events CSV  
-    ///   - Thread 3: iCloud data + build image map
-    /// STEP 4: Updates display once all three threads complete
+    /// STEP 3: Launches parallel work after pointer is ready:
+    ///   - Thread 1: Bands CSV then Schedule CSV (serial imports — same SQLite DB)
+    ///   - Thread 2: Description map CSV (separate file; safe to run in parallel)
+    ///   - Thread 3: iCloud data
+    /// STEP 4: Updates display once all parallel work completes
     /// NOTE: Throttling should be checked by callers before invoking this method.
     /// First launch bypasses throttling, other scenarios should check shouldDownloadSchedule() first.
     /// - Parameter reason: Description of why refresh is occurring
@@ -6420,20 +6419,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             // Requirement: check on app launch and when returning from background; both flows use unified refresh.
             MinimumVersionWarningManager.checkAndShowIfNeeded(reason: "UnifiedRefresh(\(reason)) pointerUpdated=\(pointerResult.networkRefreshSucceeded)")
             
-            // STEP 3: Launch 3 parallel CSV download threads
-            print("🔄 [UNIFIED_REFRESH] Step 3 - Launching 3 parallel CSV download threads")
+            // STEP 3: Parallel downloads after pointer (bands+schedule serial for SQLite; map + iCloud parallel)
+            print("🔄 [UNIFIED_REFRESH] Step 3 - Launching parallel downloads (bands/schedule, description map, iCloud)")
             
-            // Create a dispatch group to track all 3 parallel operations
             let refreshGroup = DispatchGroup()
             
-            // Run Bands then Schedule sequentially to avoid SQLite lock contention (same DB file).
+            // Thread 1: Bands then Schedule sequentially to avoid SQLite lock contention (same DB file).
             refreshGroup.enter()
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                 guard let self = self else {
                     refreshGroup.leave()
                     return
                 }
-                print("🔄 [UNIFIED_REFRESH] Step 1 - Downloading Bands CSV")
+                print("🔄 [UNIFIED_REFRESH] Thread 1 - Downloading Bands CSV")
                 self.bandNameHandle.gatherData(forceDownload: true) { [weak self] in
                     guard let self = self else {
                         refreshGroup.leave()
@@ -6445,7 +6443,21 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 }
             }
             
-            // Thread 3: Download iCloud data (parallel with bands+schedule)
+            // Thread 2: Description map (file-based; safe to run in parallel with SQLite imports)
+            refreshGroup.enter()
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                guard let self = self else {
+                    refreshGroup.leave()
+                    return
+                }
+                print("🔄 [UNIFIED_REFRESH] Thread 2 - Downloading description map")
+                self.bandDescriptions.getDescriptionMapFile()
+                self.bandDescriptions.getDescriptionMap()
+                print("✅ [UNIFIED_REFRESH] Thread 2 - Description map complete")
+                refreshGroup.leave()
+            }
+            
+            // Thread 3: iCloud data (parallel with bands/schedule + description map)
             refreshGroup.enter()
             DispatchQueue.global(qos: .utility).async { [weak self] in
                 guard let self = self else {
@@ -6461,20 +6473,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 }
             }
             
-            // STEP 4: Wait for all 3 parallel downloads to complete
+            // STEP 4: Wait for all parallel downloads to complete
             refreshGroup.notify(queue: .global(qos: .utility)) { [weak self] in
                 guard let self = self else { return }
                 
-                print("📝 [UNIFIED_REFRESH] All CSVs downloaded - now loading description map and image map with fresh data")
+                print("📝 [UNIFIED_REFRESH] Parallel downloads complete - refreshing image map with fresh data")
                 
-                // Load description map AFTER CSVs are imported
-                // This ensures the description map is available for the details screen
-                self.bandDescriptions.getDescriptionMapFile()
-                self.bandDescriptions.getDescriptionMap()
-                print("✅ [UNIFIED_REFRESH] Description map loaded with fresh CSV data")
-                
-                // Build image map AFTER CSVs are imported AND AFTER descriptionMap is loaded,
-                // but DO NOT block UI completion on image generation (prevents "hung" refreshes).
+                // Build image map AFTER CSVs are imported.
+                // Do NOT block UI completion on image generation (prevents "hung" refreshes).
                 self.bandNameHandle.loadCachedDataImmediately()
                 self.schedule.loadCachedDataImmediately()
                 CombinedImageListHandler.shared.triggerRefreshPostDataLoad(
@@ -6493,7 +6499,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 
                 // Now update the display on main thread (images may fill in as the map updates)
                 DispatchQueue.main.async {
-                    print("🎉 [UNIFIED_REFRESH] All data complete (CSVs + description map) - updating display")
+                    print("🎉 [UNIFIED_REFRESH] All data complete (CSVs + description map + iCloud) - updating display")
                     
                     // Clear justLaunched flag
                     cacheVariables.justLaunched = false

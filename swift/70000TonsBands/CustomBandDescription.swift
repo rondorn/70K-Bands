@@ -266,9 +266,10 @@ open class CustomBandDescription {
             let snapshot: [String: String] = readDescriptionMap { bandDescriptionUrl }
             for record in snapshot {
                 let bandName = record.key
+                let descriptionUrl = record.value
                 print ("commentFile working on bandName " + bandName)
-                if (self.doesDescriptionFileExists(bandName: bandName) == false){
-                    _ = self.getDescription(bandName: bandName)
+                if self.needsOfficialDescriptionRefresh(bandName: bandName) {
+                    _ = self.getDescriptionFromUrl(bandName: bandName, descriptionUrl: descriptionUrl)
                 }
             }
             
@@ -284,6 +285,102 @@ open class CustomBandDescription {
         
         print ("commentFile lookup for \(commentFile)");
         return (FileManager.default.fileExists(atPath: commentFile.path))
+    }
+
+    func hasCustomNoteFile(bandName: String) -> Bool {
+        let custCommentFile = directoryPath.appendingPathComponent(bandName + "_comment.note-cust")
+        return FileManager.default.fileExists(atPath: custCommentFile.path)
+    }
+
+    /// True when the current map-date (or custom) note file exists with usable content.
+    func hasCurrentOfficialCache(bandName: String) -> Bool {
+        if hasCustomNoteFile(bandName: bandName) {
+            if let text = readNoteFileText(fileName: bandName + "_comment.note-cust"), !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                return true
+            }
+        }
+        let fileName = getNoteFileName(bandName: bandName)
+        guard let text = readNoteFileText(fileName: fileName) else { return false }
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !trimmed.isEmpty && !trimmed.hasPrefix(FestivalConfig.current.getDefaultDescriptionText())
+    }
+
+    func needsOfficialDescriptionRefresh(bandName: String) -> Bool {
+        return !hasCustomNoteFile(bandName: bandName) && !hasCurrentOfficialCache(bandName: bandName)
+    }
+
+    private func readNoteFileText(fileName: String) -> String? {
+        let commentFile = directoryPath.appendingPathComponent(fileName)
+        guard FileManager.default.fileExists(atPath: commentFile.path),
+              let data = try? String(contentsOf: commentFile, encoding: .utf8),
+              data.count > 2 else {
+            return nil
+        }
+        return data
+    }
+
+    /// Newest older dated note file when current-marker file is missing (offline / failed refresh).
+    private func findBestOlderNoteFileName(bandName: String) -> String? {
+        let currentFileName = getNoteFileName(bandName: bandName)
+        let prefix = bandName + "_comment.note-"
+        guard let contents = try? FileManager.default.contentsOfDirectory(atPath: directoryPath.path) else {
+            return nil
+        }
+        var bestName: String?
+        var bestDate = Date.distantPast
+        for name in contents {
+            guard name.hasPrefix(prefix), name != currentFileName, !name.hasSuffix("-cust") else { continue }
+            let url = directoryPath.appendingPathComponent(name)
+            let attrs = try? FileManager.default.attributesOfItem(atPath: url.path)
+            let modified = (attrs?[.modificationDate] as? Date) ?? Date.distantPast
+            if modified >= bestDate {
+                bestDate = modified
+                bestName = name
+            }
+        }
+        return bestName
+    }
+
+    /// Best on-disk description for display: current marker / custom, else newest older dated file.
+    func getBestCachedDescription(bandName: String) -> String {
+        convertOldData(bandName: bandName)
+
+        if let current = readNoteFileText(fileName: getNoteFileName(bandName: bandName)), current.count > 2 {
+            var text = removeSpecialCharsFromString(text: current)
+            text = text.replacingOccurrences(of: "^\\s+", with: "", options: .regularExpression)
+            if !text.hasPrefix(FestivalConfig.current.getDefaultDescriptionText()) {
+                return text
+            }
+        }
+
+        if let olderName = findBestOlderNoteFileName(bandName: bandName),
+           let older = readNoteFileText(fileName: olderName), older.count > 2 {
+            var text = removeSpecialCharsFromString(text: older)
+            text = text.replacingOccurrences(of: "^\\s+", with: "", options: .regularExpression)
+            print("DEBUG_commentFile: Using older cached description \(olderName) for \(bandName)")
+            return text
+        }
+
+        return FestivalConfig.current.getDefaultDescriptionText()
+    }
+
+    /// Deletes other dated note files ONLY after a successful current-date save.
+    func cleanupObsoleteCacheAfterSuccessfulSave(bandName: String) {
+        let currentFileName = getNoteFileName(bandName: bandName)
+        let prefix = bandName + "_comment.note-"
+        guard let contents = try? FileManager.default.contentsOfDirectory(atPath: directoryPath.path) else {
+            return
+        }
+        for name in contents {
+            guard name.hasPrefix(prefix), name != currentFileName, !name.hasSuffix("-cust") else { continue }
+            let path = directoryPath.appendingPathComponent(name).path
+            do {
+                try FileManager.default.removeItem(atPath: path)
+                print("DEBUG_commentFile: Deleted obsolete cached description \(name)")
+            } catch {
+                print("DEBUG_commentFile: Failed deleting obsolete \(name): \(error)")
+            }
+        }
     }
     
     func custMatchesDefault(customNote: String, bandName: String)-> Bool{
@@ -371,6 +468,10 @@ open class CustomBandDescription {
             // Check if internet is available
             guard isInternetAvailable() else {
                 print("No internet available for \(bandName) description download")
+                if let olderName = findBestOlderNoteFileName(bandName: bandName),
+                   let older = readNoteFileText(fileName: olderName) {
+                    return removeSpecialCharsFromString(text: older)
+                }
                 return FestivalConfig.current.getDefaultDescriptionText()
             }
             
@@ -393,11 +494,18 @@ open class CustomBandDescription {
                 print ("Wrote commentFile for \(bandName) " + commentText)
                 do {
                     try commentText.write(to: commentFile, atomically: false, encoding: String.Encoding.utf8)
+                    cleanupObsoleteCacheAfterSuccessfulSave(bandName: bandName)
                 } catch {
                     print("commentFile " + error.localizedDescription)
                 }
             } else {
                 print("Received HTML error page or empty response for \(bandName)")
+                // Keep any older cache intact on failed download
+                if let olderName = findBestOlderNoteFileName(bandName: bandName),
+                   let older = readNoteFileText(fileName: olderName) {
+                    return removeSpecialCharsFromString(text: older)
+                }
+                return FestivalConfig.current.getDefaultDescriptionText()
             }
         }
 
@@ -406,6 +514,9 @@ open class CustomBandDescription {
             if (data.count > 2){
                 commentText = data
             }
+        } else if let olderName = findBestOlderNoteFileName(bandName: bandName),
+                  let older = readNoteFileText(fileName: olderName) {
+            commentText = older
         }
     
         commentText = removeSpecialCharsFromString(text: commentText)
@@ -452,7 +563,8 @@ open class CustomBandDescription {
         }
     }
     
-    /// Returns the description for a given band, or an empty string if not found.
+    /// Returns the best cached description for a band (current marker, else older dated file).
+    /// Does not perform network I/O — callers that need a refresh should download separately.
     /// - Parameter band: The name of the band.
     /// - Returns: The description string for the band.
     func getDescription(bandName: String) -> String {
@@ -463,75 +575,8 @@ open class CustomBandDescription {
             return FestivalConfig.current.getDefaultDescriptionText()
         }
         
-        convertOldData(bandName: bandName)
-        let normalizedBandName = normalizeBandName(bandName)
-        print ("DEBUG_commentFile:  lookup for \(bandName) (normalized: \(normalizedBandName))")
-        var commentText = FestivalConfig.current.getDefaultDescriptionText()
-        
-        let commentFileName = self.getNoteFileName(bandName: bandName)
-        let commentFile = directoryPath.appendingPathComponent( commentFileName)
-        
-        print ("DEBUG_commentFile: doesDescriptionFileExists for \(bandName)")
-        if (doesDescriptionFileExists(bandName: bandName) == false){
-            
-            if (downloadingAllComments == false){
-                DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                    self.getDescriptionMapFile();
-                    self.getDescriptionMap();
-                }
-            }
-            
-            let urlString: String? = readDescriptionMap {
-                return bandDescriptionUrl[normalizedBandName]
-            }
-            if let urlString, !urlString.isEmpty {
-                let urlString = String(describing: urlString)
-                print ("DEBUG_commentFile: downloading URL \(urlString)")
-                DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
-                    
-                    self.getDescriptionFromUrl(bandName: bandName, descriptionUrl: urlString)
-                }
-            } else {
-                let mapCount = readDescriptionMap { bandDescriptionUrl.count }
-                print ("DEBUG_commentFile: No URL for band '\(normalizedBandName)' - mapCount=\(mapCount)")
-            }
-        } else {
-            print ("DEBUG_commentFile: No URL for band \(bandName) - \(commentFile)")
-            if FileManager.default.fileExists(atPath: commentFile.path){
-                print ("DEBUG_commentFile: No URL for band \(bandName) - file exists")
-            } else {
-                print ("DEBUG_commentFile: No URL for band \(bandName) - file does not exists")
-            }
-        
-        }
-        
-
-        // Safely read the file
-        if let data = try? String(contentsOf: commentFile, encoding: String.Encoding.utf8) {
-            if (data.count > 2){
-                commentText = data
-            } else {
-                print ("No URL for band  What happened here - \(data)")
-            }
-        } else {
-                print ("No URL for band  What happened here")
-        }
-        
-        
-        commentText = removeSpecialCharsFromString(text: commentText)
-        //remove leading space
-        commentText = commentText.replacingOccurrences(of: "^\\s+", with: "", options: .regularExpression)
-        
-        if (commentText.contains(FestivalConfig.current.getDefaultDescriptionText())){
-            do {
-                print ("commentFile being deleted \(commentFile) -! - \(commentText)")
-                try FileManager.default.removeItem(atPath: commentFile.path)
-                
-            } catch let error as NSError {
-                print ("Encountered an error removing old commentFile " + error.debugDescription)
-            }
-        }
-        return commentText;
+        print ("DEBUG_commentFile: cache-only lookup for \(bandName)")
+        return getBestCachedDescription(bandName: bandName)
     }
     
     
@@ -875,50 +920,39 @@ open class CustomBandDescription {
         return bandsReady && scheduleReady
     }
     
-    /// Downloads all missing descriptions and replaces obsolete cached files
-    /// This method is called when the app is exiting to ensure all data is cached
+    /// Ensures the description map is downloaded/parsed into this instance.
+    /// Returns the number of band→URL entries available for bulk note download.
+    @discardableResult
+    func ensureDescriptionMapLoadedForBulk() -> Int {
+        print("DEBUG_commentFile: ensureDescriptionMapLoadedForBulk — refreshing map")
+        getDescriptionMapFile()
+        getDescriptionMap()
+        let count = readDescriptionMap { bandDescriptionUrl.count }
+        print("DEBUG_commentFile: ensureDescriptionMapLoadedForBulk — map entries=\(count)")
+        return count
+    }
+    
+    /// Downloads all missing current-marker descriptions (bulk / terminate / background).
+    /// Always loads the map first; never returns early after only refreshing the map.
+    /// Runs synchronously on the caller’s queue (caller must not be main).
     func downloadAllDescriptionsOnAppExit() {
-        print("DEBUG_commentFile: Starting background download of all descriptions on app exit")
+        downloadAllMissingDescriptionsForBulk()
+    }
+    
+    /// Guaranteed map load, then download every band that lacks a current-date cache file.
+    /// Safe to call from launch bulk, background bulk, or terminate.
+    func downloadAllMissingDescriptionsForBulk() {
+        print("DEBUG_commentFile: Starting bulk download of all missing descriptions")
         
-        // Ensure we have the description map first
-        if readDescriptionMap({ bandDescriptionUrl.isEmpty }) {
-            print("DEBUG_commentFile: Description map is empty, downloading it first")
-            getDescriptionMapFile()
-            getDescriptionMap()
+        let mapCount = ensureDescriptionMapLoadedForBulk()
+        guard mapCount > 0 else {
+            print("⚠️ DEBUG_commentFile: Description map empty after load — cannot bulk-download notes")
             return
         }
         
-        // Snapshot so we don't iterate while background refresh mutates the map.
-        let descriptionMapSnapshot: [String: String] = readDescriptionMap { bandDescriptionUrl }
-        
-        // Download all missing descriptions in the background
-        DispatchQueue.global(qos: .utility).async {
-            for (bandName, descriptionUrl) in descriptionMapSnapshot {
-                // Check if we need to download this description
-                let commentFileName = self.getNoteFileName(bandName: bandName)
-                let commentFile = directoryPath.appendingPathComponent(commentFileName)
-                
-                // Download if file doesn't exist or if it's obsolete (contains default text)
-                if !FileManager.default.fileExists(atPath: commentFile.path) {
-                    print("DEBUG_commentFile: Downloading missing description for \(bandName)")
-                    self.getDescriptionFromUrl(bandName: bandName, descriptionUrl: descriptionUrl)
-                } else {
-                    // Check if existing file contains default text (obsolete)
-                    if let data = try? String(contentsOf: commentFile, encoding: .utf8) {
-                        if data.contains(FestivalConfig.current.getDefaultDescriptionText()) {
-                            print("DEBUG_commentFile: Replacing obsolete description for \(bandName)")
-                            do {
-                                try FileManager.default.removeItem(atPath: commentFile.path)
-                                self.getDescriptionFromUrl(bandName: bandName, descriptionUrl: descriptionUrl)
-                            } catch {
-                                print("DEBUG_commentFile: Error removing obsolete file for \(bandName): \(error)")
-                            }
-                        }
-                    }
-                }
-            }
-            print("DEBUG_commentFile: Completed background download of all descriptions on app exit")
-        }
+        print("DEBUG_commentFile: Bulk-downloading missing notes for \(mapCount) map entries")
+        getAllDescriptions()
+        print("DEBUG_commentFile: Completed bulk download of missing descriptions")
     }
     
     /// Handles data collection requests, including year changes

@@ -879,7 +879,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         // Modal sheets must not block Firebase sync — only bulk image/description downloads.
         let modalPresented = isModalPresented()
         if modalPresented {
-            print("⚠️ Modal view controller is presented — skipping bulk downloads, Firebase sync still allowed")
+            print("⚠️ Modal view controller is presented — deferring bulk downloads, Firebase sync still allowed")
+            BackgroundWorkMonitor.shared.markBulkDownloadPending(context: "modal-presented")
         }
         
         // Local schedule alerts: own background task — never gated on Firebase or bulk downloads.
@@ -914,19 +915,46 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         recoverPendingBulkDownloadOnForeground()
     }
 
-    private static func canRunBulkDownloadNow() -> Bool {
-        LocalNotificationRebuildCoordinator.canRebuildLocalAlertsNow()
+    /// Bulk image/note prefetch readiness — intentionally NOT tied to local-alert rebuild gates.
+    /// Alert rebuild requires schedule + current year; offline note/image cache must still run
+    /// when browsing another year or before schedule is fully in memory.
+    private static func bulkDownloadReadinessSnapshot() -> String {
+        if MasterViewController.isYearChangeInProgress {
+            return "yearChangeInProgress"
+        }
+        // Soft diagnostic only — do not block. CSV can stick true; notes/images must still prefetch.
+        if MasterViewController.isCsvDownloadInProgress {
+            return "ready-with-csv-in-progress"
+        }
+        if scheduleHandler.shared.schedulingData.isEmpty {
+            return "ready-with-empty-schedule"
+        }
+        let alertSnapshot = LocalNotificationRebuildCoordinator.rebuildReadinessSnapshot()
+        if alertSnapshot != "ready" {
+            return "ready-alerts-would-block:\(alertSnapshot)"
+        }
+        return "ready"
     }
 
-    /// Prefetch band images and notes while the app is open (not first launch).
-    /// Background bulk on app exit is unchanged — this is an additional foreground pass.
+    private static func canRunBulkDownloadNow() -> Bool {
+        // Only hard-block during year change (caches/URLs unstable).
+        !MasterViewController.isYearChangeInProgress
+    }
+
+    /// Prefetch band images and notes while the app is open.
+    /// Background bulk on app exit remains as a safety net for offline (shipboard) use.
     func startBulkDownloadOnLaunchIfNeeded(reason: String) {
-        if reason.lowercased().contains("first launch") {
-            print("📦 [BULK_DOWNLOAD] skip launch bulk — first launch (\(reason))")
+        let normalized = reason.lowercased()
+        // Only skip the initial first-launch kickoff before CSV/map exist.
+        // Do NOT skip "schedule-ready:First launch" — that is when offline prefetch must run.
+        if normalized == "first launch" {
+            print("📦 [BULK_DOWNLOAD] skip launch bulk — initial first launch before data ready (\(reason))")
             return
         }
-        guard UserDefaults.standard.bool(forKey: "hasRunBefore") else {
-            print("📦 [BULK_DOWNLOAD] skip launch bulk — first install session")
+        // schedule-ready after first launch sets hasRunBefore just before this call; allow it through.
+        if !UserDefaults.standard.bool(forKey: "hasRunBefore") && !normalized.contains("schedule-ready") {
+            print("📦 [BULK_DOWNLOAD] skip launch bulk — first install session (\(reason))")
+            BackgroundWorkMonitor.shared.markBulkDownloadPending(context: "first-install-\(reason)")
             return
         }
         startBulkDownloadWork(application: nil, context: "launch:\(reason)")
@@ -938,9 +966,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
 
     @discardableResult
     private func startBulkDownloadWork(application: UIApplication?, context: String) -> Bool {
+        let readiness = Self.bulkDownloadReadinessSnapshot()
         guard Self.canRunBulkDownloadNow() else {
-            print("📦 [BULK_DOWNLOAD] skip bulk (\(context)) — not ready")
+            print("📦 [BULK_DOWNLOAD] skip bulk (\(context)) — not ready: \(readiness)")
+            BackgroundWorkMonitor.shared.markBulkDownloadPending(context: "skipped-\(readiness)")
             return false
+        }
+        if readiness != "ready" {
+            print("📦 [BULK_DOWNLOAD] proceeding despite soft condition (\(context)): \(readiness)")
         }
 
         bulkDownloadLock.lock()
@@ -1115,31 +1148,29 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     /// Performs network test first, then executes bulk image/description downloads if network is good.
     /// Firebase sync is intentionally separate — see `startFirebaseSyncIfNeeded`.
+    /// Image and notes run sequentially on this queue so both complete before bulk in-flight clears
+    /// (critical for offline shipboard use).
     private func performBulkOperationsWithNetworkGating(includeDescriptionBulkDownload: Bool = true) {
         print("🌐 NETWORK GATING: Starting REAL network test before bulk operations (description bulk: \(includeDescriptionBulkDownload))")
         
-        // Run network test on background queue to never block
-        DispatchQueue.global(qos: .utility).async {
-            print("🌐 NETWORK GATING: Performing real HTTP request to test network quality")
-            
-            // ROBUST NETWORK TEST: Do actual HTTP request instead of relying on cached values
-            let isNetworkGood = self.performRobustNetworkTest()
-            
-            print("🌐 NETWORK GATING: Robust network test completed - result: \(isNetworkGood)")
-            
-            if isNetworkGood {
-                print("🌐 NETWORK GATING: ✅ Network is good - proceeding with bulk operations")
-                self.performBulkImageDownload()
-                if includeDescriptionBulkDownload {
-                    self.performBulkDescriptionDownload()
-                } else {
-                    print("🌐 NETWORK GATING: Skipping bulk description download (not requested for this entry point)")
-                }
-            } else {
-                print("🌐 NETWORK GATING: ❌ Network is poor/down - skipping ALL bulk operations")
-                print("🌐 NETWORK GATING: This should prevent bulk operations in 100% packet loss scenarios")
-            }
+        print("🌐 NETWORK GATING: Performing real HTTP request to test network quality")
+        let isNetworkGood = self.performRobustNetworkTest()
+        print("🌐 NETWORK GATING: Robust network test completed - result: \(isNetworkGood)")
+        
+        guard isNetworkGood else {
+            print("🌐 NETWORK GATING: ❌ Network is poor/down - skipping ALL bulk operations")
+            print("🌐 NETWORK GATING: This should prevent bulk operations in 100% packet loss scenarios")
+            return
         }
+        
+        print("🌐 NETWORK GATING: ✅ Network is good - proceeding with bulk operations")
+        self.performBulkImageDownload()
+        if includeDescriptionBulkDownload {
+            self.performBulkDescriptionDownload()
+        } else {
+            print("🌐 NETWORK GATING: Skipping bulk description download (not requested for this entry point)")
+        }
+        print("🌐 NETWORK GATING: Bulk image + notes pass finished")
     }
     
     /// Performs a robust network test with actual HTTP request - not cached values
@@ -1205,79 +1236,51 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         return testResult
     }
     
-    /// Performs bulk image download - only called after network test passes
+    /// Performs bulk image download - only called after network test passes.
+    /// Runs on the caller’s queue (already background from bulk work).
     private func performBulkImageDownload() {
         print("🖼️ BULK IMAGE DOWNLOAD: Starting image download (network verified)")
         
-        DispatchQueue.global(qos: .userInitiated).async {
-            print("🖼️ Image loading background queue started")
+        let imageHandlerInstance = imageHandler()
+        let combinedImageList = CombinedImageListHandler.shared.combinedImageList
+        print("🖼️ Starting bulk image loading with \(combinedImageList.count) images")
+        
+        if combinedImageList.isEmpty {
+            print("⚠️ Combined image list is empty - forcing regeneration")
             
-            // Use a dedicated imageHandler instance for background processing
-            let imageHandlerInstance = imageHandler()
-            let combinedImageList = CombinedImageListHandler.shared.combinedImageList
-            print("🖼️ Starting bulk image loading with \(combinedImageList.count) images")
+            let bandNameHandle = bandNamesHandler.shared
+            let scheduleHandle = scheduleHandler.shared
+            let regenSemaphore = DispatchSemaphore(value: 0)
             
-            if combinedImageList.isEmpty {
-                print("⚠️ Combined image list is empty - forcing regeneration")
-                
-                // Use singleton handlers for image list generation
-                let bandNameHandle = bandNamesHandler.shared
-                let scheduleHandle = scheduleHandler.shared
-                
-                CombinedImageListHandler.shared.generateCombinedImageList(
-                    bandNameHandle: bandNameHandle,
-                    scheduleHandle: scheduleHandle
-                ) {
-                    let updatedList = CombinedImageListHandler.shared.combinedImageList
-                    print("🖼️ After regeneration: \(updatedList.count) images available")
-                    
-                    // Proceed with bulk loading after regeneration
-                    print("🖼️ Calling getAllImages() for bulk download...")
-                    imageHandlerInstance.getAllImages()
-                    print("🖼️ getAllImages() call completed")
-                }
-            } else {
-                // Proceed directly with bulk loading if list already exists
-                print("🖼️ Calling getAllImages() for bulk download...")
-                imageHandlerInstance.getAllImages()
-                print("🖼️ getAllImages() call completed")
+            CombinedImageListHandler.shared.generateCombinedImageList(
+                bandNameHandle: bandNameHandle,
+                scheduleHandle: scheduleHandle
+            ) {
+                let updatedList = CombinedImageListHandler.shared.combinedImageList
+                print("🖼️ After regeneration: \(updatedList.count) images available")
+                regenSemaphore.signal()
             }
+            _ = regenSemaphore.wait(timeout: .now() + 60)
             
-            print("🖼️ Background image loading completed")
+            print("🖼️ Calling getAllImages() for bulk download...")
+            imageHandlerInstance.getAllImages()
+            print("🖼️ getAllImages() call completed")
+        } else {
+            print("🖼️ Calling getAllImages() for bulk download...")
+            imageHandlerInstance.getAllImages()
+            print("🖼️ getAllImages() call completed")
         }
+        
+        print("🖼️ BULK IMAGE DOWNLOAD: Completed")
     }
     
-    /// Performs bulk description/notes download - only called after network test passes
+    /// Performs bulk description/notes download - only called after network test passes.
+    /// Loads the description map on this AppDelegate instance, then downloads every missing current-marker note.
+    /// Runs on the caller’s queue (already background from bulk work).
     private func performBulkDescriptionDownload() {
         print("📝 BULK DESCRIPTION DOWNLOAD: Starting description download (network verified)")
-        
-        DispatchQueue.global(qos: .userInitiated).async {
-            print("📝 Description loading background queue started")
-            print("📝 Starting bulk description loading")
-            
-            // Download all missing descriptions and replace obsolete cached files
-            self.bandDescriptions.downloadAllDescriptionsOnAppExit()
-            
-            // Since network was already verified, we can proceed directly
-            print("📝 Network already verified - proceeding with description downloads")
-            
-            // Ensure description map is loaded before bulk loading
-            print("📝 Loading description map file...")
-            self.bandDescriptions.getDescriptionMapFile()
-            print("📝 Parsing description map...")
-            self.bandDescriptions.getDescriptionMap()
-            
-            print("📝 Description map contains \(self.bandDescriptions.bandDescriptionUrl.count) entries")
-            if self.bandDescriptions.bandDescriptionUrl.isEmpty {
-                print("⚠️ Description URL map is empty - bulk loading will be skipped")
-                return
-            }
-            
-            print("📝 Starting bulk download of \(self.bandDescriptions.bandDescriptionUrl.count) descriptions")
-            print("📝 Calling getAllDescriptions() for allINotes bulk download...")
-            self.bandDescriptions.getAllDescriptions()
-            print("📝 getAllDescriptions() allINotes call completed")
-        }
+        self.bandDescriptions.downloadAllMissingDescriptionsForBulk()
+        print("📝 BULK DESCRIPTION DOWNLOAD: Completed")
     }
     
     /// Performs Firebase reporting - only called after network test passes
@@ -1439,8 +1442,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
         // SQLite automatically persists data, no manual save needed
         
-        // Download all missing descriptions and replace obsolete cached files
-        bandDescriptions.downloadAllDescriptionsOnAppExit()
+        // Best-effort sync bulk notes before process exit (map load + missing current-marker files).
+        // Prefer background entry for a fuller download window; this is a last-chance safety net.
+        print("📝 [TERMINATE] Starting best-effort bulk description download")
+        bandDescriptions.downloadAllMissingDescriptionsForBulk()
     }
 
     // MARK: - Helper Methods

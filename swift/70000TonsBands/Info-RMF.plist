@@ -6,6 +6,23 @@
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
 	<string>RWMF Bands</string>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>RMF Shared Preferences</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>LSHandlerRank</key>
+			<string>Owner</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>com.rdorn.rmf.share</string>
+			</array>
+			<key>LSSupportsOpeningDocumentsInPlace</key>
+			<true/>
+		</dict>
+	</array>
 	<key>CFBundleExecutable</key>
 	<string>RWMF Bands</string>
 	<key>CFBundleGetInfoString</key>
@@ -24,10 +41,10 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
-	<key>FirebaseAppDelegateProxyEnabled</key>
-	<true/>
 	<key>FIREBASE_ANALYTICS_COLLECTION_ENABLED</key>
 	<false/>
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<true/>
 	<key>FirebaseAutomaticScreenReportingEnabled</key>
 	<false/>
 	<key>ITSAppUsesNonExemptEncryption</key>
@@ -36,18 +53,15 @@
 	<string></string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>NSCameraUsageDescription</key>
-	<string>Camera access is used to scan a QR code containing the event schedule from another device (e.g. when offline at the festival).</string>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>fetch</string>
-		<string>remote-notification</string>
-	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Camera access is used to scan a QR code containing the event schedule from another device (e.g. when offline at the festival).</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -65,6 +79,13 @@
 			</array>
 		</dict>
 	</dict>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
+	<key>UIFileSharingEnabled</key>
+	<true/>
 	<key>UILaunchStoryboardName</key>
 	<string>UILaunchScreen-RMF</string>
 	<key>UIMainStoryboardFile</key>
@@ -103,6 +124,58 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>RMF Shared Preferences</string>
+			<key>UTTypeIconFiles</key>
+			<array/>
+			<key>UTTypeIdentifier</key>
+			<string>com.rdorn.rmf.share</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>rmfshare</string>
+				</array>
+				<key>public.mime-type</key>
+				<array>
+					<string>application/x-rmf-share</string>
+					<string>application/octet-stream</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
+	<key>UTImportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>RMF Shared Preferences</string>
+			<key>UTTypeIdentifier</key>
+			<string>com.rdorn.rmf.share</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>rmfshare</string>
+				</array>
+				<key>public.mime-type</key>
+				<array>
+					<string>application/x-rmf-share</string>
+					<string>application/octet-stream</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
 	<key>iCloud.com.rdorn.rmfbands</key>
 	<dict>
 		<key>NSUbiquitousContainerIsDocumentScopePublic</key>
@@ -112,78 +185,5 @@
 		<key>NSUbiquitousContainerSupportedFolderLevels</key>
 		<string>One</string>
 	</dict>
-	<key>CFBundleDocumentTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleTypeName</key>
-			<string>RMF Shared Preferences</string>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>LSHandlerRank</key>
-			<string>Owner</string>
-			<key>LSItemContentTypes</key>
-			<array>
-				<string>com.rdorn.rmf.share</string>
-			</array>
-			<key>LSSupportsOpeningDocumentsInPlace</key>
-			<true/>
-		</dict>
-	</array>
-	<key>LSSupportsOpeningDocumentsInPlace</key>
-	<true/>
-	<key>UIFileSharingEnabled</key>
-	<true/>
-	<key>UTExportedTypeDeclarations</key>
-	<array>
-		<dict>
-			<key>UTTypeIdentifier</key>
-			<string>com.rdorn.rmf.share</string>
-			<key>UTTypeDescription</key>
-			<string>RMF Shared Preferences</string>
-			<key>UTTypeConformsTo</key>
-			<array>
-				<string>public.data</string>
-			</array>
-			<key>UTTypeTagSpecification</key>
-			<dict>
-				<key>public.filename-extension</key>
-				<array>
-					<string>rmfshare</string>
-				</array>
-				<key>public.mime-type</key>
-				<array>
-					<string>application/x-rmf-share</string>
-					<string>application/octet-stream</string>
-				</array>
-			</dict>
-			<key>UTTypeIconFiles</key>
-			<array/>
-		</dict>
-	</array>
-	<key>UTImportedTypeDeclarations</key>
-	<array>
-		<dict>
-			<key>UTTypeIdentifier</key>
-			<string>com.rdorn.rmf.share</string>
-			<key>UTTypeDescription</key>
-			<string>RMF Shared Preferences</string>
-			<key>UTTypeConformsTo</key>
-			<array>
-				<string>public.data</string>
-			</array>
-			<key>UTTypeTagSpecification</key>
-			<dict>
-				<key>public.filename-extension</key>
-				<array>
-					<string>rmfshare</string>
-				</array>
-				<key>public.mime-type</key>
-				<array>
-					<string>application/x-rmf-share</string>
-					<string>application/octet-stream</string>
-				</array>
-			</dict>
-		</dict>
-	</array>
 </dict>
 </plist>

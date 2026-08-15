@@ -6,6 +6,29 @@
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
 	<string>70K Bands</string>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>70kshare</string>
+			</array>
+			<key>CFBundleTypeName</key>
+			<string>70K Bands Shared Preferences</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>LSHandlerRank</key>
+			<string>Owner</string>
+			<key>LSIsAppleDefaultForType</key>
+			<true/>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>com.rdorn.70kbands.share</string>
+			</array>
+			<key>LSSupportsOpeningDocumentsInPlace</key>
+			<true/>
+		</dict>
+	</array>
 	<key>CFBundleExecutable</key>
 	<string>70K Bands</string>
 	<key>CFBundleGetInfoString</key>
@@ -22,6 +45,17 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.rdorn.schedule-qr-guide</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>bands70k</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>FirebaseAppDelegateProxyEnabled</key>
@@ -32,17 +66,18 @@
 	<string></string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>NSCameraUsageDescription</key>
-	<string>Camera access is used to scan a QR code containing the event schedule from another device (e.g. when offline on a cruise).</string>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
-	<key>UIBackgroundModes</key>
+	<key>NSCameraUsageDescription</key>
+	<string>Camera access is used to scan a QR code containing the event schedule from another device (e.g. when offline on a cruise).</string>
+	<key>QLSupportedContentTypes</key>
 	<array>
-		<string>fetch</string>
-		<string>remote-notification</string>
+		<string>com.rdorn.70kbands.share</string>
 	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
@@ -61,6 +96,13 @@
 			</array>
 		</dict>
 	</dict>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
+	<key>UIFileSharingEnabled</key>
+	<true/>
 	<key>UILaunchStoryboardName</key>
 	<string>UILaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
@@ -69,6 +111,8 @@
 	<array>
 		<string>armv7</string>
 	</array>
+	<key>UIRequiresFullScreen</key>
+	<false/>
 	<key>UIStatusBarStyle</key>
 	<string>UIStatusBarStyleLightContent</string>
 	<key>UIStatusBarTintParameters</key>
@@ -95,10 +139,60 @@
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 	</array>
-	<key>UIRequiresFullScreen</key>
-	<false/>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.json</string>
+				<string>public.text</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>70K Bands Shared Preferences</string>
+			<key>UTTypeIconFiles</key>
+			<array/>
+			<key>UTTypeIdentifier</key>
+			<string>com.rdorn.70kbands.share</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>70kshare</string>
+				</array>
+				<key>public.mime-type</key>
+				<array>
+					<string>application/json</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
+	<key>UTImportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.json</string>
+				<string>public.text</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>70K Bands Shared Preferences</string>
+			<key>UTTypeIdentifier</key>
+			<string>com.rdorn.70kbands.share</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>70kshare</string>
+				</array>
+				<key>public.mime-type</key>
+				<array>
+					<string>application/json</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
 	<key>iCloud.com.rdorn.-0000TonsBands</key>
 	<dict>
 		<key>NSUbiquitousContainerIsDocumentScopePublic</key>
@@ -108,99 +202,5 @@
 		<key>NSUbiquitousContainerSupportedFolderLevels</key>
 		<string>One</string>
 	</dict>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleURLName</key>
-			<string>com.rdorn.schedule-qr-guide</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>bands70k</string>
-			</array>
-		</dict>
-	</array>
-	<key>CFBundleDocumentTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleTypeName</key>
-			<string>70K Bands Shared Preferences</string>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>LSHandlerRank</key>
-			<string>Owner</string>
-			<key>LSItemContentTypes</key>
-			<array>
-				<string>com.rdorn.70kbands.share</string>
-			</array>
-			<key>LSSupportsOpeningDocumentsInPlace</key>
-			<true/>
-			<key>CFBundleTypeExtensions</key>
-			<array>
-				<string>70kshare</string>
-			</array>
-			<key>LSIsAppleDefaultForType</key>
-			<true/>
-		</dict>
-	</array>
-	<key>LSSupportsOpeningDocumentsInPlace</key>
-	<true/>
-	<key>UIFileSharingEnabled</key>
-	<true/>
-	<key>QLSupportedContentTypes</key>
-	<array>
-		<string>com.rdorn.70kbands.share</string>
-	</array>
-	<key>UTExportedTypeDeclarations</key>
-	<array>
-		<dict>
-			<key>UTTypeIdentifier</key>
-			<string>com.rdorn.70kbands.share</string>
-			<key>UTTypeDescription</key>
-			<string>70K Bands Shared Preferences</string>
-			<key>UTTypeConformsTo</key>
-			<array>
-				<string>public.json</string>
-				<string>public.text</string>
-			</array>
-			<key>UTTypeTagSpecification</key>
-			<dict>
-				<key>public.filename-extension</key>
-				<array>
-					<string>70kshare</string>
-				</array>
-				<key>public.mime-type</key>
-				<array>
-					<string>application/json</string>
-				</array>
-			</dict>
-			<key>UTTypeIconFiles</key>
-			<array/>
-		</dict>
-	</array>
-	<key>UTImportedTypeDeclarations</key>
-	<array>
-		<dict>
-			<key>UTTypeIdentifier</key>
-			<string>com.rdorn.70kbands.share</string>
-			<key>UTTypeDescription</key>
-			<string>70K Bands Shared Preferences</string>
-			<key>UTTypeConformsTo</key>
-			<array>
-				<string>public.json</string>
-				<string>public.text</string>
-			</array>
-			<key>UTTypeTagSpecification</key>
-			<dict>
-				<key>public.filename-extension</key>
-				<array>
-					<string>70kshare</string>
-				</array>
-				<key>public.mime-type</key>
-				<array>
-					<string>application/json</string>
-				</array>
-			</dict>
-		</dict>
-	</array>
 </dict>
 </plist>

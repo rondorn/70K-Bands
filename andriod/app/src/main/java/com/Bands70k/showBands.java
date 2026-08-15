@@ -709,7 +709,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         ThreadManager.getInstance().executeGeneralWithCallbacks(
                 // Background task: download/update all config files
                 () -> {
-                    Log.d("PullToRefresh", "Starting background pull-to-refresh download (bandInfo, schedule, descriptionMap)");
+                    Log.d("PullToRefresh", "Starting background pull-to-refresh download (bandInfo, schedule, descriptionMap in parallel)");
 
                     // Ensure we don't overlap with other band loading work
                     if (!SynchronizationManager.waitForBandLoadingComplete(10)) {
@@ -728,11 +728,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                             Log.d("PullToRefresh", "Offline detected (enhanced check). Using cached data if present: " + hasCachedData);
                         }
 
-                        // Strict ordering requirement:
-                        // 1) pointer file
-                        // 2) bandInfo.csv
-                        // 3) schedule.csv
-                        // 4) descriptionMap.csv
+                        // Pointer first, then bandInfo / schedule / descriptionMap in parallel.
                         if (!staticVariables.ensurePointerFileAvailable()) {
                             Log.e("PullToRefresh", "Pointer file unavailable — aborting pull-to-refresh download");
                             return;
@@ -4973,9 +4969,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                         Log.e("AsyncTask", "Pointer file unavailable — aborting data download");
                         return;
                     }
-                    Log.d("AsyncTask", "Pointer ready — downloading band, schedule, and descriptionMap");
+                    Log.d("AsyncTask", "Pointer ready — downloading band, schedule, and descriptionMap in parallel");
 
-                    // 2–4) Core CSV downloads (same pipeline as pull-to-refresh).
+                    // Core CSV downloads (same parallel pipeline as pull-to-refresh).
                     staticVariables.downloadCoreCsvFiles();
                 } catch (Exception error) {
                     Log.e("bandInfo", "Error during startup data download: " + error.getMessage(), error);

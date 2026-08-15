@@ -1559,9 +1559,12 @@ public class staticVariables {
     }
 
     /**
-     * Downloads core CSV files in strict order: bandInfo, schedule, descriptionMap.
+     * Downloads core CSV files in parallel: bandInfo, schedule, descriptionMap.
      * Caller must have already ensured the pointer file is available.
      * Must be called from a background thread.
+     *
+     * Uses dedicated threads (not ThreadManager) so waiting here cannot deadlock
+     * the shared network/general executor pools.
      */
     public static void downloadCoreCsvFiles() {
         boolean isMainThread = Looper.myLooper() == Looper.getMainLooper();
@@ -1570,28 +1573,69 @@ public class staticVariables {
             return;
         }
 
-        Log.d("CORE_CSV", "Starting core CSV download pipeline");
+        Log.d("CORE_CSV", "Starting parallel core CSV download pipeline");
         lookupUrls();
 
-        BandInfo bandInfo = new BandInfo();
-        bandInfo.DownloadBandFile();
-
+        // Resolve schedule URL before launching parallel work (pointer already loaded).
         String scheduleUrl = scheduleURL;
         if (scheduleUrl == null || scheduleUrl.trim().isEmpty()) {
+            BandInfo bandInfo = new BandInfo();
             bandInfo.getDownloadtUrls();
             scheduleUrl = scheduleURL;
         }
-        if (scheduleUrl != null && !scheduleUrl.trim().isEmpty()) {
-            scheduleInfo scheduleData = new scheduleInfo();
-            scheduleData.DownloadScheduleFile(scheduleUrl);
-        } else {
-            Log.w("CORE_CSV", "Schedule URL empty — skipping schedule download");
+        final String resolvedScheduleUrl = scheduleUrl;
+
+        final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(3);
+
+        new Thread(() -> {
+            try {
+                Log.d("CORE_CSV", "Parallel thread: downloading bandInfo");
+                new BandInfo().DownloadBandFile();
+                Log.d("CORE_CSV", "Parallel thread: bandInfo complete");
+            } catch (Exception e) {
+                Log.e("CORE_CSV", "bandInfo download failed: " + e.getMessage(), e);
+            } finally {
+                latch.countDown();
+            }
+        }, "CoreCSV-Band").start();
+
+        new Thread(() -> {
+            try {
+                if (resolvedScheduleUrl != null && !resolvedScheduleUrl.trim().isEmpty()) {
+                    Log.d("CORE_CSV", "Parallel thread: downloading schedule");
+                    new scheduleInfo().DownloadScheduleFile(resolvedScheduleUrl);
+                    Log.d("CORE_CSV", "Parallel thread: schedule complete");
+                } else {
+                    Log.w("CORE_CSV", "Schedule URL empty — skipping schedule download");
+                }
+            } catch (Exception e) {
+                Log.e("CORE_CSV", "schedule download failed: " + e.getMessage(), e);
+            } finally {
+                latch.countDown();
+            }
+        }, "CoreCSV-Schedule").start();
+
+        new Thread(() -> {
+            try {
+                Log.d("CORE_CSV", "Parallel thread: downloading descriptionMap");
+                CustomerDescriptionHandler descHandler = CustomerDescriptionHandler.getInstance();
+                descHandler.getDescriptionMapFile();
+                descHandler.getDescriptionMap();
+                Log.d("CORE_CSV", "Parallel thread: descriptionMap complete");
+            } catch (Exception e) {
+                Log.e("CORE_CSV", "descriptionMap download failed: " + e.getMessage(), e);
+            } finally {
+                latch.countDown();
+            }
+        }, "CoreCSV-DescriptionMap").start();
+
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            Log.w("CORE_CSV", "Interrupted while waiting for parallel CSV downloads");
         }
 
-        CustomerDescriptionHandler descHandler = CustomerDescriptionHandler.getInstance();
-        descHandler.getDescriptionMapFile();
-        descHandler.getDescriptionMap();
-
-        Log.d("CORE_CSV", "Core CSV download pipeline complete");
+        Log.d("CORE_CSV", "Parallel core CSV download pipeline complete");
     }
 }

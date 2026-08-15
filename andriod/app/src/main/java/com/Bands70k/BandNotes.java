@@ -116,10 +116,10 @@ public class BandNotes {
 
     /**
      * Cleans up obsolete cached note files with old dates.
-     * When the descriptionMap date changes, this removes the old cached file
-     * so a fresh version will be downloaded with the new date.
+     * ONLY call after a successful write of the current-date cache file.
+     * Never call before/during a failed download — expired cache must remain for offline use.
      */
-    private void cleanupObsoleteCache() {
+    public void cleanupObsoleteCacheAfterSuccessfulSave() {
         try {
             String currentDate = String.valueOf(staticVariables.descriptionMapModData.get(normalizedBandName));
             
@@ -164,14 +164,113 @@ public class BandNotes {
     }
     
     /**
-     * Checks if the band note file exists.
-     * Cleans up obsolete cached files before checking.
-     * @return True if the note file exists, false otherwise.
+     * Checks if the current-marker note file exists (no cleanup; never purges expired cache).
      */
     public boolean fileExists(){
         refreshNoteFileReference();
-        cleanupObsoleteCache();
         return bandNoteFile.exists();
+    }
+
+    /** True when the user-controlled custom note file exists. */
+    public boolean hasCustomNoteFile() {
+        return bandCustNoteFile != null && bandCustNoteFile.exists();
+    }
+
+    /**
+     * True when the official current-date cache file exists and has usable content.
+     */
+    public boolean hasCurrentOfficialCache() {
+        if (hasCustomNoteFile()) {
+            return true;
+        }
+        refreshNoteFileReference();
+        if (!bandNoteFile.exists()) {
+            return false;
+        }
+        String note = extractNoteText(FileHandler70k.readObject(bandNoteFile));
+        return note != null && !note.trim().isEmpty();
+    }
+
+    /**
+     * True when online refresh should download a new official description for the current map date.
+     */
+    public boolean needsOfficialDescriptionRefresh() {
+        return !hasCustomNoteFile() && !hasCurrentOfficialCache();
+    }
+
+    /**
+     * Reads note text from the current-marker / custom file only (no older-date fallback).
+     */
+    public String getCurrentMarkerNoteFromFile() {
+        refreshNoteFileReference();
+        if (!bandNoteFile.exists() && !hasCustomNoteFile()) {
+            return "";
+        }
+        // Prefer custom file path when present
+        if (hasCustomNoteFile()) {
+            Map<String, String> custData = FileHandler70k.readObject(bandCustNoteFile);
+            String custom = extractNoteText(custData);
+            if (custom != null && !custom.trim().isEmpty()) {
+                return custom;
+            }
+        }
+        return extractNoteText(FileHandler70k.readObject(bandNoteFile));
+    }
+
+    /**
+     * Finds the newest older dated note file (or legacy .note_new) when the current-date file is missing.
+     */
+    private File findBestOlderNoteFile() {
+        try {
+            String currentDate = String.valueOf(staticVariables.descriptionMapModData.get(normalizedBandName));
+            File dir = new File(showBands.newRootDir + FileHandler70k.directoryName);
+            if (!dir.exists() || !dir.isDirectory()) {
+                return null;
+            }
+
+            File best = null;
+            long bestModified = -1L;
+            File[] files = dir.listFiles((directory, filename) ->
+                    filename.startsWith(bandName + ".note-") && !filename.endsWith(".note_cust"));
+            if (files != null) {
+                for (File candidate : files) {
+                    if (currentDate != null && !currentDate.equals("null") && !currentDate.isEmpty()
+                            && candidate.getName().equals(bandName + ".note-" + currentDate)) {
+                        continue; // Prefer handled by current-path read
+                    }
+                    long modified = candidate.lastModified();
+                    if (modified >= bestModified) {
+                        bestModified = modified;
+                        best = candidate;
+                    }
+                }
+            }
+
+            if (best == null) {
+                File legacy = new File(showBands.newRootDir + FileHandler70k.directoryName + bandName + ".note_new");
+                if (legacy.exists()) {
+                    return legacy;
+                }
+            }
+            return best;
+        } catch (Exception e) {
+            Log.e("70K_NOTE_DEBUG", "findBestOlderNoteFile error for " + bandName + ": " + e.getMessage());
+            return null;
+        }
+    }
+
+    private String extractNoteText(Map<String, String> notesData) {
+        if (notesData == null || notesData.isEmpty()) {
+            return "";
+        }
+        if (notesData.containsKey("customDescription")) {
+            String custom = notesData.get("customDescription");
+            if (custom != null && !custom.trim().isEmpty()) {
+                return custom;
+            }
+        }
+        String defaultNote = notesData.get("defaultNote");
+        return defaultNote != null ? defaultNote : "";
     }
 
     /**
@@ -213,8 +312,8 @@ public class BandNotes {
             // Recompute note file path now that custom file is gone (should switch back to date-based default)
             refreshNoteFileReference();
 
-            // Remove any stale cache files with old dates
-            cleanupObsoleteCache();
+            // Remove any stale cache files with old dates (safe: current custom path already cleared)
+            cleanupObsoleteCacheAfterSuccessfulSave();
         } catch (Exception e) {
             Log.e("70K_NOTE_DEBUG", "clearCustomNote error for " + bandName + ": " + e.getMessage());
         }
@@ -313,7 +412,9 @@ public class BandNotes {
     }
 
     /**
-     * Gets the band note from the file, converting old notes if needed.
+     * Gets the band note from disk for display.
+     * Prefers current-date / custom cache; falls back to newest older dated cache (offline-safe).
+     * Never deletes expired cache files.
      * @return The band note as a string.
      */
     public String getBandNoteFromFile(){
@@ -325,39 +426,40 @@ public class BandNotes {
             convertOldBandNote();
         }
 
-        // Ensure we are reading from the correct date-based file for the CURRENT descriptionMap date
+        // Prefer current-marker / custom file first (no obsolete cleanup here)
         refreshNoteFileReference();
-        cleanupObsoleteCache();
-
         Map<String, String> notesData = FileHandler70k.readObject(bandNoteFile);
+        note = extractNoteText(notesData);
 
-        Log.d("70K_NOTE_DEBUG","Loading note from file for band: " + bandName + ", notesData: " + notesData);
-        if (notesData.containsKey("customDescription")){
-            note = notesData.get("customDescription");
-            Log.d("70K_NOTE_DEBUG", "Returning customDescription for " + bandName + ": " + note);
-
+        if (notesData.containsKey("customDescription")) {
+            String custom = notesData.get("customDescription");
             // If a custom note exists but is blank, treat it as cleared so default behavior resumes.
-            // This prevents an empty .note_cust from blocking default downloads/reads.
-            if (note == null || note.trim().isEmpty()) {
+            if (custom == null || custom.trim().isEmpty()) {
                 Log.d("70K_NOTE_DEBUG", "Custom note is blank for " + bandName + " - clearing custom note and falling back to default");
                 clearCustomNote();
 
-                // Re-read from the (now default) note file if it exists
                 Map<String, String> refreshedData = FileHandler70k.readObject(bandNoteFile);
-                if (refreshedData != null) {
-                    String defaultNote = refreshedData.get("defaultNote");
-                    if (defaultNote != null) {
-                        return defaultNote;
-                    }
-                }
-                return "";
+                note = extractNoteText(refreshedData);
             }
-        } else {
-            note = notesData.get("defaultNote");
-            Log.d("70K_NOTE_DEBUG", "Returning defaultNote for " + bandName + ": " + note);
         }
 
-        return note;
+        if (note != null && !note.trim().isEmpty()) {
+            Log.d("70K_NOTE_DEBUG", "Returning note from current cache for " + bandName);
+            return note;
+        }
+
+        // Fall back to newest older dated cache so offline / failed refresh still shows something
+        File older = findBestOlderNoteFile();
+        if (older != null && older.exists()) {
+            String olderNote = extractNoteText(FileHandler70k.readObject(older));
+            if (olderNote != null && !olderNote.trim().isEmpty()) {
+                Log.d("70K_NOTE_DEBUG", "Returning older cached note for " + bandName + " from " + older.getName());
+                return olderNote;
+            }
+        }
+
+        Log.d("70K_NOTE_DEBUG", "No cached note available for " + bandName);
+        return "";
     }
 
     /**
@@ -394,8 +496,8 @@ public class BandNotes {
             // No need to create a separate date file anymore
             Log.d("70K_NOTE_DEBUG", "Default note data saved for " + bandNoteFile + " with date: " + dateModified);
             
-            // Clean up any obsolete cached files with old dates
-            cleanupObsoleteCache();
+            // Clean up obsolete dated files ONLY after successful save
+            cleanupObsoleteCacheAfterSuccessfulSave();
         } else {
             Log.d("70K_NOTE_DEBUG", "Default note NOT saved (conditions not met) for " + bandName);
             bandNoteFile.delete();
@@ -456,8 +558,8 @@ public class BandNotes {
 
             Log.d("70K_NOTE_DEBUG", "Custom note data saved for " + bandNoteFile + " and " + bandCustNoteFile);
             
-            // Clean up any obsolete cached files with old dates
-            cleanupObsoleteCache();
+            // Clean up obsolete dated files ONLY after successful save
+            cleanupObsoleteCacheAfterSuccessfulSave();
 
         } else {
             Log.d("70K_NOTE_DEBUG", "Custom note NOT saved (conditions not met) for " + bandName);

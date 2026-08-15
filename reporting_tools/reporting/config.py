@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from reporting.auth import default_secrets_path, load_secrets, resolve_firebase_export_url
+from reporting.auth import default_secrets_path, load_secrets, resolve_firebase_export
 from reporting.models import FestivalConfig
 from reporting.naming import with_event_year
 
@@ -46,7 +46,7 @@ def resolve_festival(
     csv_files = entry.get("csv_files", {})
     secrets = secrets if secrets is not None else load_secrets()
 
-    firebase_export_url = resolve_firebase_export_url(festival_id, entry, secrets)
+    firebase = resolve_firebase_export(festival_id, entry, secrets)
 
     return FestivalConfig(
         id=festival_id,
@@ -56,7 +56,8 @@ def resolve_festival(
         public_data_dir=expand_path(entry["public_data_dir"]),
         data_dir=expand_path(entry["data_dir"]),
         output_dir=output_dir,
-        firebase_export_url=firebase_export_url,
+        firebase_export_url=firebase.url,
+        firebase_service_account=firebase.service_account,
         json_backup_path=output_dir / entry["json_backup_filename"],
         reports_main=reports["main"],
         reports_full=reports["full"],
@@ -78,6 +79,8 @@ def resolve_festival(
         event_data_csv=expand_path(
             csv_files.get("event_data", str(output_dir / "eventData.csv"))
         ),
+        firebase_use_adc=firebase.use_adc,
+        firebase_project_id=firebase.project_id,
     )
 
 

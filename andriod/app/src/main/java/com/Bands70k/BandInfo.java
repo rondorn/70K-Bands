@@ -570,9 +570,9 @@ public class BandInfo {
      * Downloads the band file and parses it.
      *
      * NOTE: Schedule download is intentionally NOT done here anymore.
-     * The app's core refresh pipeline requires a strict order:
-     * pointer file -> band data -> schedule data -> descriptionMap
-     * and that pipeline is orchestrated by callers (startup + pull-to-refresh).
+     * The app's core refresh pipeline is:
+     * pointer file, then band / schedule / descriptionMap in parallel
+     * (orchestrated by callers on startup + pull-to-refresh).
      * Uses hash-based caching to only process files when content has changed.
      * @return ArrayList of band names.
      */

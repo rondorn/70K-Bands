@@ -155,12 +155,25 @@ public class showBandDetails extends Activity {
      */
     private boolean suppressProgressiveLoadOnNextResume = false;
 
-    /** One background download attempt per band per details visit; no retry after failure. */
-    private final Set<String> backgroundNoteDownloadAttempted = new HashSet<>();
+    /** Image: one background download attempt per band per details visit. */
     private final Set<String> backgroundImageDownloadAttempted = new HashSet<>();
 
     /** Invalidates in-flight progressive loads when a new band/load starts. */
     private volatile int progressiveLoadGeneration = 0;
+
+    /** Debounced note refresh: prefer the band the user has paused on. */
+    private static final long NOTE_REFRESH_DEBOUNCE_MS = 400L;
+    private final Handler noteRefreshHandler = new Handler(Looper.getMainLooper());
+    private Runnable pendingNoteRefreshRunnable;
+    /** Bumped to supersede in-flight note downloads (UI apply only when current). */
+    private final java.util.concurrent.atomic.AtomicInteger noteDownloadJobId =
+            new java.util.concurrent.atomic.AtomicInteger(0);
+    private final java.util.concurrent.ExecutorService noteDownloadExecutor =
+            java.util.concurrent.Executors.newSingleThreadExecutor(r -> {
+                Thread t = new Thread(r, "DetailsNoteRefresh");
+                t.setDaemon(true);
+                return t;
+            });
 
     public void onCreate(Bundle savedInstanceState) {
 
@@ -278,8 +291,8 @@ public class showBandDetails extends Activity {
                         return;
                     }
 
-                    // PHASE 4: One background attempt when note cache is empty
-                    downloadMissingNoteIfNeeded(loadId, loadingBand);
+                    // PHASE 4: Debounced note refresh for settled band (cache-first; keep old on failure)
+                    scheduleDebouncedNoteRefresh(loadId, loadingBand);
 
                     if (isStaleProgressiveLoad(loadId, loadingBand) || isFinishing() || isDestroyed()) {
                         return;
@@ -514,10 +527,14 @@ public class showBandDetails extends Activity {
                 Log.d("ProgressiveLoading", "Phase 1: Activity destroyed, skipping cached note for " + bandName);
                 return;
             }
-            
-            if (hasCachedNoteContent()) {
+
+            ensureDescriptionMapModDataLoaded();
+            BandNotes notes = new BandNotes(loadingBand);
+            String cached = notes.getBandNoteFromFile();
+            if (cached != null && !cached.trim().isEmpty()
+                    && !FestivalConfig.getInstance().isEmptyGenericNoteText(cached, this)) {
                 Log.d("ProgressiveLoading", "Phase 1: Cached note found for " + loadingBand);
-                applyCachedNoteToUi(loadId, loadingBand, bandHandler.getBandNoteFromFile());
+                applyCachedNoteToUi(loadId, loadingBand, cached);
             } else {
                 Log.d("ProgressiveLoading", "Phase 1: No cached note for " + loadingBand);
             }
@@ -643,44 +660,91 @@ public class showBandDetails extends Activity {
     }
     
     /**
-     * PHASE 4: Single background download when note file is missing; refresh UI only on success.
+     * PHASE 4: Debounce note network refresh so rapid band swipes do not accumulate downloads.
+     * Shows cache immediately in Phase 1; after settle, refresh only if current-marker cache is missing.
      */
-    private void downloadMissingNoteIfNeeded(int loadId, String loadingBand) {
+    private void scheduleDebouncedNoteRefresh(final int loadId, final String loadingBand) {
+        if (pendingNoteRefreshRunnable != null) {
+            noteRefreshHandler.removeCallbacks(pendingNoteRefreshRunnable);
+            pendingNoteRefreshRunnable = null;
+        }
+        // Supersede any in-flight note download UI apply
+        noteDownloadJobId.incrementAndGet();
+
+        pendingNoteRefreshRunnable = () -> {
+            pendingNoteRefreshRunnable = null;
+            if (isStaleProgressiveLoad(loadId, loadingBand) || isFinishing() || isDestroyed()) {
+                return;
+            }
+            refreshNoteIfNeeded(loadId, loadingBand);
+        };
+        noteRefreshHandler.postDelayed(pendingNoteRefreshRunnable, NOTE_REFRESH_DEBOUNCE_MS);
+    }
+
+    /**
+     * Downloads the current-date description when missing, writes cache first, then refreshes UI.
+     * On failure leaves existing cache and UI untouched.
+     */
+    private void refreshNoteIfNeeded(final int loadId, final String loadingBand) {
         try {
-            if (isFinishing() || isDestroyed()) {
+            if (isStaleProgressiveLoad(loadId, loadingBand) || isFinishing() || isDestroyed()) {
                 return;
             }
 
-            if (hasCachedNoteContent()) {
-                Log.d("ProgressiveLoading", "Phase 4: Note already cached for " + loadingBand);
+            ensureDescriptionMapModDataLoaded();
+            BandNotes notes = new BandNotes(loadingBand);
+
+            if (!notes.needsOfficialDescriptionRefresh()) {
+                Log.d("ProgressiveLoading", "Phase 4: Current-marker note cache OK for " + loadingBand);
                 return;
             }
 
-            if (backgroundNoteDownloadAttempted.contains(loadingBand)) {
-                Log.d("ProgressiveLoading", "Phase 4: Note download already attempted for " + loadingBand
-                        + " — skipping retry");
-                return;
-            }
-            backgroundNoteDownloadAttempted.add(loadingBand);
-
-            Log.d("ProgressiveLoading", "Phase 4: Background note download (single attempt) for " + loadingBand);
-            bandHandler.getBandNoteImmediate();
-
-            if (isStaleProgressiveLoad(loadId, loadingBand)) {
+            if (!OnlineStatus.isOnline()) {
+                Log.d("ProgressiveLoading", "Phase 4: Offline — keeping best cached note for " + loadingBand);
                 return;
             }
 
-            if (hasCachedNoteContent()) {
-                Log.d("ProgressiveLoading", "Phase 4: Note download succeeded for " + loadingBand);
-                applyCachedNoteToUi(loadId, loadingBand, bandHandler.getBandNoteFromFile());
-            } else {
-                Log.d("ProgressiveLoading", "Phase 4: Note download failed for " + loadingBand + " — no retry");
-            }
+            final int jobId = noteDownloadJobId.incrementAndGet();
+            Log.d("ProgressiveLoading", "Phase 4: Starting note refresh for settled band " + loadingBand
+                    + " job=" + jobId);
+
+            noteDownloadExecutor.execute(() -> {
+                try {
+                    if (jobId != noteDownloadJobId.get()) {
+                        Log.d("ProgressiveLoading", "Phase 4: Note job " + jobId + " superseded before start");
+                        return;
+                    }
+
+                    CustomerDescriptionHandler.getInstance().loadNoteFromURLImmediate(loadingBand);
+
+                    if (jobId != noteDownloadJobId.get()) {
+                        // Still saved to disk by loadNoteFromURLImmediate if it succeeded; skip UI
+                        Log.d("ProgressiveLoading", "Phase 4: Note job " + jobId + " superseded after download");
+                        return;
+                    }
+
+                    if (isStaleProgressiveLoad(loadId, loadingBand) || isFinishing() || isDestroyed()) {
+                        return;
+                    }
+
+                    BandNotes refreshed = new BandNotes(loadingBand);
+                    if (refreshed.hasCurrentOfficialCache()) {
+                        String raw = refreshed.getCurrentMarkerNoteFromFile();
+                        Log.d("ProgressiveLoading", "Phase 4: Note refresh succeeded for " + loadingBand);
+                        applyCachedNoteToUi(loadId, loadingBand, raw);
+                    } else {
+                        Log.d("ProgressiveLoading", "Phase 4: Note refresh failed for " + loadingBand
+                                + " — keeping previous cache/UI");
+                    }
+                } catch (Exception e) {
+                    Log.e("ProgressiveLoading", "Phase 4: Error refreshing note for " + loadingBand, e);
+                }
+            });
         } catch (Exception e) {
-            Log.e("ProgressiveLoading", "Phase 4: Error downloading note for " + loadingBand, e);
+            Log.e("ProgressiveLoading", "Phase 4: Error scheduling note refresh for " + loadingBand, e);
         }
     }
-    
+
     /**
      * PHASE 5: Single background download when image file is missing; refresh UI only on success.
      */
@@ -3766,6 +3830,13 @@ public class showBandDetails extends Activity {
             webViewProgressBar = null;
         }
         
+        // Cancel debounced note refresh and supersede in-flight note downloads
+        if (pendingNoteRefreshRunnable != null) {
+            noteRefreshHandler.removeCallbacks(pendingNoteRefreshRunnable);
+            pendingNoteRefreshRunnable = null;
+        }
+        noteDownloadJobId.incrementAndGet();
+
         // Clean up translation resources to prevent memory leaks
         if (translator != null) {
             try {

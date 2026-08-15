@@ -130,6 +130,11 @@ class DetailViewModel: ObservableObject {
     /// Generation of the newest `getCachedData` hydration kicked off from detail (stale completions ignore this).
     private var inFlightEssentialHydrationGeneration: Int?
     
+    /// Debounced description refresh — prefer the band the user has paused on.
+    private var pendingNoteRefreshWorkItem: DispatchWorkItem?
+    private var activeNoteDownloadTask: URLSessionDataTask?
+    private static let noteRefreshDebounceNs: UInt64 = 400_000_000
+    
     // Swipe navigation state
     private var blockSwiping: Bool = false
     
@@ -322,6 +327,8 @@ class DetailViewModel: ObservableObject {
     }
     
     deinit {
+        pendingNoteRefreshWorkItem?.cancel()
+        activeNoteDownloadTask?.cancel()
         NotificationCenter.default.removeObserver(self, name: .bandNamesCacheReady, object: nil)
         NotificationCenter.default.removeObserver(self, name: Notification.Name("ImageListUpdated"), object: nil)
         NotificationCenter.default.removeObserver(self, name: Notification.Name("BandDescriptionUpdated"), object: nil)
@@ -342,7 +349,7 @@ class DetailViewModel: ObservableObject {
             self.loadBandImage()
             self.loadBandDetails()
             self.loadBandLinks()
-            self.loadNotes()
+            self.loadNotes(generation: generation)
             self.loadPriority()
             self.setupTranslationButton()
             self.updateNavigationState()
@@ -1092,7 +1099,7 @@ class DetailViewModel: ObservableObject {
             } else {
                 print("DEBUG: CONFIRMATION - Note file was deleted")
                 // Reload notes after deletion
-                loadNotes()
+                loadNotes(generation: loadBandDataGeneration)
             }
         } catch {
             print("DEBUG: Error removing note file: \(error.localizedDescription)")
@@ -1673,10 +1680,17 @@ class DetailViewModel: ObservableObject {
         scheduleEvents = newScheduleEvents
     }
     
-    private func loadNotes() {
-        print("DEBUG: loadNotes() called for band: '\(bandName)'")
+    private func loadNotes(generation: Int) {
+        print("DEBUG: loadNotes() called for band: '\(bandName)' generation=\(generation)")
         
-        let noteText = bandNotes.getDescription(bandName: bandName)
+        // Cancel any pending / in-flight note refresh from a previous band swipe
+        pendingNoteRefreshWorkItem?.cancel()
+        pendingNoteRefreshWorkItem = nil
+        activeNoteDownloadTask?.cancel()
+        activeNoteDownloadTask = nil
+        
+        // Cache-first: current marker or newest older dated file
+        let noteText = bandNotes.getBestCachedDescription(bandName: bandName)
         englishDescriptionText = noteText
         customNotes = noteText
         // Store original notes for change tracking
@@ -1707,13 +1721,12 @@ class DetailViewModel: ObservableObject {
             print("DEBUG: Added noteworthy prefix for '\(bandName)'")
         }
         
-        // Check if we need to download description
-        let noteUrl = bandNotes.getDescriptionUrl(bandName)
-        if shouldDownloadDescription(noteText: noteText, noteUrl: noteUrl) {
-            print("DEBUG: Downloading description for '\(bandName)' from URL")
-            downloadDescription(noteUrl: noteUrl)
-        } else if #available(iOS 18.0, *) {
-            if BandDescriptionTranslator.shared.isTranslationSupported() {
+        // Debounced refresh for the band the user has settled on
+        scheduleDebouncedNoteRefresh(generation: generation)
+        
+        if #available(iOS 18.0, *) {
+            if BandDescriptionTranslator.shared.isTranslationSupported(),
+               !bandNotes.needsOfficialDescriptionRefresh(bandName: bandName) {
                 print("DEBUG: Displaying description in current language for '\(bandName)'")
                 displayDescriptionInCurrentLanguage()
             }
@@ -1722,48 +1735,122 @@ class DetailViewModel: ObservableObject {
         print("DEBUG: Final customNotes for '\(bandName)': '\(customNotes.prefix(50))...' (length: \(customNotes.count))")
     }
     
-    private func shouldDownloadDescription(noteText: String, noteUrl: String) -> Bool {
-        let needsDownload = noteText.isEmpty ||
-                           noteText.starts(with: FestivalConfig.current.getDefaultDescriptionText()) ||
-                           noteText.starts(with: "Comment text is not available yet. Please wait")
+    private func scheduleDebouncedNoteRefresh(generation: Int) {
+        pendingNoteRefreshWorkItem?.cancel()
         
-        return needsDownload && !noteUrl.isEmpty && isInternetAvailable()
+        let bandForRefresh = bandName
+        let workItem = DispatchWorkItem { [weak self] in
+            guard let self = self else { return }
+            guard generation == self.loadBandDataGeneration, self.bandName == bandForRefresh else {
+                print("DEBUG: Note refresh superseded for '\(bandForRefresh)'")
+                return
+            }
+            self.refreshNoteIfNeeded(generation: generation, bandName: bandForRefresh)
+        }
+        pendingNoteRefreshWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + .nanoseconds(Int(Self.noteRefreshDebounceNs)), execute: workItem)
     }
     
-    private func downloadDescription(noteUrl: String) {
+    private func refreshNoteIfNeeded(generation: Int, bandName: String) {
+        guard generation == loadBandDataGeneration, self.bandName == bandName else { return }
+        
+        if bandNotes.hasCustomNoteFile(bandName: bandName) {
+            print("DEBUG: Custom note present for '\(bandName)' — skipping official refresh")
+            return
+        }
+        
+        guard bandNotes.needsOfficialDescriptionRefresh(bandName: bandName) else {
+            print("DEBUG: Current-marker note cache OK for '\(bandName)'")
+            return
+        }
+        
+        guard isInternetAvailable() else {
+            print("DEBUG: Offline — keeping best cached note for '\(bandName)'")
+            return
+        }
+        
+        let noteUrl = bandNotes.getDescriptionUrl(bandName)
+        guard !noteUrl.isEmpty else {
+            print("DEBUG: No description URL for '\(bandName)'")
+            return
+        }
+        
+        print("DEBUG: Starting debounced note refresh for '\(bandName)'")
+        downloadDescription(noteUrl: noteUrl, generation: generation, bandName: bandName)
+    }
+    
+    private func downloadDescription(noteUrl: String, generation: Int, bandName: String) {
         guard let url = URL(string: noteUrl) else { return }
         
-        URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
-            guard let self = self,
-                  error == nil,
+        activeNoteDownloadTask?.cancel()
+        
+        let task = URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+            guard let self = self else { return }
+            
+            // Always allow writing cache for this band if download succeeded, even if UI superseded —
+            // but only update UI when generation still matches.
+            if let error = error as NSError?, error.code == NSURLErrorCancelled {
+                print("DEBUG: Note download cancelled for '\(bandName)'")
+                return
+            }
+            
+            guard error == nil,
                   let httpResponse = response as? HTTPURLResponse,
                   httpResponse.statusCode == 200,
                   let data = data,
                   let descriptionText = String(data: data, encoding: .utf8),
-                  !descriptionText.starts(with: "<!DOCTYPE") else { return }
+                  !descriptionText.starts(with: "<!DOCTYPE"),
+                  !descriptionText.isEmpty else {
+                print("DEBUG: Note download failed for '\(bandName)' — keeping previous cache/UI")
+                return
+            }
             
-            // Cache the downloaded description
-            let commentFileName = self.bandNotes.getNoteFileName(bandName: self.bandName)
+            // Write current-marker cache FIRST, then cleanup older dated files
+            let commentFileName = self.bandNotes.getNoteFileName(bandName: bandName)
             let commentFile = self.directoryPath.appendingPathComponent(commentFileName)
             
             do {
-                try descriptionText.write(to: commentFile, atomically: false, encoding: .utf8)
+                try descriptionText.write(to: commentFile, atomically: true, encoding: .utf8)
+                self.bandNotes.cleanupObsoleteCacheAfterSuccessfulSave(bandName: bandName)
             } catch {
                 print("Error caching description: \(error)")
+                return
             }
             
             DispatchQueue.main.async {
+                guard generation == self.loadBandDataGeneration, self.bandName == bandName else {
+                    print("DEBUG: Note download completed for '\(bandName)' but UI superseded — cache updated")
+                    return
+                }
+                
                 let processedText = self.bandNotes.removeSpecialCharsFromString(text: descriptionText)
                 self.englishDescriptionText = processedText
                 self.customNotes = processedText
+                
+                if processedText.contains("!!!!https://") {
+                    self.doNotSaveText = true
+                    self.isNotesEditable = false
+                    self.customNotes = processedText.replacingOccurrences(of: "!!!!https://", with: "https://")
+                } else {
+                    self.doNotSaveText = false
+                    self.isNotesEditable = true
+                }
+                
+                if !self.noteWorthy.isEmpty {
+                    self.customNotes = "\n" + self.customNotes
+                    self.englishDescriptionText = "\n" + self.englishDescriptionText
+                }
                 
                 if #available(iOS 18.0, *) {
                     if BandDescriptionTranslator.shared.isTranslationSupported() {
                         self.displayDescriptionInCurrentLanguage()
                     }
                 }
+                print("DEBUG: Note UI refreshed from new cache for '\(bandName)'")
             }
-        }.resume()
+        }
+        activeNoteDownloadTask = task
+        task.resume()
     }
     
     private func displayDescriptionInCurrentLanguage() {

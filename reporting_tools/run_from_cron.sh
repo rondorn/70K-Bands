@@ -6,7 +6,6 @@
 #
 # First-time setup:
 #   cd reporting_tools && ./setup.sh
-#   python3 run_reports.py auth setup --festivals 70k
 #   python3 run_reports.py auth google
 
 set -euo pipefail
