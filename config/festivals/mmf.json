@@ -21,6 +21,8 @@
   },
   "shareUrl": "https://www.facebook.com/profile.php?id=61580889273388",
   "shareFileExtension": "mmfshare",
+  "shareTypeIdentifier": "com.rdorn.mmf.share",
+  "shareMimeType": "application/x-mmf-share",
   "notificationChannelId": "MMFBandsCustomSound1",
   "notificationChannelName": "MMFBandsCustomSound1",
   "notificationChannelDescription": "Channel for the MMF Bands local show alerts with custom sound",

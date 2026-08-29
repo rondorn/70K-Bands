@@ -21,6 +21,8 @@
   },
   "shareUrl": "https://www.facebook.com/profile.php?id=61580889273388",
   "shareFileExtension": "mdfshare",
+  "shareTypeIdentifier": "com.rdorn.mdf.share",
+  "shareMimeType": "application/x-mdf-share",
   "notificationChannelId": "MDFBandsCustomSound1",
   "notificationChannelName": "MDFBandsCustomSound1",
   "notificationChannelDescription": "Channel for the MDF Bands local show alerts with custom sound",

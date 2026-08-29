@@ -697,11 +697,19 @@ class SQLiteAttendanceManager {
         return result
     }
     
-    /// Imports attendance data for a specific profile
-    /// Thread-safe - can be called from any thread
-    func importAttendance(for profileNameStr: String, attendanceData: [[String: Any]]) {
+    /// Imports attendance data for a specific profile.
+    /// Waits until the SQLite write finishes so callers can switch profile and refresh UI.
+    @discardableResult
+    func importAttendance(for profileNameStr: String, attendanceData: [[String: Any]]) -> Bool {
+        var success = false
+        let semaphore = DispatchSemaphore(value: 0)
+
         serialQueue.async { [weak self] in
-            guard let self = self, let db = self.db else { return }
+            defer { semaphore.signal() }
+            guard let self = self, let db = self.db else {
+                print("❌ SQLiteAttendanceManager: importAttendance aborted — database not ready")
+                return
+            }
             
             print("📥 [SQLITE_WRITE] ===== WRITING ATTENDANCE TO SQLITE =====")
             print("📥 [SQLITE_WRITE] Profile: '\(profileNameStr)', Count: \(attendanceData.count)")
@@ -748,10 +756,13 @@ class SQLiteAttendanceManager {
                 print("✅ [SQLITE_WRITE] Imported \(importedCount)/\(attendanceData.count) attendance records")
                 print("✅ [SQLITE_WRITE] Profile '\(profileNameStr)' now has \(afterCount) attendance records AFTER import (was \(beforeCount))")
                 print("✅ [SQLITE_WRITE] ===== WRITE COMPLETE =====")
+                success = true
             } catch {
                 print("❌ SQLiteAttendanceManager: Failed to import attendance: \(error)")
             }
         }
+        semaphore.wait()
+        return success
     }
     
     /// Deletes all data for a specific profile

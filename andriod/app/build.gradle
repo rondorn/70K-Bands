@@ -92,10 +92,26 @@ def festivalFlavorMap = [
         mdfbands : 'mdf',
         mmfbands : 'mmf',
 ]
+def applyShareRegistration = file("${festivalsRoot}/apply_share_registration.py")
 
 festivalFlavorMap.each { flavorName, festivalKey ->
     def genDir = layout.buildDirectory.dir("generated/festivalAssets/${flavorName}")
+    def manifestFile = layout.buildDirectory.file("generated/festivalManifest/${flavorName}/AndroidManifest.xml")
+    def festivalJson = file("${festivalsRoot}/${festivalKey}.json")
+    // Generate during configuration so AGP can merge the flavor manifest.
+    def manifestOutForConfig = manifestFile.get().asFile
+    manifestOutForConfig.parentFile.mkdirs()
+    exec {
+        commandLine 'python3', applyShareRegistration.absolutePath,
+                '--festival-json', festivalJson.absolutePath,
+                '--android-manifest', manifestOutForConfig.absolutePath
+    }
     def packTask = tasks.register("packFestivalAssets${flavorName}") {
+        inputs.file(festivalJson)
+        inputs.file(file("${festivalsRoot}/registry.json"))
+        inputs.file(applyShareRegistration)
+        outputs.dir(genDir)
+        outputs.file(manifestFile)
         doLast {
             def outDir = genDir.get().asFile
             outDir.mkdirs()
@@ -111,9 +127,17 @@ festivalFlavorMap.each { flavorName, festivalKey ->
                 into outDir
                 rename { 'festival_registry.json' }
             }
+            def manifestOut = manifestFile.get().asFile
+            manifestOut.parentFile.mkdirs()
+            exec {
+                commandLine 'python3', applyShareRegistration.absolutePath,
+                        '--festival-json', festivalJson.absolutePath,
+                        '--android-manifest', manifestOut.absolutePath
+            }
         }
     }
     android.sourceSets."$flavorName".assets.srcDir genDir
+    android.sourceSets."$flavorName".manifest.srcFile manifestFile.get().asFile
     tasks.named('preBuild').configure { dependsOn packTask }
 }
 

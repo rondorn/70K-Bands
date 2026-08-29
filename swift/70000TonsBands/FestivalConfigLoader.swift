@@ -85,6 +85,8 @@ private struct FestivalConfigJson: Codable {
     let logo: PlatformAsset
     let shareUrl: String
     let shareFileExtension: String
+    let shareTypeIdentifier: String
+    let shareMimeType: String
     let notificationChannelId: String
     let notificationChannelName: String
     let notificationChannelDescription: String
@@ -148,6 +150,8 @@ struct FestivalConfigPayload {
     let logoUrl: String
     let shareUrl: String
     let shareFileExtension: String
+    let shareTypeIdentifier: String
+    let shareMimeType: String
     let mustSeeIconSmall: String
     let mightSeeIconSmall: String
     let wontSeeIconSmall: String
@@ -218,6 +222,8 @@ enum FestivalConfigLoader {
             logoUrl: r(json.logo),
             shareUrl: json.shareUrl,
             shareFileExtension: json.shareFileExtension,
+            shareTypeIdentifier: json.shareTypeIdentifier,
+            shareMimeType: json.shareMimeType,
             mustSeeIconSmall: r(g.mustSeeIconSmall),
             mightSeeIconSmall: r(g.mightSeeIconSmall),
             wontSeeIconSmall: r(g.wontSeeIconSmall),

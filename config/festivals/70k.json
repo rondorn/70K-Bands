@@ -21,6 +21,8 @@
   },
   "shareUrl": "http://www.facebook.com/70kBands",
   "shareFileExtension": "70kshare",
+  "shareTypeIdentifier": "com.rdorn.70kbands.share",
+  "shareMimeType": "application/x-70kbands-share",
   "notificationChannelId": "70KBandsCustomSound1",
   "notificationChannelName": "70KBandsCustomSound1",
   "notificationChannelDescription": "Channel for the 70K Bands local show alerts with custom sound1",

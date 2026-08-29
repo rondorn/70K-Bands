@@ -75,3 +75,17 @@ PY
 fi
 
 echo "✅ Festival config: copied ${FESTIVAL_KEY}.json → festival.json"
+
+INFO_PLIST="${APP_DIR}/Info.plist"
+if [ ! -f "$INFO_PLIST" ] && [ -n "${INFOPLIST_PATH:-}" ]; then
+    INFO_PLIST="${TARGET_BUILD_DIR}/${INFOPLIST_PATH}"
+fi
+if [ -f "$INFO_PLIST" ]; then
+    python3 "${FESTIVALS_DIR}/apply_share_registration.py" \
+        --festival-json "$SOURCE_JSON" \
+        --ios-plist "$INFO_PLIST"
+else
+    echo "❌ Festival config: Info.plist not found to register share file type (${APP_DIR}/Info.plist)"
+    echo "   Move the Copy Firebase Config build phase after Copy Bundle Resources."
+    exit 1
+fi

@@ -152,12 +152,10 @@ struct ActivityViewController: UIViewControllerRepresentable {
         )
         items.append(shareText)
         
-        // Add file URL(s) with custom item source
+        // Attach the file with the festival UTI so iOS keeps the real name (not "dataFile")
         for item in activityItems {
             if let url = item as? URL {
-                // For Messages/iMessage, we want the raw URL to appear as an attachment
-                // Use custom item source for metadata but keep URL for compatibility
-                items.append(url)
+                items.append(FileActivityItemSource(fileURL: url))
             } else {
                 items.append(item)
             }
@@ -226,7 +224,7 @@ class FileActivityItemSource: NSObject, UIActivityItemSource {
     
     func activityViewController(_ activityViewController: UIActivityViewController, dataTypeIdentifierForActivityType activityType: UIActivity.ActivityType?) -> String {
         // Explicitly declare the UTI
-        return "com.rdorn.70kbands.share"
+        return FestivalConfig.current.shareTypeIdentifier
     }
     
     func activityViewController(_ activityViewController: UIActivityViewController, thumbnailImageForActivityType activityType: UIActivity.ActivityType?, suggestedSize size: CGSize) -> UIImage? {

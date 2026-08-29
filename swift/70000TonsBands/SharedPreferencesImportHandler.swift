@@ -193,8 +193,8 @@ class SharedPreferencesImportHandler {
             
             showSuccessAlert(message: message, isNewProfile: !isUpdate)
             
-            // Refresh the UI - this will trigger a full data reload with the new profile
-            NotificationCenter.default.post(name: Notification.Name("refreshGUI"), object: nil)
+            // iPad split view stays on the master list; force the same full rebuild as a manual profile switch.
+            findMasterViewController()?.clearAllCachesAndRefresh()
         } else {
             showErrorAlert(message: NSLocalizedString("Failed to import. Please try again.", comment: "Import failed message"))
             
@@ -219,6 +219,25 @@ class SharedPreferencesImportHandler {
         pendingImportSet = nil
     }
     
+    /// Finds MasterViewController through split-view (iPad) or navigation (iPhone).
+    private func findMasterViewController() -> MasterViewController? {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene else {
+            return nil
+        }
+        let root = windowScene.windows.first { $0.isKeyWindow }?.rootViewController
+            ?? windowScene.windows.first?.rootViewController
+        if let split = root as? UISplitViewController {
+            if let nav = split.viewControllers.first as? UINavigationController {
+                return nav.viewControllers.first as? MasterViewController
+            }
+            return split.viewControllers.first as? MasterViewController
+        }
+        if let nav = root as? UINavigationController {
+            return nav.viewControllers.first as? MasterViewController
+        }
+        return root as? MasterViewController
+    }
+
     /// Shows success alert
     private func showSuccessAlert(message: String, isNewProfile: Bool) {
         DispatchQueue.main.async {

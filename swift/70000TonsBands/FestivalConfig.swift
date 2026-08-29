@@ -9,8 +9,8 @@
 // MARK: - Festival configuration
 //
 // Data loads from bundled festival.json (source: config/festivals/*.json).
-// See config/festivals/README.md for adding a festival and what must exist
-// outside JSON (icons, Firebase plist/json, bundle IDs, store listings).
+// Share-file OS registration (Info.plist document types) is written at build
+// from that JSON by apply_share_registration.py. See config/festivals/README.md.
 //
 
 import Foundation
@@ -122,6 +122,10 @@ struct FestivalConfig {
     let shareUrl: String
     /// Profile-share file extension without leading dot (e.g. "mmfshare"). Set per festival in init.
     let shareFileExtension: String
+    /// Uniform Type Identifier for share files (e.g. "com.rdorn.mmf.share"). Must match Info.plist.
+    let shareTypeIdentifier: String
+    /// MIME type advertised when exporting share files (e.g. "application/x-mmf-share").
+    let shareMimeType: String
     
     // Configurable graphic elements (forward-looking for future festivals; 70K and MDF keep existing assets)
     /// Must/Might/Wont priority icons (small, for swipe actions and menus)
@@ -196,6 +200,8 @@ struct FestivalConfig {
         self.logoUrl = p.logoUrl
         self.shareUrl = p.shareUrl
         self.shareFileExtension = p.shareFileExtension
+        self.shareTypeIdentifier = p.shareTypeIdentifier
+        self.shareMimeType = p.shareMimeType
         self.mustSeeIconSmall = p.mustSeeIconSmall
         self.mightSeeIconSmall = p.mightSeeIconSmall
         self.wontSeeIconSmall = p.wontSeeIconSmall

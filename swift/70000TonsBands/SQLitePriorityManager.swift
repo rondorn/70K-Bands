@@ -585,11 +585,19 @@ class SQLitePriorityManager {
         return result
     }
     
-    /// Imports priorities for a specific profile
-    /// Thread-safe - can be called from any thread
-    func importPriorities(for profileNameStr: String, priorities: [String: Int], eventYear year: Int = 0) {
+    /// Imports priorities for a specific profile.
+    /// Waits until the SQLite write finishes so callers can switch profile and refresh UI.
+    @discardableResult
+    func importPriorities(for profileNameStr: String, priorities: [String: Int], eventYear year: Int = 0) -> Bool {
+        var success = false
+        let semaphore = DispatchSemaphore(value: 0)
+
         serialQueue.async { [weak self] in
-            guard let self = self, let db = self.db else { return }
+            defer { semaphore.signal() }
+            guard let self = self, let db = self.db else {
+                print("❌ SQLitePriorityManager: importPriorities aborted — database not ready")
+                return
+            }
             
             print("📥 [SQLITE_WRITE] ===== WRITING PRIORITIES TO SQLITE =====")
             print("📥 [SQLITE_WRITE] Profile: '\(profileNameStr)', Count: \(priorities.count)")
@@ -726,10 +734,13 @@ class SQLitePriorityManager {
                     print("🚨 [CRITICAL] All profiles in DB: \(profileList)")
                 }
                 print("✅ [SQLITE_WRITE] ===== WRITE COMPLETE =====")
+                success = true
             } catch {
                 print("❌ SQLitePriorityManager: Failed to import priorities: \(error)")
             }
         }
+        semaphore.wait()
+        return success
     }
     
     /// Deletes all data for a specific profile

@@ -1955,7 +1955,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         Uri fileUri = SharedPreferencesManager.getInstance().exportCurrentPreferences(shareName);
         if (fileUri != null) {
             Intent sharingIntent = new Intent(Intent.ACTION_SEND);
-            sharingIntent.setType("*/*");
+            String mimeType = FestivalConfig.getInstance().shareMimeType;
+            sharingIntent.setType(mimeType);
             sharingIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
             sharingIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             
@@ -1964,6 +1965,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             String fileExtension = FestivalConfig.getInstance().getShareFileExtensionWithDot();
             String subject = shareName + fileExtension;
             sharingIntent.putExtra(Intent.EXTRA_SUBJECT, subject);
+            sharingIntent.setClipData(android.content.ClipData.newRawUri(subject, fileUri));
             
             String appName = FestivalConfig.getInstance().appName;
             sharingIntent.putExtra(Intent.EXTRA_TEXT, "Sharing my " + appName + " band priorities and event attendance");
@@ -4408,6 +4410,12 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         }
 
         android.net.Uri data = intent.getData();
+        if (data == null && Intent.ACTION_SEND.equals(intent.getAction())) {
+            data = intent.getParcelableExtra(Intent.EXTRA_STREAM);
+        }
+        if (data == null && intent.getClipData() != null && intent.getClipData().getItemCount() > 0) {
+            data = intent.getClipData().getItemAt(0).getUri();
+        }
         if (data != null && ScheduleQRGuideLink.handleIncomingUri(data)) {
             Log.d(TAG, "[QRGuide] Guide URL intent handled");
             setIntent(new Intent());
@@ -4416,8 +4424,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         
         String action = intent.getAction();
         
-        if (!Intent.ACTION_VIEW.equals(action) || data == null) {
-            Log.d(TAG, "🔥 Not ACTION_VIEW or data is null - Action:" + action + ", Data:" + data);
+        boolean isView = Intent.ACTION_VIEW.equals(action);
+        boolean isSend = Intent.ACTION_SEND.equals(action);
+        if ((!isView && !isSend) || data == null) {
+            Log.d(TAG, "🔥 Not ACTION_VIEW/SEND or data is null - Action:" + action + ", Data:" + data);
             return;
         }
         

@@ -104,12 +104,18 @@
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>70kshare</string>
+			</array>
 			<key>CFBundleTypeName</key>
 			<string>70K Bands Shared Preferences</string>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>LSHandlerRank</key>
 			<string>Owner</string>
+			<key>LSIsAppleDefaultForType</key>
+			<true/>
 			<key>LSItemContentTypes</key>
 			<array>
 				<string>com.rdorn.70kbands.share</string>

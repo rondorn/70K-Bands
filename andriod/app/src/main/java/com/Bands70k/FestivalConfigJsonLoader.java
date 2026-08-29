@@ -120,6 +120,8 @@ final class FestivalConfigJsonLoader {
         c.notificationChannelDescription = root.getString("notificationChannelDescription");
         c.shareUrl = root.getString("shareUrl");
         c.shareFileExtension = root.getString("shareFileExtension");
+        c.shareTypeIdentifier = root.getString("shareTypeIdentifier");
+        c.shareMimeType = root.getString("shareMimeType");
         c.meetAndGreetsEnabledDefault = root.getBoolean("meetAndGreetsEnabledDefault");
         c.specialEventsEnabledDefault = root.getBoolean("specialEventsEnabledDefault");
         c.unofficalEventsEnabledDefault = root.getBoolean("unofficalEventsEnabledDefault");
@@ -277,6 +279,8 @@ final class FestivalConfigJsonLoader {
         String notificationChannelDescription;
         String shareUrl;
         String shareFileExtension;
+        String shareTypeIdentifier;
+        String shareMimeType;
         String mustSeeIconSmall;
         String mightSeeIconSmall;
         String wontSeeIconSmall;

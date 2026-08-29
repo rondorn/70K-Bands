@@ -1388,8 +1388,8 @@
 				1154F6021A575893003F4764 /* Sources */,
 				1154F6031A575893003F4764 /* Frameworks */,
 				11F033381AB3A77F00AA29B8 /* Embed Foundation Extensions */,
-				119717BC2E5E4ED000D500C9 /* Copy Firebase Config */,
 				114CC0731C79211200CF5BF1 /* Resources */,
+				119717BC2E5E4ED000D500C9 /* Copy Firebase Config */,
 				12F0543C88C59132472E4C47 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
@@ -1432,8 +1432,8 @@
 				1172EDF72E5A1C4D006E3596 /* Sources */,
 				1172EE272E5A1C4D006E3596 /* Frameworks */,
 				1172EE342E5A1C4D006E3596 /* Embed Foundation Extensions */,
-				119717BD2E5E4F8400D500C9 /* Copy Firebase Config */,
 				1172EE352E5A1C4D006E3596 /* Resources */,
+				119717BD2E5E4F8400D500C9 /* Copy Firebase Config */,
 				716395E5DAFB8CD768AFABDF /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (

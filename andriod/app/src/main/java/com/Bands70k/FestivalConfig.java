@@ -35,8 +35,10 @@ import java.util.Map;
  *   - Localized app display name if overridden (strings.xml / InfoPlist.strings)
  *   - Play Store / App Store listings, fastlane, release scripts
  *
- * BUILD: Gradle packs config/festivals/&lt;id&gt;.json → assets/festival.json per flavor.
- *        iOS copy-festival-config.sh copies the matching JSON into the app bundle.
+ * BUILD: Gradle packs config/festivals/&lt;id&gt;.json → assets/festival.json per flavor
+ *        and generates share-file AndroidManifest intent filters from that JSON.
+ *        iOS copy-festival-config.sh copies the matching JSON into the app bundle
+ *        and writes share-file document types into the built Info.plist.
  * =============================================================================
  */
 
@@ -122,6 +124,10 @@ public class FestivalConfig {
 
     /** Profile-share file extension without leading dot (e.g. "mmfshare"). Set per festival in constructor. */
     public final String shareFileExtension;
+    /** Uniform Type Identifier / Android share type id (e.g. "com.rdorn.mmf.share"). */
+    public final String shareTypeIdentifier;
+    /** MIME type advertised when exporting share files (e.g. "application/x-mmf-share"). */
+    public final String shareMimeType;
     
     // Configurable graphic elements (same abstraction as Swift; 70K and MDF use same assets, future festivals can override)
     /** Must/Might/Wont priority icons (small, for swipe actions and menus). Drawable resource names. */
@@ -198,6 +204,8 @@ public class FestivalConfig {
         this.notificationChannelDescription = loaded.notificationChannelDescription;
         this.shareUrl = loaded.shareUrl;
         this.shareFileExtension = loaded.shareFileExtension;
+        this.shareTypeIdentifier = loaded.shareTypeIdentifier;
+        this.shareMimeType = loaded.shareMimeType;
         this.mustSeeIconSmall = loaded.mustSeeIconSmall;
         this.mightSeeIconSmall = loaded.mightSeeIconSmall;
         this.wontSeeIconSmall = loaded.wontSeeIconSmall;

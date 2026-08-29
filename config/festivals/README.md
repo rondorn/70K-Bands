@@ -17,14 +17,15 @@ Single source of truth for per-festival app settings. Each file is **self-contai
 
 1. Copy e.g. `mdf.json` → `xyz.json` and edit **all** fields.
 2. Add `xyzshare` to `registry.json` → `shareFileExtensions` (FCM topics stay in registry — no per-festival copy).
-3. **Android:** add flavor to `festivalFlavorMap` in `andriod/app/build.gradle`.
-4. **iOS:** new target/scheme; `copy-festival-config.sh` selects JSON by product name (`*MDF*`, `*MMF*`, else `70k`).
+3. **Android:** add flavor to `festivalFlavorMap` in `andriod/app/build.gradle`. Share-file intent filters are generated from JSON at build time.
+4. **iOS:** new target/scheme; `copy-festival-config.sh` selects JSON by product name (`*MDF*`, `*MMF*`, else `70k`) and writes share-file document types into the built Info.plist.
 5. Complete the **outside JSON** checklist below.
 
 ## JSON field notes
 
 - **`firebaseConfigFile`**, **`logo`**, venue icons, and **`graphics`** use `{ "android": "...", "ios": "..." }` because asset names differ by platform.
 - **`packageName`** (Android) and **`bundleIdentifier`** (iOS) are documented in JSON; authoritative IDs still live in Gradle / Xcode.
+- **`shareFileExtension`**, **`shareTypeIdentifier`**, and **`shareMimeType`** are required. Runtime import/export reads them from JSON. OS registration (iOS document types / Android intent filters) is generated at build time by `apply_share_registration.py` — do not hand-edit flavor `AndroidManifest.xml` share filters or Info.plist UTIs.
 - **`eventTypeDisplayNames`** / **`eventTypeFilterDisplayNames`**: keys are canonical event types (`Show`, `Meet and Greet`, …); values are per-language maps (`en`, `de`, `es`, `fr`, `pt`, `da`, `fi`).
 - **`about`**: team members for the About screen (`name`, `roleTranslationKey`, optional `photoPositionTranslationKey` for group-photo position labels). Optional **`photo`** (one image) or **`photos`** (array) per member — each entry uses `{ "android": "...", "ios": "..." }`. Images render below that member's title. For a shared group photo, attach it only to the last listed member (others omit `photo`/`photos`). For individual headshots, add one photo per member.
 

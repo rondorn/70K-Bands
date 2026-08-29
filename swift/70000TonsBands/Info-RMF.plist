@@ -9,12 +9,18 @@
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>rmfshare</string>
+			</array>
 			<key>CFBundleTypeName</key>
 			<string>RMF Shared Preferences</string>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>LSHandlerRank</key>
 			<string>Owner</string>
+			<key>LSIsAppleDefaultForType</key>
+			<true/>
 			<key>LSItemContentTypes</key>
 			<array>
 				<string>com.rdorn.rmf.share</string>
@@ -62,6 +68,10 @@
 	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>Camera access is used to scan a QR code containing the event schedule from another device (e.g. when offline at the festival).</string>
+	<key>QLSupportedContentTypes</key>
+	<array>
+		<string>com.rdorn.rmf.share</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -129,7 +139,8 @@
 		<dict>
 			<key>UTTypeConformsTo</key>
 			<array>
-				<string>public.data</string>
+				<string>public.json</string>
+				<string>public.text</string>
 			</array>
 			<key>UTTypeDescription</key>
 			<string>RMF Shared Preferences</string>
@@ -145,8 +156,8 @@
 				</array>
 				<key>public.mime-type</key>
 				<array>
+					<string>application/json</string>
 					<string>application/x-rmf-share</string>
-					<string>application/octet-stream</string>
 				</array>
 			</dict>
 		</dict>
@@ -156,7 +167,8 @@
 		<dict>
 			<key>UTTypeConformsTo</key>
 			<array>
-				<string>public.data</string>
+				<string>public.json</string>
+				<string>public.text</string>
 			</array>
 			<key>UTTypeDescription</key>
 			<string>RMF Shared Preferences</string>
@@ -170,8 +182,8 @@
 				</array>
 				<key>public.mime-type</key>
 				<array>
+					<string>application/json</string>
 					<string>application/x-rmf-share</string>
-					<string>application/octet-stream</string>
 				</array>
 			</dict>
 		</dict>

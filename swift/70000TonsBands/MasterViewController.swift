@@ -4207,6 +4207,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     @objc func onPreferenceSourceChanged(_ notification: Notification) {
         print("🔄 [PREFERENCE_SOURCE] Received preference source change notification")
         updateTitleForActivePreferenceSource()
+        // iPad keeps the master list on screen; reloadData alone reuses a stale CellDataCache.
+        clearAllCachesAndRefresh()
     }
     
     func detailShareChoices(){

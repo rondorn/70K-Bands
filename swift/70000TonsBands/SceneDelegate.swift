@@ -17,6 +17,17 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         appDelegate.configureMainWindow(for: windowScene)
         window = appDelegate.window
+
+        for context in connectionOptions.urlContexts {
+            _ = appDelegate.handleIncomingOpenURL(context.url, delay: 1.0)
+        }
+    }
+
+    func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+        guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else { return }
+        for context in URLContexts {
+            _ = appDelegate.handleIncomingOpenURL(context.url)
+        }
     }
 
     func sceneWillEnterForeground(_ scene: UIScene) {

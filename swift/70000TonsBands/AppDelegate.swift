@@ -23,6 +23,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     
     var window: UIWindow?
+    /// Dedupes the same inbound share URL when both SceneDelegate and AppDelegate receive it.
+    private var lastHandledShareURL: URL?
+    private var lastHandledShareAt: Date?
     var registrationToken: String?
     var registrationOptions = [String: AnyObject]()
     
@@ -1506,6 +1509,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         let config = FestivalConfig.current
 
         if config.isValidShareFileExtension(pathExtension: ext) {
+            let now = Date()
+            if lastHandledShareURL == url, let last = lastHandledShareAt, now.timeIntervalSince(last) < 2 {
+                print("📥 Ignoring duplicate share URL: \(url.lastPathComponent)")
+                return true
+            }
+            lastHandledShareURL = url
+            lastHandledShareAt = now
+
             let importBlock = {
                 _ = SharedPreferencesImportHandler.shared.handleIncomingFile(url)
             }
@@ -1558,21 +1569,24 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     }
     
     /// Handles opening share files and schedule QR guide deep links.
-    func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
-        print("📥 AppDelegate: Opening URL (iOS 9+): \(url)")
+    /// SceneDelegate forwards incoming document URLs here (iOS 13+ scene lifecycle).
+    func handleIncomingOpenURL(_ url: URL, delay: TimeInterval = 0) -> Bool {
         if ScheduleQRGuideLink.handleIncomingURL(url) {
             return true
         }
-        return handleIncomingShareFile(url: url)
+        return handleIncomingShareFile(url: url, delay: delay)
+    }
+
+    /// Handles opening share files and schedule QR guide deep links.
+    func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
+        print("📥 AppDelegate: Opening URL (iOS 9+): \(url)")
+        return handleIncomingOpenURL(url)
     }
     
     /// Legacy method for opening URLs (iOS 4.2-9.0, still called by some apps)
     func application(_ application: UIApplication, open url: URL, sourceApplication: String?, annotation: Any) -> Bool {
         print("📥 AppDelegate: Opening URL (Legacy): \(url)")
-        if ScheduleQRGuideLink.handleIncomingURL(url) {
-            return true
-        }
-        return handleIncomingShareFile(url: url)
+        return handleIncomingOpenURL(url)
     }
     
     /// Handle opening documents (alternative entry point)
@@ -1581,10 +1595,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         
         if let url = launchOptions?[.url] as? URL {
             print("📥 Launched with URL: \(url)")
-            if ScheduleQRGuideLink.handleIncomingURL(url) {
-                return true
-            }
-            _ = handleIncomingShareFile(url: url, delay: 1.0)
+            _ = handleIncomingOpenURL(url, delay: 1.0)
         }
         
         return true

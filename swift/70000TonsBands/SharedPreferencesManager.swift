@@ -315,21 +315,21 @@ class SharedPreferencesManager {
         }
         
         // Import priorities into SQLite with UserID as profile key
-        priorityManager.importPriorities(
+        let prioritiesImported = priorityManager.importPriorities(
             for: profileKey,
             priorities: preferenceSet.priorities,
             eventYear: preferenceSet.eventYear
         )
         
         // Convert attendance dictionary to array format for SQLiteAttendanceManager
+        // Index format is "Band:Location:HH:MM:EventType:Year" — year is the last field.
         var attendanceArray: [[String: Any]] = []
         for (index, status) in preferenceSet.attendance {
-            // Parse index: "BandName:Location:StartTime:EventType:Year"
             let components = index.split(separator: ":").map(String.init)
-            guard components.count >= 5 else { continue }
+            guard components.count >= 2 else { continue }
             
             let bandNameStr = components[0]
-            let yearInt = Int(components[4]) ?? preferenceSet.eventYear
+            let yearInt = Int(components.last ?? "") ?? preferenceSet.eventYear
             
             attendanceArray.append([
                 "bandName": bandNameStr,
@@ -341,10 +341,19 @@ class SharedPreferencesManager {
         }
         
         // Import attendance into SQLite with UserID as profile key
-        SQLiteAttendanceManager.shared.importAttendance(
+        let attendanceImported = SQLiteAttendanceManager.shared.importAttendance(
             for: profileKey,
             attendanceData: attendanceArray
         )
+
+        if !prioritiesImported {
+            print("❌ [IMPORT] Priority write failed for profile \(profileKey)")
+            return false
+        }
+        if !attendanceImported {
+            print("❌ [IMPORT] Attendance write failed for profile \(profileKey)")
+            return false
+        }
         
         // Get or assign color
         let colorHex = ProfileColorManager.shared.getHexString(
