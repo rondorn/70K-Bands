@@ -15,8 +15,8 @@ android {
         targetSdkVersion 36
         // Android versionCode 2026081201must fit in signed 32-bit int.
         //noinspection HighAppVersionCode
-        versionCode 2026081201
-        versionName "2026081201"
+        versionCode 2026083101
+        versionName "2026083101"
         android.compileOptions.incremental = false
         multiDexEnabled false
     }
@@ -30,8 +30,7 @@ android {
             versionNameSuffix "-70k"
             buildConfigField "String", "FESTIVAL_TYPE", '"70K"'
             resValue "string", "app_name", "70K Bands"
-            resValue "string", "app_icon", "@mipmap/logo_70k_bands"
-            resValue "string", "notification_icon", "@drawable/new_bands_70k_icon"
+            manifestPlaceholders = [appIcon: "@mipmap/logo_70k_bands", notificationIcon: "@drawable/new_bands_70k_icon"]
             resValue "string", "authorities", "com.Bands70k"
             resValue "string", "notification_publisher", "com.Bands70k.NotificationPublisher"
             resValue "string", "default_description", "Comment text is not available yet. Please wait for Aaron to add his description. You can add your own if you choose, but when his becomes available it will not overwrite your data, and will not display."
@@ -43,8 +42,7 @@ android {
             versionNameSuffix "-mdf"
             buildConfigField "String", "FESTIVAL_TYPE", '"MDF"'
             resValue "string", "app_name", "MDF Bands"
-            resValue "string", "app_icon", "@mipmap/logo_mdf_bands"
-            resValue "string", "notification_icon", "@drawable/mdf_bands_icon"
+            manifestPlaceholders = [appIcon: "@mipmap/logo_mdf_bands", notificationIcon: "@drawable/mdf_bands_icon"]
             resValue "string", "authorities", "com.rdorn.mdfbands"
             resValue "string", "notification_publisher", "com.rdorn.mdfbands.NotificationPublisher"
             resValue "string", "default_description", "No notes are available, right now, feel free to add your own."
@@ -56,8 +54,7 @@ android {
             versionNameSuffix "-mmf"
             buildConfigField "String", "FESTIVAL_TYPE", '"MMF"'
             resValue "string", "app_name", "MMF Bands"
-            resValue "string", "app_icon", "@mipmap/logo_mmf_bands"
-            resValue "string", "notification_icon", "@drawable/mmf_bands_icon"
+            manifestPlaceholders = [appIcon: "@mipmap/logo_mmf_bands", notificationIcon: "@drawable/mmf_bands_icon"]
             resValue "string", "authorities", "com.rdorn.mmfbands"
             resValue "string", "notification_publisher", "com.rdorn.mmfbands.NotificationPublisher"
             resValue "string", "default_description", "No notes are available, right now, feel free to add your own."
@@ -138,6 +135,7 @@ festivalFlavorMap.each { flavorName, festivalKey ->
     }
     android.sourceSets."$flavorName".assets.srcDir genDir
     android.sourceSets."$flavorName".manifest.srcFile manifestFile.get().asFile
+    android.sourceSets."$flavorName".res.srcDirs = ["src/${flavorName}/res"]
     tasks.named('preBuild').configure { dependsOn packTask }
 }
 

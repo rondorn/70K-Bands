@@ -435,12 +435,8 @@ class MasterViewUIManager {
         
         print("🔍 [FILTER_STATUS] Final filterTextNeeded: \(filterTextNeeded)")
         
-        // Title "(Filtering)" only when something is actually hidden (matches orange badge), not merely non-default toggles.
-        if hiddenRecordsCount > 0 {
-            filtersOnText = "(" + NSLocalizedString("Filtering", comment: "") + ")"
-        } else {
-            filtersOnText = ""
-        }
+        // Nav title no longer appends "(Filtering)"; the Filters badge is the indicator.
+        filtersOnText = ""
         
         print("🔍 [FILTER_STATUS] filtersOnText set to: '\(filtersOnText)' (hiddenRecordsCount=\(hiddenRecordsCount))")
     }

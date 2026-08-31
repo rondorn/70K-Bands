@@ -58,17 +58,14 @@
                 android:layout_marginLeft="2dp"
                 android:layout_marginRight="2dp"
                 android:gravity="center"
+                android:includeFontPadding="false"
+                android:lineSpacingMultiplier="0.9"
+                android:maxLines="2"
+                android:ellipsize="end"
                 android:text=""
                 android:textAlignment="center"
-                android:textAppearance="?android:attr/textAppearanceMedium"
                 android:textColor="@android:color/white"
-                android:textStyle="bold"
-                android:autoSizeTextType="uniform"
-                android:autoSizeMinTextSize="4sp"
-                android:autoSizeMaxTextSize="40sp"
-                android:autoSizeStepGranularity="1sp"
-                android:maxLines="1"
-                android:ellipsize="end" />
+                android:textStyle="bold" />
 
         </LinearLayout>
 

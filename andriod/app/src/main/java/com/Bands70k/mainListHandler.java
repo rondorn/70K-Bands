@@ -1,6 +1,11 @@
 package com.Bands70k;
 
 import android.content.Context;
+import android.graphics.Typeface;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.AbsoluteSizeSpan;
+import android.text.style.StyleSpan;
 import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
@@ -391,7 +396,7 @@ public class mainListHandler {
         String headerText = this.getSizeDisplay();
         
         Log.d("HeaderText", "Setting headerBandCount TextView to: " + headerText);
-        bandCount.setText(headerText);
+        applyTwoLineHeader(bandCount, headerText);
         
         // Set text color based on active profile (white for Default, profile color for others)
         SharedPreferencesManager sharingManager = SharedPreferencesManager.getInstance();
@@ -938,16 +943,10 @@ public class mainListHandler {
         String displayText = "";
         String yearDisplay = "";
 
+        // Header no longer appends "(Filtering)"; the Filters badge is the indicator.
         String filteringText = "";
 
-        // "(Filtering)" only when something is actually hidden (same basis as the orange badge), not merely
-        // because a toggle differs from default with zero effect on the list.
-        int hiddenForTitle = resolveHiddenCountForFilteringLabel();
-        if (hiddenForTitle > 0) {
-            filteringText = " (" + staticVariables.context.getResources().getString(R.string.Filtering) + ")";
-        }
-
-        Log.d("Setup header Text Bands", "Filtering in place set to " + String.valueOf(staticVariables.filteringInPlace) + ", hiddenForTitle=" + hiddenForTitle);
+        Log.d("Setup header Text Bands", "Filtering in place set to " + String.valueOf(staticVariables.filteringInPlace));
 
         if (String.valueOf(staticVariables.preferences.getEventYearToLoad()).equals("Current") == false){
             yearDisplay = "(" + String.valueOf(staticVariables.preferences.getEventYearToLoad()) + ")";
@@ -1006,14 +1005,36 @@ public class mainListHandler {
             staticVariables.showEventButtons = false;
             staticVariables.showUnofficalEventButtons = false;
 
-            // Show the festival app name when no data is available
-            String appName = FestivalConfig.getInstance().appName;
-            Log.d("HeaderText", "Setting header text with appName: " + appName);
-            displayText = yearDisplay + " " + appName + "!";
+            // App name is already line 1 of the header; do not repeat it here.
+            displayText = yearDisplay.trim();
             staticVariables.staticBandCount = 0;
         }
 
         return displayText;
+    }
+
+    /**
+     * Matches iOS nav title: appName on line 1 (11sp), count on line 2 (15sp bold).
+     */
+    public static void applyTwoLineHeader(TextView target, String countLine) {
+        if (target == null) {
+            return;
+        }
+        String festival = FestivalConfig.getInstance().appName;
+        String count = countLine != null ? countLine.trim() : "";
+        SpannableStringBuilder sb = new SpannableStringBuilder();
+        sb.append(festival);
+        int festivalEnd = sb.length();
+        sb.setSpan(new AbsoluteSizeSpan(11, true), 0, festivalEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        sb.setSpan(new StyleSpan(Typeface.BOLD), 0, festivalEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        if (!count.isEmpty()) {
+            sb.append('\n');
+            int countStart = sb.length();
+            sb.append(count);
+            sb.setSpan(new AbsoluteSizeSpan(15, true), countStart, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            sb.setSpan(new StyleSpan(Typeface.BOLD), countStart, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        target.setText(sb);
     }
 
     /**

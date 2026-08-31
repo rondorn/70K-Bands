@@ -1285,23 +1285,44 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         mainToolBar?.isTranslucent = false
     }
     
-    /// Builds titleView with count label. Stats icon is set as leftBarButtonItem (far left, symmetric with preferences).
+    /// Builds titleView with festival name on line 1 and count on line 2.
+    /// Stats icon is set as leftBarButtonItem (far left, symmetric with preferences).
     private func makeTitleViewWithStats(text: String, profileColor: UIColor) -> UIView {
         let label: UILabel
         if let existing = titleCountLabel {
             label = existing
         } else {
             label = UILabel()
-            label.font = UIFont.boldSystemFont(ofSize: 17)
             label.textAlignment = .center
+            label.numberOfLines = 2
+            label.lineBreakMode = .byTruncatingTail
             label.isUserInteractionEnabled = true
             label.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(showProfilePicker)))
             titleCountLabel = label
         }
-        label.text = text
-        label.textColor = profileColor
+        let festivalLine = FestivalConfig.current.appName
+        let countLine = text.trimmingCharacters(in: .whitespaces)
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.alignment = .center
+        paragraph.lineSpacing = 0
+        let attributed = NSMutableAttributedString()
+        attributed.append(NSAttributedString(string: festivalLine + "\n", attributes: [
+            .font: UIFont.systemFont(ofSize: 11, weight: .semibold),
+            .foregroundColor: profileColor.withAlphaComponent(0.9),
+            .paragraphStyle: paragraph
+        ]))
+        attributed.append(NSAttributedString(string: countLine, attributes: [
+            .font: UIFont.boldSystemFont(ofSize: 15),
+            .foregroundColor: profileColor,
+            .paragraphStyle: paragraph
+        ]))
+        label.attributedText = attributed
+        let barWidth = navigationController?.navigationBar.bounds.width ?? UIScreen.main.bounds.width
+        let maxWidth = max(barWidth - 120, 100)
+        label.preferredMaxLayoutWidth = maxWidth
         label.sizeToFit()
-        label.frame = CGRect(x: 0, y: 0, width: max(label.bounds.width, 100), height: 44)
+        let width = min(max(label.bounds.width, 80), maxWidth)
+        label.frame = CGRect(x: 0, y: 0, width: width, height: 44)
         return label
     }
     
@@ -3267,20 +3288,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         effectiveDisplayedBandRows: Int,
         unofficialCountToSubtract: Int,
         eventCount: Int,
-        filtersOnText: String
+        filtersOnText _: String
     ) -> (count: Int, unitAndFiltersLabel: String) {
         let bandSlotsDisplayed = displayedRowsForFilterBadge(in: bandsSnapshot)
-        let filtersSuffix = " " + filtersOnText
 
         if !showScheduleView {
             let c = max(effectiveDisplayedBandRows - unofficialCountToSubtract, 0)
-            return (c, " " + NSLocalizedString("Bands", comment: "") + filtersSuffix)
+            return (c, " " + NSLocalizedString("Bands", comment: ""))
         }
         if scheduleCompositionIsUnofficialOnly(forYear: year) {
-            return (max(bandSlotsDisplayed, 0), " " + NSLocalizedString("Bands", comment: "") + filtersSuffix)
+            return (max(bandSlotsDisplayed, 0), " " + NSLocalizedString("Bands", comment: ""))
         }
         if !scheduleHasCurrentEventsForRules(forYear: year) {
-            return (max(bandSlotsDisplayed, 0), " " + NSLocalizedString("Bands", comment: "") + filtersSuffix)
+            return (max(bandSlotsDisplayed, 0), " " + NSLocalizedString("Bands", comment: ""))
         }
         // Event-mode header must match Android: `numberOfEvents` counts time-keyed slots only, not band-name rows
         // (e.g. lineup entries at the bottom after all shows expired with hide-expired on).
@@ -3294,7 +3314,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         } else {
             eventsTitleCount = max(scheduleEventRowsDisplayed, 0)
         }
-        return (eventsTitleCount, " " + NSLocalizedString("Events", comment: "") + filtersSuffix)
+        return (eventsTitleCount, " " + NSLocalizedString("Events", comment: ""))
     }
   
     /// Updates the count label at the top of the list showing "{x} Events" or "{x} Bands"

@@ -3243,7 +3243,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             String headerText = listHandler.getSizeDisplay();
             TextView bandCount = (TextView) this.findViewById(R.id.headerBandCount);
             if (bandCount != null) {
-                bandCount.setText(headerText);
+                mainListHandler.applyTwoLineHeader(bandCount, headerText);
                 
                 // Set text color based on active profile
                 SharedPreferencesManager sharingManager = SharedPreferencesManager.getInstance();
@@ -3774,7 +3774,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         TextView bandCount = (TextView) this.findViewById(R.id.headerBandCount);
         if (bandCount != null && listHandler != null) {
             String headerText = listHandler.getSizeDisplay();
-            bandCount.setText(headerText);
+            mainListHandler.applyTwoLineHeader(bandCount, headerText);
             SharedPreferencesManager sharingManager = SharedPreferencesManager.getInstance();
             String activeProfile = sharingManager.getActivePreferenceSource();
             int profileColor = ProfileColorManager.getInstance().getColorInt(activeProfile);

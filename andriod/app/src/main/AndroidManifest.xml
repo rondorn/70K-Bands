@@ -18,7 +18,7 @@
         android:name="Bands70k"
         android:allowBackup="true"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@string/app_icon"
+        android:icon="${appIcon}"
         android:label="@string/app_name"
         android:usesCleartextTraffic="true"
         android:theme="@style/splashScreenTheme">
@@ -153,6 +153,6 @@
             android:value="false" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@string/notification_icon" />
+            android:resource="${notificationIcon}" />
     </application>
 </manifest>
