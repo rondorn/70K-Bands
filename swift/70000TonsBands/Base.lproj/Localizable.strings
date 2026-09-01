@@ -382,3 +382,7 @@
 "Shared Comments Submit Success" = "Description submitted for review.";
 "Shared Comments Submit Failed" = "Could not submit description";
 
+// Bulk download progress indicators
+"Bulk Image Download" = "Bulk Image Download";
+"Bulk Note Download" = "Bulk Note Download";
+

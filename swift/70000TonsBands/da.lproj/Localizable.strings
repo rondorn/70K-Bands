@@ -414,3 +414,7 @@
 "Shared Comments Submit Success" = "Beskrivelse indsendt til gennemgang.";
 "Shared Comments Submit Failed" = "Kunne ikke indsende beskrivelsen";
 
+// Bulk download progress indicators
+"Bulk Image Download" = "Massebilleddownload";
+"Bulk Note Download" = "Massenotedownload";
+

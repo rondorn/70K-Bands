@@ -51,8 +51,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     private var firebaseSyncInFlight = false
     private var bulkDownloadInFlight = false
     private let bulkDownloadLock = NSLock()
-    private var lastBulkRecoveryTrigger: Date?
-    private let bulkRecoveryDebounceSeconds: TimeInterval = 2.0
+    /// Ignores a second bulk start if the previous pass just finished (quick app-switch bounce).
+    private let bulkRapidRetriggerInterval: TimeInterval = 30
+    private var lastBulkStartedAt: Date?
+    private var lastBulkFinishedAt: Date?
     private let firebaseSyncLock = NSLock()
     
     // Flag to track if Firebase has been configured
@@ -721,7 +723,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         print("📱 [TIMING] applicationDidBecomeActive CALLED at \(becameActiveTime.timeIntervalSince1970)")
         print("📱 [TIMING] Firebase configured flag = \(AppDelegate.isFirebaseConfigured)")
 
-        // Retry deferred background work when returning to foreground (Firebase, local alerts, bulk downloads).
+        // Retry deferred Firebase sync and local alert rebuilds after foreground return.
         recoverDeferredBackgroundWorkOnForeground()
         
         // SAFETY: Defer Firebase operations to ensure Firebase is configured
@@ -851,16 +853,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         }
     }
     
-    private func isModalPresented() -> Bool {
-        if let rootViewController = UIApplication.shared.connectedScenes
-            .compactMap({ $0 as? UIWindowScene })
-            .flatMap({ $0.windows })
-            .first(where: { $0.isKeyWindow })?.rootViewController {
-            return rootViewController.presentedViewController != nil
-        }
-        return false
-    }
-    
     func applicationDidEnterBackground(_ application: UIApplication) {
         handleAppEnteringBackground(application: application)
     }
@@ -875,18 +867,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         lastBackgroundSyncTrigger = Date()
 
         FirebaseSyncTrace.snapshot("enterBackground-start")
-        print("🔄 App entering background - starting bulk loading process")
+        print("🔄 App entering background - Firebase/iCloud/alerts only (image/notes prefetch is launch-only)")
         print("🔍 DEBUG: App state: \(application.applicationState.rawValue)")
         print("🔍 DEBUG: Active scenes: \(UIApplication.shared.connectedScenes.count)")
         
-        // Modal sheets must not block Firebase sync — only bulk image/description downloads.
-        let modalPresented = isModalPresented()
-        if modalPresented {
-            print("⚠️ Modal view controller is presented — deferring bulk downloads, Firebase sync still allowed")
-            BackgroundWorkMonitor.shared.markBulkDownloadPending(context: "modal-presented")
-        }
-        
-        // Local schedule alerts: own background task — never gated on Firebase or bulk downloads.
+        // Local schedule alerts: own background task — never gated on Firebase.
         LocalNotificationRebuildCoordinator.shared.runBackgroundRebuildIfNeeded(
             application: application,
             reason: "applicationDidEnterBackground"
@@ -903,19 +888,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         firebaseUserWrite.flushPendingWriteOnBackground()
         startFirebaseSyncIfNeeded(application: application)
         
-        if modalPresented == false {
-            startBulkDownloadIfNeeded(application: application)
-        }
-        
         //Messaging.messaging().disconnect()
         print("Disconnected from FCM.")
     }
 
-    /// Retries Firebase sync, local alert rebuilds, and bulk downloads after foreground return.
+    /// Retries Firebase sync and local alert rebuilds after foreground return.
     func recoverDeferredBackgroundWorkOnForeground() {
         recoverPendingFirebaseSyncOnForeground()
         LocalNotificationRebuildCoordinator.shared.recoverLocalAlertsOnForeground()
-        recoverPendingBulkDownloadOnForeground()
     }
 
     /// Bulk image/note prefetch readiness — intentionally NOT tied to local-alert rebuild gates.
@@ -944,35 +924,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         !MasterViewController.isYearChangeInProgress
     }
 
-    /// Prefetch band images and notes while the app is open.
-    /// Background bulk on app exit remains as a safety net for offline (shipboard) use.
+    /// Prefetch band images and notes after pointer, artists, schedule, and description map are loaded.
     func startBulkDownloadOnLaunchIfNeeded(reason: String) {
         let normalized = reason.lowercased()
-        // Only skip the initial first-launch kickoff before CSV/map exist.
-        // Do NOT skip "schedule-ready:First launch" — that is when offline prefetch must run.
-        if normalized == "first launch" {
-            print("📦 [BULK_DOWNLOAD] skip launch bulk — initial first launch before data ready (\(reason))")
-            return
-        }
-        // schedule-ready after first launch sets hasRunBefore just before this call; allow it through.
-        if !UserDefaults.standard.bool(forKey: "hasRunBefore") && !normalized.contains("schedule-ready") {
-            print("📦 [BULK_DOWNLOAD] skip launch bulk — first install session (\(reason))")
-            BackgroundWorkMonitor.shared.markBulkDownloadPending(context: "first-install-\(reason)")
-            return
-        }
-        startBulkDownloadWork(application: nil, context: "launch:\(reason)")
-    }
-
-    func startBulkDownloadIfNeeded(application: UIApplication) {
-        _ = startBulkDownloadWork(application: application, context: "background")
+        let allowRapidRetrigger = normalized.contains("pull-to-refresh")
+        startBulkDownloadWork(context: "prefetch:\(reason)", allowRapidRetrigger: allowRapidRetrigger)
     }
 
     @discardableResult
-    private func startBulkDownloadWork(application: UIApplication?, context: String) -> Bool {
+    private func startBulkDownloadWork(context: String, allowRapidRetrigger: Bool = false) -> Bool {
         let readiness = Self.bulkDownloadReadinessSnapshot()
         guard Self.canRunBulkDownloadNow() else {
             print("📦 [BULK_DOWNLOAD] skip bulk (\(context)) — not ready: \(readiness)")
-            BackgroundWorkMonitor.shared.markBulkDownloadPending(context: "skipped-\(readiness)")
             return false
         }
         if readiness != "ready" {
@@ -981,57 +944,33 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
 
         bulkDownloadLock.lock()
         if bulkDownloadInFlight {
+            let elapsed = lastBulkStartedAt.map { Int(Date().timeIntervalSince($0)) } ?? 0
             bulkDownloadLock.unlock()
-            print("📦 [BULK_DOWNLOAD] skip (\(context)) — already in flight")
+            print("📦 [BULK_DOWNLOAD] skip (\(context)) — already in flight for \(elapsed)s (will resume if the app was briefly backgrounded)")
+            return false
+        }
+        if !allowRapidRetrigger,
+           let finished = lastBulkFinishedAt,
+           Date().timeIntervalSince(finished) < bulkRapidRetriggerInterval {
+            bulkDownloadLock.unlock()
+            print("📦 [BULK_DOWNLOAD] skip (\(context)) — previous pass finished \(Int(Date().timeIntervalSince(finished)))s ago (rapid foreground bounce)")
             return false
         }
         bulkDownloadInFlight = true
+        lastBulkStartedAt = Date()
         bulkDownloadLock.unlock()
-
-        var bulkTask: UIBackgroundTaskIdentifier = .invalid
-        if let application = application {
-            bulkTask = application.beginBackgroundTask(withName: "BulkDataDownload") { [weak self] in
-                print("⚠️ Bulk download background task expiring")
-                BackgroundWorkMonitor.shared.markBulkDownloadPending(context: "bg-task-expired")
-                self?.bulkDownloadLock.lock()
-                self?.bulkDownloadInFlight = false
-                self?.bulkDownloadLock.unlock()
-                if bulkTask != .invalid {
-                    application.endBackgroundTask(bulkTask)
-                }
-            }
-        }
 
         print("📦 [BULK_DOWNLOAD] starting bulk downloads (\(context))")
         DispatchQueue.global(qos: .utility).async { [weak self] in
             defer {
                 self?.bulkDownloadLock.lock()
                 self?.bulkDownloadInFlight = false
+                self?.lastBulkFinishedAt = Date()
                 self?.bulkDownloadLock.unlock()
-                if bulkTask != .invalid, let application = application {
-                    application.endBackgroundTask(bulkTask)
-                }
             }
             self?.performBulkOperationsWithNetworkGating()
-            if application != nil {
-                BackgroundWorkMonitor.shared.clearBulkDownloadPending()
-            }
         }
         return true
-    }
-
-    func recoverPendingBulkDownloadOnForeground() {
-        guard BackgroundWorkMonitor.shared.hasPendingBulkDownload() else { return }
-
-        if let lastTrigger = lastBulkRecoveryTrigger,
-           Date().timeIntervalSince(lastTrigger) < bulkRecoveryDebounceSeconds {
-            return
-        }
-        lastBulkRecoveryTrigger = Date()
-
-        if startBulkDownloadWork(application: nil, context: "foreground-recovery") {
-            BackgroundWorkMonitor.shared.clearBulkDownloadPending()
-        }
     }
 
     /// Start sync while app is still active/inactive (Home button) — avoids tight iOS background time limits.
@@ -1151,8 +1090,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     /// Performs network test first, then executes bulk image/description downloads if network is good.
     /// Firebase sync is intentionally separate — see `startFirebaseSyncIfNeeded`.
-    /// Image and notes run sequentially on this queue so both complete before bulk in-flight clears
-    /// (critical for offline shipboard use).
+    /// Image and notes run sequentially on this queue so both complete before bulk in-flight clears.
+    /// The progress indicator is shown only when at least one image or note actually needs downloading.
     private func performBulkOperationsWithNetworkGating(includeDescriptionBulkDownload: Bool = true) {
         print("🌐 NETWORK GATING: Starting REAL network test before bulk operations (description bulk: \(includeDescriptionBulkDownload))")
         
@@ -1167,12 +1106,36 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         }
         
         print("🌐 NETWORK GATING: ✅ Network is good - proceeding with bulk operations")
-        self.performBulkImageDownload()
+        self.ensureCombinedImageListReadyForBulk()
+        
+        let imageHandlerInstance = imageHandler()
+        let pendingImages = imageHandlerInstance.countImagesNeedingDownload()
+        let pendingNotes = includeDescriptionBulkDownload
+            ? self.bandDescriptions.countMissingDescriptionsForBulk()
+            : 0
+        print("📦 [BULK_DOWNLOAD] pending work — images: \(pendingImages), notes: \(pendingNotes)")
+        
+        guard pendingImages > 0 || pendingNotes > 0 else {
+            print("📦 [BULK_DOWNLOAD] all images and notes are up to date — skipping indicator")
+            return
+        }
+        
+        BulkDownloadProgressIndicator.shared.beginSession()
+        if pendingImages > 0 {
+            imageHandlerInstance.getAllImages()
+        } else {
+            print("🖼️ BULK IMAGE DOWNLOAD: All images cached, skipping")
+        }
         if includeDescriptionBulkDownload {
-            self.performBulkDescriptionDownload()
+            if pendingNotes > 0 {
+                self.performBulkDescriptionDownload()
+            } else {
+                print("📝 BULK DESCRIPTION DOWNLOAD: All notes cached, skipping")
+            }
         } else {
             print("🌐 NETWORK GATING: Skipping bulk description download (not requested for this entry point)")
         }
+        BulkDownloadProgressIndicator.shared.finishAll()
         print("🌐 NETWORK GATING: Bulk image + notes pass finished")
     }
     
@@ -1239,42 +1202,24 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         return testResult
     }
     
-    /// Performs bulk image download - only called after network test passes.
-    /// Runs on the caller’s queue (already background from bulk work).
-    private func performBulkImageDownload() {
-        print("🖼️ BULK IMAGE DOWNLOAD: Starting image download (network verified)")
-        
-        let imageHandlerInstance = imageHandler()
+    /// Regenerates the combined image list when it is empty so bulk counting sees real entries.
+    private func ensureCombinedImageListReadyForBulk() {
         let combinedImageList = CombinedImageListHandler.shared.combinedImageList
-        print("🖼️ Starting bulk image loading with \(combinedImageList.count) images")
+        guard combinedImageList.isEmpty else { return }
         
-        if combinedImageList.isEmpty {
-            print("⚠️ Combined image list is empty - forcing regeneration")
-            
-            let bandNameHandle = bandNamesHandler.shared
-            let scheduleHandle = scheduleHandler.shared
-            let regenSemaphore = DispatchSemaphore(value: 0)
-            
-            CombinedImageListHandler.shared.generateCombinedImageList(
-                bandNameHandle: bandNameHandle,
-                scheduleHandle: scheduleHandle
-            ) {
-                let updatedList = CombinedImageListHandler.shared.combinedImageList
-                print("🖼️ After regeneration: \(updatedList.count) images available")
-                regenSemaphore.signal()
-            }
-            _ = regenSemaphore.wait(timeout: .now() + 60)
-            
-            print("🖼️ Calling getAllImages() for bulk download...")
-            imageHandlerInstance.getAllImages()
-            print("🖼️ getAllImages() call completed")
-        } else {
-            print("🖼️ Calling getAllImages() for bulk download...")
-            imageHandlerInstance.getAllImages()
-            print("🖼️ getAllImages() call completed")
+        print("⚠️ Combined image list is empty - forcing regeneration before bulk download")
+        let bandNameHandle = bandNamesHandler.shared
+        let scheduleHandle = scheduleHandler.shared
+        let regenSemaphore = DispatchSemaphore(value: 0)
+        CombinedImageListHandler.shared.generateCombinedImageList(
+            bandNameHandle: bandNameHandle,
+            scheduleHandle: scheduleHandle
+        ) {
+            let updatedList = CombinedImageListHandler.shared.combinedImageList
+            print("🖼️ After regeneration: \(updatedList.count) images available")
+            regenSemaphore.signal()
         }
-        
-        print("🖼️ BULK IMAGE DOWNLOAD: Completed")
+        _ = regenSemaphore.wait(timeout: .now() + 60)
     }
     
     /// Performs bulk description/notes download - only called after network test passes.

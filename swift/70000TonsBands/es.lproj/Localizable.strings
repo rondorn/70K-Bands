@@ -424,3 +424,7 @@
 "Shared Comments Submit Success" = "Descripción enviada para revisión.";
 "Shared Comments Submit Failed" = "No se pudo enviar la descripción";
 
+// Bulk download progress indicators
+"Bulk Image Download" = "Descarga masiva de imágenes";
+"Bulk Note Download" = "Descarga masiva de notas";
+

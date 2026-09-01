@@ -421,3 +421,7 @@
 "Shared Comments Submit Success" = "Description envoyée pour examen.";
 "Shared Comments Submit Failed" = "Impossible d'envoyer la description";
 
+// Bulk download progress indicators
+"Bulk Image Download" = "Téléchargement d'images en masse";
+"Bulk Note Download" = "Téléchargement de notes en masse";
+

@@ -422,3 +422,7 @@
 "Shared Comments Submit Success" = "Beschreibung zur Prüfung eingereicht.";
 "Shared Comments Submit Failed" = "Beschreibung konnte nicht eingereicht werden";
 
+// Bulk download progress indicators
+"Bulk Image Download" = "Massenbild-Download";
+"Bulk Note Download" = "Massennotiz-Download";
+

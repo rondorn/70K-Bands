@@ -2143,11 +2143,35 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     }
 
-    /// Kick off image/note prefetch when schedule data is present (non-first launch).
-    private func triggerLaunchBulkDownloadIfScheduleReady(reason: String) {
-        guard !schedule.schedulingData.isEmpty else { return }
+    /// Kick off image/note prefetch after pointer, artists, schedule, and description map are loaded.
+    private func startLaunchBulkPrefetchIfNeeded(reason: String) {
         guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else { return }
+        print("📦 [BULK_DOWNLOAD] core data ready — starting image/notes prefetch (\(reason))")
         appDelegate.startBulkDownloadOnLaunchIfNeeded(reason: reason)
+    }
+    
+    /// Launch, PTR, and returning from background — after pointer/artists/schedule/description map are ready.
+    private func shouldStartLaunchBulkPrefetch(reason: String) -> Bool {
+        let normalized = reason.lowercased()
+        return normalized.contains("first launch")
+            || normalized.contains("subsequent launch")
+            || normalized.contains("pull-to-refresh")
+            || normalized.contains("foreground refresh")
+    }
+    
+    /// Subsequent launch was throttled: use already-cached CSVs/maps, then prefetch missing images/notes.
+    private func kickoffLaunchBulkFromCachedData(reason: String) {
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            guard let self = self else { return }
+            print("📦 [BULK_DOWNLOAD] loading cached description map before prefetch (\(reason))")
+            self.bandDescriptions.getDescriptionMap()
+            CombinedImageListHandler.shared.generateCombinedImageList(
+                bandNameHandle: self.bandNameHandle,
+                scheduleHandle: self.schedule
+            ) {
+                self.startLaunchBulkPrefetchIfNeeded(reason: reason)
+            }
+        }
     }
     
     // Centralized refresh method for band list
@@ -6371,7 +6395,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             // Update UI on main thread with database data
             DispatchQueue.main.async {
                 self.refreshBandList(reason: "Subsequent launch - immediate database display", skipDataLoading: true)
-                self.triggerLaunchBulkDownloadIfScheduleReady(reason: "Subsequent launch - immediate display")
             }
             
             // Step 2: Launch parallel download threads (with throttling check)
@@ -6381,6 +6404,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 self.performUnifiedDataRefresh(reason: "Subsequent launch")
             } else {
                 print("🚀 SUBSEQUENT LAUNCH: Throttled - less than 5 minutes since last download, skipping fresh download")
+                self.kickoffLaunchBulkFromCachedData(reason: "Subsequent launch - throttled cached data")
             }
         }
     }
@@ -6505,11 +6529,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 // Do NOT block UI completion on image generation (prevents "hung" refreshes).
                 self.bandNameHandle.loadCachedDataImmediately()
                 self.schedule.loadCachedDataImmediately()
-                CombinedImageListHandler.shared.triggerRefreshPostDataLoad(
+                let shouldPrefetchMedia = self.shouldStartLaunchBulkPrefetch(reason: reason)
+                CombinedImageListHandler.shared.generateCombinedImageList(
                     bandNameHandle: self.bandNameHandle,
-                    scheduleHandle: self.schedule,
-                    context: "UnifiedRefresh(\(reason)) post-commit"
-                )
+                    scheduleHandle: self.schedule
+                ) {
+                    print("🧩 [IMAGE_PIPELINE] UnifiedRefresh(\(reason)) post-commit combined image list ready")
+                    if shouldPrefetchMedia {
+                        self.startLaunchBulkPrefetchIfNeeded(reason: "core-data-ready:\(reason)")
+                    }
+                }
                 
                 // DISABLED: Orphaned band cleanup removed
                 // Bands and events are separate entities - bands can legitimately exist without events
@@ -6539,7 +6568,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
 
                     if !self.schedule.schedulingData.isEmpty {
                         LocalNotificationRebuildCoordinator.shared.rebuildWhenScheduleReady(reason: "schedule-ready:\(reason)")
-                        self.triggerLaunchBulkDownloadIfScheduleReady(reason: "schedule-ready:\(reason)")
                     }
                 }
             }

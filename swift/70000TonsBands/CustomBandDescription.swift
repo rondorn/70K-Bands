@@ -264,13 +264,23 @@ open class CustomBandDescription {
             
             // Snapshot map so we don't iterate while background refresh mutates it.
             let snapshot: [String: String] = readDescriptionMap { bandDescriptionUrl }
-            for record in snapshot {
-                let bandName = record.key
-                let descriptionUrl = record.value
-                print ("commentFile working on bandName " + bandName)
-                if self.needsOfficialDescriptionRefresh(bandName: bandName) {
+            let pending = snapshot.filter { self.needsOfficialDescriptionRefresh(bandName: $0.key) }
+            print("commentFile cache check: \(pending.count) of \(snapshot.count) notes need downloading")
+
+            if pending.isEmpty {
+                print("commentFile all notes already cached, skipping note download phase")
+            } else {
+                BulkDownloadProgressIndicator.shared.begin(phase: .notes, total: pending.count)
+                var downloaded = 0
+                for record in pending {
+                    let bandName = record.key
+                    let descriptionUrl = record.value
+                    print ("commentFile working on bandName " + bandName)
                     _ = self.getDescriptionFromUrl(bandName: bandName, descriptionUrl: descriptionUrl)
+                    downloaded += 1
+                    BulkDownloadProgressIndicator.shared.update(phase: .notes, completed: downloaded, total: pending.count)
                 }
+                BulkDownloadProgressIndicator.shared.end(phase: .notes)
             }
             
             downloadingAllComments = false
@@ -940,7 +950,7 @@ open class CustomBandDescription {
     }
     
     /// Guaranteed map load, then download every band that lacks a current-date cache file.
-    /// Safe to call from launch bulk, background bulk, or terminate.
+    /// Safe to call from launch bulk or terminate.
     func downloadAllMissingDescriptionsForBulk() {
         print("DEBUG_commentFile: Starting bulk download of all missing descriptions")
         
@@ -953,6 +963,15 @@ open class CustomBandDescription {
         print("DEBUG_commentFile: Bulk-downloading missing notes for \(mapCount) map entries")
         getAllDescriptions()
         print("DEBUG_commentFile: Completed bulk download of missing descriptions")
+    }
+    
+    /// Counts notes that still need a current-marker download. Loads the map first.
+    func countMissingDescriptionsForBulk() -> Int {
+        let mapCount = ensureDescriptionMapLoadedForBulk()
+        guard mapCount > 0 else { return 0 }
+        return readDescriptionMap {
+            bandDescriptionUrl.keys.filter { self.needsOfficialDescriptionRefresh(bandName: $0) }.count
+        }
     }
     
     /// Handles data collection requests, including year changes

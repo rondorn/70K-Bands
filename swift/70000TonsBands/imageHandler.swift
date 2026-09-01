@@ -15,6 +15,10 @@ open class imageHandler {
     private var activeDownloads = 0
     private let maxConcurrentDownloads = 3
     private let downloadQueue = DispatchQueue(label: "imageDownloadQueue", qos: .utility)
+    private let bulkBatchQueue = DispatchQueue(label: "com.70kbands.imageHandler.bulkBatch", qos: .utility)
+    private let bulkProgressLock = NSLock()
+    private var bulkDownloadCompleted = 0
+    private var bulkDownloadTotal = 0
     
     /// Returns the festival-specific default logo
     /// - Returns: UIImage of the festival logo, or a system default if loading fails
@@ -241,6 +245,35 @@ open class imageHandler {
         return image
     }
 
+    private func cacheFilename(bandName: String, imageInfo: ImageInfo) -> (storeName: String, customFilename: String?) {
+        if let date = imageInfo.date, !date.isEmpty {
+            let name = bandName + "_schedule_" + date + ".png"
+            return (name, name)
+        }
+        return (bandName + "_v2.png", nil)
+    }
+
+    private func needsImageDownload(bandName: String, imageInfo: ImageInfo) -> Bool {
+        let storeName = cacheFilename(bandName: bandName, imageInfo: imageInfo).storeName
+        let file = directoryPath.appendingPathComponent(storeName)
+        return !isCachedImageCurrent(cachePNGFile: file, expectedUrl: imageInfo.url)
+    }
+
+    func countImagesNeedingDownload() -> Int {
+        let combinedImageList = CombinedImageListHandler.shared.combinedImageList
+        return combinedImageList.filter { needsImageDownload(bandName: $0.key, imageInfo: $0.value) }.count
+    }
+
+    private func recordBulkImageProgress() {
+        bulkProgressLock.lock()
+        bulkDownloadCompleted += 1
+        let completed = min(bulkDownloadCompleted, bulkDownloadTotal)
+        let total = bulkDownloadTotal
+        bulkProgressLock.unlock()
+        guard total > 0 else { return }
+        BulkDownloadProgressIndicator.shared.update(phase: .images, completed: completed, total: total)
+    }
+
     func getAllImages(bandNameHandle: bandNamesHandler? = nil){
         
         if (downloadingAllImages == false){
@@ -253,16 +286,49 @@ open class imageHandler {
             
             // Convert to array for batch processing
             let imageEntries = Array(combinedImageList)
-            
-            // Process images in batches to avoid overwhelming slow networks
-            processBulkImagesInBatches(imageEntries: imageEntries, batchSize: 3, delay: 0.5)
+            let pendingEntries = imageEntries.filter { needsImageDownload(bandName: $0.0, imageInfo: $0.1) }
+            print("🖼️ Cache check: \(pendingEntries.count) of \(imageEntries.count) images need downloading")
+
+            bulkProgressLock.lock()
+            bulkDownloadCompleted = 0
+            bulkDownloadTotal = pendingEntries.count
+            bulkProgressLock.unlock()
+
+            guard !pendingEntries.isEmpty else {
+                print("🖼️ All images already cached, skipping image download phase")
+                downloadingAllImages = false
+                return
+            }
+
+            BulkDownloadProgressIndicator.shared.begin(phase: .images, total: pendingEntries.count)
+
+            let finishBulk = {
+                BulkDownloadProgressIndicator.shared.end(phase: .images)
+                self.downloadingAllImages = false
+            }
+            // Never wait on the main thread. Completion runs on bulkBatchQueue so wait() cannot deadlock.
+            if Thread.isMainThread {
+                processBulkImagesInBatches(imageEntries: pendingEntries, batchSize: 3, delay: 0.5, completion: finishBulk)
+                return
+            }
+            let finished = DispatchSemaphore(value: 0)
+            processBulkImagesInBatches(imageEntries: pendingEntries, batchSize: 3, delay: 0.5) {
+                finishBulk()
+                finished.signal()
+            }
+            finished.wait()
         }
     }
     
-    private func processBulkImagesInBatches(imageEntries: [(String, ImageInfo)], batchSize: Int, delay: TimeInterval) {
+    private func processBulkImagesInBatches(
+        imageEntries: [(String, ImageInfo)],
+        batchSize: Int,
+        delay: TimeInterval,
+        completion: @escaping () -> Void
+    ) {
         guard !imageEntries.isEmpty else {
             print("🖼️ Bulk image loading completed - all batches processed")
-            downloadingAllImages = false
+            completion()
             return
         }
         
@@ -277,22 +343,13 @@ open class imageHandler {
         // Process current batch
         for (bandName, imageInfo) in currentBatch {
             let imageURL = imageInfo.url
-            let imageDate = imageInfo.date
-            
             let oldImageStoreName = bandName + ".png"        // Old cache format
-            
-            // Determine cache filename based on whether image has a date
-            let newImageStoreName: String
-            let customFilename: String?
-            if let date = imageDate, !date.isEmpty {
-                // Schedule image with date - use date-based filename
-                newImageStoreName = bandName + "_schedule_" + date + ".png"
-                customFilename = newImageStoreName
+            let names = cacheFilename(bandName: bandName, imageInfo: imageInfo)
+            let newImageStoreName = names.storeName
+            let customFilename = names.customFilename
+            if customFilename != nil {
                 print("🗓️ Processing \(bandName) with date-based cache: \(newImageStoreName)")
             } else {
-                // Artist image or schedule without date - use standard format
-                newImageStoreName = bandName + "_v2.png"
-                customFilename = nil
                 print("📸 Processing \(bandName) with standard cache: \(newImageStoreName)")
             }
             
@@ -310,6 +367,7 @@ open class imageHandler {
 
             if cacheMatchesDataUrl {
                 print("⏭️ Skipping \(bandName) - PNG cache matches data URL (\(newImageStoreName))")
+                self.recordBulkImageProgress()
             } else {
                 // Check if we have old cache that should be upgraded
                 if FileManager.default.fileExists(atPath: oldImageStoreFile.path) {
@@ -331,20 +389,26 @@ open class imageHandler {
                     } else {
                         print("❌ Failed to download image for \(bandName)")
                     }
+                    self.recordBulkImageProgress()
                     group.leave()
                 }
             }
         }
         
         // Wait for current batch to complete, then process next batch after delay
-        group.notify(queue: .global(qos: .background)) {
+        group.notify(queue: bulkBatchQueue) {
             if !remainingEntries.isEmpty {
-                DispatchQueue.global(qos: .background).asyncAfter(deadline: .now() + delay) {
-                    self.processBulkImagesInBatches(imageEntries: remainingEntries, batchSize: batchSize, delay: delay)
+                self.bulkBatchQueue.asyncAfter(deadline: .now() + delay) {
+                    self.processBulkImagesInBatches(
+                        imageEntries: remainingEntries,
+                        batchSize: batchSize,
+                        delay: delay,
+                        completion: completion
+                    )
                 }
             } else {
                 print("🖼️ Bulk image loading completed - all images processed")
-                self.downloadingAllImages = false
+                completion()
             }
         }
     }

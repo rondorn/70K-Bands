@@ -420,3 +420,7 @@
 "Shared Comments Submit Success" = "Kuvaus lähetetty tarkistettavaksi.";
 "Shared Comments Submit Failed" = "Kuvausta ei voitu lähettää";
 
+// Bulk download progress indicators
+"Bulk Image Download" = "Massakuvien lataus";
+"Bulk Note Download" = "Massamuistiinpanojen lataus";
+
