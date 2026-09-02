@@ -24,6 +24,21 @@ platform :android do
     unless File.exist?(@play_json_key)
       UI.user_error!("Service account JSON not found: #{@play_json_key}\n(.env path is relative to #{@android_project_root})")
     end
+
+    @play_sa_email = JSON.parse(File.read(@play_json_key))["client_email"] rescue "the Play service account"
+  end
+
+  def festival_flag_for(app)
+    {
+      "bands70k" => "-70k",
+      "mdfbands" => "-mdf",
+      "mmfbands" => "-mmf"
+    }[app["flavor"]]
+  end
+
+  def permission_denied?(error)
+    msg = error.message.to_s
+    msg.match?(/does not have permission/i) || msg.match?(/PERMISSION_DENIED/i)
   end
 
   def truthy?(value)
@@ -51,6 +66,30 @@ platform :android do
     )
   end
 
+  def signing_for(app)
+    default_path = @config["default_keystore_path"].to_s.strip
+    default_path = ENV["ANDROID_KEYSTORE_PATH"].to_s.strip if default_path.empty?
+    default_alias = @config["default_key_alias"].to_s.strip
+    default_alias = ENV["ANDROID_KEY_ALIAS"].to_s.strip if default_alias.empty?
+
+    store_file = app["keystore_path"].to_s.strip
+    store_file = default_path if store_file.empty?
+    key_alias = app["key_alias"].to_s.strip
+    key_alias = default_alias if key_alias.empty?
+    store_file = File.expand_path(store_file) unless store_file.empty?
+
+    UI.user_error!("No keystore_path for #{app['name']} (set on the app or default_keystore_path)") if store_file.empty?
+    UI.user_error!("No key_alias for #{app['name']} (set on the app or default_key_alias)") if key_alias.empty?
+    UI.user_error!("Keystore not found for #{app['name']}: #{store_file}") unless File.exist?(store_file)
+
+    {
+      "android.injected.signing.store.file" => store_file,
+      "android.injected.signing.store.password" => ENV["ANDROID_STORE_PASSWORD"],
+      "android.injected.signing.key.alias" => key_alias,
+      "android.injected.signing.key.password" => ENV["ANDROID_KEY_PASSWORD"]
+    }
+  end
+
   # Shared by release_all_apps and upload_to_play_only (expects AABs already built)
   # Uploads must run serially: Play Console uses one edit session per app and fastlane is not thread-safe (Dir.chdir).
   private_lane :upload_enabled_apps_to_play do |options|
@@ -59,6 +98,7 @@ platform :android do
     track = options[:track] || "production"
     rollout = (options[:rollout] || "1.0").to_s
     apps = resolve_apps(options)
+    failed = []
 
     apps.each do |app|
       puts "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -83,21 +123,45 @@ platform :android do
         version_code: version_code
       )
 
-      upload_to_play_store(
-        package_name: package_name,
-        track: track,
-        rollout: rollout,
-        aab: aab_path,
-        skip_upload_metadata: false,
-        skip_upload_images: true,
-        skip_upload_screenshots: true,
-        json_key: @play_json_key
-      )
+      begin
+        upload_to_play_store(
+          package_name: package_name,
+          track: track,
+          rollout: rollout,
+          aab: aab_path,
+          skip_upload_images: true,
+          skip_upload_screenshots: true,
+          json_key: @play_json_key
+        )
+        puts "✓ #{app['name']} → #{track}"
+      rescue => e
+        UI.error("✗ #{app['name']} failed: #{e.message}")
+        if permission_denied?(e)
+          flag = festival_flag_for(app)
+          retry_cmd = if flag
+            "./upload_to_play_only.sh #{flag} #{version_code} #{track} #{rollout}"
+          else
+            "./upload_to_play_only.sh #{version_code} #{track} #{rollout}"
+          end
+          UI.error(<<~MSG)
 
-      puts "✓ #{app['name']} → #{track}"
+            Play Console denied #{@play_sa_email} access to #{package_name}.
+            In Play Console → Users and permissions, invite that service account
+            with Admin or Release manager on #{app['name']}. If the app does not
+            exist yet, create it first, then invite the account.
+            After access is granted, upload without rebuilding:
+              #{retry_cmd}
+          MSG
+        end
+        failed << app["name"]
+      end
     end
 
-    puts "\n✅ All apps uploaded successfully!"
+    if failed.empty?
+      puts "\n✅ All apps uploaded successfully!"
+    else
+      UI.user_error!("Upload failed for: #{failed.join(', ')}")
+    end
   end
 
   desc "Release all enabled apps to Google Play (build AABs first via release_full_automation.sh / Gradle)"
@@ -161,18 +225,15 @@ platform :android do
     
     @apps.each do |app|
       flavor = app["flavor"]
+      signing = signing_for(app)
       puts "Building #{app['name']}..."
-      
+      puts "  signing: #{signing['android.injected.signing.store.file']} (#{signing['android.injected.signing.key.alias']})"
+
       gradle(
         task: "bundle",
         flavor: flavor,
         build_type: "Release",
-        properties: {
-          "android.injected.signing.store.file" => ENV["ANDROID_KEYSTORE_PATH"],
-          "android.injected.signing.store.password" => ENV["ANDROID_STORE_PASSWORD"],
-          "android.injected.signing.key.alias" => ENV["ANDROID_KEY_ALIAS"],
-          "android.injected.signing.key.password" => ENV["ANDROID_KEY_PASSWORD"]
-        }
+        properties: signing
       )
       
       puts "✓ #{app['name']} built"

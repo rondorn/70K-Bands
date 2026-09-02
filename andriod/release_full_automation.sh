@@ -67,14 +67,47 @@ selected_apps_label() {
     echo "$result"
 }
 
+gradle_signing_for() {
+    local app_name="$1"
+    local store_file key_alias
+    store_file="$(python3 scripts/resolve_android_signing.py --name "$app_name" --field path)"
+    key_alias="$(python3 scripts/resolve_android_signing.py --name "$app_name" --field alias)"
+    GRADLE_SIGNING_APP=(
+        -Pandroid.injected.signing.store.file="$store_file"
+        -Pandroid.injected.signing.store.password="$ANDROID_STORE_PASSWORD"
+        -Pandroid.injected.signing.key.alias="$key_alias"
+        -Pandroid.injected.signing.key.password="$ANDROID_KEY_PASSWORD"
+    )
+    SIGNING_STORE_FILE="$store_file"
+    SIGNING_KEY_ALIAS="$key_alias"
+}
+
+verify_selected_keystores() {
+    local app_name store_file key_alias
+    echo -e "${BLUE}Upload keys (from apps_config.json):${NC}"
+    for app_name in "$@"; do
+        store_file="$(python3 scripts/resolve_android_signing.py --name "$app_name" --field path)"
+        key_alias="$(python3 scripts/resolve_android_signing.py --name "$app_name" --field alias)"
+        if [ ! -f "$store_file" ]; then
+            echo -e "${RED}Error: keystore for ${app_name} not found${NC}"
+            echo "Expected at: $store_file"
+            exit 1
+        fi
+        echo "  ${app_name} → ${store_file} (alias: ${key_alias})"
+    done
+    echo ""
+}
+
 run_build_job() {
     local label="$1"
     local task="$2"
     local log_file="$LOG_DIR/${task}.log"
 
+    gradle_signing_for "$label"
     mkdir -p "$LOG_DIR"
     echo -e "${BLUE}Building ${label} AAB…${NC} (log: ${log_file})"
-    if ./gradlew "$task" "${GRADLE_SIGNING[@]}" >"$log_file" 2>&1; then
+    echo -e "${BLUE}  signing: ${SIGNING_STORE_FILE} (${SIGNING_KEY_ALIAS})${NC}"
+    if ./gradlew "$task" "${GRADLE_SIGNING_APP[@]}" >"$log_file" 2>&1; then
         echo -e "${GREEN}✓ ${label} built${NC}"
         return 0
     fi
@@ -179,24 +212,22 @@ set -a
 source .env
 set +a
 
-GRADLE_SIGNING=(
-    -Pandroid.injected.signing.store.file="$ANDROID_KEYSTORE_PATH"
-    -Pandroid.injected.signing.store.password="$ANDROID_STORE_PASSWORD"
-    -Pandroid.injected.signing.key.alias="$ANDROID_KEY_ALIAS"
-    -Pandroid.injected.signing.key.password="$ANDROID_KEY_PASSWORD"
-)
-
 if [ ! -f "$GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" ]; then
     echo -e "${RED}Error: Google Play service account JSON not found${NC}"
     echo "Expected at: $GOOGLE_PLAY_SERVICE_ACCOUNT_JSON"
     exit 1
 fi
 
-if [ ! -f "$ANDROID_KEYSTORE_PATH" ]; then
-    echo -e "${RED}Error: Android keystore not found${NC}"
-    echo "Expected at: $ANDROID_KEYSTORE_PATH"
+if [ -z "$ANDROID_STORE_PASSWORD" ] || [ -z "$ANDROID_KEY_PASSWORD" ]; then
+    echo -e "${RED}Error: ANDROID_STORE_PASSWORD and ANDROID_KEY_PASSWORD must be set in .env${NC}"
     exit 1
 fi
+
+SELECTED_APP_NAMES=()
+[ "$DO_70K" = true ] && SELECTED_APP_NAMES+=("70K Bands")
+[ "$DO_MDF" = true ] && SELECTED_APP_NAMES+=("MDF Bands")
+[ "$DO_MMF" = true ] && SELECTED_APP_NAMES+=("MMF Bands")
+verify_selected_keystores "${SELECTED_APP_NAMES[@]}"
 
 PREV_VALUES_FILE=".release_previous_values"
 if [ -f "$PREV_VALUES_FILE" ]; then
@@ -225,6 +256,12 @@ fi
 
 if [ -z "$VERSION_CODE" ]; then
     echo -e "${RED}Error: Version code required${NC}"
+    exit 1
+fi
+
+if [[ ! "$VERSION_CODE" =~ ^[0-9]+$ ]]; then
+    echo -e "${RED}Error: Version code must be an integer (got: ${VERSION_CODE})${NC}"
+    echo "Do not enter the keystore alias here — that is shown above for signing only."
     exit 1
 fi
 
@@ -312,9 +349,20 @@ echo -e "${BLUE}Step 4: Updating Build Configuration${NC}"
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
-sed -i.bak "s/versionCode [0-9]*/versionCode $VERSION_CODE/" app/build.gradle
-sed -i.bak "s/versionName \"[^\"]*\"/versionName \"$VERSION_NAME\"/" app/build.gradle
-rm app/build.gradle.bak
+# Only rewrite the defaultConfig assignments (start of line). A loose
+# `versionCode [0-9]*` also matches comments and `[0-9]*` can match nothing.
+sed -i.bak -E \
+    "s/^([[:space:]]*versionCode)[[:space:]]+[0-9]+/\1 ${VERSION_CODE}/" \
+    app/build.gradle
+sed -i.bak -E \
+    "s/^([[:space:]]*versionName)[[:space:]]+\"[^\"]*\"/\1 \"${VERSION_NAME}\"/" \
+    app/build.gradle
+rm -f app/build.gradle.bak
+
+if ! grep -Eq "^[[:space:]]*versionCode[[:space:]]+${VERSION_CODE}$" app/build.gradle; then
+    echo -e "${RED}Error: failed to set versionCode ${VERSION_CODE} in app/build.gradle${NC}"
+    exit 1
+fi
 
 echo -e "${GREEN}✓ Build configuration updated${NC}"
 echo ""

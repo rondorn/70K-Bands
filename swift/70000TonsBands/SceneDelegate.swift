@@ -32,8 +32,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     func sceneWillEnterForeground(_ scene: UIScene) {
         guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else { return }
-        FirebaseSyncTrace.log("sceneWillEnterForeground", "checking foreground recovery")
-        appDelegate.recoverDeferredBackgroundWorkOnForeground()
+        FirebaseSyncTrace.log("sceneWillEnterForeground", "true background return check")
+        appDelegate.handleAppReturningFromBackground()
     }
 
     func sceneWillResignActive(_ scene: UIScene) {

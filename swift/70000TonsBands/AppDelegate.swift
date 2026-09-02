@@ -48,6 +48,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     private let backgroundSyncDebounceSeconds: TimeInterval = 2.0
     private var lastForegroundRecoveryTrigger: Date?
     private let foregroundRecoveryDebounceSeconds: TimeInterval = 2.0
+    /// True after a real scene/app background. Consumed on foreground so details/preferences
+    /// navigation (which never backgrounds the scene) does not start a core CSV refresh.
+    private var hasEnteredBackgroundForCoreRefresh = false
+    private var lastCoreRefreshFromBackgroundAt: Date?
+    private let coreRefreshFromBackgroundMinInterval: TimeInterval = 5.0
+    private let coreRefreshLock = NSLock()
     private var firebaseSyncInFlight = false
     private var bulkDownloadInFlight = false
     private let bulkDownloadLock = NSLock()
@@ -859,6 +865,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
 
     /// Shared background handler — called from AppDelegate and SceneDelegate.
     func handleAppEnteringBackground(application: UIApplication) {
+        coreRefreshLock.lock()
+        hasEnteredBackgroundForCoreRefresh = true
+        coreRefreshLock.unlock()
+
         if let lastTrigger = lastBackgroundSyncTrigger,
            Date().timeIntervalSince(lastTrigger) < backgroundSyncDebounceSeconds {
             FirebaseSyncTrace.log("SKIP handleAppEnteringBackground", "debounced")
@@ -867,7 +877,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         lastBackgroundSyncTrigger = Date()
 
         FirebaseSyncTrace.snapshot("enterBackground-start")
-        print("🔄 App entering background - Firebase/iCloud/alerts only (image/notes prefetch is launch-only)")
+        print("🔄 App entering background — marking true background for core refresh on return")
         print("🔍 DEBUG: App state: \(application.applicationState.rawValue)")
         print("🔍 DEBUG: Active scenes: \(UIApplication.shared.connectedScenes.count)")
         
@@ -1293,25 +1303,43 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
 
 
     func applicationWillEnterForeground(_ application: UIApplication) {
-        // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
-        
-        print("AppDelegate: App entering foreground - using same robust refresh as pull-to-refresh")
-        
-        // CRITICAL: Synchronize UserDefaults to pick up any Settings.bundle changes (like PointerUrl)
+        handleAppReturningFromBackground()
+    }
+
+    /// True background → foreground (Home, app switcher, lock/unlock). Not details or preferences.
+    /// Scene-based apps get this from SceneDelegate; AppDelegate is a deduped fallback.
+    func handleAppReturningFromBackground() {
+        recoverDeferredBackgroundWorkOnForeground()
+
         UserDefaults.standard.synchronize()
-        print("🔧 [POINTER_DEBUG] UserDefaults synchronized in applicationWillEnterForeground")
-        
-        // Move all potentially blocking operations to background thread
+
+        coreRefreshLock.lock()
+        let cameFromBackground = hasEnteredBackgroundForCoreRefresh
+        hasEnteredBackgroundForCoreRefresh = false
+        let lastRefresh = lastCoreRefreshFromBackgroundAt
+        coreRefreshLock.unlock()
+
+        guard cameFromBackground else {
+            print("📦 [FOREGROUND_REFRESH] skip — not a true background return (launch, details, or preferences)")
+            return
+        }
+
+        if let lastRefresh,
+           Date().timeIntervalSince(lastRefresh) < coreRefreshFromBackgroundMinInterval {
+            print("📦 [FOREGROUND_REFRESH] skip — core refresh started \(Int(Date().timeIntervalSince(lastRefresh)))s ago")
+            return
+        }
+
+        coreRefreshLock.lock()
+        lastCoreRefreshFromBackgroundAt = Date()
+        coreRefreshLock.unlock()
+
+        print("📦 [FOREGROUND_REFRESH] true background return — pointer, artists, schedule, description map, then bulk")
         DispatchQueue.global(qos: .utility).async {
-            // Force iCloud synchronization when app enters foreground
-            print("iCloud: App entering foreground, forcing iCloud synchronization in background")
             NSUbiquitousKeyValueStore.default.synchronize()
-            
-            // Post foreground refresh notification on main thread after sync completes
-            DispatchQueue.main.async {
-                print("iCloud: Foreground sync complete, posting foreground refresh notification")
-                NotificationCenter.default.post(name: Notification.Name("ForegroundRefresh"), object: nil)
-            }
+        }
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: Notification.Name("ForegroundRefresh"), object: nil)
         }
     }
 

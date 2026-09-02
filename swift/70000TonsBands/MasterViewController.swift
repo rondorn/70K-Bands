@@ -5751,7 +5751,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     @objc func handleForegroundRefresh() {
-        print("🔄 FOREGROUND-REFRESH: Triggered - using unified refresh system")
+        print("🔄 FOREGROUND-REFRESH: Triggered after true background return (not details/preferences)")
         
         // Prevent conflicts with existing data collection processes
         guard !isLoadingBandData, !bandNameHandle.readingBandFile else {
