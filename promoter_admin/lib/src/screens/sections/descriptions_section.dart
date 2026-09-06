@@ -14,6 +14,7 @@ import 'package:promoter_admin/src/widgets/centered_when_wrapped.dart';
 import 'package:promoter_admin/src/widgets/compact_section_list.dart';
 import 'package:promoter_admin/src/widgets/description_editor_indicator.dart';
 import 'package:promoter_admin/src/widgets/dropbox_folder_picker.dart';
+import 'package:promoter_admin/src/widgets/import_descriptions_folder_dialog.dart';
 import 'package:promoter_admin/src/widgets/layout_breakpoints.dart';
 
 enum _FormMode { addDescription, addLink, edit }
@@ -680,6 +681,53 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
     }
   }
 
+  Future<List<String>> _lineupNamesForImport() async {
+    final bands = await widget.lineupService.load(widget.workspace);
+    return [
+      for (final band in bands)
+        if (band.name.trim().isNotEmpty) band.name.trim(),
+    ];
+  }
+
+  Future<void> _importFromDropboxFolder() async {
+    if (!_canEditMap) return;
+    if (!widget.dropboxConnected) {
+      await widget.onConnectDropbox();
+      return;
+    }
+    final request = await showImportDescriptionsFolderDialog(context: context);
+    if (request == null || !mounted) return;
+
+    setState(() {
+      _saving = true;
+      _error = null;
+      _message = null;
+    });
+    try {
+      final lineupNames = await _lineupNamesForImport();
+      final result =
+          await widget.descriptionMapService.importLinksFromDropboxFolder(
+        workspace: widget.workspace,
+        folderShareUrl: request.folderUrl,
+        lineupNames: lineupNames,
+        overrideExisting: request.overrideExisting,
+      );
+      await _load();
+      if (!mounted) return;
+      setState(() {
+        _saving = false;
+        _message = result.message;
+      });
+      widget.onTestingDataChanged?.call();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _saving = false;
+        _error = e.toString();
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading && widget.tab == DescriptionsTab.list) {
@@ -757,6 +805,14 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
             children: [
               const DescriptionEditorLegend(),
               _editorSummaryLine(),
+              if (_canEditMap)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: OutlinedButton(
+                    onPressed: _saving ? null : _importFromDropboxFolder,
+                    child: const Text('Import from Dropbox folder'),
+                  ),
+                ),
             ],
           ),
         ),

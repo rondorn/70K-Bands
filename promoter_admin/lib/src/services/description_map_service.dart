@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:promoter_admin/src/models/festival_workspace.dart';
 import 'package:promoter_admin/src/services/csv_staging.dart';
 import 'package:promoter_admin/src/services/csv_util.dart';
+import 'package:promoter_admin/src/services/description_folder_import.dart';
 import 'package:promoter_admin/src/services/dropbox_api.dart';
 import 'package:promoter_admin/src/services/dropbox_auth.dart';
 import 'package:promoter_admin/src/services/emergency_local_mode_support.dart';
@@ -366,6 +367,84 @@ class DescriptionMapService {
       (a, b) => a.band.toLowerCase().compareTo(b.band.toLowerCase()),
     );
     await save(workspace, updated);
+  }
+
+  /// Link existing Dropbox `.txt` files from [folderShareUrl] onto the map.
+  ///
+  /// Files are not copied. Matching uses the Testing lineup only. Unmatched
+  /// files are ignored. Ambiguous matches are skipped and reported.
+  Future<DescriptionFolderImportResult> importLinksFromDropboxFolder({
+    required FestivalWorkspace workspace,
+    required String folderShareUrl,
+    required List<String> lineupNames,
+    bool overrideExisting = false,
+  }) async {
+    final url = folderShareUrl.trim();
+    if (url.isEmpty) {
+      throw StateError('A Dropbox folder URL is required.');
+    }
+    final files = await dropboxApi.listFilesInShareFolder(url);
+    final entries = await load(workspace);
+    final existingUrlByBandLower = <String, String>{};
+    for (final entry in entries) {
+      final band = entry.band.trim();
+      if (band.isEmpty) continue;
+      existingUrlByBandLower.putIfAbsent(band.toLowerCase(), () => entry.url);
+    }
+    final plan = planDescriptionFolderImport(
+      lineupNames: lineupNames,
+      files: [
+        for (final file in files)
+          DescriptionImportFile(fileName: file.name, filePath: file.path),
+      ],
+      existingUrlByBandLower: existingUrlByBandLower,
+      overrideExisting: overrideExisting,
+    );
+
+    if (plan.toLink.isEmpty) {
+      return DescriptionFolderImportResult(
+        added: 0,
+        updated: 0,
+        skippedExisting: plan.skippedExisting,
+        ambiguousBands: plan.ambiguousBands,
+      );
+    }
+
+    final editor = await _currentEditorLabel();
+    final updated = List<DescriptionMapEntry>.from(entries);
+    var added = 0;
+    var replaced = 0;
+    for (final item in plan.toLink) {
+      final shareUrl = await dropboxApi.shareUrlForPath(item.filePath);
+      final storedUrl = normalizeDropboxUrl(shareUrl.trim());
+      final idx = updated.indexWhere(
+        (e) => e.band.toLowerCase() == item.bandName.toLowerCase(),
+      );
+      final previousDate = idx >= 0 ? updated[idx].date : '';
+      final row = DescriptionMapEntry(
+        band: idx >= 0 ? updated[idx].band : item.bandName,
+        url: storedUrl,
+        date: nextCacheDate(previousDate),
+        updatedBy: normalizeUpdatedBy(editor),
+      );
+      if (idx >= 0) {
+        updated[idx] = row;
+        replaced++;
+      } else {
+        updated.add(row);
+        added++;
+      }
+    }
+    updated.sort(
+      (a, b) => a.band.toLowerCase().compareTo(b.band.toLowerCase()),
+    );
+    await save(workspace, updated);
+    return DescriptionFolderImportResult(
+      added: added,
+      updated: replaced,
+      skippedExisting: plan.skippedExisting,
+      ambiguousBands: plan.ambiguousBands,
+    );
   }
 
   Future<void> removeMapEntry({

@@ -253,7 +253,7 @@ The report opens inside the app. Reports are read-only here — updating stats i
 
 **Nav:** DESCRIPTIONS → **Descriptions**
 
-This screen lists **every artist** and whether they already have a fan-facing blurb. Use it when you want to scan the whole festival at once, or when you need **Attach Link** / **Delete** (those aren’t on the artist form).
+This screen lists **every artist** and whether they already have a fan-facing blurb. Use it when you want to scan the whole festival at once, or when you need **Attach Link** / **Delete** / **Import from Dropbox folder** (those aren’t on the artist form).
 
 You can write or change the same blurbs **on the artist add/edit form** instead (see [Descriptions while you add or edit a band](#descriptions-while-you-add-or-edit-a-band)). Pick whichever screen fits your task.
 
@@ -261,6 +261,7 @@ You can write or change the same blurbs **on the artist add/edit form** instead 
 
 - See who still needs a write-up  
 - **Attach Link** — a description file already exists on Dropbox; connect it to the right band *(Descriptions write access in Settings)*  
+- **Import from Dropbox folder** — connect many existing `.txt` files at once *(Descriptions write access)*  
 - **Delete** — remove a band’s description from the festival list *(Descriptions write access)*  
 - Work straight down the lineup fixing text
 
@@ -274,12 +275,26 @@ When you **Edit** here, choose **Edit description text** or **Edit description l
 
 ![Create Description](./images/descriptions-create.png)
 
+### Import many descriptions from a Dropbox folder
+
+Use this when the write-ups already live in Dropbox as `.txt` files and you want to attach them to the lineup in one step. The files stay where they are — the app only links them.
+
+1. Connect Dropbox, and make sure Settings → **File access** shows **write** on **Descriptions**.  
+2. On the Descriptions list, click **Import from Dropbox folder**.  
+3. Paste a Dropbox **folder** link (the folder that contains the `.txt` files).  
+4. Leave **Override existing** unchecked unless you want to replace links that are already on the list.  
+5. Click **Import**.
+
+A file named `Lathe.txt` is attached to the lineup band **Lathe**. Spaces in a band name become underscores in the file name (`Arch Enemy` → `Arch_Enemy.txt`). Names are not case-sensitive.
+
+Files that don’t match a current Testing lineup band are skipped. If a band matches more than one file, or shows up more than once in the lineup, that band is skipped and listed in the result so you can clean up and import again.
+
 ### If Descriptions is locked for you
 
 Settings → **File access** may show **write** on **Artists** but not on **Descriptions**. That is normal when one person owns the lineup and another owns the write-ups.
 
 - You can still use **Create Description** on this list, or **Add description** on the artist form — the app saves your text and shows a **link to copy**. Send that link to whoever maintains the description list.  
-- **Edit**, **Delete**, **Attach Link**, and **Edit description** on the artist form stay unavailable until your festival contact shares **edit** access on the description file with your Dropbox email, then you **Refresh file access** in Settings.
+- **Edit**, **Delete**, **Attach Link**, **Import from Dropbox folder**, and **Edit description** on the artist form stay unavailable until your festival contact shares **edit** access on the description file with your Dropbox email, then you **Refresh file access** in Settings.
 
 ---
 
@@ -558,7 +573,7 @@ Volunteers who can’t Publish still improve Testing for whoever does.
 | **Nothing to publish** / green **Production is up to date** | Testing matches Production — make and save changes in Testing first, or wait for **…still saving…** to finish.                                                                                                                                                                                                               |
 | Orange **Ready to publish** badge                           | You have unpublished Testing changes — open **Publish** and review **What will change in Production** before confirming.                                                                                                                                                                                                     |
 | No **Edit description** on Artists                          | Same as missing **Descriptions** write access in Settings → **File access**. **Add description** still works — copy the handoff link.                                                                                                                                                                                        |
-| No Edit / Attach Link on Descriptions                       | Need **write** on **Descriptions** in **File access**, not just **Artists**. **Create Description** and **Add description** still work — copy the URL for whoever maintains the description list.                                                                                                                            |
+| No Edit / Attach Link / **Import from Dropbox folder** on Descriptions | Need **write** on **Descriptions** in **File access**, not just **Artists**. **Create Description** and **Add description** still work — copy the URL for whoever maintains the description list.                                                                                                                            |
 | Export vs official schedule                                 | Promoters may publish exports as the official running order. Don’t circulate one that competes with an existing official PDF or web schedule.                                                                                                                                                                                |
 | No **QR poster** in Export                                  | Your festival may not support offline QR schedule updates yet — ask your app maintainer. You still need a loaded lineup (**Load festival data**).                                                                                                                                                                            |
 | QR poster won’t scan well                                   | Print at **100% scale**; avoid shrinking the PDF to fit. Reprint if the schedule changed after you exported.                                                                                                                                                                                                                 |
