@@ -403,6 +403,9 @@ class _SettingsSectionState extends State<SettingsSection> {
       case FestivalAccessFolderKind.descriptions:
         return widget.workspace.descriptionMapUrl.trim().isNotEmpty ||
             widget.workspace.descriptionFilesFolderPath.trim().isNotEmpty;
+      case FestivalAccessFolderKind.reports:
+        return widget.workspace.reportsFolderUrl.trim().isNotEmpty ||
+            widget.workspace.reportFilesFolderPath.trim().isNotEmpty;
     }
   }
 
@@ -2033,27 +2036,28 @@ class _SettingsSectionState extends State<SettingsSection> {
                         : (v) =>
                               setState(() => _canEditDescriptions = v ?? false),
                   ),
-                  if (widget.workspace.reportsFolderUrl.trim().isNotEmpty)
-                    CheckboxListTile(
-                      contentPadding: EdgeInsets.zero,
-                      dense: true,
-                      controlAffinity: ListTileControlAffinity.leading,
-                      title: const Text('Stats reports'),
-                      subtitle: Text(
-                        _canViewReports
-                            ? 'Write access to reports folder — Reports section shown'
-                            : 'No write access — Reports section hidden',
-                        style: const TextStyle(
-                          color: AppColors.muted,
-                          fontSize: 12,
-                        ),
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    title: const Text('Reports'),
+                    subtitle: Text(
+                      widget.workspace.reportsFolderUrl.trim().isEmpty
+                          ? 'No reports folder yet'
+                          : (_canViewReports
+                                ? 'Write access — Reports section shown'
+                                : 'No write access — Reports section hidden'),
+                      style: const TextStyle(
+                        color: AppColors.muted,
+                        fontSize: 12,
                       ),
-                      value: _canViewReports,
-                      onChanged: _busy
-                          ? null
-                          : (v) =>
-                                setState(() => _canViewReports = v ?? false),
                     ),
+                    value: _canViewReports,
+                    onChanged: _busy
+                        ? null
+                        : (v) =>
+                              setState(() => _canViewReports = v ?? false),
+                  ),
                   Padding(
                     padding: const EdgeInsets.only(top: 4, bottom: 4),
                     child: Text(
@@ -2089,9 +2093,10 @@ class _SettingsSectionState extends State<SettingsSection> {
                   children: [
                     const HintText(
                       'Grant Dropbox folder access so collaborators can edit only '
-                      'master (pointer) files, artists, schedule, descriptions, or '
-                      'the alert monitoring folder. Master access is the most '
-                      'restricted — use it for year transitions and pointer control.',
+                      'master (pointer) files, artists, schedule, descriptions, '
+                      'the alert monitoring folder, or the reports folder. Master '
+                      'access is the most restricted — use it for year transitions '
+                      'and pointer control.',
                     ),
                     const SizedBox(height: 8),
                     ..._manageableFolderAccessKinds().map(
@@ -3277,6 +3282,8 @@ class _FolderAccessControls extends StatelessWidget {
     final pathHint = switch (kind) {
       FestivalAccessFolderKind.alerts =>
         '(folder path will be detected from the alert folder link)',
+      FestivalAccessFolderKind.reports =>
+        '(folder path will be detected from the reports folder link)',
       FestivalAccessFolderKind.master =>
         '(folder path will be detected from pointer links)',
       _ => '(folder path will be detected from data files)',

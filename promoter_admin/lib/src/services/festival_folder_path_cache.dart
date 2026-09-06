@@ -53,7 +53,8 @@ class FestivalFolderPathCache {
         before.ownsArtistFilesFolder != after.ownsArtistFilesFolder ||
         before.ownsScheduleFilesFolder != after.ownsScheduleFilesFolder ||
         before.ownsDescriptionFilesFolder != after.ownsDescriptionFilesFolder ||
-        before.ownsAlertFilesFolder != after.ownsAlertFilesFolder;
+        before.ownsAlertFilesFolder != after.ownsAlertFilesFolder ||
+        before.ownsReportFilesFolder != after.ownsReportFilesFolder;
   }
 
   /// Whether a background Dropbox probe found anything worth refreshing in UI.
@@ -199,6 +200,7 @@ class FestivalFolderPathCache {
       FestivalAccessFolderKind.descriptions =>
         workspace.descriptionFilesFolderPath,
       FestivalAccessFolderKind.alerts => workspace.alertFilesFolderPath,
+      FestivalAccessFolderKind.reports => workspace.reportFilesFolderPath,
     }.trim();
     return path.isEmpty ? null : path;
   }
@@ -215,6 +217,15 @@ class FestivalFolderPathCache {
         if (alertUrl.isEmpty) return null;
         try {
           return await dropboxApi.resolveApiPath(alertUrl);
+        } catch (_) {
+          return cachedPathFor(workspace, kind);
+        }
+
+      case FestivalAccessFolderKind.reports:
+        final reportsUrl = workspace.reportsFolderUrl.trim();
+        if (reportsUrl.isEmpty) return null;
+        try {
+          return await dropboxApi.resolveApiPath(reportsUrl);
         } catch (_) {
           return cachedPathFor(workspace, kind);
         }

@@ -1197,6 +1197,7 @@ class DropboxApi {
       workspace.scheduleFilesFolderPath.trim(),
       workspace.descriptionFilesFolderPath.trim(),
       workspace.alertFilesFolderPath.trim(),
+      workspace.reportFilesFolderPath.trim(),
     ];
 
     final results = await Future.wait([
@@ -1215,6 +1216,9 @@ class DropboxApi {
       paths[4].isEmpty
           ? Future<bool>.value(false)
           : isFolderOwner(paths[4]),
+      paths[5].isEmpty
+          ? Future<bool>.value(false)
+          : isFolderOwner(paths[5]),
     ]);
 
     return workspace.copyWith(
@@ -1223,6 +1227,7 @@ class DropboxApi {
       ownsScheduleFilesFolder: results[2],
       ownsDescriptionFilesFolder: results[3],
       ownsAlertFilesFolder: results[4],
+      ownsReportFilesFolder: results[5],
     );
   }
 }

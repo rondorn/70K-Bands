@@ -45,6 +45,7 @@ class FestivalWorkspace {
     this.ownsScheduleFilesFolder = false,
     this.ownsDescriptionFilesFolder = false,
     this.ownsAlertFilesFolder = false,
+    this.ownsReportFilesFolder = false,
     this.ownsMasterFilesFolder = false,
   });
 
@@ -149,6 +150,7 @@ class FestivalWorkspace {
   final bool ownsScheduleFilesFolder;
   final bool ownsDescriptionFilesFolder;
   final bool ownsAlertFilesFolder;
+  final bool ownsReportFilesFolder;
   final bool ownsMasterFilesFolder;
 
   bool get hasSplitAccessFolders =>
@@ -164,6 +166,7 @@ class FestivalWorkspace {
       ownsScheduleFilesFolder ||
       ownsDescriptionFilesFolder ||
       ownsAlertFilesFolder ||
+      ownsReportFilesFolder ||
       ownsMasterFilesFolder;
 
   bool get hasTestingPointer => testingPointerUrl.trim().isNotEmpty;
@@ -271,6 +274,7 @@ class FestivalWorkspace {
     bool? ownsScheduleFilesFolder,
     bool? ownsDescriptionFilesFolder,
     bool? ownsAlertFilesFolder,
+    bool? ownsReportFilesFolder,
     bool? ownsMasterFilesFolder,
   }) {
     return FestivalWorkspace(
@@ -327,6 +331,8 @@ class FestivalWorkspace {
       ownsDescriptionFilesFolder:
           ownsDescriptionFilesFolder ?? this.ownsDescriptionFilesFolder,
       ownsAlertFilesFolder: ownsAlertFilesFolder ?? this.ownsAlertFilesFolder,
+      ownsReportFilesFolder:
+          ownsReportFilesFolder ?? this.ownsReportFilesFolder,
       ownsMasterFilesFolder:
           ownsMasterFilesFolder ?? this.ownsMasterFilesFolder,
     );

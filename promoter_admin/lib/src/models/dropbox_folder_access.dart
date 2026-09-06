@@ -50,7 +50,8 @@ enum FestivalAccessFolderKind {
   artists,
   schedule,
   descriptions,
-  alerts;
+  alerts,
+  reports;
 
   String get settingsLabel {
     switch (this) {
@@ -64,6 +65,8 @@ enum FestivalAccessFolderKind {
         return 'Descriptions';
       case FestivalAccessFolderKind.alerts:
         return 'Alerts';
+      case FestivalAccessFolderKind.reports:
+        return 'Reports';
     }
   }
 
@@ -79,6 +82,29 @@ enum FestivalAccessFolderKind {
         return 'Grant Description Access Rights';
       case FestivalAccessFolderKind.alerts:
         return 'Grant Alert Monitoring Access Rights';
+      case FestivalAccessFolderKind.reports:
+        return 'Grant Reports Access Rights';
+    }
+  }
+
+  String get grantDialogBody {
+    switch (this) {
+      case FestivalAccessFolderKind.reports:
+        return 'Dropbox will email an invitation. The recipient must accept '
+            'before they can open the Reports section (write access to the '
+            'reports folder).';
+      default:
+        return 'Dropbox will email an invitation. The recipient must accept '
+            'before they can edit ${settingsLabel.toLowerCase()} files.';
+    }
+  }
+
+  String get inviteTargetPhrase {
+    switch (this) {
+      case FestivalAccessFolderKind.reports:
+        return 'the Reports folder';
+      default:
+        return '$settingsLabel files';
     }
   }
 }

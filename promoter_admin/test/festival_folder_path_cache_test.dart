@@ -35,6 +35,36 @@ void main() {
       ),
       isNull,
     );
+    expect(
+      FestivalFolderPathCache.cachedPathFor(
+        workspace,
+        FestivalAccessFolderKind.reports,
+      ),
+      isNull,
+    );
+  });
+
+  test('cachedPathFor returns reports folder path', () {
+    const workspace = FestivalWorkspace(
+      reportFilesFolderPath: '/Festival_Reports',
+    );
+    expect(
+      FestivalFolderPathCache.cachedPathFor(
+        workspace,
+        FestivalAccessFolderKind.reports,
+      ),
+      '/Festival_Reports',
+    );
+  });
+
+  test('ownershipDiffers detects reports ownership change', () {
+    const before = FestivalWorkspace(ownsReportFilesFolder: false);
+    const after = FestivalWorkspace(ownsReportFilesFolder: true);
+    expect(FestivalFolderPathCache.ownershipDiffers(before, after), isTrue);
+    expect(
+      FestivalFolderPathCache.backgroundProbeDiffers(before, after),
+      isTrue,
+    );
   });
 
   test('backgroundProbeDiffers ignores unchanged workspace', () {

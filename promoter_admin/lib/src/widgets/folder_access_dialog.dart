@@ -12,14 +12,15 @@ Future<void> showGrantFolderAccessDialog({
   required FestivalWorkspace workspace,
   required FestivalAccessFolderKind kind,
 }) async {
+  final messenger = ScaffoldMessenger.maybeOf(context);
   final emailController = TextEditingController();
   var busy = false;
   String? error;
 
   await showDialog<void>(
     context: context,
-    builder: (context) => StatefulBuilder(
-      builder: (context, setState) {
+    builder: (dialogContext) => StatefulBuilder(
+      builder: (dialogContext, setState) {
         Future<void> submit() async {
           final email = emailController.text.trim();
           if (email.isEmpty) {
@@ -36,17 +37,17 @@ Future<void> showGrantFolderAccessDialog({
               kind: kind,
               email: email,
             );
-            if (context.mounted) {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Dropbox invited $email to ${kind.settingsLabel} files.',
-                  ),
+            if (!dialogContext.mounted) return;
+            Navigator.pop(dialogContext);
+            messenger?.showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Dropbox invited $email to ${kind.inviteTargetPhrase}.',
                 ),
-              );
-            }
+              ),
+            );
           } catch (e) {
+            if (!dialogContext.mounted) return;
             setState(() {
               busy = false;
               error = e.toString();
@@ -64,8 +65,7 @@ Future<void> showGrantFolderAccessDialog({
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Dropbox will email an invitation. The recipient must accept '
-                  'before they can edit ${kind.settingsLabel.toLowerCase()} files.',
+                  kind.grantDialogBody,
                   style: const TextStyle(color: AppColors.muted, fontSize: 13),
                 ),
                 const SizedBox(height: 12),
@@ -90,7 +90,7 @@ Future<void> showGrantFolderAccessDialog({
           ),
           actions: [
             TextButton(
-              onPressed: busy ? null : () => Navigator.pop(context),
+              onPressed: busy ? null : () => Navigator.pop(dialogContext),
               child: const Text('Cancel'),
             ),
             FilledButton(

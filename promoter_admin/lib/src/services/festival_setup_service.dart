@@ -176,6 +176,7 @@ class FestivalSetupService {
         reportDiscoveryFolderUrl: current.reportDiscoveryFolderUrl,
         reportFilesFolderPath: current.reportFilesFolderPath,
         canViewReports: current.canViewReports,
+        ownsReportFilesFolder: current.ownsReportFilesFolder,
       );
     }
     if (!package.includesAlerts) {

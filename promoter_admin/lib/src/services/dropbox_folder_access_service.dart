@@ -28,6 +28,8 @@ class DropboxFolderAccessService {
         return workspace.ownsDescriptionFilesFolder;
       case FestivalAccessFolderKind.alerts:
         return workspace.ownsAlertFilesFolder;
+      case FestivalAccessFolderKind.reports:
+        return workspace.ownsReportFilesFolder;
     }
   }
 

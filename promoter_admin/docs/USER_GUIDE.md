@@ -110,8 +110,8 @@ Otherwise you’ll mainly use Settings once:
 - **Alert folder** — only if your festival uses push announcements (optional). **Create alert folder on Dropbox** appears when you’re connected and the field is empty.  
 - **Festival logo** — optional image URL; a preview appears as you paste the link. Used on exported running-order pages. Dropbox links you paste with `dl=0` are shown and saved as `raw=1` automatically.  
 - **Data files** — read-only list of the artists, schedule, and description map URLs the app is using. Festival owners with Testing-link write access also see **Testing vs Production files** controls (share or separate artists / description map) and **Add new year…**.  
-- **File access** — what you can edit (Artists, Schedule, Descriptions). Use **Refresh file access** if rights were just shared and buttons still look locked. Uncheck a row if detection is wrong or you don’t use that area. When a **Reports folder** is set, a **Stats reports** row shows whether you can open the Reports section (based on write access to that folder).  
-- **Folder access** — (festival owners) invite collaborators by email to specific Dropbox folders (artists, schedule, descriptions, alerts, or master pointer files).  
+- **File access** — what you can edit (Artists, Schedule, Descriptions) and whether **Reports** is shown. Use **Refresh file access** if rights were just shared and buttons still look locked. Uncheck a row if detection is wrong or you don’t use that area. **Reports** is based on write access to the reports folder.  
+- **Folder access** — (festival owners) invite collaborators by email to specific Dropbox folders (artists, schedule, descriptions, alerts, reports, or master pointer files).  
 - **Lineup options** — **Use city/state fields** for festivals that track local artist location.  
 - **Venues / Days / Dates / Date rollover / Event types** — vocabulary for Schedule Entry (filled from a setup import, or once by Load when empty; you edit afterward).  
 - **Days / Dates** — keep them in matching order (first Day with first Date, and so on). You need **one more date than days** so late-night sets that spill past midnight still land on the right calendar day. **Date rollover** (default 8:00 AM) is the cutoff: times before that still count as the previous festival day. Schedule Entry fills **Date** for you when you pick **Day** and start time; change Date by hand if needed.  
@@ -235,6 +235,8 @@ Under **Data files**, **Stats reports** should eventually show *End-user report 
 - Dropbox confirms you have **write access** to that folder (same idea as other file access — your festival contact shares the folder with your Dropbox email).
 
 You don’t need write access to change report files; it is only used to decide who may open the viewer. If **Reports** is missing, ask for share access to the reports folder, then **Refresh file access** in Settings.
+
+Festival owners who own the reports Dropbox folder also see **Grant Reports Access Rights** under **Folder access** in Settings — same invite/revoke controls as artists, schedule, descriptions, and alerts.
 
 ### Viewing reports
 
