@@ -185,12 +185,9 @@ public class ImageHandler {
         return new File(hashFilePath);
     }
 
-    /** Trims URL strings so comparisons match what we persist after download. */
+    /** Normalizes URL strings so comparisons match what we persist after download. */
     private static String normalizeImageUrlForCache(String url) {
-        if (url == null) {
-            return "";
-        }
-        return url.trim();
+        return BandInfo.normalizeImageUrl(url);
     }
 
     /**
@@ -513,6 +510,7 @@ public class ImageHandler {
             }
             
             if (imageUrl != null && !imageUrl.trim().isEmpty() && !imageUrl.equals(" ")) {
+                imageUrl = BandInfo.normalizeImageUrl(imageUrl);
                 Log.d("loadImageFile", "Downloading image immediately from URL: " + imageUrl);
                 
                 URL url = new URL(imageUrl);

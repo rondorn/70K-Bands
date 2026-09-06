@@ -137,6 +137,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     public static Boolean returningFromDetailsScreen = false;
 
     private static final int REQUEST_CODE_BAND_DETAILS = 1001;
+    private static final int REQUEST_CODE_PREFERENCES = 1;
 
     /** Set when launching band details; cleared after list refresh on return. */
     private boolean openedDetailsScreen = false;
@@ -2230,7 +2231,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         Intent showPreferences = new Intent(showBands.this, preferenceLayout.class);
         // Update activity reference for progress indicator if downloads are running
         ForegroundDownloadManager.setCurrentActivity(showBands.this);
-        startActivityForResult(showPreferences, 1);
+        startActivityForResult(showPreferences, REQUEST_CODE_PREFERENCES);
             }
         });
 
@@ -2349,6 +2350,14 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             } else if (requestCode == REQUEST_CODE_BAND_DETAILS) {
                 Log.d("ListRefresh", "Returned from band details — refreshing list for priority/attendance changes");
                 handleReturnFromDetailsScreen();
+            } else if (requestCode == REQUEST_CODE_PREFERENCES) {
+                Log.d("YearChange", "Returned from preferences");
+                if (staticVariables.refreshActivated) {
+                    staticVariables.refreshActivated = false;
+                    reloadUiFromCachedYearData();
+                } else {
+                    reloadData();
+                }
             } else {
                 Log.d("LANDSCAPE_SCHEDULE", "⚠️ requestCode does not match - got " + requestCode + ", expected " + ShowBandsLandscapeCoordinator.REQUEST_CODE_LANDSCAPE_SCHEDULE);
             }
@@ -2534,11 +2543,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             Log.d("MDF_DEBUG", "🚀 populateBandList() - No cached data, calling refreshNewData()");
             refreshNewData();
         } else {
-            // Show restored/offline cache immediately, then refresh pointer + CSVs in background.
-            // Required after reinstall when Android backup restores old year data but pointer advances.
+            // Show restored/offline cache immediately, then refresh pointer + CSVs in background once per process.
             Log.d("MDF_DEBUG", "🚀 populateBandList() - Has cached data, reloadData() + background core refresh");
             reloadData();
-            if (!staticVariables.loadingBands) {
+            if (!startupRefreshDone.get() && !staticVariables.loadingBands) {
                 executeAsyncListViewLoader();
             }
         }
@@ -4549,11 +4557,23 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             }
         }, 500);
         
-        // Returning from details must refresh Must/Might/Wont icons even if a background load is running.
-        if (openedDetailsScreen) {
-            Log.d("ListRefresh", "onResume fallback: returning from details screen");
-            handleReturnFromDetailsScreen();
-        } else if (!returningFromStatsPage) {
+        // Year change downloads CSVs in preferences; rebuild the list from those files (no extra download).
+        if (staticVariables.refreshActivated) {
+            staticVariables.refreshActivated = false;
+            Log.d("YearChange", "onResume: year changed — rebuilding list from cached files");
+            reloadUiFromCachedYearData();
+        } else if (openedDetailsScreen || returningFromDetailsScreen) {
+            Log.d("ListRefresh", "onResume: returning from details — UI refresh only (no network)");
+            if (openedDetailsScreen) {
+                handleReturnFromDetailsScreen();
+            }
+        } else if (returningFromStatsPage) {
+            Log.d("DisplayListData", "Skipping network refresh - returning from stats/reports");
+            returningFromStatsPage = false;
+            if (adapter != null) {
+                adapter.notifyDataSetChanged();
+            }
+        } else {
             
             // FRESH INSTALL FIX: Only trigger refresh if data loading is NOT already in progress
             // This prevents duplicate downloads on first install (onCreate already started loading)
@@ -4576,9 +4596,18 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 }
             }
             
+            boolean hasCachedFiles = FileHandler70k.bandInfo.exists() && FileHandler70k.schedule.exists();
+
             if (isWaitingForData) {
                 if (staticVariables.loadingBands) {
                     Log.d("FRESH_INSTALL", "Waiting for data — initial load still in progress");
+                    return;
+                }
+                if (hasCachedFiles) {
+                    // In-memory list can be empty after details return / cache clear — reload from disk, do not download.
+                    Log.d("FRESH_INSTALL", "Waiting placeholder but cache files exist — UI reload only");
+                    reloadData();
+                    refreshData();
                     return;
                 }
                 Log.d("FRESH_INSTALL", "Still waiting for data with no active load — retrying download");
@@ -4587,15 +4616,13 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             }
             Log.d("ListPosition", "Normal onResume - checking if offline to optimize loading");
 
-            boolean hasCachedData = FileHandler70k.bandInfo.exists() && FileHandler70k.schedule.exists();
-
-            if (!hasCachedData) {
+            if (!hasCachedFiles) {
                 Log.d("refreshNewData", "No cached data - downloading core data files");
                 refreshNewData();
             } else {
-                // Normal resume (including internal navigation and true background->foreground):
-                // - Core refresh is handled at the Application level (Bands70k -> CoreDataRefreshManager)
-                // - If schedule file was modified while in background (e.g. data added back), re-read from disk so UI and wizard see new data
+                // Normal resume (including internal navigation):
+                // - Core CSV refresh is Application-level (true background) or pull-to-refresh only
+                // - If schedule file was modified while in background, re-read from disk so UI and wizard see new data
                 if (FileHandler70k.schedule.exists()) {
                     String currentHash = CacheHashManager.getInstance().calculateFileHash(FileHandler70k.schedule);
                     String lastHash = dataTimestampPrefs.getString("schedule_hash", null);
@@ -4615,9 +4642,6 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 refreshData();
                 offerAutoSchedulePromptFromPointerThenMaybeWizard();
             }
-        } else {
-            Log.d("DisplayListData", "Skipping refresh - returning from stats page");
-            returningFromStatsPage = false; // Reset flag
         }
 
         Log.d(TAG, notificationTag + " In onResume - 3");
@@ -4824,6 +4848,41 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     }
 
     /**
+     * Rebuild the main list from band/schedule files already on disk.
+     * Used after a year change (files were downloaded in preferences) so the UI
+     * updates without treating this as launch, background, or pull-to-refresh.
+     */
+    private void reloadUiFromCachedYearData() {
+        Log.d("YearChange", "reloadUiFromCachedYearData START eventYear=" + staticVariables.eventYear
+                + " eventYearIndex=" + staticVariables.eventYearIndex);
+
+        if (listHandler != null) {
+            listHandler.clearCache();
+        }
+
+        try {
+            if (FileHandler70k.schedule != null && FileHandler70k.schedule.exists()) {
+                scheduleInfo.setLastPreviousEventKeysForWizard(scheduleInfo.collectEventKeys(BandInfo.scheduleRecords));
+                scheduleInfo schedule = new scheduleInfo();
+                BandInfo.scheduleRecords = schedule.ParseScheduleCSV();
+                Log.d("YearChange", "Re-parsed schedule: "
+                        + (BandInfo.scheduleRecords != null ? BandInfo.scheduleRecords.size() : 0) + " bands");
+                if (dataTimestampPrefs != null && FileHandler70k.schedule.exists()) {
+                    String hash = CacheHashManager.getInstance().calculateFileHash(FileHandler70k.schedule);
+                    if (hash != null) {
+                        dataTimestampPrefs.edit().putString("schedule_hash", hash).apply();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.e("YearChange", "Error re-parsing schedule after year change", e);
+        }
+
+        reloadData();
+        Log.d("YearChange", "reloadUiFromCachedYearData END");
+    }
+
+    /**
      * Reload list after band details closes so Must/Might/Wont (and related) changes appear immediately.
      */
     private void handleReturnFromDetailsScreen() {
@@ -4995,6 +5054,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             // Pre-execute on UI thread — claim the load lock before onResume can start a duplicate path.
             () -> {
                 Log.d("DisplayListData", "Refresh Stage = Pre-Start");
+                startupRefreshDone.set(true);
                 if (!staticVariables.loadingBands) {
                     staticVariables.loadingBands = true;
                     SynchronizationManager.signalBandLoadingStarted();

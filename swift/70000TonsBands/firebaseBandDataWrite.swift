@@ -121,6 +121,7 @@ class firebaseBandDataWrite {
             let sanitizedBandName = sanitizedName ?? self.sanitizeBandNameForFirebase(bandName)
             let firebasePath = "bandData/\(uid)/\(storageYear)/\(sanitizedBandName)"
             print("🔥 [FIREBASE_BAND] writeSingleRecord: Writing to Firebase path: \(firebasePath)")
+            NetworkCounter.record("Firebase-Artists")
             
             let dataToWrite: [String: Any] = [
                 "bandName": bandName,
@@ -230,6 +231,7 @@ class firebaseBandDataWrite {
             }
             
             print("🔥 [FIREBASE_BAND] writeData: BATCH setValue for \(batchUpdate.count) lineup bands at bandData/\(uid)/\(storageYear)")
+            NetworkCounter.record("Firebase-Artists")
             FirebaseSyncTrace.log("BAND setValue START", "path=bandData/\(uid)/\(storageYear) count=\(batchUpdate.count)")
             FirebaseConnectionHelper.goOnline(reason: "band_batch_write_start")
             firebaseRef.child("bandData").child(uid).child(String(storageYear)).setValue(batchUpdate) { error, _ in
@@ -248,6 +250,8 @@ class firebaseBandDataWrite {
                 finish()
             }
         } else {
+            print("🔥 [FIREBASE_BAND] writeData: Skipping — simulator/test environment (inTestEnvironment=true)")
+            NetworkCounter.record("Firebase-Artists skipped=simulator")
             finish()
         }
         

@@ -1100,6 +1100,7 @@ class iCloudDataHandler {
     /// Purges iCloud KVS keys older than 3 years, or keys without a timestamp (old format)
     func purgeOldiCloudKeys() {
         print("KVS: Starting purgeOldiCloudKeys")
+        NetworkCounter.record("iCloud-Bulk")
         let store = NSUbiquitousKeyValueStore.default
         let threeYearsAgo = Date().timeIntervalSince1970 - (3 * 365 * 24 * 60 * 60)
         let allEntries = store.dictionaryRepresentation

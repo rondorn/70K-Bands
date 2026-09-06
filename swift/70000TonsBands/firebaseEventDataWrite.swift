@@ -171,6 +171,7 @@ class firebaseEventDataWrite {
             
             let firebasePath = "showData/\(uid)/\(parsed.yearPlain)/\(sanitizedIndex)"
             print("🔥 firebase EVENT_WRITE: Writing to path: \(firebasePath)")
+            NetworkCounter.record("Firebase-Schedule")
             
             var payload: [String: Any] = [
                 "originalIdentifier": index,
@@ -332,6 +333,7 @@ class firebaseEventDataWrite {
                         }
                         
                         print("🔥 firebase EVENT_WRITE: BATCH updateChildren for \(batchUpdate.count) shows at showData/\(uid)/\(currentYear)")
+                        NetworkCounter.record("Firebase-Schedule")
                         let writeSemaphore = DispatchSemaphore(value: 0)
                         firebaseRef.child("showData").child(uid).child(String(currentYear)).updateChildValues(batchUpdate) { error, _ in
                             if let error = error {
@@ -358,6 +360,7 @@ class firebaseEventDataWrite {
         } else {
             //this is being done soley to prevent capturing garbage stats data within my app!
             print("🔥 firebase EVENT_WRITE: ❌ BLOCKED - Bypassed firebase event data writes due to being in simulator!!!")
+            NetworkCounter.record("Firebase-Schedule skipped=simulator")
         }
         finish()
     }

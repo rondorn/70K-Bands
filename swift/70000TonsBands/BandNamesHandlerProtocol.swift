@@ -20,13 +20,19 @@ protocol BandNamesHandlerProtocol {
     func getBandNoteWorthy(_ band: String) -> String
     func getPriorYears(_ band: String) -> String
     func getCachedData(forceNetwork: Bool, completion: (() -> Void)?)
-    func gatherData(forceDownload: Bool, isYearChangeOperation: Bool, completion: (() -> Void)?)
+    func gatherData(forceDownload: Bool, isYearChangeOperation: Bool, prefetchedCSV: String?, completion: (() -> Void)?)
     func gatherData(forceDownload: Bool, completion: (() -> Void)?)
     func readBandFile()
     func populateCache(completion: (() -> Void)?)
     func clearCachedData()
     func writeBandFile(_ httpData: String)
     func forceReadBandFileAndPopulateCache(completion: (() -> Void)?)
+}
+
+extension BandNamesHandlerProtocol {
+    func gatherData(forceDownload: Bool, isYearChangeOperation: Bool, completion: (() -> Void)?) {
+        gatherData(forceDownload: forceDownload, isYearChangeOperation: isYearChangeOperation, prefetchedCSV: nil, completion: completion)
+    }
 }
 
 /// Extension to make bandNamesHandler conform to protocol

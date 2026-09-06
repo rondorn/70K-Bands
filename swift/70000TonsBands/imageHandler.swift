@@ -170,6 +170,7 @@ open class imageHandler {
         // Always reload from server to ensure we get fresh images when ImageDate changes
         // The file-based caching system handles persistent caching with date invalidation
         request.cachePolicy = .reloadIgnoringLocalCacheData
+        NetworkCounter.recordDropbox(urlString)
         
         URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             defer {

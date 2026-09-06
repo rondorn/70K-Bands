@@ -15,8 +15,8 @@ android {
         targetSdkVersion 36
         // versionCode must fit in a signed 32-bit int.
         //noinspection HighAppVersionCode
-        versionCode 2026083101
-        versionName "2026083101"
+        versionCode 2026090601
+        versionName "2026090601"
         android.compileOptions.incremental = false
         multiDexEnabled false
     }

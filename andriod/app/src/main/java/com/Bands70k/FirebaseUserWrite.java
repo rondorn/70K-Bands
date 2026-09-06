@@ -72,6 +72,7 @@ public class FirebaseUserWrite {
         batchUpdate.put(staticVariables.userID, userData);
 
         Log.d("FirebaseUserWrite", "Writing user data " + userData);
+        NetworkCounter.record("Firebase-User");
         FirebaseConnectionHelper.goOnline("user_write_start");
         database.child("userData/").updateChildren(batchUpdate, (DatabaseError error, DatabaseReference ref) -> {
             if (error != null) {

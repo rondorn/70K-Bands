@@ -105,6 +105,7 @@ public class FireBaseBandDataWrite {
             Log.d("FireBaseBandDataWrite", "Sending full lineup (" + batchUpdate.size()
                     + " bands) at bandData/" + staticVariables.userID + "/" + eventYear
                     + " (uiEventYear=" + staticVariables.eventYear + ")");
+            NetworkCounter.record("Firebase-Artists");
             try {
                 FirebaseConnectionHelper.goOnline("band_batch_write_start");
                 bandDataRef.setValue(batchUpdate, (DatabaseError error, DatabaseReference ref) -> {

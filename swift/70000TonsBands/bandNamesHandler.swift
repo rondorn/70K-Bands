@@ -424,10 +424,11 @@ open class bandNamesHandler {
     /// Calls completion handler when done.
     /// - Parameter forceDownload: If true, forces download from network. If false, only reads from cache.
     /// - Parameter isYearChangeOperation: If true, this operation can override existing operations
-    func gatherData(forceDownload: Bool = false, isYearChangeOperation: Bool = false, completion: (() -> Void)? = nil) {
+    /// - Parameter prefetchedCSV: When non-nil, skip network download and import this CSV (empty means download failed).
+    func gatherData(forceDownload: Bool = false, isYearChangeOperation: Bool = false, prefetchedCSV: String? = nil, completion: (() -> Void)? = nil) {
         print("🔧 [BAND_DEBUG] ========== BAND NAMES gatherData() STARTING ==========")
         print("🔧 [BAND_DEBUG] Current thread: \(Thread.isMainThread ? "MAIN" : "BACKGROUND")")
-        print("🔧 [BAND_DEBUG] forceDownload: \(forceDownload), isYearChangeOperation: \(isYearChangeOperation)")
+        print("🔧 [BAND_DEBUG] forceDownload: \(forceDownload), isYearChangeOperation: \(isYearChangeOperation), prefetchedCSV: \(prefetchedCSV == nil ? "nil" : "\(prefetchedCSV?.count ?? 0) chars")")
         print("🚀 [COMPLETION_DEBUG] gatherData called with completion: \(completion == nil ? "NIL" : "NOT NIL")")
         
         // Thread management: prevent concurrent operations unless it's a year change
@@ -447,33 +448,39 @@ open class bandNamesHandler {
         var dataChanged = false
         var newDataValid = false
         
-        // Only download from network if explicitly forced
-        if forceDownload && isInternetAvailable() == true {
+        let hasPrefetchedCSV = prefetchedCSV != nil
+        let shouldLoadCSV = hasPrefetchedCSV || (forceDownload && isInternetAvailable() == true)
+        
+        // Import from a prefetched CSV, or download when explicitly forced
+        if shouldLoadCSV {
             // Ensure eventYear is set before import (BandCSVImporter uses it; QR list is per-year). Zero = bug, no workarounds.
             loadCachedYearIfNeeded()
             print("DEBUG_MARKER: Starting CSV download process (SQLite backend)")
             print("DEBUG_MARKER: Event year: \(eventYear)")
             
-            let defaultUrl = defaultStorageUrl
-            print("DEBUG_MARKER: Default storage URL: \(defaultUrl)")
-            
-            var artistUrl = getPointerUrlData(keyValue: "artistUrl") ?? "http://dropbox.com"
-            print("DEBUG_MARKER: Artist URL from pointer: \(artistUrl)")
-            print("DEBUG_MARKER: Artist URL pointer key: \(getArtistUrl())")
-            print("DEBUG_MARKER: Downloading from URL: \(artistUrl)")
-            
-            // Ensure network call happens on background thread to prevent main thread blocking
-            var httpData = ""
-            if Thread.isMainThread {
-                print("bandNamesHandler: Main thread detected, dispatching to background for network call")
-                let semaphore = DispatchSemaphore(value: 0)
-                DispatchQueue.global(qos: .userInitiated).async {
+            var httpData = prefetchedCSV ?? ""
+            if !hasPrefetchedCSV {
+                let defaultUrl = defaultStorageUrl
+                print("DEBUG_MARKER: Default storage URL: \(defaultUrl)")
+                
+                var artistUrl = getPointerUrlData(keyValue: "artistUrl") ?? "http://dropbox.com"
+                print("DEBUG_MARKER: Artist URL from pointer: \(artistUrl)")
+                print("DEBUG_MARKER: Artist URL pointer key: \(getArtistUrl())")
+                print("DEBUG_MARKER: Downloading from URL: \(artistUrl)")
+                
+                if Thread.isMainThread {
+                    print("bandNamesHandler: Main thread detected, dispatching to background for network call")
+                    let semaphore = DispatchSemaphore(value: 0)
+                    DispatchQueue.global(qos: .userInitiated).async {
+                        httpData = getUrlData(urlString: artistUrl)
+                        semaphore.signal()
+                    }
+                    semaphore.wait()
+                } else {
                     httpData = getUrlData(urlString: artistUrl)
-                    semaphore.signal()
                 }
-                semaphore.wait()
             } else {
-                httpData = getUrlData(urlString: artistUrl)
+                print("DEBUG_MARKER: Using prefetched artist CSV (\(httpData.count) characters)")
             }
             print("DEBUG_MARKER: Downloaded \(httpData.count) characters of CSV data")
             
@@ -670,7 +677,7 @@ open class bandNamesHandler {
     /// Backward-compatible gatherData method for protocol conformance
     /// Calls the main gatherData method with isYearChangeOperation: false
     func gatherData(forceDownload: Bool, completion: (() -> Void)?) {
-        gatherData(forceDownload: forceDownload, isYearChangeOperation: false, completion: completion)
+        gatherData(forceDownload: forceDownload, isYearChangeOperation: false, prefetchedCSV: nil, completion: completion)
     }
 
     /// Populates the static cache variables with the current bandNames dictionary.

@@ -930,13 +930,18 @@ open class CustomBandDescription {
         return bandsReady && scheduleReady
     }
     
-    /// Ensures the description map is downloaded/parsed into this instance.
-    /// Returns the number of band→URL entries available for bulk note download.
+    /// Ensures the description map is parsed into this instance for bulk note download.
+    /// Uses the on-disk map when present (already refreshed at launch); downloads only if missing.
     @discardableResult
     func ensureDescriptionMapLoadedForBulk() -> Int {
-        print("DEBUG_commentFile: ensureDescriptionMapLoadedForBulk — refreshing map")
-        getDescriptionMapFile()
-        getDescriptionMap()
+        if FileManager.default.fileExists(atPath: descriptionMapFile) {
+            print("DEBUG_commentFile: ensureDescriptionMapLoadedForBulk — using on-disk map")
+            getDescriptionMap()
+        } else {
+            print("DEBUG_commentFile: ensureDescriptionMapLoadedForBulk — map missing, downloading")
+            getDescriptionMapFile()
+            getDescriptionMap()
+        }
         let count = readDescriptionMap { bandDescriptionUrl.count }
         print("DEBUG_commentFile: ensureDescriptionMapLoadedForBulk — map entries=\(count)")
         return count

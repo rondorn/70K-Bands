@@ -212,13 +212,7 @@ public class CustomerDescriptionHandler {
             
             try {
 
-                URL u = new URL(descriptionMapURL);
-                
-                // Handle HTTP redirects properly for Dropbox URLs
-                HttpURLConnection connection = (HttpURLConnection) u.openConnection();
-                connection.setInstanceFollowRedirects(true);
-                HttpConnectionHelper.applyTimeouts(connection);
-                
+                HttpURLConnection connection = HttpConnectionHelper.openNoCacheConnection(descriptionMapURL);
                 InputStream is = connection.getInputStream();
                 DataInputStream dis = new DataInputStream(is);
 
@@ -233,6 +227,7 @@ public class CustomerDescriptionHandler {
                 fos.close();
                 dis.close();
                 is.close();
+                try { connection.disconnect(); } catch (Exception ignored) {}
                 
                 downloadSuccessful = true;
                 Log.d("descriptionMapFile", "Description map downloaded to temp file");
@@ -303,12 +298,7 @@ public class CustomerDescriptionHandler {
             try {
                 Log.d("70K_NOTE_DEBUG", "Downloading description map immediately from: " + descriptionMapURL);
                 
-                URL u = new URL(descriptionMapURL);
-                
-                // Handle HTTP redirects properly for Dropbox URLs
-                HttpURLConnection connection = (HttpURLConnection) u.openConnection();
-                connection.setInstanceFollowRedirects(true);
-                HttpConnectionHelper.applyTimeouts(connection);
+                HttpURLConnection connection = HttpConnectionHelper.openNoCacheConnection(descriptionMapURL);
                 
                 InputStream is = connection.getInputStream();
                 DataInputStream dis = new DataInputStream(is);

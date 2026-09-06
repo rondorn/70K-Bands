@@ -38,7 +38,11 @@ class firebaseUserWrite {
     }
 
     private func scheduleWriteIfNeededInternal(immediate: Bool) {
-        guard inTestEnvironment == false else { return }
+        guard inTestEnvironment == false else {
+            print("🔥 [USER_WRITE] Skipping — simulator/test environment (inTestEnvironment=true)")
+            NetworkCounter.record("Firebase-User skipped=simulator")
+            return
+        }
 
         schedulerQueue.async {
             let hadPendingWrite = self.pendingWorkItem != nil
@@ -120,6 +124,7 @@ class firebaseUserWrite {
             let activeProfileCount = allProfiles.count
 
             print("🔥 [USER_WRITE] Writing userData for \(userDataHandle.uid)")
+            NetworkCounter.record("Firebase-User")
             firebaseRef.child("userData/").child(userDataHandle.uid).setValue([
                 "userID": userDataHandle.uid,
                 "country": userDataHandle.country,

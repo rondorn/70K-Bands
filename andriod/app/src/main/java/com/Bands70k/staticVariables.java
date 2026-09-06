@@ -98,6 +98,11 @@ public class staticVariables {
     
     // Cache for pointer data
     public static Map<String, String> storePointerData = new HashMap<String, String>();
+
+    private static final Object POINTER_NETWORK_LOCK = new Object();
+    private static volatile long lastPointerNetworkSuccessMs = 0L;
+    /** Collapse duplicate launch/foreground pointer fetches that start within this window. */
+    private static final long POINTER_NETWORK_DEDUP_MS = 10_000L;
     
     // Flag to track if background URL lookup is in progress (prevents duplicate calls)
     private static volatile boolean backgroundLookupInProgress = false;
@@ -185,7 +190,11 @@ public class staticVariables {
 
     public static Integer showsIwillAttend = 0;
 
-    public static Boolean refreshActivated = false;
+    /**
+     * Set true after a year change finishes downloading the new year's CSVs.
+     * Consumed by {@link showBands} to rebuild the main list from disk (no extra download).
+     */
+    public static volatile Boolean refreshActivated = false;
 
     public static Boolean prefsLoaded = false;
 
@@ -893,12 +902,13 @@ public class staticVariables {
             String data = "";
             String line;
 
-            URL url = new URL(pointerUrl);
+            URL url = new URL(HttpConnectionHelper.cacheBustUrl(pointerUrl));
             
             // Handle HTTP redirects properly for Dropbox URLs
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setInstanceFollowRedirects(true);
             HttpConnectionHelper.applyTimeouts(connection);
+            HttpConnectionHelper.applyNoCache(connection);
             
             BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
             while ((line = in.readLine()) != null) {
@@ -967,8 +977,19 @@ public class staticVariables {
         }
 
         Log.d("lookupUrls", "Refreshing pointer cache from network (prescribed refresh)");
-        Map<String, String> downloadUrls = fetchFromNetwork(); // also writes FileHandler70k.pointerCacheFile
-        return downloadUrls != null && !downloadUrls.isEmpty();
+        synchronized (POINTER_NETWORK_LOCK) {
+            long elapsed = System.currentTimeMillis() - lastPointerNetworkSuccessMs;
+            if (hasPointerOnDisk() && lastPointerNetworkSuccessMs > 0 && elapsed < POINTER_NETWORK_DEDUP_MS) {
+                Log.d("lookupUrls", "Skipping pointer network fetch — already refreshed " + elapsed + "ms ago");
+                return true;
+            }
+            Map<String, String> downloadUrls = fetchFromNetwork();
+            boolean ok = downloadUrls != null && !downloadUrls.isEmpty();
+            if (ok) {
+                lastPointerNetworkSuccessMs = System.currentTimeMillis();
+            }
+            return ok;
+        }
     }
 
     /**
@@ -1637,5 +1658,10 @@ public class staticVariables {
         }
 
         Log.d("CORE_CSV", "Parallel core CSV download pipeline complete");
+        try {
+            CombinedImageListHandler.getInstance().forceRebuildFromBandData(new BandInfo());
+        } catch (Exception e) {
+            Log.w("CORE_CSV", "Combined image list rebuild after CSV download failed: " + e.getMessage());
+        }
     }
 }

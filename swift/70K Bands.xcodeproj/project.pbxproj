@@ -42,6 +42,9 @@
 		111608632F647C0D00B1B407 /* LaunchTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111608622F647C0D00B1B407 /* LaunchTiming.swift */; };
 		111608642F647C0D00B1B407 /* LaunchTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111608622F647C0D00B1B407 /* LaunchTiming.swift */; };
 		111608652F647C0D00B1B407 /* LaunchTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111608622F647C0D00B1B407 /* LaunchTiming.swift */; };
+		111608672F647C0D00B1B408 /* NetworkCounter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111608662F647C0D00B1B408 /* NetworkCounter.swift */; };
+		111608682F647C0D00B1B408 /* NetworkCounter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111608662F647C0D00B1B408 /* NetworkCounter.swift */; };
+		111608692F647C0D00B1B408 /* NetworkCounter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111608662F647C0D00B1B408 /* NetworkCounter.swift */; };
 		1116C9D52F63033300E1ACC0 /* BinaryQRScanner in Frameworks */ = {isa = PBXBuildFile; productRef = 11E8A0622EE8A10008472A3 /* BinaryQRScanner */; };
 		1116C9D62F63033300E1ACC1 /* BinaryQRScanner in Frameworks */ = {isa = PBXBuildFile; productRef = 11E8A0622EE8A10008472A3 /* BinaryQRScanner */; };
 		111A13523D7FE3F5476A41D4 /* ShowsAttended.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11AE985220CDFE890007C4E1 /* ShowsAttended.swift */; };
@@ -661,6 +664,7 @@
 		7A854C0CFD37416CCDB6D12C /* firebaseUserWrite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D4844422418A9E00910878 /* firebaseUserWrite.swift */; };
 		7DC00F2FFA646848D8FF933E /* CellDataCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1145F0D42E69ED1A002B7511 /* CellDataCache.swift */; };
 		80B429504D71897456B039E2 /* LaunchTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111608622F647C0D00B1B407 /* LaunchTiming.swift */; };
+		80B429514D71897456B039E2 /* NetworkCounter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111608662F647C0D00B1B408 /* NetworkCounter.swift */; };
 		8286D12897CE36F3941B9D38 /* NetworkTesting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1122E3ED23DC8E38005EE50D /* NetworkTesting.swift */; };
 		82F2265E50F74313A6F60BE1 /* LandscapeScheduleViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DDB7E0B0AC440BA94B56DBD /* LandscapeScheduleViewModel.swift */; };
 		838BE8FC24998ADF63DDA3E2 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D681A68280A00267A8F /* CoreGraphics.framework */; };
@@ -802,6 +806,7 @@
 		110FA1602E3BAF7B003A0184 /* CombinedImageListHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CombinedImageListHandler.swift; sourceTree = "<group>"; };
 		11111FA620D03D77008E41F6 /* ShowAttendedReport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowAttendedReport.swift; sourceTree = "<group>"; };
 		111608622F647C0D00B1B407 /* LaunchTiming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchTiming.swift; sourceTree = "<group>"; };
+		111608662F647C0D00B1B408 /* NetworkCounter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkCounter.swift; sourceTree = "<group>"; };
 		11168CAF1C7ACB5900398FFF /* 70K Bands-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "70K Bands-Bridging-Header.h"; sourceTree = "<group>"; };
 		111A936C2E4F8FAB00EA4ABD /* SwiftUITranslationHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftUITranslationHelper.swift; sourceTree = "<group>"; };
 		1122E3ED23DC8E38005EE50D /* NetworkTesting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkTesting.swift; sourceTree = "<group>"; };
@@ -1229,6 +1234,7 @@
 				8CA018E4476A45C994ED91C0 /* LandscapeScheduleView.swift */,
 				8DDB7E0B0AC440BA94B56DBD /* LandscapeScheduleViewModel.swift */,
 				111608622F647C0D00B1B407 /* LaunchTiming.swift */,
+				111608662F647C0D00B1B408 /* NetworkCounter.swift */,
 				11DCE9B51A85B9FF00A25FB8 /* localNotificationHandler.swift */,
 				114CC0701C79204100CF5BF1 /* Main.storyboard */,
 				11DCE9B31A856EE600A25FB8 /* mainListController.swift */,
@@ -2119,6 +2125,7 @@
 				115213292A69E23C0017DD9F /* variableStore.swift in Sources */,
 				11EB86AD2F3530C8007D5AD0 /* AboutView.swift in Sources */,
 				111608642F647C0D00B1B407 /* LaunchTiming.swift in Sources */,
+				111608682F647C0D00B1B408 /* NetworkCounter.swift in Sources */,
 				11DCE9BD1A86F9E000A25FB8 /* Constants.swift in Sources */,
 				110E085A2AECB6E200075618 /* DropDownCell.swift in Sources */,
 				11E2F24A2E8D78530004D6F4 /* AttendanceManager.swift in Sources */,
@@ -2253,6 +2260,7 @@
 				11895B9C2EE4D4F1008CC4A9 /* SQLiteDataManager.swift in Sources */,
 				1155E3BA1A8B20BF00D51ED9 /* scheduleHandlerTest.swift in Sources */,
 				111608652F647C0D00B1B407 /* LaunchTiming.swift in Sources */,
+				111608692F647C0D00B1B408 /* NetworkCounter.swift in Sources */,
 				11E8A0312EE8A10008472A3 /* ScheduleQRDecompressFromImageTests.swift in Sources */,
 				11111FA820D03DBF008E41F6 /* ShowAttendedReport.swift in Sources */,
 				116C9D8E2F415D370036743C /* FilePaths.swift in Sources */,
@@ -2369,6 +2377,7 @@
 				1172EE002E5A1C4D006E3596 /* CustomListEntry.swift in Sources */,
 				11EB86AC2F3530C8007D5AD0 /* AboutView.swift in Sources */,
 				111608632F647C0D00B1B407 /* LaunchTiming.swift in Sources */,
+				111608672F647C0D00B1B408 /* NetworkCounter.swift in Sources */,
 				1172EE012E5A1C4D006E3596 /* variableStore.swift in Sources */,
 				1172EE022E5A1C4D006E3596 /* Constants.swift in Sources */,
 				1172EE032E5A1C4D006E3596 /* DropDownCell.swift in Sources */,
@@ -2494,6 +2503,7 @@
 				BE635B27BE2B02D1591B5CBE /* CustomListEntry.swift in Sources */,
 				13BDF43DEA2F95810CFC3043 /* AboutView.swift in Sources */,
 				80B429504D71897456B039E2 /* LaunchTiming.swift in Sources */,
+				80B429514D71897456B039E2 /* NetworkCounter.swift in Sources */,
 				2A1A885DEF593AC5A87657A2 /* variableStore.swift in Sources */,
 				00589C427C1DAE3236231B78 /* Constants.swift in Sources */,
 				D50F7E9C20BE46DFFB4423E4 /* DropDownCell.swift in Sources */,
@@ -2619,6 +2629,7 @@
 				115C128D3000A5EF007EA9A1 /* CustomListEntry.swift in Sources */,
 				115C128E3000A5EF007EA9A1 /* AboutView.swift in Sources */,
 				115C128F3000A5EF007EA9A1 /* LaunchTiming.swift in Sources */,
+				115C12903000A5EF007EA9A1 /* variableStore.swift in Sources */,
 				115C12903000A5EF007EA9A1 /* variableStore.swift in Sources */,
 				115C12913000A5EF007EA9A1 /* Constants.swift in Sources */,
 				115C12923000A5EF007EA9A1 /* DropDownCell.swift in Sources */,
@@ -2937,7 +2948,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260902001;
+				CURRENT_PROJECT_VERSION = 20260906001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -2966,7 +2977,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260902001;
+				MARKETING_VERSION = 20260906001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -3022,7 +3033,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260902001;
+				CURRENT_PROJECT_VERSION = 20260906001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -3047,7 +3058,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260902001;
+				MARKETING_VERSION = 20260906001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -3244,7 +3255,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260902001;
+				CURRENT_PROJECT_VERSION = 20260906001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -3266,7 +3277,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260902001;
+				MARKETING_VERSION = 20260906001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -3322,7 +3333,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260902001;
+				CURRENT_PROJECT_VERSION = 20260906001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -3347,7 +3358,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260902001;
+				MARKETING_VERSION = 20260906001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -3405,7 +3416,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260902001;
+				CURRENT_PROJECT_VERSION = 20260906001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -3427,7 +3438,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260902001;
+				MARKETING_VERSION = 20260906001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -3486,7 +3497,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260902001;
+				CURRENT_PROJECT_VERSION = 20260906001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -3511,7 +3522,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260902001;
+				MARKETING_VERSION = 20260906001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -3571,7 +3582,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260902001;
+				CURRENT_PROJECT_VERSION = 20260906001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -3593,7 +3604,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260902001;
+				MARKETING_VERSION = 20260906001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -3652,7 +3663,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20260902001;
+				CURRENT_PROJECT_VERSION = 20260906001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -3677,7 +3688,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20260902001;
+				MARKETING_VERSION = 20260906001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",

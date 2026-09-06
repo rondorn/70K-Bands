@@ -142,6 +142,20 @@ public class CombinedImageListHandler {
         applyCombinedImageList(newCombinedList, newSourceDataHash);
     }
 
+    /**
+     * Rebuilds the combined image URL list from the current parsed band/schedule data.
+     * Called after core CSV downloads so image fetches do not keep a stale combined-list URL.
+     */
+    public void forceRebuildFromBandData(BandInfo bandInfo) {
+        Log.d(TAG, "forceRebuildFromBandData: regenerating combined image URLs from current CSVs");
+        Map<String, String> newCombinedList = buildCombinedImageListFromBandData(bandInfo);
+        CacheHashManager cacheManager = CacheHashManager.getInstance();
+        String bandHash = cacheManager.getCachedHash("bandInfo");
+        String schedHash = cacheManager.getCachedHash("scheduleInfo");
+        String sourceHash = (bandHash != null ? bandHash : "") + "|" + (schedHash != null ? schedHash : "");
+        applyCombinedImageList(newCombinedList, sourceHash);
+    }
+
     private Map<String, String> buildCombinedImageListFromBandData(BandInfo bandInfo) {
         Map<String, String> newCombinedList = new HashMap<>();
 
@@ -214,6 +228,15 @@ public class CombinedImageListHandler {
         if (checkYearChange()) {
             Log.d(TAG, "Year changed detected, combined list cleared - will need regeneration");
         }
+
+        // Artist CSV is the source of truth. The on-disk combined list can keep a stale URL
+        // after the lineup file changes (Dropbox replace, or a previous https:// prepend).
+        String liveUrl = BandInfo.getImageUrl(name);
+        if (liveUrl != null && !liveUrl.trim().isEmpty() && !liveUrl.equals(" ")) {
+            String normalized = BandInfo.normalizeImageUrl(liveUrl);
+            Log.d(TAG, "Getting image URL for '" + name + "' from live artist/schedule data: " + normalized);
+            return normalized;
+        }
         
         String value = combinedImageList.get(name);
         if (value == null) {
@@ -222,7 +245,7 @@ public class CombinedImageListHandler {
             if (staticVariables.imageUrlMap != null && staticVariables.imageUrlMap.containsKey(name)) {
                 String url = staticVariables.imageUrlMap.get(name);
                 Log.d(TAG, "Getting image URL for '" + name + "' from source data (fallback): " + url);
-                return url;
+                return BandInfo.normalizeImageUrl(url);
             }
             
             // Also check artist images
@@ -240,18 +263,18 @@ public class CombinedImageListHandler {
         if (value.trim().startsWith("{")) {
             try {
                 JSONObject imageInfo = new JSONObject(value);
-                String url = imageInfo.getString("url");
+                String url = BandInfo.normalizeImageUrl(imageInfo.getString("url"));
                 Log.d(TAG, "Getting image URL for '" + name + "' (with date): " + url);
                 return url;
             } catch (JSONException e) {
                 // Not valid JSON, treat as simple URL string
                 Log.d(TAG, "Getting image URL for '" + name + "': " + value);
-                return value;
+                return BandInfo.normalizeImageUrl(value);
             }
         } else {
             // Simple URL string (artist image or schedule without date)
             Log.d(TAG, "Getting image URL for '" + name + "': " + value);
-            return value;
+            return BandInfo.normalizeImageUrl(value);
         }
     }
     

@@ -341,8 +341,6 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         NotificationCenter.default.addObserver(self, selector:#selector(MasterViewController.refreshAlerts), name: UserDefaults.didChangeNotification, object: nil)
         
-        refreshDisplayAfterWake();
-    
         setNeedsStatusBarAppearanceUpdate()
         
         setToolbar();
@@ -5025,6 +5023,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 print("[YEAR_CHANGE_DEBUG] statsButtonTapped: Retrieved reportUrl: \(dynamicStatsUrl)")
                 
                 if let url = URL(string: dynamicStatsUrl), !dynamicStatsUrl.isEmpty {
+                NetworkCounter.recordDropbox(dynamicStatsUrl)
                 let task = URLSession.shared.dataTask(with: url) { [weak self] (data, response, error) in
                     guard let self = self else { return }
                     
@@ -6364,8 +6363,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // NEW: Use the unified refresh function that does:
         // 1. Download pointer file first
-        // 2. Parallel: bands+schedule (serial imports), description map, iCloud
-        // 3. Single UI refresh when ALL data is ready
+        // 2. Parallel HTTP: artist CSV, schedule CSV, description map; iCloud in parallel
+        // 3. Import artists, then schedule (schedule-only names must be created after artist cleanup)
+        // 4. Single UI refresh when ALL data is ready
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             
@@ -6403,7 +6403,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 print("🚀 SUBSEQUENT LAUNCH: Throttling check passed - launching unified data refresh")
                 self.performUnifiedDataRefresh(reason: "Subsequent launch")
             } else {
-                print("🚀 SUBSEQUENT LAUNCH: Throttled - less than 5 minutes since last download, skipping fresh download")
+                print("🚀 SUBSEQUENT LAUNCH: Throttled - skipping artist/schedule/description downloads")
+                _ = self.ensurePointerFileAvailable(reason: "Subsequent launch - throttled")
                 self.kickoffLaunchBulkFromCachedData(reason: "Subsequent launch - throttled cached data")
             }
         }
@@ -6414,10 +6415,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     /// Unified data refresh function that:
     /// STEP 1: Downloads and updates pointer file (synchronously)
     /// STEP 2: Checks if year changed and handles it
-    /// STEP 3: Launches parallel work after pointer is ready:
-    ///   - Thread 1: Bands CSV then Schedule CSV (serial imports — same SQLite DB)
-    ///   - Thread 2: Description map CSV (separate file; safe to run in parallel)
-    ///   - Thread 3: iCloud data
+    /// STEP 3: After pointer is ready:
+    ///   - Download artist CSV, schedule CSV, and description map in parallel
+    ///   - Import artists first, then schedule (schedule may create stub band rows for
+    ///     names not in the artist list; artist import deletes bands missing from the
+    ///     artist CSV, so schedule must import after artists)
+    ///   - iCloud pull in parallel with the CSV work
     /// STEP 4: Updates display once all parallel work completes
     /// NOTE: Throttling should be checked by callers before invoking this method.
     /// First launch bypasses throttling, other scenarios should check shouldDownloadSchedule() first.
@@ -6465,45 +6468,76 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             // Requirement: check on app launch and when returning from background; both flows use unified refresh.
             MinimumVersionWarningManager.checkAndShowIfNeeded(reason: "UnifiedRefresh(\(reason)) pointerUpdated=\(pointerResult.networkRefreshSucceeded)")
             
-            // STEP 3: Parallel downloads after pointer (bands+schedule serial for SQLite; map + iCloud parallel)
-            print("🔄 [UNIFIED_REFRESH] Step 3 - Launching parallel downloads (bands/schedule, description map, iCloud)")
+            // STEP 3: Parallel HTTP downloads, then serial SQLite imports (artists before schedule).
+            print("🔄 [UNIFIED_REFRESH] Step 3 - Parallel CSV downloads, then artist import before schedule import")
             
             let refreshGroup = DispatchGroup()
             
-            // Thread 1: Bands then Schedule sequentially to avoid SQLite lock contention (same DB file).
             refreshGroup.enter()
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                 guard let self = self else {
                     refreshGroup.leave()
                     return
                 }
-                print("🔄 [UNIFIED_REFRESH] Thread 1 - Downloading Bands CSV")
-                self.bandNameHandle.gatherData(forceDownload: true) { [weak self] in
+                
+                let artistUrl = getPointerUrlData(keyValue: "artistUrl") ?? ""
+                let scheduleUrl = getPointerUrlData(keyValue: "scheduleUrl") ?? ""
+                
+                var artistCSV = ""
+                var scheduleCSV = ""
+                let downloadGroup = DispatchGroup()
+                
+                downloadGroup.enter()
+                DispatchQueue.global(qos: .userInitiated).async {
+                    if !artistUrl.isEmpty && artistUrl.hasPrefix("http") {
+                        print("🔄 [UNIFIED_REFRESH] Downloading artist CSV")
+                        artistCSV = getUrlData(urlString: artistUrl)
+                    } else {
+                        print("⚠️ [UNIFIED_REFRESH] Invalid artist URL '\(artistUrl)', skipping download")
+                    }
+                    downloadGroup.leave()
+                }
+                
+                downloadGroup.enter()
+                DispatchQueue.global(qos: .userInitiated).async {
+                    if !scheduleUrl.isEmpty && scheduleUrl != "Default" && scheduleUrl.hasPrefix("http") {
+                        print("🔄 [UNIFIED_REFRESH] Downloading schedule CSV")
+                        scheduleCSV = getUrlData(urlString: scheduleUrl)
+                    } else {
+                        print("⚠️ [UNIFIED_REFRESH] Invalid schedule URL '\(scheduleUrl)', skipping download")
+                    }
+                    downloadGroup.leave()
+                }
+                
+                downloadGroup.wait()
+                print("🔄 [UNIFIED_REFRESH] CSV downloads complete — importing artists then schedule")
+                
+                self.bandNameHandle.gatherData(forceDownload: true, prefetchedCSV: artistCSV) { [weak self] in
                     guard let self = self else {
                         refreshGroup.leave()
                         return
                     }
-                    print("✅ [UNIFIED_REFRESH] Bands CSV complete - now downloading Schedule CSV (sequential to avoid DB lock)")
-                    self.schedule.populateSchedule(forceDownload: true)
+                    print("✅ [UNIFIED_REFRESH] Artist import complete — importing schedule")
+                    self.schedule.populateSchedule(forceDownload: true, prefetchedCSV: scheduleCSV)
                     refreshGroup.leave()
                 }
             }
             
-            // Thread 2: Description map (file-based; safe to run in parallel with SQLite imports)
+            // Description map is a separate file; download/parse in parallel with artist/schedule.
             refreshGroup.enter()
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                 guard let self = self else {
                     refreshGroup.leave()
                     return
                 }
-                print("🔄 [UNIFIED_REFRESH] Thread 2 - Downloading description map")
+                print("🔄 [UNIFIED_REFRESH] Downloading description map")
                 self.bandDescriptions.getDescriptionMapFile()
                 self.bandDescriptions.getDescriptionMap()
-                print("✅ [UNIFIED_REFRESH] Thread 2 - Description map complete")
+                print("✅ [UNIFIED_REFRESH] Description map complete")
                 refreshGroup.leave()
             }
             
-            // Thread 3: iCloud data (parallel with bands/schedule + description map)
+            // iCloud data (parallel with CSV downloads/imports)
             refreshGroup.enter()
             DispatchQueue.global(qos: .utility).async { [weak self] in
                 guard let self = self else {
@@ -6660,6 +6694,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         configuration.timeoutIntervalForRequest = timeout
         configuration.timeoutIntervalForResource = timeout
         let session = URLSession(configuration: configuration)
+        NetworkCounter.recordDropbox(url.absoluteString)
         
         let task = session.dataTask(with: url) { (data, response, error) in
             defer { semaphore.signal() }
@@ -6832,6 +6867,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         }
         
         var request = URLRequest(url: url)
+        NetworkCounter.recordDropbox(url.absoluteString)
         request.httpMethod = "GET"
         request.timeoutInterval = 4.0 // 4 second timeout for data operations test  
         request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData // Force fresh request

@@ -268,6 +268,7 @@ open class NetworkTesting {
             self.updateInternetCache(false)
             return
         }
+        NetworkCounter.recordDropbox(testUrl)
         
         var request = URLRequest(url: url)
         request.timeoutInterval = 2.0 // 2 second timeout for faster failure in bad network
@@ -418,6 +419,7 @@ open class NetworkTesting {
             print("🔥 NetworkTesting: ❌ LIVE TEST FAILED - Invalid URL")
             return false
         }
+        NetworkCounter.recordDropbox("https://www.dropbox.com")
         
         var request = URLRequest(url: url)
         request.timeoutInterval = 3.0 // 3 second timeout for faster failure in bad network
@@ -499,6 +501,7 @@ open class NetworkTesting {
             updateInternetCache(false)
             return false
         }
+        NetworkCounter.recordDropbox(testUrl)
         
         var request = URLRequest(url: url)
         request.timeoutInterval = 2.0 // 2 second timeout for faster failure in bad network

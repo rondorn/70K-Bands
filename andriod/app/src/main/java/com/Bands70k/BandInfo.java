@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -347,6 +348,43 @@ public class BandInfo {
     }
 
     /**
+     * Normalizes a remote image URL: trims quotes, collapses accidental double
+     * schemes ({@code https://https://...}), and adds {@code https://} only when missing.
+     */
+    public static String normalizeImageUrl(String raw) {
+        if (raw == null) {
+            return "";
+        }
+        String url = raw.trim();
+        if (url.isEmpty() || url.equals(" ")) {
+            return "";
+        }
+        if (url.length() >= 2
+                && ((url.startsWith("\"") && url.endsWith("\""))
+                || (url.startsWith("'") && url.endsWith("'")))) {
+            url = url.substring(1, url.length() - 1).trim();
+        }
+        while (true) {
+            String lower = url.toLowerCase(Locale.US);
+            if (lower.startsWith("https://https://") || lower.startsWith("https://http://")) {
+                url = url.substring("https://".length());
+            } else if (lower.startsWith("http://https://") || lower.startsWith("http://http://")) {
+                url = url.substring("http://".length());
+            } else {
+                break;
+            }
+        }
+        String lower = url.toLowerCase(Locale.US);
+        if (lower.startsWith("http://") || lower.startsWith("https://")) {
+            return url;
+        }
+        if (url.startsWith("//")) {
+            return "https:" + url;
+        }
+        return "https://" + url;
+    }
+
+    /**
      * Gets the image URL for a band.
      * @param bandName The name of the band.
      * @return The image URL or blank if not available.
@@ -356,15 +394,17 @@ public class BandInfo {
         // Priority 1: Artist images from band CSV (more reliable)
         String artistImageUrl = getBandDetailsData(bandName, "imageUrl");
         if (artistImageUrl != null && !artistImageUrl.trim().isEmpty()) {
-            Log.d("ImageUrlIs1", bandName + " artist image: https://" + artistImageUrl);
-            return "https://" + artistImageUrl;
+            String normalized = normalizeImageUrl(artistImageUrl);
+            Log.d("ImageUrlIs1", bandName + " artist image: " + normalized);
+            return normalized.isEmpty() ? " " : normalized;
 
         // Priority 2: Event images from schedule CSV (less reliable fallback)
         } else if (staticVariables.imageUrlMap.containsKey(bandName) == true) {
             String eventImageUrl = staticVariables.imageUrlMap.get(bandName);
             if (eventImageUrl != null && !eventImageUrl.trim().isEmpty()) {
-                Log.d("ImageUrlIs2", bandName + " event image: " + eventImageUrl);
-                return eventImageUrl;
+                String normalized = normalizeImageUrl(eventImageUrl);
+                Log.d("ImageUrlIs2", bandName + " event image: " + normalized);
+                return normalized.isEmpty() ? " " : normalized;
             }
         }
         
@@ -613,10 +653,7 @@ public class BandInfo {
             boolean downloadSuccessful = false;
             
             try {
-                URL u = new URL(artistUrl);
-                java.net.HttpURLConnection connection = (java.net.HttpURLConnection) u.openConnection();
-                connection.setInstanceFollowRedirects(true);
-                HttpConnectionHelper.applyTimeouts(connection);
+                java.net.HttpURLConnection connection = HttpConnectionHelper.openNoCacheConnection(artistUrl);
                 InputStream is = connection.getInputStream();
 
                 DataInputStream dis = new DataInputStream(is);
@@ -675,6 +712,7 @@ public class BandInfo {
     public ArrayList<String> ParseBandCSV(){
 
         ArrayList<String> bandNames = new ArrayList<String>();
+        bandData.clear();
 
         try {
             File file = FileHandler70k.bandInfo;

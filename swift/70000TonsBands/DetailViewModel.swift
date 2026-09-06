@@ -1781,6 +1781,7 @@ class DetailViewModel: ObservableObject {
     
     private func downloadDescription(noteUrl: String, generation: Int, bandName: String) {
         guard let url = URL(string: noteUrl) else { return }
+        NetworkCounter.recordDropbox(noteUrl)
         
         activeNoteDownloadTask?.cancel()
         
@@ -2349,6 +2350,7 @@ class DetailViewModel: ObservableObject {
         }
         
         print("🔄 Downloading latest stats from: \(remoteStatsUrl)")
+        NetworkCounter.recordDropbox(remoteStatsUrl)
         
         let task = URLSession.shared.dataTask(with: url) { [weak self] (data, response, error) in
             guard let self = self else { return }

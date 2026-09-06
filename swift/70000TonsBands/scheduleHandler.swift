@@ -629,7 +629,7 @@ open class scheduleHandler {
         print("✅ [SCHEDULE_CHECKSUM] Cleared stored checksum (schedule file removed or reset)")
     }
     
-    func populateSchedule(forceDownload: Bool = false, isYearChangeOperation: Bool = false) {
+    func populateSchedule(forceDownload: Bool = false, isYearChangeOperation: Bool = false, prefetchedCSV: String? = nil) {
         let operationId = UUID()
         
         // CRITICAL: Atomic check and set to prevent race conditions
@@ -691,37 +691,41 @@ open class scheduleHandler {
         var dataChanged = false
         var newDataValid = false
         
-        // Only download from network if explicitly forced
-        if forceDownload && isInternetAvailable() == true {
+        let hasPrefetchedCSV = prefetchedCSV != nil
+        let shouldLoadCSV = hasPrefetchedCSV || (forceDownload && isInternetAvailable() == true)
+        
+        if shouldLoadCSV {
             print("🔍 [SCHEDULE_DEBUG] populateSchedule: Clearing cache before download")
             clearCache()
             print("DEBUG_MARKER: Starting CSV download process (SQLite backend)")
             print("DEBUG_MARKER: Event year: \(eventYear)")
             
-            let scheduleUrl = getPointerUrlData(keyValue: "scheduleUrl") ?? ""
-            print("DEBUG_MARKER: Schedule URL from pointer: \(scheduleUrl)")
-            print("DEBUG_MARKER: Schedule URL pointer key: \(getScheduleUrl())")
-            
-            // Validate URL before attempting download
-            guard !scheduleUrl.isEmpty && scheduleUrl != "Default" && scheduleUrl.hasPrefix("http") else {
-                print("❌ scheduleHandler: Invalid schedule URL '\(scheduleUrl)', skipping download")
-                return
-            }
-            
-            print("DEBUG_MARKER: Downloading from URL: \(scheduleUrl)")
-            
-            // Ensure network call happens on background thread to prevent main thread blocking
-            var httpData = ""
-            if Thread.isMainThread {
-                print("scheduleHandler: Main thread detected, dispatching to background for network call")
-                let semaphore = DispatchSemaphore(value: 0)
-                DispatchQueue.global(qos: .userInitiated).async {
-                    httpData = getUrlData(urlString: scheduleUrl)
-                    semaphore.signal()
+            var httpData = prefetchedCSV ?? ""
+            if !hasPrefetchedCSV {
+                let scheduleUrl = getPointerUrlData(keyValue: "scheduleUrl") ?? ""
+                print("DEBUG_MARKER: Schedule URL from pointer: \(scheduleUrl)")
+                print("DEBUG_MARKER: Schedule URL pointer key: \(getScheduleUrl())")
+                
+                guard !scheduleUrl.isEmpty && scheduleUrl != "Default" && scheduleUrl.hasPrefix("http") else {
+                    print("❌ scheduleHandler: Invalid schedule URL '\(scheduleUrl)', skipping download")
+                    return
                 }
-                semaphore.wait()
+                
+                print("DEBUG_MARKER: Downloading from URL: \(scheduleUrl)")
+                
+                if Thread.isMainThread {
+                    print("scheduleHandler: Main thread detected, dispatching to background for network call")
+                    let semaphore = DispatchSemaphore(value: 0)
+                    DispatchQueue.global(qos: .userInitiated).async {
+                        httpData = getUrlData(urlString: scheduleUrl)
+                        semaphore.signal()
+                    }
+                    semaphore.wait()
+                } else {
+                    httpData = getUrlData(urlString: scheduleUrl)
+                }
             } else {
-                httpData = getUrlData(urlString: scheduleUrl)
+                print("DEBUG_MARKER: Using prefetched schedule CSV (\(httpData.count) characters)")
             }
             print("DEBUG_MARKER: Downloaded \(httpData.count) characters of CSV data")
             

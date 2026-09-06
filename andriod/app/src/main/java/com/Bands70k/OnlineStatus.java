@@ -12,8 +12,6 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
@@ -173,60 +171,22 @@ public class OnlineStatus {
 
         long currentEpoc = System.currentTimeMillis() / 1000L;
 
-        // Validate internet by fetching the POINTER file and verifying its format.
-        // This directly detects:
-        // - airplane mode (no network)
-        // - really bad network (timeouts)
-        // - cruise ship captive/limited internet (request times out or returns non-pointer HTML)
-        String pointerUrl = null;
-        try {
-            String customPointerUrl = staticVariables.preferences != null ? staticVariables.preferences.getCustomPointerUrl() : null;
-            if (customPointerUrl != null && !customPointerUrl.trim().isEmpty()) {
-                pointerUrl = customPointerUrl.trim();
-            } else {
-                pointerUrl = staticVariables.getDefaultUrls();
-                if (staticVariables.preferences != null && "Testing".equals(staticVariables.preferences.getPointerUrl())) {
-                    pointerUrl = staticVariables.getDefaultUrlTest();
-                }
-            }
-        } catch (Exception ignored) {
-            pointerUrl = staticVariables.getDefaultUrls();
-        }
+        // Validate internet with a lightweight Dropbox probe — not the pointer file.
+        // The pointer download is a data call (one per launch); using it here was counted
+        // as extra productionPointer hits on every OnlineStatus.isOnline() check.
+        String probeUrl = "https://www.dropbox.com";
 
         HttpURLConnection connection = null;
         try {
-            URL url = new URL(pointerUrl);
+            URL url = new URL(probeUrl);
             connection = (HttpURLConnection) url.openConnection();
             connection.setInstanceFollowRedirects(true);
             HttpConnectionHelper.applyTimeouts(connection);
             connection.setRequestMethod("GET");
 
             int responseCode = connection.getResponseCode();
-            if (responseCode < 200 || responseCode >= 400) {
-                Log.d("Internet Found", "Internet Found false - HTTP " + responseCode);
-                returnState = false;
-            } else {
-                // Read a small portion of the response and validate pointer format.
-                int validLineCount = 0;
-                int linesChecked = 0;
-                BufferedReader in = new BufferedReader(new java.io.InputStreamReader(connection.getInputStream()));
-                String line;
-                while ((line = in.readLine()) != null && linesChecked < 20) {
-                    linesChecked++;
-                    if (line.contains("::")) {
-                        String[] parts = line.split("::");
-                        if (parts.length >= 3) {
-                            validLineCount++;
-                            if (validLineCount >= 2) {
-                                break;
-                            }
-                        }
-                    }
-                }
-                in.close();
-                returnState = validLineCount >= 2;
-                Log.d("Internet Found", "Internet Found pointer validation validLineCount=" + validLineCount + " => " + returnState);
-            }
+            returnState = responseCode >= 200 && responseCode < 400;
+            Log.d("Internet Found", "Internet Found probe HTTP " + responseCode + " => " + returnState);
         } catch (Exception e) {
             Log.d("Internet Found", "Internet Found false - exception " + e.getMessage());
             returnState = false;

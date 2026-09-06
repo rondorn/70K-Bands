@@ -42,6 +42,7 @@ class firebaseSharedCommentsWrite {
     ) {
         if inTestEnvironment {
             print("⏭️ [SHARED_COMMENTS] Skipping write in test environment")
+            NetworkCounter.record("Firebase-Notes skipped=simulator")
             DispatchQueue.main.async { completion(true) }
             return
         }
@@ -83,6 +84,7 @@ class firebaseSharedCommentsWrite {
         ]
 
         print("📝 [SHARED_COMMENTS] Writing to \(path)")
+        NetworkCounter.record("Firebase-Notes")
 
         firebaseRef.child(path).setValue(payload) { error, _ in
             if let error = error {

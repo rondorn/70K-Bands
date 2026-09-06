@@ -148,6 +148,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         configuration.timeoutIntervalForRequest = timeout
         configuration.timeoutIntervalForResource = timeout
         let session = URLSession(configuration: configuration)
+        NetworkCounter.recordDropbox(url.absoluteString)
         
         let task = session.dataTask(with: url) { [weak self] (data, response, error) in
             guard let self = self else { return }
@@ -327,10 +328,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     func refreshPointerFileForUserInitiatedRefresh(completion: ((Bool) -> Void)? = nil) {
         downloadAndUpdatePointerFile(reason: "pull-to-refresh", enforceOncePerLaunch: false, completion: completion)
     }
-    
-    private func downloadAndUpdatePointerFileOnLaunch() {
-        downloadAndUpdatePointerFile(reason: "startup", enforceOncePerLaunch: true, completion: nil)
-    }
 
     /**
      Called when the application has finished launching. Sets up the main window, root view controller, and various app-wide settings.
@@ -443,7 +440,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             
             setupCurrentYearUrls()
             SharedCommentsSettings.loadEnableSharedComments()
-            self.downloadAndUpdatePointerFileOnLaunch()
+            // Pointer download is owned by MasterViewController.performUnifiedDataRefresh
+            // (one download per launch). A second copy here raced the unified refresh.
             
             // Initialize Firebase Messaging after Firebase is configured
             // This prevents error -9816 (SSL connection failure) on first launch

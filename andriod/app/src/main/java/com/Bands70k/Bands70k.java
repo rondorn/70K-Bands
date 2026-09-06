@@ -16,6 +16,8 @@ import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
 
@@ -29,6 +31,9 @@ public class Bands70k extends Application implements Application.ActivityLifecyc
     private static Context context;
     private int activityCount = 0;
     private static boolean isAppInBackground = false;
+    private static final long BACKGROUND_SETTLE_MS = 800L;
+    private final Handler lifecycleHandler = new Handler(Looper.getMainLooper());
+    private Runnable pendingBackgroundMark;
     private NetworkStateReceiver networkStateReceiver;
     private boolean hasCheckedMinimumVersionThisProcess = false;
     private static volatile Activity currentActivity = null;
@@ -276,6 +281,7 @@ public class Bands70k extends Application implements Application.ActivityLifecyc
     @Override
     public void onActivityStarted(Activity activity) {
         activityCount++;
+        cancelPendingBackgroundMark();
         // Check minimum supported app version on:
         // - Cold start (first activity becomes visible)
         // - Return from background (no activities were visible, now one is)
@@ -288,7 +294,7 @@ public class Bands70k extends Application implements Application.ActivityLifecyc
             }
         }
 
-        if (isAppInBackground && activityCount == 1) {
+        if (isAppInBackground && activityCount >= 1) {
             // App was in background and now has an active activity - app came to foreground
             isAppInBackground = false;
             Log.i("AppLifecycle", "App came to FOREGROUND - stopping any bulk loading");
@@ -308,7 +314,7 @@ public class Bands70k extends Application implements Application.ActivityLifecyc
             ForegroundDownloadManager.onAppForegrounded();
 
             // Core data refresh (pointer -> band -> schedule -> descriptionMap).
-            // Runs ONLY on true background -> foreground transitions.
+            // Runs ONLY on true background -> foreground transitions (not details/reports).
             CoreDataRefreshManager.startCoreRefreshFromBackground();
 
             // Offline -> online recovery: full Firebase sync when local data changed while away.
@@ -325,28 +331,36 @@ public class Bands70k extends Application implements Application.ActivityLifecyc
     public void onActivityStopped(Activity activity) {
         activityCount--;
         if (!isAppInBackground && activityCount == 0) {
-            // No activities are visible - app went to background
-            isAppInBackground = true;
-            currentActivity = null;
-            Log.i("AppLifecycle", "App went to BACKGROUND");
-            
-            // Cancel foreground download timer
-            ForegroundDownloadManager.onAppBackgrounded();
-            
-            // NO LONGER starting background downloads - all downloads happen in foreground only
-            // This avoids Android 15 background network restrictions
-            Log.i("AppLifecycle", "App went to background - downloads only happen in foreground");
-            
-            // Cancel any running downloads if app backgrounds (they should complete in foreground)
-            if (ForegroundDownloadManager.isDownloading()) {
-                Log.i("AppLifecycle", "Downloads in progress - user should wait or they'll continue in service");
-            }
-            
-            // Upload Firebase band/show data when app goes to background.
-            FirebaseUserWriteScheduler.flushPendingWriteOnBackground();
-            FirebaseSyncCoordinator.startFirebaseSyncIfNeeded(FirebaseSyncCoordinator.Trigger.BACKGROUND);
+            // Brief 0 during in-app navigation (details/reports) is not a true background.
+            pendingBackgroundMark = () -> {
+                pendingBackgroundMark = null;
+                if (activityCount == 0 && !isAppInBackground) {
+                    isAppInBackground = true;
+                    currentActivity = null;
+                    Log.i("AppLifecycle", "App went to BACKGROUND");
+
+                    ForegroundDownloadManager.onAppBackgrounded();
+
+                    Log.i("AppLifecycle", "App went to background - downloads only happen in foreground");
+
+                    if (ForegroundDownloadManager.isDownloading()) {
+                        Log.i("AppLifecycle", "Downloads in progress - user should wait or they'll continue in service");
+                    }
+
+                    FirebaseUserWriteScheduler.flushPendingWriteOnBackground();
+                    FirebaseSyncCoordinator.startFirebaseSyncIfNeeded(FirebaseSyncCoordinator.Trigger.BACKGROUND);
+                }
+            };
+            lifecycleHandler.postDelayed(pendingBackgroundMark, BACKGROUND_SETTLE_MS);
         }
         Log.d("AppLifecycle", "Activity stopped: " + activity.getClass().getSimpleName() + " (active count: " + activityCount + ")");
+    }
+
+    private void cancelPendingBackgroundMark() {
+        if (pendingBackgroundMark != null) {
+            lifecycleHandler.removeCallbacks(pendingBackgroundMark);
+            pendingBackgroundMark = null;
+        }
     }
     
     @Override

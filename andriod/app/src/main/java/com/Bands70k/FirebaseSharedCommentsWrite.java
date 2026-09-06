@@ -88,6 +88,7 @@ public class FirebaseSharedCommentsWrite {
         payload.put("updatedAt", formatter.format(new Date()));
 
         Log.d(TAG, "Writing to " + path);
+        NetworkCounter.record("Firebase-Notes");
 
         mDatabase.child(path).setValue(payload)
                 .addOnSuccessListener(aVoid -> {

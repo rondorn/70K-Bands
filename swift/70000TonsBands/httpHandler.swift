@@ -34,6 +34,7 @@ func HTTPGet(_ url: String, callback: @escaping (String, String?) -> Void) {
     
     if (url.isEmpty == false && url != " " && internetAvailble == true){
         print ("Loading URL - '\(url)'")
+        NetworkCounter.recordDropbox(url)
         let request = NSMutableURLRequest(url: URL(string: url)!)
         request.timeoutInterval = NetworkTimeoutPolicy.timeoutIntervalForCurrentThread()
 
@@ -80,6 +81,7 @@ func getUrlData(urlString: String) -> String{
                     }
                     
                     print ("getUrlData: Attempting to load URL \(urlString) (attempt \(retryCount + 1))")
+                    NetworkCounter.recordDropbox(urlString)
 
                     guard let url = URL(string: urlString) else {
                         print("getUrlData: Invalid URL: \(urlString)")

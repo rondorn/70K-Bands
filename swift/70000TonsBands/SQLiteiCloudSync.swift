@@ -58,6 +58,7 @@ class SQLiteiCloudSync {
         }
         
         print("☁️ Starting iCloud priority sync to SQLite...")
+        NetworkCounter.record("iCloud-User")
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else {
@@ -135,6 +136,7 @@ class SQLiteiCloudSync {
         }
         
         print("☁️ Starting priority sync to iCloud (Default only)...")
+        NetworkCounter.record("iCloud-User")
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else {
@@ -349,6 +351,7 @@ class SQLiteiCloudSync {
         }
         
         print("☁️ Starting iCloud attendance sync to SQLite...")
+        NetworkCounter.record("iCloud-Schedule")
         print("🔍 [CLEAR_DEBUG] syncFromiCloud started (any iCloud key with no local row will be written to SQLite)")
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
@@ -487,6 +490,7 @@ class SQLiteiCloudSync {
         }
         
         print("☁️ Starting attendance sync to iCloud (Default only)...")
+        NetworkCounter.record("iCloud-Schedule")
         print("🔍 [CLEAR_DEBUG] syncToiCloud async work queued (will read SQLite, remove stale iCloud keys, then call completion)")
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
