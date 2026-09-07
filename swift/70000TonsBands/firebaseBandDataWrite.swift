@@ -92,12 +92,6 @@ class firebaseBandDataWrite {
             
             print("🔥 [FIREBASE_BAND] writeSingleRecord: Inside background queue for '\(bandName)'")
             
-            guard let firebaseRef = self.ensureReference() else {
-                print("❌ [FIREBASE_BAND] writeSingleRecord: BLOCKED - Firebase reference not initialized for '\(bandName)'")
-                FirebaseWriteMonitor.shared.recordWriteFailure(context: "band_ref_nil:\(bandName)")
-                return
-            }
-            
             self.firebaseBandAttendedArray = self.loadCompareFile()
             
             let uid = (UIDevice.current.identifierForVendor?.uuidString)!
@@ -121,6 +115,12 @@ class firebaseBandDataWrite {
             let sanitizedBandName = sanitizedName ?? self.sanitizeBandNameForFirebase(bandName)
             let firebasePath = "bandData/\(uid)/\(storageYear)/\(sanitizedBandName)"
             print("🔥 [FIREBASE_BAND] writeSingleRecord: Writing to Firebase path: \(firebasePath)")
+
+            guard let firebaseRef = FirebaseConnectionHelper.beginWriteSession(reason: "band_single") else {
+                print("❌ [FIREBASE_BAND] writeSingleRecord: BLOCKED - Firebase reference not initialized for '\(bandName)'")
+                FirebaseWriteMonitor.shared.recordWriteFailure(context: "band_ref_nil:\(bandName)")
+                return
+            }
             NetworkCounter.record("Firebase-Artists")
             
             let dataToWrite: [String: Any] = [
@@ -141,8 +141,8 @@ class firebaseBandDataWrite {
                         FirebaseWriteMonitor.shared.recordWriteSuccess(context: "band:\(bandName)")
                         self.firebaseBandAttendedArray[bandName] = ranking
                         self.variableStoreHandle.storeDataToDisk(data: self.firebaseBandAttendedArray, fileName: self.bandCompareFile)
-                        FirebaseConnectionHelper.goOffline(reason: "band_single_write_complete")
                     }
+                    FirebaseConnectionHelper.endWriteSession(reason: "band_single_write_complete")
                 }
 
         }
@@ -172,7 +172,7 @@ class firebaseBandDataWrite {
             return
         }
         
-        guard ensureReference() != nil else {
+        guard AppDelegate.isFirebaseConfigured else {
             FirebaseSyncTrace.log("BLOCKED band writeData", "firebaseRef=nil configured=\(AppDelegate.isFirebaseConfigured)")
             print("❌ [FIREBASE_BAND] writeData: BLOCKED - Firebase reference not initialized")
             finish()
@@ -213,11 +213,6 @@ class firebaseBandDataWrite {
             }
             print("🔥 [FIREBASE_BAND] writeData: Sending full lineup (\(bandRank.count) bands) for pointer year \(storageYear)")
             
-            guard let firebaseRef = ensureReference() else {
-                finish()
-                return
-            }
-            
             var batchUpdate = [String: [String: Any]]()
             for (bandName, ranking) in bandRank {
                 let sanitizedName = sanitizeBandNameForFirebase(bandName)
@@ -229,11 +224,15 @@ class firebaseBandDataWrite {
                     "year": String(storageYear)
                 ]
             }
+
+            guard let firebaseRef = FirebaseConnectionHelper.beginWriteSession(reason: "band_batch") else {
+                finish()
+                return
+            }
             
             print("🔥 [FIREBASE_BAND] writeData: BATCH setValue for \(batchUpdate.count) lineup bands at bandData/\(uid)/\(storageYear)")
             NetworkCounter.record("Firebase-Artists")
             FirebaseSyncTrace.log("BAND setValue START", "path=bandData/\(uid)/\(storageYear) count=\(batchUpdate.count)")
-            FirebaseConnectionHelper.goOnline(reason: "band_batch_write_start")
             firebaseRef.child("bandData").child(uid).child(String(storageYear)).setValue(batchUpdate) { error, _ in
                 if let error = error {
                     FirebaseSyncTrace.log("BAND setValue FAILED", error.localizedDescription)
@@ -246,7 +245,7 @@ class firebaseBandDataWrite {
                     self.firebaseBandAttendedArray = self.bandRank
                     self.variableStoreHandle.storeDataToDisk(data: self.firebaseBandAttendedArray, fileName: self.bandCompareFile)
                 }
-                FirebaseConnectionHelper.goOffline(reason: "band_batch_write_complete")
+                FirebaseConnectionHelper.endWriteSession(reason: "band_batch_write_complete")
                 finish()
             }
         } else {

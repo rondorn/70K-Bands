@@ -52,17 +52,17 @@ class firebaseSharedCommentsWrite {
             return
         }
 
-        guard let firebaseRef = ref else {
-            print("❌ [SHARED_COMMENTS] Firebase reference not initialized")
-            FirebaseWriteMonitor.shared.recordWriteFailure(context: "shared_comments_ref_nil")
-            DispatchQueue.main.async { completion(false) }
-            return
-        }
-
         let userDataHandle = userDataHandler()
         guard !userDataHandle.uid.isEmpty else {
             print("❌ [SHARED_COMMENTS] Missing user ID")
             FirebaseWriteMonitor.shared.recordWriteFailure(context: "shared_comments_uid_empty")
+            DispatchQueue.main.async { completion(false) }
+            return
+        }
+
+        guard let firebaseRef = FirebaseConnectionHelper.beginWriteSession(reason: "shared_comments") else {
+            print("❌ [SHARED_COMMENTS] Firebase reference not initialized")
+            FirebaseWriteMonitor.shared.recordWriteFailure(context: "shared_comments_ref_nil")
             DispatchQueue.main.async { completion(false) }
             return
         }
@@ -96,6 +96,7 @@ class firebaseSharedCommentsWrite {
                 FirebaseWriteMonitor.shared.recordWriteSuccess(context: "shared_comments:\(bandName)")
                 DispatchQueue.main.async { completion(true) }
             }
+            FirebaseConnectionHelper.endWriteSession(reason: "shared_comments_complete")
         }
     }
 

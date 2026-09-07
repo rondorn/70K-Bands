@@ -154,13 +154,6 @@ class firebaseEventDataWrite {
             
             print("🔥 firebase EVENT_WRITE: Background write started for \(parsed.band)")
             
-            // Check if Firebase reference is initialized
-            guard let firebaseRef = self.ensureReference() else {
-                print("⚠️ [FIREBASE_EVENT] Cannot write event data: Firebase reference not initialized, skipping analytics")
-                FirebaseWriteMonitor.shared.recordWriteFailure(context: "event_ref_nil:\(index)")
-                return
-            }
-            
             self.firebaseShowsAttendedArray = self.loadCompareFile();
             
             let uid = (UIDevice.current.identifierForVendor?.uuidString)!
@@ -171,6 +164,12 @@ class firebaseEventDataWrite {
             
             let firebasePath = "showData/\(uid)/\(parsed.yearPlain)/\(sanitizedIndex)"
             print("🔥 firebase EVENT_WRITE: Writing to path: \(firebasePath)")
+
+            guard let firebaseRef = FirebaseConnectionHelper.beginWriteSession(reason: "event_single") else {
+                print("⚠️ [FIREBASE_EVENT] Cannot write event data: Firebase reference not initialized, skipping analytics")
+                FirebaseWriteMonitor.shared.recordWriteFailure(context: "event_ref_nil:\(index)")
+                return
+            }
             NetworkCounter.record("Firebase-Schedule")
             
             var payload: [String: Any] = [
@@ -197,8 +196,8 @@ class firebaseEventDataWrite {
                         FirebaseWriteMonitor.shared.recordWriteSuccess(context: "event:\(index)")
                         self.firebaseShowsAttendedArray[index] = status
                         self.variableStoreHandle.storeDataToDisk(data: self.firebaseShowsAttendedArray, fileName: self.eventCompareFile)
-                        FirebaseConnectionHelper.goOffline(reason: "event_single_write_complete")
                     }
+                    FirebaseConnectionHelper.endWriteSession(reason: "event_single_write_complete")
                 }
             
         }
@@ -216,8 +215,7 @@ class firebaseEventDataWrite {
             return
         }
         
-        // Check if Firebase reference is initialized
-        guard ensureReference() != nil else {
+        guard AppDelegate.isFirebaseConfigured else {
             print("⚠️ [FIREBASE_EVENT] Firebase reference not initialized, skipping event analytics reporting")
             finish()
             return
@@ -312,11 +310,6 @@ class firebaseEventDataWrite {
                             return
                         }
                         
-                        guard let firebaseRef = self.ensureReference() else {
-                            print("⚠️ [FIREBASE_EVENT] Firebase reference not initialized, skipping batch write")
-                            return
-                        }
-                        
                         var batchUpdate = [String: [String: Any]]()
                         var skippedInvalid = 0
                         for (index, status) in showsAttendedArray {
@@ -333,6 +326,10 @@ class firebaseEventDataWrite {
                         }
                         
                         print("🔥 firebase EVENT_WRITE: BATCH updateChildren for \(batchUpdate.count) shows at showData/\(uid)/\(currentYear)")
+                        guard let firebaseRef = FirebaseConnectionHelper.beginWriteSession(reason: "event_batch") else {
+                            print("⚠️ [FIREBASE_EVENT] Firebase reference not initialized, skipping batch write")
+                            return
+                        }
                         NetworkCounter.record("Firebase-Schedule")
                         let writeSemaphore = DispatchSemaphore(value: 0)
                         firebaseRef.child("showData").child(uid).child(String(currentYear)).updateChildValues(batchUpdate) { error, _ in
@@ -345,7 +342,7 @@ class firebaseEventDataWrite {
                                 self.firebaseShowsAttendedArray = showsAttendedArray
                                 self.variableStoreHandle.storeDataToDisk(data: self.firebaseShowsAttendedArray, fileName: self.eventCompareFile)
                             }
-                            FirebaseConnectionHelper.goOffline(reason: "event_batch_write_complete")
+                            FirebaseConnectionHelper.endWriteSession(reason: "event_batch_write_complete")
                             writeSemaphore.signal()
                         }
                         _ = writeSemaphore.wait(timeout: .now() + 30)

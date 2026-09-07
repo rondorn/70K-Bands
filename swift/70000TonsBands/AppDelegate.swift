@@ -61,7 +61,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     private let bulkRapidRetriggerInterval: TimeInterval = 30
     private var lastBulkStartedAt: Date?
     private var lastBulkFinishedAt: Date?
-    private let firebaseSyncLock = NSLock()
+    private var firebaseSyncLock = NSLock()
+    /// One launch/foreground Firebase pulse (user + pending band/show) per 30s.
+    private var lastLifecycleFirebaseSyncScheduledAt: Date?
+    private let lifecycleFirebaseSyncDebounceSeconds: TimeInterval = 30
+    private var pendingLifecycleSyncWork: DispatchWorkItem?
+    private let lifecycleSyncLock = NSLock()
     
     // Flag to track if Firebase has been configured
     // Must be static so it can be accessed from other classes
@@ -437,6 +442,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             let firebaseCompleteTime = Date()
             print("✅ [TIMING] Firebase configured COMPLETE at \(firebaseCompleteTime.timeIntervalSince1970)")
             print("✅ Firebase configured")
+            FirebaseConnectionHelper.goIdleAfterConfigure()
             
             setupCurrentYearUrls()
             SharedCommentsSettings.loadEnableSharedComments()
@@ -455,6 +461,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             print("✅ Remote notifications registered")
             
             print("✅ Deferred network operations started")
+
+            // User lastLaunch + any pending band/show uploads — parallel with CSV refresh.
+            self.scheduleUserAndPendingDataSync(reason: "launch")
         }
 
         // Set up notification permissions immediately (doesn't require network)
@@ -751,16 +760,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             print("iCloud: App became active, forcing iCloud synchronization in background")
             NSUbiquitousKeyValueStore.default.synchronize()
             
-            // Perform network operations in background (Firebase now guaranteed to be configured)
-            let userDataHandle = userDataHandler()
-            
-            // SAFETY: Only use Firebase if it's actually configured
-            if AppDelegate.isFirebaseConfigured {
-                print("🔥 [TIMING] Scheduling Firebase user write with jitter")
-                firebaseUserWrite.scheduleWriteIfNeeded()
-            } else {
-                print("⚠️ [TIMING] Firebase NOT configured yet, skipping Firebase user write")
-            }
+            // User lastLaunch + pending band/show share one jittered connection window.
+            // applicationDidBecomeActive is often not called in scene-based apps.
             
             // Post refresh notification on main thread after background operations complete
             DispatchQueue.main.async {
@@ -873,6 +874,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             return
         }
         lastBackgroundSyncTrigger = Date()
+        cancelPendingLifecycleFirebaseSync()
 
         FirebaseSyncTrace.snapshot("enterBackground-start")
         print("🔄 App entering background — marking true background for core refresh on return")
@@ -894,7 +896,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         }
         
         firebaseUserWrite.flushPendingWriteOnBackground()
-        startFirebaseSyncIfNeeded(application: application)
+        startFirebaseSyncIfNeeded(application: application, skipJitter: true)
         
         //Messaging.messaging().disconnect()
         print("Disconnected from FCM.")
@@ -986,7 +988,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         LocalNotificationRebuildCoordinator.shared.startLocalAlertsEarlyIfNeeded()
         guard FirebaseWriteMonitor.shared.shouldRunFullSync() else { return }
         FirebaseSyncTrace.log("early sync on resignActive", "before background suspension")
-        startFirebaseSyncIfNeeded(application: nil)
+        startFirebaseSyncIfNeeded(application: nil, skipJitter: true)
     }
 
     /// Retries band/show upload after foreground return when background sync did not finish.
@@ -1009,31 +1011,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             firebaseSyncInFlight = false
         }
         firebaseSyncLock.unlock()
-
-        let startSync = { [weak self] in
-            guard let self = self else { return }
-            guard FirebaseWriteMonitor.shared.shouldRunFullSync() else { return }
-            FirebaseSyncTrace.log("foreground recovery", "starting sync")
-            self.startFirebaseSyncIfNeeded(application: nil)
-        }
-
-        if AppDelegate.isFirebaseConfigured {
-            startSync()
-        } else {
-            FirebaseSyncTrace.log("foreground recovery", "deferring 5s until Firebase configured")
-            DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 5.0) {
-                guard AppDelegate.isFirebaseConfigured else {
-                    FirebaseSyncTrace.log("foreground recovery", "aborted — Firebase still not configured")
-                    return
-                }
-                startSync()
-            }
-        }
+        FirebaseSyncTrace.log("foreground recovery", "in-flight reset — launch/foreground window will start sync")
     }
 
     /// Starts band/show Firebase sync on a dedicated background task and queue.
     /// Does not block notifications, iCloud, or bulk downloads.
-    func startFirebaseSyncIfNeeded(application: UIApplication? = nil) {
+    /// Starts band/show Firebase sync on a dedicated background task and queue.
+    /// Does not block notifications, iCloud, or bulk downloads.
+    /// - Parameter skipJitter: True when the caller already applied launch/foreground jitter, or when iOS background time is limited.
+    func startFirebaseSyncIfNeeded(application: UIApplication? = nil, skipJitter: Bool = false) {
         FirebaseSyncTrace.snapshot("startFirebaseSyncIfNeeded-entry")
         guard FirebaseWriteMonitor.shared.shouldRunFullSync() else {
             FirebaseSyncTrace.log("SKIP startFirebaseSyncIfNeeded", "shouldRunFullSync=false")
@@ -1089,7 +1075,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             } else {
                 FirebaseSyncTrace.log("network test passed — calling performFirebaseReporting")
             }
-            self.performFirebaseReporting(isBackground: isBackground)
+            self.performFirebaseReporting(isBackground: isBackground, skipJitter: skipJitter)
             FirebaseSyncTrace.snapshot("startFirebaseSyncIfNeeded-done")
         }
     }
@@ -1243,15 +1229,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     private static let bandEventSyncMaxJitterMs = 20_000
     private static let bandEventSyncBackgroundMaxJitterMs = 5_000
 
-    private func performFirebaseReporting(isBackground: Bool = false) {
+    private func performFirebaseReporting(isBackground: Bool = false, skipJitter: Bool = false) {
         let started = Date()
         FirebaseSyncTrace.snapshot("performFirebaseReporting-start")
-        print("🔥 FIREBASE REPORTING: Starting Firebase reporting (network verified, background=\(isBackground))")
+        print("🔥 FIREBASE REPORTING: Starting Firebase reporting (network verified, background=\(isBackground), skipJitter=\(skipJitter))")
         
         let hasDirtyChanges = FirebaseWriteMonitor.shared.hasPendingLocalChanges()
         let uid = UIDevice.current.identifierForVendor?.uuidString ?? ""
         let maxJitterMs: Int
-        if hasDirtyChanges {
+        if skipJitter || hasDirtyChanges {
             maxJitterMs = 0
         } else {
             maxJitterMs = isBackground ? Self.bandEventSyncBackgroundMaxJitterMs : Self.bandEventSyncMaxJitterMs
@@ -1304,10 +1290,65 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         handleAppReturningFromBackground()
     }
 
+    /// User lastLaunch plus any dirty band/show Firebase uploads.
+    /// One 0–20s jitter window, then user + pending band/show share a single short RTDB connection.
+    func scheduleUserAndPendingDataSync(reason: String) {
+        print("🔥 [USER_WRITE] scheduleUserAndPendingDataSync reason=\(reason)")
+
+        lifecycleSyncLock.lock()
+        if let last = lastLifecycleFirebaseSyncScheduledAt,
+           Date().timeIntervalSince(last) < lifecycleFirebaseSyncDebounceSeconds {
+            lifecycleSyncLock.unlock()
+            print("🔥 [USER_WRITE] Skipping \(reason) — lifecycle Firebase sync already scheduled")
+            return
+        }
+        lastLifecycleFirebaseSyncScheduledAt = Date()
+        pendingLifecycleSyncWork?.cancel()
+        lifecycleSyncLock.unlock()
+
+        let startWhenReady: () -> Void = { [weak self] in
+            guard let self = self else { return }
+            let uid = UIDevice.current.identifierForVendor?.uuidString ?? ""
+            let delayMs = FirebaseConnectionHelper.jitterDelayMs(for: uid)
+            print("🔥 [USER_WRITE] \(reason) waiting \(delayMs)ms before user + pending band/show writes")
+
+            let work = DispatchWorkItem { [weak self] in
+                guard let self = self else { return }
+                firebaseUserWrite.writeImmediatelyIfNeeded()
+                self.startFirebaseSyncIfNeeded(application: nil, skipJitter: true)
+            }
+            self.lifecycleSyncLock.lock()
+            self.pendingLifecycleSyncWork = work
+            self.lifecycleSyncLock.unlock()
+            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + .milliseconds(delayMs), execute: work)
+        }
+
+        if AppDelegate.isFirebaseConfigured {
+            startWhenReady()
+        } else {
+            print("🔥 [USER_WRITE] Firebase not ready — deferring \(reason) sync 4s")
+            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 4.0) {
+                guard AppDelegate.isFirebaseConfigured else {
+                    print("⚠️ [USER_WRITE] Firebase still not configured — \(reason) sync skipped")
+                    return
+                }
+                startWhenReady()
+            }
+        }
+    }
+
+    private func cancelPendingLifecycleFirebaseSync() {
+        lifecycleSyncLock.lock()
+        pendingLifecycleSyncWork?.cancel()
+        pendingLifecycleSyncWork = nil
+        lifecycleSyncLock.unlock()
+    }
+
     /// True background → foreground (Home, app switcher, lock/unlock). Not details or preferences.
     /// Scene-based apps get this from SceneDelegate; AppDelegate is a deduped fallback.
     func handleAppReturningFromBackground() {
         recoverDeferredBackgroundWorkOnForeground()
+        scheduleUserAndPendingDataSync(reason: "scene-foreground")
 
         UserDefaults.standard.synchronize()
 

@@ -7,8 +7,16 @@ import Foundation
 import Firebase
 
 /// Lazily opens and closes Firebase Realtime Database connections to stay within concurrent connection limits.
+///
+/// One WebSocket per app. Sessions are refcounted so overlapping user/band/show writes share one
+/// connection, then disconnect after a short idle so a herd of launches does not stay online.
 enum FirebaseConnectionHelper {
     private static let queue = DispatchQueue(label: "FirebaseConnectionHelper.queue")
+    private static var writeSessionCount = 0
+    private static var idleCloseWork: DispatchWorkItem?
+    /// Coalesce back-to-back writes (user then band) into one connection pulse.
+    private static let idleCloseDelaySeconds: TimeInterval = 1.0
+    static let launchJitterMaxMs = 20_000
 
     static func databaseReference() -> DatabaseReference? {
         guard AppDelegate.isFirebaseConfigured else {
@@ -18,24 +26,60 @@ enum FirebaseConnectionHelper {
         return Database.database().reference()
     }
 
-    static func goOffline(reason: String) {
+    /// Opens the RTDB connection if this is the first in-flight write on this device.
+    @discardableResult
+    static func beginWriteSession(reason: String) -> DatabaseReference? {
+        guard AppDelegate.isFirebaseConfigured else {
+            print("⚠️ [FIREBASE_CONN] Firebase not configured — skipping write session (\(reason))")
+            return nil
+        }
+        queue.sync {
+            idleCloseWork?.cancel()
+            idleCloseWork = nil
+            writeSessionCount += 1
+            if writeSessionCount == 1 {
+                Database.database().goOnline()
+                print("🔌 [FIREBASE_CONN] goOnline (\(reason)) sessions=1")
+            } else {
+                print("🔌 [FIREBASE_CONN] reuse connection (\(reason)) sessions=\(writeSessionCount)")
+            }
+        }
+        return Database.database().reference()
+    }
+
+    /// Closes the RTDB connection when the last in-flight write finishes (after a 1s idle).
+    static func endWriteSession(reason: String) {
         guard AppDelegate.isFirebaseConfigured else { return }
         queue.async {
-            Database.database().goOffline()
-            print("🔌 [FIREBASE_CONN] goOffline (\(reason))")
+            writeSessionCount = max(0, writeSessionCount - 1)
+            print("🔌 [FIREBASE_CONN] endWriteSession (\(reason)) sessions=\(writeSessionCount)")
+            guard writeSessionCount == 0 else { return }
+            idleCloseWork?.cancel()
+            let work = DispatchWorkItem {
+                if writeSessionCount == 0 {
+                    Database.database().goOffline()
+                    print("🔌 [FIREBASE_CONN] goOffline (idle after \(reason))")
+                }
+            }
+            idleCloseWork = work
+            queue.asyncAfter(deadline: .now() + idleCloseDelaySeconds, execute: work)
         }
     }
 
-    static func goOnline(reason: String) {
+    /// After `FirebaseApp.configure()` the SDK is online. Disconnect until a write session starts.
+    static func goIdleAfterConfigure() {
         guard AppDelegate.isFirebaseConfigured else { return }
-        queue.sync {
-            Database.database().goOnline()
-            print("🔌 [FIREBASE_CONN] goOnline (\(reason))")
+        queue.async {
+            if writeSessionCount == 0 {
+                Database.database().goOffline()
+                print("🔌 [FIREBASE_CONN] goOffline (post-configure idle)")
+            }
         }
     }
 
     /// Spreads connection opens across launches using a stable per-device delay (0–20s).
-    static func jitterDelayMs(for userId: String, maxJitterMs: Int = 20_000) -> Int {
+    /// 200 devices launching together → ~10 starts/sec over 20s; short sessions aim for ~25 concurrent.
+    static func jitterDelayMs(for userId: String, maxJitterMs: Int = launchJitterMaxMs) -> Int {
         guard !userId.isEmpty else { return 0 }
         let hash = abs(userId.hashValue)
         return hash % (maxJitterMs + 1)
