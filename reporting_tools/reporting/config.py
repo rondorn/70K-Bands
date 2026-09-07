@@ -63,6 +63,7 @@ def resolve_festival(
         reports_full=reports["full"],
         reports_languages=dict(reports.get("languages", {})),
         min_votes=int(entry.get("min_votes", 50)),
+        active_user_days=int(entry.get("active_user_days", 30)),
         total_user_base_for_attendance=int(
             entry.get("total_user_base_for_attendance", 2920)
         ),

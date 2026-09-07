@@ -29,8 +29,9 @@ def generate_html_reports(dataset: FestivalDataset) -> None:
             output_file=config.reports_main,
             source=config.id,
             min_votes=config.min_votes,
+            cutoff_days=config.active_user_days,
         )
-        html_reports.main_full(source=config.id)
+        html_reports.main_full(source=config.id, cutoff_days=config.active_user_days)
     finally:
         os.chdir(previous_cwd)
 
@@ -44,6 +45,7 @@ def run_festival_pipeline(
 ) -> FestivalDataset:
     print(f"\n{'=' * 60}")
     print(f"Running report pipeline: {config.name} ({config.id})")
+    print(f"min-votes={config.min_votes}  cutoff-days={config.active_user_days}")
     print(f"{'=' * 60}\n")
 
     if not skip_pointer:

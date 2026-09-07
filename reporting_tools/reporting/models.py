@@ -23,6 +23,7 @@ class FestivalConfig:
     reports_full: str
     reports_languages: dict[str, str]
     min_votes: int
+    active_user_days: int
     total_user_base_for_attendance: int
     daily_history_path: Path
     monthly_history_path: Path

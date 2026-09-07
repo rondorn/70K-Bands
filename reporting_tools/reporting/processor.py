@@ -137,7 +137,8 @@ def process_firebase_data(
     valid_events = _build_valid_events(schedule_rows, config.event_year)
     country_codes = _load_country_codes()
 
-    cutoff_epoch = int((datetime.now() - timedelta(days=ACTIVE_USER_DAYS)).timestamp())
+    active_user_days = config.active_user_days or ACTIVE_USER_DAYS
+    cutoff_epoch = int((datetime.now() - timedelta(days=active_user_days)).timestamp())
 
     users: list[UserRecord] = []
     rankings: list[RankingRecord] = []
@@ -298,7 +299,7 @@ def process_firebase_data(
     if skipped_invalid_launch:
         print(f"  Skipped {skipped_invalid_launch} users with invalid lastLaunch")
 
-    print(f"  Active users (last {ACTIVE_USER_DAYS} days): {len(users)}")
+    print(f"  Active users (last {active_user_days} days): {len(users)}")
     print(f"  Ranking rows: {len(rankings)}")
     print(f"  Event rows: {len(events)}")
 

@@ -64,6 +64,20 @@ def add_report_args(parser: argparse.ArgumentParser) -> None:
         action="store_true",
         help="List configured festival ids and exit",
     )
+    parser.add_argument(
+        "--min-votes",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Override festivals.json min_votes for this run (if omitted, each festival uses its own min_votes field)",
+    )
+    parser.add_argument(
+        "--cutoff-days",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Drop users whose last launch is older than this many days (default: 30)",
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -146,6 +160,22 @@ def run_reports(args: argparse.Namespace) -> int:
 
     print(f"Using config:  {config_path}")
     print(f"Using secrets: {secrets_path}")
+
+    if args.min_votes is not None:
+        if args.min_votes < 0:
+            print("ERROR: --min-votes must be >= 0", file=sys.stderr)
+            return 1
+        for config in configs:
+            config.min_votes = args.min_votes
+        print(f"Override min-votes: {args.min_votes}")
+
+    if args.cutoff_days is not None:
+        if args.cutoff_days < 1:
+            print("ERROR: --cutoff-days must be >= 1", file=sys.stderr)
+            return 1
+        for config in configs:
+            config.active_user_days = args.cutoff_days
+        print(f"Override cutoff-days: {args.cutoff_days}")
 
     for config in configs:
         try:

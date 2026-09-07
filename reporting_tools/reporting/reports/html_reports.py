@@ -35,6 +35,36 @@ def set_festival_context(config: FestivalConfig) -> None:
     TOTAL_USER_BASE_FOR_ATTENDANCE = config.total_user_base_for_attendance
 
 
+_CUTOFF_DAYS_OVERRIDE: int | None = None
+
+
+def _active_user_days() -> int:
+    if _CUTOFF_DAYS_OVERRIDE is not None:
+        return _CUTOFF_DAYS_OVERRIDE
+    if _FESTIVAL_CONTEXT is not None:
+        return _FESTIVAL_CONTEXT.active_user_days
+    return 30
+
+
+def _apply_cutoff_note(html_content: str) -> str:
+    """Swap the hardcoded 30-day footnote for the active cutoff."""
+    days = _active_user_days()
+    if days == 30:
+        return html_content
+    replacements = (
+        ("last 30 days", f"last {days} days"),
+        ("sidste 30 dage", f"sidste {days} dage"),
+        ("letzten 30 Tagen", f"letzten {days} Tagen"),
+        ("últimos 30 días", f"últimos {days} días"),
+        ("viimeisten 30 päivän", f"viimeisten {days} päivän"),
+        ("des 30 derniers jours", f"des {days} derniers jours"),
+        ("últimos 30 dias", f"últimos {days} dias"),
+    )
+    for old, new in replacements:
+        html_content = html_content.replace(old, new)
+    return html_content
+
+
 # ============================================================================
 # CONFIGURATION CONSTANTS
 # ============================================================================
@@ -971,7 +1001,7 @@ def generate_html_content(csv_files: List[tuple[str, List[str], List[Dict[str, A
     html_content = html_content.replace('{{ tab_buttons }}', tab_buttons)
     html_content = html_content.replace('{{ tab_contents }}', tab_contents)
     html_content = html_content.replace('{{ last_generated }}', last_generated)
-    return html_content
+    return _apply_cutoff_note(html_content)
 
 
 def generate_language_specific_html(csv_files: List[tuple[str, List[str], List[Dict[str, Any]], str]], last_generated: str, language: str, limit_country_rows: bool = True) -> str:
@@ -1707,7 +1737,7 @@ def generate_language_specific_html(csv_files: List[tuple[str, List[str], List[D
 </body>
 </html>"""
 
-    return html_template
+    return _apply_cutoff_note(html_template)
 
 
 def generate_all_language_files(processed_files: List[tuple[str, List[str], List[Dict[str, Any]], str]], last_generated: str, source: str = '70K_Bands') -> None:
@@ -1783,7 +1813,7 @@ def process_genre_data(file_path: Path) -> tuple[List[str], List[List[str]]]:
     """
 
 
-def main(output_file: str = None, source: str = '70K_Bands', min_votes: int = 50) -> None:
+def main(output_file: str = None, source: str = '70K_Bands', min_votes: int = 50, cutoff_days: int | None = None) -> None:
     """
     Main function to process CSV files and generate HTML.
     
@@ -1791,7 +1821,10 @@ def main(output_file: str = None, source: str = '70K_Bands', min_votes: int = 50
         output_file: The output HTML file name
         source: Data source ('70K_Bands' or 'MDF_Bands')
         min_votes: Minimum Must votes required for a band to appear (exclusive; default: 50)
+        cutoff_days: Drop users whose last launch is older than this many days (default: 30)
     """
+    global _CUTOFF_DAYS_OVERRIDE
+    _CUTOFF_DAYS_OVERRIDE = cutoff_days
     file_paths = get_file_paths(source)
     static_files = file_paths['static_files']
     event_year = file_paths.get('event_year', '')
@@ -1805,6 +1838,8 @@ def main(output_file: str = None, source: str = '70K_Bands', min_votes: int = 50
     print(f"Event year: {event_year}")
     print(f"Artist lineup: {file_paths.get('artist_lineup', '')}")
     print(f"Output file: {output_file}")
+    print(f"Min votes: {min_votes}")
+    print(f"Active-user cutoff: {_active_user_days()} days")
 
     # --- Platform Report ---
     platform_data = []
@@ -1813,7 +1848,7 @@ def main(output_file: str = None, source: str = '70K_Bands', min_votes: int = 50
     user_file = Path(static_files['userData'])
     # --- Prepare date filtering ---
     now = datetime.now()
-    cutoff = now - timedelta(days=30)
+    cutoff = now - timedelta(days=_active_user_days())
     filtered_users = []
     total_users = 0
     excluded_users = 0
@@ -2324,13 +2359,16 @@ def load_valid_events_from_schedule(source: str = '70K_Bands') -> dict[str, dict
         return valid_events
 
 
-def main_full(source: str = '70K_Bands') -> None:
+def main_full(source: str = '70K_Bands', cutoff_days: int | None = None) -> None:
     """
     Main function to process CSV files and generate FULL HTML (no limits, with 48h active users tab).
     
     Args:
         source: Data source ('70K_Bands' or 'MDF_Bands')
+        cutoff_days: Drop users whose last launch is older than this many days (default: 30)
     """
+    global _CUTOFF_DAYS_OVERRIDE
+    _CUTOFF_DAYS_OVERRIDE = cutoff_days
     # Get file paths based on source
     file_paths = get_file_paths(source)
     static_files = file_paths['static_files']
@@ -2342,6 +2380,7 @@ def main_full(source: str = '70K_Bands') -> None:
     print(f"Event year: {event_year}")
     print(f"Artist lineup: {file_paths.get('artist_lineup', '')}")
     print(f"Output file: {output_file}")
+    print(f"Active-user cutoff: {_active_user_days()} days")
 
     # --- Platform Report ---
     platform_data = []
@@ -2350,7 +2389,7 @@ def main_full(source: str = '70K_Bands') -> None:
     user_file = Path(static_files['userData'])
     # --- Prepare date filtering ---
     now = datetime.now()
-    cutoff = now - timedelta(days=30)
+    cutoff = now - timedelta(days=_active_user_days())
     filtered_users = []
     total_users = 0
     excluded_users = 0
@@ -3127,8 +3166,10 @@ if __name__ == "__main__":
                        help='Data source to process (default: 70K_Bands)')
     parser.add_argument('--min-votes', type=int, default=50, 
                        help='Bands need more than this many Must votes to appear in the main report (default: 50)')
+    parser.add_argument('--cutoff-days', type=int, default=30,
+                       help='Drop users whose last launch is older than this many days (default: 30)')
     args = parser.parse_args()
     
     print(f"Generating reports for {args.source}...")
-    main(output_file=args.file, source=args.source, min_votes=args.min_votes)
-    main_full(source=args.source)
+    main(output_file=args.file, source=args.source, min_votes=args.min_votes, cutoff_days=args.cutoff_days)
+    main_full(source=args.source, cutoff_days=args.cutoff_days)
