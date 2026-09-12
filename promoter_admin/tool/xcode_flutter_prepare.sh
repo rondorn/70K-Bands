@@ -67,6 +67,8 @@ case "$PLATFORM" in
     /bin/sh "$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh" prepare
     ;;
   macos)
+    # Xcode 27 + Flutter < 3.44.8: see scripts/xcode27-lipo-workaround/lipo
+    export PATH="$(cd "$(dirname "$0")/../scripts/xcode27-lipo-workaround" && pwd):${PATH}"
     "$FLUTTER_ROOT/packages/flutter_tools/bin/macos_assemble.sh" prepare
     ;;
 esac

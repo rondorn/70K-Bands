@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Xcode 27's lipo treats extra -verify_arch operands as extra input files
+# ("requires exactly one input file") instead of extra architectures.
+# Flutter 3.44.6 still runs: lipo <binary> -verify_arch arm64 x86_64
+# which fails even when the binary is a valid fat file. Verify each arch
+# separately. All other lipo invocations pass through unchanged.
+# Fixed upstream in Flutter 3.44.8 (https://github.com/flutter/flutter/issues/188346).
+set -euo pipefail
+
+REAL_LIPO="${REAL_LIPO:-/usr/bin/lipo}"
+
+args=("$@")
+verify_idx=-1
+for i in "${!args[@]}"; do
+  if [[ "${args[$i]}" == "-verify_arch" ]]; then
+    verify_idx=$i
+    break
+  fi
+done
+
+if (( verify_idx >= 0 )); then
+  after_start=$((verify_idx + 1))
+  if (( after_start < ${#args[@]} )); then
+    before=("${args[@]:0:verify_idx}")
+    arches=("${args[@]:after_start}")
+    if (( ${#arches[@]} > 1 )); then
+      status=0
+      for arch in "${arches[@]}"; do
+        if ! "$REAL_LIPO" "${before[@]}" -verify_arch "$arch"; then
+          status=1
+        fi
+      done
+      exit "$status"
+    fi
+  fi
+fi
+
+exec "$REAL_LIPO" "$@"

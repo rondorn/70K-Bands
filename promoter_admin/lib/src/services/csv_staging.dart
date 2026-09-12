@@ -149,6 +149,9 @@ typedef PendingChangeCounter = Future<int> Function(
   String? syncedCsv,
 );
 
+/// Builds a stable row identity for live-CSV merge (artists, schedule, map).
+typedef CsvRowKey = String Function(Map<String, String> row);
+
 /// Local Testing CSV + debounced Dropbox upload (one serialized queue per instance).
 class CsvStagingCoordinator extends ChangeNotifier {
   CsvStagingCoordinator({
@@ -158,28 +161,45 @@ class CsvStagingCoordinator extends ChangeNotifier {
     required this.resolveUrl,
     this.pendingChangeCounter,
     this.mergeKeyColumn,
+    this.mergeKeyColumns,
+    this.mergeRowKey,
     this.mergeSkipKeyLower,
     this.debounce = const Duration(seconds: 2),
     Directory? stagingRoot,
     Future<void> Function(String url, String text)? uploadOverride,
+    Future<String> Function(String locator)? fetchPublishedOverride,
   })  : _stagingRootOverride = stagingRoot,
-        _uploadOverride = uploadOverride;
+        _uploadOverride = uploadOverride,
+        _fetchPublishedOverride = fetchPublishedOverride;
 
   final DropboxApi dropboxApi;
   final String channelSuffix;
   final String displayName;
   final ResolveTestingCsvUrl resolveUrl;
   final PendingChangeCounter? pendingChangeCounter;
-  /// When set, local saves merge with the live published CSV by this key
-  /// so remote-only rows (e.g. automation) are not overwritten.
+  /// When any merge identity is set, local saves overlay onto the live
+  /// published CSV so remote-only rows (e.g. automation) are not overwritten.
   final String? mergeKeyColumn;
+  final List<String>? mergeKeyColumns;
+  final CsvRowKey? mergeRowKey;
   final String? mergeSkipKeyLower;
+
+  bool get mergeEnabled {
+    if (mergeRowKey != null) return true;
+    final columns = mergeKeyColumns;
+    if (columns != null && columns.isNotEmpty) return true;
+    return (mergeKeyColumn?.trim() ?? '').isNotEmpty;
+  }
   final Duration debounce;
   final Directory? _stagingRootOverride;
   final Future<void> Function(String url, String text)? _uploadOverride;
+  final Future<String> Function(String locator)? _fetchPublishedOverride;
 
   /// How long a published fetch stays fresh before background revalidation.
   static const Duration publishedCacheTtl = Duration(minutes: 10);
+
+  /// Overlapping Dropbox writers: re-download, merge, and retry this many times.
+  static const int mergeUploadAttempts = 5;
 
   CsvSyncStatus _status = const CsvSyncStatus();
   CsvSyncStatus get status => _status;
@@ -284,18 +304,32 @@ class CsvStagingCoordinator extends ChangeNotifier {
     return pending.length;
   }
 
-  static String _rowKey(Map<String, String> row, String keyColumn) =>
-      (row[keyColumn] ?? '').trim().toLowerCase();
+  static CsvRowKey resolveMergeRowKey({
+    String? keyColumn,
+    List<String>? keyColumns,
+    CsvRowKey? rowKey,
+  }) {
+    if (rowKey != null) return rowKey;
+    final columns = [
+      if (keyColumns != null) ...keyColumns,
+      if ((keyColumn?.trim() ?? '').isNotEmpty) keyColumn!.trim(),
+    ];
+    if (columns.isEmpty) {
+      throw ArgumentError('merge requires keyColumn, keyColumns, or rowKey');
+    }
+    return (row) => columns
+        .map((c) => (row[c] ?? '').trim().toLowerCase())
+        .join('|');
+  }
 
-  static bool _skipRow(
-    Map<String, String> row,
-    String keyColumn,
+  static bool _skipMergeRow(
+    String key,
     String? skipKeyLower,
   ) {
-    final key = _rowKey(row, keyColumn);
     if (key.isEmpty) return true;
-    if (skipKeyLower != null && key == skipKeyLower) return true;
-    return false;
+    if (skipKeyLower == null || skipKeyLower.isEmpty) return false;
+    if (key == skipKeyLower) return true;
+    return key.split('|').first == skipKeyLower;
   }
 
   /// Fingerprint ignores empty values so missing vs blank extra columns match.
@@ -307,82 +341,123 @@ class CsvStagingCoordinator extends ChangeNotifier {
     return keys.map((k) => '$k=${row[k]!.trim()}').join('\u001f');
   }
 
-  static Map<String, Map<String, String>> _rowsByKey(
+  static ({Map<String, Map<String, String>> byKey, List<String> order})
+      _rowsByResolvedKey(
     String csv, {
-    required String keyColumn,
+    required CsvRowKey keyOf,
     String? skipKeyLower,
   }) {
-    final out = <String, Map<String, String>>{};
-    if (csv.trim().isEmpty) return out;
-    for (final row in parseCsvMaps(csv)) {
-      if (_skipRow(row, keyColumn, skipKeyLower)) continue;
-      out[_rowKey(row, keyColumn)] = Map<String, String>.from(row);
+    final byKey = <String, Map<String, String>>{};
+    final order = <String>[];
+    if (csv.trim().isEmpty) {
+      return (byKey: byKey, order: order);
     }
-    return out;
+    for (final row in parseCsvMaps(csv)) {
+      final key = keyOf(row);
+      if (_skipMergeRow(key, skipKeyLower)) continue;
+      if (!byKey.containsKey(key)) {
+        order.add(key);
+      }
+      byKey[key] = Map<String, String>.from(row);
+    }
+    return (byKey: byKey, order: order);
   }
 
-  static List<String> _mergeCsvFields(Iterable<Map<String, String>> rows) {
-    var hasUpdatedBy = false;
-    final extras = <String>{};
-    for (final row in rows) {
-      for (final entry in row.entries) {
-        final key = entry.key;
-        if (key == 'UpdatedBy') {
-          if (entry.value.trim().isNotEmpty) hasUpdatedBy = true;
-        } else if (key != 'Band' && key != 'URL' && key != 'Date') {
-          extras.add(key);
-        }
+  static List<String> csvHeaderFields(String csv) {
+    final lines = csv
+        .split(RegExp(r'\r?\n'))
+        .map((l) => l.trimRight())
+        .where((l) => l.trim().isNotEmpty)
+        .toList();
+    if (lines.isEmpty) return [];
+    return [
+      for (final header in parseCsvLine(lines.first))
+        if (header.trim().isNotEmpty) header.trim(),
+    ];
+  }
+
+  static List<String> mergeOutputFields({
+    required String publishedCsv,
+    required String localCsv,
+    required String? lastSyncedCsv,
+  }) {
+    final seen = <String>{};
+    final out = <String>[];
+    void add(List<String> fields) {
+      for (final raw in fields) {
+        final field = raw.trim();
+        if (field.isEmpty || seen.contains(field)) continue;
+        seen.add(field);
+        out.add(field);
       }
     }
-    final extraList = extras.toList()..sort();
-    return [
-      'Band',
-      'URL',
-      'Date',
-      if (hasUpdatedBy) 'UpdatedBy',
-      ...extraList,
-    ];
+
+    add(csvHeaderFields(publishedCsv));
+    add(csvHeaderFields(localCsv));
+    add(csvHeaderFields(lastSyncedCsv ?? ''));
+    if (out.isEmpty) {
+      for (final row in [
+        ...parseCsvMaps(publishedCsv),
+        ...parseCsvMaps(localCsv),
+        ...parseCsvMaps(lastSyncedCsv ?? ''),
+      ]) {
+        add(row.keys.toList());
+      }
+    }
+    return out;
   }
 
   /// Rebuild [publishedCsv] with only the row changes in [localCsv] relative
   /// to [lastSyncedCsv]. Remote-only rows are kept. Deletes apply only for
   /// keys present in the last synced snapshot (keys the admin actually had).
+  ///
+  /// Published row order is kept; new local keys are appended. Identity
+  /// changes (renamed band, moved set time) show up as a delete of the old
+  /// key plus an add of the new one.
   static String mergeRemoteWithLocalEdits({
     required String publishedCsv,
     required String localCsv,
     required String? lastSyncedCsv,
-    required String keyColumn,
+    String? keyColumn,
+    List<String>? keyColumns,
+    CsvRowKey? rowKey,
     String? skipKeyLower,
   }) {
-    final published = _rowsByKey(
+    final keyOf = resolveMergeRowKey(
+      keyColumn: keyColumn,
+      keyColumns: keyColumns,
+      rowKey: rowKey,
+    );
+    final published = _rowsByResolvedKey(
       publishedCsv,
-      keyColumn: keyColumn,
+      keyOf: keyOf,
       skipKeyLower: skipKeyLower,
     );
-    final local = _rowsByKey(
+    final local = _rowsByResolvedKey(
       localCsv,
-      keyColumn: keyColumn,
+      keyOf: keyOf,
       skipKeyLower: skipKeyLower,
     );
-    final synced = _rowsByKey(
+    final synced = _rowsByResolvedKey(
       lastSyncedCsv ?? '',
-      keyColumn: keyColumn,
+      keyOf: keyOf,
       skipKeyLower: skipKeyLower,
     );
 
-    final result = {
-      for (final entry in published.entries)
-        entry.key: Map<String, String>.from(entry.value),
+    final result = <String, Map<String, String>>{
+      for (final key in published.order)
+        key: Map<String, String>.from(published.byKey[key]!),
     };
+    final order = List<String>.from(published.order);
 
-    for (final entry in local.entries) {
-      final key = entry.key;
-      final localRow = entry.value;
-      final syncedRow = synced[key];
+    for (final key in local.order) {
+      final localRow = local.byKey[key]!;
+      final syncedRow = synced.byKey[key];
       if (syncedRow == null) {
         final publishedRow = result[key];
         if (publishedRow == null) {
           result[key] = localRow;
+          order.add(key);
         } else if (rowFingerprint(localRow) != rowFingerprint(publishedRow)) {
           result[key] = localRow;
         }
@@ -391,16 +466,40 @@ class CsvStagingCoordinator extends ChangeNotifier {
       }
     }
 
-    for (final key in synced.keys) {
-      if (!local.containsKey(key)) {
+    for (final key in synced.byKey.keys) {
+      if (!local.byKey.containsKey(key)) {
         result.remove(key);
+        order.remove(key);
       }
     }
 
-    final keys = result.keys.toList()
-      ..sort((a, b) => a.compareTo(b));
-    final rows = [for (final key in keys) result[key]!];
-    return mapsToCsv(_mergeCsvFields(rows), rows);
+    final rows = [
+      for (final key in order)
+        if (result.containsKey(key)) result[key]!,
+    ];
+    final fields = mergeOutputFields(
+      publishedCsv: publishedCsv,
+      localCsv: localCsv,
+      lastSyncedCsv: lastSyncedCsv,
+    );
+    if (fields.isEmpty) return '';
+    return mapsToCsv(fields, rows);
+  }
+
+  String _mergeUsingConfig({
+    required String publishedCsv,
+    required String localCsv,
+    required String? lastSyncedCsv,
+  }) {
+    return mergeRemoteWithLocalEdits(
+      publishedCsv: publishedCsv,
+      localCsv: localCsv,
+      lastSyncedCsv: lastSyncedCsv,
+      keyColumn: mergeKeyColumn,
+      keyColumns: mergeKeyColumns,
+      rowKey: mergeRowKey,
+      skipKeyLower: mergeSkipKeyLower,
+    );
   }
 
   Future<int> _pendingCount(
@@ -526,10 +625,31 @@ class CsvStagingCoordinator extends ChangeNotifier {
     return text;
   }
 
+  Future<({String text, String rev})> _downloadPublishedForMerge(
+    String locator,
+  ) async {
+    final fetchOverride = _fetchPublishedOverride;
+    if (fetchOverride != null) {
+      return (text: await fetchOverride(locator), rev: '');
+    }
+    if (LocalContentStore.isLocalLocator(locator)) {
+      return (
+        text: await LocalContentStore.readText(locator),
+        rev: '',
+      );
+    }
+    final path = await dropboxApi.resolveApiPath(normalizeDropboxUrl(locator));
+    return dropboxApi.downloadTextWithRevAtPath(path);
+  }
+
   Future<String> _fetchPublishedContent(
     String locator, {
     bool forceRefresh = false,
   }) async {
+    final fetchOverride = _fetchPublishedOverride;
+    if (fetchOverride != null) {
+      return fetchOverride(locator);
+    }
     if (LocalContentStore.isLocalLocator(locator)) {
       return LocalContentStore.readText(locator);
     }
@@ -539,7 +659,11 @@ class CsvStagingCoordinator extends ChangeNotifier {
     );
   }
 
-  Future<void> _publishContent(String locator, String text) async {
+  Future<void> _publishContent(
+    String locator,
+    String text, {
+    String? ifRev,
+  }) async {
     if (LocalContentStore.isLocalLocator(locator)) {
       await LocalContentStore.writeText(locator, text);
       return;
@@ -549,7 +673,11 @@ class CsvStagingCoordinator extends ChangeNotifier {
       await upload(locator, text);
       return;
     }
-    await dropboxApi.uploadTextInPlace(normalizeDropboxUrl(locator), text);
+    await dropboxApi.uploadTextInPlace(
+      normalizeDropboxUrl(locator),
+      text,
+      ifRev: ifRev,
+    );
   }
 
   String _normalizePublishedLocator(String locator) {
@@ -759,7 +887,7 @@ class CsvStagingCoordinator extends ChangeNotifier {
       var text = await csv.readAsString();
       var rowCount = countDataRows(text);
       final snapshot = await _syncedSnapshotFile(workspace);
-      final syncedText =
+      var syncedText =
           await snapshot.exists() ? await snapshot.readAsString() : null;
       var pendingCount = await _pendingCount(text, syncedText);
 
@@ -778,31 +906,48 @@ class CsvStagingCoordinator extends ChangeNotifier {
         'lastError': '',
       });
 
-      try {
-        final keyColumn = mergeKeyColumn?.trim() ?? '';
-        if (keyColumn.isNotEmpty) {
-          final published =
-              await _fetchPublishedContent(urlRaw, forceRefresh: true);
-          final merged = mergeRemoteWithLocalEdits(
-            publishedCsv: published,
-            localCsv: text,
-            lastSyncedCsv: syncedText,
-            keyColumn: keyColumn,
-            skipKeyLower: mergeSkipKeyLower,
-          );
-          if (!csvTextsEqual(merged, text)) {
-            debugPrint('$displayName: merged live CSV before upload');
-            await csv.writeAsString(merged);
-            text = merged;
-            pendingCount = await _pendingCount(text, syncedText);
-            rowCount = countDataRows(text);
+      for (var attempt = 0; attempt < mergeUploadAttempts; attempt++) {
+        text = await csv.readAsString();
+        syncedText =
+            await snapshot.exists() ? await snapshot.readAsString() : null;
+        String? ifRev;
+        if (mergeEnabled) {
+          try {
+            final live = await _downloadPublishedForMerge(urlRaw);
+            ifRev = live.rev.isEmpty ? null : live.rev;
+            final merged = _mergeUsingConfig(
+              publishedCsv: live.text,
+              localCsv: text,
+              lastSyncedCsv: syncedText,
+            );
+            if (!csvTextsEqual(merged, text)) {
+              debugPrint('$displayName: merged live CSV before upload');
+              await csv.writeAsString(merged);
+              text = merged;
+            }
+          } catch (e) {
+            if (e is DropboxRevisionConflict) rethrow;
+            debugPrint('$displayName: live merge skipped before upload: $e');
+            ifRev = null;
           }
         }
-      } catch (e) {
-        debugPrint('$displayName: live merge skipped before upload: $e');
-      }
+        pendingCount = await _pendingCount(text, syncedText);
+        rowCount = countDataRows(text);
 
-      await _publishContent(urlRaw, text);
+        try {
+          await _publishContent(urlRaw, text, ifRev: ifRev);
+          break;
+        } on DropboxRevisionConflict {
+          if (attempt >= mergeUploadAttempts - 1) rethrow;
+          debugPrint(
+            '$displayName: Dropbox revision conflict, retrying merge '
+            '(${attempt + 1}/$mergeUploadAttempts)',
+          );
+          await Future<void>.delayed(
+            Duration(milliseconds: 120 * (attempt + 1)),
+          );
+        }
+      }
       if (!LocalContentStore.isLocalLocator(urlRaw)) {
         await invalidateCachedUrlText(normalizeDropboxUrl(urlRaw));
       }
@@ -912,17 +1057,14 @@ class CsvStagingCoordinator extends ChangeNotifier {
     FestivalWorkspace workspace,
     String localCsv,
   ) async {
-    final keyColumn = mergeKeyColumn?.trim() ?? '';
-    if (keyColumn.isEmpty) return localCsv;
+    if (!mergeEnabled) return localCsv;
     final url = await resolveUrl(workspace);
-    final published = await _fetchPublishedContent(url, forceRefresh: true);
+    final live = await _downloadPublishedForMerge(url);
     final snapshot = await readSyncedSnapshot(workspace);
-    return mergeRemoteWithLocalEdits(
-      publishedCsv: published,
+    return _mergeUsingConfig(
+      publishedCsv: live.text,
       localCsv: localCsv,
       lastSyncedCsv: snapshot,
-      keyColumn: keyColumn,
-      skipKeyLower: mergeSkipKeyLower,
     );
   }
 

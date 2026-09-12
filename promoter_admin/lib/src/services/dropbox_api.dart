@@ -188,6 +188,41 @@ String? parseVoidSharingResponseBody(String body) {
   return null;
 }
 
+/// Thrown when an upload used [DropboxApi.uploadTextInPlace] `ifRev` and the
+/// file changed on Dropbox before the write landed.
+class DropboxRevisionConflict implements Exception {
+  DropboxRevisionConflict([
+    this.message = 'Dropbox file changed since it was read',
+  ]);
+
+  final String message;
+
+  @override
+  String toString() => message;
+}
+
+bool isDropboxRevisionConflictStatus(int statusCode, String body) {
+  if (statusCode != 409) return false;
+  final lower = body.toLowerCase();
+  return lower.contains('conflict') ||
+      lower.contains('invalid_revision') ||
+      lower.contains('rev_not_found');
+}
+
+/// `rev` from a files/download or files/upload `Dropbox-API-Result` header.
+String? parseDropboxApiResultRev(String? headerJson) {
+  final raw = headerJson?.trim() ?? '';
+  if (raw.isEmpty) return null;
+  try {
+    final decoded = jsonDecode(raw);
+    if (decoded is! Map<String, dynamic>) return null;
+    final rev = (decoded['rev'] ?? '').toString().trim();
+    return rev.isEmpty ? null : rev;
+  } catch (_) {
+    return null;
+  }
+}
+
 /// Dropbox file operations that edit existing files in place (stable share links).
 class DropboxApi {
   DropboxApi(this.auth);
@@ -361,6 +396,14 @@ class DropboxApi {
 
   /// Download UTF-8 text at a Dropbox API path.
   Future<String> downloadTextAtPath(String apiPath) async {
+    final downloaded = await downloadTextWithRevAtPath(apiPath);
+    return downloaded.text;
+  }
+
+  /// Download UTF-8 text and the file [rev] used for conflict-checked uploads.
+  Future<({String text, String rev})> downloadTextWithRevAtPath(
+    String apiPath,
+  ) async {
     var path = apiPath.trim().replaceAll('\\', '/');
     if (path.isEmpty) throw ArgumentError('Path is required');
     if (!path.startsWith('/')) path = '/$path';
@@ -389,7 +432,11 @@ class DropboxApi {
     if (body.isNotEmpty && body.codeUnitAt(0) == 0xFEFF) {
       body = body.substring(1);
     }
-    return body;
+    final rev = parseDropboxApiResultRev(
+          resp.headers['dropbox-api-result'],
+        ) ??
+        '';
+    return (text: body, rev: rev);
   }
 
   /// Upload [text] as [fileName] inside the folder behind [folderShareUrl].
@@ -452,9 +499,26 @@ class DropboxApi {
   }
 
   /// Edit file content in place at the path behind [shareUrl]. Does not delete/replace.
-  Future<void> uploadTextInPlace(String shareUrl, String text) async {
+  ///
+  /// When [ifRev] is set, uses Dropbox `update` mode so a concurrent writer
+  /// gets [DropboxRevisionConflict] instead of silently overwriting.
+  Future<void> uploadTextInPlace(
+    String shareUrl,
+    String text, {
+    String? ifRev,
+  }) async {
     final path = await resolveApiPath(shareUrl);
+    await _uploadTextAtResolvedPath(path, text, ifRev: ifRev);
+    await putCachedUrlText(shareUrl, text);
+  }
+
+  Future<void> _uploadTextAtResolvedPath(
+    String path,
+    String text, {
+    String? ifRev,
+  }) async {
     final token = await auth.accessToken();
+    final useRev = ifRev != null && ifRev.trim().isNotEmpty;
     final resp = await http.post(
       Uri.parse('https://content.dropboxapi.com/2/files/upload'),
       headers: {
@@ -462,16 +526,23 @@ class DropboxApi {
         'Content-Type': 'application/octet-stream',
         'Dropbox-API-Arg': dropboxApiArg({
           'path': path,
-          'mode': 'overwrite',
+          'mode': useRev
+              ? <String, String>{'.tag': 'update', 'update': ifRev.trim()}
+              : 'overwrite',
           'autorename': false,
           'mute': false,
-          'strict_conflict': false,
+          'strict_conflict': useRev,
         }),
       },
       body: utf8.encode(text),
     );
     if (resp.statusCode < 200 || resp.statusCode >= 300) {
       final body = resp.body;
+      if (useRev && isDropboxRevisionConflictStatus(resp.statusCode, body)) {
+        throw DropboxRevisionConflict(
+          'Dropbox file changed since it was read (${resp.statusCode})',
+        );
+      }
       if (body.contains('files.content.write')) {
         throw StateError(
           'Dropbox app is missing files.content.write. '
@@ -480,8 +551,6 @@ class DropboxApi {
       }
       throw StateError('Dropbox upload failed (${resp.statusCode}): $body');
     }
-    // Keep share-URL reads in sync with what we just wrote.
-    await putCachedUrlText(shareUrl, text);
   }
 
   /// Create folder if missing. Ignores conflict when it already exists.

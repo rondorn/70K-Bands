@@ -13,6 +13,7 @@ void main() {
   late List<String> uploads;
   late ScheduleStagingCoordinator staging;
   late FestivalWorkspace workspace;
+  late String publishedCsv;
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('schedule_staging_test_');
@@ -22,6 +23,8 @@ void main() {
       festivalName: '70K',
       scheduleUrl: 'https://example.com/schedule_test.csv?raw=1',
     );
+    final header = ScheduleService.toCsv(const []);
+    publishedCsv = header;
     staging = ScheduleStagingCoordinator(
       pointerService: PointerService(),
       dropboxApi: DropboxApi(DropboxAuth()),
@@ -30,10 +33,10 @@ void main() {
       uploadOverride: (url, text) async {
         uploads.add(text);
       },
+      fetchPublishedOverride: (_) async => publishedCsv,
     );
 
     // Seed a synced staging file so ensureStaging does not hit the network.
-    final header = ScheduleService.toCsv(const []);
     final csv = File('${tempDir.path}/fest-70k_schedule.csv');
     await csv.writeAsString(header);
     final snapshot = File('${tempDir.path}/fest-70k_schedule.synced.csv');
@@ -180,6 +183,7 @@ void main() {
       event('Keep', '12:00'),
       event('Remove', '13:00'),
     ]);
+    publishedCsv = synced;
     final csv = File('${tempDir.path}/fest-70k_schedule.csv');
     await csv.writeAsString(synced);
     final snapshot = File('${tempDir.path}/fest-70k_schedule.synced.csv');

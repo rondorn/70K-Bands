@@ -45,6 +45,8 @@ class LineupService {
                   skipKeyLower: 'bandname',
                 );
               },
+              mergeKeyColumn: 'bandName',
+              mergeSkipKeyLower: 'bandname',
             );
 
   final PointerService pointerService;
@@ -111,14 +113,24 @@ class LineupService {
   }
 
   /// Save locally immediately and queue a background Dropbox sync.
-  Future<void> save(FestivalWorkspace workspace, List<BandRow> bands) async {
-    await staging.saveLocalAndQueue(
-      workspace,
-      toCsv(
-        bands,
-        useCityState: workspace.useCityStateField,
-      ),
+  ///
+  /// Fetches the live artists CSV first and overlays only this device's row
+  /// edits so bands added elsewhere (automation, another admin) are kept.
+  Future<List<BandRow>> save(
+    FestivalWorkspace workspace,
+    List<BandRow> bands,
+  ) async {
+    var csv = toCsv(
+      bands,
+      useCityState: workspace.useCityStateField,
     );
+    try {
+      csv = await staging.mergeLocalCsvWithPublished(workspace, csv);
+    } catch (e) {
+      debugPrint('Artists merge skipped (saving local copy): $e');
+    }
+    await staging.saveLocalAndQueue(workspace, csv);
+    return PointerService.parseLineupCsvPreservingOrder(csv);
   }
 
   Future<void> flushSync(FestivalWorkspace workspace) =>

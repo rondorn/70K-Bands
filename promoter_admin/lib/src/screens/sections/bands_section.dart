@@ -584,7 +584,7 @@ class _BandsSectionState extends State<BandsSection> {
         updated.add(row);
       }
       // Keep file order as entered; alphabetical sorting is display-only.
-      await widget.lineupService.save(widget.workspace, updated);
+      final saved = await widget.lineupService.save(widget.workspace, updated);
 
       final descriptionResult = await _saveDescriptionChanges(name);
       final descriptionNote = descriptionResult.note ?? '';
@@ -592,7 +592,7 @@ class _BandsSectionState extends State<BandsSection> {
 
       _clearForm();
       setState(() {
-        _bands = updated;
+        _bands = saved;
         _saving = false;
         _editingIndex = null;
         _resetDescriptionState();
@@ -669,9 +669,9 @@ class _BandsSectionState extends State<BandsSection> {
     });
     try {
       final updated = List<BandRow>.from(_bands)..removeAt(index);
-      await widget.lineupService.save(widget.workspace, updated);
+      final saved = await widget.lineupService.save(widget.workspace, updated);
       setState(() {
-        _bands = updated;
+        _bands = saved;
         _saving = false;
         _message = 'Removed “${band.name}” from Testing artists.';
       });

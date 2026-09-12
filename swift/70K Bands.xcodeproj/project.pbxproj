@@ -79,6 +79,7 @@
 		112913A32EE7D8B2008472A3 /* ProfileTutorialOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1530C58547653A0C1AAAA76C /* ProfileTutorialOverlay.swift */; };
 		112913A42EE7D8C3008472A3 /* ProfilePickerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 080FE1E959C6EBF8BA8E5265 /* ProfilePickerViewController.swift */; };
 		112913A52EE7D8C3008472A3 /* ProfilePickerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 080FE1E959C6EBF8BA8E5265 /* ProfilePickerViewController.swift */; };
+		113D43913055B17F00840210 /* NetworkCounter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111608662F647C0D00B1B408 /* NetworkCounter.swift */; };
 		113EB92A2F243A4D00CE27BB /* DebugLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 113EB9292F243A4D00CE27BB /* DebugLogger.swift */; };
 		113EB92B2F243A4D00CE27BB /* DebugLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 113EB9292F243A4D00CE27BB /* DebugLogger.swift */; };
 		113EB92C2F243A4D00CE27BB /* DebugLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 113EB9292F243A4D00CE27BB /* DebugLogger.swift */; };
@@ -750,7 +751,7 @@
 		F1E2B0152E5A292E006E3596 /* DataIntegrityTag.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E2B0112E5A292E006E3596 /* DataIntegrityTag.swift */; };
 		F2EF5FCC2A774600FD4827EF /* Settings70k.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E4EDA92ACBAE5E0036D002 /* Settings70k.swift */; };
 		F4041B7229C6CDF1BDE208A2 /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11B20C431ECDE4ED0031FD3A /* UserNotifications.framework */; };
-		F4288A81F0924614BF0B4D24 /* Pods_RMF_Bands.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E49E36AB3BD44277AC9FF250 /* Pods_RMF_Bands.framework */; };
+		F4288A81F0924614BF0B4D24 /* Pods_RWMF_Bands.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E49E36AB3BD44277AC9FF250 /* Pods_RWMF_Bands.framework */; };
 		F5E3DD40F40436DDFF677745 /* iCloudDataHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119A867322D12FA700D23233 /* iCloudDataHandler.swift */; };
 		F65703AB2ACFD227A41BE6C5 /* SharedPreferencesImportHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1129138A2EE74F7F008472A3 /* SharedPreferencesImportHandler.swift */; };
 		F6FEBFA8A63B0ED0EB73E621 /* UtilityHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11ED61801A9103C100D29A5B /* UtilityHandler.swift */; };
@@ -991,7 +992,7 @@
 		D1872F46599AEEB5529AC99F /* MMF Bands.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "MMF Bands.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		D403DF7988D03A46BFEB31DF /* Pods_MMF_Bands.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MMF_Bands.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		DD4175EFC5176744994D3FE6 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
-		E49E36AB3BD44277AC9FF250 /* Pods_RMF_Bands.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RMF_Bands.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		E49E36AB3BD44277AC9FF250 /* Pods_RWMF_Bands.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RWMF_Bands.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		E5280282B2B9A8824CA090AF /* Pods-MDF Bands.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MDF Bands.release.xcconfig"; path = "Target Support Files/Pods-MDF Bands/Pods-MDF Bands.release.xcconfig"; sourceTree = "<group>"; };
 		F1E2A0012E5A292E006E3596 /* FestivalConfigLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FestivalConfigLoader.swift; sourceTree = "<group>"; };
 		F1E2B0112E5A292E006E3596 /* DataIntegrityTag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataIntegrityTag.swift; sourceTree = "<group>"; };
@@ -1066,7 +1067,7 @@
 				115C12F63000A5EF007EA9A1 /* CFNetwork.framework in Frameworks */,
 				115C130B3000A5EF007EA9A1 /* BinaryQRScanner in Frameworks */,
 				115C12F73000A5EF007EA9A1 /* AudioToolbox.framework in Frameworks */,
-				F4288A81F0924614BF0B4D24 /* Pods_RMF_Bands.framework in Frameworks */,
+				F4288A81F0924614BF0B4D24 /* Pods_RWMF_Bands.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1107,7 +1108,7 @@
 				7244FDFE5D87C624F0B9DB94 /* Pods_70K_BandsTests.framework */,
 				FF3385D373C8DCA3BFA74E7A /* iOS */,
 				D403DF7988D03A46BFEB31DF /* Pods_MMF_Bands.framework */,
-				E49E36AB3BD44277AC9FF250 /* Pods_RMF_Bands.framework */,
+				E49E36AB3BD44277AC9FF250 /* Pods_RWMF_Bands.framework */,
 				679FE8DFD3945D383A75E8F9 /* Pods_MDF_Bands.framework */,
 			);
 			name = Frameworks;
@@ -2672,6 +2673,7 @@
 				115C12B73000A5EF007EA9A1 /* DebugLogger.swift in Sources */,
 				115C12B83000A5EF007EA9A1 /* SQLitePriorityManager.swift in Sources */,
 				115C12B93000A5EF007EA9A1 /* DetailView.swift in Sources */,
+				113D43913055B17F00840210 /* NetworkCounter.swift in Sources */,
 				115C12BA3000A5EF007EA9A1 /* DetailViewModel.swift in Sources */,
 				115C12BB3000A5EF007EA9A1 /* DetailProfileBypassBandNames.swift in Sources */,
 				115C12BC3000A5EF007EA9A1 /* DeviceSizeManager.swift in Sources */,

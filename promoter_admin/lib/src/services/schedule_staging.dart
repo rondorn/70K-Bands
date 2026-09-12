@@ -28,6 +28,7 @@ class ScheduleStagingCoordinator extends ChangeNotifier {
     Duration debounce = const Duration(seconds: 2),
     Directory? stagingRoot,
     Future<void> Function(String url, String text)? uploadOverride,
+    Future<String> Function(String locator)? fetchPublishedOverride,
   }) : _inner = CsvStagingCoordinator(
           dropboxApi: dropboxApi,
           channelSuffix: 'schedule',
@@ -35,6 +36,7 @@ class ScheduleStagingCoordinator extends ChangeNotifier {
           debounce: debounce,
           stagingRoot: stagingRoot,
           uploadOverride: uploadOverride,
+          fetchPublishedOverride: fetchPublishedOverride,
           resolveUrl: (workspace) async {
             if (workspace.usesEmergencyLocalMode) {
               final path = workspace.emergencyLocalPaths.scheduleCsv.trim();
@@ -61,6 +63,8 @@ class ScheduleStagingCoordinator extends ChangeNotifier {
               syncedCsv: syncedCsv,
             ).length;
           },
+          mergeRowKey: mergeEventKeyFromRow,
+          mergeSkipKeyLower: 'band',
         ) {
     _inner.addListener(notifyListeners);
   }
@@ -70,6 +74,19 @@ class ScheduleStagingCoordinator extends ChangeNotifier {
   final CsvStagingCoordinator _inner;
 
   CsvSyncStatus get status => _inner.status;
+
+  /// Event identity for live-CSV merge: band, venue, start time, day.
+  /// Captured conceptually at edit start via last synced snapshot vs local.
+  static String mergeEventKeyFromRow(Map<String, String> row) {
+    final band = (row['Band'] ?? '').trim().toLowerCase();
+    if (band.isEmpty || band == 'band') return '';
+    return [
+      band,
+      (row['Location'] ?? '').trim().toLowerCase(),
+      (row['Start Time'] ?? '').trim().toLowerCase(),
+      (row['Day'] ?? '').trim().toLowerCase(),
+    ].join('|');
+  }
 
   /// Event identity key (band|location|date|start) matching the web portal.
   static String eventKey({
@@ -195,6 +212,12 @@ class ScheduleStagingCoordinator extends ChangeNotifier {
     String csvText,
   ) =>
       _inner.saveLocalAndQueue(workspace, csvText);
+
+  Future<String> mergeLocalCsvWithPublished(
+    FestivalWorkspace workspace,
+    String localCsv,
+  ) =>
+      _inner.mergeLocalCsvWithPublished(workspace, localCsv);
 
   Future<void> flushSync(FestivalWorkspace workspace) =>
       _inner.flushSync(workspace);

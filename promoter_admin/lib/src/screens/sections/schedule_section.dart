@@ -514,6 +514,15 @@ class _ScheduleSectionState extends State<ScheduleSection> {
     // Keep _type, _venue, _day, _date, start/end/length as-is.
   }
 
+  int _indexOfMergeEvent(List<ScheduleEvent> events, ScheduleEvent target) {
+    final key = ScheduleStagingCoordinator.mergeEventKeyFromRow(target.asRow());
+    final index = events.indexWhere(
+      (e) => ScheduleStagingCoordinator.mergeEventKeyFromRow(e.asRow()) == key,
+    );
+    if (index >= 0) return index;
+    return events.isEmpty ? 0 : events.length - 1;
+  }
+
   Future<void> _saveEvent() async {
     if (!_canEdit) return;
     if (!widget.dropboxConnected) {
@@ -633,7 +642,6 @@ class _ScheduleSectionState extends State<ScheduleSection> {
       final updated = List<ScheduleEvent>.from(_events);
       final wasUpdate =
           editIdx != null && editIdx >= 0 && editIdx < updated.length;
-      final savedIndex = wasUpdate ? editIdx : updated.length;
 
       // When editing a non-band event without new description text, keep
       // the existing description URL on the row.
@@ -661,7 +669,8 @@ class _ScheduleSectionState extends State<ScheduleSection> {
       } else {
         updated.add(toSave);
       }
-      await widget.scheduleService.save(widget.workspace, updated);
+      final saved = await widget.scheduleService.save(widget.workspace, updated);
+      final savedIndex = _indexOfMergeEvent(saved, toSave);
       final handoffLink =
           descriptionBody.isNotEmpty &&
               !widget.workspace.canEditDescriptions &&
@@ -669,7 +678,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
           ? descriptionUrl.trim()
           : null;
       setState(() {
-        _events = updated;
+        _events = saved;
         _shareUrl = handoffLink != null ? displayShareUrl(handoffLink) : null;
         _prepareNextEntry(
           saved: toSave,
@@ -785,28 +794,41 @@ class _ScheduleSectionState extends State<ScheduleSection> {
       _error = null;
     });
     try {
+      final editingEvent = (_editingIndex != null &&
+              _editingIndex! >= 0 &&
+              _editingIndex! < _events.length)
+          ? _events[_editingIndex!]
+          : null;
       final updated = List<ScheduleEvent>.from(_events)..removeAt(index);
-      await widget.scheduleService.save(widget.workspace, updated);
+      final saved = await widget.scheduleService.save(widget.workspace, updated);
       setState(() {
-        _events = updated;
+        _events = saved;
         _committing = false;
         _message = 'Removed “${e.band}” from Testing schedule.';
-        if (_lastSavedIndex != null) {
-          if (_lastSavedIndex == index) {
+        if (_lastSavedEvent != null) {
+          final last = _lastSavedEvent!;
+          final lastKey =
+              ScheduleStagingCoordinator.mergeEventKeyFromRow(last.asRow());
+          final lastIdx = saved.indexWhere(
+            (event) =>
+                ScheduleStagingCoordinator.mergeEventKeyFromRow(
+                  event.asRow(),
+                ) ==
+                lastKey,
+          );
+          if (lastIdx >= 0) {
+            _lastSavedIndex = lastIdx;
+          } else {
             _lastSavedIndex = null;
             _lastSavedEvent = null;
-          } else if (_lastSavedIndex! > index) {
-            _lastSavedIndex = _lastSavedIndex! - 1;
           }
         }
-        if (_editingIndex != null) {
-          if (_editingIndex == index) {
-            _editingIndex = null;
-            _band = DropdownOptions.empty;
-            _notes.clear();
-          } else if (_editingIndex! > index) {
-            _editingIndex = _editingIndex! - 1;
-          }
+        if (_editingIndex == index) {
+          _editingIndex = null;
+          _band = DropdownOptions.empty;
+          _notes.clear();
+        } else if (editingEvent != null) {
+          _editingIndex = _indexOfMergeEvent(saved, editingEvent);
         }
       });
       await _refreshOutstanding();

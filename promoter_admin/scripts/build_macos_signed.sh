@@ -143,6 +143,16 @@ fi
 echo "==> Building macOS release ($FULL_VERSION)"
 flutter config --enable-macos-desktop >/dev/null
 flutter pub get
+
+# Xcode 27 + Flutter < 3.44.8: `lipo -verify_arch arm64 x86_64` fails with
+# "requires exactly one input file" even when FlutterMacOS is a valid fat
+# binary. That aborts release_unpack_macos. Shim verifies each arch separately.
+# Harmless on newer Flutter (already one-arch-at-a-time) and older Xcode.
+LIPO_SHIM="$ROOT/scripts/xcode27-lipo-workaround"
+if [[ -x "$LIPO_SHIM/lipo" ]]; then
+  export PATH="$LIPO_SHIM:$PATH"
+fi
+
 flutter build macos --release
 
 if [[ ! -d "$APP_BUILD" ]]; then

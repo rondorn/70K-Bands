@@ -153,9 +153,22 @@ class ScheduleService {
 
   /// Save locally immediately and queue a background Dropbox sync.
   ///
+  /// Fetches the live schedule first and overlays only this device's event
+  /// edits so other days / automation rows are not overwritten.
+  ///
   /// Does **not** wait for Dropbox — safe for rapid bulk entry.
-  Future<void> save(FestivalWorkspace workspace, List<ScheduleEvent> events) {
-    return staging.saveLocalAndQueue(workspace, toCsv(events));
+  Future<List<ScheduleEvent>> save(
+    FestivalWorkspace workspace,
+    List<ScheduleEvent> events,
+  ) async {
+    var csv = toCsv(events);
+    try {
+      csv = await staging.mergeLocalCsvWithPublished(workspace, csv);
+    } catch (e) {
+      debugPrint('Schedule merge skipped (saving local copy): $e');
+    }
+    await staging.saveLocalAndQueue(workspace, csv);
+    return parseEvents(csv);
   }
 
   /// Upload any pending local schedule changes to Dropbox now.

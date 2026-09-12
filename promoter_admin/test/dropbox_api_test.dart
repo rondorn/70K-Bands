@@ -23,6 +23,43 @@ void main() {
       final header = dropboxApiArg({'path': '/descriptions/ether_realm.txt'});
       expect(header, '{"path":"/descriptions/ether_realm.txt"}');
     });
+
+    test('encodes update mode with a parent rev', () {
+      final header = dropboxApiArg({
+        'path': '/schedule.csv',
+        'mode': {'.tag': 'update', 'update': 'abc123'},
+        'strict_conflict': true,
+      });
+      expect(header, contains('".tag":"update"'));
+      expect(header, contains('"update":"abc123"'));
+      expect(header, contains('"strict_conflict":true'));
+    });
+  });
+
+  group('Dropbox revision helpers', () {
+    test('parseDropboxApiResultRev reads rev from download header JSON', () {
+      expect(
+        parseDropboxApiResultRev(
+          '{"name":"schedule.csv","rev":"a1c10ce0dd31"}',
+        ),
+        'a1c10ce0dd31',
+      );
+      expect(parseDropboxApiResultRev(null), isNull);
+      expect(parseDropboxApiResultRev('not-json'), isNull);
+    });
+
+    test('isDropboxRevisionConflictStatus detects update conflicts', () {
+      expect(
+        isDropboxRevisionConflictStatus(
+          409,
+          '{"error_summary":"path/conflict/file/","error":{".tag":"path"}}',
+        ),
+        isTrue,
+      );
+      expect(isDropboxRevisionConflictStatus(409, 'invalid_revision'), isTrue);
+      expect(isDropboxRevisionConflictStatus(400, 'conflict'), isFalse);
+      expect(isDropboxRevisionConflictStatus(409, 'too_many_write_operations'), isFalse);
+    });
   });
 
   group('parseVoidSharingResponseBody', () {
