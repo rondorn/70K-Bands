@@ -157,6 +157,8 @@ class CsvStagingCoordinator extends ChangeNotifier {
     required this.displayName,
     required this.resolveUrl,
     this.pendingChangeCounter,
+    this.mergeKeyColumn,
+    this.mergeSkipKeyLower,
     this.debounce = const Duration(seconds: 2),
     Directory? stagingRoot,
     Future<void> Function(String url, String text)? uploadOverride,
@@ -168,6 +170,10 @@ class CsvStagingCoordinator extends ChangeNotifier {
   final String displayName;
   final ResolveTestingCsvUrl resolveUrl;
   final PendingChangeCounter? pendingChangeCounter;
+  /// When set, local saves merge with the live published CSV by this key
+  /// so remote-only rows (e.g. automation) are not overwritten.
+  final String? mergeKeyColumn;
+  final String? mergeSkipKeyLower;
   final Duration debounce;
   final Directory? _stagingRootOverride;
   final Future<void> Function(String url, String text)? _uploadOverride;
@@ -276,6 +282,125 @@ class CsvStagingCoordinator extends ChangeNotifier {
     }
     pending.addAll(syncedByKey.keys.where((k) => !stagingKeys.contains(k)));
     return pending.length;
+  }
+
+  static String _rowKey(Map<String, String> row, String keyColumn) =>
+      (row[keyColumn] ?? '').trim().toLowerCase();
+
+  static bool _skipRow(
+    Map<String, String> row,
+    String keyColumn,
+    String? skipKeyLower,
+  ) {
+    final key = _rowKey(row, keyColumn);
+    if (key.isEmpty) return true;
+    if (skipKeyLower != null && key == skipKeyLower) return true;
+    return false;
+  }
+
+  /// Fingerprint ignores empty values so missing vs blank extra columns match.
+  static String rowFingerprint(Map<String, String> row) {
+    final keys = row.keys
+        .where((k) => (row[k] ?? '').trim().isNotEmpty)
+        .toList()
+      ..sort();
+    return keys.map((k) => '$k=${row[k]!.trim()}').join('\u001f');
+  }
+
+  static Map<String, Map<String, String>> _rowsByKey(
+    String csv, {
+    required String keyColumn,
+    String? skipKeyLower,
+  }) {
+    final out = <String, Map<String, String>>{};
+    if (csv.trim().isEmpty) return out;
+    for (final row in parseCsvMaps(csv)) {
+      if (_skipRow(row, keyColumn, skipKeyLower)) continue;
+      out[_rowKey(row, keyColumn)] = Map<String, String>.from(row);
+    }
+    return out;
+  }
+
+  static List<String> _mergeCsvFields(Iterable<Map<String, String>> rows) {
+    var hasUpdatedBy = false;
+    final extras = <String>{};
+    for (final row in rows) {
+      for (final entry in row.entries) {
+        final key = entry.key;
+        if (key == 'UpdatedBy') {
+          if (entry.value.trim().isNotEmpty) hasUpdatedBy = true;
+        } else if (key != 'Band' && key != 'URL' && key != 'Date') {
+          extras.add(key);
+        }
+      }
+    }
+    final extraList = extras.toList()..sort();
+    return [
+      'Band',
+      'URL',
+      'Date',
+      if (hasUpdatedBy) 'UpdatedBy',
+      ...extraList,
+    ];
+  }
+
+  /// Rebuild [publishedCsv] with only the row changes in [localCsv] relative
+  /// to [lastSyncedCsv]. Remote-only rows are kept. Deletes apply only for
+  /// keys present in the last synced snapshot (keys the admin actually had).
+  static String mergeRemoteWithLocalEdits({
+    required String publishedCsv,
+    required String localCsv,
+    required String? lastSyncedCsv,
+    required String keyColumn,
+    String? skipKeyLower,
+  }) {
+    final published = _rowsByKey(
+      publishedCsv,
+      keyColumn: keyColumn,
+      skipKeyLower: skipKeyLower,
+    );
+    final local = _rowsByKey(
+      localCsv,
+      keyColumn: keyColumn,
+      skipKeyLower: skipKeyLower,
+    );
+    final synced = _rowsByKey(
+      lastSyncedCsv ?? '',
+      keyColumn: keyColumn,
+      skipKeyLower: skipKeyLower,
+    );
+
+    final result = {
+      for (final entry in published.entries)
+        entry.key: Map<String, String>.from(entry.value),
+    };
+
+    for (final entry in local.entries) {
+      final key = entry.key;
+      final localRow = entry.value;
+      final syncedRow = synced[key];
+      if (syncedRow == null) {
+        final publishedRow = result[key];
+        if (publishedRow == null) {
+          result[key] = localRow;
+        } else if (rowFingerprint(localRow) != rowFingerprint(publishedRow)) {
+          result[key] = localRow;
+        }
+      } else if (rowFingerprint(localRow) != rowFingerprint(syncedRow)) {
+        result[key] = localRow;
+      }
+    }
+
+    for (final key in synced.keys) {
+      if (!local.containsKey(key)) {
+        result.remove(key);
+      }
+    }
+
+    final keys = result.keys.toList()
+      ..sort((a, b) => a.compareTo(b));
+    final rows = [for (final key in keys) result[key]!];
+    return mapsToCsv(_mergeCsvFields(rows), rows);
   }
 
   Future<int> _pendingCount(
@@ -630,29 +755,53 @@ class CsvStagingCoordinator extends ChangeNotifier {
     }
     final urlRaw = await resolveUrl(workspace);
     final url = _normalizePublishedLocator(urlRaw);
-    final text = await csv.readAsString();
-    final rowCount = countDataRows(text);
-    final snapshot = await _syncedSnapshotFile(workspace);
-    final syncedText =
-        await snapshot.exists() ? await snapshot.readAsString() : null;
-    final pendingCount = await _pendingCount(text, syncedText);
-
-    _applyStatus(
-      _status.copyWith(
-        state: CsvSyncState.syncing,
-        lastError: '',
-        rowCount: rowCount,
-        pendingCount: pendingCount,
-        displayName: displayName,
-      ),
-    );
-    await _writeMeta(workspace, {
-      'state': 'syncing',
-      'publishedUrl': url,
-      'lastError': '',
-    });
-
     try {
+      var text = await csv.readAsString();
+      var rowCount = countDataRows(text);
+      final snapshot = await _syncedSnapshotFile(workspace);
+      final syncedText =
+          await snapshot.exists() ? await snapshot.readAsString() : null;
+      var pendingCount = await _pendingCount(text, syncedText);
+
+      _applyStatus(
+        _status.copyWith(
+          state: CsvSyncState.syncing,
+          lastError: '',
+          rowCount: rowCount,
+          pendingCount: pendingCount,
+          displayName: displayName,
+        ),
+      );
+      await _writeMeta(workspace, {
+        'state': 'syncing',
+        'publishedUrl': url,
+        'lastError': '',
+      });
+
+      try {
+        final keyColumn = mergeKeyColumn?.trim() ?? '';
+        if (keyColumn.isNotEmpty) {
+          final published =
+              await _fetchPublishedContent(urlRaw, forceRefresh: true);
+          final merged = mergeRemoteWithLocalEdits(
+            publishedCsv: published,
+            localCsv: text,
+            lastSyncedCsv: syncedText,
+            keyColumn: keyColumn,
+            skipKeyLower: mergeSkipKeyLower,
+          );
+          if (!csvTextsEqual(merged, text)) {
+            debugPrint('$displayName: merged live CSV before upload');
+            await csv.writeAsString(merged);
+            text = merged;
+            pendingCount = await _pendingCount(text, syncedText);
+            rowCount = countDataRows(text);
+          }
+        }
+      } catch (e) {
+        debugPrint('$displayName: live merge skipped before upload: $e');
+      }
+
       await _publishContent(urlRaw, text);
       if (!LocalContentStore.isLocalLocator(urlRaw)) {
         await invalidateCachedUrlText(normalizeDropboxUrl(urlRaw));
@@ -753,6 +902,28 @@ class CsvStagingCoordinator extends ChangeNotifier {
     final snapshot = await _syncedSnapshotFile(workspace);
     if (!await snapshot.exists()) return null;
     return snapshot.readAsString();
+  }
+
+  /// Fetch the live published CSV and overlay only this device's row edits.
+  ///
+  /// Returns [localCsv] unchanged when merge is not configured or the fetch
+  /// fails (caller should still save locally).
+  Future<String> mergeLocalCsvWithPublished(
+    FestivalWorkspace workspace,
+    String localCsv,
+  ) async {
+    final keyColumn = mergeKeyColumn?.trim() ?? '';
+    if (keyColumn.isEmpty) return localCsv;
+    final url = await resolveUrl(workspace);
+    final published = await _fetchPublishedContent(url, forceRefresh: true);
+    final snapshot = await readSyncedSnapshot(workspace);
+    return mergeRemoteWithLocalEdits(
+      publishedCsv: published,
+      localCsv: localCsv,
+      lastSyncedCsv: snapshot,
+      keyColumn: keyColumn,
+      skipKeyLower: mergeSkipKeyLower,
+    );
   }
 
   /// Explicitly discard local edits and reload from Testing Dropbox.

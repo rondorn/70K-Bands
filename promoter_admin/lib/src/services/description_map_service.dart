@@ -54,6 +54,8 @@ class DescriptionMapService {
               dropboxApi: dropboxApi,
               channelSuffix: 'description_map',
               displayName: 'Description map',
+              mergeKeyColumn: 'Band',
+              mergeSkipKeyLower: 'band',
               resolveUrl: (workspace) async {
                 if (workspace.usesEmergencyLocalMode) {
                   final path =
@@ -158,13 +160,21 @@ class DescriptionMapService {
 
   /// Save map CSV locally and queue background Dropbox sync.
   ///
+  /// Fetches the live map first and overlays only this device's row edits so
+  /// bands added elsewhere (automation, another admin) are not overwritten.
   /// Individual description `.txt` files still upload immediately via
   /// [writeDescriptionFile] and related helpers.
   Future<void> save(
     FestivalWorkspace workspace,
     List<DescriptionMapEntry> entries,
   ) async {
-    await staging.saveLocalAndQueue(workspace, toCsv(entries));
+    var csv = toCsv(entries);
+    try {
+      csv = await staging.mergeLocalCsvWithPublished(workspace, csv);
+    } catch (e) {
+      debugPrint('Description map merge skipped (saving local copy): $e');
+    }
+    await staging.saveLocalAndQueue(workspace, csv);
   }
 
   Future<void> flushSync(FestivalWorkspace workspace) =>
