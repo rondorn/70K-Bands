@@ -128,13 +128,20 @@ Future<String> fetchUrlText(
   if (response.statusCode < 200 || response.statusCode >= 300) {
     throw Exception('HTTP ${response.statusCode} for $normalized');
   }
-  // Strip UTF-8 BOM if present.
-  var body = response.body;
-  if (body.isNotEmpty && body.codeUnitAt(0) == 0xFEFF) {
-    body = body.substring(1);
-  }
+  // Decode bytes as UTF-8. response.body defaults to Latin-1 when Dropbox
+  // omits charset, which turns Æ into Ã on the next save.
+  final body = decodeUtf8Text(response.bodyBytes);
   await UrlTextCache.put(key, body);
   return body;
+}
+
+/// Decode file/text bytes as UTF-8 and strip a leading BOM.
+String decodeUtf8Text(List<int> bytes) {
+  var text = utf8.decode(bytes);
+  if (text.isNotEmpty && text.codeUnitAt(0) == 0xFEFF) {
+    text = text.substring(1);
+  }
+  return text;
 }
 
 /// Append a unique query param so CDNs treat the request as uncached.

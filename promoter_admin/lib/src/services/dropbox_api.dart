@@ -428,10 +428,7 @@ class DropboxApi {
         'Dropbox download failed for $path (${resp.statusCode}): $body',
       );
     }
-    var body = resp.body;
-    if (body.isNotEmpty && body.codeUnitAt(0) == 0xFEFF) {
-      body = body.substring(1);
-    }
+    final body = decodeUtf8Text(resp.bodyBytes);
     final rev = parseDropboxApiResultRev(
           resp.headers['dropbox-api-result'],
         ) ??

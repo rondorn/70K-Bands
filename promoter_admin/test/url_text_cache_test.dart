@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:promoter_admin/src/services/http_fetch.dart';
 
@@ -40,6 +42,14 @@ void main() {
       isNull,
     );
     expect(UrlTextCache.peek('https://example.com/band.txt'), isNull);
+  });
+
+  test('decodeUtf8Text keeps Æ instead of Latin-1 mojibake', () {
+    const name = 'Æther Realm';
+    final utf8Bytes = utf8.encode(name);
+    expect(latin1.decode(utf8Bytes), 'Ã\u0086ther Realm');
+    expect(decodeUtf8Text(utf8Bytes), name);
+    expect(decodeUtf8Text([0xEF, 0xBB, 0xBF, ...utf8Bytes]), name);
   });
 
   test('cacheBustedUrl adds unique query param without dropping others', () {
