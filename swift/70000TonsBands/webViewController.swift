@@ -99,13 +99,7 @@ class WebViewController: UIViewController, WKNavigationDelegate {
     }
 
     func updateSplitViewDisplayMode(for size: CGSize) {
-        if DeviceSizeManager.isLargeDisplay() {
-            if size.width > size.height {
-                splitViewController?.preferredDisplayMode = .allVisible
-            } else {
-                splitViewController?.preferredDisplayMode = .primaryHidden
-            }
-        }
+        splitViewController?.applyAdaptiveListDetailLayout()
     }
     
     override func didReceiveMemoryWarning() {

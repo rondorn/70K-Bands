@@ -11,7 +11,7 @@ import Firebase
 import AVKit
 import SwiftUI
 
-class MasterViewController: UITableViewController, UISplitViewControllerDelegate, UISearchBarDelegate, UIGestureRecognizerDelegate {
+class MasterViewController: UITableViewController, UISplitViewControllerDelegate, UISearchBarDelegate, UITextFieldDelegate, UIGestureRecognizerDelegate {
 
     /// Serial queue for background work; year-change / refresh IDs live in `MasterViewYearChangeCoordinator`.
     private var backgroundOperationQueue: OperationQueue = {
@@ -280,10 +280,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         masterView = self;
         
         // Do any additional setup after loading the view, typically from a nib.
-        if isSplitViewCapable() {
-            splitViewController?.preferredDisplayMode = UISplitViewController.DisplayMode.allVisible
-            splitViewController?.preferredPrimaryColumnWidth = 400 // Make left column wider (default ~320)
-        }
+        splitViewController?.applyAdaptiveListDetailLayout()
+        DeviceSizeManager.shared.attachHingeTracking(to: view)
         
         blankScreenActivityIndicator.hidesWhenStopped = true
         
@@ -300,10 +298,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         mainTableView.separatorColor = UIColor.lightGray
         mainTableView.tableFooterView = UIView() // Remove separators for empty rows
         mainTableView.cellLayoutMarginsFollowReadableWidth = false  // Full width so Day label isn't clipped
+        mainTableView.insetsContentViewsToSafeArea = true
         mainTableView.keyboardDismissMode = .onDrag  // Dismiss keyboard when scrolling list
         let tapToDismissKeyboard = UITapGestureRecognizer(target: self, action: #selector(dismissSearchKeyboard(_:)))
         tapToDismissKeyboard.cancelsTouchesInView = false
         tapToDismissKeyboard.delegate = self
+        dismissSearchKeyboardTap = tapToDismissKeyboard
         mainTableView.addGestureRecognizer(tapToDismissKeyboard)
         
         //do an initial load of iCloud data on launch
@@ -345,7 +345,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         setToolbar();
     
-        mainTableView.estimatedSectionHeaderHeight = 44.0
+        mainTableView.estimatedSectionHeaderHeight = listFilterHeaderHeight
+        if #available(iOS 15.0, *) {
+            mainTableView.sectionHeaderTopPadding = 0
+        }
         
         // Add long press gesture recognizer for priority/attendance menu
         let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
@@ -380,20 +383,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             filterMenuButton?.backgroundColor = .black
             shareButton?.customView?.backgroundColor = .black
-            bandSearch?.backgroundColor = .black
-            bandSearch?.tintColor = .lightGray
-            bandSearch?.barTintColor = .black
-            bandSearch?.searchTextField.backgroundColor = .black
-            bandSearch?.searchTextField.textColor = .white
-            bandSearch?.searchTextField.attributedPlaceholder = NSAttributedString(
-                string: NSLocalizedString("SearchCriteria", comment: ""),
-                attributes: [NSAttributedString.Key.foregroundColor: UIColor.lightGray]
-            )
+        }
 
-            
+        if let search = bandSearch {
+            styleListSearchBar(search)
         }
         
         NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.OnOrientationChange), name: UIDevice.orientationDidChangeNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(MasterViewController.hingeDidChange), name: DeviceSizeManager.hingeDidChangeNotification, object: nil)
         
         // Initialize DeviceSizeManager to start listening for orientation changes
         // This ensures device size classification is recalculated on orientation changes
@@ -653,6 +650,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
         return true
     }
+
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        guard gestureRecognizer === dismissSearchKeyboardTap else { return true }
+        var view: UIView? = touch.view
+        while let current = view {
+            if current is UITextField { return false }
+            view = current.superview
+        }
+        return true
+    }
     
     /// Keyboard Done toolbar - matches DetailView pattern, uses system .done for native look
     private func installSearchKeyboardDoneToolbar(_ searchBar: UISearchBar) {
@@ -676,9 +683,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // iOS automatically re-focuses the search bar when clear is tapped. A short delay lets that complete,
         // then we resign to dismiss the keyboard for good.
         if searchText.isEmpty {
-            let bar = searchBar
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                bar.resignFirstResponder()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+                guard self?.effectiveSearchBar?.searchTextField.isFirstResponder == true else { return }
+                searchBar.resignFirstResponder()
             }
         }
         
@@ -1238,6 +1245,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        if isListSearchTextField(textField) {
+            return true
+        }
+
         let countryHandle = countryHandler.shared
         
         // Only use autocomplete if country data is already loaded (don't block main thread)
@@ -1622,6 +1633,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // Force view to update layout
         view.setNeedsLayout()
         view.layoutIfNeeded()
+        DeviceSizeManager.shared.attachHingeTracking(to: view)
         
         // Run orientation check after view has laid out (fixes launch in landscape showing portrait)
         if !isSplitViewCapable() {
@@ -1631,6 +1643,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
+        installListFilterHeaderIfNeeded()
+        applyClosedDisplayContentInsetsIfNeeded()
+        applySplitLayoutIfNeeded()
         
         // CRITICAL FIX: Check orientation after layout changes (more reliable than OnOrientationChange)
         // This catches cases where orientation changes but the notification hasn't fired yet
@@ -1649,25 +1664,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 return
             }
             
-            let mainWindow = UIApplication.shared.connectedScenes
-                .compactMap { $0 as? UIWindowScene }
-                .flatMap { $0.windows }
-                .first { $0.isKeyWindow } ?? view.window
-            
-            let windowBounds = mainWindow?.bounds ?? view.bounds
-            let statusBarLandscape = UIApplication.shared.statusBarOrientation.isLandscape
-            let deviceOrientationLandscape = UIDevice.current.orientation.isLandscape
-            
-            let isLandscape: Bool
-            if !statusBarLandscape && !deviceOrientationLandscape {
-                isLandscape = false
-            } else if statusBarLandscape || deviceOrientationLandscape {
-                isLandscape = true
-            } else {
-                isLandscape = windowBounds.width > windowBounds.height
-            }
-            
-            if !isLandscape {
+            if !DeviceSizeManager.shared.allowsIPhoneLandscapeCalendar()
+                || !DeviceSizeManager.shared.isPhoneLandscapeLayout() {
                 landscapeScheduleCoordinator.dismissLandscapeScheduleView()
             }
         }
@@ -1743,12 +1741,71 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             self.bandSearch?.isHidden = false
             self.filterMenuButton?.alpha = 1.0
             self.bandSearch?.alpha = 1.0
-            self.mainToolBar?.isHidden = false
-            self.mainToolBar?.alpha = 1.0
+            self.mainToolBar?.isHidden = true
             
             print("🔄 [ROTATION] After restore in animation - filterMenuButton.isHidden: \(self.filterMenuButton?.isHidden ?? true)")
             print("🔄 [ROTATION] After restore in animation - bandSearch.isHidden: \(self.bandSearch?.isHidden ?? true)")
             print("🔄 [ROTATION] After restore in animation - view.window: \(self.view.window != nil ? "exists" : "nil")")
+            self.lastAppliedSplitLayoutSignature = nil
+            self.applySplitLayoutIfNeeded()
+            self.applyClosedDisplayContentInsetsIfNeeded(force: true)
+            DuoClosedListRevealController.shared.noteTransitionFinished()
+        }
+    }
+
+    override var shouldAutorotate: Bool { true }
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask { .all }
+
+    override func viewSafeAreaInsetsDidChange() {
+        super.viewSafeAreaInsetsDidChange()
+        applyClosedDisplayContentInsetsIfNeeded(force: true)
+        lastAppliedSplitLayoutSignature = nil
+        applySplitLayoutIfNeeded()
+    }
+
+    private func applySplitLayoutIfNeeded() {
+        let useSplit = DeviceSizeManager.shouldUseSplitView()
+        let compact = traitCollection.horizontalSizeClass == .compact
+        let landscape = DeviceSizeManager.shared.isCurrentlyLandscape()
+        let width = Int((splitViewController?.view.bounds.width ?? view.bounds.width).rounded())
+        let signature = "\(useSplit)|\(compact)|\(landscape)|\(width)"
+        guard signature != lastAppliedSplitLayoutSignature else { return }
+        lastAppliedSplitLayoutSignature = signature
+        DeviceSizeManager.shared.lastAdaptiveLayoutSignature = ""
+        splitViewController?.applyAdaptiveListDetailLayout()
+        setupViewToggleButton()
+        updateNavigationBar()
+    }
+
+    /// Header stays left of the reserved clock/icons. Rows already live inside the safe area,
+    /// so they are not inset again (that was the dead gap before the icon column).
+    private func applyClosedDisplayContentInsetsIfNeeded(force: Bool = false) {
+        DeviceSizeManager.shared.updateUsableInsets(from: tableView)
+        let insets = tableView.safeAreaInsets
+        let horizontal = UIEdgeInsets(top: 0, left: insets.left, bottom: 0, right: insets.right)
+        let insetsChanged = horizontal.left != lastAppliedHorizontalSafeArea.left
+            || horizontal.right != lastAppliedHorizontalSafeArea.right
+        if force || insetsChanged {
+            lastAppliedHorizontalSafeArea = horizontal
+            filterHeaderLeadingConstraint?.constant = 4 + insets.left
+            filterHeaderTrailingConstraint?.constant = -(8 + insets.right)
+            tableView.separatorInset = UIEdgeInsets(
+                top: 0,
+                left: 15,
+                bottom: 0,
+                right: SplitViewLayoutPolicy.separatorTrailingInset(safeAreaTrailing: insets.right)
+            )
+        }
+
+        for cell in tableView.visibleCells {
+            let bandEntry: String
+            if let indexPath = tableView.indexPath(for: cell), indexPath.row < bands.count {
+                bandEntry = bands[indexPath.row]
+            } else {
+                bandEntry = ""
+            }
+            let isScheduledEvent = bandEntry.contains(":") && bandEntry.components(separatedBy: ":").first?.doubleValue != nil
+            uiManager.applyUsableWidthInsets(to: cell, hideSeparator: !isScheduledEvent)
         }
     }
     
@@ -2252,7 +2309,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     dataHandle: self.dataHandle,
                     priorityManager: self.priorityManager,
                     attendedHandle: self.attendedHandle,
-                    searchCriteria: self.effectiveSearchBar?.text ?? "",
+                    searchCriteria: self.currentSearchText,
                     areFiltersActive: self.filterTextNeeded
                 ) { [weak self] (filtered: [String]) in
             // CRITICAL FIX: Ensure all UI operations happen on main thread
@@ -2479,6 +2536,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // CRITICAL: Update DeviceSizeManager on orientation change
         // This ensures device size classification is recalculated (important for foldable devices)
         DeviceSizeManager.shared.updateDeviceSize()
+        lastAppliedSplitLayoutSignature = nil
+        applySplitLayoutIfNeeded()
         
         // Check if detail view is currently presented - if so, don't handle orientation change
         // Detail view should stay in detail view regardless of orientation
@@ -2513,6 +2572,14 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 self.refreshBandList(reason: "Orientation change")
             }
         }
+    }
+
+    @objc func hingeDidChange() {
+        DeviceSizeManager.shared.updateDeviceSize()
+        lastAppliedSplitLayoutSignature = nil
+        applySplitLayoutIfNeeded()
+        applyClosedDisplayContentInsetsIfNeeded(force: true)
+        landscapeScheduleCoordinator.checkOrientationAndShowLandscapeIfNeeded()
     }
     
     /// Call after a filter change (e.g. Hide Expired Events) so list vs calendar is re-evaluated in landscape.
@@ -2570,9 +2637,46 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     // MARK: - iPad Split View Detection
     
     func isSplitViewCapable() -> Bool {
-        // Use centralized DeviceSizeManager for consistent device size classification
-        // This recalculates on orientation changes and device folds
-        return DeviceSizeManager.isLargeDisplay()
+        // iPad: always. Large iPhone / Duo inner display: landscape only.
+        return DeviceSizeManager.shouldUseSplitView()
+    }
+
+    func splitViewController(
+        _ splitViewController: UISplitViewController,
+        collapseSecondary secondaryViewController: UIViewController,
+        onto primaryViewController: UIViewController
+    ) -> Bool {
+        let isPlaceholder = SplitViewLayoutPolicy.isPlaceholderDetail(secondaryViewController)
+        if !isPlaceholder {
+            DuoClosedListRevealController.shared.noteKeptDetailOnCollapse()
+        }
+        // false = push details onto the list so a swipe/back reveals the list.
+        // true = discard placeholder and stay on the list.
+        return SplitViewLayoutPolicy.shouldDiscardSecondaryOnCollapse(
+            isPlaceholderDetail: isPlaceholder
+        )
+    }
+
+    func splitViewController(
+        _ splitViewController: UISplitViewController,
+        separateSecondaryFrom primaryViewController: UIViewController
+    ) -> UIViewController? {
+        if let primaryNav = primaryViewController as? UINavigationController,
+           primaryNav.viewControllers.count > 1,
+           let detail = primaryNav.viewControllers.last as? DetailHostingController {
+            primaryNav.popViewController(animated: false)
+            return UINavigationController(rootViewController: detail)
+        }
+        if let parked = DeviceSizeManager.shared.parkedSecondaryViewController {
+            DeviceSizeManager.shared.parkedSecondaryViewController = nil
+            return parked
+        }
+        return nil
+    }
+
+    @available(iOS 14.0, *)
+    func splitViewControllerDidCollapse(_ svc: UISplitViewController) {
+        DuoClosedListRevealController.shared.noteTransitionFinished()
     }
     
     private func setupViewToggleButton() {
@@ -2663,23 +2767,26 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     private func updateNavigationBar() {
-        var rightButtons = navigationItem.rightBarButtonItems ?? []
-        
-        // Remove any existing toggle button first
-        rightButtons.removeAll { item in
-            item.action == #selector(toggleViewTapped)
-        }
-        
-        // Add the toggle button if it exists (otherwise just leave it removed)
+        var rightButtons: [UIBarButtonItem] = []
+
         if let toggleButton = viewToggleButton {
-            // Add toggle button at the beginning (leftmost position)
-            rightButtons.insert(toggleButton, at: 0)
-            print("📱 [IPAD_TOGGLE] Button added to navigation bar")
-        } else {
-            print("📱 [IPAD_TOGGLE] Button removed from navigation bar")
+            rightButtons.append(toggleButton)
         }
-        
+        // Closed Duo / compact: iOS 27 parks these in the vertical side chrome next to the clock.
+        if usesCompactListChrome, let share = shareButton {
+            rightButtons.append(share)
+        }
+        if let pref = preferenceButton {
+            rightButtons.append(pref)
+        }
+
         navigationItem.rightBarButtonItems = rightButtons
+    }
+
+    /// Compact cover / forced-compact inner portrait: utilities live in the list header.
+    private var usesCompactListChrome: Bool {
+        traitCollection.horizontalSizeClass == .compact
+            || (DeviceSizeManager.shared.hingeAvailable && DeviceSizeManager.shared.isHingeClosed)
     }
     
     /// Centralized method that performs the same logic as pull-to-refresh
@@ -2993,7 +3100,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         uiManager.setFilterTitleText(
             bands: bands,
             listCount: listCount,
-            searchText: effectiveSearchBar?.text,
+            searchText: currentSearchText,
             filterTextNeeded: &filterTextNeeded,
             filtersOnText: &filtersOnText,
             hiddenRecordsCount: hiddenRecordsCount
@@ -3003,6 +3110,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     
     /// Custom share button view in header (for popover sourceView when using custom layout)
     private weak var customShareButtonView: UIView?
+    private weak var filterHeaderLeadingConstraint: NSLayoutConstraint?
+    private weak var filterHeaderTrailingConstraint: NSLayoutConstraint?
+    private var lastAppliedHorizontalSafeArea: UIEdgeInsets = .zero
+    private var lastAppliedSplitLayoutSignature: String?
     
     /// Container for filter count badge (allocates space in header stack so badge isn't clipped)
     private weak var filterBadgeContainer: UIView?
@@ -3011,9 +3122,17 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     /// Fallback filter/search when IBOutlets not connected (e.g. split view, lazy load)
     private var fallbackFilterButton: UIButton?
     private var fallbackBandSearch: UISearchBar?
+    private var listFilterHeaderView: UIView?
+    private var listFilterHeaderIncludesShare = false
+    private var dismissSearchKeyboardTap: UITapGestureRecognizer?
+    private let listFilterHeaderHeight: CGFloat = 44
     
     /// Search bar to use for criteria (IB outlet or programmatic fallback)
     private var effectiveSearchBar: UISearchBar? { bandSearch ?? fallbackBandSearch }
+
+    private var currentSearchText: String {
+        effectiveSearchBar?.text ?? ""
+    }
     
     /// Filter button to use for positioning (IB outlet or programmatic fallback)
     private var effectiveFilterButton: UIButton? { filterMenuButton ?? fallbackFilterButton }
@@ -3566,6 +3685,39 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        return pinnedListFilterHeader()
+    }
+
+    override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        return listFilterHeaderHeight
+    }
+
+    /// Filters + search stay in the section header so they pin under the nav bar while
+    /// rows scroll underneath. Reuse one view; rebuilding it drops search first responder.
+    private func installListFilterHeaderIfNeeded() {
+        if tableView.tableHeaderView != nil {
+            tableView.tableHeaderView = nil
+        }
+        _ = pinnedListFilterHeader()
+    }
+
+    private func pinnedListFilterHeader() -> UIView {
+        let includeShare = !usesCompactListChrome
+        let searchIsEditing = effectiveSearchBar?.searchTextField.isFirstResponder == true
+        if let existing = listFilterHeaderView,
+           listFilterHeaderIncludesShare == includeShare || searchIsEditing {
+            return existing
+        }
+
+        let header = makeListFilterHeader(for: tableView, includeShare: includeShare)
+        let width = tableView.bounds.width > 1 ? tableView.bounds.width : 320
+        header.frame = CGRect(x: 0, y: 0, width: width, height: listFilterHeaderHeight)
+        listFilterHeaderView = header
+        listFilterHeaderIncludesShare = includeShare
+        return header
+    }
+
+    private func makeListFilterHeader(for tableView: UITableView, includeShare: Bool) -> UIView {
         let filterBtn: UIButton
         let searchBar: UISearchBar
         if let fb = filterMenuButton, let sb = bandSearch {
@@ -3588,17 +3740,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 bar.searchTextField.returnKeyType = .done
                 bar.delegate = self
                 installSearchKeyboardDoneToolbar(bar)
-                bar.barStyle = .black
-                bar.searchBarStyle = .prominent
-                bar.backgroundColor = .black
-                bar.tintColor = .lightGray
-                bar.barTintColor = .black
-                bar.searchTextField.backgroundColor = .black
-                bar.searchTextField.textColor = .white
-                bar.searchTextField.attributedPlaceholder = NSAttributedString(
-                    string: NSLocalizedString("SearchCriteria", comment: ""),
-                    attributes: [.foregroundColor: UIColor.lightGray]
-                )
+                styleListSearchBar(bar)
                 fallbackBandSearch = bar
             }
             filterBtn = fallbackFilterButton!
@@ -3609,6 +3751,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         let container = UIView(frame: CGRect(x: 0, y: 0, width: headerWidth, height: 44))
         container.backgroundColor = .black
         container.isOpaque = true
+        container.clipsToBounds = true
+        container.isUserInteractionEnabled = true
         mainToolBar?.isHidden = true  // Using custom header instead
         
         if filterMenuButton != nil { filterButtonBar?.customView = nil }
@@ -3617,24 +3761,16 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         searchBar.removeFromSuperview()
         searchBar.searchTextField.returnKeyType = .done
         installSearchKeyboardDoneToolbar(searchBar)
-        filterBtn.isHidden = false
+        styleListSearchBar(searchBar)
         searchBar.isHidden = false
-        filterBtn.alpha = 1.0
+        searchBar.isUserInteractionEnabled = true
         searchBar.alpha = 1.0
+        filterBtn.isHidden = false
+        filterBtn.alpha = 1.0
         filterBtn.setContentHuggingPriority(.defaultHigh, for: .horizontal)
         searchBar.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        
-        let shareBtn = UIButton(type: .system)
-        shareBtn.setImage(UIImage(named: FestivalConfig.current.shareIcon), for: .normal)
-        shareBtn.tintColor = UIColor(white: 0.67, alpha: 1)
-        shareBtn.addTarget(self, action: #selector(customShareButtonTapped(_:)), for: .touchUpInside)
-        shareBtn.translatesAutoresizingMaskIntoConstraints = false
-        let shareWidthConstraint = shareBtn.widthAnchor.constraint(equalToConstant: 44)
-        shareWidthConstraint.priority = .defaultHigh  // Breakable so layout can resolve when portrait width is tight
-        shareWidthConstraint.isActive = true
-        shareBtn.setContentHuggingPriority(.defaultHigh, for: .horizontal)
-        customShareButtonView = shareBtn
-        
+        searchBar.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+
         let badgeContainer = UIView()
         badgeContainer.backgroundColor = .clear
         badgeContainer.translatesAutoresizingMaskIntoConstraints = false
@@ -3642,8 +3778,20 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         widthConstraint.isActive = true
         filterBadgeContainer = badgeContainer
         filterBadgeContainerWidthConstraint = widthConstraint
+
+        var headerViews: [UIView] = [filterBtn, badgeContainer, searchBar]
+        if includeShare {
+            let shareBtn = makeListHeaderIconButton(
+                image: UIImage(named: FestivalConfig.current.shareIcon),
+                action: #selector(customShareButtonTapped(_:))
+            )
+            customShareButtonView = shareBtn
+            headerViews.append(shareBtn)
+        } else {
+            customShareButtonView = nil
+        }
         
-        let stack = UIStackView(arrangedSubviews: [filterBtn, badgeContainer, searchBar, shareBtn])
+        let stack = UIStackView(arrangedSubviews: headerViews)
         stack.axis = .horizontal
         stack.alignment = .center
         stack.distribution = .fill
@@ -3651,23 +3799,77 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         stack.translatesAutoresizingMaskIntoConstraints = false
         
         container.addSubview(stack)
+        let leadingInset = 4 + tableView.safeAreaInsets.left
+        let trailingInset = 8 + tableView.safeAreaInsets.right
+        let leadingConstraint = stack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: leadingInset)
+        let trailingConstraint = stack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -trailingInset)
+        filterHeaderLeadingConstraint = leadingConstraint
+        filterHeaderTrailingConstraint = trailingConstraint
         NSLayoutConstraint.activate([
-            stack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 4),
-            stack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+            leadingConstraint,
+            trailingConstraint,
             stack.topAnchor.constraint(equalTo: container.topAnchor),
             stack.bottomAnchor.constraint(equalTo: container.bottomAnchor)
         ])
         
         ensureFilterCounterAndShareLayout()
+        updateNavigationBar()
         return container
     }
     
     @objc private func customShareButtonTapped(_ sender: UIButton) {
         shareButtonClicked(shareButton)
     }
-    
-    override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return 44.0
+
+    private func isListSearchTextField(_ textField: UITextField) -> Bool {
+        if textField === bandSearch?.searchTextField { return true }
+        if textField === fallbackBandSearch?.searchTextField { return true }
+        var view: UIView? = textField
+        while let current = view {
+            if current is UISearchBar { return true }
+            view = current.superview
+        }
+        return false
+    }
+
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        textField.resignFirstResponder()
+        return true
+    }
+
+    private func styleListSearchBar(_ searchBar: UISearchBar) {
+        searchBar.barStyle = .black
+        searchBar.searchBarStyle = .minimal
+        searchBar.isTranslucent = false
+        searchBar.backgroundColor = .black
+        searchBar.tintColor = .lightGray
+        searchBar.barTintColor = .black
+        // Storyboard used 70KSearch (a 25pt icon) as backgroundImage, which tiles
+        // around the field. Keep that asset only as the in-field search icon.
+        searchBar.backgroundImage = UIImage()
+        searchBar.scopeBarBackgroundImage = UIImage()
+        searchBar.setBackgroundImage(UIImage(), for: .any, barMetrics: .default)
+        if let searchImg = UIImage(named: "70KSearch") {
+            searchBar.setImage(searchImg, for: .search, state: .normal)
+        }
+        searchBar.searchTextField.backgroundColor = UIColor(white: 0.18, alpha: 1)
+        searchBar.searchTextField.textColor = .white
+        searchBar.searchTextField.attributedPlaceholder = NSAttributedString(
+            string: NSLocalizedString("SearchCriteria", comment: ""),
+            attributes: [.foregroundColor: UIColor.lightGray]
+        )
+    }
+
+    private func makeListHeaderIconButton(image: UIImage?, action: Selector) -> UIButton {
+        let button = UIButton(type: .system)
+        button.setImage(image, for: .normal)
+        button.tintColor = UIColor(white: 0.67, alpha: 1)
+        button.addTarget(self, action: action, for: .touchUpInside)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.widthAnchor.constraint(equalToConstant: 44).isActive = true
+        button.setContentHuggingPriority(.required, for: .horizontal)
+        button.setContentCompressionResistancePriority(.required, for: .horizontal)
+        return button
     }
     
     //swip code start
@@ -3858,11 +4060,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
         }
         self.splitViewController!.delegate = self;
-
-        if isSplitViewCapable() {
-            self.splitViewController!.preferredDisplayMode = UISplitViewController.DisplayMode.allVisible
-            self.splitViewController!.preferredPrimaryColumnWidth = 400 // Make left column wider (default ~320)
-        }
+        self.splitViewController?.applyAdaptiveListDetailLayout()
 
         self.extendedLayoutIncludesOpaqueBars = true
         
@@ -5400,34 +5598,12 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     private func checkAndDismissLandscapeIfPortrait() {
-        guard !isSplitViewCapable() && landscapeScheduleCoordinator.isShowingLandscapeSchedule else {
+        guard landscapeScheduleCoordinator.isShowingLandscapeSchedule else {
             return
         }
-        
-        // Get main window for accurate bounds
-        let mainWindow = UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .flatMap { $0.windows }
-            .first { $0.isKeyWindow } ?? view.window
-        
-        let windowBounds = mainWindow?.bounds ?? view.bounds
-        let windowBoundsLandscape = windowBounds.width > windowBounds.height
-        let viewBoundsLandscape = view.bounds.width > view.bounds.height
-        let statusBarLandscape = UIApplication.shared.statusBarOrientation.isLandscape
-        let deviceOrientationLandscape = UIDevice.current.orientation.isLandscape
-        
-        // Prioritize device orientation and status bar
-        let isLandscape: Bool
-        if !statusBarLandscape && !deviceOrientationLandscape {
-            isLandscape = false
-        } else if statusBarLandscape || deviceOrientationLandscape {
-            isLandscape = true
-        } else {
-            isLandscape = windowBoundsLandscape || viewBoundsLandscape
-        }
-        
-        if !isLandscape {
-            print("🚫 [LANDSCAPE_SCHEDULE] iPhone in portrait after detail dismissal (immediate check) - dismissing calendar view")
+        if !DeviceSizeManager.shared.allowsIPhoneLandscapeCalendar()
+            || !DeviceSizeManager.shared.isPhoneLandscapeLayout() {
+            print("🚫 [LANDSCAPE_SCHEDULE] Calendar not valid after detail dismissal — dismissing")
             landscapeScheduleCoordinator.dismissLandscapeScheduleView()
         }
     }
@@ -7091,7 +7267,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             dataHandle: self.dataHandle,
             priorityManager: self.priorityManager,
             attendedHandle: self.attendedHandle,
-            searchCriteria: self.bandSearch?.text ?? "",
+            searchCriteria: self.currentSearchText,
             areFiltersActive: self.filterTextNeeded
         ) { [weak self] (filtered: [String]) in
             // CRITICAL FIX: Ensure all UI operations happen on main thread

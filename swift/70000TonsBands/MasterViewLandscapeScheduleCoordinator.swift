@@ -38,25 +38,8 @@ final class MasterViewLandscapeScheduleCoordinator {
         print("🔄 [ORIENTATION_CHECK] view.window: \(host.view.window != nil ? "exists" : "nil")")
         print("🔄 [ORIENTATION_CHECK] isShowingLandscapeSchedule: \(isShowingLandscapeSchedule)")
 
-        let mainWindow = UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .flatMap { $0.windows }
-            .first { $0.isKeyWindow } ?? host.view.window
-
-        let windowBounds = mainWindow?.bounds ?? host.view.bounds
-        let windowBoundsLandscape = windowBounds.width > windowBounds.height
-        let viewBoundsLandscape = host.view.bounds.width > host.view.bounds.height
-        let statusBarLandscape = UIApplication.shared.statusBarOrientation.isLandscape
-        let deviceOrientationLandscape = UIDevice.current.orientation.isLandscape
-
-        let isLandscape: Bool
-        if !statusBarLandscape && !deviceOrientationLandscape {
-            isLandscape = false
-        } else if statusBarLandscape || deviceOrientationLandscape {
-            isLandscape = true
-        } else {
-            isLandscape = windowBoundsLandscape || viewBoundsLandscape
-        }
+        let isLandscape = DeviceSizeManager.shared.isPhoneLandscapeLayout()
+        let allowsCalendar = DeviceSizeManager.shared.allowsIPhoneLandscapeCalendar()
 
         if let landscapeVC = landscapeScheduleViewController,
            landscapeVC.presentedViewController != nil {
@@ -65,28 +48,28 @@ final class MasterViewLandscapeScheduleCoordinator {
             return
         }
 
-        if !host.isSplitViewCapable() {
-            print("🚫 [LANDSCAPE_SCHEDULE] Orientation check - windowBounds: \(windowBoundsLandscape) (w:\(windowBounds.width) h:\(windowBounds.height)), viewBounds: \(viewBoundsLandscape) (w:\(host.view.bounds.width) h:\(host.view.bounds.height)), statusBar: \(statusBarLandscape), device: \(deviceOrientationLandscape), isLandscape: \(isLandscape), isShowingCalendar: \(isShowingLandscapeSchedule)")
-
-            if !isLandscape {
-                if isShowingLandscapeSchedule {
-                    print("🚫 [LANDSCAPE_SCHEDULE] iPhone rotated to portrait - immediately dismissing calendar view (portrait never shows calendar)")
-                    print("🚫 [ORIENTATION_CHECK] Before dismissLandscapeScheduleView - filterMenuButton.isHidden: \(host.filterMenuButton?.isHidden ?? true)")
-                    print("🚫 [ORIENTATION_CHECK] Before dismissLandscapeScheduleView - bandSearch.isHidden: \(host.bandSearch?.isHidden ?? true)")
-                    dismissLandscapeScheduleView()
-                    print("🚫 [ORIENTATION_CHECK] After dismissLandscapeScheduleView - filterMenuButton.isHidden: \(host.filterMenuButton?.isHidden ?? true)")
-                    print("🚫 [ORIENTATION_CHECK] After dismissLandscapeScheduleView - bandSearch.isHidden: \(host.bandSearch?.isHidden ?? true)")
-                }
-                return
+        if !allowsCalendar {
+            if isShowingLandscapeSchedule {
+                print("🚫 [LANDSCAPE_SCHEDULE] Calendar overlay is for compact phones; split layouts use the toggle")
+                dismissLandscapeScheduleView()
             }
+            if host.isSplitViewCapable() {
+                print("📱 [IPAD_TOGGLE] Schedule View: \(getShowScheduleView()), Manual Calendar View: \(host.isManualCalendarView)")
+            }
+            return
+        }
+
+        print("🚫 [LANDSCAPE_SCHEDULE] Orientation check - window: \(host.view.window?.bounds ?? .zero), view: \(host.view.bounds), isLandscape: \(isLandscape), isShowingCalendar: \(isShowingLandscapeSchedule)")
+
+        if !isLandscape {
+            if isShowingLandscapeSchedule {
+                print("🚫 [LANDSCAPE_SCHEDULE] iPhone rotated to portrait - immediately dismissing calendar view (portrait never shows calendar)")
+                dismissLandscapeScheduleView()
+            }
+            return
         }
 
         let isScheduleView = getShowScheduleView()
-
-        if host.isSplitViewCapable() {
-            print("📱 [IPAD_TOGGLE] Schedule View: \(isScheduleView), Manual Calendar View: \(host.isManualCalendarView)")
-            return
-        }
 
         if let topVC = host.navigationController?.topViewController, topVC is DetailHostingController {
             print("🔄 [ORIENTATION] Detail view is showing in navigation stack - skipping orientation handling")
@@ -120,27 +103,14 @@ final class MasterViewLandscapeScheduleCoordinator {
             return
         }
 
-        let mainWindow = UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .flatMap { $0.windows }
-            .first { $0.isKeyWindow } ?? host.view.window
-
-        let windowBounds = mainWindow?.bounds ?? host.view.bounds
-        let windowBoundsLandscape = windowBounds.width > windowBounds.height
-        let viewBoundsLandscape = host.view.bounds.width > host.view.bounds.height
-        let statusBarLandscape = UIApplication.shared.statusBarOrientation.isLandscape
-        let deviceOrientationLandscape = UIDevice.current.orientation.isLandscape
-
-        let isLandscape: Bool
-        if !statusBarLandscape && !deviceOrientationLandscape {
-            isLandscape = false
-        } else if statusBarLandscape || deviceOrientationLandscape {
-            isLandscape = true
-        } else {
-            isLandscape = windowBoundsLandscape || viewBoundsLandscape
+        let isLandscape = DeviceSizeManager.shared.isPhoneLandscapeLayout()
+        if !DeviceSizeManager.shared.allowsIPhoneLandscapeCalendar() {
+            print("🚫 [ORIENTATION] Calendar not used on this display — dismissing")
+            dismissLandscapeScheduleView()
+            return
         }
 
-        print("🚫 [ORIENTATION] Portrait check attempt \(attempt)/\(maxAttempts) - windowBounds: \(windowBoundsLandscape) (w:\(windowBounds.width) h:\(windowBounds.height)), viewBounds: \(viewBoundsLandscape), statusBar: \(statusBarLandscape), device: \(deviceOrientationLandscape), isLandscape: \(isLandscape)")
+        print("🚫 [ORIENTATION] Portrait check attempt \(attempt)/\(maxAttempts) - window: \(host.view.window?.bounds ?? .zero), isLandscape: \(isLandscape)")
 
         if !isLandscape {
             print("🚫 [ORIENTATION] iPhone detected in portrait - dismissing calendar view immediately")
@@ -165,31 +135,9 @@ final class MasterViewLandscapeScheduleCoordinator {
             return
         }
 
-        if !host.isSplitViewCapable() {
-            let mainWindow = UIApplication.shared.connectedScenes
-                .compactMap { $0 as? UIWindowScene }
-                .flatMap { $0.windows }
-                .first { $0.isKeyWindow } ?? host.view.window
-
-            let windowBounds = mainWindow?.bounds ?? host.view.bounds
-            let windowBoundsLandscape = windowBounds.width > windowBounds.height
-            let viewBoundsLandscape = host.view.bounds.width > host.view.bounds.height
-            let statusBarLandscape = UIApplication.shared.statusBarOrientation.isLandscape
-            let deviceOrientationLandscape = UIDevice.current.orientation.isLandscape
-
-            let isLandscape: Bool
-            if !statusBarLandscape && !deviceOrientationLandscape {
-                isLandscape = false
-            } else if statusBarLandscape || deviceOrientationLandscape {
-                isLandscape = true
-            } else {
-                isLandscape = windowBoundsLandscape || viewBoundsLandscape
-            }
-
-            if !isLandscape {
-                print("🚫 [LANDSCAPE_SCHEDULE] iPhone in portrait mode - calendar mode is not allowed")
-                return
-            }
+        if !host.isSplitViewCapable() && !DeviceSizeManager.shared.isPhoneLandscapeLayout() {
+            print("🚫 [LANDSCAPE_SCHEDULE] iPhone in portrait mode - calendar mode is not allowed")
+            return
         }
 
         print("🔄 [LANDSCAPE_SCHEDULE] Presenting landscape schedule view")

@@ -1496,21 +1496,36 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     // MARK: - Split view
 
     func splitViewController(_ splitViewController: UISplitViewController, collapseSecondary secondaryViewController:UIViewController, onto primaryViewController:UIViewController) -> Bool {
-        // Since we're now using SwiftUI navigation instead of DetailViewController,
-        // we can use a simpler approach for split view collapse behavior
-        if let secondaryAsNavController = secondaryViewController as? UINavigationController {
-            // If there's no meaningful content to show (placeholder or no controller), collapse the secondary view
-            if secondaryAsNavController.topViewController == nil {
-                return true
-            }
-            
-            // If it's our placeholder controller, also collapse
-            if secondaryAsNavController.topViewController?.title == "Band Details" &&
-               secondaryAsNavController.topViewController?.children.isEmpty == true {
-                return true
-            }
+        let isPlaceholder = SplitViewLayoutPolicy.isPlaceholderDetail(secondaryViewController)
+        if !isPlaceholder {
+            DuoClosedListRevealController.shared.noteKeptDetailOnCollapse()
         }
-        return false
+        // false keeps a real detail on the stack so closing Duo / collapsing shows details; swipe back reveals the list.
+        return SplitViewLayoutPolicy.shouldDiscardSecondaryOnCollapse(
+            isPlaceholderDetail: isPlaceholder
+        )
+    }
+
+    func splitViewController(
+        _ splitViewController: UISplitViewController,
+        separateSecondaryFrom primaryViewController: UIViewController
+    ) -> UIViewController? {
+        if let primaryNav = primaryViewController as? UINavigationController,
+           primaryNav.viewControllers.count > 1,
+           let detail = primaryNav.viewControllers.last as? DetailHostingController {
+            primaryNav.popViewController(animated: false)
+            return UINavigationController(rootViewController: detail)
+        }
+        if let parked = DeviceSizeManager.shared.parkedSecondaryViewController {
+            DeviceSizeManager.shared.parkedSecondaryViewController = nil
+            return parked
+        }
+        return nil
+    }
+
+    @available(iOS 14.0, *)
+    func splitViewControllerDidCollapse(_ svc: UISplitViewController) {
+        DuoClosedListRevealController.shared.noteTransitionFinished()
     }
     // Core Data stack removed - all data now uses SQLite directly
     
@@ -1619,6 +1634,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
     }
 
+    /// iPhone’s VC default is `.allButUpsideDown`. Returning `.all` lets the closed Duo cover
+    /// (Touch ID) rotate the list right-side-up when the device is upside down, if the hardware allows it.
+    func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
+        .all
+    }
+
     /// Creates the main window and split-view hierarchy for the given scene.
     func configureMainWindow(for windowScene: UIWindowScene) {
         window = UIWindow(windowScene: windowScene)
@@ -1631,9 +1652,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             window?.rootViewController = splitViewController
 
             splitViewController.delegate = self
-            splitViewController.preferredDisplayMode = .oneBesideSecondary
+            splitViewController.applyAdaptiveListDetailLayout()
 
             window?.makeKeyAndVisible()
+            if let window {
+                DeviceSizeManager.shared.attachHingeTracking(to: window)
+            }
+            if #available(iOS 16.0, *) {
+                splitViewController.setNeedsUpdateOfSupportedInterfaceOrientations()
+            }
 
             if let masterNavigationController = splitViewController.viewControllers.first as? UINavigationController,
                masterNavigationController.viewControllers.first is MasterViewController {

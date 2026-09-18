@@ -56,6 +56,7 @@ class DetailHostingController: UIHostingController<AnyView> {
         // Force dark mode appearance
         overrideUserInterfaceStyle = .dark
         view.backgroundColor = UIColor.black
+        DuoClosedListRevealController.shared.installCancelTracking(on: view)
         
         // Set navigation bar styling
         if let navigationController = navigationController {
@@ -71,9 +72,10 @@ class DetailHostingController: UIHostingController<AnyView> {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
-        if DeviceSizeManager.isLargeDisplay() {
-            splitViewController?.preferredDisplayMode = UISplitViewController.DisplayMode.allVisible
+        if DeviceSizeManager.shouldUseSplitView() {
+            splitViewController?.applyAdaptiveListDetailLayout()
         }
+        DuoClosedListRevealController.shared.installCancelTracking(on: view)
         
         // Ensure back button always says "Back" when navigating from this view
         let backItem = UIBarButtonItem()
@@ -100,6 +102,9 @@ class DetailHostingController: UIHostingController<AnyView> {
     override var preferredStatusBarStyle: UIStatusBarStyle {
         return .lightContent
     }
+
+    override var shouldAutorotate: Bool { true }
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask { .all }
     
     // MARK: - Public Methods
     
@@ -209,10 +214,6 @@ extension DetailHostingController {
     
     /// Configures the controller for split view presentation
     func configureSplitViewPresentation() {
-        // Set up split view specific configurations
-        if let splitViewController = splitViewController {
-            navigationItem.leftBarButtonItem = splitViewController.displayModeButtonItem
-            navigationItem.leftItemsSupplementBackButton = true
-        }
+        navigationItem.leftItemsSupplementBackButton = true
     }
 }

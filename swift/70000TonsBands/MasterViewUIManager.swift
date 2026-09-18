@@ -50,21 +50,21 @@ class MasterViewUIManager {
         // Add comprehensive bounds checking to prevent crash
         guard indexPath.row >= 0 else {
             print("ERROR: Negative index \(indexPath.row) in configureCell")
-            cell.separatorInset = UIEdgeInsets(top: 0, left: 15, bottom: 0, right: 0)
+            applyUsableWidthInsets(to: cell, hideSeparator: false)
             return
         }
         
         guard indexPath.row < bands.count else {
             print("ERROR: Index \(indexPath.row) out of bounds for bands array (count: \(bands.count))")
             // Set default separator style and return early
-            cell.separatorInset = UIEdgeInsets(top: 0, left: 15, bottom: 0, right: 0)
+            applyUsableWidthInsets(to: cell, hideSeparator: false)
             return
         }
         
         // Ensure bands array is not empty
         guard !bands.isEmpty else {
             print("ERROR: Bands array is empty in configureCell - this may happen during data refresh")
-            cell.separatorInset = UIEdgeInsets(top: 0, left: 15, bottom: 0, right: 0)
+            applyUsableWidthInsets(to: cell, hideSeparator: false)
             return
         }
         
@@ -82,12 +82,37 @@ class MasterViewUIManager {
         let bandEntry = bands[indexPath.row]
         let isScheduledEvent = bandEntry.contains(":") && bandEntry.components(separatedBy: ":").first?.doubleValue != nil
         
-        if !isScheduledEvent {
-            // This is a band name only - hide separator
+        applyUsableWidthInsets(to: cell, hideSeparator: !isScheduledEvent)
+    }
+
+    /// Day column stays in the usable content area. Separators stop before the reserved side icons.
+    func applyUsableWidthInsets(to cell: UITableViewCell, hideSeparator: Bool) {
+        let dayTrailing = DeviceSizeManager.shared.trailingUsableInset
+        let separatorTrailing = DeviceSizeManager.shared.separatorTrailingInsetForReservedChrome
+        if hideSeparator {
             cell.separatorInset = UIEdgeInsets(top: 0, left: cell.bounds.size.width, bottom: 0, right: 0)
         } else {
-            // This is a scheduled event - show separator normally
-            cell.separatorInset = UIEdgeInsets(top: 0, left: 15, bottom: 0, right: 0)
+            cell.separatorInset = UIEdgeInsets(top: 0, left: 15, bottom: 0, right: separatorTrailing)
+        }
+        insetDayColumn(of: cell, trailing: dayTrailing)
+    }
+
+    private func insetDayColumn(of cell: UITableViewCell, trailing: CGFloat) {
+        guard let dayLabel = cell.viewWithTag(9) else { return }
+        for constraint in cell.contentView.constraints {
+            let pinsDayToContentTrailing =
+                (constraint.firstItem === cell.contentView && constraint.firstAttribute == .trailing
+                    && constraint.secondItem === dayLabel && constraint.secondAttribute == .trailing)
+                || (constraint.firstItem === dayLabel && constraint.firstAttribute == .trailing
+                    && constraint.secondItem === cell.contentView && constraint.secondAttribute == .trailing)
+            if pinsDayToContentTrailing {
+                // contentView.trailing = dayLabel.trailing + constant
+                if constraint.firstItem === cell.contentView {
+                    constraint.constant = trailing
+                } else {
+                    constraint.constant = -trailing
+                }
+            }
         }
     }
     
@@ -240,12 +265,7 @@ class MasterViewUIManager {
             indexForCell.isHidden = true
         }
         
-        // Configure separator visibility from cached data
-        if cachedData.shouldHideSeparator {
-            cell.separatorInset = UIEdgeInsets(top: 0, left: cell.bounds.size.width, bottom: 0, right: 0)
-        } else {
-            cell.separatorInset = UIEdgeInsets(top: 0, left: 15, bottom: 0, right: 0)
-        }
+        applyUsableWidthInsets(to: cell, hideSeparator: cachedData.shouldHideSeparator)
     }
     
     // MARK: - Table View Helpers
