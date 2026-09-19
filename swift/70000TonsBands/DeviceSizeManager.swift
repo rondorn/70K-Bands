@@ -41,6 +41,19 @@ enum SplitViewLayoutPolicy {
         max(0, safeAreaTrailing)
     }
 
+    /// Share/gear belong in iOS 27 side chrome only on iPhone and closed Duo.
+    /// iPad's split primary column is also `.compact`, but it has no cover chrome —
+    /// putting those items in the nav bar crushes the title and stats control.
+    static func usesCompactListChrome(
+        idiom: UIUserInterfaceIdiom,
+        horizontalSizeClass: UIUserInterfaceSizeClass,
+        hingeAvailable: Bool,
+        isHingeClosed: Bool
+    ) -> Bool {
+        guard idiom != .pad else { return false }
+        return horizontalSizeClass == .compact || (hingeAvailable && isHingeClosed)
+    }
+
     /// Regular-width windows still split unless we force compact. Duo inner portrait is
     /// regular-width, so without this the list sits beside an empty second column.
     static func shouldForceCompactHorizontalSizeClass(useSplit: Bool) -> Bool {

@@ -1326,32 +1326,26 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             .paragraphStyle: paragraph
         ]))
         label.attributedText = attributed
-        let barWidth = navigationController?.navigationBar.bounds.width ?? UIScreen.main.bounds.width
-        let maxWidth = max(barWidth - 120, 100)
+        // Size to the text only. A near-full-width titleView sits on top of the
+        // stats button on iOS 27.2 and eats its taps.
+        let maxWidth: CGFloat = 160
         label.preferredMaxLayoutWidth = maxWidth
-        label.sizeToFit()
-        let width = min(max(label.bounds.width, 80), maxWidth)
+        let fitted = label.sizeThatFits(CGSize(width: maxWidth, height: 44))
+        let width = min(max(ceil(fitted.width), 80), maxWidth)
         label.frame = CGRect(x: 0, y: 0, width: width, height: 44)
         return label
     }
     
-    /// Updates left bar button with stats icon (far left, symmetric with preferences on right). Uses customView to stay visible when scrolling.
+    /// Stats on the far left, same control type as gear/share so iOS 27.2 gives it
+    /// a real hit target instead of a flush custom view.
     private func installStatsBarButton() {
-        let btn = UIButton(type: .system)
-        btn.setImage(UIImage(named: FestivalConfig.current.statsIcon), for: .normal)
-        btn.tintColor = .white
-        btn.addTarget(self, action: #selector(statsButtonTapped(_:)), for: .touchUpInside)
-        btn.frame = CGRect(x: 0, y: 0, width: 44, height: 44)
-        let container = UIView(frame: CGRect(x: 0, y: 0, width: 44, height: 44))
-        container.addSubview(btn)
-        btn.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            btn.centerXAnchor.constraint(equalTo: container.centerXAnchor),
-            btn.centerYAnchor.constraint(equalTo: container.centerYAnchor),
-            btn.widthAnchor.constraint(equalToConstant: 44),
-            btn.heightAnchor.constraint(equalToConstant: 44)
-        ])
-        let barItem = UIBarButtonItem(customView: container)
+        let barItem = UIBarButtonItem(
+            image: UIImage(named: FestivalConfig.current.statsIcon),
+            style: .plain,
+            target: self,
+            action: #selector(statsButtonTapped(_:))
+        )
+        barItem.tintColor = .white
         if #available(iOS 26.0, *) {
             barItem.hidesSharedBackground = true
         }
@@ -2783,10 +2777,15 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         navigationItem.rightBarButtonItems = rightButtons
     }
 
-    /// Compact cover / forced-compact inner portrait: utilities live in the list header.
+    /// Compact cover: share/gear park in iOS 27 side chrome. iPad split primary is also
+    /// compact in UIKit, but must keep the normal iPad header layout.
     private var usesCompactListChrome: Bool {
-        traitCollection.horizontalSizeClass == .compact
-            || (DeviceSizeManager.shared.hingeAvailable && DeviceSizeManager.shared.isHingeClosed)
+        SplitViewLayoutPolicy.usesCompactListChrome(
+            idiom: traitCollection.userInterfaceIdiom,
+            horizontalSizeClass: traitCollection.horizontalSizeClass,
+            hingeAvailable: DeviceSizeManager.shared.hingeAvailable,
+            isHingeClosed: DeviceSizeManager.shared.isHingeClosed
+        )
     }
     
     /// Centralized method that performs the same logic as pull-to-refresh

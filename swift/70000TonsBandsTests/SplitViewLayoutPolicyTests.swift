@@ -59,6 +59,40 @@ class SplitViewLayoutPolicyTests: XCTestCase {
         XCTAssertLessThan(width, 1180)
     }
 
+    func testCompactListChromeSkipsIPadEvenWhenPrimaryIsCompact() {
+        XCTAssertFalse(
+            SplitViewLayoutPolicy.usesCompactListChrome(
+                idiom: .pad,
+                horizontalSizeClass: .compact,
+                hingeAvailable: false,
+                isHingeClosed: false
+            ),
+            "iPad split primary is compact but has no cover chrome"
+        )
+    }
+
+    func testCompactListChromeUsedOnPhone() {
+        XCTAssertTrue(
+            SplitViewLayoutPolicy.usesCompactListChrome(
+                idiom: .phone,
+                horizontalSizeClass: .compact,
+                hingeAvailable: false,
+                isHingeClosed: false
+            )
+        )
+    }
+
+    func testCompactListChromeUsedOnClosedDuo() {
+        XCTAssertTrue(
+            SplitViewLayoutPolicy.usesCompactListChrome(
+                idiom: .phone,
+                horizontalSizeClass: .regular,
+                hingeAvailable: true,
+                isHingeClosed: true
+            )
+        )
+    }
+
     func testSeparatorStopsAtTrailingSafeArea() {
         XCTAssertEqual(
             SplitViewLayoutPolicy.additionalRowTrailingInset(
