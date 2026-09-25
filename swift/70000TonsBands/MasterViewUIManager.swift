@@ -95,6 +95,40 @@ class MasterViewUIManager {
             cell.separatorInset = UIEdgeInsets(top: 0, left: 15, bottom: 0, right: separatorTrailing)
         }
         insetDayColumn(of: cell, trailing: dayTrailing)
+        insetClosedDuoBandListPriorityIcon(of: cell)
+    }
+
+    /// Storyboard: contentView.trailingMargin = rankImage.trailing - 6 (id Pzs-Qh-pAZ).
+    private static let bandListPriorityIconStoryboardTrailingConstant: CGFloat = -6
+
+    /// Closed Duo band list only: slide the no-schedule priority icon (tag 7) in
+    /// so the cover chrome does not clip it. Schedule rows, calendar, and other
+    /// devices keep the storyboard constant.
+    private func insetClosedDuoBandListPriorityIcon(of cell: UITableViewCell) {
+        guard let icon = cell.viewWithTag(7) else { return }
+        let extra = SplitViewLayoutPolicy.closedDuoBandListPriorityIconExtraTrailingInset(
+            hingeAvailable: DeviceSizeManager.shared.hingeAvailable,
+            isHingeClosed: DeviceSizeManager.shared.isHingeClosed
+        )
+        let storyboard = Self.bandListPriorityIconStoryboardTrailingConstant
+        for constraint in cell.contentView.constraints {
+            let pinsIconToTrailing =
+                (constraint.firstItem === cell.contentView
+                    && (constraint.firstAttribute == .trailing || constraint.firstAttribute == .trailingMargin)
+                    && constraint.secondItem === icon
+                    && (constraint.secondAttribute == .trailing || constraint.secondAttribute == .trailingMargin))
+                || (constraint.firstItem === icon
+                    && (constraint.firstAttribute == .trailing || constraint.firstAttribute == .trailingMargin)
+                    && constraint.secondItem === cell.contentView
+                    && (constraint.secondAttribute == .trailing || constraint.secondAttribute == .trailingMargin))
+            if pinsIconToTrailing {
+                if constraint.firstItem === cell.contentView {
+                    constraint.constant = storyboard + extra
+                } else {
+                    constraint.constant = -storyboard - extra
+                }
+            }
+        }
     }
 
     private func insetDayColumn(of cell: UITableViewCell, trailing: CGFloat) {

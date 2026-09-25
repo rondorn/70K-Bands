@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import json
+import re
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Tuple
@@ -12,6 +13,26 @@ MAX_HISTORY_DAYS = 90
 DISPLAY_DAYS = 30
 MAX_HISTORY_MONTHS = 12
 DISPLAY_MONTHS = 12
+
+APP_DATA_ARCHIVE_HEADERS = ["Month", "Highest Monthly Count"]
+MONTH_NAMES = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+]
+_MONTH_NAME_TO_NUM = {name.lower(): index for index, name in enumerate(MONTH_NAMES, start=1)}
+_MONTH_ABBR_TO_NUM = {
+    datetime(2000, month, 1).strftime("%b").lower(): month for month in range(1, 13)
+}
 
 
 class DailyUsageTracker:
@@ -214,6 +235,8 @@ class MonthlyUsageTracker:
             }
             print(f"Updated monthly usage for {month_key}: max_users={max_users}")
 
+        # Archive yearly highs before trimming the rolling 12-month JSON.
+        update_yearly_archives(self.config.output_dir, self.history_data)
         self._clean_old_history()
         self._save_history()
 
@@ -245,6 +268,152 @@ class MonthlyUsageTracker:
                 ]
             )
         return headers, rows
+
+
+def yearly_app_data_path(output_dir: Path, year: int) -> Path:
+    """Return `{output_dir}/{year}/{year}_App_Data.csv`."""
+    return output_dir / str(year) / f"{year}_App_Data.csv"
+
+
+def parse_archive_month(value: str) -> int | None:
+    """Map a Month cell to 1-12. Accepts January, Jan, 01, 1, or 2026-01."""
+    text = (value or "").strip()
+    if not text:
+        return None
+    lowered = text.lower()
+    if lowered in _MONTH_NAME_TO_NUM:
+        return _MONTH_NAME_TO_NUM[lowered]
+    first_token = re.split(r"[\s,/.-]+", lowered)[0]
+    if first_token in _MONTH_NAME_TO_NUM:
+        return _MONTH_NAME_TO_NUM[first_token]
+    if first_token in _MONTH_ABBR_TO_NUM:
+        return _MONTH_ABBR_TO_NUM[first_token]
+    match = re.match(r"^(?:(\d{4})[-/])?(\d{1,2})$", text)
+    if match:
+        month = int(match.group(2))
+        if 1 <= month <= 12:
+            return month
+    return None
+
+
+def load_app_data_archive(path: Path) -> dict[int, int]:
+    """Load Month -> highest count from a yearly archive CSV."""
+    counts: dict[int, int] = {}
+    if not path.exists():
+        return counts
+    with path.open(encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        reader.fieldnames = [fn.strip() for fn in reader.fieldnames or []]
+        for row in reader:
+            row = {k.strip(): (v or "").strip() for k, v in row.items() if k}
+            month = parse_archive_month(row.get("Month", ""))
+            if month is None:
+                continue
+            raw_count = row.get("Highest Monthly Count", "").replace(",", "")
+            try:
+                count = int(raw_count)
+            except ValueError:
+                continue
+            counts[month] = max(counts.get(month, 0), count)
+    return counts
+
+
+def write_app_data_archive(path: Path, counts: dict[int, int]) -> None:
+    """Write months in calendar order. Only months with a recorded high are included."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(APP_DATA_ARCHIVE_HEADERS)
+        for month in range(1, 13):
+            if month not in counts:
+                continue
+            writer.writerow([MONTH_NAMES[month - 1], counts[month]])
+
+
+def update_yearly_archives(
+    output_dir: Path, monthly_history: Dict[str, Dict]
+) -> list[Path]:
+    """Create or update `{year}/{year}_App_Data.csv` from monthly history.
+
+    Highest Monthly Count is a high-water mark: a later run never lowers a month.
+    """
+    by_year: dict[int, dict[int, int]] = {}
+    for month_key, entry in monthly_history.items():
+        try:
+            parsed = datetime.strptime(month_key, "%Y-%m")
+        except ValueError:
+            continue
+        count = int(entry.get("max_users", 0) or 0)
+        year_months = by_year.setdefault(parsed.year, {})
+        year_months[parsed.month] = max(year_months.get(parsed.month, 0), count)
+
+    written: list[Path] = []
+    for year, months in sorted(by_year.items()):
+        path = yearly_app_data_path(output_dir, year)
+        merged = load_app_data_archive(path)
+        for month, count in months.items():
+            merged[month] = max(merged.get(month, 0), count)
+        write_app_data_archive(path, merged)
+        written.append(path)
+        print(f"Updated yearly app data archive: {path}")
+    return written
+
+
+def discover_app_data_archives(output_dir: Path) -> list[tuple[int, Path]]:
+    """Find `{year}/{year}_App_Data.csv` folders under output_dir."""
+    archives: list[tuple[int, Path]] = []
+    if not output_dir.exists():
+        return archives
+    for child in output_dir.iterdir():
+        if not child.is_dir() or not child.name.isdigit() or len(child.name) != 4:
+            continue
+        year = int(child.name)
+        path = yearly_app_data_path(output_dir, year)
+        if path.exists():
+            archives.append((year, path))
+    return sorted(archives)
+
+
+def format_yoy_change(previous: int | None, current: int | None) -> str:
+    if previous is None or current is None or previous == 0:
+        return ""
+    percent = (current - previous) / previous * 100
+    sign = "+" if percent > 0 else ""
+    return f"{sign}{percent:.1f}%"
+
+
+def get_year_over_year_data(output_dir: Path) -> Tuple[List[str], List[List[str]]]:
+    """Build a month-by-year comparison table from yearly app-data archives."""
+    archives = discover_app_data_archives(output_dir)
+    if not archives:
+        return ["Month"], [["No data available"]]
+
+    years = [year for year, _ in archives]
+    counts_by_year = {year: load_app_data_archive(path) for year, path in archives}
+    headers = ["Month", *[str(year) for year in years]]
+    if len(years) >= 2:
+        headers.append("YoY Change")
+
+    rows: list[list[str]] = []
+    for month in range(1, 13):
+        if not any(month in counts_by_year[year] for year in years):
+            continue
+        row = [MONTH_NAMES[month - 1]]
+        for year in years:
+            count = counts_by_year[year].get(month)
+            row.append(str(count) if count is not None else "")
+        if len(years) >= 2:
+            row.append(
+                format_yoy_change(
+                    counts_by_year[years[-2]].get(month),
+                    counts_by_year[years[-1]].get(month),
+                )
+            )
+        rows.append(row)
+
+    if not rows:
+        return headers, [["No data available"] + [""] * (len(headers) - 1)]
+    return headers, rows
 
 
 def update_usage_history(config: FestivalConfig, users: list[UserRecord]) -> None:

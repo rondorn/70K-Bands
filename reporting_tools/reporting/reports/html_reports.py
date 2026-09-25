@@ -627,6 +627,7 @@ def generate_html_content(csv_files: List[tuple[str, List[str], List[Dict[str, A
             'Event Attendance': '🎫',
             'Daily Usage': '📊',
             'Monthly Usage': '📅',
+            'Year Over Year': '📈',
             'OS Version': '⚙️',
             '70K Version': '📲'
         }
@@ -896,6 +897,8 @@ def generate_html_content(csv_files: List[tuple[str, List[str], List[Dict[str, A
         elif filename == 'genreReport.csv':
             # For genre report, show all entries
             data_to_show = data
+        elif filename == 'Year Over Year':
+            data_to_show = data
         else:
             data_to_show = data[:20]
             
@@ -945,6 +948,8 @@ def generate_html_content(csv_files: List[tuple[str, List[str], List[Dict[str, A
             display_name = 'OS Version'
         elif filename == '70K Version':
             display_name = '70K Version'
+        elif filename == 'Year Over Year':
+            display_name = 'Year Over Year'
         else:
             display_name = format_title(filename)
         # Determine original data length for limiting note
@@ -1037,6 +1042,7 @@ def generate_language_specific_html(csv_files: List[tuple[str, List[str], List[D
             'Event Attendance': '🎫',
             'Daily Usage': '📊',
             'Monthly Usage': '📅',
+            'Year Over Year': '📈',
             'OS Version': '⚙️',
             '70K Version': '📲'
         }
@@ -3015,10 +3021,12 @@ def main_full(source: str = '70K_Bands', cutoff_days: int | None = None) -> None
     # --- Monthly Usage Report ---
     monthly_usage_headers = ["Month", "iOS %", "Android %", "Total Users"]
     monthly_usage_rows = []
+    yoy_headers = ["Month"]
+    yoy_rows: list[list[str]] = [["No data available"]]
     
     # Load usage trackers for both 70K_Bands and MDF_Bands sources
     try:
-        from reporting.usage import DailyUsageTracker, MonthlyUsageTracker
+        from reporting.usage import DailyUsageTracker, MonthlyUsageTracker, get_year_over_year_data
 
         if _FESTIVAL_CONTEXT is None:
             raise RuntimeError("Festival context not set")
@@ -3043,6 +3051,7 @@ def main_full(source: str = '70K_Bands', cutoff_days: int | None = None) -> None
         # Monthly usage tracker
         monthly_headers, monthly_data = monthly_tracker.get_monthly_usage_data()
         monthly_usage_rows = monthly_data
+        yoy_headers, yoy_rows = get_year_over_year_data(_FESTIVAL_CONTEXT.output_dir)
             
     except ImportError as e:
         print(f"Warning: Could not import usage trackers: {e}")
@@ -3093,6 +3102,7 @@ def main_full(source: str = '70K_Bands', cutoff_days: int | None = None) -> None
         ("Event Attendance", event_attendance_headers, event_attendance_rows, None),
         ("Daily Usage", daily_usage_headers, daily_usage_rows, None),
         ("Monthly Usage", monthly_usage_headers, monthly_usage_rows, None),
+        ("Year Over Year", yoy_headers, yoy_rows, None),
         ("OS Version", side_by_side_os_headers, side_by_side_os_rows, None),
         ("70K Version", side_by_side_70k_headers, side_by_side_70k_rows, None),
         ("Active Profiles", profile_headers, profile_rows, None),

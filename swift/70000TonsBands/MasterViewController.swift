@@ -270,6 +270,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         self.navigationController?.hidesBarsWhenVerticallyCompact = false
         self.navigationController?.barHideOnSwipeGestureRecognizer.isEnabled = false
         self.navigationController?.navigationBar.prefersLargeTitles = false
+        applyClosedDuoNavigationBarMinimizationIfNeeded()
         
         // Ensure back button always says "Back" when navigating from this view
         let backItem = UIBarButtonItem()
@@ -1399,6 +1400,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         navigationController?.hidesBarsWhenVerticallyCompact = false
         navigationController?.barHideOnSwipeGestureRecognizer.isEnabled = false
         navigationController?.navigationBar.prefersLargeTitles = false
+        applyClosedDuoNavigationBarMinimizationIfNeeded()
         
         // Ensure UI elements are visible when view appears (especially after rotation)
         print("🔄 [VIEW_LIFECYCLE] viewWillAppear called")
@@ -2573,6 +2575,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         lastAppliedSplitLayoutSignature = nil
         applySplitLayoutIfNeeded()
         applyClosedDisplayContentInsetsIfNeeded(force: true)
+        applyClosedDuoNavigationBarMinimizationIfNeeded()
         landscapeScheduleCoordinator.checkOrientationAndShowLandscapeIfNeeded()
     }
     
@@ -2786,6 +2789,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             hingeAvailable: DeviceSizeManager.shared.hingeAvailable,
             isHingeClosed: DeviceSizeManager.shared.isHingeClosed
         )
+    }
+
+    /// Closed Duo only: keep the app name/count in the nav bar while the list scrolls.
+    /// Other devices keep UIKit's default minimization.
+    private func applyClosedDuoNavigationBarMinimizationIfNeeded() {
+        guard #available(iOS 27.0, *) else { return }
+        var minimization = navigationItem.navigationBarMinimization
+        let pinTitle = SplitViewLayoutPolicy.shouldPinNavigationTitleOnScroll(
+            hingeAvailable: DeviceSizeManager.shared.hingeAvailable,
+            isHingeClosed: DeviceSizeManager.shared.isHingeClosed
+        )
+        minimization.minimizationBehavior = pinTitle ? .never : .automatic
+        navigationItem.navigationBarMinimization = minimization
     }
     
     /// Centralized method that performs the same logic as pull-to-refresh

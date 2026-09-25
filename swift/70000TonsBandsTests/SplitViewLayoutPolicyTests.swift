@@ -93,6 +93,55 @@ class SplitViewLayoutPolicyTests: XCTestCase {
         )
     }
 
+    func testNavigationTitlePinsOnlyOnClosedDuo() {
+        XCTAssertTrue(
+            SplitViewLayoutPolicy.shouldPinNavigationTitleOnScroll(
+                hingeAvailable: true,
+                isHingeClosed: true
+            )
+        )
+        XCTAssertFalse(
+            SplitViewLayoutPolicy.shouldPinNavigationTitleOnScroll(
+                hingeAvailable: true,
+                isHingeClosed: false
+            ),
+            "Open Duo must not pin title minimization"
+        )
+        XCTAssertFalse(
+            SplitViewLayoutPolicy.shouldPinNavigationTitleOnScroll(
+                hingeAvailable: false,
+                isHingeClosed: false
+            ),
+            "iPhone and iPad have no hinge and must keep default nav scrolling"
+        )
+    }
+
+    func testClosedDuoOnlyInsetsBandListPriorityIcon() {
+        XCTAssertEqual(
+            SplitViewLayoutPolicy.closedDuoBandListPriorityIconExtraTrailingInset(
+                hingeAvailable: true,
+                isHingeClosed: true
+            ),
+            SplitViewLayoutPolicy.closedDuoBandListPriorityIconExtraTrailing
+        )
+        XCTAssertEqual(
+            SplitViewLayoutPolicy.closedDuoBandListPriorityIconExtraTrailingInset(
+                hingeAvailable: true,
+                isHingeClosed: false
+            ),
+            0,
+            "Open Duo must not move the list priority icon"
+        )
+        XCTAssertEqual(
+            SplitViewLayoutPolicy.closedDuoBandListPriorityIconExtraTrailingInset(
+                hingeAvailable: false,
+                isHingeClosed: false
+            ),
+            0,
+            "iPhone and iPad must not move the list priority icon"
+        )
+    }
+
     func testSeparatorStopsAtTrailingSafeArea() {
         XCTAssertEqual(
             SplitViewLayoutPolicy.additionalRowTrailingInset(

@@ -43,7 +43,8 @@ For each selected festival, the pipeline:
 2. **Downloads the Firebase JSON export** — saved as backup using Google Application Default Credentials (`~/.config/gcloud/application_default_credentials.json`), the same login alerts fall back to.
 3. **Organizes data in memory** — users, rankings, events filtered against lineup/schedule.
 4. **Updates usage history** — daily/monthly active-user JSON files.
-5. **Generates HTML reports** — main, full, and localized dashboards with event year in titles and filenames.
+5. **Archives yearly app usage** — writes `{year}/{year}_App_Data.csv` (`Month, Highest Monthly Count`) under the output directory. The full report uses these files for a year-over-year compare.
+6. **Generates HTML reports** — main, full, and localized dashboards with event year in titles and filenames.
 
 ## Configuration files — what is confidential?
 

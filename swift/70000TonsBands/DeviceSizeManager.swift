@@ -54,6 +54,26 @@ enum SplitViewLayoutPolicy {
         return horizontalSizeClass == .compact || (hingeAvailable && isHingeClosed)
     }
 
+    /// iOS 27 cover chrome minimizes the nav title into the list on closed Duo only.
+    /// iPhone, iPad, and open Duo must keep the system default.
+    static func shouldPinNavigationTitleOnScroll(
+        hingeAvailable: Bool,
+        isHingeClosed: Bool
+    ) -> Bool {
+        hingeAvailable && isHingeClosed
+    }
+
+    /// Extra trailing space for the no-schedule priority icon (tag 7) on closed Duo.
+    /// The cover chrome sits on that icon; other layouts already clear it.
+    static let closedDuoBandListPriorityIconExtraTrailing: CGFloat = 36
+
+    static func closedDuoBandListPriorityIconExtraTrailingInset(
+        hingeAvailable: Bool,
+        isHingeClosed: Bool
+    ) -> CGFloat {
+        (hingeAvailable && isHingeClosed) ? closedDuoBandListPriorityIconExtraTrailing : 0
+    }
+
     /// Regular-width windows still split unless we force compact. Duo inner portrait is
     /// regular-width, so without this the list sits beside an empty second column.
     static func shouldForceCompactHorizontalSizeClass(useSplit: Bool) -> Bool {
