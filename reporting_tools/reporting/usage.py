@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import calendar
 import csv
 import json
 import re
@@ -14,7 +13,7 @@ MAX_HISTORY_DAYS = 90
 DISPLAY_DAYS = 30
 MAX_HISTORY_MONTHS = 12
 DISPLAY_MONTHS = 12
-YEARLY_ROLLING_ACTIVE_DAYS = 40
+YEARLY_ROLLING_ACTIVE_DAYS = 30
 
 APP_DATA_ARCHIVE_HEADERS = ["Month", "Highest Monthly Count"]
 MONTH_NAMES = [
@@ -308,29 +307,6 @@ def rolling_active_count(
     return sum(1 for launch in launches if cutoff <= launch <= as_of)
 
 
-def highest_rolling_active_for_month(
-    launches: list[datetime],
-    year: int,
-    month: int,
-    window_days: int = YEARLY_ROLLING_ACTIVE_DAYS,
-    now: datetime | None = None,
-) -> int:
-    """Peak trailing-window active-user total observed on any day of the month.
-
-    Example: 912 users in the last 40 days on day 12, 815 on day 31 → 912.
-    """
-    now = now or datetime.now()
-    last_day = calendar.monthrange(year, month)[1]
-    highest = 0
-    for day in range(1, last_day + 1):
-        day_end = datetime(year, month, day, 23, 59, 59)
-        if day_end.date() > now.date():
-            break
-        as_of = now if day_end.date() == now.date() else day_end
-        highest = max(highest, rolling_active_count(launches, as_of, window_days))
-    return highest
-
-
 def yearly_app_data_path(output_dir: Path, year: int) -> Path:
     """Return `{output_dir}/{year}/{year}_App_Data.csv`."""
     return output_dir / str(year) / f"{year}_App_Data.csv"
@@ -391,35 +367,37 @@ def write_app_data_archive(path: Path, counts: dict[int, int]) -> None:
             writer.writerow([MONTH_NAMES[month - 1], counts[month]])
 
 
-def update_yearly_archives(
-    output_dir: Path, monthly_history: Dict[str, Dict]
-) -> list[Path]:
-    """Merge month highs into `{year}/{year}_App_Data.csv`.
+def update_current_month_archive(
+    output_dir: Path,
+    today_count: int,
+    now: datetime | None = None,
+) -> Path:
+    """Read this year's file, keep every other month, and high-water the current month.
 
-    Highest Monthly Count is a high-water mark: a later run never lowers a month.
+    Only today's trailing-window total is known. If it is larger than the stored
+    current-month value, replace it; otherwise leave the larger stored value.
     """
-    by_year: dict[int, dict[int, int]] = {}
-    for month_key, entry in monthly_history.items():
-        try:
-            parsed = datetime.strptime(month_key, "%Y-%m")
-        except ValueError:
-            continue
-        count = int(entry.get("max_users", 0) or 0)
-        if count <= 0:
-            continue
-        year_months = by_year.setdefault(parsed.year, {})
-        year_months[parsed.month] = max(year_months.get(parsed.month, 0), count)
+    now = now or datetime.now()
+    path = yearly_app_data_path(output_dir, now.year)
+    stored = load_app_data_archive(path)
+    month = now.month
+    existing = stored.get(month, 0)
+    month_label = MONTH_NAMES[month - 1]
+    year = now.year
 
-    written: list[Path] = []
-    for year, months in sorted(by_year.items()):
-        path = yearly_app_data_path(output_dir, year)
-        merged = load_app_data_archive(path)
-        for month, count in months.items():
-            merged[month] = max(merged.get(month, 0), count)
-        write_app_data_archive(path, merged)
-        written.append(path)
-        print(f"Updated yearly app data archive: {path}")
-    return written
+    if today_count > existing:
+        stored[month] = today_count
+        write_app_data_archive(path, stored)
+        print(
+            f"Updated {year}_App_Data.csv {month_label}: "
+            f"{existing} -> {today_count}"
+        )
+    else:
+        print(
+            f"Kept {year}_App_Data.csv {month_label}: "
+            f"stored={existing}, today={today_count}"
+        )
+    return path
 
 
 def discover_app_data_archives(output_dir: Path) -> list[tuple[int, Path]]:
@@ -485,19 +463,14 @@ def update_yearly_archive_from_launches(
     *,
     window_days: int = YEARLY_ROLLING_ACTIVE_DAYS,
     now: datetime | None = None,
-) -> list[Path]:
-    """Archive this month's peak trailing-window active-user total."""
+) -> Path:
+    """Compare today's trailing 30-day active users with the stored current month."""
     now = now or datetime.now()
-    high = highest_rolling_active_for_month(
-        launches, now.year, now.month, window_days, now
-    )
-    if high <= 0:
-        return []
-    month_key = now.strftime("%Y-%m")
+    today_count = rolling_active_count(launches, now, window_days)
     print(
-        f"Yearly archive {month_key}: peak {window_days}-day active users = {high}"
+        f"Today's {window_days}-day active users: {today_count}"
     )
-    return update_yearly_archives(output_dir, {month_key: {"max_users": high}})
+    return update_current_month_archive(output_dir, today_count, now)
 
 
 def update_usage_history(
@@ -520,4 +493,9 @@ def update_usage_history(
             for parsed in (parse_last_launch(user.last_launch) for user in users)
             if parsed is not None
         ]
-    update_yearly_archive_from_launches(config.output_dir, launches)
+    window_days = config.active_user_days or YEARLY_ROLLING_ACTIVE_DAYS
+    update_yearly_archive_from_launches(
+        config.output_dir,
+        launches,
+        window_days=window_days,
+    )
