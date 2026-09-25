@@ -488,11 +488,18 @@ def format_number(value: str) -> str:
     return text
 
 
-def format_table_cell(cell: object) -> str:
-    """Escape a table cell, adding commas to whole numbers. Rank HTML is left as-is."""
+def is_version_column(header: str | None) -> bool:
+    """Version identifiers must not get thousands separators."""
+    return bool(header) and "version" in str(header).lower()
+
+
+def format_table_cell(cell: object, header: str | None = None) -> str:
+    """Escape a table cell. Comma-format counts, never version numbers."""
     text = str(cell)
     if '<span class="rank-number' in text:
         return text
+    if is_version_column(header):
+        return escape_html(text)
     return escape_html(format_number(text))
 
 
@@ -925,7 +932,8 @@ def generate_html_content(csv_files: List[tuple[str, List[str], List[Dict[str, A
             row_class = ' class="total-row"' if is_total else ''
             table_html += f'<tr{row_class}>'
             for i, cell in enumerate(row):
-                cell_value = format_table_cell(cell)
+                header = headers[i] if headers and i < len(headers) else None
+                cell_value = format_table_cell(cell, header)
                 if is_total and i == 0:
                     table_html += f'<td data-en="Total">{cell_value}</td>\n'
                 else:
@@ -1347,7 +1355,8 @@ def generate_language_specific_html(csv_files: List[tuple[str, List[str], List[D
             row_class = ' class="total-row"' if is_total else ''
             table_html += f'<tr{row_class}>'
             for i, cell in enumerate(row):
-                cell_value = format_table_cell(cell)
+                header = headers[i] if headers and i < len(headers) else None
+                cell_value = format_table_cell(cell, header)
                 if is_total and i == 0:
                     table_html += f'<td>{cell_value}</td>\n'
                 else:

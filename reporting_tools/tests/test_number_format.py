@@ -24,8 +24,25 @@ class NumberFormatTests(unittest.TestCase):
 
     def test_table_cell_escapes_and_formats(self) -> None:
         self.assertEqual(format_table_cell("1187"), "1,187")
+        self.assertEqual(format_table_cell("1187", "Count"), "1,187")
         self.assertEqual(format_table_cell("Band <Name>"), "Band &lt;Name&gt;")
         self.assertIn("rank-number", format_table_cell('<span class="rank-number">12</span>'))
+
+    def test_does_not_comma_format_version_numbers(self) -> None:
+        self.assertEqual(
+            format_table_cell("20160801001", "iOS 70K Version"),
+            "20160801001",
+        )
+        self.assertEqual(
+            format_table_cell("20160801001", "Android 70K Version"),
+            "20160801001",
+        )
+        self.assertEqual(
+            format_table_cell("18", "iOS OS Version"),
+            "18",
+        )
+        self.assertEqual(format_table_cell("1000", "Count"), "1,000")
+        self.assertEqual(format_table_cell("1000", "User Count"), "1,000")
 
 
 if __name__ == "__main__":
