@@ -5,7 +5,7 @@ import json
 import re
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Dict, List, Tuple
 
 from reporting.models import FestivalConfig, UserRecord
 
@@ -269,42 +269,31 @@ class MonthlyUsageTracker:
         return headers, rows
 
 
-def parse_last_launch(value: object) -> datetime | None:
-    """Parse a Firebase or CSV last-launch value into a datetime."""
-    from reporting.processor import _normalize_date_digits
+def count_active_users_for_report(
+    users: list[UserRecord],
+    window_days: int = YEARLY_ROLLING_ACTIVE_DAYS,
+    now: datetime | None = None,
+) -> int:
+    """Same total as the Platforms tab: unique users with last launch in the last N days.
 
-    text = _normalize_date_digits("" if value is None else str(value))
-    if not text:
-        return None
-    for size, fmt in ((19, "%Y-%m-%d %H:%M:%S"), (10, "%Y-%m-%d")):
+    lastLaunch is stored in UTC. Do not require launch <= local now, or today's
+    UTC afternoon users are dropped while still counted on Platforms.
+    """
+    now = now or datetime.now()
+    cutoff = now - timedelta(days=window_days)
+    unique_ids: dict[str, UserRecord] = {}
+    for user in users:
+        last_launch_str = (user.last_launch or "").strip()
         try:
-            return datetime.strptime(text[:size], fmt)
+            last_launch_dt = datetime.strptime(last_launch_str, "%Y-%m-%d %H:%M:%S")
         except ValueError:
             continue
-    return None
-
-
-def collect_last_launches(firebase_json: dict[str, Any] | None) -> list[datetime]:
-    """All last-launch timestamps from the Firebase export, not the cutoff-filtered CSV."""
-    launches: list[datetime] = []
-    user_data = (firebase_json or {}).get("userData") or {}
-    for _user_id, data in user_data.items():
-        if not isinstance(data, dict):
+        if last_launch_dt < cutoff:
             continue
-        parsed = parse_last_launch(data.get("lastLaunch"))
-        if parsed is not None:
-            launches.append(parsed)
-    return launches
-
-
-def rolling_active_count(
-    launches: list[datetime],
-    as_of: datetime,
-    window_days: int = YEARLY_ROLLING_ACTIVE_DAYS,
-) -> int:
-    """Users whose last launch is in the trailing window ending at as_of."""
-    cutoff = as_of - timedelta(days=window_days)
-    return sum(1 for launch in launches if cutoff <= launch <= as_of)
+        user_id = (user.userid or "").strip()
+        if user_id and user_id not in unique_ids:
+            unique_ids[user_id] = user
+    return len(unique_ids)
 
 
 def yearly_app_data_path(output_dir: Path, year: int) -> Path:
@@ -457,26 +446,22 @@ def get_year_over_year_data(output_dir: Path) -> Tuple[List[str], List[List[str]
     return headers, rows
 
 
-def update_yearly_archive_from_launches(
+def update_yearly_archive_from_users(
     output_dir: Path,
-    launches: list[datetime],
+    users: list[UserRecord],
     *,
     window_days: int = YEARLY_ROLLING_ACTIVE_DAYS,
     now: datetime | None = None,
 ) -> Path:
-    """Compare today's trailing 30-day active users with the stored current month."""
-    now = now or datetime.now()
-    today_count = rolling_active_count(launches, now, window_days)
-    print(
-        f"Today's {window_days}-day active users: {today_count}"
-    )
+    """Compare today's Platforms-tab total with the stored current month."""
+    today_count = count_active_users_for_report(users, window_days, now)
+    print(f"Today's {window_days}-day active users (Platforms total): {today_count}")
     return update_current_month_archive(output_dir, today_count, now)
 
 
 def update_usage_history(
     config: FestivalConfig,
     users: list[UserRecord],
-    firebase_json: dict[str, Any] | None = None,
 ) -> None:
     print(f"Updating usage history for {config.name}...")
     daily = DailyUsageTracker(config, users)
@@ -486,16 +471,9 @@ def update_usage_history(
     monthly = MonthlyUsageTracker(config, users)
     monthly.update_monthly_usage()
 
-    launches = collect_last_launches(firebase_json)
-    if not launches:
-        launches = [
-            parsed
-            for parsed in (parse_last_launch(user.last_launch) for user in users)
-            if parsed is not None
-        ]
     window_days = config.active_user_days or YEARLY_ROLLING_ACTIVE_DAYS
-    update_yearly_archive_from_launches(
+    update_yearly_archive_from_users(
         config.output_dir,
-        launches,
+        users,
         window_days=window_days,
     )
