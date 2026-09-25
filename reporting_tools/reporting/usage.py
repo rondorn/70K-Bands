@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import calendar
 import csv
 import json
 import re
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 from reporting.models import FestivalConfig, UserRecord
 
@@ -13,6 +14,7 @@ MAX_HISTORY_DAYS = 90
 DISPLAY_DAYS = 30
 MAX_HISTORY_MONTHS = 12
 DISPLAY_MONTHS = 12
+YEARLY_ROLLING_ACTIVE_DAYS = 40
 
 APP_DATA_ARCHIVE_HEADERS = ["Month", "Highest Monthly Count"]
 MONTH_NAMES = [
@@ -235,8 +237,6 @@ class MonthlyUsageTracker:
             }
             print(f"Updated monthly usage for {month_key}: max_users={max_users}")
 
-        # Archive yearly highs before trimming the rolling 12-month JSON.
-        update_yearly_archives(self.config.output_dir, self.history_data)
         self._clean_old_history()
         self._save_history()
 
@@ -268,6 +268,67 @@ class MonthlyUsageTracker:
                 ]
             )
         return headers, rows
+
+
+def parse_last_launch(value: object) -> datetime | None:
+    """Parse a Firebase or CSV last-launch value into a datetime."""
+    from reporting.processor import _normalize_date_digits
+
+    text = _normalize_date_digits("" if value is None else str(value))
+    if not text:
+        return None
+    for size, fmt in ((19, "%Y-%m-%d %H:%M:%S"), (10, "%Y-%m-%d")):
+        try:
+            return datetime.strptime(text[:size], fmt)
+        except ValueError:
+            continue
+    return None
+
+
+def collect_last_launches(firebase_json: dict[str, Any] | None) -> list[datetime]:
+    """All last-launch timestamps from the Firebase export, not the cutoff-filtered CSV."""
+    launches: list[datetime] = []
+    user_data = (firebase_json or {}).get("userData") or {}
+    for _user_id, data in user_data.items():
+        if not isinstance(data, dict):
+            continue
+        parsed = parse_last_launch(data.get("lastLaunch"))
+        if parsed is not None:
+            launches.append(parsed)
+    return launches
+
+
+def rolling_active_count(
+    launches: list[datetime],
+    as_of: datetime,
+    window_days: int = YEARLY_ROLLING_ACTIVE_DAYS,
+) -> int:
+    """Users whose last launch is in the trailing window ending at as_of."""
+    cutoff = as_of - timedelta(days=window_days)
+    return sum(1 for launch in launches if cutoff <= launch <= as_of)
+
+
+def highest_rolling_active_for_month(
+    launches: list[datetime],
+    year: int,
+    month: int,
+    window_days: int = YEARLY_ROLLING_ACTIVE_DAYS,
+    now: datetime | None = None,
+) -> int:
+    """Peak trailing-window active-user total observed on any day of the month.
+
+    Example: 912 users in the last 40 days on day 12, 815 on day 31 → 912.
+    """
+    now = now or datetime.now()
+    last_day = calendar.monthrange(year, month)[1]
+    highest = 0
+    for day in range(1, last_day + 1):
+        day_end = datetime(year, month, day, 23, 59, 59)
+        if day_end.date() > now.date():
+            break
+        as_of = now if day_end.date() == now.date() else day_end
+        highest = max(highest, rolling_active_count(launches, as_of, window_days))
+    return highest
 
 
 def yearly_app_data_path(output_dir: Path, year: int) -> Path:
@@ -333,7 +394,7 @@ def write_app_data_archive(path: Path, counts: dict[int, int]) -> None:
 def update_yearly_archives(
     output_dir: Path, monthly_history: Dict[str, Dict]
 ) -> list[Path]:
-    """Create or update `{year}/{year}_App_Data.csv` from monthly history.
+    """Merge month highs into `{year}/{year}_App_Data.csv`.
 
     Highest Monthly Count is a high-water mark: a later run never lowers a month.
     """
@@ -344,6 +405,8 @@ def update_yearly_archives(
         except ValueError:
             continue
         count = int(entry.get("max_users", 0) or 0)
+        if count <= 0:
+            continue
         year_months = by_year.setdefault(parsed.year, {})
         year_months[parsed.month] = max(year_months.get(parsed.month, 0), count)
 
@@ -416,7 +479,32 @@ def get_year_over_year_data(output_dir: Path) -> Tuple[List[str], List[List[str]
     return headers, rows
 
 
-def update_usage_history(config: FestivalConfig, users: list[UserRecord]) -> None:
+def update_yearly_archive_from_launches(
+    output_dir: Path,
+    launches: list[datetime],
+    *,
+    window_days: int = YEARLY_ROLLING_ACTIVE_DAYS,
+    now: datetime | None = None,
+) -> list[Path]:
+    """Archive this month's peak trailing-window active-user total."""
+    now = now or datetime.now()
+    high = highest_rolling_active_for_month(
+        launches, now.year, now.month, window_days, now
+    )
+    if high <= 0:
+        return []
+    month_key = now.strftime("%Y-%m")
+    print(
+        f"Yearly archive {month_key}: peak {window_days}-day active users = {high}"
+    )
+    return update_yearly_archives(output_dir, {month_key: {"max_users": high}})
+
+
+def update_usage_history(
+    config: FestivalConfig,
+    users: list[UserRecord],
+    firebase_json: dict[str, Any] | None = None,
+) -> None:
     print(f"Updating usage history for {config.name}...")
     daily = DailyUsageTracker(config, users)
     daily.ensure_recent_days(days_back=7)
@@ -424,3 +512,12 @@ def update_usage_history(config: FestivalConfig, users: list[UserRecord]) -> Non
 
     monthly = MonthlyUsageTracker(config, users)
     monthly.update_monthly_usage()
+
+    launches = collect_last_launches(firebase_json)
+    if not launches:
+        launches = [
+            parsed
+            for parsed in (parse_last_launch(user.last_launch) for user in users)
+            if parsed is not None
+        ]
+    update_yearly_archive_from_launches(config.output_dir, launches)

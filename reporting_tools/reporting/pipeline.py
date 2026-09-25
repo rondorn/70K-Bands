@@ -73,7 +73,7 @@ def run_festival_pipeline(
 
     dataset = process_firebase_data(config, firebase_json)
     materialize_dataset_csvs(dataset)
-    update_usage_history(config, dataset.users)
+    update_usage_history(config, dataset.users, firebase_json=firebase_json)
     generate_html_reports(dataset)
 
     print(f"\nReports written to {config.output_dir}")
