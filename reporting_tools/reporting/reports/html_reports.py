@@ -463,22 +463,37 @@ def escape_html(text: str) -> str:
 
 
 def format_number(value: str) -> str:
-    """
-    Format a string as a number with commas for readability.
-    
-    Args:
-        value: The value to format
-    
-    Returns:
-        The formatted string, or the original value if not a number
-    """
-    try:
-        num = float(value)
-        if num.is_integer():
-            return f"{int(num):,}"
-        return f"{num:,.2f}"
-    except (ValueError, TypeError):
-        return value
+    """Add thousands separators to whole numbers, including optional sign and %."""
+    if value is None:
+        return ""
+    text = str(value)
+    stripped = text.strip()
+    if not stripped:
+        return text
+
+    suffix = ""
+    body = stripped
+    if body.endswith("%"):
+        suffix = "%"
+        body = body[:-1].strip()
+
+    sign = ""
+    if body[:1] in "+-":
+        sign = body[0]
+        body = body[1:].strip()
+
+    compact = body.replace(",", "")
+    if compact.isdigit():
+        return f"{sign}{int(compact):,}{suffix}"
+    return text
+
+
+def format_table_cell(cell: object) -> str:
+    """Escape a table cell, adding commas to whole numbers. Rank HTML is left as-is."""
+    text = str(cell)
+    if '<span class="rank-number' in text:
+        return text
+    return escape_html(format_number(text))
 
 
 def format_cell_value(value: str, header: str) -> str:
@@ -670,7 +685,7 @@ def generate_html_content(csv_files: List[tuple[str, List[str], List[Dict[str, A
             num_countries = getattr(builtins, 'country_count_unique', None)
             if num_countries is not None:
                 note_template = 'The app is being used by users in {{n}} countries.'
-                note_text = f'The app is being used by users in {num_countries} countries.'
+                note_text = f'The app is being used by users in {format_number(str(num_countries))} countries.'
                 table_html += f'<div class="country-count-note" data-en="{note_template}" style="color: #888; margin-bottom: 10px; font-style: italic;">{note_text}</div>\n'
         
         table_html += '<table class="data-table">\n'
@@ -910,11 +925,7 @@ def generate_html_content(csv_files: List[tuple[str, List[str], List[Dict[str, A
             row_class = ' class="total-row"' if is_total else ''
             table_html += f'<tr{row_class}>'
             for i, cell in enumerate(row):
-                # Don't escape HTML if it contains rank-number spans
-                if '<span class="rank-number' in str(cell):
-                    cell_value = str(cell)
-                else:
-                    cell_value = escape_html(cell)
+                cell_value = format_table_cell(cell)
                 if is_total and i == 0:
                     table_html += f'<td data-en="Total">{cell_value}</td>\n'
                 else:
@@ -1095,7 +1106,7 @@ def generate_language_specific_html(csv_files: List[tuple[str, List[str], List[D
             num_countries = getattr(builtins, 'country_count_unique', None)
             if num_countries is not None:
                 country_note_template = translations.get('The app is being used by users in {{n}} countries.', 'The app is being used by users in {{n}} countries.')
-                note_text = country_note_template.replace('{{n}}', str(num_countries))
+                note_text = country_note_template.replace('{{n}}', format_number(str(num_countries)))
                 table_html += f'<div class="country-count-note" style="color: #888; margin-bottom: 10px; font-style: italic;">{note_text}</div>\n'
         
         table_html += '<table class="data-table">\n'
@@ -1336,11 +1347,7 @@ def generate_language_specific_html(csv_files: List[tuple[str, List[str], List[D
             row_class = ' class="total-row"' if is_total else ''
             table_html += f'<tr{row_class}>'
             for i, cell in enumerate(row):
-                # Don't escape HTML if it contains rank-number spans
-                if '<span class="rank-number' in str(cell):
-                    cell_value = str(cell)
-                else:
-                    cell_value = escape_html(cell)
+                cell_value = format_table_cell(cell)
                 if is_total and i == 0:
                     table_html += f'<td>{cell_value}</td>\n'
                 else:
@@ -3148,7 +3155,7 @@ def main_full(source: str = '70K_Bands', cutoff_days: int | None = None) -> None
         # Manually generate the HTML for this row as in generate_table_html
         html_row = '<tr>'
         for i, cell in enumerate(dodheimsgard_row):
-            cell_value = escape_html(cell)
+            cell_value = format_table_cell(cell)
             cell_class = ' class="number-cell"' if cell.replace('.', '').replace('%', '').replace(',', '').isdigit() else ''
             html_row += f'<td{cell_class}>{cell_value}</td>'
         html_row += '</tr>'
