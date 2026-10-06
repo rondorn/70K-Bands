@@ -2,6 +2,10 @@
     <!-- Default screen margins, per the Android Design guidelines. -->
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
+    <!-- Top-bar action icons: 40dp tap target, padding shrinks the drawn glyph to ~24dp. -->
+    <dimen name="toolbar_action_hit_size">40dp</dimen>
+    <dimen name="toolbar_action_icon_padding">8dp</dimen>
+    <dimen name="toolbar_action_icon_gap">4dp</dimen>
     <!-- Auto schedule wizard: unofficial / pre-party checklist scroll area (nested inside outer wizard scroll). -->
     <dimen name="wizard_unofficial_list_height">400dp</dimen>
 </resources>

@@ -780,23 +780,39 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         // Use window width if available, otherwise fall back to display metrics
         int screenWidth = (windowWidth > 0) ? windowWidth : displayWidth;
 
-        // Set SearchView size based on screen width
-        float widthPercentage = 0.62f;  // 62% of screen width
-        int desiredWidth = (int) (screenWidth * widthPercentage);
+        Log.d("orientation", "setSearchBarWidth - display: " + displayWidth + ", window: " + windowWidth + ", using: " + screenWidth);
+        searchCriteriaObject = (SearchView) findViewById(R.id.searchCriteria);
+        if (searchCriteriaObject == null) {
+            return;
+        }
+        styleListSearchView(searchCriteriaObject);
+    }
 
-        Log.d("orientation", "setSearchBarWidth - display: " + displayWidth + ", window: " + windowWidth + ", using: " + screenWidth + ", desired: " + desiredWidth);
-        // Find SearchView and update its layout params
-        searchCriteriaObject = (SearchView)findViewById(R.id.searchCriteria);
-        ViewGroup.LayoutParams layoutParams = searchCriteriaObject.getLayoutParams();
-        layoutParams.width = desiredWidth;
-
-        searchCriteriaObject.setLayoutParams(layoutParams);
+    /** Dark capsule search field, matching the iOS list header SearchBar. */
+    private void styleListSearchView(SearchView searchView) {
+        searchView.setBackgroundResource(R.drawable.search_bar_capsule);
+        View plate = searchView.findViewById(androidx.appcompat.R.id.search_plate);
+        if (plate != null) {
+            plate.setBackgroundColor(Color.TRANSPARENT);
+        }
+        View mag = searchView.findViewById(androidx.appcompat.R.id.search_mag_icon);
+        if (mag != null) {
+            mag.setPadding(0, 0, 0, 0);
+        }
+        TextView edit = searchView.findViewById(androidx.appcompat.R.id.search_src_text);
+        if (edit != null) {
+            edit.setTextColor(Color.WHITE);
+            edit.setHintTextColor(Color.LTGRAY);
+            edit.setBackgroundColor(Color.TRANSPARENT);
+            edit.setPadding(0, 0, 8, 0);
+        }
     }
 
     private void handleSearch(){
         searchCriteriaObject = (SearchView)findViewById(R.id.searchCriteria);
         searchCriteriaObject.setQuery(searchCriteria, false); // Don't submit query to avoid auto-focus
         searchCriteria = searchCriteriaObject.getQuery().toString();
+        styleListSearchView(searchCriteriaObject);
         
         // Ensure SearchView doesn't automatically get focus
         searchCriteriaObject.clearFocus();
@@ -2237,17 +2253,15 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
         landscapeSchedule.updateCalendarButtonVisibility();
 
-        Button shareButton = (Button) findViewById(R.id.shareButton);
-        shareButton.setOnClickListener(new Button.OnClickListener() {
-            public void onClick(View v) {
-                Log.d(TAG, "🔔 [SHARE_BUTTON] Share button clicked!");
-                Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
-                sharingIntent.setType("text/plain");
-
-                shareMenuPrompt();
-
-            }
-        });
+        ImageButton shareButton = (ImageButton) findViewById(R.id.shareButton);
+        if (shareButton != null) {
+            shareButton.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    Log.d(TAG, "🔔 [SHARE_BUTTON] Share button clicked!");
+                    shareMenuPrompt();
+                }
+            });
+        }
 
         // Download Report Button
         Button downloadReportButton = (Button) findViewById(R.id.downloadReportButton);
@@ -2271,7 +2285,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         int prefsResId = config.getPreferencesIconResId(this);
         if (prefsResId != 0 && preferencesButton != null) preferencesButton.setImageResource(prefsResId);
         int shareResId = config.getShareIconResId(this);
-        if (shareResId != 0 && shareButton != null) shareButton.setBackgroundResource(shareResId);
+        if (shareResId != 0 && shareButton != null) shareButton.setImageResource(shareResId);
         int statsResId = config.getStatsIconResId(this);
         if (statsResId != 0 && downloadReportButton != null) downloadReportButton.setCompoundDrawablesWithIntrinsicBounds(statsResId, 0, 0, 0);
     }

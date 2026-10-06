@@ -33,6 +33,13 @@
         <item name="android:windowBackground">@drawable/splash_screen</item>
     </style>
 
+    <!-- iOS-style in-list search: dark capsule, no Material underline. -->
+    <style name="SearchViewListHeader" parent="Widget.AppCompat.SearchView">
+        <item name="queryBackground">@android:color/transparent</item>
+        <item name="submitBackground">@android:color/transparent</item>
+        <item name="searchHintIcon">@null</item>
+    </style>
+
     <style name="ModernSwitch" parent="Widget.AppCompat.CompoundButton.Switch">
         <item name="colorControlActivated">#34C759</item>
         <item name="colorSwitchThumbNormal">#FFFFFF</item>

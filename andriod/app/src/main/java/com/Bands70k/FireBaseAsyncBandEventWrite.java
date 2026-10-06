@@ -67,21 +67,18 @@ public class FireBaseAsyncBandEventWrite {
 
         if (staticVariables.isTestingEnv) {
             Log.d(TAG, "Skipping band/show Firebase sync — Testing pointer environment disables RTDB writes");
-            FirebaseConnectionHelper.goOffline("band_event_sync_testing_env");
             signalComplete.run();
             return;
         }
 
         if (!FirebaseWriteMonitor.shouldRunFullSync()) {
             Log.d(TAG, "No pending Firebase sync state — skipping band/event upload");
-            FirebaseConnectionHelper.goOffline("band_event_sync_noop");
             signalComplete.run();
             return;
         }
 
         waitForBandEventSyncJitter(maxJitterMs);
         if (Thread.currentThread().isInterrupted()) {
-            FirebaseConnectionHelper.goOffline("band_event_sync_jitter_interrupted");
             signalComplete.run();
             return;
         }
@@ -91,7 +88,6 @@ public class FireBaseAsyncBandEventWrite {
 
         Runnable onBatchComplete = () -> {
             if (pendingCallbacks.decrementAndGet() <= 0) {
-                FirebaseConnectionHelper.goOffline("band_event_sync_complete");
                 ThreadManager.getInstance().executeNetwork(() -> {
                     try {
                         Thread.sleep(2000);
@@ -130,7 +126,6 @@ public class FireBaseAsyncBandEventWrite {
                 Log.e(TAG, "Show sync expected but produced no Firebase callbacks");
                 FirebaseWriteMonitor.recordWriteFailure("show_sync_no_callbacks");
             }
-            FirebaseConnectionHelper.goOffline("band_event_sync_noop");
             FirebaseWriteMonitor.finalizeFullSyncAttempt();
             signalComplete.run();
         }

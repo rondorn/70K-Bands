@@ -279,6 +279,18 @@ public class staticVariables {
 
     public static Boolean isTestingEnv = false;
 
+    /**
+     * Keep Firebase test-env gating aligned with the pointer spinner.
+     * Emulator hardware "golfdish" always stays in the testing environment.
+     */
+    public static void syncTestingEnvFromPreferences() {
+        if (Build.HARDWARE.contains("golfdish")) {
+            isTestingEnv = true;
+            return;
+        }
+        isTestingEnv = preferences != null && "Testing".equalsIgnoreCase(preferences.getPointerUrl());
+    }
+
     public static String searchCriteria = "";
 
     /**
@@ -353,9 +365,7 @@ public class staticVariables {
             prefs.edit().putBoolean("CustomPointerUrlErrorShown", false).apply();
         }
 
-        if (Build.HARDWARE.contains("golfdish") || "Testing".equals(preferences.getPointerUrl())) {
-            isTestingEnv = true;
-        }
+        syncTestingEnvFromPreferences();
         /*
         if (staticVariables.filterToogle.get(staticVariables.mustSeeIcon) == null) {
             staticVariables.filterToogle.put(staticVariables.mustSeeIcon, staticVariables.preferences.getShowMust());
@@ -1180,10 +1190,7 @@ public class staticVariables {
             Log.d("getPointerUrlData", "Using language-specific key: " + actualKeyValue + " for original key: " + keyValue);
         }
         
-        // Check if we're in test environment
-        if (preferences.getPointerUrl().equals("Testing")) {
-            isTestingEnv = true;
-        }
+        syncTestingEnvFromPreferences();
         
         // Get pointer index (equivalent to getScheduleUrl() in iOS)
         String pointerIndex = preferences.getEventYearToLoad();

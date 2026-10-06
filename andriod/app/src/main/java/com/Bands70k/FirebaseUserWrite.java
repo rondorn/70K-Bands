@@ -67,13 +67,18 @@ public class FirebaseUserWrite {
         userData.put("osVersion", android.os.Build.VERSION.SDK_INT);
         userData.put("activeProfiles", activeProfileCount);
 
-        DatabaseReference database = FirebaseConnectionHelper.databaseReference();
+        DatabaseReference database = FirebaseConnectionHelper.beginWriteSession("user_write_start");
+        if (database == null) {
+            Log.w("FirebaseUserWrite", "Firebase reference unavailable, skipping write");
+            FirebaseWriteMonitor.recordWriteFailure("user_ref_nil");
+            return;
+        }
+
         Map<String, Object> batchUpdate = new HashMap<>();
         batchUpdate.put(staticVariables.userID, userData);
 
         Log.d("FirebaseUserWrite", "Writing user data " + userData);
         NetworkCounter.record("Firebase-User");
-        FirebaseConnectionHelper.goOnline("user_write_start");
         database.child("userData/").updateChildren(batchUpdate, (DatabaseError error, DatabaseReference ref) -> {
             if (error != null) {
                 Log.e("FirebaseUserWrite", "Batch write failed: " + error.getMessage());
@@ -82,7 +87,7 @@ public class FirebaseUserWrite {
                 Log.d("FirebaseUserWrite", "Batch write successful for user data");
                 FirebaseWriteMonitor.recordWriteSuccess("user_batch");
             }
-            FirebaseConnectionHelper.goOffline("user_write_complete");
+            FirebaseConnectionHelper.endWriteSession("user_write_complete");
         });
     }
 

@@ -6,8 +6,10 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.window.OnBackInvokedDispatcher;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.Gravity;
@@ -16,6 +18,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.PopupMenu;
 import android.widget.Switch;
@@ -118,6 +121,16 @@ public class preferenceLayout  extends Activity {
         setValues();
         setLabels();
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                    OnBackInvokedDispatcher.PRIORITY_DEFAULT,
+                    () -> {
+                        persistPreferenceEdits();
+                        setResult(RESULT_OK, null);
+                        finish();
+                    });
+        }
 
         eventYearButton();
 
@@ -1033,6 +1046,17 @@ public class preferenceLayout  extends Activity {
             customPointerUrl.setText(customUrl);
         }
 
+        pointerUrl.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                persistPreferenceEdits();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+
         
         noteFontSizeLarge = (Switch)findViewById(R.id.noteFontSizeLarge);
         noteFontSizeLarge.setChecked(staticVariables.preferences.getNoteFontSizeLarge());
@@ -1067,21 +1091,35 @@ public class preferenceLayout  extends Activity {
 
     }
 
+    private void persistPreferenceEdits() {
+        if (minBeforeAlertSpinner != null) {
+            staticVariables.preferences.setMinBeforeToAlert(minBeforeAlertSpinner.getSelectedItemPosition());
+        }
+        if (pointerUrl != null && pointerUrl.getSelectedItem() != null) {
+            staticVariables.preferences.setPointerUrl(String.valueOf(pointerUrl.getSelectedItem()));
+        }
+        if (customPointerUrl != null) {
+            String customUrl = customPointerUrl.getText().toString().trim();
+            staticVariables.preferences.setCustomPointerUrl(customUrl.isEmpty() ? null : customUrl);
+        }
+        staticVariables.preferences.saveData();
+        Log.d("preferenceLayout", "Saved pointerUrl=" + staticVariables.preferences.getPointerUrl()
+                + " isTestingEnv=" + staticVariables.isTestingEnv);
+    }
+
+    @Override
+    protected void onPause() {
+        persistPreferenceEdits();
+        super.onPause();
+    }
+
     @Override
     public void onBackPressed() {
-
-        staticVariables.preferences.setMinBeforeToAlert(minBeforeAlertSpinner.getSelectedItemPosition());
-        staticVariables.preferences.setPointerUrl(String.valueOf(pointerUrl.getSelectedItem()));
-        String customUrl = customPointerUrl.getText().toString().trim();
-        staticVariables.preferences.setCustomPointerUrl(customUrl.isEmpty() ? null : customUrl);
-        staticVariables.preferences.saveData();
-
-        // Removed unnecessary 70ms sleep - modern Android handles activity transitions properly
+        persistPreferenceEdits();
         setResult(RESULT_OK, null);
         finish();
         NavUtils.navigateUpTo(this, new Intent(this,
                 showBands.class));
-
     }
 
     @Override

@@ -27,6 +27,10 @@ public final class FirebaseUserWriteScheduler {
         INSTANCE.scheduleInternal(false);
     }
 
+    public static void writeImmediatelyIfNeeded() {
+        INSTANCE.scheduleInternal(true);
+    }
+
     public static void flushPendingWriteOnBackground() {
         INSTANCE.scheduleInternal(true);
     }

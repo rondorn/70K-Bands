@@ -106,8 +106,12 @@ public class FireBaseBandDataWrite {
                     + " bands) at bandData/" + staticVariables.userID + "/" + eventYear
                     + " (uiEventYear=" + staticVariables.eventYear + ")");
             NetworkCounter.record("Firebase-Artists");
+            if (FirebaseConnectionHelper.beginWriteSession("band_batch_write_start") == null) {
+                Log.w("FireBaseBandDataWrite", "Firebase reference unavailable, skipping write");
+                FirebaseWriteMonitor.recordWriteFailure("band_ref_nil");
+                return 0;
+            }
             try {
-                FirebaseConnectionHelper.goOnline("band_batch_write_start");
                 bandDataRef.setValue(batchUpdate, (DatabaseError error, DatabaseReference ref) -> {
                     if (error != null) {
                         Log.e("FireBaseBandDataWrite", "Batch write failed: " + error.getMessage());
@@ -116,6 +120,7 @@ public class FireBaseBandDataWrite {
                         Log.d("FireBaseBandDataWrite", "Batch write successful for pointer year " + eventYear);
                         FirebaseWriteMonitor.recordWriteSuccess("band_batch");
                     }
+                    FirebaseConnectionHelper.endWriteSession("band_batch_write_complete");
                     if (onComplete != null) {
                         onComplete.run();
                     }
@@ -124,6 +129,7 @@ public class FireBaseBandDataWrite {
             } catch (Exception error){
                 Log.e("FireBaseBandDataWrite", "Batch write exception: " + error.toString());
                 FirebaseWriteMonitor.recordWriteFailure("band_batch_exception");
+                FirebaseConnectionHelper.endWriteSession("band_batch_write_exception");
                 if (onComplete != null) {
                     onComplete.run();
                 }

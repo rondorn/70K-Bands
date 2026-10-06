@@ -185,8 +185,12 @@ public class FirebaseEventDataWrite {
                 
                 Log.d("FirebaseEventDataWrite", "🔥 BATCH_WRITE: Writing " + batchUpdate.size() + " event entries in single batch");
                 NetworkCounter.record("Firebase-Schedule");
+                if (FirebaseConnectionHelper.beginWriteSession("event_batch_write_start") == null) {
+                    Log.w("FirebaseEventDataWrite", "Firebase reference unavailable, skipping write");
+                    FirebaseWriteMonitor.recordWriteFailure("event_ref_nil");
+                    return 0;
+                }
                 try {
-                    FirebaseConnectionHelper.goOnline("event_batch_write_start");
                     // Single batch write for all event data
                     showDataRef.updateChildren(batchUpdate, (error, ref) -> {
                         if (error != null) {
@@ -196,6 +200,7 @@ public class FirebaseEventDataWrite {
                             Log.d("FirebaseEventDataWrite", "Batch write successful for " + batchUpdate.size() + " events");
                             FirebaseWriteMonitor.recordWriteSuccess("event_batch");
                         }
+                        FirebaseConnectionHelper.endWriteSession("event_batch_write_complete");
                         if (onComplete != null) {
                             onComplete.run();
                         }
@@ -204,6 +209,7 @@ public class FirebaseEventDataWrite {
                 } catch (Exception error){
                     Log.e("FirebaseEventDataWrite", "Batch write exception: " + error.toString());
                     FirebaseWriteMonitor.recordWriteFailure("event_batch_exception");
+                    FirebaseConnectionHelper.endWriteSession("event_batch_write_exception");
                     if (onComplete != null) {
                         onComplete.run();
                     }

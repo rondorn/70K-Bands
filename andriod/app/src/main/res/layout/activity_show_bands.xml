@@ -72,22 +72,40 @@
         <!-- Calendar view button: visible only on tablets/foldables (visibility set in code) -->
         <ImageButton
             android:id="@+id/calendarViewButton"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="@dimen/toolbar_action_hit_size"
+            android:layout_height="@dimen/toolbar_action_hit_size"
+            android:padding="@dimen/toolbar_action_icon_padding"
             android:src="@android:drawable/ic_menu_today"
             android:background="@android:color/black"
             android:scaleType="fitCenter"
+            android:adjustViewBounds="true"
             android:contentDescription="Calendar view"
             android:visibility="gone" />
 
         <ImageButton
             android:id="@+id/preferences"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="@dimen/toolbar_action_hit_size"
+            android:layout_height="@dimen/toolbar_action_hit_size"
+            android:layout_marginStart="@dimen/toolbar_action_icon_gap"
+            android:padding="@dimen/toolbar_action_icon_padding"
             android:src="@drawable/icon_gear"
-            android:text="prefs"
             android:background="@android:color/black"
-            android:scaleType="fitEnd"/>
+            android:scaleType="fitCenter"
+            android:adjustViewBounds="true"
+            android:contentDescription="Preferences" />
+
+        <ImageButton
+            android:id="@+id/shareButton"
+            android:layout_width="@dimen/toolbar_action_hit_size"
+            android:layout_height="@dimen/toolbar_action_hit_size"
+            android:layout_marginStart="@dimen/toolbar_action_icon_gap"
+            android:layout_marginEnd="6dp"
+            android:padding="@dimen/toolbar_action_icon_padding"
+            android:src="@drawable/icon_share"
+            android:background="@android:color/black"
+            android:scaleType="fitCenter"
+            android:adjustViewBounds="true"
+            android:contentDescription="Share" />
 
     </LinearLayout>
 
@@ -95,10 +113,10 @@
         android:id="@+id/searchFilterBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="60dp"
+        android:minHeight="44dp"
         android:layout_marginTop="65dp"
-        android:paddingTop="10dp"
-        android:paddingBottom="10dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
         android:background="#FF000000">
 
         <!-- Filters menu: hamburger icon + "Filters" text + badge (iOS-style) -->
@@ -121,13 +139,13 @@
                 android:background="#FF000000"
                 android:gravity="start|center_vertical"
                 android:text="@string/Filters"
+                android:textAllCaps="false"
                 android:textColor="#ABABAB"
                 android:drawableLeft="@drawable/ic_filter_lines"
                 app:drawableTint="#ABABAB"
-                android:drawablePadding="8dp"
-                android:textSize="18sp"
+                android:drawablePadding="6dp"
+                android:textSize="17sp"
                 android:maxLines="1"
-                android:textStyle="bold"
                 android:paddingStart="4dp"
                 android:paddingEnd="4dp"
                 android:contentDescription="Filters" />
@@ -154,28 +172,22 @@
 
         <androidx.appcompat.widget.SearchView
             android:id="@+id/searchCriteria"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="36dp"
             android:layout_toEndOf="@+id/filterMenuContainer"
-            android:layout_toStartOf="@+id/shareButton"
-            android:layout_centerVertical="true"
-            android:layout_marginStart="8dp"
-            android:layout_marginEnd="8dp"
-            app:iconifiedByDefault="false"
-            app:queryHint="@string/SearchCritiera"
-            app:searchIcon="@drawable/search_icon" />
-
-        <Button
-            android:id="@+id/shareButton"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
+            android:layout_marginStart="8dp"
             android:layout_marginEnd="10dp"
-            android:gravity="center"
-            android:background="@drawable/icon_share"
-            android:text=""
-            android:contentDescription="Share" />
+            android:background="@drawable/search_bar_capsule"
+            android:paddingStart="4dp"
+            android:paddingEnd="8dp"
+            android:theme="@style/SearchViewListHeader"
+            app:iconifiedByDefault="false"
+            app:queryHint="@string/SearchCritiera"
+            app:searchIcon="@drawable/search_icon"
+            app:queryBackground="@android:color/transparent"
+            app:submitBackground="@android:color/transparent" />
 
     </RelativeLayout >
 

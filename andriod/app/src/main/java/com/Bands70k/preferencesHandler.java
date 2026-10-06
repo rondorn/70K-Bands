@@ -754,7 +754,8 @@ public class preferencesHandler {
     }
 
     public void setPointerUrl(String pointerUrl) {
-        this.pointerUrl = pointerUrl;
+        this.pointerUrl = (pointerUrl == null || pointerUrl.trim().isEmpty()) ? "Default" : pointerUrl;
+        staticVariables.syncTestingEnvFromPreferences();
     }
 
     public String getCustomPointerUrl() {

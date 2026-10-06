@@ -42,7 +42,14 @@ public final class FirebaseSyncCoordinator {
      * Starts band/show sync on a network thread if pending. Does not block the caller.
      */
     public static void startFirebaseSyncIfNeeded(Trigger trigger) {
-        ThreadManager.getInstance().executeNetwork(() -> performSync(trigger, false));
+        startFirebaseSyncIfNeeded(trigger, false);
+    }
+
+    /**
+     * @param skipJitter when true, do not add another jitter delay (caller already waited).
+     */
+    public static void startFirebaseSyncIfNeeded(Trigger trigger, boolean skipJitter) {
+        ThreadManager.getInstance().executeNetwork(() -> performSync(trigger, false, skipJitter));
     }
 
     /**
@@ -50,7 +57,7 @@ public final class FirebaseSyncCoordinator {
      * Used by {@link ImageDownloadService} so the download pipeline waits for Firebase.
      */
     public static void performFirebaseSyncAndAwait(Trigger trigger) {
-        performSync(trigger, true);
+        performSync(trigger, true, false);
     }
 
     static int computeMaxJitterMs(boolean isBackgroundTransition) {
@@ -64,7 +71,7 @@ public final class FirebaseSyncCoordinator {
         return trigger == Trigger.BACKGROUND;
     }
 
-    private static void performSync(Trigger trigger, boolean blockUntilComplete) {
+    private static void performSync(Trigger trigger, boolean blockUntilComplete, boolean skipJitter) {
         if (!FirebaseWriteMonitor.shouldRunFullSync()) {
             Log.d(TAG, "No pending Firebase sync — skipping (" + trigger + ")");
             return;
@@ -99,7 +106,7 @@ public final class FirebaseSyncCoordinator {
 
             int attendedCount = staticVariables.attendedHandler.getShowsAttended().size();
             boolean isBackgroundTransition = isBackgroundTransition(trigger);
-            int maxJitterMs = computeMaxJitterMs(isBackgroundTransition);
+            int maxJitterMs = skipJitter ? 0 : computeMaxJitterMs(isBackgroundTransition);
 
             Log.i(TAG, "Starting Firebase band/show sync (" + trigger
                     + ", dirty=" + FirebaseWriteMonitor.hasPendingLocalChanges()
