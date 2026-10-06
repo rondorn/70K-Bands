@@ -535,15 +535,16 @@ public class LandscapeScheduleView extends LinearLayout {
                 showVenueFilterSheet();
             }
         });
-        int filterRowHeight = dpToPx(38);
+        int filterRowHeight = dpToPx(44);
         filterButton = new Button(context);
         filterButton.setText(context.getResources().getString(R.string.Filters));
         filterButton.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
         filterButton.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_filter_lines, 0, 0, 0);
         filterButton.setCompoundDrawablePadding(dpToPx(8));
         filterButton.setTextColor(Color.argb(255, 171, 171, 171)); // #ABABAB like iOS
-        filterButton.setTextSize(18);
-        filterButton.setTypeface(null, android.graphics.Typeface.BOLD);
+        filterButton.setTextSize(TypedValue.COMPLEX_UNIT_PX,
+                context.getResources().getDimension(R.dimen.filter_menu_text_size));
+        filterButton.setIncludeFontPadding(false);
         filterButton.setBackgroundColor(Color.TRANSPARENT);
         filterButton.setMinHeight(0);
         filterButton.setMinWidth(0);

@@ -6,6 +6,8 @@
     <dimen name="toolbar_action_hit_size">40dp</dimen>
     <dimen name="toolbar_action_icon_padding">8dp</dimen>
     <dimen name="toolbar_action_icon_gap">4dp</dimen>
+    <!-- Matches iOS Filters button title (25pt). -->
+    <dimen name="filter_menu_text_size">25sp</dimen>
     <!-- Auto schedule wizard: unofficial / pre-party checklist scroll area (nested inside outer wizard scroll). -->
     <dimen name="wizard_unofficial_list_height">400dp</dimen>
 </resources>
