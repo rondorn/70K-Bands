@@ -6655,6 +6655,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 return
             }
 
+            // Separate from the UI refresh. Reads the pointer file only and writes a private Siri catalog.
+            if reason.range(of: "launch", options: .caseInsensitive) != nil {
+                SiriCatalogIndexer.start()
+            }
+
             // Version warning: check after pointer refresh attempt (fresh if download succeeded; cached otherwise).
             // Requirement: check on app launch and when returning from background; both flows use unified refresh.
             MinimumVersionWarningManager.checkAndShowIfNeeded(reason: "UnifiedRefresh(\(reason)) pointerUpdated=\(pointerResult.networkRefreshSucceeded)")

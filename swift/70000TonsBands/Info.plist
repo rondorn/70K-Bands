@@ -73,6 +73,23 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>INAlternativeAppNames</key>
+	<array>
+		<dict>
+			<key>INAlternativeAppName</key>
+			<string>70,000 Tons</string>
+			<key>INAlternativeAppNamePronunciationHint</key>
+			<string>seventy thousand tons</string>
+		</dict>
+		<dict>
+			<key>INAlternativeAppName</key>
+			<string>70K</string>
+			<key>INAlternativeAppNamePronunciationHint</key>
+			<string>seventy K</string>
+		</dict>
+	</array>
+	<key>NSSiriUsageDescription</key>
+	<string>Siri can answer questions about bands and show times and open a band in the app.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Camera access is used to scan a QR code containing the event schedule from another device (e.g. when offline on a cruise).</string>
 	<key>QLSupportedContentTypes</key>

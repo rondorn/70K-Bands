@@ -690,6 +690,12 @@
 		A26246E843CAD6BC433E2BE0 /* localNotificationHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DCE9B51A85B9FF00A25FB8 /* localNotificationHandler.swift */; };
 		A675FD4802CA8FCD596C9CBD /* MasterViewCacheManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116C9D822F415D370036743F /* MasterViewCacheManager.swift */; };
 		A75D717561FE81A6B9B25507 /* ScheduleCSVImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11C62E7C2E64B9EE000D9AF2 /* ScheduleCSVImporter.swift */; };
+		A7C3E1B12F8A4C0100A1B011 /* SiriCatalogIndexer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7C3E1B12F8A4C0100A1B001 /* SiriCatalogIndexer.swift */; };
+		A7C3E1B12F8A4C0100A1B012 /* SiriCatalogIndexer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7C3E1B12F8A4C0100A1B001 /* SiriCatalogIndexer.swift */; };
+		A7C3E1B12F8A4C0100A1B013 /* SiriCatalogIndexer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7C3E1B12F8A4C0100A1B001 /* SiriCatalogIndexer.swift */; };
+		A7C3E1B12F8A4C0100A1B014 /* SiriCatalogIndexer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7C3E1B12F8A4C0100A1B001 /* SiriCatalogIndexer.swift */; };
+		A7C3E1B12F8A4C0100A1B015 /* SiriCatalogIndexer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7C3E1B12F8A4C0100A1B001 /* SiriCatalogIndexer.swift */; };
+		A7C3E1B12F8A4C0100A1B022 /* SiriCatalogIndexerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7C3E1B12F8A4C0100A1B021 /* SiriCatalogIndexerTests.swift */; };
 		AA84C7CFCF3B3A840FCEF948 /* ToastMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1187BE1120D6AFC8002F070F /* ToastMessages.swift */; };
 		AB110447D412B0F4A9A4E236 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 11AC1D701A68283600267A8F /* Security.framework */; };
 		AD19533922DFCF2C02D5CB19 /* BandNamesHandlerProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1147D6FD2E63CF51000A98B0 /* BandNamesHandlerProtocol.swift */; };
@@ -986,6 +992,8 @@
 		8CA018E4476A45C994ED91C0 /* LandscapeScheduleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandscapeScheduleView.swift; sourceTree = "<group>"; };
 		8DDB7E0B0AC440BA94B56DBD /* LandscapeScheduleViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandscapeScheduleViewModel.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718293A4B5B /* AutoScheduleWizardManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoScheduleWizardManager.swift; sourceTree = "<group>"; };
+		A7C3E1B12F8A4C0100A1B001 /* SiriCatalogIndexer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiriCatalogIndexer.swift; sourceTree = "<group>"; };
+		A7C3E1B12F8A4C0100A1B021 /* SiriCatalogIndexerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiriCatalogIndexerTests.swift; sourceTree = "<group>"; };
 		B0B1C2D3E4F5061728394A5B /* MinimumVersionWarningManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MinimumVersionWarningManager.swift; sourceTree = "<group>"; };
 		B2419D6586AE49F081AAD3F8 /* Info-RMF.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "Info-RMF.plist"; sourceTree = "<group>"; };
 		C0C1C2D3E4F5061728394B0B /* SharedCommentsSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedCommentsSettings.swift; sourceTree = "<group>"; };
@@ -1202,6 +1210,7 @@
 				1175C9392E4D2C5A0074E2F2 /* DetailView.swift */,
 				1175C93A2E4D2C5A0074E2F2 /* DetailViewModel.swift */,
 				1175C93A2E4D2C5A0074E2F3 /* DeviceSizeManager.swift */,
+				A7C3E1B12F8A4C0100A1B001 /* SiriCatalogIndexer.swift */,
 				110E084B2AECB6E100075618 /* DPDConstants.swift */,
 				110E08492AECB6E100075618 /* DPDKeyboardListener.swift */,
 				110E084C2AECB6E200075618 /* DPDUIView+Extension.swift */,
@@ -1322,6 +1331,7 @@
 				1155E3A21A8B0A0400D51ED9 /* bandNamesTest.swift */,
 				11E8A0302EE8A10008472A3 /* ScheduleQRDecompressFromImageTests.swift */,
 				11D5A1012F8A4B0100A1B001 /* SplitViewLayoutPolicyTests.swift */,
+				A7C3E1B12F8A4C0100A1B021 /* SiriCatalogIndexerTests.swift */,
 				1155E3B91A8B20BF00D51ED9 /* scheduleHandlerTest.swift */,
 			);
 			path = 70000TonsBandsTests;
@@ -2184,6 +2194,7 @@
 				11C061EE2F55FDAA0037A875 /* AutoChooseAttendanceWizardView.swift in Sources */,
 				11615BB82E4644ED007BD3D5 /* PreferencesView.swift in Sources */,
 				1154F60C1A575893003F4764 /* AppDelegate.swift in Sources */,
+				A7C3E1B12F8A4C0100A1B011 /* SiriCatalogIndexer.swift in Sources */,
 				11F1A2B32E5A30000000002 /* SceneDelegate.swift in Sources */,
 				1169374520F555CD00038DA5 /* Reachability.swift in Sources */,
 				112913972EE77518008472A3 /* ProfileColorManager.swift in Sources */,
@@ -2261,12 +2272,14 @@
 				11E2F2482E8D78530004D6F4 /* AttendanceManager.swift in Sources */,
 				110E085B2AECB6E200075618 /* DropDownCell.swift in Sources */,
 				1155E3B01A8B126500D51ED9 /* AppDelegate.swift in Sources */,
+				A7C3E1B12F8A4C0100A1B012 /* SiriCatalogIndexer.swift in Sources */,
 				11895B9C2EE4D4F1008CC4A9 /* SQLiteDataManager.swift in Sources */,
 				1155E3BA1A8B20BF00D51ED9 /* scheduleHandlerTest.swift in Sources */,
 				111608652F647C0D00B1B407 /* LaunchTiming.swift in Sources */,
 				111608692F647C0D00B1B408 /* NetworkCounter.swift in Sources */,
 				11E8A0312EE8A10008472A3 /* ScheduleQRDecompressFromImageTests.swift in Sources */,
 				11D5A1022F8A4B0100A1B002 /* SplitViewLayoutPolicyTests.swift in Sources */,
+				A7C3E1B12F8A4C0100A1B022 /* SiriCatalogIndexerTests.swift in Sources */,
 				11111FA820D03DBF008E41F6 /* ShowAttendedReport.swift in Sources */,
 				116C9D8E2F415D370036743C /* FilePaths.swift in Sources */,
 				116C9D8F2F415D370036743C /* CSVFields.swift in Sources */,
@@ -2438,6 +2451,7 @@
 				1172EE152E5A1C4D006E3596 /* PreferencesViewModel.swift in Sources */,
 				1172EE162E5A1C4D006E3596 /* PreferencesView.swift in Sources */,
 				1172EE172E5A1C4D006E3596 /* AppDelegate.swift in Sources */,
+				A7C3E1B12F8A4C0100A1B013 /* SiriCatalogIndexer.swift in Sources */,
 				11F1A2B32E5A30000000005 /* SceneDelegate.swift in Sources */,
 				1172EE182E5A1C4D006E3596 /* Reachability.swift in Sources */,
 				112913992EE77518008472A3 /* ProfileColorManager.swift in Sources */,
@@ -2564,6 +2578,7 @@
 				A1042054388DCAB86C9A2AB4 /* PreferencesViewModel.swift in Sources */,
 				56E9FEE0E9B1E41F85D18345 /* PreferencesView.swift in Sources */,
 				E490DEFAACF6C57A03375E7A /* AppDelegate.swift in Sources */,
+				A7C3E1B12F8A4C0100A1B014 /* SiriCatalogIndexer.swift in Sources */,
 				11F1A2B32E5A30000000006 /* SceneDelegate.swift in Sources */,
 				EAADED5E18FAE85DA34E1B99 /* Reachability.swift in Sources */,
 				B1A940881E5294F08760B414 /* ProfileColorManager.swift in Sources */,
@@ -2691,6 +2706,7 @@
 				115C12C43000A5EF007EA9A1 /* PreferencesViewModel.swift in Sources */,
 				115C12C53000A5EF007EA9A1 /* PreferencesView.swift in Sources */,
 				115C12C63000A5EF007EA9A1 /* AppDelegate.swift in Sources */,
+				A7C3E1B12F8A4C0100A1B015 /* SiriCatalogIndexer.swift in Sources */,
 				11F1A2B32E5A30000000004 /* SceneDelegate.swift in Sources */,
 				115C12C73000A5EF007EA9A1 /* Reachability.swift in Sources */,
 				115C12C83000A5EF007EA9A1 /* ProfileColorManager.swift in Sources */,
@@ -2858,7 +2874,11 @@
 				);
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_LDFLAGS = "$(inherited)";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-weak_framework",
+					FoundationModels,
+				);
 				PRESERVE_DEAD_CODE_INITS_AND_TERMS = NO;
 				SDKROOT = iphoneos;
 				SWIFT_INSTALL_OBJC_HEADER = YES;
@@ -2929,7 +2949,11 @@
 				);
 				MTL_ENABLE_DEBUG_INFO = NO;
 				ONLY_ACTIVE_ARCH = NO;
-				OTHER_LDFLAGS = "$(inherited)";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-weak_framework",
+					FoundationModels,
+				);
 				PRESERVE_DEAD_CODE_INITS_AND_TERMS = NO;
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
@@ -2954,7 +2978,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20261005001;
+				CURRENT_PROJECT_VERSION = 20261008001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -2983,7 +3007,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20261005001;
+				MARKETING_VERSION = 20261008001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -3007,7 +3031,11 @@
 					"-isystem",
 					"\"${PODS_ROOT}/Headers/Public/GoogleUtilities\"",
 				);
-				OTHER_LDFLAGS = "$(inherited)";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-weak_framework",
+					FoundationModels,
+				);
 				PODS_ROOT = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.rdorn.-0000TonsBands";
 				PRODUCT_NAME = "70K Bands";
@@ -3039,7 +3067,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20261005001;
+				CURRENT_PROJECT_VERSION = 20261008001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -3064,7 +3092,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20261005001;
+				MARKETING_VERSION = 20261008001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -3088,7 +3116,11 @@
 					"-isystem",
 					"\"${PODS_ROOT}/Headers/Public/GoogleUtilities\"",
 				);
-				OTHER_LDFLAGS = "$(inherited)";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-weak_framework",
+					FoundationModels,
+				);
 				PODS_ROOT = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.rdorn.-0000TonsBands";
 				PRODUCT_NAME = "70K Bands";
@@ -3168,7 +3200,11 @@
 					"-isystem",
 					"\"${PODS_ROOT}/Headers/Public/GoogleUtilities\"",
 				);
-				OTHER_LDFLAGS = "$(inherited)";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-weak_framework",
+					FoundationModels,
+				);
 				PODS_ROOT = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.rdorn.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "70K BandsTests";
@@ -3236,7 +3272,11 @@
 					"-isystem",
 					"\"${PODS_ROOT}/Headers/Public/GoogleUtilities\"",
 				);
-				OTHER_LDFLAGS = "$(inherited)";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-weak_framework",
+					FoundationModels,
+				);
 				PODS_ROOT = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.rdorn.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "70K BandsTests";
@@ -3261,7 +3301,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20261005001;
+				CURRENT_PROJECT_VERSION = 20261008001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -3283,7 +3323,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20261005001;
+				MARKETING_VERSION = 20261008001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -3307,7 +3347,11 @@
 					"-isystem",
 					"\"${PODS_ROOT}/Headers/Public/GoogleUtilities\"",
 				);
-				OTHER_LDFLAGS = "$(inherited)";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-weak_framework",
+					FoundationModels,
+				);
 				PODS_ROOT = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.rdorn.mdfbands;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -3339,7 +3383,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20261005001;
+				CURRENT_PROJECT_VERSION = 20261008001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -3364,7 +3408,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20261005001;
+				MARKETING_VERSION = 20261008001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -3388,7 +3432,11 @@
 					"-isystem",
 					"\"${PODS_ROOT}/Headers/Public/GoogleUtilities\"",
 				);
-				OTHER_LDFLAGS = "$(inherited)";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-weak_framework",
+					FoundationModels,
+				);
 				PODS_ROOT = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.rdorn.mdfbands;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -3422,7 +3470,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20261005001;
+				CURRENT_PROJECT_VERSION = 20261008001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -3444,7 +3492,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20261005001;
+				MARKETING_VERSION = 20261008001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -3468,7 +3516,11 @@
 					"-isystem",
 					"\"${PODS_ROOT}/Headers/Public/GoogleUtilities\"",
 				);
-				OTHER_LDFLAGS = "$(inherited)";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-weak_framework",
+					FoundationModels,
+				);
 				PODS_ROOT = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.rdorn.mmfbands;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -3503,7 +3555,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20261005001;
+				CURRENT_PROJECT_VERSION = 20261008001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -3528,7 +3580,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20261005001;
+				MARKETING_VERSION = 20261008001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -3552,7 +3604,11 @@
 					"-isystem",
 					"\"${PODS_ROOT}/Headers/Public/GoogleUtilities\"",
 				);
-				OTHER_LDFLAGS = "$(inherited)";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-weak_framework",
+					FoundationModels,
+				);
 				PODS_ROOT = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.rdorn.mmfbands;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -3588,7 +3644,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20261005001;
+				CURRENT_PROJECT_VERSION = 20261008001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -3610,7 +3666,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20261005001;
+				MARKETING_VERSION = 20261008001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -3634,7 +3690,11 @@
 					"-isystem",
 					"\"${PODS_ROOT}/Headers/Public/GoogleUtilities\"",
 				);
-				OTHER_LDFLAGS = "$(inherited)";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-weak_framework",
+					FoundationModels,
+				);
 				PODS_ROOT = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.rdorn.rmfbands;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -3669,7 +3729,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CONFIGURATION_TEMP_DIR = build/.build;
-				CURRENT_PROJECT_VERSION = 20261005001;
+				CURRENT_PROJECT_VERSION = 20261008001;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = RYVG8BC9NZ;
@@ -3694,7 +3754,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 20261005001;
+				MARKETING_VERSION = 20261008001;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -3718,7 +3778,11 @@
 					"-isystem",
 					"\"${PODS_ROOT}/Headers/Public/GoogleUtilities\"",
 				);
-				OTHER_LDFLAGS = "$(inherited)";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-weak_framework",
+					FoundationModels,
+				);
 				PODS_ROOT = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.rdorn.rmfbands;
 				PRODUCT_NAME = "$(TARGET_NAME)";
