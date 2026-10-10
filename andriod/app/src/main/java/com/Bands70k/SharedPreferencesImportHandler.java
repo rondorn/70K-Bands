@@ -156,10 +156,10 @@ public class SharedPreferencesImportHandler {
             
             // Add text input field with senderName as default
             final EditText input = new EditText(activity);
-            input.setHint("e.g., Friend's Picks");
+            input.setHint(activity.getString(R.string.share_profile_name_hint));
             // Use senderName from the imported file as default
             String defaultName = (preferenceSet.senderName != null && !preferenceSet.senderName.isEmpty()) ? 
-                    preferenceSet.senderName : "Shared Profile";
+                    preferenceSet.senderName : activity.getString(R.string.default_shared_profile_name);
             input.setText(defaultName);
             input.selectAll();
             builder.setView(input);

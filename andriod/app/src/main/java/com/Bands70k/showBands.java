@@ -551,11 +551,11 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 Log.e("Easter Egg", errorMsg);
                 
                 // Provide more specific error messages
-                String userMessage = "Unable to play video";
+                String userMessage = getString(R.string.unable_to_play_video);
                 if (what == MediaPlayer.MEDIA_ERROR_UNKNOWN) {
-                    userMessage = "Unknown media error";
+                    userMessage = getString(R.string.unknown_media_error);
                 } else if (what == MediaPlayer.MEDIA_ERROR_SERVER_DIED) {
-                    userMessage = "Media server error";
+                    userMessage = getString(R.string.media_server_error);
                 }
                 
                 Toast.makeText(showBands.this, userMessage, Toast.LENGTH_LONG).show();
@@ -607,7 +607,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             mVideoView.requestFocus();
         } catch (Exception e) {
             Log.e("Easter Egg", "Exception setting video URI: " + e.getMessage());
-            Toast.makeText(this, "Error loading video", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.error_loading_video, Toast.LENGTH_SHORT).show();
             dialog.dismiss();
         }
         
@@ -1480,7 +1480,22 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 }
 
                 String bandName = getBandNameFromIndex(bandIndex);
-                Long timeIndex = getTimeIndexFromIndex(bandIndex);
+                Long timeIndex = null;
+                // Same resolution as long-press: the visible row is authoritative; bandNamesIndex can lag behind it.
+                if (adapter != null && position >= 0 && position < adapter.getCount()) {
+                    bandListItem rowItem = adapter.getItem(position);
+                    if (rowItem != null && rowItem.getScheduleSlotTimeIndex() != null
+                            && rowItem.getScheduleSlotTimeIndex() > 0) {
+                        timeIndex = rowItem.getScheduleSlotTimeIndex();
+                        String rowBand = rowItem.getBandName();
+                        if (rowBand != null && !rowBand.isEmpty()) {
+                            bandName = rowBand;
+                        }
+                    }
+                }
+                if (timeIndex == null || timeIndex == 0) {
+                    timeIndex = getTimeIndexFromIndex(bandIndex);
+                }
 
                 listState = bandNamesList.onSaveInstanceState();
 
@@ -1508,9 +1523,13 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                         String attendedValue = listHandler.getAttendedListMap(position);
                         Log.d("attendedValue", "attendedValue = " + attendedValue);
 
-                        if (timeIndex != 0) {
+                        scheduleHandler swipeEvt = null;
+                        if (timeIndex != null && timeIndex != 0 && BandInfo.scheduleRecords != null
+                                && BandInfo.scheduleRecords.get(bandName) != null) {
+                            swipeEvt = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex);
+                        }
+                        if (swipeEvt != null) {
                             String location = listHandler.getLocation(bandName, timeIndex);
-                            scheduleHandler swipeEvt = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex);
                             String rawStartTime = swipeEvt.getStartTimeString();
                             String eventType = listHandler.getEventType(bandName, timeIndex);
                             String scheduleDay = swipeEvt.getShowDay();
@@ -1519,7 +1538,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                             String status = staticVariables.attendedHandler.addShowsAttended(bandName, location, rawStartTime, eventType, scheduleDay);
                             message = staticVariables.attendedHandler.setShowsAttendedStatus(status);
                         } else {
-                            message = "No Show Is Associated With This Entry";
+                            message = getString(R.string.no_event_associated);
                         }
                         HelpMessageHandler.showMessage(message, findViewById(R.id.showBandsView));
                         break;
@@ -1550,7 +1569,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         
         if (profileKeys.isEmpty()) {
             Log.e("ProfilePicker", "❌ No profiles available - this shouldn't happen!");
-            Toast.makeText(this, "No profiles available", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.no_profiles_available, Toast.LENGTH_SHORT).show();
             return;
         }
         
@@ -1882,7 +1901,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 
             } catch (Exception e) {
                 Log.e("ProfileAction", "❌ [COPY] Failed to copy to Default", e);
-                Toast.makeText(this, "Failed to copy settings", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.failed_to_copy_settings, Toast.LENGTH_SHORT).show();
             }
         });
         
@@ -1913,7 +1932,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 updateHeaderColorForCurrentProfile();
                 Toast.makeText(this, getString(R.string.profile_deleted), Toast.LENGTH_SHORT).show();
             } else {
-                Toast.makeText(this, "Failed to delete profile", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.failed_to_delete_profile, Toast.LENGTH_SHORT).show();
             }
         });
         
@@ -1930,7 +1949,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         if (android.os.Build.MODEL != null && !android.os.Build.MODEL.isEmpty()) {
             deviceName = android.os.Build.MODEL;
         } else {
-            deviceName = "My Device";
+            deviceName = getString(R.string.default_device_name);
         }
         
         // Use dark theme for the dialog
@@ -1940,7 +1959,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         
         // Set up the input field with explicit colors for dark theme
         final EditText input = new EditText(this);
-        input.setHint("e.g., John's Phone");
+        input.setHint(R.string.device_name_hint);
         input.setText(deviceName);
         input.selectAll();
         input.setTextColor(android.graphics.Color.WHITE);  // White text
@@ -2117,7 +2136,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
                 sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, subject);
                 sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBody);
-                startActivity(Intent.createChooser(sharingIntent, "Share via"));
+                startActivity(Intent.createChooser(sharingIntent, getString(R.string.share_via)));
             }
         });
 
@@ -2147,7 +2166,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBody);
                 
                 Log.d(TAG, "📊 [EVENT_REPORT] Launching share chooser...");
-                startActivity(Intent.createChooser(sharingIntent, "Share via"));
+                startActivity(Intent.createChooser(sharingIntent, getString(R.string.share_via)));
             }
         });
 

@@ -1405,7 +1405,7 @@ public class showBandDetails extends Activity {
         
         // Show loading placeholders for key sections
         if (noteValue != null) {
-            noteValue.setText("Loading notes...");
+            noteValue.setText(R.string.loading_notes);
             // Apply font size preference
             applyNoteFontSize();
         }
@@ -1952,7 +1952,7 @@ public class showBandDetails extends Activity {
         if (!createWebViewWithRetry()) {
             // All retry attempts failed - show error and exit
             Log.e("WebView", "Failed to create WebView after all retry attempts");
-            Toast.makeText(this, "Unable to open web browser. Please try again later.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, R.string.unable_to_open_browser, Toast.LENGTH_LONG).show();
             exitInAppWebView();
             return;
         }
@@ -2020,7 +2020,7 @@ public class showBandDetails extends Activity {
                     return false;
                 } else {
                     Log.w("WebView", "Blocked potentially unsafe URL: " + url);
-                    Toast.makeText(showBandDetails.this, "URL blocked for security reasons", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(showBandDetails.this, R.string.url_blocked, Toast.LENGTH_SHORT).show();
                     return true; // Block the navigation
                 }
             }
@@ -2093,7 +2093,7 @@ public class showBandDetails extends Activity {
             inAppWebView.loadUrl(url);
         } else {
             Log.w("WebView", "Blocked unsafe initial URL: " + url);
-            Toast.makeText(this, "URL blocked for security reasons", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.url_blocked, Toast.LENGTH_SHORT).show();
             exitInAppWebView(); // Exit back to details view
         }
         
@@ -2231,7 +2231,7 @@ public class showBandDetails extends Activity {
         
         if (translator == null) {
             Log.e("Translation", "Translator not initialized");
-            showToast("Translation not available");
+            showToast(getString(R.string.translation_not_available));
             return;
         }
         
@@ -2258,7 +2258,7 @@ public class showBandDetails extends Activity {
                 showToast(toastMessage);
             } else {
                 Log.e("Translation", "No original English text stored!");
-                showToast("Error: No original text available");
+                showToast(getString(R.string.translation_no_original_text));
             }
         } else {
             // Translate to local language
@@ -2317,7 +2317,7 @@ public class showBandDetails extends Activity {
                             showToast(toastMessage);
                         } else {
                             Log.e("Translation", "Translation returned empty result");
-                            showToast("Translation failed - empty result");
+                            showToast(getString(R.string.translation_failed_empty));
                         }
                     });
                 }
@@ -2331,7 +2331,7 @@ public class showBandDetails extends Activity {
                             Log.d("Translation", "Activity destroyed, ignoring translation error");
                             return;
                         }
-                        showToast("Translation error: " + error);
+                        showToast(getString(R.string.translation_error, error));
                     });
                 }
             });
@@ -2577,7 +2577,7 @@ public class showBandDetails extends Activity {
         Button copyButton = dialogView.findViewById(R.id.copy_button);
         Button pasteButton = dialogView.findViewById(R.id.paste_button);
         
-        titleView.setText("Edit Note");
+        titleView.setText(R.string.edit_note);
         subtitleView.setText(bandName);
         subtitleView.setVisibility(View.VISIBLE);
         
@@ -3316,7 +3316,7 @@ public class showBandDetails extends Activity {
         youtubeLink.setVisibility(hasYoutube ? View.VISIBLE : View.GONE);
 
         if (BandInfo.hasAnyWebLink(bandName)) {
-            linksLabel.setText("Links:");
+            linksLabel.setText(R.string.links_label);
             linksSection.setVisibility(View.VISIBLE);
             setupDynamicLinkSpacing();
         } else {

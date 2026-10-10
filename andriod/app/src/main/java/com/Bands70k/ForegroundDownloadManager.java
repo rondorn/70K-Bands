@@ -365,7 +365,7 @@ public class ForegroundDownloadManager {
      */
     private static String getLocalizedLabelForTask(String task) {
         if (currentActivity == null) {
-            return "Bulk Downloads";
+            return bulkDownloadsFallback();
         }
         
         try {
@@ -389,8 +389,13 @@ public class ForegroundDownloadManager {
             return currentActivity.getString(R.string.bulk_image_download);
         } catch (Exception e) {
             Log.e(TAG, "Error getting localized label", e);
-            return "Bulk Downloads";
+            return bulkDownloadsFallback();
         }
+    }
+
+    private static String bulkDownloadsFallback() {
+        Context context = Bands70k.getAppContext();
+        return context != null ? context.getString(R.string.bulk_downloads) : "Bulk Downloads";
     }
     
     /**
@@ -484,11 +489,11 @@ public class ForegroundDownloadManager {
         
         // For now, use a simple dialog. We'll enhance with progress bar later
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        builder.setTitle("Downloads in Progress");
-        builder.setMessage("Data is being downloaded in the background. Would you like to wait for it to complete, or leave the app now?");
+        builder.setTitle(R.string.downloads_in_progress_title);
+        builder.setMessage(R.string.downloads_in_progress_message);
         builder.setCancelable(false);
         
-        builder.setPositiveButton("Wait", new DialogInterface.OnClickListener() {
+        builder.setPositiveButton(R.string.wait, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 Log.d(TAG, "User chose to wait");
@@ -511,7 +516,7 @@ public class ForegroundDownloadManager {
             }
         });
         
-        builder.setNegativeButton("Leave Now", new DialogInterface.OnClickListener() {
+        builder.setNegativeButton(R.string.leave_now, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 Log.d(TAG, "User chose to leave - starting foreground service");
@@ -540,7 +545,7 @@ public class ForegroundDownloadManager {
         
         // Create simple dialog with progress (using built-in Android views)
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        builder.setTitle("Downloading Data");
+        builder.setTitle(R.string.downloading_data);
         
         // Create a simple layout programmatically
         android.widget.LinearLayout layout = new android.widget.LinearLayout(activity);
@@ -548,7 +553,7 @@ public class ForegroundDownloadManager {
         layout.setPadding(50, 40, 50, 40);
         
         progressText = new TextView(activity);
-        progressText.setText("Preparing...");
+        progressText.setText(R.string.preparing);
         progressText.setPadding(0, 0, 0, 20);
         
         progressBar = new ProgressBar(activity, null, android.R.attr.progressBarStyleHorizontal);
@@ -572,7 +577,7 @@ public class ForegroundDownloadManager {
         builder.setView(layout);
         builder.setCancelable(false);
         
-        builder.setNegativeButton("Leave Anyway", new DialogInterface.OnClickListener() {
+        builder.setNegativeButton(R.string.leave_anyway, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 Log.d(TAG, "User chose to leave anyway");
@@ -605,10 +610,10 @@ public class ForegroundDownloadManager {
                 if (!isDownloading.get()) {
                     // Downloads complete - show completion message briefly then dismiss
                     if (progressText != null) {
-                        progressText.setText("Downloads completed!");
+                        progressText.setText(R.string.downloads_completed);
                     }
                     if (progressDetails != null) {
-                        progressDetails.setText("All data has been synced");
+                        progressDetails.setText(R.string.all_data_synced);
                     }
                     if (progressBar != null) {
                         progressBar.setProgress(progressBar.getMax());
@@ -641,7 +646,7 @@ public class ForegroundDownloadManager {
         if (progressText != null) {
             String currentTask = ImageDownloadService.getCurrentTask();
             if (currentTask != null && !currentTask.isEmpty()) {
-                progressText.setText(currentTask);
+                progressText.setText(ImageDownloadService.localizedTask(progressText.getContext(), currentTask));
             }
         }
         

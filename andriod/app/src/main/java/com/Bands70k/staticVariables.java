@@ -960,7 +960,7 @@ public class staticVariables {
                         new android.os.Handler(android.os.Looper.getMainLooper()).post(new Runnable() {
                             @Override
                             public void run() {
-                                HelpMessageHandler.showMessage("Failed to load data from Custom Pointer URL. Please check the URL or clear it to use the default.");
+                                HelpMessageHandler.showMessage(context.getString(R.string.custom_pointer_load_failed));
                             }
                         });
                     }

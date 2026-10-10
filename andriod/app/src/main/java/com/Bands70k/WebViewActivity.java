@@ -106,7 +106,7 @@ public class WebViewActivity extends Activity {
                     return true;
                 } else {
                     Log.w("WebViewActivity", "Blocked potentially unsafe URL: " + url);
-                    Toast.makeText(WebViewActivity.this, "URL blocked for security reasons", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(WebViewActivity.this, R.string.url_blocked, Toast.LENGTH_SHORT).show();
                     return true; // Block the navigation
                 }
             }
@@ -114,7 +114,7 @@ public class WebViewActivity extends Activity {
             @Override
             public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
                 Log.e("WebViewActivity", "Error loading page: " + description);
-                Toast.makeText(WebViewActivity.this, "Error loading report: " + description, Toast.LENGTH_LONG).show();
+                Toast.makeText(WebViewActivity.this, getString(R.string.error_loading_report, description), Toast.LENGTH_LONG).show();
             }
         });
         
@@ -158,7 +158,7 @@ public class WebViewActivity extends Activity {
                 loadReportWithCaching(reportUrl);
             } else {
                 Log.w("WebViewActivity", "Blocked unsafe URL from intent: " + reportUrl);
-                Toast.makeText(this, "URL blocked for security reasons", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.url_blocked, Toast.LENGTH_SHORT).show();
                 finish();
             }
         } else {
@@ -212,12 +212,12 @@ public class WebViewActivity extends Activity {
                         webView.loadUrl(directUrl);
                     } else {
                         Log.w("WebViewActivity", "Blocked unsafe URL from intent: " + directUrl);
-                        Toast.makeText(this, "URL blocked for security reasons", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, R.string.url_blocked, Toast.LENGTH_SHORT).show();
                         finish();
                     }
                 } else {
                     Log.e("WebViewActivity", "No content or URL provided");
-                    Toast.makeText(this, "Unable to load report", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, R.string.unable_to_load_report, Toast.LENGTH_SHORT).show();
                     finish();
                 }
             }

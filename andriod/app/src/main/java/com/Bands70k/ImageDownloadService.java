@@ -48,6 +48,30 @@ public class ImageDownloadService extends Service {
     private static String currentTask = "Preparing...";
     private static String currentDetails = "";
 
+    /**
+     * Returns the display text for an internal task name. Task names stay in English because
+     * other code matches on them (e.g. ForegroundDownloadManager.getLocalizedLabelForTask).
+     */
+    public static String localizedTask(Context context, String task) {
+        if (context == null || task == null) {
+            return task;
+        }
+        switch (task) {
+            case "Starting...": return context.getString(R.string.starting);
+            case "Preparing...": return context.getString(R.string.preparing);
+            case "Downloading images...": return context.getString(R.string.downloading_images);
+            case "Downloading notes...": return context.getString(R.string.downloading_notes);
+            case "Uploading data to Firebase": return context.getString(R.string.uploading_data);
+            case "Complete": return context.getString(R.string.download_complete);
+            default: return task;
+        }
+    }
+
+    private static String text(int resId, Object... args) {
+        Context context = Bands70k.getAppContext();
+        return context != null ? context.getString(resId, args) : "";
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -143,15 +167,16 @@ public class ImageDownloadService extends Service {
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0
         );
 
+        String taskLabel = localizedTask(this, task);
         String contentText;
         if (total > 0) {
-            contentText = task + ": " + completed + " / " + total;
+            contentText = taskLabel + ": " + completed + " / " + total;
         } else {
-            contentText = task;
+            contentText = taskLabel;
         }
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Syncing Data")
+            .setContentTitle(getString(R.string.syncing_data))
             .setContentText(contentText)
             .setSmallIcon(R.drawable.new_bands_70k_icon)
             .setContentIntent(pendingIntent)
@@ -420,7 +445,7 @@ public class ImageDownloadService extends Service {
                 if (needsUpdate == 0) {
                     Log.d(TAG, "All images already cached, skipping image download phase");
                     currentTask = "Downloading images...";
-                    currentDetails = "All images cached";
+                    currentDetails = text(R.string.all_images_cached);
                     // Mark this phase as complete immediately
                     tasksCompleted.incrementAndGet();
                     // Don't show progress indicator when everything is cached - just move on silently
@@ -471,7 +496,7 @@ public class ImageDownloadService extends Service {
                         
                         downloaded++;
                         currentProgress.set(downloaded);
-                        currentDetails = "Downloaded " + downloaded + " of " + needsUpdate + " images";
+                        currentDetails = text(R.string.downloaded_images_progress, downloaded, needsUpdate);
                         
                         // Update notification every 5 images or on last image
                         if (downloaded % 5 == 0 || downloaded == needsUpdate) {
@@ -576,7 +601,7 @@ public class ImageDownloadService extends Service {
                 if (needsUpdate == 0) {
                     Log.d(TAG, "All notes already cached, skipping note download phase");
                     currentTask = "Downloading notes...";
-                    currentDetails = "All notes cached";
+                    currentDetails = text(R.string.all_notes_cached);
                     // Mark this phase as complete immediately
                     tasksCompleted.incrementAndGet();
                     // Don't show progress indicator when everything is cached - just move on silently
@@ -630,7 +655,7 @@ public class ImageDownloadService extends Service {
                         
                         downloaded++;
                         currentProgress.set(downloaded);
-                        currentDetails = "Downloaded " + downloaded + " of " + needsUpdate + " notes";
+                        currentDetails = text(R.string.downloaded_notes_progress, downloaded, needsUpdate);
                         
                         // Update notification every 5 notes or on last note
                         if (downloaded % 5 == 0 || downloaded == needsUpdate) {
@@ -668,7 +693,7 @@ public class ImageDownloadService extends Service {
             try {
                 Log.d(TAG, "Starting Firebase reporting phase");
                 currentTask = "Uploading data to Firebase";
-                currentDetails = "Uploading data to Firebase";
+                currentDetails = text(R.string.uploading_data);
                 currentTotal.set(1);
                 currentProgress.set(0);
                 updateNotificationStatic(0, 1, "Uploading data to Firebase");
@@ -679,7 +704,7 @@ public class ImageDownloadService extends Service {
                 Log.d(TAG, "Firebase reporting phase completed");
                 tasksCompleted.incrementAndGet();
                 currentTask = "Complete";
-                currentDetails = "All downloads completed";
+                currentDetails = text(R.string.all_downloads_completed);
                 updateNotificationStatic(1, 1, "Uploading data to Firebase");
 
             } catch (Exception e) {

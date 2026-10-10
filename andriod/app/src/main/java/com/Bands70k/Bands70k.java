@@ -44,7 +44,9 @@ public class Bands70k extends Application implements Application.ActivityLifecyc
      */
     @Override
     protected void attachBaseContext(Context base) {
-        Configuration config = new Configuration(base.getResources().getConfiguration());
+        // Override only fontScale: copying the full configuration would also pin the locale at
+        // process start, leaving app-context strings (toasts, help messages) in the old language.
+        Configuration config = new Configuration();
         config.fontScale = 1.0f; // Force normal font scale to prevent UI breakage
         Context context = base.createConfigurationContext(config);
         super.attachBaseContext(context);

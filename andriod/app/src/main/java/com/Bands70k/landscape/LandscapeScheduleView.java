@@ -437,7 +437,7 @@ public class LandscapeScheduleView extends LinearLayout {
         
         // Day label and optional "X venues hidden" subtitle (like iOS)
         dayLabel = new TextView(context);
-        dayLabel.setText("Loading...");
+        dayLabel.setText(R.string.loading_ellipsis);
         dayLabel.setTextColor(Color.WHITE);
         dayLabel.setTextSize(20);
         dayLabel.setTypeface(null, android.graphics.Typeface.BOLD);
@@ -1027,7 +1027,7 @@ public class LandscapeScheduleView extends LinearLayout {
         
         // Update header
         if (days.isEmpty()) {
-            dayLabel.setText("No Schedule Data");
+            dayLabel.setText(R.string.no_schedule_data_available);
             prevButton.setVisibility(View.GONE);
             nextButton.setVisibility(View.GONE);
             
@@ -1382,7 +1382,7 @@ public class LandscapeScheduleView extends LinearLayout {
         
         if (days.isEmpty() || currentDayIndex >= days.size()) {
             TextView noData = new TextView(context);
-            noData.setText("No schedule data available");
+            noData.setText(R.string.no_schedule_data_available);
             noData.setTextColor(Color.WHITE);
             noData.setGravity(Gravity.CENTER);
             noData.setPadding(0, dpToPx(50), 0, 0);
@@ -1472,7 +1472,7 @@ public class LandscapeScheduleView extends LinearLayout {
         // Create fixed venue header row
         // Time header - use maxHeaderHeight so it matches venue headers
         TextView timeHeader = new TextView(context);
-        timeHeader.setText("Time");
+        timeHeader.setText(R.string.time_header);
         timeHeader.setTextColor(Color.WHITE);
         timeHeader.setTextSize(12); // Match venue header size
         timeHeader.setTypeface(null, android.graphics.Typeface.BOLD);
@@ -2076,7 +2076,7 @@ public class LandscapeScheduleView extends LinearLayout {
             }
         });
         
-        builder.setNegativeButton("Cancel", new android.content.DialogInterface.OnClickListener() {
+        builder.setNegativeButton(R.string.Cancel, new android.content.DialogInterface.OnClickListener() {
             @Override
             public void onClick(android.content.DialogInterface dialog, int which) {
                 Log.d(TAG, "User cancelled band selection");
@@ -2138,7 +2138,7 @@ public class LandscapeScheduleView extends LinearLayout {
                     openLongPressMenuForBand(finalEvent, selectedBand);
                 }
             });
-            builder.setNegativeButton("Cancel", null);
+            builder.setNegativeButton(R.string.Cancel, null);
             android.app.AlertDialog dialog = builder.create();
             styleDialogForDarkTheme(dialog);
             dialog.show();
@@ -2227,7 +2227,7 @@ public class LandscapeScheduleView extends LinearLayout {
                 }
             });
             
-            builder.setNegativeButton("Cancel", new android.content.DialogInterface.OnClickListener() {
+            builder.setNegativeButton(R.string.Cancel, new android.content.DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(android.content.DialogInterface dialog, int which) {
                     Log.d(TAG, "User cancelled band selection");

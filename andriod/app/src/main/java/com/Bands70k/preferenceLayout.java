@@ -491,7 +491,7 @@ public class preferenceLayout  extends Activity {
                     AlertDialog.Builder restartDialog = new AlertDialog.Builder(preferenceLayout.this);
 
                     // Setting Dialog Title
-                    restartDialog.setTitle("Confirm Restart");
+                    restartDialog.setTitle(getString(R.string.confirm_restart));
 
                     // Setting Dialog Message
                     restartDialog.setMessage(getResources().getString(R.string.importMessage));
@@ -516,7 +516,7 @@ public class preferenceLayout  extends Activity {
                     // Showing Alert Dialog
                     restartDialog.show();
                 } else {
-                    HelpMessageHandler.showMessage("Something went wrong downloading file from URL " + importUrl.getText());
+                    HelpMessageHandler.showMessage(getString(R.string.import_url_download_failed, importUrl.getText()));
                 }
 
             }
@@ -566,7 +566,7 @@ public class preferenceLayout  extends Activity {
             zis.close();
         } catch (IOException e) {
             Log.e("General Exception", "Something went wrong " + e.getMessage());
-            HelpMessageHandler.showMessage("Something went wrong " + e.getMessage());
+            HelpMessageHandler.showMessage(getString(R.string.generic_error_with_detail, e.getMessage()));
             e.printStackTrace();
             return false;
         }

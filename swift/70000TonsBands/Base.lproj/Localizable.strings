@@ -306,7 +306,7 @@
 
 // Toast and help messages
 "Invalid cell data - cannot add attendance" = "Invalid cell data - cannot add attendance"; // Toast message when cell data is invalid
-"No Show Is Associated With This Entry" = "No Show Is Associated With This Entry"; // Toast message when no show is associated with entry
+"No Show Is Associated With This Entry" = "No Event Is Associated With This Entry"; // Toast message when no show is associated with entry
 "Dismiss" = "Dismiss"; // Alert dismiss button
 "Message received" = "Message received"; // Alert title when a push notification message is received
 "Choose Country" = "Choose Country"; // Alert title for country selection
