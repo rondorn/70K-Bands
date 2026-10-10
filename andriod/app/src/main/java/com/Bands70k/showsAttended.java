@@ -917,20 +917,18 @@ public class showsAttended {
 
     public String setShowsAttendedStatus(String status){
 
-        String message = "";
-
+        int valueRes;
         if (status.equals(staticVariables.sawAllStatus)){
-            message = staticVariables.context.getResources().getString(R.string.AllOfEvent);
-
+            valueRes = R.string.EventAttendanceAll;
         } else if (status.equals(staticVariables.sawSomeStatus)){
-            message = staticVariables.context.getResources().getString(R.string.PartOfEvent);
-
+            valueRes = R.string.EventAttendancePartial;
         } else {
-            message = staticVariables.context.getResources().getString(R.string.NoneOfEvent);
-
+            valueRes = R.string.EventAttendanceNone;
         }
 
-        return message;
+        return staticVariables.context.getString(R.string.event_attendance_status_format,
+                staticVariables.context.getString(R.string.event_attendance),
+                staticVariables.context.getString(valueRes));
     }
 
 }

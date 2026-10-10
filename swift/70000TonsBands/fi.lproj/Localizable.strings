@@ -22,10 +22,11 @@
 "Might"="Ehkä";
 "Wont"="Ei";
 "Band Priority"="Bändin prioriteetti";
-"Event Attendance"="Tapahtuman läsnäolo";
-"EventAttendanceAll"="Kaikki";
+"Event Attendance"="Osallistuminen";
+"EventAttendanceAll"="Kokonaan";
 "EventAttendancePartial"="Osittain";
-"EventAttendanceNone"="Ei mitään";
+"EventAttendanceNone"="Ei lainkaan";
+"EventAttendanceStatusFormat"="%@: %@";
 
 "Ok"="Kyllä";
 "Cancel"="Peruuta";
@@ -42,10 +43,6 @@
 
 "Sorting Chronologically"="Lajittelu aikajärjestyksessä";
 "Sorting Alphabetically"="Lajittelu aakkosjärjestyksessä";
-
-"All Of Event"="Osallistun koko tapahtumaan";
-"Part Of Event"="Osallistun osaan tapahtumasta";
-"None Of Event"="En tule osallistumaan tähän tapahtumaan";
 
 
 
@@ -106,7 +103,7 @@
 "Schedule information is not currently loaded" = "Ohjelmatietoja ei ole juuri nyt ladattu";
 
 "Clear All Filters" = "Tyhjennä kaikki suodattimet";  //menu choice
-"Show Flagged Events Only" = "Näytä vain merkityt tapahtumat"; //menu choice
+"Show Flagged Events Only" = "Vain omat tapahtumat"; //menu choice
 
 //venue filters
 
@@ -160,7 +157,7 @@
 "AIScheduleMustConflictBoth" = "Molemmat";
 "AIScheduleDoneTitle" = "Valmis";
 "AIScheduleDoneMessage" = "%d tapahtumaa merkitty osallistuvaksi.";
-"AIScheduleDoneMessageDetail" = "Näet nyt aikataulusi.\n\nSuodatinvalikossa:\n• Tyhjennä suodattimet nähdäksesi kaikki\n• Näytä vain merkityt nähdäksesi omasi\n• Pitkä painallus muuttaa osallistumistilaa.";
+"AIScheduleDoneMessageDetail" = "Näet nyt aikataulusi.\n\nSuodatinvalikossa:\n• Valitse Tyhjennä kaikki suodattimet nähdäksesi kaikki tapahtumat\n• Valitse Vain omat tapahtumat nähdäksesi vain omat tapahtumasi\n• Paina tapahtumaa pitkään muuttaaksesi osallistumistasi.";
 "AIScheduleExistingAttendanceTitle" = "Sinulla on jo merkityt tapahtumat";
 "AIScheduleExistingAttendanceMessage" = "%d tapahtumaa on jo merkitty tälle vuodelle. Uusi aikataulu lisätään niihin.";
 "AIScheduleExistingAttendanceContinue" = "Jatka";
@@ -205,7 +202,7 @@
 "MightSeeBands" = "Mahdollisia Bändejä";
 
 // Event sharing localization
-"EventsAttended" = "Osallistutut Tapahtumat";
+"EventsAttended" = "Tapahtumat";
 "ShowsPlural" = "Showt";
 "MeetAndGreetsPlural" = "Tapaamiset & Tervehdykset";
 "ClinicsPlural" = "Kliinikat";

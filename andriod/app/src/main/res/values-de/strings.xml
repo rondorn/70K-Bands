@@ -6,7 +6,7 @@
     <string name="wont">Nein</string>
     <string name="unknown">Unbekannte</string>
     <string name="band_priority">Band-Priorität</string>
-    <string name="event_attendance">Veranstaltungsbesuch</string>
+    <string name="event_attendance">Teilnahme</string>
 
     <string name="Ok">Ja</string>
     <string name="Cancel">Nein</string>
@@ -49,7 +49,7 @@
     <string name="unknown_bands_details">Details</string>
     <string name="aischedule_done_title">Fertig</string>
     <string name="aischedule_done_message">%d Veranstaltungen als „Teilnehmen“ markiert.</string>
-    <string name="aischedule_done_message_detail">Du wirst nun zu deinem Zeitplan geführt.\n\nIm Filtermenü:\n• „Alle Filter löschen“ für alle Veranstaltungen\n• „Nur markierte“ für deine Veranstaltungen\n• Langdruck auf eine Veranstaltung zum Ändern.</string>
+    <string name="aischedule_done_message_detail">Du siehst jetzt deinen Zeitplan.\n\nIm Filtermenü:\n• Tippe auf „Alle Filter löschen“, um alle Veranstaltungen zu sehen\n• Tippe auf „Nur meine Veranstaltungen“, um nur deine Veranstaltungen zu sehen\n• Halte eine Veranstaltung gedrückt, um deine Teilnahme zu ändern.</string>
     <string name="aischedule_build_schedule">Zeitplan erstellen</string>
     <string name="building_schedule">Zeitplan wird erstellt…</string>
     <string name="build_schedule_automatically">Meinen Zeitplan automatisch erstellen</string>
@@ -88,12 +88,10 @@
     <string name="SortingChronologically">Chronologisch sortieren</string>
     <string name="SortingAlphabetically">Alphabetisch sortieren</string>
 
-    <string name="AllOfEvent">An diesem Event teilnehmen</string>
-    <string name="PartOfEvent">Teilnehmen an dieser Veranstaltung</string>
-    <string name="NoneOfEvent">Ich werde dieses Ereignis nicht sehen</string>
-    <string name="EventAttendanceAll">Alle</string>
+    <string name="EventAttendanceAll">Vollständig</string>
     <string name="EventAttendancePartial">Teilweise</string>
     <string name="EventAttendanceNone">Keine</string>
+    <string name="event_attendance_status_format">%1$s: %2$s</string>
 
     <string name="venueFilterHeader">Anzeigen/Ausblenden Tagungsort</string>
 
@@ -165,7 +163,7 @@
     <!-- menu choice -->
     <string name="band_ranking_filters">Band-Auswahl-Filter</string>
     <!-- menu header -->
-    <string name="show_only_flagged_as_attended">Nur als besucht markierte anzeigen</string>
+    <string name="show_only_flagged_as_attended">Nur meine Veranstaltungen</string>
     <!-- menu header -->
     <!-- menu header -->
     <string name="event_type_filters">Filter nach Veranstaltungstyp</string>
@@ -184,7 +182,7 @@
     <!-- menu choice -->
     <string name="show_all_events">Alle Veranstaltungen anzeigen</string>
     <!-- menu choice -->
-    <string name="show_flaged_events_only">Nur markierte Veranstaltungen anzeigen</string>
+    <string name="show_flaged_events_only">Nur meine Veranstaltungen</string>
     <!-- menu choice -->
     <!-- venue filters -->
     <!-- menu choice -->
@@ -323,7 +321,7 @@
     <string name="MightSeeBands">Könnte Sehen Bands</string>
     
     <!-- Event sharing localization -->
-    <string name="EventsAttended">Besuchte Veranstaltungen</string>
+    <string name="EventsAttended">Veranstaltungen</string>
     <string name="ShowsPlural">Shows</string>
     <string name="MeetAndGreetsPlural">Meet &amp; Greets</string>
     <string name="ClinicsPlural">Workshops</string>

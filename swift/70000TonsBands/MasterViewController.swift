@@ -4825,7 +4825,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             let sawSomeStatusValue = sawSomeStatus
             let sawNoneStatusValue = sawNoneStatus
             
-            let allOfEventTitle = NSLocalizedString("EventAttendanceAll", comment: "Event attendance: All")
+            let allOfEventTitle = NSLocalizedString("EventAttendanceAll", comment: "Event attendance: Full")
             attendanceItems.append(CompactActionSheetViewController.MenuItem(
                 title: allOfEventTitle,
                 iconName: getAttendanceIconName(status: sawAllStatusValue),

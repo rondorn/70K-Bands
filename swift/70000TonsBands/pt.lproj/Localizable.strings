@@ -20,9 +20,10 @@
 "Wont"="Não";
 "Band Priority"="Prioridade da banda";
 "Event Attendance"="Comparecimento ao evento";
-"EventAttendanceAll"="Todos";
+"EventAttendanceAll"="Completo";
 "EventAttendancePartial"="Parcial";
 "EventAttendanceNone"="Nenhum";
+"EventAttendanceStatusFormat"="%@: %@";
 
 "Ok"="Ok";
 "Cancel"="Cancelar";
@@ -40,10 +41,6 @@
 
 "Sorting Chronologically"="Ordenando Cronologicamente";
 "Sorting Alphabetically"="Ordenando Alfabeticamente";
-
-"All Of Event"="Participando de tudo deste evento";
-"Part Of Event"="Participando de alguns desde evento";
-"None Of Event"="Eu não vou ver esse evento";
 
 
 
@@ -124,7 +121,7 @@
 "Schedule information is not currently loaded" = "As informações da programação não estão carregadas no momento";
 
 "Clear All Filters" = "Limpar todos os filtros";  //menu choice
-"Show Flagged Events Only" = "Mostrar apenas eventos sinalizados";  //menu choice
+"Show Flagged Events Only" = "Apenas meus eventos";  //menu choice
 
 //venue filters
 
@@ -178,7 +175,7 @@
 "AIScheduleMustConflictBoth" = "Ambos";
 "AIScheduleDoneTitle" = "Concluído";
 "AIScheduleDoneMessage" = "Marcados %d eventos como vou assistir.";
-"AIScheduleDoneMessageDetail" = "Agora você verá uma tela com sua programação.\n\nNo menu de filtros:\n• Toque em Limpar filtros para ver todos os eventos\n• Toque em Só eventos marcados para ver apenas os seus\n• Toque e segure em qualquer evento para alterar sua presença.";
+"AIScheduleDoneMessageDetail" = "Agora você verá sua programação.\n\nNo menu de filtros:\n• Toque em Limpar todos os filtros para ver todos os eventos\n• Toque em Apenas meus eventos para ver só os seus eventos\n• Toque e segure qualquer evento para alterar seu comparecimento.";
 "AIScheduleExistingAttendanceTitle" = "Você já tem eventos marcados";
 "AIScheduleExistingAttendanceMessage" = "Há %d eventos já marcados este ano. A nova programação será adicionada e não os alterará.";
 "AIScheduleExistingAttendanceContinue" = "Continuar";
@@ -223,7 +220,7 @@
 "MightSeeBands" = "Bandas Possíveis";
 
 // Event sharing localization
-"EventsAttended" = "Eventos Participados";
+"EventsAttended" = "Eventos";
 "ShowsPlural" = "Shows";
 "MeetAndGreetsPlural" = "Encontros & Cumprimentos";
 "ClinicsPlural" = "Clínicas";

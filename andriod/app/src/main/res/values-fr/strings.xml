@@ -49,7 +49,7 @@
     <string name="unknown_bands_details">Détails</string>
     <string name="aischedule_done_title">Terminé</string>
     <string name="aischedule_done_message">%d événements marqués comme participation.</string>
-    <string name="aischedule_done_message_detail">Vous allez voir votre programme.\n\nDans le menu filtre :\n• Effacer les filtres pour tout voir\n• Afficher uniquement les événements marqués\n• Appui long pour modifier la participation.</string>
+    <string name="aischedule_done_message_detail">Vous allez voir votre programme.\n\nDans le menu des filtres :\n• Appuyez sur Effacer tous les filtres pour voir tous les événements\n• Appuyez sur Mes événements uniquement pour ne voir que vos événements\n• Appuyez longuement sur un événement pour modifier votre présence.</string>
     <string name="aischedule_build_schedule">Construire le programme</string>
     <string name="building_schedule">Construction de votre programme…</string>
     <string name="build_schedule_automatically">Construire mon programme automatiquement</string>
@@ -92,12 +92,10 @@
     <string name="SortingChronologically">Tri chronologique</string>
     <string name="SortingAlphabetically">Tri alphabétique</string>
 
-    <string name="AllOfEvent">Assister à tous cet événement</string>
-    <string name="PartOfEvent">Assister à certains de cet événement</string>
-    <string name="NoneOfEvent">Je ne verrai pas cet événement</string>
-    <string name="EventAttendanceAll">Tous</string>
-    <string name="EventAttendancePartial">Partiel</string>
-    <string name="EventAttendanceNone">Aucun</string>
+    <string name="EventAttendanceAll">Complète</string>
+    <string name="EventAttendancePartial">Partielle</string>
+    <string name="EventAttendanceNone">Aucune</string>
+    <string name="event_attendance_status_format">%1$s : %2$s</string>
 
     <string name="venueFilterHeader">Afficher/Masquer le Lieu</string>
 
@@ -168,7 +166,7 @@
     <!-- menu choice -->
     <string name="band_ranking_filters">Filtres de classement des bandes</string>
     <!-- menu choice -->
-    <string name="show_only_flagged_as_attended">Afficher uniquement marqué comme étant présent</string>
+    <string name="show_only_flagged_as_attended">Mes événements uniquement</string>
     <!-- help text -->
     <!-- menu header -->
     <string name="event_type_filters">Filtres de types d\'événements</string>
@@ -187,7 +185,7 @@
     <!-- menu choice -->
     <string name="show_all_events">Afficher tous les événements</string>
     <!-- menu choice -->
-    <string name="show_flaged_events_only">Afficher uniquement les événements marqués</string>
+    <string name="show_flaged_events_only">Mes événements uniquement</string>
     <!-- menu choice -->
     <!-- venue filters -->
     <!-- menu choice -->
@@ -326,7 +324,7 @@
     <string name="MightSeeBands">Groupes À Voir Peut-Être</string>
     
     <!-- Event sharing localization -->
-    <string name="EventsAttended">Événements Assistés</string>
+    <string name="EventsAttended">Événements</string>
     <string name="ShowsPlural">Spectacles</string>
     <string name="MeetAndGreetsPlural">Rencontres &amp; Salutations</string>
     <string name="ClinicsPlural">Cliniques</string>

@@ -30,11 +30,13 @@ public class showsAttendedReport {
         String bandName;
         String venue;
         String fullIndex; // Store full index to look up venue later
-        
-        EventEntry(String bandName, String venue, String fullIndex) {
+        String status;
+
+        EventEntry(String bandName, String venue, String fullIndex, String status) {
             this.bandName = bandName;
             this.venue = venue;
             this.fullIndex = fullIndex;
+            this.status = status;
         }
     }
 
@@ -159,7 +161,7 @@ public class showsAttendedReport {
                 
                 // Track individual event with its venue info
                 Log.d("ShareMessage", "📝 Tracking event for report");
-                trackIndividualEvent(eventType, bandName, index);
+                trackIndividualEvent(eventType, bandName, index, statusPart);
                 trackedCount++;
             } else {
                 Log.d("ShareMessage", "⏭️ Skipping - status is sawNone");
@@ -337,8 +339,9 @@ public class showsAttendedReport {
      * @param eventType The type of event (Show, Meet and Greet, etc.)
      * @param bandName The name of the band
      * @param fullIndex The full index string (band:location:time:eventType:year)
+     * @param status The attendance status (sawAll or sawSome)
      */
-    private void trackIndividualEvent(String eventType, String bandName, String fullIndex) {
+    private void trackIndividualEvent(String eventType, String bandName, String fullIndex, String status) {
         if (!individualEvents.containsKey(eventType)) {
             individualEvents.put(eventType, new ArrayList<EventEntry>());
         }
@@ -373,7 +376,7 @@ public class showsAttendedReport {
             }
         }
         
-        EventEntry entry = new EventEntry(bandName, venue, fullIndex);
+        EventEntry entry = new EventEntry(bandName, venue, fullIndex, status);
         existingEvents.add(entry);
         
         Log.d("trackIndividualEvent", "✅ Added event: " + bandName + " at " + venue + " @ " + time + " (" + eventType + ")");
@@ -479,9 +482,14 @@ public class showsAttendedReport {
                 List<String> eventEntries = new ArrayList<>();
                 
                 for (EventEntry event : events) {
-                    String venueInfo = (event.venue != null && !event.venue.isEmpty()) 
-                        ? " (" + event.venue + ")" 
-                        : "";
+                    List<String> details = new ArrayList<>();
+                    if (event.venue != null && !event.venue.isEmpty()) {
+                        details.add(event.venue);
+                    }
+                    if (staticVariables.sawSomeStatus.equals(event.status)) {
+                        details.add(staticVariables.context.getString(R.string.EventAttendancePartial));
+                    }
+                    String venueInfo = details.isEmpty() ? "" : " (" + String.join(", ", details) + ")";
                     
                     eventEntries.add("• " + event.bandName + venueInfo);
                 }

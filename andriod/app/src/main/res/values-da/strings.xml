@@ -49,7 +49,7 @@
     <string name="unknown_bands_details">Detaljer</string>
     <string name="aischedule_done_title">Færdig</string>
     <string name="aischedule_done_message">%d begivenheder markeret som deltager.</string>
-    <string name="aischedule_done_message_detail">Du vises nu din tidsplan.\n\nI filtermenuen:\n• Ryd alle filtre for alle begivenheder\n• Vis kun markerede for dine begivenheder\n• Langt tryk for at ændre deltagelse.</string>
+    <string name="aischedule_done_message_detail">Du ser nu din tidsplan.\n\nI filtermenuen:\n• Tryk på Ryd alle filtre for at se alle begivenheder\n• Tryk på Kun mine begivenheder for kun at se dine begivenheder\n• Tryk længe på en begivenhed for at ændre din deltagelse.</string>
     <string name="aischedule_build_schedule">Byg tidsplan</string>
     <string name="building_schedule">Bygger din tidsplan…</string>
     <string name="build_schedule_automatically">Byg min tidsplan automatisk</string>
@@ -90,12 +90,10 @@
     <string name="SortingChronologically">Sortering Kronologisk</string>
     <string name="SortingAlphabetically">Sortering Alfabetisk</string>
 
-    <string name="AllOfEvent">Deltager i alt dette arrangement</string>
-    <string name="PartOfEvent">Deltager nogle af denne begivenhed</string>
-    <string name="NoneOfEvent">Jeg vil ikke se denne begivenhed</string>
-    <string name="EventAttendanceAll">Alle</string>
-    <string name="EventAttendancePartial">Delvist</string>
+    <string name="EventAttendanceAll">Fuld</string>
+    <string name="EventAttendancePartial">Delvis</string>
     <string name="EventAttendanceNone">Ingen</string>
+    <string name="event_attendance_status_format">%1$s: %2$s</string>
 
     <string name="venueFilterHeader">Vis/Skjul Lokalitet</string>
 
@@ -165,7 +163,7 @@
     <!-- menu choice -->
     <string name="band_ranking_filters">Båndrangeringsfiltre</string>
     <!-- menu header -->
-    <string name="show_only_flagged_as_attended">Vis kun markeret som deltog</string>
+    <string name="show_only_flagged_as_attended">Kun mine begivenheder</string>
     <!-- menu header -->
     <!-- menu header -->
     <string name="event_type_filters">Hændelsestypefiltre</string>
@@ -182,7 +180,7 @@
     <!-- menu choice -->
     <string name="show_all_events">Vis alle begivenheder</string>
     <!-- menu choice -->
-    <string name="show_flaged_events_only">Vis kun markerede begivenheder</string>
+    <string name="show_flaged_events_only">Kun mine begivenheder</string>
     <!-- menu choice -->
     <!-- venue filters -->
     <!-- menu choice -->
@@ -321,7 +319,7 @@
     <string name="MightSeeBands">Måske Se Bands</string>
     
     <!-- Event sharing localization -->
-    <string name="EventsAttended">Arrangementer Deltaget</string>
+    <string name="EventsAttended">Begivenheder</string>
     <string name="ShowsPlural">Shows</string>
     <string name="MeetAndGreetsPlural">Møde &amp; Hilsner</string>
     <string name="ClinicsPlural">Klinikker</string>

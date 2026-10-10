@@ -20,9 +20,10 @@
 "Wont"="No";
 "Band Priority"="Prioridad de banda";
 "Event Attendance"="Asistencia al evento";
-"EventAttendanceAll"="Todo";
+"EventAttendanceAll"="Completa";
 "EventAttendancePartial"="Parcial";
-"EventAttendanceNone"="Ninguno";
+"EventAttendanceNone"="Ninguna";
+"EventAttendanceStatusFormat"="%@: %@";
 "Unknown" = "No lo sé";
 
 // Filter option labels
@@ -58,10 +59,6 @@
 
 "Sorting Chronologically"="Ordenar cronológicamente";
 "Sorting Alphabetically"="Ordenar alfabéticamente";
-
-"All Of Event"="Asistir a todo este evento";
-"Part Of Event"="Asistir a parte de este evento";
-"None Of Event"="No voy a asistir a este evento";
 
 
 "Unofficial Events"="Organizado por fans";
@@ -133,7 +130,7 @@
 
 "Clear All Filters" = "Borrar todos los filtros"; //menu choice
 
-"Show Flagged Events Only" = "Mostrar solo eventos marcados"; //menu choice
+"Show Flagged Events Only" = "Solo mis eventos"; //menu choice
 
 //venue filters
 
@@ -177,7 +174,7 @@
 "MightSeeBands" = "Bandas Que Podría Ver";
 
 // Event sharing localization
-"EventsAttended" = "Eventos Asistidos";
+"EventsAttended" = "Eventos";
 "ShowsPlural" = "Shows";
 "MeetAndGreetsPlural" = "Meet & Greets";
 "ClinicsPlural" = "Clínicas";
@@ -226,7 +223,7 @@
 "AIScheduleMustConflictBoth" = "Ambos";
 "AIScheduleDoneTitle" = "Listo";
 "AIScheduleDoneMessage" = "Se marcaron %d eventos como asistiré.";
-"AIScheduleDoneMessageDetail" = "Ahora verás una vista con tu horario.\n\nEn el menú de filtros:\n• Toca Borrar filtros para ver todos los eventos\n• Toca Solo eventos marcados para ver solo los tuyos\n• Mantén pulsado cualquier evento para cambiar tu asistencia.";
+"AIScheduleDoneMessageDetail" = "Ahora verás tu horario.\n\nEn el menú de filtros:\n• Toca Borrar todos los filtros para ver todos los eventos\n• Toca Solo mis eventos para ver solo tus eventos\n• Mantén pulsado cualquier evento para cambiar tu asistencia.";
 "AIScheduleExistingAttendanceTitle" = "Ya tienes eventos marcados";
 "AIScheduleExistingAttendanceMessage" = "Hay %d eventos ya marcados este año. El nuevo horario se añadirá y no los cambiará.";
 "AIScheduleExistingAttendanceContinue" = "Continuar";

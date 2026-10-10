@@ -20,10 +20,11 @@
 "Might"="Kann";
 "Wont"="Nein";
 "Band Priority"="Band-Priorität";
-"Event Attendance"="Veranstaltungsbesuch";
-"EventAttendanceAll"="Alle";
+"Event Attendance"="Teilnahme";
+"EventAttendanceAll"="Vollständig";
 "EventAttendancePartial"="Teilweise";
 "EventAttendanceNone"="Keine";
+"EventAttendanceStatusFormat"="%@: %@";
 "Unknown" = "Unbekannt";
 
 // Filter option labels
@@ -52,10 +53,6 @@
 
 "Sorting Chronologically"="Chronologisch sortieren";
 "Sorting Alphabetically"="Alphabetisch sortieren";
-
-"All Of Event"="Komplette Teilnahme";
-"Part Of Event"="Teilweise Teilnahme";
-"None Of Event"="Keine Teilnahme";
 
 
 "Minutes Before Event to Alert"="Alarm X Minuten vor Event";
@@ -133,7 +130,7 @@
 "Schedule information is not currently loaded" = "Programminformationen sind derzeit nicht geladen";
 
 "Clear All Filters" = "Alle Filter löschen"; //menu choice
-"Show Flagged Events Only" = "Nur markierte Veranstaltungen anzeigen"; //menu choice
+"Show Flagged Events Only" = "Nur meine Veranstaltungen"; //menu choice
 
 //venue filters
 
@@ -187,7 +184,7 @@
 "AIScheduleMustConflictBoth" = "Beide";
 "AIScheduleDoneTitle" = "Fertig";
 "AIScheduleDoneMessage" = "%d Events als „nehme teil“ markiert.";
-"AIScheduleDoneMessageDetail" = "Du siehst jetzt deinen Zeitplan.\n\nIm Filtermenü:\n• Tippe auf Alle Filter löschen für alle Events\n• Tippe auf Nur markierte Events für deine Events\n• Halte ein Event gedrückt, um den Status zu ändern.";
+"AIScheduleDoneMessageDetail" = "Du siehst jetzt deinen Zeitplan.\n\nIm Filtermenü:\n• Tippe auf „Alle Filter löschen“, um alle Veranstaltungen zu sehen\n• Tippe auf „Nur meine Veranstaltungen“, um nur deine Veranstaltungen zu sehen\n• Halte eine Veranstaltung gedrückt, um deine Teilnahme zu ändern.";
 "AIScheduleExistingAttendanceTitle" = "Du hast bereits Events markiert";
 "AIScheduleExistingAttendanceMessage" = "%d Events sind dieses Jahr bereits markiert. Der neue Zeitplan wird hinzugefügt und ändert sie nicht.";
 "AIScheduleExistingAttendanceContinue" = "Weiter";
@@ -248,7 +245,7 @@
 "MightSeeBands" = "Könnte Sehen Bands";
 
 // Event sharing localization
-"EventsAttended" = "Besuchte Veranstaltungen";
+"EventsAttended" = "Veranstaltungen";
 "ShowsPlural" = "Shows";
 "MeetAndGreetsPlural" = "Meet & Greets";
 "ClinicsPlural" = "Workshops";

@@ -14,9 +14,10 @@
 "Wont"="Wont";
 "Band Priority"="Band Priority";
 "Event Attendance"="Event Attendance";
-"EventAttendanceAll"="All";
+"EventAttendanceAll"="Full";
 "EventAttendancePartial"="Partial";
 "EventAttendanceNone"="None";
+"EventAttendanceStatusFormat"="%@: %@";
 "Unknown" = "Unknown";
 
 // Filter option labels (band classification and event type)
@@ -49,10 +50,6 @@
 
 "Sorting Chronologically"="Sorting Chronologically";
 "Sorting Alphabetically"="Sorting Alphabetically";
-
-"All Of Event"="Attending This Event";
-"Part Of Event"="Attending Some Of This Event";
-"None Of Event"="I Will Not See This Event";
 
 
 
@@ -101,7 +98,7 @@
 "MightSeeBands" = "Might See Bands";
 
 // Event sharing localization
-"EventsAttended" = "Events Attended";
+"EventsAttended" = "Events";
 "ShowsPlural" = "Shows";
 "MeetAndGreetsPlural" = "Meet & Greets";
 "ClinicsPlural" = "Clinics";
@@ -186,7 +183,7 @@
 "Schedule information is not currently loaded" = "Schedule information is not currently loaded";
 
 "Clear All Filters" = "Clear All Filters"; //menu choice
-"Show Flagged Events Only" = "Show Flagged Events Only"; //menu choice
+"Show Flagged Events Only" = "My Events Only"; //menu choice
 
 //venue filters
 
@@ -361,7 +358,7 @@
 "AIScheduleSeeingThemFormat" = "Seeing them: %@";
 "AIScheduleDoneTitle" = "Done";
 "AIScheduleDoneMessage" = "Marked %d events as will attend.";
-"AIScheduleDoneMessageDetail" = "You will now be taken to a view showing your schedule.\n\nIn the filter menu:\n• Click Clear All Filters to see all events\n• Click Show Flagged Events only to see only your events\n• Long press any event to change your attendance status.";
+"AIScheduleDoneMessageDetail" = "You will now be taken to a view showing your schedule.\n\nIn the filter menu:\n• Click Clear All Filters to see all events\n• Click My Events Only to see only your events\n• Long press any event to change your attendance status.";
 "AIScheduleExistingAttendanceTitle" = "You already have events marked";
 "AIScheduleExistingAttendanceMessage" = "%d events are already marked for this year. The new schedule will be added and won't change those.";
 "AIScheduleExistingAttendanceContinue" = "Continue";

@@ -818,7 +818,7 @@ open class ShowsAttended {
         eventYearString: String,
         scheduleDay: String? = nil
     ) -> String {
-        var status = getShowAttendedStatus(
+        let status = getShowAttendedStatus(
             band: band,
             location: location,
             startTime: startTime,
@@ -827,20 +827,23 @@ open class ShowsAttended {
             scheduleDay: scheduleDay
         )
         
-        var userFriendlyStatus = "";
-        
-        if (status == sawAllStatus){
-            status = NSLocalizedString("All Of Event", comment: "")
-        
-        } else if (status == sawSomeStatus){
-                status = NSLocalizedString("Part Of Event", comment: "")
-            
+        return attendanceStatusMessage(status)
+    }
+    
+    func attendanceStatusMessage(_ status: String) -> String {
+        let value: String
+        if status == sawAllStatus {
+            value = NSLocalizedString("EventAttendanceAll", comment: "Event attendance: Full")
+        } else if status == sawSomeStatus {
+            value = NSLocalizedString("EventAttendancePartial", comment: "Event attendance: Partial")
         } else {
-                status = NSLocalizedString("None Of Event", comment: "")
+            value = NSLocalizedString("EventAttendanceNone", comment: "Event attendance: None")
         }
-        
-        return status
-        
+        return String(
+            format: NSLocalizedString("EventAttendanceStatusFormat", comment: "Event attendance toast: header, value"),
+            NSLocalizedString("Event Attendance", comment: "Event attendance section header"),
+            value
+        )
     }
     
     func setShowsAttendedStatus(_ sender: UITextField, status: String)->String{
@@ -852,19 +855,19 @@ open class ShowsAttended {
         if (status == sawAllStatus){
             sender.textColor = UIColor.lightGray
             sender.text = fieldText
-            message = NSLocalizedString("All Of Event", comment: "")
+            message = attendanceStatusMessage(status)
             
         } else if (status == sawSomeStatus){
             sender.textColor = UIColor.lightGray
             
             fieldText = removeIcons(text: fieldText!)
             sender.text = fieldText
-            message = NSLocalizedString("Part Of Event", comment: "")
+            message = attendanceStatusMessage(status)
             
         } else {
             sender.textColor = UIColor.lightGray
             sender.text = fieldText
-            message = NSLocalizedString("None Of Event", comment: "")
+            message = attendanceStatusMessage(status)
         }
         
         return message;

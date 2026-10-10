@@ -482,7 +482,11 @@ class showAttendenceReport {
                         // Add each individual event attended
                         for event in events {
                             let location = event["location"] ?? ""
-                            let venueInfo = location.isEmpty ? "" : " (\(location))"
+                            var details = location.isEmpty ? [] : [location]
+                            if event["status"] == sawSomeStatus {
+                                details.append(NSLocalizedString("EventAttendancePartial", comment: "Event attendance: Partial"))
+                            }
+                            let venueInfo = details.isEmpty ? "" : " (\(details.joined(separator: ", ")))"
                             eventEntries.append("• \(bandName)\(venueInfo)")
                         }
                     } else {

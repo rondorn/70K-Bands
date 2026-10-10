@@ -7,7 +7,7 @@
     <string name="wont">Ei</string>
     <string name="unknown">Tuntematon</string>
     <string name="band_priority">Bändin prioriteetti</string>
-    <string name="event_attendance">Tapahtuman läsnäolo</string>
+    <string name="event_attendance">Osallistuminen</string>
 
     <string name="Ok">Kyllä</string>
     <string name="Cancel">Ei</string>
@@ -50,7 +50,7 @@
     <string name="unknown_bands_details">Tiedot</string>
     <string name="aischedule_done_title">Valmis</string>
     <string name="aischedule_done_message">%d tapahtumaa merkitty osallistun.</string>
-    <string name="aischedule_done_message_detail">Näet nyt aikataulusi.\n\nSuodatinvalikossa:\n• Tyhjennä suodattimet nähdäksesi kaikki\n• Näytä vain merkityt nähdäksesi omasi\n• Pitkä painallus muuttaaksesi osallistumista.</string>
+    <string name="aischedule_done_message_detail">Näet nyt aikataulusi.\n\nSuodatinvalikossa:\n• Valitse Tyhjennä kaikki suodattimet nähdäksesi kaikki tapahtumat\n• Valitse Vain omat tapahtumat nähdäksesi vain omat tapahtumasi\n• Paina tapahtumaa pitkään muuttaaksesi osallistumistasi.</string>
     <string name="aischedule_build_schedule">Rakenna aikataulu</string>
     <string name="building_schedule">Rakennetaan aikatauluasi…</string>
     <string name="build_schedule_automatically">Rakenna aikatauluni automaattisesti</string>
@@ -92,12 +92,10 @@
     <string name="SortingChronologically">Lajittelu aikajärjestyksessä</string>
     <string name="SortingAlphabetically">Lajittelu aakkosjärjestyksessä</string>
 
-    <string name="AllOfEvent">Osallistun koko tapahtumaan</string>
-    <string name="PartOfEvent">Osallistun osaan tapahtumasta</string>
-    <string name="NoneOfEvent">En tule osallistumaan tähän tapahtumaan</string>
-    <string name="EventAttendanceAll">Kaikki</string>
+    <string name="EventAttendanceAll">Kokonaan</string>
     <string name="EventAttendancePartial">Osittain</string>
-    <string name="EventAttendanceNone">Ei mitään</string>
+    <string name="EventAttendanceNone">Ei lainkaan</string>
+    <string name="event_attendance_status_format">%1$s: %2$s</string>
 
     <string name="venueFilterHeader">Näytä/piilota paikka</string>
 
@@ -167,7 +165,7 @@
     <!-- menu choice -->
     <string name="band_ranking_filters">Kiinnostussuodattimet</string>
     <!-- menu header -->
-    <string name="show_only_flagged_as_attended">Näytä vain kiinnostavat tapahtumat</string>
+    <string name="show_only_flagged_as_attended">Vain omat tapahtumat</string>
     <!-- menu header -->
     <!-- menu header -->
     <string name="event_type_filters">Tapahtumatyyppisuodattimet</string>
@@ -186,7 +184,7 @@
     <!-- menu choice -->
     <string name="show_all_events">Näytä kaikki tapahtumat</string>
     <!-- menu choice -->
-    <string name="show_flaged_events_only">Näytä vain merkityt tapahtumat</string>
+    <string name="show_flaged_events_only">Vain omat tapahtumat</string>
     <!-- menu choice -->
     <!-- venue filters -->
     <!-- menu choice -->
@@ -329,7 +327,7 @@
     <string name="MightSeeBands">Mahdollisia Bändejä</string>
     
     <!-- Event sharing localization -->
-    <string name="EventsAttended">Osallistutut Tapahtumat</string>
+    <string name="EventsAttended">Tapahtumat</string>
     <string name="ShowsPlural">Showt</string>
     <string name="MeetAndGreetsPlural">Tapaamiset &amp; Tervehdykset</string>
     <string name="ClinicsPlural">Kliinikat</string>

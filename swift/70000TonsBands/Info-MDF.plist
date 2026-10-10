@@ -53,6 +53,19 @@
 	<true/>
 	<key>FirebaseAutomaticScreenReportingEnabled</key>
 	<false/>
+	<key>INAlternativeAppNames</key>
+	<array>
+		<dict>
+			<key>INAlternativeAppName</key>
+			<string>MDF</string>
+			<key>INAlternativeAppNamePronunciationHint</key>
+			<string>M D F</string>
+		</dict>
+		<dict>
+			<key>INAlternativeAppName</key>
+			<string>Maryland Deathfest</string>
+		</dict>
+	</array>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSApplicationCategoryType</key>
@@ -68,19 +81,6 @@
 	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>Camera access is used to scan a QR code containing the event schedule from another device (e.g. when offline at the festival).</string>
-	<key>INAlternativeAppNames</key>
-	<array>
-		<dict>
-			<key>INAlternativeAppName</key>
-			<string>MDF</string>
-			<key>INAlternativeAppNamePronunciationHint</key>
-			<string>M D F</string>
-		</dict>
-		<dict>
-			<key>INAlternativeAppName</key>
-			<string>Maryland Deathfest</string>
-		</dict>
-	</array>
 	<key>NSSiriUsageDescription</key>
 	<string>Siri can answer questions about bands and show times and open a band in the app.</string>
 	<key>QLSupportedContentTypes</key>

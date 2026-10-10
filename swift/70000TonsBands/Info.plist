@@ -60,19 +60,6 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>FirebaseAppDelegateProxyEnabled</key>
 	<true/>
-	<key>ITSAppUsesNonExemptEncryption</key>
-	<false/>
-	<key>LSApplicationCategoryType</key>
-	<string></string>
-	<key>LSRequiresIPhoneOS</key>
-	<true/>
-	<key>LSSupportsOpeningDocumentsInPlace</key>
-	<true/>
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSAllowsArbitraryLoads</key>
-		<true/>
-	</dict>
 	<key>INAlternativeAppNames</key>
 	<array>
 		<dict>
@@ -88,10 +75,23 @@
 			<string>seventy K</string>
 		</dict>
 	</array>
-	<key>NSSiriUsageDescription</key>
-	<string>Siri can answer questions about bands and show times and open a band in the app.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>LSApplicationCategoryType</key>
+	<string></string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>Camera access is used to scan a QR code containing the event schedule from another device (e.g. when offline on a cruise).</string>
+	<key>NSSiriUsageDescription</key>
+	<string>Siri can answer questions about bands and show times and open a band in the app.</string>
 	<key>QLSupportedContentTypes</key>
 	<array>
 		<string>com.rdorn.70kbands.share</string>

@@ -55,7 +55,7 @@
     <string name="unknown_bands_details">Detalles</string>
     <string name="aischedule_done_title">Listo</string>
     <string name="aischedule_done_message">Se marcaron %d eventos como asistiré.</string>
-    <string name="aischedule_done_message_detail">Ahora verás tu horario.\n\nEn el menú de filtros:\n• Pulsa Borrar filtros para ver todos los eventos\n• Pulsa Solo eventos marcados para ver solo los tuyos\n• Mantén pulsado un evento para cambiar si asistirás.</string>
+    <string name="aischedule_done_message_detail">Ahora verás tu horario.\n\nEn el menú de filtros:\n• Toca Borrar todos los filtros para ver todos los eventos\n• Toca Solo mis eventos para ver solo tus eventos\n• Mantén pulsado cualquier evento para cambiar tu asistencia.</string>
     <string name="aischedule_build_schedule">Construir horario</string>
     <string name="building_schedule">Construyendo tu horario…</string>
     <string name="build_schedule_automatically">Construir mi horario automáticamente</string>
@@ -86,12 +86,10 @@
     <string name="AlertForShowsAccordingToSelection">Alertas para conciertos de acuerdo con tus favoritos</string>
     <string name="SortingChronologically">Ordenar cronológicamente</string>
     <string name="SortingAlphabetically">Ordenar alfabéticamente</string>
-    <string name="AllOfEvent">Asistir a todo este evento</string>
-    <string name="PartOfEvent">Asistir a parte de este evento</string>
-    <string name="NoneOfEvent">No voy a asistir a este evento</string>
-    <string name="EventAttendanceAll">Todo</string>
+    <string name="EventAttendanceAll">Completa</string>
     <string name="EventAttendancePartial">Parcial</string>
-    <string name="EventAttendanceNone">Ninguno</string>
+    <string name="EventAttendanceNone">Ninguna</string>
+    <string name="event_attendance_status_format">%1$s: %2$s</string>
 
 
 
@@ -160,7 +158,7 @@
     <!-- menu choice -->
     <string name="band_ranking_filters">Filtros de clasificación de bandas</string>
     <!-- menu header -->
-    <string name="show_only_flagged_as_attended">Mostrar solo marcados como asistidos</string>
+    <string name="show_only_flagged_as_attended">Solo mis eventos</string>
     <!-- menu header -->
     <!-- menu header -->
     <string name="event_type_filters">Filtros de tipo de evento</string>
@@ -179,7 +177,7 @@
     <!-- menu choice -->
     <string name="show_all_events">Mostrar todos los eventos</string>
     <!-- menu choice -->
-    <string name="show_flaged_events_only">Mostrar solo eventos marcados</string>
+    <string name="show_flaged_events_only">Solo mis eventos</string>
     <!-- menu choice -->
     <!-- venue filters -->
     <!-- menu choice -->
@@ -312,7 +310,7 @@
     <string name="MightSeeBands">Bandas Que Podría Ver</string>
     
     <!-- Event sharing localization -->
-    <string name="EventsAttended">Eventos Asistidos</string>
+    <string name="EventsAttended">Eventos</string>
     <string name="ShowsPlural">Shows</string>
     <string name="MeetAndGreetsPlural">Meet &amp; Greets</string>
     <string name="ClinicsPlural">Clínicas</string>

@@ -19,9 +19,10 @@
 "Wont"="Skal ikke";
 "Band Priority"="Bandprioritet";
 "Event Attendance"="Begivenhedsdeltagelse";
-"EventAttendanceAll"="Alle";
-"EventAttendancePartial"="Delvist";
+"EventAttendanceAll"="Fuld";
+"EventAttendancePartial"="Delvis";
 "EventAttendanceNone"="Ingen";
+"EventAttendanceStatusFormat"="%@: %@";
 
 "Ok"="Ja";
 "Cancel"="Ingen";
@@ -39,10 +40,6 @@
 
 "Sorting Chronologically"="Sortering Kronologisk";
 "Sorting Alphabetically"="Sortering Alfabetisk";
-
-"All Of Event"="Deltager i alt dette arrangement";
-"Part Of Event"="Deltager nogle af denne begivenhed";
-"None Of Event"="Jeg vil ikke se denne begivenhed";
 
 
 
@@ -99,7 +96,7 @@
 "Schedule information is not currently loaded" = "Programoplysninger er ikke indlæst i øjeblikket";
 
 "Clear All Filters" = "Ryd alle filtre";  //menu choice
-"Show Flagged Events Only" = "Vis kun markerede begivenheder";  //menu choice
+"Show Flagged Events Only" = "Kun mine begivenheder";  //menu choice
 
 //venue filters
 
@@ -143,7 +140,7 @@
 "MightSeeBands" = "Måske Se Bands";
 
 // Event sharing localization
-"EventsAttended" = "Arrangementer Deltaget";
+"EventsAttended" = "Begivenheder";
 "ShowsPlural" = "Shows";
 "MeetAndGreetsPlural" = "Møde & Hilsner";
 "ClinicsPlural" = "Klinikker";
@@ -190,7 +187,7 @@
 "AIScheduleMustConflictBoth" = "Begge";
 "AIScheduleDoneTitle" = "Færdig";
 "AIScheduleDoneMessage" = "%d events markeret som deltager.";
-"AIScheduleDoneMessageDetail" = "Du ser nu din tidsplan.\n\nI filtermenuen:\n• Tryk Ryd filtre for alle events\n• Tryk Vis kun markerede for dine events\n• Langt tryk på et event for at ændre status.";
+"AIScheduleDoneMessageDetail" = "Du ser nu din tidsplan.\n\nI filtermenuen:\n• Tryk på Ryd alle filtre for at se alle begivenheder\n• Tryk på Kun mine begivenheder for kun at se dine begivenheder\n• Tryk længe på en begivenhed for at ændre din deltagelse.";
 "AIScheduleExistingAttendanceTitle" = "Du har allerede markeret events";
 "AIScheduleExistingAttendanceMessage" = "%d events er allerede markeret dette år. Den nye tidsplan tilføjes uden at ændre dem.";
 "AIScheduleExistingAttendanceContinue" = "Fortsæt";

@@ -20,9 +20,10 @@
 "Wont" = "Non";
 "Band Priority" = "Priorité du groupe";
 "Event Attendance" = "Présence à l'événement";
-"EventAttendanceAll" = "Tous";
-"EventAttendancePartial" = "Partiel";
-"EventAttendanceNone" = "Aucun";
+"EventAttendanceAll" = "Complète";
+"EventAttendancePartial" = "Partielle";
+"EventAttendanceNone" = "Aucune";
+"EventAttendanceStatusFormat"="%@ : %@";
 "Unknown" = "Inconnu";
 
 // Filter option labels
@@ -50,10 +51,6 @@
 
 "Sorting Chronologically"="Tri chronologique";
 "Sorting Alphabetically"="Tri alphabétique";
-
-"All Of Event"="Assister à tous cet événement";
-"Part Of Event"="Assister à certains de cet événement";
-"None Of Event"="Je ne verrai pas cet événement";
 
 
 
@@ -136,7 +133,7 @@
 
 "Clear All Filters" = "Effacer tous les filtres"; //menu choice
 
-"Show Flagged Events Only" = "Afficher uniquement les événements marqués"; //menu choice
+"Show Flagged Events Only" = "Mes événements uniquement"; //menu choice
 
 //venue filters
 
@@ -344,7 +341,7 @@
 "ClinicsPlural" = "Cliniques";
 "Close" = "Fermer";
 "CruiseEventsPlural" = "Evenements Organises par les Participants";
-"EventsAttended" = "Événements Assistés";
+"EventsAttended" = "Événements";
 "MeetAndGreetsPlural" = "Rencontres";
 "MightSeeBands" = "Bandes à Peut-être Voir";
 
@@ -390,7 +387,7 @@
 "AIScheduleMustConflictBoth" = "Les deux";
 "AIScheduleDoneTitle" = "Terminé";
 "AIScheduleDoneMessage" = "%d événements marqués comme « j'assiste ».";
-"AIScheduleDoneMessageDetail" = "Vous allez voir votre programme.\n\nDans le menu des filtres :\n• Appuyez sur Effacer les filtres pour tout voir\n• Appuyez sur Événements marqués pour ne voir que les vôtres\n• Maintenez appuyé sur un événement pour changer votre statut.";
+"AIScheduleDoneMessageDetail" = "Vous allez voir votre programme.\n\nDans le menu des filtres :\n• Appuyez sur Effacer tous les filtres pour voir tous les événements\n• Appuyez sur Mes événements uniquement pour ne voir que vos événements\n• Appuyez longuement sur un événement pour modifier votre présence.";
 "AIScheduleExistingAttendanceTitle" = "Vous avez déjà des événements marqués";
 "AIScheduleExistingAttendanceMessage" = "%d événements sont déjà marqués cette année. Le nouveau programme s'ajoutera sans les modifier.";
 "AIScheduleExistingAttendanceContinue" = "Continuer";
