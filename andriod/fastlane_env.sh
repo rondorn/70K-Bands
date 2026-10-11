@@ -36,10 +36,24 @@ resolve_fastlane_command() {
         return 0
     fi
 
-    if command -v fastlane >/dev/null 2>&1; then
-        echo "Note: Gemfile present but bundle gems not installed — using standalone fastlane." >&2
+    # A fastlane on PATH can be a stale RubyGems stub for macOS system Ruby that crashes on this
+    # Gemfile.lock's bundler version, so only accept a candidate that actually runs.
+    local fastlane_cmd=""
+    for candidate in \
+        "/opt/homebrew/bin/fastlane" \
+        "/usr/local/bin/fastlane" \
+        "$(command -v fastlane 2>/dev/null)"; do
+        [ -n "$candidate" ] && [ -x "$candidate" ] || continue
+        if "$candidate" --version >/dev/null 2>&1; then
+            fastlane_cmd="$candidate"
+            break
+        fi
+    done
+
+    if [ -n "$fastlane_cmd" ]; then
+        echo "Note: Gemfile present but bundle gems not installed — using standalone fastlane ($fastlane_cmd)." >&2
         echo "      To use bundled gems: /opt/homebrew/opt/ruby/bin/bundle install" >&2
-        FASTLANE=(fastlane)
+        FASTLANE=("$fastlane_cmd")
         return 0
     fi
 

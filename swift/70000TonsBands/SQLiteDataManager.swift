@@ -182,12 +182,13 @@ class SQLiteDataManager: DataManagerProtocol {
             if storedVersion == 8 {
                 try? db.execute("ALTER TABLE bands ADD COLUMN lineIndex INTEGER")
             }
-            // Major schema bumps: drop and recreate (only when needed in future)
+            // Major schema bumps: drop and recreate (only when needed in future).
+            // user_priorities / user_attendances are owned by SQLitePriorityManager / SQLiteAttendanceManager,
+            // which may already have created them this launch; dropping them here (e.g. on a fresh install,
+            // where storedVersion is 0) breaks every priority and attendance write until the next launch.
             if storedVersion < 8 {
                 try? db.run(bandsTable.drop(ifExists: true))
                 try? db.run(eventsTable.drop(ifExists: true))
-                try? db.run(userPrioritiesTable.drop(ifExists: true))
-                try? db.run(userAttendancesTable.drop(ifExists: true))
                 try? db.run(descriptionMapTable.drop(ifExists: true))
                 for year in 2011...2030 {
                     UserDefaults.standard.removeObject(forKey: "batchInsertCallCount_\(year)")
@@ -239,26 +240,10 @@ class SQLiteDataManager: DataManagerProtocol {
             t.unique(eventBandName, eventYear_col, timeIndex)
         })
         
-        // User Priorities table
-        try db.run(userPrioritiesTable.create(ifNotExists: true) { t in
-            t.column(priorityId, primaryKey: .autoincrement)
-            t.column(priorityBandName)
-            t.column(priorityEventYear)
-            t.column(priorityValue)
-            t.column(priorityLastModified)
-            t.unique(priorityBandName, priorityEventYear)
-        })
-        
-        // User Attendances table
-        try db.run(userAttendancesTable.create(ifNotExists: true) { t in
-            t.column(attendanceId, primaryKey: .autoincrement)
-            t.column(attendanceBandName)
-            t.column(attendanceEventYear)
-            t.column(attendanceTimeIndex)
-            t.column(attendanceStatus)
-            t.column(attendanceLastModified)
-            t.unique(attendanceBandName, attendanceEventYear, attendanceTimeIndex)
-        })
+        // user_priorities and user_attendances are created (and migrated) by SQLitePriorityManager and
+        // SQLiteAttendanceManager; creating them here first would lock in an outdated schema.
+        _ = SQLitePriorityManager.shared
+        _ = SQLiteAttendanceManager.shared
         
         // Description Map table
         try db.run(descriptionMapTable.create(ifNotExists: true) { t in
