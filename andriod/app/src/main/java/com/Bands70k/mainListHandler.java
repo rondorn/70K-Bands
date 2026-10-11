@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Typeface;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
+import android.text.TextPaint;
 import android.text.style.AbsoluteSizeSpan;
 import android.text.style.StyleSpan;
 import android.util.Log;
@@ -1014,7 +1015,9 @@ public class mainListHandler {
     }
 
     /**
-     * Matches iOS nav title: appName on line 1 (11sp), count on line 2 (15sp bold).
+     * Matches iOS nav title: app name 13sp, count 17sp bold.
+     * Each line shrinks (down to 11sp) when it is wider than the header column,
+     * so long translations stay one line on a narrow phone.
      */
     public static void applyTwoLineHeader(TextView target, String countLine) {
         if (target == null) {
@@ -1022,19 +1025,67 @@ public class mainListHandler {
         }
         String festival = FestivalConfig.getInstance().appName;
         String count = countLine != null ? countLine.trim() : "";
+        float density = target.getResources().getDisplayMetrics().scaledDensity;
+        applyHeaderSpans(target, festival, count, 13f * density, 17f * density);
+        final String generation = festival + "\n" + count;
+        target.setTag(generation);
+        target.post(() -> {
+            if (!generation.equals(target.getTag())) {
+                return;
+            }
+            int available = target.getWidth() - target.getPaddingLeft() - target.getPaddingRight();
+            if (target.getParent() instanceof android.view.View) {
+                android.view.View parent = (android.view.View) target.getParent();
+                int parentWidth = parent.getWidth() - parent.getPaddingLeft() - parent.getPaddingRight();
+                if (parentWidth > available) {
+                    available = parentWidth;
+                }
+            }
+            if (available <= 2) {
+                return;
+            }
+            available -= 2;
+            float namePx = fittedHeaderSizePx(target, festival, 13f, 11f, available);
+            float countPx = fittedHeaderSizePx(target, count, 17f, 11f, available);
+            applyHeaderSpans(target, festival, count, namePx, countPx);
+        });
+    }
+
+    private static void applyHeaderSpans(TextView target, String festival, String count, float namePx, float countPx) {
         SpannableStringBuilder sb = new SpannableStringBuilder();
         sb.append(festival);
         int festivalEnd = sb.length();
-        sb.setSpan(new AbsoluteSizeSpan(11, true), 0, festivalEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        sb.setSpan(new AbsoluteSizeSpan(Math.round(namePx), false), 0, festivalEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         sb.setSpan(new StyleSpan(Typeface.BOLD), 0, festivalEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         if (!count.isEmpty()) {
             sb.append('\n');
             int countStart = sb.length();
             sb.append(count);
-            sb.setSpan(new AbsoluteSizeSpan(15, true), countStart, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            sb.setSpan(new AbsoluteSizeSpan(Math.round(countPx), false), countStart, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             sb.setSpan(new StyleSpan(Typeface.BOLD), countStart, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         target.setText(sb);
+    }
+
+    private static float fittedHeaderSizePx(TextView target, String text, float preferredSp, float minSp, int availablePx) {
+        float density = target.getResources().getDisplayMetrics().scaledDensity;
+        float preferredPx = preferredSp * density;
+        if (text == null || text.isEmpty()) {
+            return preferredPx;
+        }
+        float measured = headerTextWidth(target, text, preferredPx);
+        if (measured <= availablePx || measured <= 0f) {
+            return preferredPx;
+        }
+        float fitted = preferredPx * (availablePx / measured);
+        return Math.max(fitted, minSp * density);
+    }
+
+    private static float headerTextWidth(TextView target, String text, float sizePx) {
+        TextPaint paint = new TextPaint(target.getPaint());
+        paint.setTypeface(Typeface.DEFAULT_BOLD);
+        paint.setTextSize(sizePx);
+        return paint.measureText(text);
     }
 
     /**

@@ -1306,6 +1306,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             label.textAlignment = .center
             label.numberOfLines = 2
             label.lineBreakMode = .byTruncatingTail
+            label.adjustsFontSizeToFitWidth = true
+            label.minimumScaleFactor = 0.75
             label.isUserInteractionEnabled = true
             label.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(showProfilePicker)))
             titleCountLabel = label
@@ -1317,19 +1319,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         paragraph.lineSpacing = 0
         let attributed = NSMutableAttributedString()
         attributed.append(NSAttributedString(string: festivalLine + "\n", attributes: [
-            .font: UIFont.systemFont(ofSize: 11, weight: .semibold),
+            .font: UIFont.systemFont(ofSize: 13, weight: .semibold),
             .foregroundColor: profileColor.withAlphaComponent(0.9),
             .paragraphStyle: paragraph
         ]))
         attributed.append(NSAttributedString(string: countLine, attributes: [
-            .font: UIFont.boldSystemFont(ofSize: 15),
+            .font: UIFont.boldSystemFont(ofSize: 17),
             .foregroundColor: profileColor,
             .paragraphStyle: paragraph
         ]))
         label.attributedText = attributed
         // Size to the text only. A near-full-width titleView sits on top of the
         // stats button on iOS 27.2 and eats its taps.
-        let maxWidth: CGFloat = 160
+        let maxWidth: CGFloat = 200
         label.preferredMaxLayoutWidth = maxWidth
         let fitted = label.sizeThatFits(CGSize(width: maxWidth, height: 44))
         let width = min(max(ceil(fitted.width), 80), maxWidth)
