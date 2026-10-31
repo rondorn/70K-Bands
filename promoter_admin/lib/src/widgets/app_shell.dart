@@ -180,12 +180,16 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasFestival = festivalName.trim().isNotEmpty &&
         festivalName.trim() != AppBrand.name;
-    final logoSize = compact ? 56.0 : 112.0;
+    final logoSize = compact ? 44.0 : 112.0;
     final panelPadding = compact
-        ? const EdgeInsets.symmetric(horizontal: 12, vertical: 10)
+        ? const EdgeInsets.symmetric(horizontal: 10, vertical: 6)
         : const EdgeInsets.symmetric(horizontal: 18, vertical: 14);
-    final titleSize = compact ? 20.0 : 24.0;
-    final sectionTitleSize = compact ? 15.0 : 17.0;
+    final titleSize = compact ? 18.0 : 24.0;
+    final sectionTitleSize = compact ? 14.0 : 17.0;
+
+    final badge = publishStatus.headline.isNotEmpty
+        ? _PublishStatusBadge(status: publishStatus, compact: compact)
+        : null;
 
     final titleBlock = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -194,12 +198,12 @@ class _Header extends StatelessWidget {
           AppBrand.name,
           style: TextStyle(
             color: AppColors.brandSteel,
-            fontSize: compact ? 11 : 13,
+            fontSize: compact ? 10 : 13,
             fontWeight: FontWeight.w700,
             letterSpacing: 1.2,
           ),
         ),
-        SizedBox(height: compact ? 2 : 4),
+        SizedBox(height: compact ? 1 : 4),
         Text(
           hasFestival ? festivalName : heading,
           style: TextStyle(
@@ -209,7 +213,7 @@ class _Header extends StatelessWidget {
           ),
         ),
         if (hasFestival) ...[
-          const SizedBox(height: 2),
+          SizedBox(height: compact ? 1 : 2),
           Text(
             heading,
             style: TextStyle(
@@ -219,32 +223,36 @@ class _Header extends StatelessWidget {
             ),
           ),
         ],
-        SizedBox(height: compact ? 2 : 4),
+        SizedBox(height: compact ? 1 : 4),
         Text(
           subheading,
+          maxLines: compact ? 2 : null,
+          overflow: compact ? TextOverflow.ellipsis : null,
           style: TextStyle(
             color: AppColors.muted,
-            fontSize: compact ? 12 : 14,
+            fontSize: compact ? 11 : 14,
+            height: compact ? 1.25 : null,
           ),
         ),
         if (metaLine.isNotEmpty) ...[
-          SizedBox(height: compact ? 4 : 8),
+          SizedBox(height: compact ? 2 : 8),
           Text(
             metaLine,
-            maxLines: compact ? 3 : null,
+            maxLines: compact ? 2 : null,
             overflow: compact ? TextOverflow.ellipsis : null,
             style: TextStyle(
               color: const Color(0xFF7A7A7A),
-              fontSize: compact ? 11 : 13,
+              fontSize: compact ? 10 : 13,
+              height: compact ? 1.25 : null,
             ),
           ),
         ],
+        if (compact && badge != null) ...[
+          const SizedBox(height: 4),
+          badge,
+        ],
       ],
     );
-
-    final badge = publishStatus.headline.isNotEmpty
-        ? _PublishStatusBadge(status: publishStatus, compact: compact)
-        : null;
 
     return Container(
       padding: panelPadding,
@@ -254,30 +262,21 @@ class _Header extends StatelessWidget {
         border: Border.all(color: AppColors.navBorder),
       ),
       child: compact
-          ? Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+          ? Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
-                      child: Image.asset(
-                        AppBrand.logoAsset,
-                        width: logoSize,
-                        height: logoSize,
-                        fit: BoxFit.cover,
-                        filterQuality: FilterQuality.high,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(child: titleBlock),
-                  ],
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: Image.asset(
+                    AppBrand.logoAsset,
+                    width: logoSize,
+                    height: logoSize,
+                    fit: BoxFit.cover,
+                    filterQuality: FilterQuality.high,
+                  ),
                 ),
-                if (badge != null) ...[
-                  const SizedBox(height: 8),
-                  badge,
-                ],
+                const SizedBox(width: 10),
+                Expanded(child: titleBlock),
               ],
             )
           : Row(
@@ -320,46 +319,150 @@ class _PublishStatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = _colorsFor(status.kind);
-    return Container(
+    final detail = status.detail?.trim();
+    final hasDetail = detail != null && detail.isNotEmpty;
+    final tooltipMessage = hasDetail
+        ? '${status.headline}\n$detail'
+        : status.headline;
+
+    final badge = Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(
-        horizontal: compact ? 10 : 14,
-        vertical: compact ? 8 : 10,
+        horizontal: compact ? 8 : 14,
+        vertical: compact ? 4 : 10,
       ),
       decoration: BoxDecoration(
         color: colors.background,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(compact ? 6 : 8),
         border: Border.all(color: colors.border),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            status.headline,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: colors.text,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              height: 1.35,
+      child: compact
+          ? Row(
+              children: [
+                Icon(
+                  _iconFor(status.kind),
+                  size: 14,
+                  color: colors.text,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    status.headline,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: colors.text,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      height: 1.2,
+                    ),
+                  ),
+                ),
+                if (hasDetail)
+                  Icon(
+                    Icons.info_outline,
+                    size: 14,
+                    color: colors.detail,
+                  ),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  status.headline,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: colors.text,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    height: 1.35,
+                  ),
+                ),
+                if (hasDetail) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    detail,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: colors.detail,
+                      fontSize: 12,
+                      height: 1.35,
+                    ),
+                  ),
+                ],
+              ],
             ),
-          ),
-          if (status.detail != null && status.detail!.trim().isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              status.detail!,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: colors.detail,
-                fontSize: 12,
-                height: 1.35,
-              ),
-            ),
-          ],
-        ],
+    );
+
+    if (!compact) {
+      return badge;
+    }
+
+    return Tooltip(
+      message: tooltipMessage,
+      waitDuration: const Duration(milliseconds: 400),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(6),
+          onTap: hasDetail
+              ? () => _showDetailSheet(context, detail)
+              : null,
+          child: badge,
+        ),
       ),
     );
+  }
+
+  void _showDetailSheet(BuildContext context, String detail) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.panel,
+      showDragHandle: true,
+      builder: (context) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              status.headline,
+              style: const TextStyle(
+                color: AppColors.heading,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              detail,
+              style: const TextStyle(color: AppColors.muted, fontSize: 14),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  IconData _iconFor(PublishStatusKind kind) {
+    switch (kind) {
+      case PublishStatusKind.readyToPublish:
+      case PublishStatusKind.yearRollReady:
+        return Icons.publish_outlined;
+      case PublishStatusKind.upToDate:
+        return Icons.check_circle_outline;
+      case PublishStatusKind.error:
+      case PublishStatusKind.blocked:
+        return Icons.warning_amber_rounded;
+      case PublishStatusKind.checking:
+      case PublishStatusKind.scheduleSaving:
+        return Icons.hourglass_top;
+      case PublishStatusKind.unknown:
+      case PublishStatusKind.notConfigured:
+        return Icons.info_outline;
+    }
   }
 
   ({Color background, Color border, Color text, Color detail}) _colorsFor(

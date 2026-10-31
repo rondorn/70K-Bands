@@ -8,8 +8,11 @@ import 'package:flutter/services.dart';
 /// Uses shortest side so iPhone landscape stays compact (width alone would not).
 const kCompactLayoutShortestSide = 700.0;
 
-/// Shortest-side below which the device is treated as a phone (portrait lock).
+/// Shortest-side for classic phones / closed Duo cover (portrait lock).
 const kPhoneShortestSide = 600.0;
+
+/// iOS phone chrome including open Duo. Stays below iPad mini (~744pt).
+const kIosPhoneShortestSide = kCompactLayoutShortestSide;
 
 /// True on phone-sized screens where the Mac/iPad table layout would overflow.
 bool isCompactLayout(BuildContext context) {
@@ -17,8 +20,37 @@ bool isCompactLayout(BuildContext context) {
       kCompactLayoutShortestSide;
 }
 
-/// True on phone-class devices (iPhone, not iPad).
+bool get _isDesktopPlatform {
+  if (kIsWeb) return false;
+  return Platform.isMacOS || Platform.isWindows || Platform.isLinux;
+}
+
+/// Pure size/platform rule for phone chrome (testable without a widget tree).
+/// Desktop stays on the desktop/iPad shell. iOS uses a higher threshold so open
+/// Duo gets the one-line header + accordion nav; iPad mini and larger do not.
+bool isPhoneLayoutForShortestSide(
+  double shortestSide, {
+  required bool isDesktopPlatform,
+  required bool isIos,
+}) {
+  if (isDesktopPlatform) return false;
+  final threshold = isIos ? kIosPhoneShortestSide : kPhoneShortestSide;
+  return shortestSide < threshold;
+}
+
+/// True for iPhone (including Duo) and other phones — phone shell chrome.
+/// False on Mac/Windows/Linux and on iPad.
 bool isPhoneDevice(BuildContext context) {
+  return isPhoneLayoutForShortestSide(
+    MediaQuery.sizeOf(context).shortestSide,
+    isDesktopPlatform: _isDesktopPlatform,
+    isIos: !kIsWeb && Platform.isIOS,
+  );
+}
+
+/// Portrait lock for classic phone / closed cover only. Open Duo may rotate.
+bool shouldLockPhonePortrait(BuildContext context) {
+  if (_isDesktopPlatform) return false;
   return MediaQuery.sizeOf(context).shortestSide < kPhoneShortestSide;
 }
 
@@ -48,7 +80,7 @@ class _CompactPhoneOrientationScopeState
 
   void _applyOrientations(BuildContext context) {
     if (!_supportsOrientationLock) return;
-    if (isPhoneDevice(context)) {
+    if (shouldLockPhonePortrait(context)) {
       SystemChrome.setPreferredOrientations(const [
         DeviceOrientation.portraitUp,
         DeviceOrientation.portraitDown,

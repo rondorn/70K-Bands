@@ -1093,6 +1093,7 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
 
   Widget _buildForm() {
     return SingleChildScrollView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       child: PortalPanel(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

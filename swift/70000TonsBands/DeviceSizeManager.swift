@@ -10,20 +10,49 @@ import UIKit
 import SwiftUI
 
 /// Layout rules for iPhone, iPad, and foldable phones (iPhone Duo).
-/// Split view is for iPad in any orientation, and for large iPhones only when landscape.
+/// Split view is for iPad in any orientation, and for large phones (Duo inner / Pro Max)
+/// in landscape only. Open Duo portrait is always a single column — an open band detail
+/// is pushed on the list stack, never side-by-side (that caused stuck/unresponsive UI
+/// after rotating from landscape split).
 enum SplitViewLayoutPolicy {
     /// Whether master/detail should sit side by side.
-    /// iPad: always. Phone (including Duo inner display): only when the window is landscape.
+    /// iPad: always. Phone: only landscape on a large display. `hasOpenDetail` is ignored
+    /// for phones (kept for call-site compatibility); portrait with a band open stays
+    /// single-column so rotate landscape→portrait does not leave a stuck split.
     static func shouldUseSplitView(
         idiom: UIUserInterfaceIdiom,
         isLargeDisplay: Bool,
-        isLandscape: Bool
+        isLandscape: Bool,
+        hasOpenDetail: Bool = false
     ) -> Bool {
         guard isLargeDisplay else { return false }
         if idiom == .pad {
             return true
         }
+        // Phone / Duo: landscape only. An open detail must not keep split in portrait.
+        _ = hasOpenDetail
         return isLandscape
+    }
+
+    /// A collapsed split reports only the list column. The detail must not be installed
+    /// there — that replaces the band list and leaves the right column empty.
+    static func canInstallPushedDetailOnExistingSecondary(columnCount: Int) -> Bool {
+        columnCount > 1
+    }
+
+    /// True when this controller is showing a band, including one pushed on the list.
+    static func containsBandDetail(_ viewController: UIViewController?) -> Bool {
+        guard let viewController else { return false }
+        if viewController is DetailHostingController {
+            return true
+        }
+        if let navigation = viewController as? UINavigationController {
+            return navigation.viewControllers.contains { $0 is DetailHostingController }
+        }
+        if let split = viewController as? UISplitViewController {
+            return split.viewControllers.contains { containsBandDetail($0) }
+        }
+        return false
     }
 
     /// Extra inset for row content (Day column). 0 when cells already live in the safe area.
@@ -42,15 +71,18 @@ enum SplitViewLayoutPolicy {
     }
 
     /// Share/gear belong in iOS 27 side chrome only on iPhone and closed Duo.
-    /// iPad's split primary column is also `.compact`, but it has no cover chrome —
-    /// putting those items in the nav bar crushes the title and stats control.
+    /// Split layouts (iPad, open Duo) also report `.compact` on the primary column but
+    /// have no cover chrome — keeping those items inline crushes the title/count.
     static func usesCompactListChrome(
         idiom: UIUserInterfaceIdiom,
         horizontalSizeClass: UIUserInterfaceSizeClass,
         hingeAvailable: Bool,
-        isHingeClosed: Bool
+        isHingeClosed: Bool,
+        isShowingSplitLayout: Bool = false
     ) -> Bool {
         guard idiom != .pad else { return false }
+        if isShowingSplitLayout { return false }
+        if hingeAvailable && !isHingeClosed { return false }
         return horizontalSizeClass == .compact || (hingeAvailable && isHingeClosed)
     }
 
@@ -95,9 +127,103 @@ enum SplitViewLayoutPolicy {
         return availableWidth
     }
 
+    /// Trailing nav actions that can move into an overflow (⋯) menu when the bar is tight.
+    enum NavBarTrailingAction: Equatable {
+        case calendar
+        case share
+        case preferences
+    }
+
+    /// Decides which trailing actions stay inline vs move behind an ellipsis.
+    /// `trailingBudget` is space left after stats + title — short titles (band list)
+    /// can show icons inline; long titles ("(2026) 211 Events") keep them in ⋯.
+    enum NavigationBarOverflowPolicy {
+        static let approximateBarButtonWidth: CGFloat = 44
+        static let minimumTitleWidth: CGFloat = 168
+        static let leadingControlsWidth: CGFloat = 44
+        static let horizontalMargins: CGFloat = 24
+
+        /// How many trailing icons fit in the remaining nav-bar budget (no ellipsis).
+        static func maxInlineTrailingCount(trailingBudget: CGFloat) -> Int {
+            guard trailingBudget >= approximateBarButtonWidth else { return 0 }
+            return Int(trailingBudget / approximateBarButtonWidth)
+        }
+
+        /// Extra cushion so two trailing icons don't crush a long year/count title.
+        static let multiIconBreathingRoom: CGFloat = 36
+
+        /// `actions` is priority order (calendar first). When everything fits, overflow
+        /// is empty (no ⋯). Otherwise lower-priority actions move behind ⋯.
+        static func partitionTrailingActions(
+            trailingBudget: CGFloat,
+            actions: [NavBarTrailingAction]
+        ) -> (inline: [NavBarTrailingAction], overflow: [NavBarTrailingAction]) {
+            guard trailingBudget > 1, !actions.isEmpty else {
+                return (actions, [])
+            }
+
+            let allInlineWidth = CGFloat(actions.count) * approximateBarButtonWidth
+            let needed =
+                allInlineWidth
+                + (actions.count > 1 ? multiIconBreathingRoom : 0)
+            if trailingBudget >= needed {
+                return (actions, [])
+            }
+
+            // Reserve one slot for ⋯, then fill remaining slots from the front.
+            let budgetForInline = trailingBudget - approximateBarButtonWidth
+            let maxInline = maxInlineTrailingCount(trailingBudget: budgetForInline)
+            let inline = Array(actions.prefix(maxInline))
+            let overflow = Array(actions.dropFirst(inline.count))
+            if overflow.isEmpty {
+                return (actions, [])
+            }
+            return (inline, overflow)
+        }
+
+        /// Full-bar width helper used by older call sites / tests.
+        static func partitionTrailingActions(
+            availableWidth: CGFloat,
+            actions: [NavBarTrailingAction]
+        ) -> (inline: [NavBarTrailingAction], overflow: [NavBarTrailingAction]) {
+            let reserved = leadingControlsWidth + minimumTitleWidth + horizontalMargins
+            return partitionTrailingActions(
+                trailingBudget: availableWidth - reserved,
+                actions: actions
+            )
+        }
+    }
+
+    /// Nav calendar/list toggle: iPad and other split layouts, plus an open Duo in any
+    /// orientation. Closed Duo and regular iPhone stay orientation-driven (no icon).
+    static func shouldOfferManualScheduleCalendarToggle(
+        usesSplitLayout: Bool,
+        hingeAvailable: Bool,
+        isHingeClosed: Bool
+    ) -> Bool {
+        if usesSplitLayout { return true }
+        return hingeAvailable && !isHingeClosed
+    }
+
     /// Discard the secondary column when collapsing if it is only the empty placeholder.
     static func shouldDiscardSecondaryOnCollapse(isPlaceholderDetail: Bool) -> Bool {
         isPlaceholderDetail
+    }
+
+    /// Center the app-name/count in `titleView` when the bar is not ellipsis-only.
+    /// Compact chrome (closed Duo / phone): always center — share/gear/stats park in the
+    /// side icon column, so a leading title looks pinned in the corner.
+    /// Ellipsis-only split bars keep the title in `leftBarButtonItems` so it cannot
+    /// be crushed; with trailing room the same leading placement looks left-justified.
+    static func shouldCenterNavigationTitle(
+        inlineTrailingCount: Int,
+        overflowTrailingCount: Int,
+        usesCompactListChrome: Bool
+    ) -> Bool {
+        if usesCompactListChrome { return true }
+        // Cramped: everything is behind ⋯ — keep title leading next to stats.
+        if inlineTrailingCount == 0 && overflowTrailingCount > 0 { return false }
+        return true
     }
 
     static func isPlaceholderDetail(_ viewController: UIViewController?) -> Bool {
@@ -404,12 +530,28 @@ class DeviceSizeManager: ObservableObject {
         )
     }
 
-    /// Calendar overlay is for compact phones (including the closed Duo cover), not split layouts.
+    /// Auto landscape calendar overlay: compact phones and the closed Duo cover only.
+    /// Open Duo and split layouts use the nav calendar toggle instead.
     func allowsIPhoneLandscapeCalendar() -> Bool {
-        !shouldUseSplitView()
+        if isOpenDuoDisplay() { return false }
+        return !shouldUseSplitView()
     }
 
-    /// Split view for iPad always; for large phones (Duo inner / Pro Max) only in landscape.
+    /// Inner display with the hinge open (not the closed cover).
+    func isOpenDuoDisplay() -> Bool {
+        hingeAvailable && !isHingeClosed
+    }
+
+    /// Calendar icon in the nav bar (manual list ↔ calendar), including open Duo portrait.
+    func shouldOfferManualScheduleCalendarToggle() -> Bool {
+        SplitViewLayoutPolicy.shouldOfferManualScheduleCalendarToggle(
+            usesSplitLayout: shouldUseSplitView(),
+            hingeAvailable: hingeAvailable,
+            isHingeClosed: isHingeClosed
+        )
+    }
+
+    /// Split view for iPad always; for large phones / open Duo in landscape only.
     func shouldUseSplitView() -> Bool {
         updateDeviceSize()
         if hingeAvailable && isHingeClosed {
@@ -418,8 +560,14 @@ class DeviceSizeManager: ObservableObject {
         return SplitViewLayoutPolicy.shouldUseSplitView(
             idiom: UIDevice.current.userInterfaceIdiom,
             isLargeDisplay: isLargeDisplay,
-            isLandscape: isCurrentlyLandscape()
+            isLandscape: isCurrentlyLandscape(),
+            hasOpenDetail: false
         )
+    }
+
+    /// Band detail pushed on the list, or already showing in the secondary column.
+    func hasOpenBandDetail() -> Bool {
+        SplitViewLayoutPolicy.containsBandDetail(keyWindow()?.rootViewController)
     }
     
     /// Determines if the device has a large display (tablet) vs normal display (phone)
@@ -508,8 +656,33 @@ class DeviceSizeManager: ObservableObject {
 /// portrait-upside-down on devices that support it (Touch ID phones, and possibly Duo’s cover).
 final class AdaptiveSplitViewController: UISplitViewController {
     private var isTransitioningSize = false
+    private var pushedDetailRehomeAttempts = 0
 
     var isSizeTransitionInProgress: Bool { isTransitioningSize }
+
+    /// Fold transitions can ignore the first stack edit. Retry after layout settles.
+    func schedulePushedDetailRehomeIfNeeded() {
+        let detailOnList = (viewControllers.first as? UINavigationController)?.topViewController is DetailHostingController
+        let canMove = SplitViewLayoutPolicy.canInstallPushedDetailOnExistingSecondary(
+            columnCount: viewControllers.count
+        )
+        guard detailOnList, canMove else {
+            if !detailOnList {
+                pushedDetailRehomeAttempts = 0
+            }
+            return
+        }
+        guard pushedDetailRehomeAttempts < 2 else { return }
+        pushedDetailRehomeAttempts += 1
+        DispatchQueue.main.async { [weak self] in
+            DeviceSizeManager.shared.lastAdaptiveLayoutSignature = ""
+            self?.applyAdaptiveListDetailLayout()
+        }
+    }
+
+    func resetPushedDetailRehomeAttempts() {
+        pushedDetailRehomeAttempts = 0
+    }
 
     override var shouldAutorotate: Bool { true }
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask { .all }
@@ -550,7 +723,8 @@ extension UISplitViewController {
         let width = view.bounds.width
         guard width > 1 else { return }
 
-        let signature = "\(useSplit)|\(Int(width.rounded()))"
+        let detailOnPrimary = (viewControllers.first as? UINavigationController)?.topViewController is DetailHostingController
+        let signature = "\(useSplit)|\(Int(width.rounded()))|\(isCollapsed)|\(viewControllers.count)|\(detailOnPrimary)"
         guard signature != DeviceSizeManager.shared.lastAdaptiveLayoutSignature else { return }
         DeviceSizeManager.shared.lastAdaptiveLayoutSignature = signature
 
@@ -560,8 +734,53 @@ extension UISplitViewController {
         applyPrimaryColumnWidths(useSplit: useSplit, availableWidth: width)
 
         if useSplit {
+            ensureSecondaryColumnExistsForSplit()
             movePushedDetailOntoSecondaryIfNeeded()
+            (self as? AdaptiveSplitViewController)?.schedulePushedDetailRehomeIfNeeded()
+        } else {
+            // Portrait / closed cover: never leave two columns. A squeezed secondary after
+            // landscape→portrait was leaving an invisible pane that ate all taps.
+            collapseSecondaryOntoPrimaryIfNeeded()
+            (self as? AdaptiveSplitViewController)?.resetPushedDetailRehomeAttempts()
         }
+    }
+
+    /// Detail pushed while the cover was closed must move to the right column when the
+    /// inner display opens. The list stays in the left column.
+    func secondaryControllerForExpanding(from primaryViewController: UIViewController) -> UIViewController? {
+        if let secondary = detachPushedDetailForSecondaryColumn(from: primaryViewController) {
+            return secondary
+        }
+        if let parked = DeviceSizeManager.shared.parkedSecondaryViewController {
+            DeviceSizeManager.shared.parkedSecondaryViewController = nil
+            return parked
+        }
+        // Already moved into the right column. Returning nil here makes UIKit
+        // substitute an empty detail and hide the band the user had open.
+        if viewControllers.count > 1, SplitViewLayoutPolicy.containsBandDetail(viewControllers.last) {
+            return viewControllers.last
+        }
+        return nil
+    }
+
+    private func detachPushedDetailForSecondaryColumn(from primaryViewController: UIViewController) -> UIViewController? {
+        guard let primaryNav = primaryViewController as? UINavigationController,
+              primaryNav.viewControllers.count > 1,
+              let detail = primaryNav.viewControllers.last as? DetailHostingController else {
+            return nil
+        }
+        detail.suppressesDismissNotification = true
+        guard let popped = primaryNav.popViewController(animated: false) else {
+            detail.suppressesDismissNotification = false
+            return nil
+        }
+        return makeBandDetailNavigationController(rootViewController: popped)
+    }
+
+    private func makeBandDetailNavigationController(rootViewController: UIViewController) -> UINavigationController {
+        let navigation = UINavigationController(rootViewController: rootViewController)
+        navigation.applyBandDetailColumnChrome()
+        return navigation
     }
 
     private func applyHorizontalSizeClassOverride(useSplit: Bool) {
@@ -590,6 +809,19 @@ extension UISplitViewController {
         }
     }
 
+    /// Shows a band in the right column when that column exists. Never replaces the list stack.
+    func showBandDetailInSecondaryColumn(_ detail: UIViewController, animated: Bool) {
+        guard let primaryNav = viewControllers.first as? UINavigationController else { return }
+        if SplitViewLayoutPolicy.canInstallPushedDetailOnExistingSecondary(columnCount: viewControllers.count),
+           let detailNav = viewControllers.last as? UINavigationController,
+           detailNav !== primaryNav {
+            detailNav.applyBandDetailColumnChrome()
+            detailNav.setViewControllers([detail], animated: animated)
+            return
+        }
+        primaryNav.pushViewController(detail, animated: animated)
+    }
+
     func objcSecondaryViewController() -> UIViewController? {
         viewControllers.count > 1 ? viewControllers.last : nil
     }
@@ -602,17 +834,132 @@ extension UISplitViewController {
         }
     }
 
+    /// Landscape split needs two columns. After a portrait collapse we may only have the list.
+    private func ensureSecondaryColumnExistsForSplit() {
+        guard viewControllers.count == 1,
+              let primary = viewControllers.first else { return }
+        if let parked = DeviceSizeManager.shared.parkedSecondaryViewController {
+            DeviceSizeManager.shared.parkedSecondaryViewController = nil
+            viewControllers = [primary, parked]
+            return
+        }
+        let placeholder = UIViewController()
+        placeholder.view.backgroundColor = .black
+        placeholder.title = "Band Details"
+        let label = UILabel()
+        label.text = NSLocalizedString(
+            "SelectBandMessage",
+            comment: "Message shown in detail view when no band is selected"
+        )
+        label.textAlignment = .center
+        label.textColor = .white
+        label.numberOfLines = 0
+        label.translatesAutoresizingMaskIntoConstraints = false
+        placeholder.view.addSubview(label)
+        NSLayoutConstraint.activate([
+            label.centerXAnchor.constraint(equalTo: placeholder.view.safeAreaLayoutGuide.centerXAnchor),
+            label.centerYAnchor.constraint(equalTo: placeholder.view.safeAreaLayoutGuide.centerYAnchor),
+            label.leadingAnchor.constraint(
+                greaterThanOrEqualTo: placeholder.view.safeAreaLayoutGuide.leadingAnchor,
+                constant: 40
+            ),
+            label.trailingAnchor.constraint(
+                lessThanOrEqualTo: placeholder.view.safeAreaLayoutGuide.trailingAnchor,
+                constant: -40
+            )
+        ])
+        let detailNav = UINavigationController(rootViewController: placeholder)
+        detailNav.applyBandDetailColumnChrome()
+        viewControllers = [primary, detailNav]
+    }
+
+    /// Rotate landscape→portrait (or close the cover): push any open band onto the list
+    /// stack and drop the secondary column so nothing overlays / steals touches.
+    private func collapseSecondaryOntoPrimaryIfNeeded() {
+        guard viewControllers.count > 1,
+              let primaryNav = viewControllers.first as? UINavigationController else { return }
+        let secondary = viewControllers[1]
+        guard secondary !== primaryNav else { return }
+
+        if SplitViewLayoutPolicy.containsBandDetail(secondary),
+           !(primaryNav.topViewController is DetailHostingController) {
+            let detail: DetailHostingController? = {
+                if let nav = secondary as? UINavigationController {
+                    return nav.viewControllers.compactMap { $0 as? DetailHostingController }.last
+                }
+                return secondary as? DetailHostingController
+            }()
+            if let detail {
+                detail.suppressesDismissNotification = true
+                if let nav = secondary as? UINavigationController {
+                    let remaining = nav.viewControllers.filter { $0 !== detail }
+                    nav.setViewControllers(remaining, animated: false)
+                }
+                primaryNav.pushViewController(detail, animated: false)
+            }
+        }
+
+        // Park a non-detail secondary so landscape can restore a column quickly.
+        if SplitViewLayoutPolicy.isPlaceholderDetail(secondary) {
+            DeviceSizeManager.shared.parkedSecondaryViewController = secondary
+        } else if !SplitViewLayoutPolicy.containsBandDetail(secondary) {
+            DeviceSizeManager.shared.parkedSecondaryViewController = secondary
+        } else {
+            DeviceSizeManager.shared.parkedSecondaryViewController = nil
+        }
+        viewControllers = [primaryNav]
+    }
+
     private func movePushedDetailOntoSecondaryIfNeeded() {
-        guard let primaryNav = viewControllers.first as? UINavigationController,
+        // Column count is 1 while the cover is closed. `viewControllers.last` is the
+        // list navigation controller then — replacing its stack with the detail removes
+        // the band list and leaves an empty detail column after the screen opens.
+        guard SplitViewLayoutPolicy.canInstallPushedDetailOnExistingSecondary(columnCount: viewControllers.count),
+              let primaryNav = viewControllers.first as? UINavigationController,
               primaryNav.viewControllers.count > 1,
               let detail = primaryNav.viewControllers.last as? DetailHostingController else {
             return
         }
-        primaryNav.popViewController(animated: false)
-        if let detailNav = viewControllers.last as? UINavigationController {
-            detailNav.setViewControllers([detail], animated: false)
-        } else if viewControllers.count == 1 {
-            viewControllers.append(UINavigationController(rootViewController: detail))
+        if let coordinator = primaryNav.transitionCoordinator {
+            coordinator.animate(alongsideTransition: nil) { [weak self] _ in
+                DeviceSizeManager.shared.lastAdaptiveLayoutSignature = ""
+                self?.movePushedDetailOntoSecondaryIfNeeded()
+            }
+            return
         }
+        let secondary = viewControllers.last
+        guard let secondary, secondary !== primaryNav else { return }
+        let list = Array(primaryNav.viewControllers.dropLast())
+        guard !list.isEmpty else { return }
+
+        detail.suppressesDismissNotification = true
+        UIView.performWithoutAnimation {
+            primaryNav.setViewControllers(list, animated: false)
+            if let detailNav = secondary as? UINavigationController {
+                detailNav.applyBandDetailColumnChrome()
+                detailNav.setViewControllers([detail], animated: false)
+            } else if let index = self.viewControllers.firstIndex(where: { $0 === secondary }) {
+                var columns = self.viewControllers
+                columns[index] = self.makeBandDetailNavigationController(rootViewController: detail)
+                self.viewControllers = columns
+            }
+            if primaryNav.viewControllers.contains(where: { $0 === detail }) {
+                detail.suppressesDismissNotification = false
+            }
+        }
+    }
+}
+
+extension UINavigationController {
+    func applyBandDetailColumnChrome() {
+        overrideUserInterfaceStyle = .dark
+        navigationBar.isTranslucent = true
+        navigationBar.backgroundColor = .clear
+        navigationBar.barTintColor = .clear
+        navigationBar.tintColor = .white
+        navigationBar.shadowImage = UIImage()
+        navigationBar.setBackgroundImage(UIImage(), for: .default)
+        navigationBar.titleTextAttributes = [.foregroundColor: UIColor.white]
+        navigationBar.barStyle = .black
     }
 }

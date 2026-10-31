@@ -1510,17 +1510,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         _ splitViewController: UISplitViewController,
         separateSecondaryFrom primaryViewController: UIViewController
     ) -> UIViewController? {
-        if let primaryNav = primaryViewController as? UINavigationController,
-           primaryNav.viewControllers.count > 1,
-           let detail = primaryNav.viewControllers.last as? DetailHostingController {
-            primaryNav.popViewController(animated: false)
-            return UINavigationController(rootViewController: detail)
-        }
-        if let parked = DeviceSizeManager.shared.parkedSecondaryViewController {
-            DeviceSizeManager.shared.parkedSecondaryViewController = nil
-            return parked
-        }
-        return nil
+        splitViewController.secondaryControllerForExpanding(from: primaryViewController)
     }
 
     @available(iOS 14.0, *)
@@ -1672,12 +1662,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             let placeholderDetailController = createPlaceholderDetailViewController()
             let detailNavigationController = UINavigationController(rootViewController: placeholderDetailController)
 
-            detailNavigationController.navigationBar.isTranslucent = true
-            detailNavigationController.navigationBar.backgroundColor = UIColor.clear
-            detailNavigationController.navigationBar.barTintColor = UIColor.clear
-            detailNavigationController.navigationBar.shadowImage = UIImage()
-            detailNavigationController.navigationBar.setBackgroundImage(UIImage(), for: .default)
-            detailNavigationController.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
+            detailNavigationController.applyBandDetailColumnChrome()
 
             if splitViewController.viewControllers.count > 1 {
                 splitViewController.viewControllers = [splitViewController.viewControllers[0], detailNavigationController]

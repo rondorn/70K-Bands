@@ -1099,6 +1099,7 @@ class _BandsSectionState extends State<BandsSection> {
 
   Widget _buildForm() {
     return SingleChildScrollView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       child: PortalPanel(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

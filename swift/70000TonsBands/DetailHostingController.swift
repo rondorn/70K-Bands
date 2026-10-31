@@ -13,6 +13,9 @@ class DetailHostingController: UIHostingController<AnyView> {
     
     private let bandName: String
     private let showCustomBackButton: Bool
+
+    /// Set while the split view moves this detail from the list stack to the right column.
+    var suppressesDismissNotification = false
     
     init(bandName: String, showCustomBackButton: Bool = false) {
         self.bandName = bandName
@@ -87,6 +90,13 @@ class DetailHostingController: UIHostingController<AnyView> {
         super.viewWillDisappear(animated)
         // Disable interactive pop gesture recognizer
         navigationController?.interactivePopGestureRecognizer?.isEnabled = false
+
+        // Rehoming onto the right column also disappears from the list stack.
+        // That is not the user leaving the detail.
+        if suppressesDismissNotification {
+            suppressesDismissNotification = false
+            return
+        }
         
         // Post notification when detail screen is dismissing
         // This allows MasterViewController to check orientation and show appropriate view

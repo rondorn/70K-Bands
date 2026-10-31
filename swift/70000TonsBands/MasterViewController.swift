@@ -43,6 +43,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     @IBOutlet weak var Undefined: UIButton!
 
     @IBOutlet weak var shareButton: UIBarButtonItem!
+
+    /// Strong retain: the preferences IBOutlet is `weak`, and removing it from
+    /// `rightBarButtonItems` on split layouts was releasing it so ⋯ lost Preferences.
+    private var retainedPreferenceButton: UIBarButtonItem?
     
     @IBOutlet weak var contentController: UIView!
     @IBOutlet weak var settingsButton: UIButton!
@@ -238,6 +242,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         if let shareImg = UIImage(named: FestivalConfig.current.shareIcon) {
             shareButton?.image = shareImg
         }
+        retainPreferenceButtonIfNeeded()
         readFiltersFile()
         
         // Data loading now uses SQLite directly - no preload system needed
@@ -1295,53 +1300,59 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         mainToolBar?.isTranslucent = false
     }
     
-    /// Builds titleView with festival name on line 1 and count on line 2.
-    /// Stats icon is set as leftBarButtonItem (far left, symmetric with preferences).
-    private func makeTitleViewWithStats(text: String, profileColor: UIColor) -> UIView {
+    /// Last title/count text so leading chrome can be rebuilt after overflow changes.
+    private var lastNavigationTitleText: String = ""
+    private var lastNavigationTitleColor: UIColor = .white
+
+    /// Festival name on line 1 and count/year on line 2.
+    /// Centered in `titleView` when the bar has room; leading next to stats when cramped
+    /// (ellipsis-only) so trailing icons cannot crush it to zero width.
+    private func makeTitleCountLabel(
+        text: String,
+        profileColor: UIColor,
+        centered: Bool
+    ) -> UILabel {
         let label: UILabel
         if let existing = titleCountLabel {
             label = existing
         } else {
             label = UILabel()
-            label.textAlignment = .center
             label.numberOfLines = 2
             label.lineBreakMode = .byTruncatingTail
             label.adjustsFontSizeToFitWidth = true
-            label.minimumScaleFactor = 0.75
+            label.minimumScaleFactor = 0.7
             label.isUserInteractionEnabled = true
             label.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(showProfilePicker)))
             titleCountLabel = label
         }
+        let alignment: NSTextAlignment = centered ? .center : .left
+        label.textAlignment = alignment
         let festivalLine = FestivalConfig.current.appName
         let countLine = text.trimmingCharacters(in: .whitespaces)
         let paragraph = NSMutableParagraphStyle()
-        paragraph.alignment = .center
+        paragraph.alignment = alignment
         paragraph.lineSpacing = 0
         let attributed = NSMutableAttributedString()
         attributed.append(NSAttributedString(string: festivalLine + "\n", attributes: [
-            .font: UIFont.systemFont(ofSize: 13, weight: .semibold),
+            .font: UIFont.systemFont(ofSize: 12, weight: .semibold),
             .foregroundColor: profileColor.withAlphaComponent(0.9),
             .paragraphStyle: paragraph
         ]))
         attributed.append(NSAttributedString(string: countLine, attributes: [
-            .font: UIFont.boldSystemFont(ofSize: 17),
+            .font: UIFont.boldSystemFont(ofSize: 15),
             .foregroundColor: profileColor,
             .paragraphStyle: paragraph
         ]))
         label.attributedText = attributed
-        // Size to the text only. A near-full-width titleView sits on top of the
-        // stats button on iOS 27.2 and eats its taps.
-        let maxWidth: CGFloat = 200
+        let maxWidth = SplitViewLayoutPolicy.NavigationBarOverflowPolicy.minimumTitleWidth
         label.preferredMaxLayoutWidth = maxWidth
         let fitted = label.sizeThatFits(CGSize(width: maxWidth, height: 44))
-        let width = min(max(ceil(fitted.width), 80), maxWidth)
+        let width = min(max(ceil(fitted.width), 96), maxWidth)
         label.frame = CGRect(x: 0, y: 0, width: width, height: 44)
         return label
     }
-    
-    /// Stats on the far left, same control type as gear/share so iOS 27.2 gives it
-    /// a real hit target instead of a flush custom view.
-    private func installStatsBarButton() {
+
+    private func makeStatsBarButton() -> UIBarButtonItem {
         let barItem = UIBarButtonItem(
             image: UIImage(named: FestivalConfig.current.statsIcon),
             style: .plain,
@@ -1352,7 +1363,59 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         if #available(iOS 26.0, *) {
             barItem.hidesSharedBackground = true
         }
-        navigationItem.leftBarButtonItem = barItem
+        return barItem
+    }
+    
+    /// Stats on the leading edge; title centered or leading depending on room.
+    private func installStatsBarButton() {
+        installLeadingNavigationChrome()
+    }
+
+    private func installLeadingNavigationChrome(
+        titleText: String? = nil,
+        profileColor: UIColor? = nil,
+        centerTitle: Bool? = nil
+    ) {
+        if autoChooseWizardResumeYear != nil {
+            installBackToWizardButtonIfNeeded()
+            return
+        }
+        if let titleText {
+            lastNavigationTitleText = titleText
+        }
+        if let profileColor {
+            lastNavigationTitleColor = profileColor
+        }
+
+        let stats = makeStatsBarButton()
+        let text = lastNavigationTitleText
+        guard !text.isEmpty else {
+            navigationItem.leftBarButtonItems = [stats]
+            navigationItem.titleView = nil
+            navigationItem.title = nil
+            return
+        }
+
+        // Prefer an explicit choice from `updateNavigationBar`; otherwise keep the
+        // current placement so title-text refreshes do not yank a centered title left.
+        let centered = centerTitle ?? (navigationItem.titleView != nil || usesCompactListChrome)
+        let label = makeTitleCountLabel(
+            text: text,
+            profileColor: lastNavigationTitleColor,
+            centered: centered
+        )
+        if centered {
+            navigationItem.leftBarButtonItems = [stats]
+            navigationItem.titleView = label
+        } else {
+            let titleItem = UIBarButtonItem(customView: label)
+            if #available(iOS 26.0, *) {
+                titleItem.hidesSharedBackground = true
+            }
+            navigationItem.leftBarButtonItems = [stats, titleItem]
+            navigationItem.titleView = nil
+        }
+        navigationItem.title = nil
     }
     
     override var preferredStatusBarStyle: UIStatusBarStyle {
@@ -1518,32 +1581,22 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 // Detail screen was dismissed, check orientation to show appropriate view
                 print("🔄 [LANDSCAPE_SCHEDULE] Detail screen dismissed, checking orientation for appropriate view")
                 
-                // CRITICAL FIX: For iPad (master/detail), preserve the view state we left from
-                // Don't change based on orientation - use isManualCalendarView to restore state
-                if self.isSplitViewCapable() {
-                    // iPad: Restore the view state based on manual toggle, not orientation
+                // iPad / open Duo: preserve list vs calendar from the toggle, not orientation.
+                if self.usesManualScheduleCalendarToggle() {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
                         guard let self = self else { return }
                         if self.isManualCalendarView {
-                            // User was in calendar mode - restore calendar view
                             if !self.landscapeScheduleCoordinator.isShowingLandscapeSchedule {
-                                print("📱 [IPAD_TOGGLE] Restoring calendar view after detail dismissal in viewWillAppear (was in calendar mode)")
+                                print("📱 [CALENDAR_TOGGLE] Restoring calendar after detail dismissal in viewWillAppear")
                                 self.updateCurrentViewingDayFromVisibleCells()
                                 self.landscapeScheduleCoordinator.presentLandscapeScheduleView()
-                            } else {
-                                print("📱 [IPAD_TOGGLE] Calendar view already showing after detail dismissal in viewWillAppear")
                             }
-                        } else {
-                            // User was in list mode - ensure list view is showing
-                            if self.landscapeScheduleCoordinator.isShowingLandscapeSchedule {
-                                print("📱 [IPAD_TOGGLE] Dismissing calendar view after detail dismissal in viewWillAppear (was in list mode)")
-                                self.landscapeScheduleCoordinator.dismissLandscapeScheduleView()
-                            } else {
-                                print("📱 [IPAD_TOGGLE] List view already showing after detail dismissal in viewWillAppear")
-                            }
+                        } else if self.landscapeScheduleCoordinator.isShowingLandscapeSchedule {
+                            print("📱 [CALENDAR_TOGGLE] Dismissing calendar after detail dismissal in viewWillAppear (list mode)")
+                            self.landscapeScheduleCoordinator.dismissLandscapeScheduleView()
                         }
                     }
-                    return // Exit early - iPad behavior handled above
+                    return
                 }
                 
                 // iPhone: Use orientation-based logic (existing behavior)
@@ -1633,8 +1686,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         view.layoutIfNeeded()
         DeviceSizeManager.shared.attachHingeTracking(to: view)
         
-        // Run orientation check after view has laid out (fixes launch in landscape showing portrait)
-        if !isSplitViewCapable() {
+        // Auto landscape calendar (phone / closed Duo). Open Duo and iPad use the nav toggle.
+        if !usesManualScheduleCalendarToggle() {
             landscapeScheduleCoordinator.checkOrientationAndShowLandscapeIfNeeded()
         }
     }
@@ -1649,7 +1702,10 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // This catches cases where orientation changes but the notification hasn't fired yet
         // BUT: Don't dismiss if a detail screen is currently presented - let it handle its own orientation
         // PERF: Skip if already dismissing (prevents cascade) or if we checked recently (debounce)
-        if !isSplitViewCapable() && landscapeScheduleCoordinator.isShowingLandscapeSchedule && !landscapeScheduleCoordinator.isDismissingLandscapeSchedule {
+        // Manual toggle (iPad / open Duo): keep calendar across portrait and landscape.
+        if !usesManualScheduleCalendarToggle()
+            && landscapeScheduleCoordinator.isShowingLandscapeSchedule
+            && !landscapeScheduleCoordinator.isDismissingLandscapeSchedule {
             let now = CFAbsoluteTimeGetCurrent()
             if now - landscapeScheduleCoordinator.lastPortraitDismissCheckTime < 0.25 {
                 return
@@ -1705,9 +1761,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // Determine if we're transitioning from landscape to portrait (geometry of the *new* size).
         let isTransitioningToPortrait = size.width < size.height
         
-        // Phone-only: in portrait, the schedule calendar is not offered, so dismiss it on rotation.
-        // iPad and other large displays: calendar vs list is explicit (toggle); rotation must not dismiss.
-        if !isSplitViewCapable(),
+        // Phone / closed Duo: calendar is landscape-only. iPad and open Duo keep it via the toggle.
+        if !usesManualScheduleCalendarToggle(),
            isTransitioningToPortrait,
            landscapeScheduleCoordinator.isShowingLandscapeSchedule {
             print("🔄 [ROTATION] Transitioning to portrait (phone) - ensuring landscape view is dismissed")
@@ -1839,8 +1894,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             
             if let popover = navController.popoverPresentationController {
                 // Anchor to the title view (count label)
-                popover.sourceView = navigationItem.titleView ?? navigationController?.navigationBar ?? view
-                popover.sourceRect = navigationItem.titleView?.bounds ?? CGRect(x: view.bounds.midX, y: 0, width: 0, height: 0)
+                popover.sourceView = titleCountLabel ?? navigationController?.navigationBar ?? view
+                popover.sourceRect = titleCountLabel?.bounds ?? CGRect(x: view.bounds.midX, y: 0, width: 0, height: 0)
                 popover.permittedArrowDirections = [.up, .down]
                 popover.backgroundColor = UIColor.black.withAlphaComponent(0.9)
                 
@@ -2554,7 +2609,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // CRITICAL FIX: For iPhone, check orientation multiple times with increasing delays
         // This ensures we catch the portrait rotation even if view bounds haven't updated yet
-        if !isSplitViewCapable() && landscapeScheduleCoordinator.isShowingLandscapeSchedule {
+        if !usesManualScheduleCalendarToggle() && landscapeScheduleCoordinator.isShowingLandscapeSchedule {
             // Check immediately
             landscapeScheduleCoordinator.checkAndDismissIfPortrait(attempt: 1, maxAttempts: 3)
         }
@@ -2578,6 +2633,13 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         applySplitLayoutIfNeeded()
         applyClosedDisplayContentInsetsIfNeeded(force: true)
         applyClosedDuoNavigationBarMinimizationIfNeeded()
+        setupViewToggleButton()
+        // Closing the cover: calendar icon goes away; leave the schedule overlay too.
+        if !usesManualScheduleCalendarToggle(),
+           landscapeScheduleCoordinator.isShowingLandscapeSchedule {
+            isManualCalendarView = false
+            landscapeScheduleCoordinator.dismissLandscapeScheduleView()
+        }
         landscapeScheduleCoordinator.checkOrientationAndShowLandscapeIfNeeded()
     }
     
@@ -2640,6 +2702,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         return DeviceSizeManager.shouldUseSplitView()
     }
 
+    /// Calendar icon + manual list/calendar (iPad, open Duo portrait and landscape).
+    func usesManualScheduleCalendarToggle() -> Bool {
+        DeviceSizeManager.shared.shouldOfferManualScheduleCalendarToggle()
+    }
+
     func splitViewController(
         _ splitViewController: UISplitViewController,
         collapseSecondary secondaryViewController: UIViewController,
@@ -2660,17 +2727,7 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         _ splitViewController: UISplitViewController,
         separateSecondaryFrom primaryViewController: UIViewController
     ) -> UIViewController? {
-        if let primaryNav = primaryViewController as? UINavigationController,
-           primaryNav.viewControllers.count > 1,
-           let detail = primaryNav.viewControllers.last as? DetailHostingController {
-            primaryNav.popViewController(animated: false)
-            return UINavigationController(rootViewController: detail)
-        }
-        if let parked = DeviceSizeManager.shared.parkedSecondaryViewController {
-            DeviceSizeManager.shared.parkedSecondaryViewController = nil
-            return parked
-        }
-        return nil
+        splitViewController.secondaryControllerForExpanding(from: primaryViewController)
     }
 
     @available(iOS 14.0, *)
@@ -2679,8 +2736,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     private func setupViewToggleButton() {
-        // Only show on iPad
-        guard isSplitViewCapable() else {
+        // iPad and open Duo (any orientation). Closed Duo / iPhone use landscape auto-calendar.
+        guard usesManualScheduleCalendarToggle() else {
             viewToggleButton = nil
             updateNavigationBar()
             return
@@ -2725,25 +2782,26 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             return
         }
         
-        // Create or update toggle button: show icon for the *other* view (based on what's on screen)
-        let iconName = landscapeScheduleCoordinator.isShowingLandscapeSchedule ? "list.bullet" : "calendar"
-        
+        let image = calendarToggleImage()
         if let existingButton = viewToggleButton {
-            // Update existing button icon
-            existingButton.image = UIImage(systemName: iconName)
-            print("📱 [IPAD_TOGGLE] Button icon updated to: \(iconName)")
+            existingButton.image = image
+            existingButton.accessibilityLabel = calendarToggleAccessibilityLabel()
+            print("📱 [IPAD_TOGGLE] Button icon updated")
         } else {
-            // Create new button
             let button = UIBarButtonItem(
-                image: UIImage(systemName: iconName),
+                image: image,
                 style: .plain,
                 target: self,
                 action: #selector(toggleViewTapped)
             )
             button.tintColor = .white
+            button.accessibilityLabel = calendarToggleAccessibilityLabel()
+            if #available(iOS 26.0, *) {
+                button.hidesSharedBackground = true
+            }
             viewToggleButton = button
             updateNavigationBar()
-            print("📱 [IPAD_TOGGLE] View toggle button created with icon: \(iconName)")
+            print("📱 [IPAD_TOGGLE] View toggle button created")
         }
     }
     
@@ -2752,44 +2810,244 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         print("📱 [IPAD_TOGGLE] Manual toggle to: \(isManualCalendarView ? "Calendar" : "List")")
         
         if isManualCalendarView {
-            // Switch to calendar view
             updateCurrentViewingDayFromVisibleCells()
             landscapeScheduleCoordinator.presentLandscapeScheduleView()
-            // Update button to list icon
-            viewToggleButton?.image = UIImage(systemName: "list.bullet")
         } else {
-            // Switch to list view (scroll to current day happens in dismissLandscapeViewController)
             landscapeScheduleCoordinator.dismissLandscapeScheduleView()
-            // Update button to calendar icon
-            viewToggleButton?.image = UIImage(systemName: "calendar")
         }
+        viewToggleButton?.image = calendarToggleImage()
+        viewToggleButton?.accessibilityLabel = calendarToggleAccessibilityLabel()
+        updateNavigationBar()
+    }
+
+    /// Schedule/list toggle art. Prefers bundled assets; SF Symbol is the fallback.
+    private func calendarToggleImage() -> UIImage? {
+        if landscapeScheduleCoordinator.isShowingLandscapeSchedule {
+            return UIImage(systemName: "list.bullet")
+        }
+        return UIImage(named: "icon-Events-Unoffical")
+            ?? UIImage(named: "specialEvent")
+            ?? UIImage(systemName: "calendar")
+    }
+
+    private func calendarToggleAccessibilityLabel() -> String {
+        landscapeScheduleCoordinator.isShowingLandscapeSchedule
+            ? NSLocalizedString("List", comment: "Switch from calendar to list")
+            : NSLocalizedString("Calendar", comment: "Switch from list to calendar")
+    }
+
+    private func preferencesNavImage() -> UIImage? {
+        let named = UIImage(named: FestivalConfig.current.preferencesIcon)
+            ?? UIImage(named: "icon-gear-alt-Raw")
+        return named ?? UIImage(systemName: "gearshape")
     }
     
     private func updateNavigationBar() {
+        retainPreferenceButtonIfNeeded()
+
+        // Closed Duo / classic compact phone: keep share+gear in the bar so iOS 27
+        // can park them in the cover side chrome. Center the title — that chrome frees
+        // the bar, and a leading title looks pinned in the top-left corner.
+        if usesCompactListChrome {
+            var rightButtons: [UIBarButtonItem] = []
+            if let toggleButton = viewToggleButton {
+                rightButtons.append(toggleButton)
+            }
+            if let share = shareButton {
+                rightButtons.append(share)
+            }
+            if let pref = retainedPreferenceButton ?? preferenceButton {
+                pref.image = preferencesNavImage()
+                rightButtons.append(pref)
+            }
+            navigationItem.rightBarButtonItems = rightButtons
+            installLeadingNavigationChrome(centerTitle: true)
+            return
+        }
+
+        // Split / open Duo / iPad: never put share in the nav bar (toolbar already has it).
+        // Decide centered vs leading title from a conservative (title-leading) budget, then
+        // re-partition with the real layout so centered titles free trailing space.
+        var candidates: [SplitViewLayoutPolicy.NavBarTrailingAction] = []
+        if viewToggleButton != nil {
+            candidates.append(.calendar)
+        }
+        candidates.append(.preferences)
+
+        let conservative = SplitViewLayoutPolicy.NavigationBarOverflowPolicy.partitionTrailingActions(
+            trailingBudget: navigationBarTrailingBudget(titleOccupiesLeading: true),
+            actions: candidates
+        )
+        let centerTitle = SplitViewLayoutPolicy.shouldCenterNavigationTitle(
+            inlineTrailingCount: conservative.inline.count,
+            overflowTrailingCount: conservative.overflow.count,
+            usesCompactListChrome: false
+        )
+        let partition = SplitViewLayoutPolicy.NavigationBarOverflowPolicy.partitionTrailingActions(
+            trailingBudget: navigationBarTrailingBudget(titleOccupiesLeading: !centerTitle),
+            actions: candidates
+        )
+
         var rightButtons: [UIBarButtonItem] = []
-
-        if let toggleButton = viewToggleButton {
-            rightButtons.append(toggleButton)
+        if !partition.overflow.isEmpty {
+            rightButtons.append(makeOverflowBarButton(actions: partition.overflow))
         }
-        // Closed Duo / compact: iOS 27 parks these in the vertical side chrome next to the clock.
-        if usesCompactListChrome, let share = shareButton {
-            rightButtons.append(share)
+        for action in partition.inline {
+            if let item = inlineBarButton(for: action) {
+                rightButtons.append(item)
+            }
         }
-        if let pref = preferenceButton {
-            rightButtons.append(pref)
-        }
-
         navigationItem.rightBarButtonItems = rightButtons
+        restoreShareButtonOnToolbarIfNeeded()
+        installLeadingNavigationChrome(centerTitle: centerTitle)
     }
 
-    /// Compact cover: share/gear park in iOS 27 side chrome. iPad split primary is also
-    /// compact in UIKit, but must keep the normal iPad header layout.
+    /// Space left for trailing icons after stats (+ leading title when not centered)
+    /// and the split display-mode control.
+    private func navigationBarTrailingBudget(titleOccupiesLeading: Bool = true) -> CGFloat {
+        let total: CGFloat = {
+            let primary: CGFloat = {
+                if let split = splitViewController {
+                    return SplitViewLayoutPolicy.primaryColumnWidth(
+                        useSplit: DeviceSizeManager.shouldUseSplitView(),
+                        availableWidth: max(split.view.bounds.width, 1)
+                    )
+                }
+                return view.bounds.width
+            }()
+            let barWidth = navigationController?.navigationBar.bounds.width ?? 0
+            if barWidth > 1, primary > 1 { return min(barWidth, primary) }
+            if barWidth > 1 { return barWidth }
+            return primary
+        }()
+
+        let titleWidth: CGFloat = {
+            guard titleOccupiesLeading else { return 0 }
+            if let label = titleCountLabel, label.bounds.width > 1 {
+                return label.bounds.width
+            }
+            // Long event titles use the full reserved title slot; short band counts less.
+            let looksLikeEventCount = lastNavigationTitleText.contains("(")
+                || lastNavigationTitleText.localizedCaseInsensitiveContains("event")
+            return looksLikeEventCount
+                ? SplitViewLayoutPolicy.NavigationBarOverflowPolicy.minimumTitleWidth
+                : 96
+        }()
+
+        let displayModeWidth: CGFloat =
+            splitViewController != nil
+            ? SplitViewLayoutPolicy.NavigationBarOverflowPolicy.approximateBarButtonWidth
+            : 0
+
+        let reserved =
+            SplitViewLayoutPolicy.NavigationBarOverflowPolicy.leadingControlsWidth
+            + titleWidth
+            + displayModeWidth
+            + SplitViewLayoutPolicy.NavigationBarOverflowPolicy.horizontalMargins
+        return max(0, total - reserved)
+    }
+
+    private func retainPreferenceButtonIfNeeded() {
+        if retainedPreferenceButton == nil {
+            retainedPreferenceButton = preferenceButton
+        }
+    }
+
+    private func restoreShareButtonOnToolbarIfNeeded() {
+        guard let toolbar = mainToolBar, let share = shareButton else { return }
+        var items = toolbar.items ?? []
+        guard !items.contains(where: { $0 === share }) else { return }
+        items.append(share)
+        toolbar.items = items
+    }
+
+    private func inlineBarButton(
+        for action: SplitViewLayoutPolicy.NavBarTrailingAction
+    ) -> UIBarButtonItem? {
+        switch action {
+        case .share:
+            return nil
+        case .calendar:
+            viewToggleButton?.image = calendarToggleImage()
+            viewToggleButton?.accessibilityLabel = calendarToggleAccessibilityLabel()
+            return viewToggleButton
+        case .preferences:
+            let pref = retainedPreferenceButton ?? preferenceButton
+            pref?.image = preferencesNavImage()
+            pref?.accessibilityLabel = NSLocalizedString("Preferences", comment: "Preferences")
+            if #available(iOS 26.0, *), let pref {
+                pref.hidesSharedBackground = true
+            }
+            return pref
+        }
+    }
+
+    private func makeOverflowBarButton(
+        actions: [SplitViewLayoutPolicy.NavBarTrailingAction]
+    ) -> UIBarButtonItem {
+        let menuActions: [UIMenuElement] = actions.compactMap { action in
+            overflowMenuAction(for: action)
+        }
+
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "ellipsis.circle"), for: .normal)
+        button.tintColor = .white
+        button.accessibilityLabel = NSLocalizedString("More", comment: "Overflow menu")
+        button.frame = CGRect(x: 0, y: 0, width: 36, height: 44)
+        button.showsMenuAsPrimaryAction = true
+        button.menu = UIMenu(children: menuActions)
+
+        let item = UIBarButtonItem(customView: button)
+        if #available(iOS 26.0, *) {
+            item.hidesSharedBackground = true
+        }
+        return item
+    }
+
+    /// Icon-only menu rows (accessibility labels keep VoiceOver working).
+    private func overflowMenuAction(
+        for action: SplitViewLayoutPolicy.NavBarTrailingAction
+    ) -> UIAction? {
+        switch action {
+        case .share:
+            return nil
+        case .calendar:
+            let label = calendarToggleAccessibilityLabel()
+            let item = UIAction(
+                title: "",
+                image: calendarToggleImage(),
+                identifier: nil,
+                discoverabilityTitle: label
+            ) { [weak self] _ in
+                self?.toggleViewTapped()
+            }
+            item.accessibilityLabel = label
+            return item
+        case .preferences:
+            let label = NSLocalizedString("Preferences", comment: "Preferences")
+            let item = UIAction(
+                title: "",
+                image: preferencesNavImage(),
+                identifier: nil,
+                discoverabilityTitle: label
+            ) { [weak self] _ in
+                guard let self = self else { return }
+                self.preferencesButtonTapped(self)
+            }
+            item.accessibilityLabel = label
+            return item
+        }
+    }
+
+    /// Compact cover: share/gear park in iOS 27 side chrome. Split primary columns
+    /// (iPad, open Duo) are also compact in UIKit but must keep the title readable.
     private var usesCompactListChrome: Bool {
         SplitViewLayoutPolicy.usesCompactListChrome(
             idiom: traitCollection.userInterfaceIdiom,
             horizontalSizeClass: traitCollection.horizontalSizeClass,
             hingeAvailable: DeviceSizeManager.shared.hingeAvailable,
-            isHingeClosed: DeviceSizeManager.shared.isHingeClosed
+            isHingeClosed: DeviceSizeManager.shared.isHingeClosed,
+            isShowingSplitLayout: isSplitViewCapable()
         )
     }
 
@@ -3567,9 +3825,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                     print("📊 [ASYNC_COUNT] Updated eventCounterUnoffical to \(count)")
                     self.setFilterTitleText()
                     self.titleButton.title = titleText
-                    self.navigationItem.title = nil
                     let profileColor = self.getColorForCurrentProfile()
-                    self.navigationItem.titleView = self.makeTitleViewWithStats(text: titleText, profileColor: profileColor)
+                    self.installLeadingNavigationChrome(titleText: titleText, profileColor: profileColor)
+                    self.updateNavigationBar()
                     print("📊 [ASYNC_COUNT] Display updated: \(titleText)")
                 } else {
                     print("📊 [ASYNC_COUNT] Year changed during count, skipping update")
@@ -3612,10 +3870,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             }
             DispatchQueue.main.async {
                 self.titleButton.title = titleText
-                self.navigationItem.title = nil
                 let profileColor = self.getColorForCurrentProfile()
-                self.navigationItem.titleView = self.makeTitleViewWithStats(text: titleText, profileColor: profileColor)
-                self.navigationItem.title = nil
+                self.installLeadingNavigationChrome(titleText: titleText, profileColor: profileColor)
+                self.updateNavigationBar()
             }
         }
     }
@@ -4587,14 +4844,8 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
                 detailController.configureSplitViewPresentation()
             }
 
-            if isSplitViewCapable() {
-                // Replace detail view in split view
-                if let splitVC = self.splitViewController,
-                   let navController = splitVC.viewControllers.last as? UINavigationController {
-                    navController.setViewControllers([detailController], animated: true)
-                } else {
-                    self.navigationController?.pushViewController(detailController, animated: true)
-                }
+            if isSplitViewCapable(), let splitVC = self.splitViewController {
+                splitVC.showBandDetailInSecondaryColumn(detailController, animated: true)
             } else {
                 // iPhone: Push onto navigation stack
                 self.navigationController?.pushViewController(detailController, animated: true)
@@ -4652,17 +4903,11 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         // Create SwiftUI DetailHostingController
         let detailController = DetailHostingController(bandName: bandName)
         
-        if isSplitViewCapable() {
+        if isSplitViewCapable(), let splitVC = self.splitViewController {
             detailController.configureSplitViewPresentation()
-
-            if let splitVC = self.splitViewController,
-               let navController = splitVC.viewControllers.last as? UINavigationController {
-                navController.setViewControllers([detailController], animated: true)
-            } else {
-                self.navigationController?.pushViewController(detailController, animated: true)
-            }
+            splitVC.showBandDetailInSecondaryColumn(detailController, animated: true)
         } else {
-            // iPhone: Push onto navigation stack
+            // iPhone / closed Duo: push onto the list so Back returns to the bands.
             self.navigationController?.pushViewController(detailController, animated: true)
         }
     }
@@ -5596,16 +5841,15 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         
         // CRITICAL FIX: For iPhone, check immediately and again after delay to catch portrait mode
         // This ensures we dismiss landscape view if user exited detail in portrait
-        guard !isSplitViewCapable() else {
-            // iPad: Use delayed check only (handled below)
-            // Use a small delay to ensure detail screen dismissal animation completes
+        guard !usesManualScheduleCalendarToggle() else {
+            // iPad / open Duo: restore from the toggle after the dismiss animation.
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
                 self?.handleDetailScreenDismissingDelayed()
             }
             return
         }
         
-        // iPhone: Check immediately for portrait mode
+        // iPhone / closed Duo: Check immediately for portrait mode
         checkAndDismissLandscapeIfPortrait()
         
         // Also check after delay to catch any timing issues
@@ -5618,6 +5862,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
         guard landscapeScheduleCoordinator.isShowingLandscapeSchedule else {
             return
         }
+        if usesManualScheduleCalendarToggle() {
+            return
+        }
         if !DeviceSizeManager.shared.allowsIPhoneLandscapeCalendar()
             || !DeviceSizeManager.shared.isPhoneLandscapeLayout() {
             print("🚫 [LANDSCAPE_SCHEDULE] Calendar not valid after detail dismissal — dismissing")
@@ -5626,29 +5873,19 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
     }
     
     private func handleDetailScreenDismissingDelayed() {
-        // CRITICAL FIX: For iPad (master/detail), preserve the view state we left from
-        // Don't change based on orientation - use isManualCalendarView to restore state
-        if self.isSplitViewCapable() {
-                // iPad: Restore the view state based on manual toggle, not orientation
+        // iPad / open Duo: preserve list vs calendar from the toggle, not orientation.
+        if self.usesManualScheduleCalendarToggle() {
                 if self.isManualCalendarView {
-                    // User was in calendar mode - restore calendar view
                     if !self.landscapeScheduleCoordinator.isShowingLandscapeSchedule {
-                        print("📱 [IPAD_TOGGLE] Restoring calendar view after detail dismissal (was in calendar mode)")
+                        print("📱 [CALENDAR_TOGGLE] Restoring calendar after detail dismissal")
                         self.updateCurrentViewingDayFromVisibleCells()
                         self.landscapeScheduleCoordinator.presentLandscapeScheduleView()
-                    } else {
-                        print("📱 [IPAD_TOGGLE] Calendar view already showing after detail dismissal")
                     }
-                } else {
-                    // User was in list mode - ensure list view is showing
-                    if self.landscapeScheduleCoordinator.isShowingLandscapeSchedule {
-                        print("📱 [IPAD_TOGGLE] Dismissing calendar view after detail dismissal (was in list mode)")
-                        self.landscapeScheduleCoordinator.dismissLandscapeScheduleView()
-                    } else {
-                        print("📱 [IPAD_TOGGLE] List view already showing after detail dismissal")
-                    }
+                } else if self.landscapeScheduleCoordinator.isShowingLandscapeSchedule {
+                    print("📱 [CALENDAR_TOGGLE] Dismissing calendar after detail dismissal (list mode)")
+                    self.landscapeScheduleCoordinator.dismissLandscapeScheduleView()
                 }
-                return // Exit early - iPad behavior handled above
+                return
         }
         
         // iPhone: Use orientation-based logic (existing behavior)

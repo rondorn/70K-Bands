@@ -22,11 +22,84 @@ class SplitViewLayoutPolicyTests: XCTestCase {
     func testPhoneSplitOnlyInLandscapeWhenLarge() {
         XCTAssertFalse(
             SplitViewLayoutPolicy.shouldUseSplitView(idiom: .phone, isLargeDisplay: true, isLandscape: false),
-            "Duo open portrait / large phone portrait should be list-only"
+            "Duo open portrait with no band open should be list-only"
         )
         XCTAssertTrue(
             SplitViewLayoutPolicy.shouldUseSplitView(idiom: .phone, isLargeDisplay: true, isLandscape: true),
             "Duo open landscape / Pro Max landscape should split"
+        )
+    }
+
+    func testOpenDetailDoesNotKeepSplitInPhonePortrait() {
+        // Landscape split → open a band → rotate to portrait must leave split.
+        // Keeping split for an open detail left a squeezed secondary that ate taps.
+        XCTAssertFalse(
+            SplitViewLayoutPolicy.shouldUseSplitView(
+                idiom: .phone,
+                isLargeDisplay: true,
+                isLandscape: false,
+                hasOpenDetail: true
+            ),
+            "Open Duo portrait is list/detail stacked, never side-by-side"
+        )
+    }
+
+    func testCompactCoverDoesNotSplitEvenWithDetailOpen() {
+        XCTAssertFalse(
+            SplitViewLayoutPolicy.shouldUseSplitView(
+                idiom: .phone,
+                isLargeDisplay: false,
+                isLandscape: false,
+                hasOpenDetail: true
+            ),
+            "Closed Duo cover stays one column"
+        )
+        XCTAssertFalse(
+            SplitViewLayoutPolicy.shouldUseSplitView(
+                idiom: .phone,
+                isLargeDisplay: false,
+                isLandscape: true,
+                hasOpenDetail: true
+            )
+        )
+    }
+
+    func testLandscapePhoneStillSplitsWithOrWithoutDetail() {
+        XCTAssertTrue(
+            SplitViewLayoutPolicy.shouldUseSplitView(
+                idiom: .phone,
+                isLargeDisplay: true,
+                isLandscape: true,
+                hasOpenDetail: false
+            )
+        )
+        XCTAssertTrue(
+            SplitViewLayoutPolicy.shouldUseSplitView(
+                idiom: .phone,
+                isLargeDisplay: true,
+                isLandscape: true,
+                hasOpenDetail: true
+            )
+        )
+    }
+
+    func testPlaceholderColumnIsNotAnOpenBandDetail() {
+        let placeholder = UIViewController()
+        placeholder.title = "Band Details"
+        let navigation = UINavigationController(rootViewController: placeholder)
+        XCTAssertFalse(SplitViewLayoutPolicy.containsBandDetail(nil))
+        XCTAssertFalse(SplitViewLayoutPolicy.containsBandDetail(placeholder))
+        XCTAssertFalse(SplitViewLayoutPolicy.containsBandDetail(navigation))
+        XCTAssertTrue(SplitViewLayoutPolicy.isPlaceholderDetail(navigation))
+    }
+
+    func testPushedDetailIsNotInstalledOnTheOnlyColumn() {
+        XCTAssertFalse(
+            SplitViewLayoutPolicy.canInstallPushedDetailOnExistingSecondary(columnCount: 1),
+            "The only column while closed is the band list"
+        )
+        XCTAssertTrue(
+            SplitViewLayoutPolicy.canInstallPushedDetailOnExistingSecondary(columnCount: 2)
         )
     }
 
@@ -37,6 +110,55 @@ class SplitViewLayoutPolicyTests: XCTestCase {
         XCTAssertFalse(
             SplitViewLayoutPolicy.shouldUseSplitView(idiom: .phone, isLargeDisplay: false, isLandscape: true),
             "Closed Duo / normal iPhone stays list (or landscape calendar), not split"
+        )
+    }
+
+    func testManualCalendarToggleOnOpenDuoEvenInPortrait() {
+        XCTAssertTrue(
+            SplitViewLayoutPolicy.shouldOfferManualScheduleCalendarToggle(
+                usesSplitLayout: false,
+                hingeAvailable: true,
+                isHingeClosed: false
+            ),
+            "Open Duo portrait must show the calendar icon"
+        )
+        XCTAssertTrue(
+            SplitViewLayoutPolicy.shouldOfferManualScheduleCalendarToggle(
+                usesSplitLayout: true,
+                hingeAvailable: true,
+                isHingeClosed: false
+            ),
+            "Open Duo landscape / split still shows the calendar icon"
+        )
+    }
+
+    func testManualCalendarToggleHiddenOnClosedDuoAndPhone() {
+        XCTAssertFalse(
+            SplitViewLayoutPolicy.shouldOfferManualScheduleCalendarToggle(
+                usesSplitLayout: false,
+                hingeAvailable: true,
+                isHingeClosed: true
+            ),
+            "Closed Duo cover must not show the calendar icon"
+        )
+        XCTAssertFalse(
+            SplitViewLayoutPolicy.shouldOfferManualScheduleCalendarToggle(
+                usesSplitLayout: false,
+                hingeAvailable: false,
+                isHingeClosed: false
+            ),
+            "Regular iPhone uses landscape auto-calendar, not the icon"
+        )
+    }
+
+    func testManualCalendarToggleOnSplitLayouts() {
+        XCTAssertTrue(
+            SplitViewLayoutPolicy.shouldOfferManualScheduleCalendarToggle(
+                usesSplitLayout: true,
+                hingeAvailable: false,
+                isHingeClosed: false
+            ),
+            "iPad / large-phone split keeps the calendar icon"
         )
     }
 
@@ -90,6 +212,117 @@ class SplitViewLayoutPolicyTests: XCTestCase {
                 hingeAvailable: true,
                 isHingeClosed: true
             )
+        )
+    }
+
+    func testCompactListChromeSkippedOnOpenDuoAndSplit() {
+        XCTAssertFalse(
+            SplitViewLayoutPolicy.usesCompactListChrome(
+                idiom: .phone,
+                horizontalSizeClass: .compact,
+                hingeAvailable: true,
+                isHingeClosed: false
+            ),
+            "Open Duo has no cover side chrome"
+        )
+        XCTAssertFalse(
+            SplitViewLayoutPolicy.usesCompactListChrome(
+                idiom: .phone,
+                horizontalSizeClass: .compact,
+                hingeAvailable: false,
+                isHingeClosed: false,
+                isShowingSplitLayout: true
+            ),
+            "Split primary is compact but must not park share/gear as cover chrome"
+        )
+    }
+
+    func testNavBarOverflowShowsIconsInlineWhenBudgetAllows() {
+        // Picture 1: short title leaves room — no ⋯.
+        let actions: [SplitViewLayoutPolicy.NavBarTrailingAction] = [
+            .calendar, .preferences
+        ]
+        let result = SplitViewLayoutPolicy.NavigationBarOverflowPolicy.partitionTrailingActions(
+            trailingBudget: 200,
+            actions: actions
+        )
+        XCTAssertEqual(result.inline, actions)
+        XCTAssertTrue(result.overflow.isEmpty)
+    }
+
+    func testNavBarOverflowPreferencesAloneSkipsEllipsis() {
+        // Band list with only preferences and a little room: gear inline, no ⋯.
+        let result = SplitViewLayoutPolicy.NavigationBarOverflowPolicy.partitionTrailingActions(
+            trailingBudget: 50,
+            actions: [.preferences]
+        )
+        XCTAssertEqual(result.inline, [.preferences])
+        XCTAssertTrue(result.overflow.isEmpty)
+    }
+
+    func testNavBarOverflowUsesEllipsisWhenBudgetTight() {
+        // Picture 2: long "(2026) 211 Events" title leaves little trailing room.
+        let actions: [SplitViewLayoutPolicy.NavBarTrailingAction] = [
+            .calendar, .preferences
+        ]
+        let result = SplitViewLayoutPolicy.NavigationBarOverflowPolicy.partitionTrailingActions(
+            trailingBudget: 70,
+            actions: actions
+        )
+        XCTAssertTrue(result.inline.isEmpty)
+        XCTAssertEqual(result.overflow, actions)
+    }
+
+    func testNavBarOverflowAllowsOneActionWhenPartialBudget() {
+        let actions: [SplitViewLayoutPolicy.NavBarTrailingAction] = [
+            .calendar, .preferences
+        ]
+        // One slot after reserving ⋯ (44), not enough for both with breathing room.
+        let result = SplitViewLayoutPolicy.NavigationBarOverflowPolicy.partitionTrailingActions(
+            trailingBudget: 100,
+            actions: actions
+        )
+        XCTAssertEqual(result.inline, [.calendar])
+        XCTAssertEqual(result.overflow, [.preferences])
+    }
+
+    func testNavigationTitleCentersWhenTrailingIconsFit() {
+        XCTAssertTrue(
+            SplitViewLayoutPolicy.shouldCenterNavigationTitle(
+                inlineTrailingCount: 2,
+                overflowTrailingCount: 0,
+                usesCompactListChrome: false
+            ),
+            "Roomy iPad / Duo bars should center the app name and count"
+        )
+        XCTAssertTrue(
+            SplitViewLayoutPolicy.shouldCenterNavigationTitle(
+                inlineTrailingCount: 1,
+                overflowTrailingCount: 1,
+                usesCompactListChrome: false
+            )
+        )
+    }
+
+    func testNavigationTitleStaysLeadingWhenEllipsisOnly() {
+        XCTAssertFalse(
+            SplitViewLayoutPolicy.shouldCenterNavigationTitle(
+                inlineTrailingCount: 0,
+                overflowTrailingCount: 2,
+                usesCompactListChrome: false
+            ),
+            "Cramped bars keep the title next to stats so ⋯ cannot crush it"
+        )
+    }
+
+    func testNavigationTitleCentersOnClosedDuoCompactChrome() {
+        XCTAssertTrue(
+            SplitViewLayoutPolicy.shouldCenterNavigationTitle(
+                inlineTrailingCount: 0,
+                overflowTrailingCount: 0,
+                usesCompactListChrome: true
+            ),
+            "Closed Duo side chrome frees the bar — title must not stay pinned left"
         )
     }
 

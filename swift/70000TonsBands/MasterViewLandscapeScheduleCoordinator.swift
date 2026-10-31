@@ -48,13 +48,16 @@ final class MasterViewLandscapeScheduleCoordinator {
             return
         }
 
+        // iPad / open Duo: the nav toggle owns list vs calendar. Do not auto-show or dismiss.
+        if host.usesManualScheduleCalendarToggle() {
+            print("📱 [CALENDAR_TOGGLE] Manual calendar mode — Schedule View: \(getShowScheduleView()), Manual Calendar View: \(host.isManualCalendarView)")
+            return
+        }
+
         if !allowsCalendar {
             if isShowingLandscapeSchedule {
                 print("🚫 [LANDSCAPE_SCHEDULE] Calendar overlay is for compact phones; split layouts use the toggle")
                 dismissLandscapeScheduleView()
-            }
-            if host.isSplitViewCapable() {
-                print("📱 [IPAD_TOGGLE] Schedule View: \(getShowScheduleView()), Manual Calendar View: \(host.isManualCalendarView)")
             }
             return
         }
@@ -93,7 +96,8 @@ final class MasterViewLandscapeScheduleCoordinator {
     /// Helper method to check if iPhone is in portrait and dismiss calendar view (multiple attempts).
     func checkAndDismissIfPortrait(attempt: Int, maxAttempts: Int) {
         guard let host = host else { return }
-        guard !host.isSplitViewCapable() && isShowingLandscapeSchedule else {
+        // Open Duo / iPad keep calendar in portrait via the toggle.
+        guard !host.usesManualScheduleCalendarToggle() && isShowingLandscapeSchedule else {
             return
         }
 
@@ -135,7 +139,8 @@ final class MasterViewLandscapeScheduleCoordinator {
             return
         }
 
-        if !host.isSplitViewCapable() && !DeviceSizeManager.shared.isPhoneLandscapeLayout() {
+        let manualToggle = host.usesManualScheduleCalendarToggle()
+        if !manualToggle && !DeviceSizeManager.shared.isPhoneLandscapeLayout() {
             print("🚫 [LANDSCAPE_SCHEDULE] iPhone in portrait mode - calendar mode is not allowed")
             return
         }
@@ -175,7 +180,8 @@ final class MasterViewLandscapeScheduleCoordinator {
             attendedHandle: host.attendedHandle,
             initialDay: initialDay,
             hideExpiredEvents: hideExpiredEvents,
-            isSplitViewCapable: host.isSplitViewCapable(),
+            // List-return control: iPad and open Duo (portrait or landscape).
+            isSplitViewCapable: host.usesManualScheduleCalendarToggle(),
             onDismissRequested: { [weak self, weak host] currentDay in
                 if let day = currentDay {
                     host?.currentViewingDay = day
@@ -226,7 +232,7 @@ final class MasterViewLandscapeScheduleCoordinator {
 
                 let detailController = DetailHostingController(bandName: bandName, showCustomBackButton: true)
 
-                if host.isSplitViewCapable() {
+                if host.usesManualScheduleCalendarToggle() {
                     detailController.modalPresentationStyle = .formSheet
                     detailController.preferredContentSize = CGSize(width: 800, height: 900)
                 }
@@ -362,7 +368,7 @@ final class MasterViewLandscapeScheduleCoordinator {
             self.landscapeScheduleViewController = nil
             self.isShowingLandscapeSchedule = false
 
-            if host.isSplitViewCapable() {
+            if host.usesManualScheduleCalendarToggle() {
                 host.isManualCalendarView = false
                 host.viewToggleButton?.image = UIImage(systemName: "calendar")
             }

@@ -1443,6 +1443,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
 
   Widget _buildEntry() {
     return SingleChildScrollView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       child: PortalPanel(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

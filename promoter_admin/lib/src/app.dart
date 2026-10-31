@@ -19,6 +19,7 @@ import 'package:promoter_admin/src/services/schedule_service.dart';
 import 'package:promoter_admin/src/services/emergency_local_mode_support.dart';
 import 'package:promoter_admin/src/services/workspace_store.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
+import 'package:promoter_admin/src/widgets/ios_keyboard_dismiss.dart';
 import 'package:promoter_admin/src/widgets/layout_breakpoints.dart';
 
 class PromoterAdminApp extends StatefulWidget {
@@ -335,8 +336,10 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
       scaffoldMessengerKey: _messengerKey,
       theme: buildPromoterTheme(),
       builder: (context, child) {
-        return CompactPhoneOrientationScope(
-          child: child ?? const SizedBox.shrink(),
+        return IosKeyboardDismiss(
+          child: CompactPhoneOrientationScope(
+            child: child ?? const SizedBox.shrink(),
+          ),
         );
       },
       home: workspace == null || registry == null

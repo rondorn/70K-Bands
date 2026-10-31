@@ -236,14 +236,53 @@ fi
 
 echo ""
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BLUE}Submission${NC}"
+echo -e "${BLUE}Confirmations (all prompts before translate / upload)${NC}"
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
+echo "Answer everything below now. After the final Proceed, the script translates"
+echo "notes and runs fastlane with no further prompts — safe to walk away."
+echo ""
+
 read -r -p "Submit selected apps for review after metadata update? (y/n): " SUBMIT_CHOICE
 
 SUBMIT_FOR_REVIEW=false
 if [[ "$SUBMIT_CHOICE" =~ ^[Yy]$ ]]; then
     SUBMIT_FOR_REVIEW=true
+fi
+
+echo ""
+echo "Selected apps must show in App Store Connect → Activity for version ${VERSION}"
+echo "(processing complete) before metadata can attach the build."
+echo ""
+read -r -p "Are the selected builds uploaded and processed? (y/n): " UPLOADED
+
+if [[ ! "$UPLOADED" =~ ^[Yy]$ ]]; then
+    echo -e "${YELLOW}Run ios_archive_upload.sh (or upload in Xcode), wait for processing, then run this script again.${NC}"
+    exit 0
+fi
+
+echo ""
+echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BLUE}Summary${NC}"
+echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+echo -e "${BLUE}Version:${NC}  $VERSION"
+echo -e "${BLUE}Build:${NC}    $BUILD_NUMBER"
+echo -e "${BLUE}Apps:${NC}     $SELECTED_APPS"
+echo -e "${BLUE}Submit:${NC}   $SUBMIT_FOR_REVIEW"
+echo -e "${BLUE}Notes:${NC}"
+echo "$RELEASE_NOTES"
+echo ""
+echo "Next (unattended): translate What’s New → fastlane metadata"
+if [ "$SUBMIT_FOR_REVIEW" = true ]; then
+    echo "                  → submit for review"
+fi
+echo ""
+read -r -p "Proceed? (y/n): " CONFIRM
+
+if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
+    echo -e "${YELLOW}Cancelled${NC}"
+    exit 0
 fi
 
 echo ""
@@ -269,39 +308,6 @@ python3 translate_release_notes.py \
 echo -e "${GREEN}✓ Wrote release_notes.json${NC}"
 echo ""
 
-echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BLUE}Confirm uploads${NC}"
-echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo ""
-echo "Selected apps must show in App Store Connect → Activity for version ${VERSION} (processing complete)."
-echo ""
-read -r -p "Are the selected builds uploaded and processed? (y/n): " UPLOADED
-
-if [[ ! "$UPLOADED" =~ ^[Yy]$ ]]; then
-    echo -e "${YELLOW}Run ios_archive_upload.sh (or upload in Xcode), wait for processing, then run this script again.${NC}"
-    exit 0
-fi
-
-echo ""
-echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BLUE}Summary${NC}"
-echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo ""
-echo -e "${BLUE}Version:${NC}  $VERSION"
-echo -e "${BLUE}Build:${NC}    $BUILD_NUMBER"
-echo -e "${BLUE}Apps:${NC}     $SELECTED_APPS"
-echo -e "${BLUE}Submit:${NC}   $SUBMIT_FOR_REVIEW"
-echo -e "${BLUE}Notes:${NC}"
-echo "$RELEASE_NOTES"
-echo ""
-read -r -p "Update App Store Connect metadata (and submit if chosen)? (y/n): " CONFIRM
-
-if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
-    echo -e "${YELLOW}Cancelled${NC}"
-    exit 0
-fi
-
-echo ""
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${BLUE}fastlane release_all_apps${NC}"
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
