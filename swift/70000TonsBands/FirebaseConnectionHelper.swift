@@ -66,6 +66,22 @@ enum FirebaseConnectionHelper {
         }
     }
 
+    /// Reporting writes only. Simulator and the Testing pointer stay out of usage numbers.
+    /// Production installs, including App Store phones, are not blocked. Push subscription does not call this.
+    static func blocksReportingWrites() -> Bool {
+        #if targetEnvironment(simulator)
+        inTestEnvironment = true
+        return true
+        #else
+        let customPointer = (UserDefaults.standard.string(forKey: "CustomPointerUrl") ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let pointer = UserDefaults.standard.string(forKey: "PointerUrl") ?? "Prod"
+        let blocked = customPointer.isEmpty && pointer == testingSetting
+        inTestEnvironment = blocked
+        return blocked
+        #endif
+    }
+
     /// After `FirebaseApp.configure()` the SDK is online. Disconnect until a write session starts.
     static func goIdleAfterConfigure() {
         guard AppDelegate.isFirebaseConfigured else { return }

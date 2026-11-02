@@ -290,10 +290,10 @@ func getPointerUrlData(keyValue: String) -> String {
         print("🔧 [POINTER_DEBUG] Using custom pointer URL: '\(targetPointerUrl)'")
     } else if (pointerUrlPref == testingSetting) {
         targetPointerUrl = FestivalConfig.current.defaultStorageUrlTest
-        inTestEnvironment = true
     } else {
         targetPointerUrl = FestivalConfig.current.defaultStorageUrl
     }
+    _ = FirebaseConnectionHelper.blocksReportingWrites()
     
     // CRITICAL: Track which pointer URL was ACTUALLY used to load current data
     // This is the only reliable way to detect when data needs to be refreshed
@@ -381,9 +381,6 @@ func getPointerUrlData(keyValue: String) -> String {
     } else {
         print("🔧 [POINTER_DEBUG] ✅ Using PRODUCTION pointer: '\(defaultStorageUrl)'")
     }
-    #if targetEnvironment(simulator)
-        inTestEnvironment = true;
-    #endif
     
     // Use the user's preference as the pointer index (e.g., "Current", "2025", etc.)
     var pointerIndex = getScheduleUrl()

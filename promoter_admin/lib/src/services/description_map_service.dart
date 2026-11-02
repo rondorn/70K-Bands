@@ -3,6 +3,7 @@ import 'package:promoter_admin/src/models/festival_workspace.dart';
 import 'package:promoter_admin/src/services/csv_staging.dart';
 import 'package:promoter_admin/src/services/csv_util.dart';
 import 'package:promoter_admin/src/services/description_folder_import.dart';
+import 'package:promoter_admin/src/services/description_link_markup.dart';
 import 'package:promoter_admin/src/services/dropbox_api.dart';
 import 'package:promoter_admin/src/services/dropbox_auth.dart';
 import 'package:promoter_admin/src/services/emergency_local_mode_support.dart';
@@ -188,12 +189,13 @@ class DescriptionMapService {
     required String labelName,
     required String text,
   }) async {
+    final stored = descriptionTextForStorage(text);
     if (workspace.usesEmergencyLocalMode) {
       final path = LocalContentStore.descriptionFilePath(
         paths: workspace.emergencyLocalPaths,
         labelName: labelName,
       );
-      await LocalContentStore.writeText(path, text);
+      await LocalContentStore.writeText(path, stored);
       return path;
     }
     final mapUrl = await _mapUrl(workspace);
@@ -204,7 +206,7 @@ class DescriptionMapService {
     return writeDescriptionFileToFolder(
       folderApiPath: '$parent/descriptions',
       labelName: labelName,
-      text: text,
+      text: stored,
     );
   }
 
@@ -214,6 +216,7 @@ class DescriptionMapService {
     required String labelName,
     required String text,
   }) async {
+    final stored = descriptionTextForStorage(text);
     final safe = safeFileStem(labelName);
     if (safe.isEmpty) {
       throw StateError('Band / event name is required.');
@@ -229,7 +232,7 @@ class DescriptionMapService {
       await dropboxApi.ensureFolder(folder);
     }
     final path = folder.isEmpty ? '/$safe.txt' : '$folder/$safe.txt';
-    return dropboxApi.uploadNewTextFileAndShare(path, text);
+    return dropboxApi.uploadNewTextFileAndShare(path, stored);
   }
 
   /// Saves under the user's remembered folder (prompts caller if missing).
@@ -306,13 +309,14 @@ class DescriptionMapService {
       url,
       mapDate: previousDate,
     );
-    if (previousText == text) {
+    final stored = descriptionTextForStorage(text);
+    if (previousText == stored) {
       return;
     }
     if (LocalContentStore.isLocalLocator(url)) {
-      await LocalContentStore.writeText(url, text);
+      await LocalContentStore.writeText(url, stored);
     } else {
-      await dropboxApi.uploadTextInPlace(url, text);
+      await dropboxApi.uploadTextInPlace(url, stored);
     }
     final newDate = nextCacheDate(previousDate);
     await upsertMapEntry(
@@ -322,7 +326,7 @@ class DescriptionMapService {
       bumpDate: true,
       explicitDate: newDate,
     );
-    await putCachedUrlText(descriptionTextCacheKey(url, newDate), text);
+    await putCachedUrlText(descriptionTextCacheKey(url, newDate), stored);
     await invalidateCachedUrlText(url);
   }
 

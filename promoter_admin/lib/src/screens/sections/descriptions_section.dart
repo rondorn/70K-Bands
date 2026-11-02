@@ -8,10 +8,12 @@ import 'package:promoter_admin/src/services/dropbox_api.dart';
 import 'package:promoter_admin/src/services/http_fetch.dart';
 import 'package:promoter_admin/src/services/lineup_service.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
+import 'package:promoter_admin/src/widgets/admin_list_filter_field.dart';
 import 'package:promoter_admin/src/widgets/admin_table_cells.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
 import 'package:promoter_admin/src/widgets/centered_when_wrapped.dart';
 import 'package:promoter_admin/src/widgets/compact_section_list.dart';
+import 'package:promoter_admin/src/widgets/description_body_field.dart';
 import 'package:promoter_admin/src/widgets/description_editor_indicator.dart';
 import 'package:promoter_admin/src/widgets/dropbox_folder_picker.dart';
 import 'package:promoter_admin/src/widgets/import_descriptions_folder_dialog.dart';
@@ -20,18 +22,13 @@ import 'package:promoter_admin/src/widgets/layout_breakpoints.dart';
 enum _FormMode { addDescription, addLink, edit }
 
 class _ListRow {
-  _ListRow({
-    required this.name,
-    required this.entry,
-    required this.inLineup,
-  });
+  _ListRow({required this.name, required this.entry, required this.inLineup});
 
   final String name;
   final DescriptionMapEntry? entry;
   final bool inLineup;
 
-  bool get hasDescription =>
-      entry != null && entry!.url.trim().isNotEmpty;
+  bool get hasDescription => entry != null && entry!.url.trim().isNotEmpty;
 }
 
 /// Builds the merged description list from map entries + lineup names.
@@ -50,30 +47,24 @@ List<_ListRow> _buildDescriptionListRows({
   for (final name in lineupNames) {
     final key = name.toLowerCase();
     seen.add(key);
-    rows.add(
-      _ListRow(
-        name: name,
-        entry: byName[key],
-        inLineup: true,
-      ),
-    );
+    rows.add(_ListRow(name: name, entry: byName[key], inLineup: true));
   }
   for (final e in entries) {
     final key = e.band.trim().toLowerCase();
     if (key.isEmpty || seen.contains(key)) continue;
     seen.add(key);
-    rows.add(
-      _ListRow(
-        name: e.band.trim(),
-        entry: e,
-        inLineup: false,
-      ),
-    );
+    rows.add(_ListRow(name: e.band.trim(), entry: e, inLineup: false));
   }
-  rows.sort(
-    (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
-  );
+  rows.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
   return rows;
+}
+
+/// Case-insensitive artist-name filter. An empty query returns [rows].
+List<_ListRow> _filterDescriptionRows(List<_ListRow> rows, String query) {
+  return [
+    for (final row in rows)
+      if (adminListQueryMatches(query, [row.name])) row,
+  ];
 }
 
 class DescriptionsSection extends StatefulWidget {
@@ -124,6 +115,7 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
   String _formLabel = '';
   final _text = TextEditingController();
   final _url = TextEditingController();
+  final _filter = TextEditingController();
   bool _editText = true;
   bool _editLink = false;
   bool _loadingText = false;
@@ -192,8 +184,12 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
   void dispose() {
     _text.dispose();
     _url.dispose();
+    _filter.dispose();
     super.dispose();
   }
+
+  List<_ListRow> get _visibleRows =>
+      _filterDescriptionRows(_rows, _filter.text);
 
   @override
   void didUpdateWidget(covariant DescriptionsSection oldWidget) {
@@ -235,8 +231,9 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
       var entries = <DescriptionMapEntry>[];
       var refreshMap = false;
       try {
-        final soft =
-            await widget.descriptionMapService.loadSoft(widget.workspace);
+        final soft = await widget.descriptionMapService.loadSoft(
+          widget.workspace,
+        );
         entries = soft.entries;
         refreshMap = soft.shouldRefreshInBackground;
       } catch (e) {
@@ -338,15 +335,14 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
     var nextNames = lineupNames;
     try {
       if (refreshMap) {
-        final refreshed =
-            await widget.descriptionMapService.refreshInBackground(
-          widget.workspace,
-        );
+        final refreshed = await widget.descriptionMapService
+            .refreshInBackground(widget.workspace);
         if (refreshed != null) nextEntries = refreshed;
       }
       if (refreshLineup) {
-        final refreshed =
-            await widget.lineupService.refreshInBackground(widget.workspace);
+        final refreshed = await widget.lineupService.refreshInBackground(
+          widget.workspace,
+        );
         if (refreshed != null) {
           nextNames = {
             for (final b in refreshed)
@@ -426,8 +422,7 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
     widget.onFormModeChanged('Edit Description');
     widget.onTabChanged(DescriptionsTab.form);
     try {
-      final text =
-          await widget.descriptionMapService.loadDescriptionText(
+      final text = await widget.descriptionMapService.loadDescriptionText(
         row.entry!.url,
         mapDate: row.entry!.date,
       );
@@ -481,12 +476,12 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
             'Description map URL is not configured — Load festival data in Settings.',
           );
         }
-        shareUrl =
-            await widget.descriptionMapService.writeDescriptionAndUpsertMap(
-          workspace: widget.workspace,
-          labelName: label,
-          text: text,
-        );
+        shareUrl = await widget.descriptionMapService
+            .writeDescriptionAndUpsertMap(
+              workspace: widget.workspace,
+              labelName: label,
+              text: text,
+            );
         await _load();
         setState(() {
           _saving = false;
@@ -496,12 +491,12 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
         widget.onTabChanged(DescriptionsTab.list);
         widget.onTestingDataChanged?.call();
       } else {
-        shareUrl =
-            await widget.descriptionMapService.writeDescriptionFileForUser(
-          labelName: label,
-          text: text,
-          promptForFolder: _promptFolder,
-        );
+        shareUrl = await widget.descriptionMapService
+            .writeDescriptionFileForUser(
+              labelName: label,
+              text: text,
+              promptForFolder: _promptFolder,
+            );
         setState(() {
           _saving = false;
           _shareUrl = displayShareUrl(shareUrl);
@@ -569,7 +564,9 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
       return;
     }
     if (!_editText && !_editLink) {
-      setState(() => _error = 'Choose Edit description text or Edit description link.');
+      setState(
+        () => _error = 'Choose Edit description text or Edit description link.',
+      );
       return;
     }
     setState(() {
@@ -705,13 +702,13 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
     });
     try {
       final lineupNames = await _lineupNamesForImport();
-      final result =
-          await widget.descriptionMapService.importLinksFromDropboxFolder(
-        workspace: widget.workspace,
-        folderShareUrl: request.folderUrl,
-        lineupNames: lineupNames,
-        overrideExisting: request.overrideExisting,
-      );
+      final result = await widget.descriptionMapService
+          .importLinksFromDropboxFolder(
+            workspace: widget.workspace,
+            folderShareUrl: request.folderUrl,
+            lineupNames: lineupNames,
+            overrideExisting: request.overrideExisting,
+          );
       await _load();
       if (!mounted) return;
       setState(() {
@@ -780,7 +777,37 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
     );
   }
 
+  Widget _descriptionToolbar() {
+    return Row(
+      children: [
+        if (_canEditMap) ...[
+          Flexible(
+            fit: FlexFit.loose,
+            child: OutlinedButton(
+              onPressed: _saving ? null : _importFromDropboxFolder,
+              child: const Text(
+                'Import from Dropbox folder',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+        ],
+        Flexible(
+          child: AdminListFilterField(
+            controller: _filter,
+            hintText: 'Filter artists',
+            onChanged: (_) => setState(() {}),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildList() {
+    final visible = _visibleRows;
+    final filtering = _filter.text.trim().isNotEmpty;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -791,7 +818,8 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
           const Padding(
             padding: EdgeInsets.only(bottom: 10),
             child: StatusBanner(
-              text: 'No description-map write access. You can still create '
+              text:
+                  'No description-map write access. You can still create '
                   'description files (you will be asked where to save them) '
                   'and copy the link for the description admin. Map Edit / '
                   'Delete and Attach Link are hidden.',
@@ -805,14 +833,7 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
             children: [
               const DescriptionEditorLegend(),
               _editorSummaryLine(),
-              if (_canEditMap)
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: OutlinedButton(
-                    onPressed: _saving ? null : _importFromDropboxFolder,
-                    child: const Text('Import from Dropbox folder'),
-                  ),
-                ),
+              _descriptionToolbar(),
             ],
           ),
         ),
@@ -823,14 +844,16 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Expanded(
-                  child: _rows.isEmpty
-                      ? const Text(
-                          'No artists in the Testing lineup yet.',
-                          style: TextStyle(color: AppColors.muted),
+                  child: visible.isEmpty
+                      ? Text(
+                          filtering
+                              ? 'No artists match that filter.'
+                              : 'No artists in the Testing lineup yet.',
+                          style: const TextStyle(color: AppColors.muted),
                         )
                       : isCompactLayout(context)
-                          ? _buildCompactDescriptionsList()
-                          : LayoutBuilder(
+                      ? _buildCompactDescriptionsList(visible)
+                      : LayoutBuilder(
                           builder: (context, constraints) {
                             return SingleChildScrollView(
                               scrollDirection: Axis.horizontal,
@@ -866,12 +889,13 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
                                         label: Text('Last editor'),
                                       ),
                                       DataColumn(
-                                        columnWidth: adminTableWideActionsColumn,
+                                        columnWidth:
+                                            adminTableWideActionsColumn,
                                         label: adminTableActionsHeading(),
                                       ),
                                     ],
                                     rows: [
-                                      for (final row in _rows)
+                                      for (final row in visible)
                                         DataRow(
                                           color: WidgetStateProperty.all(
                                             _rowBackground(row),
@@ -894,8 +918,8 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
                                               adminTableText(
                                                 row.hasDescription
                                                     ? (row.inLineup
-                                                        ? 'On map'
-                                                        : 'On map (not in lineup)')
+                                                          ? 'On map'
+                                                          : 'On map (not in lineup)')
                                                     : 'No description',
                                                 maxWidth: 140,
                                                 style: TextStyle(
@@ -908,7 +932,8 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
                                             DataCell(
                                               adminTableText(
                                                 row.entry?.date ?? '—',
-                                                maxWidth: adminTableCacheDateWidth,
+                                                maxWidth:
+                                                    adminTableCacheDateWidth,
                                                 style: TextStyle(
                                                   color: row.hasDescription
                                                       ? AppColors.label
@@ -933,17 +958,16 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
                                                     ),
                                             ),
                                             DataCell(
-                                              adminTableActionsCell(
-                                                [
+                                              adminTableActionsCell([
                                                 if (!row.hasDescription) ...[
                                                   OutlinedButton(
                                                     style: _actionStyle,
                                                     onPressed: _saving
                                                         ? null
                                                         : () =>
-                                                            _openAddDescription(
-                                                              row.name,
-                                                            ),
+                                                              _openAddDescription(
+                                                                row.name,
+                                                              ),
                                                     child: const Text(
                                                       'Create Description',
                                                     ),
@@ -953,10 +977,9 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
                                                       style: _actionStyle,
                                                       onPressed: _saving
                                                           ? null
-                                                          : () =>
-                                                              _openAddLink(
-                                                                row.name,
-                                                              ),
+                                                          : () => _openAddLink(
+                                                              row.name,
+                                                            ),
                                                       child: const Text(
                                                         'Attach Link',
                                                       ),
@@ -966,16 +989,14 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
                                                     style: _actionStyle,
                                                     onPressed: _saving
                                                         ? null
-                                                        : () =>
-                                                            _openEdit(row),
+                                                        : () => _openEdit(row),
                                                     child: const Text('Edit'),
                                                   ),
                                                   OutlinedButton(
                                                     style: _actionStyle,
                                                     onPressed: _saving
                                                         ? null
-                                                        : () =>
-                                                            _deleteRow(row),
+                                                        : () => _deleteRow(row),
                                                     child: const Text('Delete'),
                                                   ),
                                                 ] else
@@ -989,8 +1010,7 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
                                                       fontSize: 12,
                                                     ),
                                                   ),
-                                                ],
-                                              ),
+                                              ]),
                                             ),
                                           ],
                                         ),
@@ -1003,7 +1023,9 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
                         ),
                 ),
                 SectionRefreshFooter(
-                  label: '${_rows.length} artist(s) — Refresh',
+                  label: filtering
+                      ? '${visible.length} of ${_rows.length} artist(s) — Refresh'
+                      : '${_rows.length} artist(s) — Refresh',
                   enabled: !_saving,
                   onRefresh: () => _load(forceRefresh: true),
                 ),
@@ -1015,10 +1037,10 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
     );
   }
 
-  Widget _buildCompactDescriptionsList() {
+  Widget _buildCompactDescriptionsList(List<_ListRow> rows) {
     return CompactSectionList(
       children: [
-        for (final row in _rows)
+        for (final row in rows)
           CompactSectionListRow(
             title: row.name,
             subtitle: row.hasDescription
@@ -1027,8 +1049,9 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
             titleStyle: TextStyle(
               color: row.hasDescription ? AppColors.heading : AppColors.muted,
               fontSize: 15,
-              fontWeight:
-                  row.hasDescription ? FontWeight.w600 : FontWeight.w400,
+              fontWeight: row.hasDescription
+                  ? FontWeight.w600
+                  : FontWeight.w400,
             ),
             backgroundColor: _rowBackground(row),
             actions: _compactDescriptionActions(row),
@@ -1086,10 +1109,10 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
   }
 
   ButtonStyle get _actionStyle => OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        minimumSize: Size.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    minimumSize: Size.zero,
+    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+  );
 
   Widget _buildForm() {
     return SingleChildScrollView(
@@ -1121,7 +1144,7 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
               FormRow(
                 label: 'Description text',
                 requiredField: true,
-                child: TextField(
+                child: DescriptionBodyField(
                   controller: _text,
                   maxLines: 14,
                   minLines: 8,
@@ -1183,7 +1206,7 @@ class _DescriptionsSectionState extends State<DescriptionsSection> {
                             ),
                           ),
                         )
-                      : TextField(
+                      : DescriptionBodyField(
                           controller: _text,
                           maxLines: 12,
                           minLines: 8,

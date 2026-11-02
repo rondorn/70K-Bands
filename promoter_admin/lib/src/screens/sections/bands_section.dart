@@ -11,10 +11,12 @@ import 'package:promoter_admin/src/services/http_fetch.dart';
 import 'package:promoter_admin/src/services/lineup_service.dart';
 import 'package:promoter_admin/src/services/location_parse.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
+import 'package:promoter_admin/src/widgets/admin_list_filter_field.dart';
 import 'package:promoter_admin/src/widgets/admin_table_cells.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
 import 'package:promoter_admin/src/widgets/centered_when_wrapped.dart';
 import 'package:promoter_admin/src/widgets/compact_section_list.dart';
+import 'package:promoter_admin/src/widgets/description_body_field.dart';
 import 'package:promoter_admin/src/widgets/dropbox_folder_picker.dart';
 import 'package:promoter_admin/src/widgets/export_artists_dialog.dart';
 import 'package:promoter_admin/src/widgets/layout_breakpoints.dart';
@@ -88,6 +90,7 @@ class _BandsSectionState extends State<BandsSection> {
   final _priorYears = TextEditingController();
   final _description = TextEditingController();
   final _descriptionUrl = TextEditingController();
+  final _filter = TextEditingController();
 
   bool get _isEditing => _editingIndex != null;
   bool get _useCityState => widget.workspace.useCityStateField;
@@ -95,7 +98,16 @@ class _BandsSectionState extends State<BandsSection> {
 
   /// File order stays as entered; alphabetical is display-only.
   List<int> get _bandsDisplayOrder {
-    final indices = List<int>.generate(_bands.length, (i) => i);
+    final indices = <int>[
+      for (var i = 0; i < _bands.length; i++)
+        if (adminListQueryMatches(_filter.text, [
+          _bands[i].name,
+          _bands[i].country,
+          _bands[i].genre,
+          _bands[i].noteworthy,
+        ]))
+          i,
+    ];
     indices.sort((a, b) {
       final byName = _bands[a]
           .name
@@ -147,6 +159,7 @@ class _BandsSectionState extends State<BandsSection> {
     _priorYears.dispose();
     _description.dispose();
     _descriptionUrl.dispose();
+    _filter.dispose();
     super.dispose();
   }
 
@@ -700,6 +713,7 @@ class _BandsSectionState extends State<BandsSection> {
 
   Widget _buildList() {
     final order = _bandsDisplayOrder;
+    final filtering = _filter.text.trim().isNotEmpty;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -773,21 +787,39 @@ class _BandsSectionState extends State<BandsSection> {
                   ),
                 Row(
                   children: [
-                    FilledButton(
-                      onPressed: _canEdit ? _startAdd : null,
-                      child: const Text('Add artist'),
+                    Flexible(
+                      fit: FlexFit.loose,
+                      child: FilledButton(
+                        onPressed: _canEdit ? _startAdd : null,
+                        child: const Text(
+                          'Add artist',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     ),
-                    const Spacer(),
-                    OutlinedButton.icon(
-                      onPressed: _bands.isEmpty
-                          ? null
-                          : () => showArtistsExportDialog(
-                                context,
-                                workspace: widget.workspace,
-                                bands: _bands,
-                              ),
-                      icon: const Icon(Icons.ios_share_outlined, size: 18),
-                      label: const Text('Export…'),
+                    const SizedBox(width: 12),
+                    Flexible(
+                      child: AdminListFilterField(
+                        controller: _filter,
+                        hintText: 'Filter artists',
+                        onChanged: (_) => setState(() {}),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Flexible(
+                      fit: FlexFit.loose,
+                      child: OutlinedButton.icon(
+                        onPressed: _bands.isEmpty
+                            ? null
+                            : () => showArtistsExportDialog(
+                                  context,
+                                  workspace: widget.workspace,
+                                  bands: _bands,
+                                ),
+                        icon: const Icon(Icons.ios_share_outlined, size: 18),
+                        label: const Text('Export…'),
+                      ),
                     ),
                   ],
                 ),
@@ -798,6 +830,11 @@ class _BandsSectionState extends State<BandsSection> {
                           'No artists in the Testing lineup yet.',
                           style: TextStyle(color: AppColors.muted),
                         )
+                      : order.isEmpty
+                          ? const Text(
+                              'No artists match that filter.',
+                              style: TextStyle(color: AppColors.muted),
+                            )
                       : isCompactLayout(context)
                           ? _buildCompactBandsList(order)
                           : LayoutBuilder(
@@ -920,7 +957,9 @@ class _BandsSectionState extends State<BandsSection> {
                         ),
                 ),
                 SectionRefreshFooter(
-                  label: '${_bands.length} artist(s) — Refresh',
+                  label: filtering
+                      ? '${order.length} of ${_bands.length} artist(s) — Refresh'
+                      : '${_bands.length} artist(s) — Refresh',
                   onRefresh: () => _load(forceRefresh: true),
                 ),
               ],
@@ -1024,13 +1063,11 @@ class _BandsSectionState extends State<BandsSection> {
                           ),
                         ),
                       )
-                    : TextField(
+                    : DescriptionBodyField(
                         controller: _description,
                         maxLines: 12,
                         minLines: 8,
-                        decoration: const InputDecoration(
-                          hintText: 'Band description text…',
-                        ),
+                        hintText: 'Band description text…',
                       ),
               ),
             CheckboxListTile(
@@ -1076,13 +1113,11 @@ class _BandsSectionState extends State<BandsSection> {
               ),
           ] else if (_showDescription) ...[
             const SizedBox(height: 6),
-            TextField(
+            DescriptionBodyField(
               controller: _description,
               maxLines: 12,
               minLines: 8,
-              decoration: const InputDecoration(
-                hintText: 'Band description text…',
-              ),
+              hintText: 'Band description text…',
             ),
             HintText(
               widget.workspace.canEditDescriptions

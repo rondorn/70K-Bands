@@ -30,6 +30,11 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         }
     }
 
+    func sceneDidBecomeActive(_ scene: UIScene) {
+        guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else { return }
+        appDelegate.connectToFcmIfConfigured(resetAttempts: true)
+    }
+
     func sceneWillEnterForeground(_ scene: UIScene) {
         guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else { return }
         FirebaseSyncTrace.log("sceneWillEnterForeground", "true background return check")

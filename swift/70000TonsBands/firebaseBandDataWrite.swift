@@ -85,6 +85,10 @@ class firebaseBandDataWrite {
     }
     
     func writeSingleRecord(bandName: String, ranking: String, sanitizedName: String? = nil){
+        if FirebaseConnectionHelper.blocksReportingWrites() {
+            print("🔥 [FIREBASE_BAND] writeSingleRecord: Skipping — test install does not write reporting data")
+            return
+        }
         
         print("🔥 [FIREBASE_BAND] writeSingleRecord: ENTRY - bandName='\(bandName)', ranking='\(ranking)', sanitizedName=\(sanitizedName ?? "nil"), thread=\(Thread.isMainThread ? "main" : "background")")
         
@@ -179,7 +183,7 @@ class firebaseBandDataWrite {
             return
         }
         
-        if inTestEnvironment == false {
+        if FirebaseConnectionHelper.blocksReportingWrites() == false {
             let uid = (UIDevice.current.identifierForVendor?.uuidString)!
             
             guard uid.isEmpty == false else {
@@ -249,7 +253,7 @@ class firebaseBandDataWrite {
                 finish()
             }
         } else {
-            print("🔥 [FIREBASE_BAND] writeData: Skipping — simulator/test environment (inTestEnvironment=true)")
+            print("🔥 [FIREBASE_BAND] writeData: Skipping — test install does not write reporting data")
             NetworkCounter.record("Firebase-Artists skipped=simulator")
             finish()
         }

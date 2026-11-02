@@ -34,6 +34,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     let messageKey = "onMessageReceived"
     
     let gcmMessageIDKey = "gcm.message_id"
+    /// Delayed retry after a global subscribe fails because the FCM token is not ready yet.
+    private var globalSubscribeRetry: DispatchWorkItem?
+    private var globalSubscribeAttempts = 0
+    private let maxGlobalSubscribeAttempts = 6
     
 
     
@@ -459,6 +463,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             // APNs registration requires network connectivity
             application.registerForRemoteNotifications()
             print("✅ Remote notifications registered")
+            self.connectToFcmIfConfigured(resetAttempts: true)
             
             print("✅ Deferred network operations started")
 
@@ -543,6 +548,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
          
         let dataDict:[String: String] = ["token": fcmToken]
         NotificationCenter.default.post(name: Notification.Name("FCMToken"), object: nil, userInfo: dataDict)
+        connectToFcmIfConfigured(resetAttempts: true)
         // TODO: If necessary send token to application server.
         // Note: This callback is fired at each app startup and whenever a new token is generated.
     }
@@ -627,28 +633,104 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     // [END refresh_token]
     // [START connect_to_fcm]
+    /// Topic subscribe is a no-op until FirebaseApp.configure has run.
+    /// `resetAttempts` is for a new opportunity (launch, token, foreground), not for the delayed retry.
+    func connectToFcmIfConfigured(resetAttempts: Bool = false) {
+        let start = {
+            guard AppDelegate.isFirebaseConfigured else {
+                print("FCM subscribe skipped — Firebase not configured yet")
+                return
+            }
+            if resetAttempts {
+                self.globalSubscribeAttempts = 0
+                self.globalSubscribeRetry?.cancel()
+                self.globalSubscribeRetry = nil
+            }
+            self.connectToFcm()
+        }
+        if Thread.isMainThread {
+            start()
+        } else {
+            DispatchQueue.main.async(execute: start)
+        }
+    }
+
     /**
-     Connects to Firebase Cloud Messaging if a token is available.
+     Subscribes every install, production and testing, to `global`.
+     `blocksReportingWrites()` must not be consulted here. It only keeps test
+     installs out of Firebase usage numbers.
      */
     func connectToFcm() {
-        // Won't connect since there is no token
-        Messaging.messaging().token { token, error in
-            if token == nil {
-                return;
+        Messaging.messaging().token { [weak self] token, error in
+            guard let self = self else { return }
+            let apply = {
+                if token == nil || token?.isEmpty == true {
+                    print("FCM token not ready (\(error?.localizedDescription ?? "nil token")) — retrying global")
+                    self.scheduleGlobalResubscribe()
+                    return
+                }
+                self.subscribeToFcmTopic(subscriptionTopic) { subscribeError in
+                    let handleResult = {
+                        if subscribeError != nil {
+                            self.scheduleGlobalResubscribe()
+                        } else {
+                            self.globalSubscribeAttempts = 0
+                            self.globalSubscribeRetry?.cancel()
+                            self.globalSubscribeRetry = nil
+                        }
+                    }
+                    if Thread.isMainThread {
+                        handleResult()
+                    } else {
+                        DispatchQueue.main.async(execute: handleResult)
+                    }
+                }
+                self.subscribeToFcmTopic(subscriptionTopicTest)
+                if getAlertForUnofficalEventsValue() {
+                    self.subscribeToFcmTopic(subscriptionUnofficalTopic)
+                } else {
+                    Messaging.messaging().unsubscribe(fromTopic: subscriptionUnofficalTopic) { unsubscribeError in
+                        if let unsubscribeError = unsubscribeError {
+                            print("FCM unsubscribe FAILED \(subscriptionUnofficalTopic): \(unsubscribeError.localizedDescription)")
+                        } else {
+                            print("FCM unsubscribe OK \(subscriptionUnofficalTopic)")
+                        }
+                    }
+                }
+            }
+            if Thread.isMainThread {
+                apply()
+            } else {
+                DispatchQueue.main.async(execute: apply)
             }
         }
-        Messaging.messaging().subscribe(toTopic: subscriptionTopic)
-        Messaging.messaging().subscribe(toTopic: subscriptionTopicTest)
-        
-        print("FCM - subscribed to " + subscriptionTopic)
-        print("FCM - subscribed to " + subscriptionTopicTest)
-        if (getAlertForUnofficalEventsValue() == true){
-            Messaging.messaging().subscribe(toTopic: subscriptionUnofficalTopic)
-            print("FCM - subscribed to " + subscriptionUnofficalTopic)
-        } else {
-            Messaging.messaging().unsubscribe(fromTopic: subscriptionUnofficalTopic)
-        }
+    }
 
+    private func scheduleGlobalResubscribe() {
+        guard globalSubscribeRetry == nil else { return }
+        guard globalSubscribeAttempts < maxGlobalSubscribeAttempts else {
+            print("FCM global subscribe paused after \(globalSubscribeAttempts) attempts; next foreground will retry")
+            return
+        }
+        globalSubscribeAttempts += 1
+        let work = DispatchWorkItem { [weak self] in
+            guard let self = self else { return }
+            self.globalSubscribeRetry = nil
+            self.connectToFcmIfConfigured()
+        }
+        globalSubscribeRetry = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3, execute: work)
+    }
+
+    private func subscribeToFcmTopic(_ topic: String, completion: ((Error?) -> Void)? = nil) {
+        Messaging.messaging().subscribe(toTopic: topic) { error in
+            if let error = error {
+                print("FCM subscribe FAILED \(topic): \(error.localizedDescription)")
+            } else {
+                print("FCM subscribe OK \(topic)")
+            }
+            completion?(error)
+        }
     }
     // [END connect_to_fcm]
 
@@ -659,28 +741,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     
     
     
-    // This function is added here only for debugging purposes, and can be removed if swizzling is enabled.
-    // If swizzling is disabled then this function must be implemented so that the APNs token can be paired to
-    // the InstanceID token.
-    func application(application: UIApplication,
+    func application(_ application: UIApplication,
                      didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-        
         let token = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
         print("FCM APNs token retrieved: \(token)")
-        
-        //#if PROD_BUILD
-        //InstanceID.instanceID().setAPNSToken(deviceToken, type: .prod)
-        //InstanceID.instanceID().setAPNSToken(deviceToken, type: .prod)
-        //#else
-        //    InstanceID.instanceID().setAPNSToken(deviceToken, type: .sandbox)
-            //InstanceID.instanceID().setAPNSToken(deviceToken, type: InstanceIDAPNSTokenType.sandbox)
-       // #endif
-        
-        //InstanceID.instanceID().setAPNSToken(deviceToken, type: InstanceIDAPNSTokenType.unknown)
-        
         Messaging.messaging().apnsToken = deviceToken
-
-        print("FCM recieved background alert - \(deviceToken)")
+        connectToFcmIfConfigured(resetAttempts: true)
     }
     
      // [START receive_message]
@@ -750,11 +816,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             print("🔥 [TIMING] Firebase configured flag = \(AppDelegate.isFirebaseConfigured)")
             
             // Only connect to FCM after Firebase is definitely configured
-            if AppDelegate.isFirebaseConfigured {
-                self.connectToFcm()
-            } else {
-                print("⚠️ [TIMING] Firebase NOT configured yet, skipping FCM connection")
-            }
+            self.connectToFcmIfConfigured(resetAttempts: true)
             
             // Force iCloud synchronization when app becomes active
             print("iCloud: App became active, forcing iCloud synchronization in background")
@@ -1697,12 +1759,13 @@ extension AppDelegate : UNUserNotificationCenterDelegate {
         if let messageID = userInfo[gcmMessageIDKey] {
             print("sendLocalAlert! Message ID: \(messageID)")
             print("sendLocalAlert! 1 \(userInfo)")
-            extractAlertMessage(userInfo: userInfo as! Dictionary<String, AnyObject>);
-            // Post notification for foreground push
             NotificationCenter.default.post(name: Notification.Name("PushNotificationReceived"), object: nil)
-            completionHandler([])
         } else {
             Messaging.messaging().appDidReceiveMessage(userInfo)
+        }
+        if #available(iOS 14.0, *) {
+            completionHandler([.banner, .list, .badge, .sound])
+        } else {
             completionHandler([.alert, .badge, .sound])
         }
     }
@@ -1752,5 +1815,6 @@ extension AppDelegate: MessagingDelegate {
       name: Notification.Name("FCMToken"),
       object: nil,
       userInfo: tokenDict)
+    connectToFcmIfConfigured(resetAttempts: true)
   }
 }

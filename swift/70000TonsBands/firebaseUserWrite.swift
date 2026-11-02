@@ -45,8 +45,8 @@ class firebaseUserWrite {
     }
 
     private func scheduleWriteIfNeededInternal(immediate: Bool) {
-        guard inTestEnvironment == false else {
-            print("🔥 [USER_WRITE] Skipping — simulator/test environment (inTestEnvironment=true)")
+        guard FirebaseConnectionHelper.blocksReportingWrites() == false else {
+            print("🔥 [USER_WRITE] Skipping — test install does not write reporting data")
             NetworkCounter.record("Firebase-User skipped=simulator")
             return
         }

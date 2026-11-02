@@ -14,10 +14,12 @@ import 'package:promoter_admin/src/services/schedule_service.dart';
 import 'package:promoter_admin/src/services/schedule_staging.dart';
 import 'package:promoter_admin/src/services/schedule_validation.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
+import 'package:promoter_admin/src/widgets/admin_list_filter_field.dart';
 import 'package:promoter_admin/src/widgets/admin_table_cells.dart';
 import 'package:promoter_admin/src/widgets/app_shell.dart';
 import 'package:promoter_admin/src/widgets/centered_when_wrapped.dart';
 import 'package:promoter_admin/src/widgets/compact_section_list.dart';
+import 'package:promoter_admin/src/widgets/description_body_field.dart';
 import 'package:promoter_admin/src/widgets/dropbox_folder_picker.dart';
 import 'package:promoter_admin/src/widgets/export_schedule_dialog.dart';
 import 'package:promoter_admin/src/widgets/layout_breakpoints.dart';
@@ -98,6 +100,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
   final _notes = TextEditingController();
   final _descriptionText = TextEditingController();
   final _imageUrl = TextEditingController();
+  final _filter = TextEditingController();
 
   bool get _isNonBand =>
       ScheduleValidation.isNonBandEventType((_type ?? '').trim());
@@ -124,7 +127,10 @@ class _ScheduleSectionState extends State<ScheduleSection> {
 
   /// File order stays as entered; this is display-only chronological order.
   List<int> get _eventsDisplayOrder {
-    final indices = List<int>.generate(_events.length, (i) => i);
+    final indices = <int>[
+      for (var i = 0; i < _events.length; i++)
+        if (_eventMatchesFilter(_events[i])) i,
+    ];
     indices.sort((a, b) {
       final ea = _events[a];
       final eb = _events[b];
@@ -137,6 +143,18 @@ class _ScheduleSectionState extends State<ScheduleSection> {
       return a.compareTo(b);
     });
     return indices;
+  }
+
+  bool _eventMatchesFilter(ScheduleEvent event) {
+    return adminListQueryMatches(_filter.text, [
+      event.band,
+      event.location,
+      event.date,
+      event.day,
+      event.startTime,
+      event.endTime,
+      event.type,
+    ]);
   }
 
   static int _dateSortKey(String raw) {
@@ -170,6 +188,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
     _notes.dispose();
     _descriptionText.dispose();
     _imageUrl.dispose();
+    _filter.dispose();
     super.dispose();
   }
 
@@ -1001,6 +1020,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
 
   Widget _buildView() {
     final order = _eventsDisplayOrder;
+    final filtering = _filter.text.trim().isNotEmpty;
     final highlightSync =
         _outstandingKeys.isNotEmpty || _justSyncedKeys.isNotEmpty;
     return Column(
@@ -1025,14 +1045,28 @@ class _ScheduleSectionState extends State<ScheduleSection> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _syncStatusBar(),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: OutlinedButton.icon(
-                    onPressed: _events.isEmpty ? null : () => _openExportDialog(),
-                    icon: const Icon(Icons.ios_share_outlined, size: 18),
-                    label: const Text('Export…'),
-                  ),
+                Row(
+                  children: [
+                    Flexible(
+                      child: AdminListFilterField(
+                        controller: _filter,
+                        hintText: 'Filter events',
+                        onChanged: (_) => setState(() {}),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Flexible(
+                      fit: FlexFit.loose,
+                      child: OutlinedButton.icon(
+                        onPressed:
+                            _events.isEmpty ? null : () => _openExportDialog(),
+                        icon: const Icon(Icons.ios_share_outlined, size: 18),
+                        label: const Text('Export…'),
+                      ),
+                    ),
+                  ],
                 ),
+                SizedBox(height: listPanelSectionGap(context)),
                 if (widget.workspace.scheduleUrl.isNotEmpty)
                   Padding(
                     padding: EdgeInsets.only(
@@ -1055,6 +1089,11 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                           'No schedule events yet.',
                           style: TextStyle(color: AppColors.muted),
                         )
+                      : order.isEmpty
+                          ? const Text(
+                              'No events match that filter.',
+                              style: TextStyle(color: AppColors.muted),
+                            )
                       : isCompactLayout(context)
                           ? _buildCompactScheduleList(order)
                           : LayoutBuilder(
@@ -1228,7 +1267,9 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                   ),
                 ),
                 SectionRefreshFooter(
-                  label: '${_events.length} event(s) — Refresh',
+                  label: filtering
+                      ? '${order.length} of ${_events.length} event(s) — Refresh'
+                      : '${_events.length} event(s) — Refresh',
                   onRefresh: () => _load(forceRefresh: true),
                 ),
               ],
@@ -1585,13 +1626,11 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      TextField(
+                      DescriptionBodyField(
                         controller: _descriptionText,
                         maxLines: 6,
                         minLines: 4,
-                        decoration: const InputDecoration(
-                          hintText: 'Plain-text description for the app…',
-                        ),
+                        hintText: 'Plain-text description for the app…',
                       ),
                       const HintText(
                         'When you save, the note is written to Dropbox and '

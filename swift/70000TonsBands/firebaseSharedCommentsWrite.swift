@@ -40,8 +40,8 @@ class firebaseSharedCommentsWrite {
         userName: String,
         completion: @escaping (Bool) -> Void
     ) {
-        if inTestEnvironment {
-            print("⏭️ [SHARED_COMMENTS] Skipping write in test environment")
+        if FirebaseConnectionHelper.blocksReportingWrites() {
+            print("⏭️ [SHARED_COMMENTS] Skipping write — test install does not write reporting data")
             NetworkCounter.record("Firebase-Notes skipped=simulator")
             DispatchQueue.main.async { completion(true) }
             return

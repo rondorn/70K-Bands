@@ -136,6 +136,10 @@ class firebaseEventDataWrite {
     }
             
     func writeEvent(index: String, status: String){
+        if FirebaseConnectionHelper.blocksReportingWrites() {
+            print("🔥 firebase EVENT_WRITE: Skipping single event — test install does not write reporting data")
+            return
+        }
         
         print("🔥 firebase EVENT_WRITE: writeEvent() called for index: \(index), status: \(status)")
         
@@ -221,7 +225,7 @@ class firebaseEventDataWrite {
             return
         }
         
-        if (inTestEnvironment == false){
+        if FirebaseConnectionHelper.blocksReportingWrites() == false {
             print("🔥 firebase EVENT_WRITE: Not in test environment, proceeding with write")
             let syncSemaphore = DispatchSemaphore(value: 0)
             DispatchQueue.global(qos: DispatchQoS.QoSClass.background).async {
