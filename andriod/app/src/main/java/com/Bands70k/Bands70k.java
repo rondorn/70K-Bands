@@ -84,6 +84,9 @@ public class Bands70k extends Application implements Application.ActivityLifecyc
         // Register proper Android background detection
         registerActivityLifecycleCallbacks(this);
         Log.d("AppLifecycle", "Application created, lifecycle callbacks registered for proper background detection");
+
+        // List|detail Activity Embedding (tablet both orients; Duo-class landscape only)
+        ListDetailSplitManager.registerEmbeddingRules(this);
         
         // Initialize app components asynchronously to avoid blocking startup
         initializeAppAsync();

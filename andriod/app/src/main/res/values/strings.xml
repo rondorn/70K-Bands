@@ -317,6 +317,7 @@
     <string name="Filtering">Filtering</string>
     <!-- filtering indicator near counts -->
     <string name="Filters">Filters</string>
+    <string name="split_detail_placeholder">Select a band</string>
     <string name="can_not_hide_all_statuses">Can not hide all status</string>
 
 

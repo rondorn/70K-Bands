@@ -58,14 +58,15 @@ public class LandscapeScheduleActivity extends Activity {
             | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
         );
 
-        // CRITICAL: Update DeviceSizeManager on activity creation (handles foldable devices)
-        DeviceSizeManager.getInstance(this).updateDeviceSize();
+        // Prefer activity + max-window metrics so embedding half-width does not look like a phone.
+        DeviceSizeManager.getInstance(this).updateFromActivity(this);
         
         // Get parameters from intent
         String initialDay = getIntent().getStringExtra(EXTRA_INITIAL_DAY);
         boolean hideExpiredEvents = getIntent().getBooleanExtra(EXTRA_HIDE_EXPIRED_EVENTS, false);
-        // Use dynamic device size check instead of static Intent extra
-        boolean isSplitViewCapable = DeviceSizeManager.getInstance(this).isLargeDisplay();
+        // Manual calendar mode on tablets / open foldables (icon, not orientation).
+        boolean isSplitViewCapable =
+                DeviceSizeManager.getInstance(this).shouldOfferManualScheduleCalendarToggle(this);
         initialIsSplitViewCapable = isSplitViewCapable; // Store for reference
         
         Log.d(TAG, "Creating LandscapeScheduleActivity - initialDay: " + initialDay + 
@@ -93,7 +94,8 @@ public class LandscapeScheduleActivity extends Activity {
                 
                 // Launch detail activity.
                 // Use dynamic device size check (handles foldable devices)
-                boolean currentIsSplitViewCapable = DeviceSizeManager.getInstance(LandscapeScheduleActivity.this).isLargeDisplay();
+                boolean currentIsSplitViewCapable = DeviceSizeManager.getInstance(LandscapeScheduleActivity.this)
+                        .shouldOfferManualScheduleCalendarToggle(LandscapeScheduleActivity.this);
                 Intent intent = new Intent(LandscapeScheduleActivity.this, showBandDetails.class);
                 intent.putExtra("BandName", bandName);
                 intent.putExtra("showCustomBackButton", true);
@@ -177,9 +179,9 @@ public class LandscapeScheduleActivity extends Activity {
               " (ORIENTATION_PORTRAIT=" + Configuration.ORIENTATION_PORTRAIT + 
               ", ORIENTATION_LANDSCAPE=" + Configuration.ORIENTATION_LANDSCAPE + ")");
         
-        // CRITICAL: Recalculate device size on configuration change (handles foldable devices)
-        DeviceSizeManager.getInstance(this).updateDeviceSize();
-        boolean isSplitViewCapable = DeviceSizeManager.getInstance(this).isLargeDisplay();
+        DeviceSizeManager.getInstance(this).updateFromActivity(this);
+        boolean isSplitViewCapable =
+                DeviceSizeManager.getInstance(this).shouldOfferManualScheduleCalendarToggle(this);
         
         Log.d(TAG, "Device size after config change - isSplitViewCapable: " + isSplitViewCapable + 
               " (was: " + initialIsSplitViewCapable + ")");
@@ -277,9 +279,9 @@ public class LandscapeScheduleActivity extends Activity {
         // CRITICAL FIX: Also check orientation when window gains focus
         // This catches cases where onConfigurationChanged might not fire
         if (hasFocus) {
-            // Use dynamic device size check (handles foldable devices)
-            DeviceSizeManager.getInstance(this).updateDeviceSize();
-            boolean isSplitViewCapable = DeviceSizeManager.getInstance(this).isLargeDisplay();
+            DeviceSizeManager.getInstance(this).updateFromActivity(this);
+            boolean isSplitViewCapable =
+                    DeviceSizeManager.getInstance(this).shouldOfferManualScheduleCalendarToggle(this);
             
             if (!isSplitViewCapable) {
                 // Check orientation using window dimensions (more reliable on foldable devices)

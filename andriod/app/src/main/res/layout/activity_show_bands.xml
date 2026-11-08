@@ -9,7 +9,12 @@
     android:gravity="top"
     android:fitsSystemWindows="true">
 
+    <!--
+      Single-column list UI. On tablets/foldables, Jetpack Activity Embedding resizes this
+      entire activity into the primary (list) column — no in-layout dual-pane required.
+    -->
     <LinearLayout
+        android:id="@+id/topToolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
@@ -69,13 +74,12 @@
 
         </LinearLayout>
 
-        <!-- Calendar view button: visible only on tablets/foldables (visibility set in code) -->
         <ImageButton
             android:id="@+id/calendarViewButton"
             android:layout_width="@dimen/toolbar_action_hit_size"
             android:layout_height="@dimen/toolbar_action_hit_size"
             android:padding="@dimen/toolbar_action_icon_padding"
-            android:src="@android:drawable/ic_menu_today"
+            android:src="@drawable/icon_calendar_view"
             android:background="@android:color/black"
             android:scaleType="fitCenter"
             android:adjustViewBounds="true"
@@ -114,12 +118,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:minHeight="44dp"
-        android:layout_marginTop="65dp"
+        android:layout_below="@+id/topToolbar"
         android:paddingTop="4dp"
         android:paddingBottom="4dp"
         android:background="#FF000000">
 
-        <!-- Filters menu: hamburger icon + "Filters" text + badge (iOS-style) -->
         <LinearLayout
             android:id="@+id/filterMenuContainer"
             android:layout_width="wrap_content"
@@ -151,7 +154,6 @@
                 android:paddingEnd="4dp"
                 android:contentDescription="Filters" />
 
-            <!-- Hidden records counter badge (orange oval, like iOS) -->
             <TextView
                 android:id="@+id/filterCountBadge"
                 android:layout_width="wrap_content"
@@ -190,21 +192,19 @@
             app:queryBackground="@android:color/transparent"
             app:submitBackground="@android:color/transparent" />
 
-    </RelativeLayout >
+    </RelativeLayout>
 
     <RelativeLayout
         android:id="@+id/listViewLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@+id/searchFilterBar"
-        android:layout_gravity="bottom"
         android:layout_marginStart="10dp"
         android:layout_marginEnd="5dp"
         android:layout_marginTop="5dp"
-        android:background="#FF000000"
-        android:orientation="horizontal">
+        android:background="#FF000000">
 
-        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
             android:id="@+id/swiperefresh"
             android:layout_width="match_parent"
             android:layout_height="match_parent">

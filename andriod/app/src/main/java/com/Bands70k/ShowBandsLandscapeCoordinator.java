@@ -53,8 +53,13 @@ public final class ShowBandsLandscapeCoordinator {
         isManualCalendarView = manual;
     }
 
+    /**
+     * True on tablets / open foldables: calendar↔list is a toolbar icon, not orientation.
+     * Uses max-window form factor so Activity Embedding (half-width list column) does not
+     * drop back into phone orientation switching.
+     */
     public boolean isSplitViewCapable() {
-        return DeviceSizeManager.getInstance(host).isLargeDisplay();
+        return DeviceSizeManager.getInstance(host).shouldOfferManualScheduleCalendarToggle(host);
     }
 
     private boolean isRotationViewOffered() {

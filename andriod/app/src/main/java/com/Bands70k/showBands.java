@@ -251,6 +251,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
         setContentView(R.layout.activity_show_bands);
         StartupTracker.markStep(getApplicationContext(), "showBands:onCreate:setContentView2");
+
+        DeviceSizeManager.getInstance(this).updateDeviceSize();
         
         // Initialize data timestamp preferences for change detection
         dataTimestampPrefs = getSharedPreferences(PREFS_DATA_TIMESTAMPS, MODE_PRIVATE);
@@ -640,14 +642,19 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         FilterButtonHandler.dismissFilterPopupIfShowing();
         setSearchBarWidth();
         
-        // CRITICAL: Update DeviceSizeManager on configuration change
-        // This ensures device size classification is recalculated (important for orientation changes and foldable devices)
-        DeviceSizeManager.getInstance(this).updateDeviceSize();
-        
-        // For tablets/master-detail view: ignore rotation, rely on button only
+        // Recalculate size class; force embedding to re-apply pane sizes after rotate.
+        DeviceSizeManager.getInstance(this).updateFromActivity(this);
+        landscapeSchedule.updateCalendarButtonVisibility();
+
+        // Large form-factor (tablet / open fold): calendar↔list via icon, never orientation.
+        // recreate() so layout is measured for the new window — same path as cold-launch
+        // in that orientation. Relayout-only leaves a broken ListView after embedding resize
+        // (landscape → portrait looked terrible while portrait launch looked fine).
         boolean isTablet = landscapeSchedule.isSplitViewCapable();
         if (isTablet) {
-            Log.d("LANDSCAPE_SCHEDULE", "onConfigurationChanged - Tablet detected, ignoring rotation (button-only mode)");
+            Log.d("LANDSCAPE_SCHEDULE", "onConfigurationChanged - Large form-factor, recreating for clean split layout");
+            ListDetailSplitManager.refreshSplitAfterConfigurationChange(this);
+            recreate();
             return;
         }
         
@@ -4566,6 +4573,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         // Invalidate options menu and header calendar button for tablets/foldables
         invalidateOptionsMenu();
         landscapeSchedule.updateCalendarButtonVisibility();
+        DeviceSizeManager.getInstance(this).updateDeviceSize();
         
         // Check for incoming file share intent (for API 35 emulator compatibility)
         Log.d(TAG, "🔥🔥🔥 onResume - checking for file share intent 🔥🔥🔥");
@@ -4597,7 +4605,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             reloadUiFromCachedYearData();
         } else if (openedDetailsScreen || returningFromDetailsScreen) {
             Log.d("ListRefresh", "onResume: returning from details — UI refresh only (no network)");
-            if (openedDetailsScreen) {
+            // Phone: details were full-screen, so onResume means the user came back.
+            // Activity Embedding split: the list often stays resumed beside details — do not
+            // treat that as "returned"; onActivityResult handles finish of the detail Activity.
+            if (openedDetailsScreen && !ListDetailSplitManager.shouldUseSplitView(this)) {
                 handleReturnFromDetailsScreen();
             }
         } else if (returningFromStatsPage) {
@@ -4870,10 +4881,14 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
         Intent showDetails = new Intent(showBands.this, showBandDetails.class);
         showDetails.putExtra("detailsListPosition", position);
-        // On tablet-sized devices, details should always show full content (notes, extra data, links) regardless of orientation
-        showDetails.putExtra("alwaysShowFullDetails", landscapeSchedule.isSplitViewCapable());
-        Log.d("NAVIGATION_DEBUG", "🚀 Starting showBandDetails activity");
-        // Update activity reference for progress indicator if downloads are running
+        // Tablet / split: full detail content in both orientations. Phone: unchanged.
+        boolean largeOrSplit = landscapeSchedule.isSplitViewCapable()
+                || ListDetailSplitManager.shouldUseSplitView(this);
+        showDetails.putExtra("alwaysShowFullDetails", largeOrSplit);
+        // Reuse detail Activity when tapping another row while embedded side-by-side.
+        showDetails.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        Log.d("NAVIGATION_DEBUG", "🚀 Starting showBandDetails (split="
+                + ListDetailSplitManager.shouldUseSplitView(this) + ")");
         ForegroundDownloadManager.setCurrentActivity(showBands.this);
         openedDetailsScreen = true;
         startActivityForResult(showDetails, REQUEST_CODE_BAND_DETAILS);

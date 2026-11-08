@@ -22,12 +22,17 @@
         android:label="@string/app_name"
         android:usesCleartextTraffic="true"
         android:theme="@style/splashScreenTheme">
+        <!-- Required for Activity Embedding list|detail splits (Android 12L+). -->
+        <property
+            android:name="android.window.PROPERTY_ACTIVITY_EMBEDDING_SPLITS_ENABLED"
+            android:value="true" />
         <activity
             android:name=".showBands"
             android:label="@string/app_name"
-            android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
-            android:launchMode="singleTask"
-            android:exported="true">
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize"
+            android:launchMode="singleTop"
+            android:exported="true"
+            android:resizeableActivity="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -43,10 +48,20 @@
             android:process=":diag" />
         <activity
             android:name=".showBandDetails"
-            android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize"
             android:label="showBandDetails"
-            android:exported="true">
+            android:launchMode="singleTop"
+            android:exported="true"
+            android:resizeableActivity="true">
         </activity>
+
+        <!-- Empty secondary pane for Activity Embedding until a band is selected.
+             No orientation configChanges — recreate on rotate so the pane matches cold launch. -->
+        <activity
+            android:name=".SplitDetailPlaceholderActivity"
+            android:exported="false"
+            android:resizeableActivity="true"
+            android:theme="@style/AppTheme" />
 
         <activity
             android:name=".landscape.LandscapeScheduleActivity"

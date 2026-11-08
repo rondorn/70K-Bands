@@ -184,27 +184,7 @@ public class showBandDetails extends Activity {
         // Update activity reference for progress indicator if downloads are running
         ForegroundDownloadManager.setCurrentActivity(this);
         
-        // Check if we should show custom back button (launched from landscape schedule)
-        Intent intent = getIntent();
-        if (intent != null) {
-            if (intent.hasExtra("detailsListPosition")) {
-                detailsListAnchorFromIntent = intent.getIntExtra("detailsListPosition", -1);
-                staticVariables.currentListPosition = detailsListAnchorFromIntent;
-            } else {
-                detailsListAnchorFromIntent = -1;
-            }
-            detailsNavigationAnchorConsumed = false;
-            showCustomBackButton = intent.getBooleanExtra("showCustomBackButton", false);
-            showAllDetailsInDetails = intent.getBooleanExtra("showAllDetailsInDetails", false);
-            alwaysShowFullDetails = intent.getBooleanExtra("alwaysShowFullDetails", false) || showAllDetailsInDetails;
-            if (showCustomBackButton) {
-                Log.d("BandDetails", "Launched from landscape schedule - enabling up navigation");
-                // Enable up navigation in action bar
-                if (getActionBar() != null) {
-                    getActionBar().setDisplayHomeAsUpEnabled(true);
-                }
-            }
-        }
+        applyIntentExtras(getIntent());
         
             setContentView(R.layout.band_details_native);
         
@@ -214,8 +194,6 @@ public class showBandDetails extends Activity {
         // Background loading is now properly managed at the Application level
         // Individual descriptions and images can still be loaded as needed for this specific band
         Log.d("DetailsScreen", "Details screen opened - background loading managed at Application level");
-
-        View view = getWindow().getDecorView();
 
         int orientationNum = getResources().getConfiguration().orientation;
         if (Configuration.ORIENTATION_LANDSCAPE == orientationNum) {
@@ -246,6 +224,61 @@ public class showBandDetails extends Activity {
             onBackPressed();
         }
 
+    }
+
+    /**
+     * Reuse this activity when the list taps another band while Activity Embedding is active
+     * (singleTop + CLEAR_TOP).
+     */
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        if (intent != null) {
+            setIntent(intent);
+        }
+        applyIntentExtras(intent);
+
+        String selected = BandInfo.getSelectedBand();
+        if (selected == null || selected.isEmpty()) {
+            return;
+        }
+        if (selected.equals(bandName)) {
+            return;
+        }
+
+        Log.d("BandDetails", "onNewIntent switching detail to " + selected);
+        bandName = selected;
+        bandNote = "";
+        cacheCleanupAttempted = false;
+        bandHandler = new BandNotes(bandName);
+        setTitle(bandName);
+        updateBandNameInUI();
+        loadAllContentProgressively();
+        suppressProgressiveLoadOnNextResume = true;
+    }
+
+    private void applyIntentExtras(Intent intent) {
+        if (intent == null) {
+            return;
+        }
+        if (intent.hasExtra("detailsListPosition")) {
+            detailsListAnchorFromIntent = intent.getIntExtra("detailsListPosition", -1);
+            staticVariables.currentListPosition = detailsListAnchorFromIntent;
+        } else {
+            detailsListAnchorFromIntent = -1;
+        }
+        detailsNavigationAnchorConsumed = false;
+        showCustomBackButton = intent.getBooleanExtra("showCustomBackButton", false);
+        showAllDetailsInDetails = intent.getBooleanExtra("showAllDetailsInDetails", false);
+        alwaysShowFullDetails = intent.getBooleanExtra("alwaysShowFullDetails", false)
+                || showAllDetailsInDetails
+                || DeviceSizeManager.getInstance(this).shouldUseSplitView();
+        if (showCustomBackButton) {
+            Log.d("BandDetails", "Launched from landscape schedule - enabling up navigation");
+            if (getActionBar() != null) {
+                getActionBar().setDisplayHomeAsUpEnabled(true);
+            }
+        }
     }
 
     /**
@@ -1004,13 +1037,17 @@ public class showBandDetails extends Activity {
 
         Log.d("RotationChange", "'" + orientation + "'");
 
-        if (inLink == false){
-            recreate();
-        } else {
+        if (inLink) {
             // If we're in WebView mode during rotation, exit back to details
             Log.d("WebView", "Configuration changed while in WebView, exiting to details");
             exitInAppWebView();
+            return;
         }
+
+        // Always recreate so detail layout matches cold-launch in the new orientation.
+        // (Keeping the instance across Activity Embedding resize left portrait broken.)
+        ListDetailSplitManager.refreshSplitAfterConfigurationChange(this);
+        recreate();
     }
 
     private void changeBand(String currentBand, String direction){
