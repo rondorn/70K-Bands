@@ -139,6 +139,13 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     private static final int REQUEST_CODE_BAND_DETAILS = 1001;
     private static final int REQUEST_CODE_PREFERENCES = 1;
 
+    /**
+     * Live list activity. Activity Embedding can recreate {@link showBands} while an async
+     * CSV load started on a previous instance is still running; post-execute must refresh
+     * whichever instance is currently alive.
+     */
+    private static volatile showBands activeInstance;
+
     /** Set when launching band details; cleared after list refresh on return. */
     private boolean openedDetailsScreen = false;
     
@@ -205,11 +212,19 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     private int lastWindowHeight = 0;
     private android.view.ViewTreeObserver.OnGlobalLayoutListener layoutChangeListener = null;
 
+    /**
+     * Activity Embedding resizes {@link showBands} into the primary pane after first layout.
+     * SwipeMenuListView can stay visually stuck (header updates, list still shows waiting /
+     * blank) until a later nudge like calendar→list. Rebind once the split settles.
+     */
+    private boolean splitListDisplayFixScheduled = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         StartupTracker.markStep(getApplicationContext(), "showBands:onCreate:start");
+        activeInstance = this;
 
         // Use internal app storage - no permissions required
         Log.d("App Storage", "Using internal app storage: " + newRootDir);
@@ -424,6 +439,97 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         // CRITICAL FIX: Setup layout change listener for foldable devices
         // On Pixel Fold front display, onConfigurationChanged may not fire, so watch for layout changes
         setupLayoutChangeListener();
+
+        // Tablet / fold split: list can paint before embedding finishes resizing the primary pane.
+        scheduleSplitListDisplayFix("onCreate");
+    }
+
+    /**
+     * After Activity Embedding applies the list|detail split, force the band ListView to
+     * rebind/relayout. Mirrors the accidental recovery from calendar → list
+     * ({@code notifyDataSetChanged} + {@code setSelectionFromTop}).
+     */
+    private void scheduleSplitListDisplayFix(String reason) {
+        if (!landscapeSchedule.isSplitViewCapable()) {
+            return;
+        }
+        if (splitListDisplayFixScheduled) {
+            return;
+        }
+        splitListDisplayFixScheduled = true;
+        Log.d("BlankListFix", "Scheduling split list display fix (" + reason + ")");
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                forceListViewDisplayRefresh("split-settle:" + reason);
+                // Embedding can apply a beat later than the first delay — one more nudge.
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        forceListViewDisplayRefresh("split-settle-retry:" + reason);
+                    }
+                }, 400);
+            }
+        }, 350);
+    }
+
+    /** True when the list adapter/handler is empty or only the waiting placeholder. */
+    private boolean isListShowingWaitingPlaceholder() {
+        String waitingMsg = getString(R.string.waiting_for_data);
+        if (adapter != null && adapter.getCount() > 0) {
+            if (adapter.getCount() == 1) {
+                bandListItem only = adapter.getItem(0);
+                return only != null && waitingMsg.equals(only.getBandName());
+            }
+            return false;
+        }
+        if (listHandler == null) {
+            return true;
+        }
+        List<String> sortableNames = listHandler.getSortableBandNames();
+        return sortableNames == null
+                || sortableNames.isEmpty()
+                || (sortableNames.size() == 1 && waitingMsg.equals(sortableNames.get(0)));
+    }
+
+    /**
+     * Nudge SwipeMenuListView to paint current adapter contents after embedding resize.
+     * Does not reload CSV data — display-only recovery.
+     */
+    void forceListViewDisplayRefresh(String reason) {
+        if (isFinishing() || isDestroyed()) {
+            return;
+        }
+        if (bandNamesList == null || adapter == null || adapter.getCount() <= 0) {
+            Log.d("BlankListFix", "forceListViewDisplayRefresh skipped (" + reason
+                    + ") list=" + (bandNamesList != null)
+                    + " adapterCount=" + (adapter != null ? adapter.getCount() : -1));
+            return;
+        }
+        Log.d("BlankListFix", "forceListViewDisplayRefresh (" + reason
+                + ") adapterCount=" + adapter.getCount()
+                + " listW=" + bandNamesList.getWidth()
+                + " listH=" + bandNamesList.getHeight());
+        try {
+            bandNamesList.setVisibility(View.VISIBLE);
+            if (bandNamesList.getAdapter() != adapter) {
+                bandNamesList.setAdapter(adapter);
+            } else {
+                adapter.notifyDataSetChanged();
+            }
+            bandNamesList.invalidateViews();
+            bandNamesList.requestLayout();
+            int first = Math.max(0, bandNamesList.getFirstVisiblePosition());
+            if (first >= adapter.getCount()) {
+                first = 0;
+            }
+            bandNamesList.setSelectionFromTop(first, 0);
+            if (bandNamesPullRefresh != null) {
+                bandNamesPullRefresh.requestLayout();
+            }
+        } catch (Exception e) {
+            Log.w("BlankListFix", "forceListViewDisplayRefresh failed (" + reason + ")", e);
+        }
     }
     
     /**
@@ -460,6 +566,12 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                         // Update stored dimensions
                         lastWindowWidth = currentWidth;
                         lastWindowHeight = currentHeight;
+
+                        // Tablet split: embedding resize can leave the list visually stuck.
+                        if (landscapeSchedule.isSplitViewCapable()) {
+                            setSearchBarWidth();
+                            forceListViewDisplayRefresh("embedding-resize");
+                        }
                         
                         // Check orientation and show landscape view if needed
                         // Only for phone mode (not tablets)
@@ -481,6 +593,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                         lastWindowWidth = currentWidth;
                         lastWindowHeight = currentHeight;
                         Log.d("LANDSCAPE_SCHEDULE", "Initial layout dimensions: " + currentWidth + "x" + currentHeight);
+                        scheduleSplitListDisplayFix("first-layout");
                     }
                 }
             }
@@ -652,8 +765,17 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         // (landscape → portrait looked terrible while portrait launch looked fine).
         boolean isTablet = landscapeSchedule.isSplitViewCapable();
         if (isTablet) {
-            Log.d("LANDSCAPE_SCHEDULE", "onConfigurationChanged - Large form-factor, recreating for clean split layout");
             ListDetailSplitManager.refreshSplitAfterConfigurationChange(this);
+            // Embedding often fires config changes during the first CSV load. Recreating then
+            // leaves the new instance stuck on "Waiting for data..." because the async
+            // completion still targets the destroyed instance and loadingBands blocks resume.
+            if (staticVariables.loadingBands) {
+                Log.d("LANDSCAPE_SCHEDULE",
+                        "onConfigurationChanged - Large form-factor, deferring recreate until data load finishes");
+                forceListViewDisplayRefresh("config-during-load");
+                return;
+            }
+            Log.d("LANDSCAPE_SCHEDULE", "onConfigurationChanged - Large form-factor, recreating for clean split layout");
             recreate();
             return;
         }
@@ -2573,17 +2695,20 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
               ", size=" + scheduleSize + ", hasCachedData=" + hasCachedData + 
               ", fileDownloaded=" + fileDownloaded);
         
-        if (!staticVariables.hasPointerOnDisk()) {
-            Log.d("FRESH_INSTALL", "No pointer on disk — showing waiting message until pointer downloads");
+        // Only show waiting when we have nothing on disk to render yet.
+        if (!hasCachedData && !staticVariables.hasPointerOnDisk()) {
+            Log.d("FRESH_INSTALL", "No pointer/cache on disk — showing waiting message until pointer downloads");
             showWaitingForDataPlaceholderOnUi();
         }
 
         if (fileDownloaded == false && !hasCachedData) {
-            // No cached data - need to download
+            // No cached data - need to download. If a load is already in flight (e.g. previous
+            // instance started it before recreate), still try UI reload once files appear.
             Log.d("MDF_DEBUG", "🚀 populateBandList() - No cached data, calling refreshNewData()");
             refreshNewData();
         } else {
             // Show restored/offline cache immediately, then refresh pointer + CSVs in background once per process.
+            // Always paint from disk on this instance — even if another instance's download is running.
             Log.d("MDF_DEBUG", "🚀 populateBandList() - Has cached data, reloadData() + background core refresh");
             reloadData();
             if (!startupRefreshDone.get() && !staticVariables.loadingBands) {
@@ -4279,13 +4404,12 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 // TRANSPARENT REFRESH FIX: Use notifyDataSetChanged() instead of setAdapter() to preserve scroll position
                 if (adapter != null && adapter.getCount() > 0 && bandNamesList.getCount() == 0) {
                     Log.d("BlankListFix", "Detected blank list with valid adapter data - refreshing adapter");
-                    // TRANSPARENT REFRESH: Only set adapter if not already set, otherwise use notifyDataSetChanged()
-                    if (bandNamesList.getAdapter() != adapter) {
-                        bandNamesList.setAdapter(adapter);
-                    } else {
-                        adapter.notifyDataSetChanged();
-                    }
-                    bandNamesList.invalidateViews();
+                    forceListViewDisplayRefresh("refreshData-blank-list");
+                } else if (landscapeSchedule.isSplitViewCapable()
+                        && adapter != null
+                        && adapter.getCount() > 1) {
+                    // Split pane may have resized after bind; nudge paint even when getCount() != 0.
+                    forceListViewDisplayRefresh("refreshData-split");
                 }
             }
         }, 500); // 500ms timeout
@@ -4326,6 +4450,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 Log.e("LANDSCAPE_SCHEDULE", "Error removing layout listener", e);
             }
             layoutChangeListener = null;
+        }
+
+        if (activeInstance == this) {
+            activeInstance = null;
         }
         
         onPause();
@@ -4619,43 +4747,35 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             }
         } else {
             
-            // FRESH INSTALL FIX: Only trigger refresh if data loading is NOT already in progress
-            // This prevents duplicate downloads on first install (onCreate already started loading)
-            if (staticVariables.loadingBands) {
-                Log.d("FRESH_INSTALL", "Data loading already in progress from onCreate, skipping onResume refresh");
-                return; // Don't interfere with the initial load
-            }
-            
-            // FRESH INSTALL FIX: Apply exact pull-to-refresh logic on first launch
-            // Check if this looks like a fresh install (no data loaded yet)
-            boolean isWaitingForData = false;
-            if (listHandler == null) {
-                isWaitingForData = true;
-            } else {
-                List<String> sortableNames = listHandler.getSortableBandNames();
-                String waitingMsg = getString(R.string.waiting_for_data);
-                if (sortableNames.isEmpty() ||
-                    (sortableNames.size() == 1 && waitingMsg.equals(sortableNames.get(0)))) {
-                    isWaitingForData = true;
-                }
-            }
-            
+            // Check if this looks like a fresh install / stuck waiting placeholder
+            boolean isWaitingForData = isListShowingWaitingPlaceholder();
             boolean hasCachedFiles = FileHandler70k.bandInfo.exists() && FileHandler70k.schedule.exists();
 
             if (isWaitingForData) {
-                if (staticVariables.loadingBands) {
-                    Log.d("FRESH_INSTALL", "Waiting for data — initial load still in progress");
+                if (hasCachedFiles) {
+                    // Recreate during embedding can leave this instance on the waiting row while
+                    // a background download started by the previous instance is still running.
+                    // Always paint from disk — do not wait for loadingBands to clear.
+                    Log.d("FRESH_INSTALL", "Waiting placeholder but cache files exist — UI reload only"
+                            + (staticVariables.loadingBands ? " (download still in flight)" : ""));
+                    reloadData();
+                    refreshData(true);
+                    forceListViewDisplayRefresh("onResume-waiting-with-cache");
                     return;
                 }
-                if (hasCachedFiles) {
-                    // In-memory list can be empty after details return / cache clear — reload from disk, do not download.
-                    Log.d("FRESH_INSTALL", "Waiting placeholder but cache files exist — UI reload only");
-                    reloadData();
-                    refreshData();
+                if (staticVariables.loadingBands) {
+                    Log.d("FRESH_INSTALL", "Waiting for data — initial load still in progress, no cache yet");
                     return;
                 }
                 Log.d("FRESH_INSTALL", "Still waiting for data with no active load — retrying download");
                 refreshNewData();
+                return;
+            }
+
+            // FRESH INSTALL FIX: Avoid duplicate network refresh while first download runs
+            if (staticVariables.loadingBands) {
+                Log.d("FRESH_INSTALL", "Data loading already in progress from onCreate, skipping onResume network refresh");
+                forceListViewDisplayRefresh("onResume-during-load");
                 return;
             }
             Log.d("ListPosition", "Normal onResume - checking if offline to optimize loading");
@@ -5117,31 +5237,30 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 }
                 Log.d("Refresh", "Refresh Stage = Pre-Stop");
             },
-            // Post-execute on UI thread
+            // Post-execute on UI thread — always target the live showBands instance.
+            // Activity Embedding may have recreated this activity while the download ran.
             () -> {
                 Log.d("Refresh", "Refresh Stage = Post-Start");
-                
-                // FRESH INSTALL FIX: Refresh display after data download
-                // NOTE: refreshData() will check if data changed and skip refresh if unchanged
-                // This prevents unnecessary refreshes that cause flashing
-                // Only refresh if we don't have data yet (fresh install) or if forceRefresh is needed
-                Log.d("onPostExecuteRefresh", "Core data download finished — refreshing UI from downloaded files");
-                refreshData(true);
-                
-                // Note: Scroll preservation is handled within refreshData() if needed
-
-                Log.d("onPostExecuteRefresh", "onPostExecuteRefresh - 1");
-                
-                // ANIMATION FIX: Don't manually control visibility - let our system handle it
-                if (staticVariables.savedScrollPosition < 0) {
-                    // Only set visibility if our animation system isn't managing it
-                    showBands.this.bandNamesList.setVisibility(View.VISIBLE);
-                    showBands.this.bandNamesList.requestLayout();
+                showBands host = activeInstance != null ? activeInstance : showBands.this;
+                if (host.isFinishing() || host.isDestroyed()) {
+                    Log.w("onPostExecuteRefresh", "No live showBands instance to refresh after CSV download");
+                    return;
                 }
 
-                Log.d("onPostExecuteRefresh", "onPostExecuteRefresh - 3");
-                bandNamesPullRefresh = (SwipeRefreshLayout) findViewById(R.id.swiperefresh);
-                bandNamesPullRefresh.setRefreshing(false);
+                Log.d("onPostExecuteRefresh", "Core data download finished — refreshing UI on "
+                        + (host == showBands.this ? "original" : "live") + " instance");
+                host.reloadData();
+                host.refreshData(true);
+                host.forceListViewDisplayRefresh("async-load-complete");
+
+                if (staticVariables.savedScrollPosition < 0 && host.bandNamesList != null) {
+                    host.bandNamesList.setVisibility(View.VISIBLE);
+                    host.bandNamesList.requestLayout();
+                }
+
+                if (host.bandNamesPullRefresh != null) {
+                    host.bandNamesPullRefresh.setRefreshing(false);
+                }
                 boolean hasCachedDataAfterLoad = FileHandler70k.bandInfo.exists()
                         && FileHandler70k.schedule.exists()
                         && FileHandler70k.bandInfo.length() > 0
@@ -5150,25 +5269,18 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 if (!hasCachedDataAfterLoad && !staticVariables.hasPointerOnDisk()) {
                     Log.w("FRESH_INSTALL", "Core load finished without data — scheduling follow-up retry");
                     new Handler().postDelayed(() -> {
-                        if (!isFinishing() && !isDestroyed() && !staticVariables.loadingBands
+                        showBands retryHost = activeInstance != null ? activeInstance : host;
+                        if (retryHost != null && !retryHost.isFinishing() && !retryHost.isDestroyed()
+                                && !staticVariables.loadingBands
                                 && !staticVariables.hasPointerOnDisk()) {
-                            refreshNewData();
+                            retryHost.refreshNewData();
                         }
                     }, 5000);
                 }
-                
-                // FLASHING FIX: refreshData() already handles setting/updating the adapter
-                // We should NOT call setAdapter() here as it causes flashing when data is unchanged
-                // The adapter is set/updated in displayBandDataWithSchedule() or displayBandDataWithoutSchedule()
-                // which are called by refreshData() -> displayBandData()
-                // Only exception: if adapter is null and list is blank (fresh install), but refreshData() handles that too
-                Log.d("FRESH_INSTALL", "Skipping adapter update in onPostExecuteRefresh - refreshData() already handled it");
-                
-                // Start bulk downloads after CSV processing completes
-                Log.d("Refresh", "CSV processing complete, starting bulk downloads");
-                ForegroundDownloadManager.startDownloadsAfterCSV(showBands.this);
 
-                offerAutoSchedulePromptFromPointerThenMaybeWizard();
+                Log.d("Refresh", "CSV processing complete, starting bulk downloads");
+                ForegroundDownloadManager.startDownloadsAfterCSV(host);
+                host.offerAutoSchedulePromptFromPointerThenMaybeWizard();
 
                 Log.d("Refresh", "Refresh Stage = Post-Stop");
             }

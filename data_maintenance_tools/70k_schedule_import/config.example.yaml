@@ -1,0 +1,11 @@
+# Defaults for import_70k_schedule.py
+# Copy to config.yaml and edit, or override on the command line:
+#   --url / --json-url
+#   --output / --csv
+#   --config PATH
+
+# JSON schedule API (array of artists with performances[])
+json_url: "https://example.com/70k/artists-schedule.json"
+
+# Destination CSV (append-only; never overwritten). Layout matches artistSchedule*.csv.
+output_csv: "/Users/rdorn/Dropbox/70K Public Data Files/artistSchedule.csv"

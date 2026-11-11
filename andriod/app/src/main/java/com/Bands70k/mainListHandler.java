@@ -368,7 +368,8 @@ public class mainListHandler {
                     }
                 }
             } else {
-                sortableBandNames = bandList;
+                // Copy — do not alias showBands.bandNames (waiting placeholder / sort would mutate it).
+                sortableBandNames = new ArrayList<>(bandList);
             }
             
             numberOfBands = sortableBandNames.size();

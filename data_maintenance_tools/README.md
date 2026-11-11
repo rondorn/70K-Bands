@@ -10,6 +10,7 @@ workflows live in that Flutter app.
 |------|---------|
 | [`poster_generation/`](poster_generation/) | Build a 70K Bands cruise-ship schedule QR poster PDF (iOS/Android compatible payload) |
 | [`alert_queue/`](alert_queue/) | Cron monitor: Dropbox `.pending` alert files → Firebase topic pushes |
+| [`70k_schedule_import/`](70k_schedule_import/) | Download 70K artists JSON API → write Show rows to schedule CSV |
 
 ## Schedule QR poster
 

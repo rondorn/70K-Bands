@@ -1,0 +1,46 @@
+[
+  {
+    "id": "32815",
+    "name": "TEST ARTIST",
+    "subheader": "Special Sets...",
+    "country": "ES",
+    "performances": [
+      {
+        "day": 1,
+        "date": "2027-01-14",
+        "details": "Performing...",
+        "stage": "Pool Deck Stage",
+        "start_time": "21:30",
+        "end_time": "22:30"
+      },
+      {
+        "day": 3,
+        "date": "2027-01-16",
+        "details": "Performing...",
+        "stage": "Royal Theater",
+        "start_time": "18:00",
+        "end_time": "19:00"
+      }
+    ]
+  },
+  {
+    "id": "1",
+    "name": "Sample Band",
+    "performances": [
+      {
+        "day": 2,
+        "date": "2027-01-15",
+        "stage": "Studio B",
+        "start_time": "9:00",
+        "end_time": "9:45"
+      },
+      {
+        "day": 2,
+        "date": "2027-01-15",
+        "stage": "Bull & Bear",
+        "start_time": "14:00",
+        "end_time": "15:00"
+      }
+    ]
+  }
+]
