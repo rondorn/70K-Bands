@@ -493,12 +493,20 @@ def is_version_column(header: str | None) -> bool:
     return bool(header) and "version" in str(header).lower()
 
 
+def is_year_column(header: str | None) -> bool:
+    """Calendar years must not get thousands separators."""
+    if not header:
+        return False
+    tokens = str(header).lower().replace("_", " ").replace("-", " ").split()
+    return "year" in tokens or "years" in tokens
+
+
 def format_table_cell(cell: object, header: str | None = None) -> str:
-    """Escape a table cell. Comma-format counts, never version numbers."""
+    """Escape a table cell. Comma-format counts, never years or version numbers."""
     text = str(cell)
     if '<span class="rank-number' in text:
         return text
-    if is_version_column(header):
+    if is_version_column(header) or is_year_column(header):
         return escape_html(text)
     return escape_html(format_number(text))
 
@@ -517,6 +525,9 @@ def format_cell_value(value: str, header: str) -> str:
     # Handle empty or None values
     if not value or not str(value).strip():
         return ''
+
+    if is_version_column(header) or is_year_column(header):
+        return str(value)
     
     # Check if header contains "percent" or ends with "%" (case insensitive)
     if ('percent' in header.lower() or header.strip().endswith('%')) and value.strip():

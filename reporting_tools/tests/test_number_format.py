@@ -44,6 +44,14 @@ class NumberFormatTests(unittest.TestCase):
         self.assertEqual(format_table_cell("1000", "Count"), "1,000")
         self.assertEqual(format_table_cell("1000", "User Count"), "1,000")
 
+    def test_does_not_comma_format_years(self) -> None:
+        self.assertEqual(format_table_cell("2019", "Year"), "2019")
+        self.assertEqual(format_table_cell("2000", "Year"), "2000")
+        self.assertEqual(format_table_cell("2019", "Prior Years"), "2019")
+        self.assertEqual(format_table_cell("2000", "Band Count"), "2,000")
+        self.assertEqual(format_table_cell("2019", "User Count"), "2,019")
+        self.assertEqual(format_table_cell("2000", "2019"), "2,000")
+
 
 if __name__ == "__main__":
     unittest.main()
