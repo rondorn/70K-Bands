@@ -194,7 +194,7 @@ class FestivalSetupService {
         dropboxApi,
       );
     }
-    return draft;
+    return draft.withoutStaleYearReports();
   }
 
   /// Turn a parsed package into a ready workspace (pointers + optional probe).

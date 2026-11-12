@@ -50,7 +50,7 @@ class PointerService {
         updated = updated.copyWith(clearDataSourceYearOverride: true);
       }
     }
-    return updated;
+    return updated.withoutStaleYearReports();
   }
 
   /// List archived years on the Testing pointer available as temporary data
@@ -142,7 +142,7 @@ class PointerService {
     updated = updated.copyWith(
       allowCustomAlerts: production.allowCustomAlerts,
       reportUrl: normalizeDropboxUrl(production.endUserReportUrl),
-    );
+    ).withoutStaleYearReports();
 
     final vocabScheduleUrl = production.scheduleUrlForVocabulary;
     if (vocabScheduleUrl.isEmpty) {

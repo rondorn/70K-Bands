@@ -2,6 +2,23 @@
 class ReportUrls {
   ReportUrls._();
 
+  static final RegExp _yearInFilename = RegExp(r'_(\d{4})(?:\.[^./]+)?$');
+
+  /// Year embedded in a report filename, such as `report_dashboard_full_2027.html`.
+  ///
+  /// Returns an empty string when the name has no `_YYYY` suffix
+  /// (`stats_unavailable.html`, unversioned dashboards).
+  static String eventYearInReportUrl(String url) {
+    final trimmed = url.trim();
+    if (trimmed.isEmpty) return '';
+    final uri = Uri.tryParse(trimmed);
+    final filename = uri != null && uri.pathSegments.isNotEmpty
+        ? uri.pathSegments.last
+        : trimmed;
+    final match = _yearInFilename.firstMatch(Uri.decodeComponent(filename));
+    return match?.group(1) ?? '';
+  }
+
   /// Derive the full-dashboard URL from the end-user URL when the pointer
   /// has no explicit `reportUrlFull` entry.
   ///

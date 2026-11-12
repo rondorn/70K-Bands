@@ -1,5 +1,6 @@
 import 'package:promoter_admin/src/models/emergency_local_paths.dart';
 import 'package:promoter_admin/src/services/emergency_local_mode_support.dart';
+import 'package:promoter_admin/src/services/report_urls.dart';
 
 /// Local workspace config for one festival (pointers from app maintainer).
 class FestivalWorkspace {
@@ -216,19 +217,54 @@ class FestivalWorkspace {
   }
 
   /// Keep cached report discovery when a background pointer/probe refresh
-  /// returns a stale workspace snapshot.
+  /// returns a snapshot from before this session's discovery.
+  ///
+  /// A cache recorded for a different event year is not kept. Otherwise a
+  /// year roll leaves the full dashboard pointed at last year's HTML while
+  /// Current has already moved on.
   FestivalWorkspace preservingSessionReportFields(FestivalWorkspace refreshed) {
     var merged = refreshed;
-    if (reportUrlFull.trim().isNotEmpty) {
-      merged = merged.copyWith(reportUrlFull: reportUrlFull);
-    }
-    if (reportDiscoveryEventYear.trim().isNotEmpty) {
+    final liveYear = reportDiscoveryEventYear.trim();
+    final refreshedYear = refreshed.eventYear.trim();
+    final cacheStillApplies = liveYear.isNotEmpty &&
+        (refreshedYear.isEmpty || liveYear == refreshedYear);
+    if (cacheStillApplies) {
+      if (reportUrlFull.trim().isNotEmpty) {
+        merged = merged.copyWith(reportUrlFull: reportUrlFull);
+      }
       merged = merged.copyWith(
         reportDiscoveryEventYear: reportDiscoveryEventYear,
         reportDiscoveryFolderUrl: reportDiscoveryFolderUrl,
       );
     }
-    return merged;
+    return merged.withoutStaleYearReports();
+  }
+
+  /// Drop report links and discovery metadata that name a different year
+  /// than [eventYear]. Unversioned URLs are left alone.
+  FestivalWorkspace withoutStaleYearReports() {
+    final year = eventYear.trim();
+    if (year.isEmpty) return this;
+    var next = this;
+    if (_reportYearMismatch(next.reportUrl, year)) {
+      next = next.copyWith(reportUrl: '');
+    }
+    if (_reportYearMismatch(next.reportUrlFull, year)) {
+      next = next.copyWith(reportUrlFull: '');
+    }
+    if (next.reportDiscoveryEventYear.trim().isNotEmpty &&
+        next.reportDiscoveryEventYear.trim() != year) {
+      next = next.copyWith(
+        reportDiscoveryEventYear: '',
+        reportDiscoveryFolderUrl: '',
+      );
+    }
+    return next;
+  }
+
+  static bool _reportYearMismatch(String url, String eventYear) {
+    final fileYear = ReportUrls.eventYearInReportUrl(url);
+    return fileYear.isNotEmpty && fileYear != eventYear;
   }
 
   FestivalWorkspace copyWith({

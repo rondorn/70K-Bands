@@ -15,6 +15,7 @@ import 'package:promoter_admin/src/services/local_content_store.dart';
 import 'package:promoter_admin/src/services/pointer_service.dart';
 import 'package:promoter_admin/src/services/promote_service.dart';
 import 'package:promoter_admin/src/services/publish_status_service.dart';
+import 'package:promoter_admin/src/services/report_discovery_service.dart';
 import 'package:promoter_admin/src/services/schedule_service.dart';
 import 'package:promoter_admin/src/services/emergency_local_mode_support.dart';
 import 'package:promoter_admin/src/services/workspace_store.dart';
@@ -125,6 +126,19 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
         if (merged != registryToSave.active) {
           registryToSave = registryToSave.upsertActive(merged);
         }
+      }
+      final resolved = registryToSave.active;
+      if (_dropboxConnected &&
+          resolved.reportsFolderUrl.trim().isNotEmpty &&
+          resolved.canViewReports &&
+          !ReportDiscoveryService.isCacheValid(resolved)) {
+        final discovered = await ReportDiscoveryService.apply(
+          resolved,
+          _dropboxApi,
+          forceRefresh: true,
+        );
+        if (!mounted) return;
+        registryToSave = registryToSave.upsertActive(discovered);
       }
       await _store.saveRegistry(registryToSave);
       setState(() => _registry = registryToSave);

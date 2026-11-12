@@ -287,7 +287,9 @@ class _BandsSectionState extends State<BandsSection> {
   }
 
   void _toggleDescriptionSection(bool on) {
-    setState(() => _showDescription = on);
+    setState(() {
+      _showDescription = on;
+    });
     if (on &&
         _isEditing &&
         _descriptionExists &&

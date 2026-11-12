@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:promoter_admin/src/models/festival_workspace.dart';
 import 'package:promoter_admin/src/models/pointer_file.dart';
 import 'package:promoter_admin/src/services/report_discovery_service.dart';
+import 'package:promoter_admin/src/services/report_urls.dart';
 
 void main() {
   group('pickMainDashboardName', () {
@@ -73,6 +74,80 @@ Current::reportUrl-en::https://example.com/en.html
     expect(merged.reportUrlFull, 'https://example.com/full.html');
     expect(merged.reportDiscoveryEventYear, '2027');
     expect(merged.reportDiscoveryFolderUrl, 'https://dropbox.com/folder');
+  });
+
+  test('preservingSessionReportFields drops last year when Current moves on', () {
+    const before = FestivalWorkspace(
+      eventYear: '2026',
+      reportUrl:
+          'https://www.dropbox.com/scl/fi/old/report_dashboard-en_2026.html?raw=1',
+      reportUrlFull:
+          'https://www.dropbox.com/scl/fi/old/report_dashboard_full_2026.html?raw=1',
+      reportDiscoveryEventYear: '2026',
+      reportDiscoveryFolderUrl: 'https://www.dropbox.com/scl/fo/folder?raw=1',
+    );
+    const refreshed = FestivalWorkspace(
+      eventYear: '2027',
+      reportUrl:
+          'https://www.dropbox.com/scl/fi/new/report_dashboard-en_2027.html?raw=1',
+      reportUrlFull:
+          'https://www.dropbox.com/scl/fi/old/report_dashboard_full_2026.html?raw=1',
+      reportDiscoveryEventYear: '2026',
+      reportDiscoveryFolderUrl: 'https://www.dropbox.com/scl/fo/folder?raw=1',
+    );
+    final merged = before.preservingSessionReportFields(refreshed);
+    expect(merged.eventYear, '2027');
+    expect(
+      merged.reportUrl,
+      'https://www.dropbox.com/scl/fi/new/report_dashboard-en_2027.html?raw=1',
+    );
+    expect(merged.reportUrlFull, isEmpty);
+    expect(merged.reportDiscoveryEventYear, isEmpty);
+    expect(merged.reportDiscoveryFolderUrl, isEmpty);
+  });
+
+  test('preservingSessionReportFields keeps same-year discovery over a stale refresh', () {
+    const before = FestivalWorkspace(
+      eventYear: '2027',
+      reportUrlFull:
+          'https://www.dropbox.com/scl/fi/new/report_dashboard_full_2027.html?raw=1',
+      reportDiscoveryEventYear: '2027',
+      reportDiscoveryFolderUrl: 'https://www.dropbox.com/scl/fo/folder?raw=1',
+    );
+    const refreshed = FestivalWorkspace(
+      eventYear: '2027',
+      reportUrlFull:
+          'https://www.dropbox.com/scl/fi/old/report_dashboard_full_2026.html?raw=1',
+      reportDiscoveryEventYear: '2026',
+      reportDiscoveryFolderUrl: 'https://www.dropbox.com/scl/fo/folder?raw=1',
+    );
+    final merged = before.preservingSessionReportFields(refreshed);
+    expect(
+      merged.reportUrlFull,
+      'https://www.dropbox.com/scl/fi/new/report_dashboard_full_2027.html?raw=1',
+    );
+    expect(merged.reportDiscoveryEventYear, '2027');
+  });
+
+  test('eventYearInReportUrl reads the year suffix from a Dropbox report link', () {
+    expect(
+      ReportUrls.eventYearInReportUrl(
+        'https://www.dropbox.com/scl/fi/abc/report_dashboard_full_2027.html?raw=1',
+      ),
+      '2027',
+    );
+    expect(
+      ReportUrls.eventYearInReportUrl(
+        'https://www.dropbox.com/scl/fi/abc/report_dashboard-en_2026.html?raw=1',
+      ),
+      '2026',
+    );
+    expect(
+      ReportUrls.eventYearInReportUrl(
+        'https://www.dropbox.com/scl/fi/abc/stats_unavailable.html?raw=1',
+      ),
+      isEmpty,
+    );
   });
 
   group('isCacheValid', () {
