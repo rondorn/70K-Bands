@@ -35,11 +35,14 @@ private func registerDesktopUpdateChannel(_ controller: FlutterViewController) {
     binaryMessenger: controller.engine.binaryMessenger
   )
   channel.setMethodCallHandler { call, result in
-    guard call.method == "revealFolder" else {
+    switch call.method {
+    case "revealFolder":
+      revealFolder(call.arguments as? String, result: result)
+    case "realHomeDirectory":
+      result(FileManager.default.homeDirectoryForCurrentUser.path)
+    default:
       result(FlutterMethodNotImplemented)
-      return
     }
-    revealFolder(call.arguments as? String, result: result)
   }
 }
 

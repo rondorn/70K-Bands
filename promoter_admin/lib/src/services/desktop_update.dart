@@ -265,11 +265,31 @@ const macDragInstallSteps =
     'Do not open the copy that is still in Downloads.';
 
 /// Expand the downloaded app into Downloads and open that folder in Finder.
+/// Sandbox sets HOME to the app container. The real Downloads folder is elsewhere.
+String? homeDirectoryFromIdP(String line) {
+  final parts = line.trim().split(':');
+  if (parts.length < 9) return null;
+  final home = parts[8].trim();
+  if (!home.startsWith('/')) return null;
+  return home;
+}
+
+Future<String> macRealHomeDirectory() async {
+  try {
+    const channel = MethodChannel(
+      'com.rdorn.open-metal-fest-admin/desktop_update',
+    );
+    final home = await channel.invokeMethod<String>('realHomeDirectory');
+    if (home != null && home.startsWith('/Users/')) return home;
+  } catch (_) {}
+  final id = await Process.run('/usr/bin/id', ['-P']);
+  final home = homeDirectoryFromIdP('${id.stdout}');
+  if (id.exitCode == 0 && home != null) return home;
+  throw StateError('Could not find your Downloads folder.');
+}
+
 Future<String> stageMacDragInstall(String sourceApp) async {
-  final home = Platform.environment['HOME']?.trim() ?? '';
-  if (home.isEmpty) {
-    throw StateError('Could not find your Downloads folder.');
-  }
+  final home = await macRealHomeDirectory();
   final folder = macDragInstallDirectory(home);
   final appDest = '$folder/$macAppBundleName';
   await Process.run('/bin/rm', ['-rf', folder]);

@@ -193,6 +193,12 @@ void main() {
         macDragInstallSteps,
         contains('Do not open the copy that is still in Downloads'),
       );
+      expect(
+        homeDirectoryFromIdP(
+          'rdorn:********:501:20::0:0:Ron Dorn:/Users/rdorn:/bin/zsh',
+        ),
+        '/Users/rdorn',
+      );
     },
   );
 }
