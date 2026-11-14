@@ -178,33 +178,23 @@ void main() {
     );
   });
 
-  test('mac helper copies the new app before moving the old one aside', () {
-    final script = macUpdateHelperScript(
-      pid: 42,
-      sourceApp: "/tmp/it's.app",
-      destApp: '/Applications/Open Metal Fest Admin.app',
-      scriptPath: '/tmp/omf-update.sh',
-    );
-    final dittoAt = script.indexOf('ditto ');
-    final moveAside = script.indexOf(
-      "mv '/Applications/Open Metal Fest Admin.app' "
-      "'/Applications/Open Metal Fest Admin.app.previous'",
-    );
-    final moveIn = script.indexOf(
-      "mv '/Applications/Open Metal Fest Admin.app.updating' "
-      "'/Applications/Open Metal Fest Admin.app'",
-    );
-    expect(script, contains('ditto --norsrc --noextattr '));
-    expect(script, contains('set -euo pipefail'));
-    expect(script, contains('kill -0 42'));
-    expect(script, contains('with administrator privileges'));
-    expect(script, contains("'/tmp/it'\\''s.app'"));
-    expect(script, contains('Contents/MacOS'));
-    expect(dittoAt, greaterThan(0));
-    expect(moveAside, greaterThan(dittoAt));
-    expect(moveIn, greaterThan(moveAside));
-    expect(shellQuote("it's"), "'it'\\''s'");
-  });
+  test(
+    'mac drag install uses a Downloads folder and tells the user to drag',
+    () {
+      expect(
+        macDragInstallDirectory('/Users/me'),
+        '/Users/me/Downloads/Open Metal Fest Admin Update',
+      );
+      expect(
+        macDragInstallSteps,
+        contains('Drag Open Metal Fest Admin onto Applications'),
+      );
+      expect(
+        macDragInstallSteps,
+        contains('Do not open the copy that is still in Downloads'),
+      );
+    },
+  );
 }
 
 class _FakeClient extends http.BaseClient {

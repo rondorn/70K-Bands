@@ -35,50 +35,32 @@ private func registerDesktopUpdateChannel(_ controller: FlutterViewController) {
     binaryMessenger: controller.engine.binaryMessenger
   )
   channel.setMethodCallHandler { call, result in
-    guard call.method == "launchInstaller" else {
+    guard call.method == "revealFolder" else {
       result(FlutterMethodNotImplemented)
       return
     }
-    launchInstaller(call.arguments as? String, result: result)
+    revealFolder(call.arguments as? String, result: result)
   }
 }
 
-private func launchInstaller(_ scriptPath: String?, result: @escaping FlutterResult) {
-  guard let scriptPath, !scriptPath.isEmpty else {
+private func revealFolder(_ path: String?, result: @escaping FlutterResult) {
+  guard let path, !path.isEmpty else {
     result(
-      FlutterError(code: "bad_args", message: "Expected a script path", details: nil)
+      FlutterError(code: "bad_args", message: "Expected a folder path", details: nil)
     )
     return
   }
-  let helper = Bundle.main.bundleURL
-    .appendingPathComponent("Contents/Helpers/UpdateInstaller.app")
-  guard FileManager.default.fileExists(atPath: helper.path) else {
+  let opened = NSWorkspace.shared.open(URL(fileURLWithPath: path))
+  if opened {
+    result(nil)
+  } else {
     result(
       FlutterError(
-        code: "missing_helper",
-        message: "This copy of the app cannot finish the update. Install the latest version by hand.",
+        code: "reveal_failed",
+        message: "Could not open the update in Finder.",
         details: nil
       )
     )
-    return
-  }
-  let config = NSWorkspace.OpenConfiguration()
-  config.createsNewApplicationInstance = true
-  config.arguments = [scriptPath]
-  NSWorkspace.shared.openApplication(at: helper, configuration: config) { _, error in
-    DispatchQueue.main.async {
-      if let error {
-        result(
-          FlutterError(
-            code: "launch_failed",
-            message: error.localizedDescription,
-            details: nil
-          )
-        )
-      } else {
-        result(nil)
-      }
-    }
   }
 }
 

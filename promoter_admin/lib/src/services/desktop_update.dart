@@ -250,6 +250,78 @@ Future<PreparedDesktopUpdate> prepareDesktopUpdate(
   );
 }
 
+const macDragInstallFolderName = 'Open Metal Fest Admin Update';
+
+String macDragInstallDirectory(String home) {
+  return '$home/Downloads/$macDragInstallFolderName';
+}
+
+const macDragInstallSteps =
+    'A Finder window is open with the new app and an Applications shortcut.\n\n'
+    '1. Drag Open Metal Fest Admin onto Applications.\n'
+    '2. If macOS asks to replace the app, choose Replace.\n'
+    '3. Quit this app.\n'
+    '4. Open Open Metal Fest Admin from Applications.\n\n'
+    'Do not open the copy that is still in Downloads.';
+
+/// Expand the downloaded app into Downloads and open that folder in Finder.
+Future<String> stageMacDragInstall(String sourceApp) async {
+  final home = Platform.environment['HOME']?.trim() ?? '';
+  if (home.isEmpty) {
+    throw StateError('Could not find your Downloads folder.');
+  }
+  final folder = macDragInstallDirectory(home);
+  final appDest = '$folder/$macAppBundleName';
+  await Process.run('/bin/rm', ['-rf', folder]);
+  await Directory(folder).create(recursive: true);
+  final copied = await Process.run('/usr/bin/ditto', [
+    '--norsrc',
+    '--noextattr',
+    sourceApp,
+    appDest,
+  ]);
+  if (copied.exitCode != 0) {
+    throw StateError('Could not prepare the update in Downloads.');
+  }
+  if (!await Directory('$appDest/Contents/MacOS').exists()) {
+    throw StateError('The update did not contain an app.');
+  }
+  await Process.run('/usr/bin/xattr', ['-cr', appDest]);
+  final link = await Process.run('/bin/ln', [
+    '-sfn',
+    '/Applications',
+    '$folder/Applications',
+  ]);
+  await revealInFinder(folder);
+  if (link.exitCode != 0) {
+    await revealInFinder('/Applications');
+  }
+  return folder;
+}
+
+Future<void> revealInFinder(String folder) async {
+  try {
+    const channel = MethodChannel(
+      'com.rdorn.open-metal-fest-admin/desktop_update',
+    );
+    await channel.invokeMethod<void>('revealFolder', folder);
+    return;
+  } on MissingPluginException {
+    // Fall through to the open command.
+  } on PlatformException catch (error) {
+    final message = error.message?.trim() ?? '';
+    throw StateError(
+      message.isEmpty ? 'Could not open the update in Finder.' : message,
+    );
+  }
+  final opened = await Process.run('/usr/bin/open', [folder]);
+  if (opened.exitCode != 0) {
+    throw StateError(
+      'The update is in $folder. Drag the app onto Applications.',
+    );
+  }
+}
+
 /// Quit this process and let a helper swap in [update], then relaunch.
 Future<void> relaunchIntoDesktopUpdate(PreparedDesktopUpdate update) async {
   if (Platform.isWindows) {
@@ -279,99 +351,7 @@ Future<void> relaunchIntoDesktopUpdate(PreparedDesktopUpdate update) async {
     exit(0);
   }
 
-  final script = File('${Directory.systemTemp.path}/omf-update-$pid.sh');
-  await script.writeAsString(
-    macUpdateHelperScript(
-      pid: pid,
-      sourceApp: update.payloadPath,
-      destApp: update.installPath,
-      scriptPath: script.path,
-    ),
-  );
-  await _launchMacInstaller(script.path);
-  exit(0);
-}
-
-/// Starts the signed helper outside this app's sandbox, then this process quits.
-/// The helper replaces the app and can show the real password dialog.
-Future<void> _launchMacInstaller(String scriptPath) async {
-  try {
-    const channel = MethodChannel(
-      'com.rdorn.open-metal-fest-admin/desktop_update',
-    );
-    await channel.invokeMethod<void>('launchInstaller', scriptPath);
-  } on MissingPluginException {
-    throw StateError(
-      'This copy of the app cannot finish the update. Install the latest version by hand.',
-    );
-  } on PlatformException catch (error) {
-    final message = error.message?.trim() ?? '';
-    throw StateError(
-      message.isEmpty ? 'The update was not installed.' : message,
-    );
-  }
-}
-
-String shellQuote(String value) => "'${value.replaceAll("'", r"'\''")}'";
-
-String macUpdateHelperScript({
-  required int pid,
-  required String sourceApp,
-  required String destApp,
-  required String scriptPath,
-}) {
-  final src = shellQuote(sourceApp);
-  final dest = shellQuote(destApp);
-  final staging = shellQuote('$destApp.updating');
-  final previous = shellQuote('$destApp.previous');
-  final elevated = shellQuote(
-    'do shell script "OMF_UPDATE_ELEVATED=1 /bin/bash ${shellQuote(scriptPath)}" '
-    'with prompt "Open Metal Fest Admin needs an administrator password to install the update." '
-    'with administrator privileges',
-  );
-  return '''
-#!/bin/bash
-set -euo pipefail
-copy_app() {
-  rm -rf $staging
-  ditto --norsrc --noextattr $src $staging
-  xattr -cr $staging || true
-  if [ ! -d $staging/Contents/MacOS ]; then
-    echo "The update did not contain an app." >&2
-    rm -rf $staging
-    return 1
-  fi
-  rm -rf $previous
-  if [ -e $dest ]; then
-    mv $dest $previous
-  fi
-  if ! mv $staging $dest; then
-    if [ -e $previous ]; then
-      mv $previous $dest || true
-    fi
-    echo "Could not move the new app into place." >&2
-    return 1
-  fi
-}
-if [ "\${OMF_UPDATE_ELEVATED:-}" = 1 ]; then
-  copy_app
-  exit \$?
-fi
-while kill -0 $pid 2>/dev/null; do
-  sleep 0.3
-done
-sleep 0.5
-if OMF_UPDATE_ELEVATED=1 /bin/bash ${shellQuote(scriptPath)}; then
-  /usr/bin/open -n $dest
-  exit 0
-fi
-if /usr/bin/osascript -e $elevated; then
-  /usr/bin/open -n $dest
-  exit 0
-fi
-echo "The update was not installed." >&2
-exit 1
-''';
+  throw StateError('This Mac update is installed from Finder.');
 }
 
 String _windowsHelperScript() => r'''
@@ -590,6 +570,11 @@ Future<void> _runUpdatePrompt(BuildContext context) async {
   }
   if (!context.mounted) return;
 
+  if (Platform.isMacOS) {
+    await _finishMacDragInstall(context, prepared);
+    return;
+  }
+
   final relaunch = await showDialog<bool>(
     context: context,
     barrierDismissible: false,
@@ -646,6 +631,64 @@ Future<void> _runUpdatePrompt(BuildContext context) async {
       await _showUpdateError(context, e);
     }
   }
+}
+
+Future<void> _finishMacDragInstall(
+  BuildContext context,
+  PreparedDesktopUpdate prepared,
+) async {
+  final preparing = Completer<void>();
+  unawaited(
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        if (!preparing.isCompleted) preparing.complete();
+        return const AlertDialog(
+          backgroundColor: AppColors.panel,
+          title: Text('Preparing update'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              LinearProgressIndicator(color: AppColors.accent),
+              SizedBox(height: 16),
+              Text('Opening the new app in Finder.'),
+            ],
+          ),
+        );
+      },
+    ),
+  );
+  await preparing.future;
+  String folder;
+  try {
+    folder = await stageMacDragInstall(prepared.payloadPath);
+  } catch (e) {
+    if (context.mounted) {
+      Navigator.of(context, rootNavigator: true).pop();
+      await _showUpdateError(context, e);
+    }
+    return;
+  }
+  if (!context.mounted) return;
+  Navigator.of(context, rootNavigator: true).pop();
+  await showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (dialogContext) => AlertDialog(
+      backgroundColor: AppColors.panel,
+      title: const Text('Drag the app to Applications'),
+      content: const Text(macDragInstallSteps),
+      actions: [
+        TextButton(
+          onPressed: () => revealInFinder(folder),
+          child: const Text('Show in Finder'),
+        ),
+        FilledButton(onPressed: () => exit(0), child: const Text('Quit')),
+      ],
+    ),
+  );
 }
 
 Future<void> _showUpdateError(BuildContext context, Object error) {
