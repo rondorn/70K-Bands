@@ -23,7 +23,49 @@ class MainFlutterWindow: NSWindow {
     self.setFrameAutosaveName(Self.frameAutosaveName)
 
     RegisterGeneratedPlugins(registry: flutterViewController)
+    registerDesktopUpdateChannel(flutterViewController)
 
     super.awakeFromNib()
+  }
+}
+
+private func registerDesktopUpdateChannel(_ controller: FlutterViewController) {
+  let channel = FlutterMethodChannel(
+    name: "com.rdorn.open-metal-fest-admin/desktop_update",
+    binaryMessenger: controller.engine.binaryMessenger
+  )
+  channel.setMethodCallHandler { call, result in
+    guard call.method == "launchApp" else {
+      result(FlutterMethodNotImplemented)
+      return
+    }
+    guard let path = call.arguments as? String, !path.isEmpty else {
+      result(
+        FlutterError(
+          code: "bad_args",
+          message: "Expected an app path",
+          details: nil
+        )
+      )
+      return
+    }
+    let url = URL(fileURLWithPath: path)
+    let config = NSWorkspace.OpenConfiguration()
+    config.createsNewApplicationInstance = true
+    NSWorkspace.shared.openApplication(at: url, configuration: config) { _, error in
+      DispatchQueue.main.async {
+        if let error {
+          result(
+            FlutterError(
+              code: "launch_failed",
+              message: error.localizedDescription,
+              details: nil
+            )
+          )
+        } else {
+          result(nil)
+        }
+      }
+    }
   }
 }

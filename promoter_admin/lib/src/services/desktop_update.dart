@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:promoter_admin/src/branding.dart';
@@ -267,17 +268,26 @@ Future<void> relaunchIntoDesktopUpdate(PreparedDesktopUpdate update) async {
   final script = File('${Directory.systemTemp.path}/omf-update-$pid.sh');
   await script.writeAsString(
     macUpdateHelperScript(
-      pid: pid,
       sourceApp: update.payloadPath,
       destApp: update.installPath,
-      consoleUid: _consoleUid(),
     ),
   );
-  if (!await _directoryIsWritable(File(update.installPath).parent.path)) {
-    final authorized = await Process.run('osascript', [
+  final elevated = !await _directoryIsWritable(
+    File(update.installPath).parent.path,
+  );
+  await _runMacInstallScript(script.path, elevated: elevated);
+  await _launchMacApp(update.installPath);
+  exit(0);
+}
+
+Future<void> _runMacInstallScript(
+  String scriptPath, {
+  required bool elevated,
+}) async {
+  if (elevated) {
+    final authorized = await Process.run('/usr/bin/osascript', [
       '-e',
-      'do shell script "nohup /bin/bash ${shellQuote(script.path)} '
-          '>/tmp/omf-update-$pid.log 2>&1 &" '
+      'do shell script "/bin/bash ${shellQuote(scriptPath)}" '
           'with administrator privileges',
     ]);
     if (authorized.exitCode != 0) {
@@ -288,43 +298,64 @@ Future<void> relaunchIntoDesktopUpdate(PreparedDesktopUpdate update) async {
             : 'The update was not installed. $detail',
       );
     }
-    exit(0);
+    return;
   }
+  final result = await Process.run('/bin/bash', [scriptPath]);
+  if (result.exitCode != 0) {
+    final detail = '${result.stderr}'.trim();
+    throw StateError(detail.isEmpty ? 'The update was not installed.' : detail);
+  }
+}
 
-  await Process.start('/bin/bash', [
-    '-c',
-    'nohup /bin/bash ${shellQuote(script.path)} >/tmp/omf-update-$pid.log 2>&1 &',
-  ], mode: ProcessStartMode.detached);
-  exit(0);
+/// Opens [path] through Launch Services so the new copy is not a child of
+/// this sandboxed process. A child would die when this process exits.
+Future<void> _launchMacApp(String path) async {
+  try {
+    const channel = MethodChannel(
+      'com.rdorn.open-metal-fest-admin/desktop_update',
+    );
+    await channel.invokeMethod<void>('launchApp', path);
+    return;
+  } catch (_) {}
+  final opened = await Process.run('/usr/bin/open', ['-n', path]);
+  if (opened.exitCode != 0) {
+    throw StateError(
+      'The update is installed. Quit this window and open ${AppBrand.name} again.',
+    );
+  }
 }
 
 String shellQuote(String value) => "'${value.replaceAll("'", r"'\''")}'";
 
 String macUpdateHelperScript({
-  required int pid,
   required String sourceApp,
   required String destApp,
-  required String consoleUid,
 }) {
   final src = shellQuote(sourceApp);
   final dest = shellQuote(destApp);
   final staging = shellQuote('$destApp.updating');
+  final previous = shellQuote('$destApp.previous');
   return '''
 #!/bin/bash
 set -euo pipefail
-while kill -0 $pid 2>/dev/null; do
-  sleep 0.4
-done
-sleep 0.6
 rm -rf $staging
 ditto $src $staging
 xattr -cr $staging || true
-rm -rf $dest
-mv $staging $dest
-if [ "\$(id -u)" -eq 0 ]; then
-  launchctl asuser $consoleUid open $dest || open $dest
-else
-  open $dest
+if [ ! -d $staging/Contents/MacOS ]; then
+  echo "The update did not contain an app." >&2
+  rm -rf $staging
+  exit 1
+fi
+rm -rf $previous
+if [ -e $dest ]; then
+  mv $dest $previous
+fi
+if ! mv $staging $dest; then
+  if [ -e $previous ]; then
+    mv $previous $dest || true
+  fi
+  echo "Could not move the new app into place." >&2
+  exit 1
 fi
 ''';
 }
@@ -344,11 +375,13 @@ Copy-Item -Path (Join-Path $Source '*') -Destination $Dest -Recurse -Force
 Start-Process -FilePath (Join-Path $Dest 'promoter_admin.exe') -WorkingDirectory $Dest
 ''';
 
-String _consoleUid() {
-  final result = Process.runSync('id', ['-u']);
-  final uid = '${result.stdout}'.trim();
-  if (result.exitCode != 0 || int.tryParse(uid) == null) return '0';
-  return uid;
+Future<void> _removeMacInstallLeftovers() async {
+  if (!Platform.isMacOS) return;
+  final bundle = macBundlePathFromExecutable(Platform.resolvedExecutable);
+  if (bundle == null) return;
+  for (final suffix in const ['.previous', '.updating']) {
+    await Process.run('/bin/rm', ['-rf', '$bundle$suffix']);
+  }
 }
 
 Future<bool> _directoryIsWritable(String path) async {
@@ -460,6 +493,7 @@ Future<void> _runUpdatePrompt(BuildContext context) async {
       macBundlePathFromExecutable(Platform.resolvedExecutable) == null) {
     return;
   }
+  unawaited(_removeMacInstallLeftovers());
   final offer = await lookupDesktopUpdate();
   if (offer == null || !context.mounted) return;
   final accepted = await showDialog<bool>(
@@ -564,10 +598,37 @@ Future<void> _runUpdatePrompt(BuildContext context) async {
     ),
   );
   if (relaunch != true || !context.mounted) return;
+  final installing = Completer<void>();
+  unawaited(
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        if (!installing.isCompleted) installing.complete();
+        return AlertDialog(
+          backgroundColor: AppColors.panel,
+          title: const Text('Installing update'),
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              LinearProgressIndicator(color: AppColors.accent),
+              SizedBox(height: 16),
+              Text('The new version will open in a moment.'),
+            ],
+          ),
+        );
+      },
+    ),
+  );
+  await installing.future;
   try {
     await relaunchIntoDesktopUpdate(prepared);
   } catch (e) {
-    if (context.mounted) await _showUpdateError(context, e);
+    if (context.mounted) {
+      Navigator.of(context, rootNavigator: true).pop();
+      await _showUpdateError(context, e);
+    }
   }
 }
 

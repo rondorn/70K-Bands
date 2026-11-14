@@ -149,23 +149,27 @@ void main() {
     );
   });
 
-  test('mac helper copies the new app before removing the old one', () {
+  test('mac helper copies the new app before moving the old one aside', () {
     final script = macUpdateHelperScript(
-      pid: 42,
       sourceApp: "/tmp/it's.app",
       destApp: '/Applications/Open Metal Fest Admin.app',
-      consoleUid: '501',
     );
     final dittoAt = script.indexOf('ditto ');
-    final removeAt = script.indexOf(
-      "rm -rf '/Applications/Open Metal Fest Admin.app'",
+    final moveAside = script.indexOf(
+      "mv '/Applications/Open Metal Fest Admin.app' "
+      "'/Applications/Open Metal Fest Admin.app.previous'",
+    );
+    final moveIn = script.indexOf(
+      "mv '/Applications/Open Metal Fest Admin.app.updating' "
+      "'/Applications/Open Metal Fest Admin.app'",
     );
     expect(script, contains('set -euo pipefail'));
-    expect(script, contains('kill -0 42'));
-    expect(script, contains('launchctl asuser 501'));
+    expect(script, isNot(contains('kill -0')));
     expect(script, contains("'/tmp/it'\\''s.app'"));
+    expect(script, contains('Contents/MacOS'));
     expect(dittoAt, greaterThan(0));
-    expect(removeAt, greaterThan(dittoAt));
+    expect(moveAside, greaterThan(dittoAt));
+    expect(moveIn, greaterThan(moveAside));
     expect(shellQuote("it's"), "'it'\\''s'");
   });
 }
