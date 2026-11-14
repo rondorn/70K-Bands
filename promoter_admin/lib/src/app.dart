@@ -5,6 +5,8 @@ import 'package:promoter_admin/src/branding.dart';
 import 'package:promoter_admin/src/models/festival_workspace.dart';
 import 'package:promoter_admin/src/screens/onboarding_screen.dart';
 import 'package:promoter_admin/src/screens/portal_screen.dart';
+import 'package:promoter_admin/src/services/desktop_update_stub.dart'
+    if (dart.library.io) 'package:promoter_admin/src/services/desktop_update.dart';
 import 'package:promoter_admin/src/services/description_map_service.dart';
 import 'package:promoter_admin/src/services/dropbox_api.dart';
 import 'package:promoter_admin/src/services/dropbox_auth.dart';
@@ -35,6 +37,8 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
   final _pointers = PointerService();
   final _auth = DropboxAuth();
   final _messengerKey = GlobalKey<ScaffoldMessengerState>();
+  final _navigatorKey = GlobalKey<NavigatorState>();
+  var _updateCheckStarted = false;
 
   FestivalRegistry? _registry;
   late final DropboxApi _dropboxApi = DropboxApi(_auth);
@@ -102,9 +106,16 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
       _dropboxConnected = connected;
       _dropboxLabel = label;
     });
+    _startDesktopUpdateCheck();
     if (connected) {
       unawaited(_refreshFestivalDataOnLaunch(registry));
     }
+  }
+
+  void _startDesktopUpdateCheck() {
+    if (_updateCheckStarted) return;
+    _updateCheckStarted = true;
+    unawaited(promptForDesktopUpdate(_navigatorKey));
   }
 
   /// Re-resolve Dropbox file URLs and start a background publish-status check.
@@ -206,8 +217,9 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
     if (current != null && current.id == workspace.id) {
       toSave = current.preservingSessionReportFields(workspace);
     }
-    final registry =
-        (_registry ?? await _store.loadRegistry()).upsertActive(toSave);
+    final registry = (_registry ?? await _store.loadRegistry()).upsertActive(
+      toSave,
+    );
     await _store.saveRegistry(registry);
     setState(() => _registry = registry);
   }
@@ -228,7 +240,8 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
             await _descriptions.flushSync(current);
           }
         } else {
-          if (current.canEditSchedule && current.scheduleUrl.trim().isNotEmpty) {
+          if (current.canEditSchedule &&
+              current.scheduleUrl.trim().isNotEmpty) {
             await _schedule.flushSync(current);
           }
           if (current.canEditBands && current.bandListUrl.trim().isNotEmpty) {
@@ -254,10 +267,7 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
     setState(() => _registry = registry);
     unawaited(_validateFolderPathCacheInBackground(festivalId));
     final active = registry.active;
-    _publishStatus.bind(
-      workspace: active,
-      dropboxConnected: _dropboxConnected,
-    );
+    _publishStatus.bind(workspace: active, dropboxConnected: _dropboxConnected);
   }
 
   /// Re-probe Dropbox write flags for [festivalId] without blocking the UI.
@@ -272,7 +282,9 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
   }
 
   /// First-launch create replaces the blank placeholder instead of adding a second festival.
-  Future<void> _createFestivalFromOnboarding(FestivalWorkspace workspace) async {
+  Future<void> _createFestivalFromOnboarding(
+    FestivalWorkspace workspace,
+  ) async {
     final current = _registry ?? await _store.loadRegistry();
     if (current.festivals.length == 1 && !current.active.isConfigured) {
       final id = current.activeFestivalId;
@@ -290,9 +302,7 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
       final registry = await _store.deleteFestival(festivalId);
       setState(() => _registry = registry);
     } catch (e) {
-      _messengerKey.currentState?.showSnackBar(
-        SnackBar(content: Text('$e')),
-      );
+      _messengerKey.currentState?.showSnackBar(SnackBar(content: Text('$e')));
     }
   }
 
@@ -347,6 +357,7 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
     return MaterialApp(
       title: AppBrand.name,
       debugShowCheckedModeBanner: false,
+      navigatorKey: _navigatorKey,
       scaffoldMessengerKey: _messengerKey,
       theme: buildPromoterTheme(),
       builder: (context, child) {
@@ -373,36 +384,36 @@ class _PromoterAdminAppState extends State<PromoterAdminApp> {
               ),
             )
           : _showOnboarding
-              ? OnboardingScreen(
-                  pointerService: _pointers,
-                  dropboxApi: _dropboxApi,
-                  dropboxConnected: _dropboxConnected,
-                  dropboxLabel: _dropboxLabel,
-                  dropboxConnecting: _connecting,
-                  onCreateFestival: _createFestivalFromOnboarding,
-                  onConnectDropbox: _connectDropbox,
-                )
-              : PortalScreen(
-                  key: ValueKey(workspace.id),
-                  workspace: workspace,
-                  festivalChoices: registry.choices,
-                  activeFestivalId: registry.activeFestivalId,
-                  pointerService: _pointers,
-                  dropboxApi: _dropboxApi,
-                  lineupService: _lineup,
-                  scheduleService: _schedule,
-                  descriptionMapService: _descriptions,
-                  publishStatusService: _publishStatus,
-                  dropboxConnected: _dropboxConnected,
-                  dropboxLabel: _dropboxLabel,
-                  dropboxConnecting: _connecting,
-                  onWorkspaceChanged: _save,
-                  onSwitchFestival: _switchFestival,
-                  onAddFestival: _addFestival,
-                  onDeleteFestival: _deleteFestival,
-                  onConnectDropbox: _connectDropbox,
-                  onDisconnectDropbox: _disconnectDropbox,
-                ),
+          ? OnboardingScreen(
+              pointerService: _pointers,
+              dropboxApi: _dropboxApi,
+              dropboxConnected: _dropboxConnected,
+              dropboxLabel: _dropboxLabel,
+              dropboxConnecting: _connecting,
+              onCreateFestival: _createFestivalFromOnboarding,
+              onConnectDropbox: _connectDropbox,
+            )
+          : PortalScreen(
+              key: ValueKey(workspace.id),
+              workspace: workspace,
+              festivalChoices: registry.choices,
+              activeFestivalId: registry.activeFestivalId,
+              pointerService: _pointers,
+              dropboxApi: _dropboxApi,
+              lineupService: _lineup,
+              scheduleService: _schedule,
+              descriptionMapService: _descriptions,
+              publishStatusService: _publishStatus,
+              dropboxConnected: _dropboxConnected,
+              dropboxLabel: _dropboxLabel,
+              dropboxConnecting: _connecting,
+              onWorkspaceChanged: _save,
+              onSwitchFestival: _switchFestival,
+              onAddFestival: _addFestival,
+              onDeleteFestival: _deleteFestival,
+              onConnectDropbox: _connectDropbox,
+              onDisconnectDropbox: _disconnectDropbox,
+            ),
     );
   }
 }

@@ -24,9 +24,15 @@
 	<true/>
 	<key>com.apple.security.network.server</key>
 	<true/>
+	<key>com.apple.security.temporary-exception.files.absolute-path.read-write</key>
+	<array>
+		<string>/Applications/</string>
+	</array>
 	<key>com.apple.security.temporary-exception.files.home-relative-path.read-write</key>
 	<array>
 		<string>Library/Application Support/OpenMetalFestAdmin/</string>
+		<string>Applications/</string>
+		<string>Downloads/</string>
 	</array>
 </dict>
 </plist>
