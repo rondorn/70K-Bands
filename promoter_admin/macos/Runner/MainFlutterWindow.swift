@@ -40,6 +40,14 @@ private func registerDesktopUpdateChannel(_ controller: FlutterViewController) {
       revealFolder(call.arguments as? String, result: result)
     case "realHomeDirectory":
       result(FileManager.default.homeDirectoryForCurrentUser.path)
+    case "quitApp":
+      result(nil)
+      DispatchQueue.main.async {
+        NSApplication.shared.terminate(nil)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+          exit(0)
+        }
+      }
     default:
       result(FlutterMethodNotImplemented)
     }

@@ -256,12 +256,13 @@ String macDragInstallDirectory(String home) {
   return '$home/Downloads/$macDragInstallFolderName';
 }
 
+const macDragInstallNoteName = 'Drag onto Applications.txt';
+
 const macDragInstallSteps =
-    'A Finder window is open with the new app and an Applications shortcut.\n\n'
+    'This app has closed so macOS can replace it.\n\n'
     '1. Drag Open Metal Fest Admin onto Applications.\n'
     '2. If macOS asks to replace the app, choose Replace.\n'
-    '3. Quit this app.\n'
-    '4. Open Open Metal Fest Admin from Applications.\n\n'
+    '3. Open Open Metal Fest Admin from Applications.\n\n'
     'Do not open the copy that is still in Downloads.';
 
 /// Expand the downloaded app into Downloads and open that folder in Finder.
@@ -307,6 +308,9 @@ Future<String> stageMacDragInstall(String sourceApp) async {
     throw StateError('The update did not contain an app.');
   }
   await Process.run('/usr/bin/xattr', ['-cr', appDest]);
+  await File(
+    '$folder/$macDragInstallNoteName',
+  ).writeAsString(macDragInstallSteps);
   final link = await Process.run('/bin/ln', [
     '-sfn',
     '/Applications',
@@ -340,6 +344,17 @@ Future<void> revealInFinder(String folder) async {
       'The update is in $folder. Drag the app onto Applications.',
     );
   }
+}
+
+/// Leave the .app bundle so Finder can replace it. A running app cannot be replaced.
+Future<void> quitMacApp() async {
+  try {
+    const channel = MethodChannel(
+      'com.rdorn.open-metal-fest-admin/desktop_update',
+    );
+    await channel.invokeMethod<void>('quitApp');
+  } catch (_) {}
+  exit(0);
 }
 
 /// Quit this process and let a helper swap in [update], then relaunch.
@@ -673,7 +688,9 @@ Future<void> _finishMacDragInstall(
             children: [
               LinearProgressIndicator(color: AppColors.accent),
               SizedBox(height: 16),
-              Text('Opening the new app in Finder.'),
+              Text(
+                'Finder will open, then this app will close so you can replace it.',
+              ),
             ],
           ),
         );
@@ -681,9 +698,8 @@ Future<void> _finishMacDragInstall(
     ),
   );
   await preparing.future;
-  String folder;
   try {
-    folder = await stageMacDragInstall(prepared.payloadPath);
+    await stageMacDragInstall(prepared.payloadPath);
   } catch (e) {
     if (context.mounted) {
       Navigator.of(context, rootNavigator: true).pop();
@@ -691,24 +707,7 @@ Future<void> _finishMacDragInstall(
     }
     return;
   }
-  if (!context.mounted) return;
-  Navigator.of(context, rootNavigator: true).pop();
-  await showDialog<void>(
-    context: context,
-    barrierDismissible: false,
-    builder: (dialogContext) => AlertDialog(
-      backgroundColor: AppColors.panel,
-      title: const Text('Drag the app to Applications'),
-      content: const Text(macDragInstallSteps),
-      actions: [
-        TextButton(
-          onPressed: () => revealInFinder(folder),
-          child: const Text('Show in Finder'),
-        ),
-        FilledButton(onPressed: () => exit(0), child: const Text('Quit')),
-      ],
-    ),
-  );
+  await quitMacApp();
 }
 
 Future<void> _showUpdateError(BuildContext context, Object error) {

@@ -191,6 +191,10 @@ void main() {
       );
       expect(
         macDragInstallSteps,
+        contains('This app has closed so macOS can replace it'),
+      );
+      expect(
+        macDragInstallSteps,
         contains('Do not open the copy that is still in Downloads'),
       );
       expect(
