@@ -53,8 +53,8 @@ jobs:
         run: |
           set -euo pipefail
           current=$(grep -E '^version:' promoter_admin/pubspec.yaml | head -1 | sed 's/version:[[:space:]]*//')
-          if [[ ! "$current" =~ ^[0-9.]+\+[0-9]+$ ]]; then
-            echo "::error::Unexpected pubspec version '$current' (expected name+number, e.g. 1.0.2+1)"
+          if [[ ! "$current" =~ ^[0-9.]+(-[a-zA-Z])?\+[0-9]+$ ]]; then
+            echo "::error::Unexpected pubspec version '$current' (expected name+number, e.g. 1.0.2+1 or 1.0.28-a+1)"
             exit 1
           fi
 
@@ -87,6 +87,7 @@ jobs:
         run: |
           full=$(grep -E '^version:' promoter_admin/pubspec.yaml | head -1 | sed 's/version:[[:space:]]*//')
           name="${full%%+*}"
+          name="$(printf '%s' "$name" | sed -E 's/-([a-zA-Z])$/\1/')"
           number="${full##*+}"
           zip="omf-admin-macos-${name}_${number}.zip"
           {

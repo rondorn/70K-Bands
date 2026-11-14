@@ -38,6 +38,8 @@ read_pubspec_version() {
   ver=$(echo "$line" | sed 's/version:[[:space:]]*//')
   WANT_NAME=${ver%+*}
   WANT_NUMBER=${ver#*+}
+  # Flutter writes a pre-release as 1.0.28-a. The app and zip use 1.0.28a.
+  WANT_NAME=$(printf '%s' "$WANT_NAME" | sed -E 's/-([a-zA-Z])$/\1/')
   if [ -z "$WANT_NAME" ] || [ -z "$WANT_NUMBER" ] || [ "$WANT_NAME" = "$ver" ]; then
     echo "error: pubspec.yaml version must be name+number (e.g. 1.0.4+16), got: $line" >&2
     exit 1

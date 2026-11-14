@@ -17,6 +17,16 @@ void main() {
     );
     expect(DesktopAppVersion.parse('1.0.24', '1') > current, isFalse);
     expect(DesktopAppVersion.parse('1.0.23', '9') > current, isFalse);
+    final iteration = DesktopAppVersion.parse('1.0.28a', '1');
+    expect(DesktopAppVersion.parse('1.0.28', '1') > iteration, isFalse);
+    expect(DesktopAppVersion.parse('1.0.28-a', '1').compareTo(iteration), 0);
+    expect(DesktopAppVersion.parse('1.0.28b', '1') > iteration, isTrue);
+    expect(DesktopAppVersion.parse('1.0.28f', '1') > iteration, isTrue);
+    expect(
+      DesktopAppVersion.parse('1.0.29', '1') >
+          DesktopAppVersion.parse('1.0.28f', '1'),
+      isTrue,
+    );
   });
 
   test('release json offers only a strictly newer zip for this platform', () {
@@ -54,6 +64,25 @@ void main() {
     );
     expect(mac, isNotNull);
     expect(mac!.assetName, 'omf-admin-macos-1.0.25_2.zip');
+    final lettered = desktopUpdateOfferFromReleaseJson(
+      '''
+{
+  "assets": [
+    {
+      "name": "omf-admin-macos-1.0.28a_1.zip",
+      "browser_download_url": "https://example.com/a.zip"
+    },
+    {
+      "name": "omf-admin-macos-1.0.28b_1.zip",
+      "browser_download_url": "https://example.com/b.zip"
+    }
+  ]
+}
+''',
+      windows: false,
+      current: DesktopAppVersion.parse('1.0.28a', '1'),
+    );
+    expect(lettered?.assetName, 'omf-admin-macos-1.0.28b_1.zip');
     expect(mac.downloadUrl, 'https://example.com/new-mac.zip');
 
     final windows = desktopUpdateOfferFromReleaseJson(
@@ -163,6 +192,7 @@ void main() {
       "mv '/Applications/Open Metal Fest Admin.app.updating' "
       "'/Applications/Open Metal Fest Admin.app'",
     );
+    expect(script, contains('ditto --norsrc --noextattr '));
     expect(script, contains('set -euo pipefail'));
     expect(script, isNot(contains('kill -0')));
     expect(script, contains("'/tmp/it'\\''s.app'"));

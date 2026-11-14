@@ -124,6 +124,7 @@ command -v flutter >/dev/null || {
 
 FULL_VERSION="$(grep -E '^version:' pubspec.yaml | head -1 | sed 's/version:[[:space:]]*//')"
 VERSION_NAME="${FULL_VERSION%%+*}"
+VERSION_NAME="$(printf '%s' "$VERSION_NAME" | sed -E 's/-([a-zA-Z])$/\1/')"
 VERSION_BUILD="${FULL_VERSION##*+}"
 ZIP_NAME="omf-admin-macos-${VERSION_NAME}_${VERSION_BUILD}.zip"
 APP_NAME="Open Metal Fest Admin.app"

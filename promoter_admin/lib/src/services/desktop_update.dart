@@ -14,26 +14,38 @@ const _userAgent = 'OpenMetalFestAdmin';
 const macAppBundleName = 'Open Metal Fest Admin.app';
 const macApplicationsDestination = '/Applications/$macAppBundleName';
 
-/// Installed or published app version (`1.0.24` + build `1`).
+/// Installed or published app version (`1.0.28a` + build `1`).
+///
+/// A trailing letter is an iteration of the same numeric version:
+/// `1.0.28` < `1.0.28a` < `1.0.28b`. `1.0.28-a` is the same version as
+/// `1.0.28a`.
 class DesktopAppVersion implements Comparable<DesktopAppVersion> {
-  const DesktopAppVersion(this.parts, this.build);
+  const DesktopAppVersion(this.parts, this.letter, this.build);
 
   final List<int> parts;
+
+  /// 0 is no letter. 1 is `a`, 2 is `b`, and so on.
+  final int letter;
   final int build;
 
+  static final _name = RegExp(r'^(\d+(?:\.\d+)*)-?([a-z])?$');
+
   factory DesktopAppVersion.parse(String name, [String build = '0']) {
-    final pieces = name
-        .trim()
-        .split('.')
-        .map((part) => int.tryParse(part) ?? 0)
-        .toList();
-    if (pieces.isEmpty) pieces.add(0);
-    return DesktopAppVersion(pieces, int.tryParse(build.trim()) ?? 0);
+    final match = _name.firstMatch(name.trim().toLowerCase());
+    final pieces = match == null
+        ? const <int>[0]
+        : match.group(1)!.split('.').map((part) => int.parse(part)).toList();
+    final letterChar = match?.group(2);
+    final letter = letterChar == null ? 0 : letterChar.codeUnitAt(0) - 96;
+    return DesktopAppVersion(pieces, letter, int.tryParse(build.trim()) ?? 0);
   }
 
   int part(int index) => index < parts.length ? parts[index] : 0;
 
-  String get label => '${parts.join('.')} ($build)';
+  String get label {
+    final suffix = letter == 0 ? '' : String.fromCharCode(96 + letter);
+    return '${parts.join('.')}$suffix ($build)';
+  }
 
   @override
   int compareTo(DesktopAppVersion other) {
@@ -44,6 +56,8 @@ class DesktopAppVersion implements Comparable<DesktopAppVersion> {
       final delta = part(i) - other.part(i);
       if (delta != 0) return delta;
     }
+    final letterDelta = letter - other.letter;
+    if (letterDelta != 0) return letterDelta;
     return build - other.build;
   }
 
@@ -120,8 +134,8 @@ DesktopUpdateOffer? desktopUpdateOfferFromReleaseJson(
   if (assets is! List) return null;
 
   final pattern = windows
-      ? RegExp(r'^omf-admin-windows-(\d+(?:\.\d+)*)_(\d+)\.zip$')
-      : RegExp(r'^omf-admin-macos-(\d+(?:\.\d+)*)_(\d+)\.zip$');
+      ? RegExp(r'^omf-admin-windows-(\d+(?:\.\d+)*(?:-?[a-zA-Z])?)_(\d+)\.zip$')
+      : RegExp(r'^omf-admin-macos-(\d+(?:\.\d+)*(?:-?[a-zA-Z])?)_(\d+)\.zip$');
 
   DesktopUpdateOffer? best;
   for (final asset in assets) {
@@ -272,38 +286,43 @@ Future<void> relaunchIntoDesktopUpdate(PreparedDesktopUpdate update) async {
       destApp: update.installPath,
     ),
   );
-  final elevated = !await _directoryIsWritable(
-    File(update.installPath).parent.path,
-  );
-  await _runMacInstallScript(script.path, elevated: elevated);
+  await _runMacInstallScript(script.path);
   await _launchMacApp(update.installPath);
   exit(0);
 }
 
-Future<void> _runMacInstallScript(
-  String scriptPath, {
-  required bool elevated,
-}) async {
-  if (elevated) {
-    final authorized = await Process.run('/usr/bin/osascript', [
-      '-e',
-      'do shell script "/bin/bash ${shellQuote(scriptPath)}" '
-          'with administrator privileges',
-    ]);
-    if (authorized.exitCode != 0) {
-      final detail = '${authorized.stderr}'.trim();
-      throw StateError(
-        detail.isEmpty
-            ? 'The update was not installed.'
-            : 'The update was not installed. $detail',
-      );
-    }
-    return;
+/// The sandbox can create a file in /Applications and still refuse to copy an
+/// app bundle. The installer always runs with an administrator password.
+Future<void> _runMacInstallScript(String scriptPath) async {
+  try {
+    const channel = MethodChannel(
+      'com.rdorn.open-metal-fest-admin/desktop_update',
+    );
+    await channel.invokeMethod<void>('runPrivilegedShell', scriptPath);
+  } on MissingPluginException {
+    await _runMacInstallScriptViaOsascript(scriptPath);
+  } on PlatformException catch (error) {
+    final message = error.message?.trim() ?? '';
+    throw StateError(
+      message.isEmpty ? 'The update was not installed.' : message,
+    );
   }
-  final result = await Process.run('/bin/bash', [scriptPath]);
-  if (result.exitCode != 0) {
-    final detail = '${result.stderr}'.trim();
-    throw StateError(detail.isEmpty ? 'The update was not installed.' : detail);
+}
+
+Future<void> _runMacInstallScriptViaOsascript(String scriptPath) async {
+  final authorized = await Process.run('/usr/bin/osascript', [
+    '-e',
+    'do shell script "/bin/bash ${shellQuote(scriptPath)}" '
+        'with prompt "Open Metal Fest Admin needs an administrator password to install the update." '
+        'with administrator privileges',
+  ]);
+  if (authorized.exitCode != 0) {
+    final detail = '${authorized.stderr}'.trim();
+    throw StateError(
+      detail.isEmpty
+          ? 'The update was not installed.'
+          : 'The update was not installed. $detail',
+    );
   }
 }
 
@@ -339,7 +358,7 @@ String macUpdateHelperScript({
 #!/bin/bash
 set -euo pipefail
 rm -rf $staging
-ditto $src $staging
+ditto --norsrc --noextattr $src $staging
 xattr -cr $staging || true
 if [ ! -d $staging/Contents/MacOS ]; then
   echo "The update did not contain an app." >&2
@@ -614,7 +633,9 @@ Future<void> _runUpdatePrompt(BuildContext context) async {
             children: [
               LinearProgressIndicator(color: AppColors.accent),
               SizedBox(height: 16),
-              Text('The new version will open in a moment.'),
+              Text(
+                'macOS will ask for your password to replace the app. The new version will then open.',
+              ),
             ],
           ),
         );
