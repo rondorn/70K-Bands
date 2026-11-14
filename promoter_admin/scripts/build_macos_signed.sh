@@ -186,10 +186,35 @@ zip_app_bundle() {
   fi
 }
 
+embed_update_helper() {
+  local app="$1"
+  local dest="$app/Contents/Helpers/UpdateInstaller.app"
+  local bin
+  bin="$(mktemp -t omf-update-helper)"
+  rm -f "$bin"
+  clang -O2 -o "$bin" "$ROOT/macos/UpdateHelper/UpdateInstaller.c"
+  rm -rf "$dest"
+  mkdir -p "$dest/Contents/MacOS"
+  cp "$bin" "$dest/Contents/MacOS/UpdateInstaller"
+  cp "$ROOT/macos/UpdateHelper/Info.plist" "$dest/Contents/Info.plist"
+  chmod 755 "$dest/Contents/MacOS/UpdateInstaller"
+  rm -f "$bin"
+}
+
+sign_update_helper() {
+  local app="$1"
+  local identity="$2"
+  local dest="$app/Contents/Helpers/UpdateInstaller.app"
+  # No sandbox entitlement. Launch Services starts this outside the main app
+  # sandbox, so it can replace the app and show the administrator dialog.
+  codesign --force --options runtime --timestamp --sign "$identity" "$dest"
+}
+
 mkdir -p "$DIST"
 rm -rf "$APP_OUT"
 export COPYFILE_DISABLE=1
 ditto --norsrc --noextattr "$APP_BUILD" "$APP_OUT"
+embed_update_helper "$APP_OUT"
 strip_macos_bundle_junk "$APP_OUT"
 # Bundle root mtime often stays at the first build; bump so Finder isn't misleading.
 touch "$APP_OUT"
@@ -219,6 +244,7 @@ else
     exit 1
   fi
   echo "==> Codesigning with: $IDENTITY"
+  sign_update_helper "$APP_OUT" "$IDENTITY"
 
   if [[ ! -f "$PROVISIONING_PROFILE" ]]; then
     echo "Developer ID provisioning profile not found:" >&2
@@ -250,6 +276,20 @@ else
     --sign "$IDENTITY" "$APP_OUT"
 
   codesign --verify --deep --strict --verbose=2 "$APP_OUT"
+  if codesign -d --entitlements - "$APP_OUT/Contents/Helpers/UpdateInstaller.app" 2>&1 \
+      | grep -q 'com.apple.security.app-sandbox'; then
+    echo "Update helper inherited the app sandbox. Signing it again." >&2
+    sign_update_helper "$APP_OUT" "$IDENTITY"
+    codesign --force --options runtime --timestamp \
+      --entitlements "$ENTITLEMENTS" \
+      --sign "$IDENTITY" "$APP_OUT"
+    codesign --verify --deep --strict --verbose=2 "$APP_OUT"
+    if codesign -d --entitlements - "$APP_OUT/Contents/Helpers/UpdateInstaller.app" 2>&1 \
+        | grep -q 'com.apple.security.app-sandbox'; then
+      echo "ERROR: update helper is still sandboxed." >&2
+      exit 1
+    fi
+  fi
   echo "    Codesign OK"
 fi
 

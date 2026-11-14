@@ -180,8 +180,10 @@ void main() {
 
   test('mac helper copies the new app before moving the old one aside', () {
     final script = macUpdateHelperScript(
+      pid: 42,
       sourceApp: "/tmp/it's.app",
       destApp: '/Applications/Open Metal Fest Admin.app',
+      scriptPath: '/tmp/omf-update.sh',
     );
     final dittoAt = script.indexOf('ditto ');
     final moveAside = script.indexOf(
@@ -194,7 +196,8 @@ void main() {
     );
     expect(script, contains('ditto --norsrc --noextattr '));
     expect(script, contains('set -euo pipefail'));
-    expect(script, isNot(contains('kill -0')));
+    expect(script, contains('kill -0 42'));
+    expect(script, contains('with administrator privileges'));
     expect(script, contains("'/tmp/it'\\''s.app'"));
     expect(script, contains('Contents/MacOS'));
     expect(dittoAt, greaterThan(0));

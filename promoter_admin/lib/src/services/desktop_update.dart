@@ -282,25 +282,28 @@ Future<void> relaunchIntoDesktopUpdate(PreparedDesktopUpdate update) async {
   final script = File('${Directory.systemTemp.path}/omf-update-$pid.sh');
   await script.writeAsString(
     macUpdateHelperScript(
+      pid: pid,
       sourceApp: update.payloadPath,
       destApp: update.installPath,
+      scriptPath: script.path,
     ),
   );
-  await _runMacInstallScript(script.path);
-  await _launchMacApp(update.installPath);
+  await _launchMacInstaller(script.path);
   exit(0);
 }
 
-/// The sandbox can create a file in /Applications and still refuse to copy an
-/// app bundle. The installer always runs with an administrator password.
-Future<void> _runMacInstallScript(String scriptPath) async {
+/// Starts the signed helper outside this app's sandbox, then this process quits.
+/// The helper replaces the app and can show the real password dialog.
+Future<void> _launchMacInstaller(String scriptPath) async {
   try {
     const channel = MethodChannel(
       'com.rdorn.open-metal-fest-admin/desktop_update',
     );
-    await channel.invokeMethod<void>('runPrivilegedShell', scriptPath);
+    await channel.invokeMethod<void>('launchInstaller', scriptPath);
   } on MissingPluginException {
-    await _runMacInstallScriptViaOsascript(scriptPath);
+    throw StateError(
+      'This copy of the app cannot finish the update. Install the latest version by hand.',
+    );
   } on PlatformException catch (error) {
     final message = error.message?.trim() ?? '';
     throw StateError(
@@ -309,73 +312,65 @@ Future<void> _runMacInstallScript(String scriptPath) async {
   }
 }
 
-Future<void> _runMacInstallScriptViaOsascript(String scriptPath) async {
-  final authorized = await Process.run('/usr/bin/osascript', [
-    '-e',
-    'do shell script "/bin/bash ${shellQuote(scriptPath)}" '
-        'with prompt "Open Metal Fest Admin needs an administrator password to install the update." '
-        'with administrator privileges',
-  ]);
-  if (authorized.exitCode != 0) {
-    final detail = '${authorized.stderr}'.trim();
-    throw StateError(
-      detail.isEmpty
-          ? 'The update was not installed.'
-          : 'The update was not installed. $detail',
-    );
-  }
-}
-
-/// Opens [path] through Launch Services so the new copy is not a child of
-/// this sandboxed process. A child would die when this process exits.
-Future<void> _launchMacApp(String path) async {
-  try {
-    const channel = MethodChannel(
-      'com.rdorn.open-metal-fest-admin/desktop_update',
-    );
-    await channel.invokeMethod<void>('launchApp', path);
-    return;
-  } catch (_) {}
-  final opened = await Process.run('/usr/bin/open', ['-n', path]);
-  if (opened.exitCode != 0) {
-    throw StateError(
-      'The update is installed. Quit this window and open ${AppBrand.name} again.',
-    );
-  }
-}
-
 String shellQuote(String value) => "'${value.replaceAll("'", r"'\''")}'";
 
 String macUpdateHelperScript({
+  required int pid,
   required String sourceApp,
   required String destApp,
+  required String scriptPath,
 }) {
   final src = shellQuote(sourceApp);
   final dest = shellQuote(destApp);
   final staging = shellQuote('$destApp.updating');
   final previous = shellQuote('$destApp.previous');
+  final elevated = shellQuote(
+    'do shell script "OMF_UPDATE_ELEVATED=1 /bin/bash ${shellQuote(scriptPath)}" '
+    'with prompt "Open Metal Fest Admin needs an administrator password to install the update." '
+    'with administrator privileges',
+  );
   return '''
 #!/bin/bash
 set -euo pipefail
-rm -rf $staging
-ditto --norsrc --noextattr $src $staging
-xattr -cr $staging || true
-if [ ! -d $staging/Contents/MacOS ]; then
-  echo "The update did not contain an app." >&2
+copy_app() {
   rm -rf $staging
-  exit 1
-fi
-rm -rf $previous
-if [ -e $dest ]; then
-  mv $dest $previous
-fi
-if ! mv $staging $dest; then
-  if [ -e $previous ]; then
-    mv $previous $dest || true
+  ditto --norsrc --noextattr $src $staging
+  xattr -cr $staging || true
+  if [ ! -d $staging/Contents/MacOS ]; then
+    echo "The update did not contain an app." >&2
+    rm -rf $staging
+    return 1
   fi
-  echo "Could not move the new app into place." >&2
-  exit 1
+  rm -rf $previous
+  if [ -e $dest ]; then
+    mv $dest $previous
+  fi
+  if ! mv $staging $dest; then
+    if [ -e $previous ]; then
+      mv $previous $dest || true
+    fi
+    echo "Could not move the new app into place." >&2
+    return 1
+  fi
+}
+if [ "\${OMF_UPDATE_ELEVATED:-}" = 1 ]; then
+  copy_app
+  exit \$?
 fi
+while kill -0 $pid 2>/dev/null; do
+  sleep 0.3
+done
+sleep 0.5
+if OMF_UPDATE_ELEVATED=1 /bin/bash ${shellQuote(scriptPath)}; then
+  /usr/bin/open -n $dest
+  exit 0
+fi
+if /usr/bin/osascript -e $elevated; then
+  /usr/bin/open -n $dest
+  exit 0
+fi
+echo "The update was not installed." >&2
+exit 1
 ''';
 }
 
@@ -634,7 +629,7 @@ Future<void> _runUpdatePrompt(BuildContext context) async {
               LinearProgressIndicator(color: AppColors.accent),
               SizedBox(height: 16),
               Text(
-                'macOS will ask for your password to replace the app. The new version will then open.',
+                'The app will quit and install the update. macOS may ask for your password. The new version then opens.',
               ),
             ],
           ),
