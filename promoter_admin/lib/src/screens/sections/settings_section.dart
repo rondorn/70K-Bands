@@ -107,6 +107,8 @@ class _SettingsSectionState extends State<SettingsSection> {
   late bool _canEditAlerts;
   late bool _canViewReports;
   late bool _useCityStateField;
+  late bool _umcApiEnabled;
+  late final TextEditingController _umcScheduleApiUrl;
   String? _status;
   String? _error;
   bool _busy = false;
@@ -163,6 +165,10 @@ class _SettingsSectionState extends State<SettingsSection> {
     _canEditAlerts = widget.workspace.canEditAlerts;
     _canViewReports = widget.workspace.canViewReports;
     _useCityStateField = widget.workspace.useCityStateField;
+    _umcApiEnabled = widget.workspace.umcApiEnabled;
+    _umcScheduleApiUrl = TextEditingController(
+      text: widget.workspace.umcScheduleApiUrl,
+    );
     for (final c in [
       _name,
       _testing,
@@ -175,6 +181,7 @@ class _SettingsSectionState extends State<SettingsSection> {
       _dateRollover,
       _eventTypes,
       _festivalLogo,
+      _umcScheduleApiUrl,
     ]) {
       c.addListener(_onFormChanged);
     }
@@ -235,6 +242,10 @@ class _SettingsSectionState extends State<SettingsSection> {
     _canEditAlerts = w.canEditAlerts;
     _canViewReports = w.canViewReports;
     _useCityStateField = w.useCityStateField;
+    _umcApiEnabled = w.umcApiEnabled;
+    if (_umcScheduleApiUrl.text != w.umcScheduleApiUrl) {
+      _umcScheduleApiUrl.text = w.umcScheduleApiUrl;
+    }
     _emergencyLocalMode = w.emergencyLocalMode;
     _emergencyLocalPaths = w.emergencyLocalPaths;
     if (w.hasDataSourceYearOverride) {
@@ -256,6 +267,7 @@ class _SettingsSectionState extends State<SettingsSection> {
       _dateRollover,
       _eventTypes,
       _festivalLogo,
+      _umcScheduleApiUrl,
     ]) {
       c.removeListener(_onFormChanged);
       c.dispose();
@@ -287,7 +299,9 @@ class _SettingsSectionState extends State<SettingsSection> {
           : w.dateRolloverTime,
     );
     final baselineRollover = DayDateAlignment.formatRolloverTime(rollH, rollM);
-    final baselineTypes = ScheduleValidation.withDefaultEventTypes(w.eventTypes);
+    final baselineTypes = ScheduleValidation.withDefaultEventTypes(
+      w.eventTypes,
+    );
     final baselineDays = DayDateAlignment.normalizeDays(w.days);
     final baselineDates = DayDateAlignment.normalizeDates(w.dates);
     final baselineLogo = normalizeDropboxUrl(w.festivalLogoUrl.trim());
@@ -310,6 +324,8 @@ class _SettingsSectionState extends State<SettingsSection> {
         d.canEditAlerts != w.canEditAlerts ||
         d.canViewReports != w.canViewReports ||
         d.useCityStateField != w.useCityStateField ||
+        d.umcApiEnabled != w.umcApiEnabled ||
+        d.umcScheduleApiUrl != w.umcScheduleApiUrl.trim() ||
         d.emergencyLocalMode != w.emergencyLocalMode ||
         d.emergencyLocalPaths != w.emergencyLocalPaths;
   }
@@ -346,6 +362,8 @@ class _SettingsSectionState extends State<SettingsSection> {
       canEditAlerts: _canEditAlerts,
       canViewReports: _canViewReports,
       useCityStateField: _useCityStateField,
+      umcApiEnabled: _umcApiEnabled,
+      umcScheduleApiUrl: _umcScheduleApiUrl.text.trim(),
       emergencyLocalMode: _emergencyLocalMode,
       emergencyLocalPaths: _emergencyLocalPaths,
     );
@@ -356,8 +374,9 @@ class _SettingsSectionState extends State<SettingsSection> {
     return draft.copyWith(
       canEditBands: draft.emergencyLocalPaths.artistsCsv.trim().isNotEmpty,
       canEditSchedule: draft.emergencyLocalPaths.scheduleCsv.trim().isNotEmpty,
-      canEditDescriptions:
-          draft.emergencyLocalPaths.descriptionMapCsv.trim().isNotEmpty,
+      canEditDescriptions: draft.emergencyLocalPaths.descriptionMapCsv
+          .trim()
+          .isNotEmpty,
       canEditAlerts: draft.emergencyLocalPaths.alertsDir.trim().isNotEmpty,
       allowCustomAlerts: draft.emergencyLocalPaths.alertsDir.trim().isNotEmpty,
       canEditPointers: false,
@@ -444,18 +463,13 @@ class _SettingsSectionState extends State<SettingsSection> {
       }
       final check = await LocalContentStore.checkPath(dir, directory: true);
       if (!check.writable) {
-        throw StateError(
-          'Alerts folder is not writable: ${check.summary}',
-        );
+        throw StateError('Alerts folder is not writable: ${check.summary}');
       }
       return draft.copyWith(canEditAlerts: true, allowCustomAlerts: true);
     }
     final folder = draft.alertFolderUrl.trim();
     if (folder.isEmpty) {
-      return draft.copyWith(
-        canEditAlerts: false,
-        alertFilesFolderPath: '',
-      );
+      return draft.copyWith(canEditAlerts: false, alertFilesFolderPath: '');
     }
     if (!widget.dropboxConnected) {
       throw StateError(
@@ -473,10 +487,7 @@ class _SettingsSectionState extends State<SettingsSection> {
     try {
       alertPath = await widget.dropboxApi.resolveApiPath(folder);
     } catch (_) {}
-    return draft.copyWith(
-      canEditAlerts: true,
-      alertFilesFolderPath: alertPath,
-    );
+    return draft.copyWith(canEditAlerts: true, alertFilesFolderPath: alertPath);
   }
 
   /// Persist form draft only when Days/Dates counts align (1:1 + extra date).
@@ -591,8 +602,8 @@ class _SettingsSectionState extends State<SettingsSection> {
         _status = draft.usesEmergencyLocalMode
             ? 'Local File Mode configuration saved.$vocabNote'
             : draft.alertFolderUrl.trim().isEmpty
-                ? 'Configuration saved.$vocabNote'
-                : 'Configuration saved. Alert folder write access verified.$vocabNote';
+            ? 'Configuration saved.$vocabNote'
+            : 'Configuration saved. Alert folder write access verified.$vocabNote';
         _busy = false;
       });
     } catch (e) {
@@ -647,9 +658,9 @@ class _SettingsSectionState extends State<SettingsSection> {
   }
 
   FestivalSetupService get _festivalSetup => FestivalSetupService(
-        pointerService: widget.pointerService,
-        dropboxApi: widget.dropboxApi,
-      );
+    pointerService: widget.pointerService,
+    dropboxApi: widget.dropboxApi,
+  );
 
   Future<void> _exportFestivalSetup() async {
     final exportWorkspace = widget.workspace.copyWith(
@@ -848,9 +859,10 @@ class _SettingsSectionState extends State<SettingsSection> {
       _error = null;
       _status = switch (choice) {
         AddFestivalFromSetupLink() => 'Loading festival setup…',
-        AddFestivalFromCreateForm(:final result) => result.createPointerFiles
-            ? 'Creating festival on Dropbox…'
-            : 'Loading festival from links…',
+        AddFestivalFromCreateForm(:final result) =>
+          result.createPointerFiles
+              ? 'Creating festival on Dropbox…'
+              : 'Loading festival from links…',
       };
     });
     try {
@@ -872,12 +884,12 @@ class _SettingsSectionState extends State<SettingsSection> {
           }
           if (result.createPointerFiles) {
             createdFromScratch = true;
-            created =
-                await FestivalCreateService(widget.dropboxApi).createFestival(
-              festivalName: result.name,
-              eventYear: result.eventYear,
-              filePrefix: result.filePrefix,
-            );
+            created = await FestivalCreateService(widget.dropboxApi)
+                .createFestival(
+                  festivalName: result.name,
+                  eventYear: result.eventYear,
+                  filePrefix: result.filePrefix,
+                );
           } else {
             created = await _festivalSetup.materializeManualLinks(
               festivalName: result.name,
@@ -895,13 +907,13 @@ class _SettingsSectionState extends State<SettingsSection> {
         _busy = false;
         _status = createdFromScratch
             ? 'Created “${created.festivalName}” with split Dropbox folders '
-                '(artist, schedule, description, and alert). '
-                'Testing and Production links are ready — send them to your '
-                'app developer if needed. '
-                'Set message_queue.config.yaml dropbox_dir to '
-                '${FestivalCreateService.localAlertSyncPathHint(created.festivalName)}.'
+                  '(artist, schedule, description, and alert). '
+                  'Testing and Production links are ready — send them to your '
+                  'app developer if needed. '
+                  'Set message_queue.config.yaml dropbox_dir to '
+                  '${FestivalCreateService.localAlertSyncPathHint(created.festivalName)}.'
             : 'Added “${created.festivalName}”'
-                '${created.eventYear.trim().isEmpty ? '' : ' (year ${created.eventYear})'}.';
+                  '${created.eventYear.trim().isEmpty ? '' : ' (year ${created.eventYear})'}.';
       });
     } catch (e) {
       setState(() {
@@ -1296,9 +1308,9 @@ class _SettingsSectionState extends State<SettingsSection> {
         _status = target.isEmpty
             ? 'Restored Testing Current (year ${probed.eventYear}).'
             : 'Demo/test data source: $target '
-                '(pointer Current remains ${probed.eventYear}). '
-                'Publish is disabled until you switch back to Current. '
-                'Load festival data also restores Current.';
+                  '(pointer Current remains ${probed.eventYear}). '
+                  'Publish is disabled until you switch back to Current. '
+                  'Load festival data also restores Current.';
         _busy = false;
       });
     } catch (e) {
@@ -1545,7 +1557,8 @@ class _SettingsSectionState extends State<SettingsSection> {
               EmergencyLocalModePanel(
                 paths: _emergencyLocalPaths,
                 enabled: !_busy,
-                onChanged: (paths) => setState(() => _emergencyLocalPaths = paths),
+                onChanged: (paths) =>
+                    setState(() => _emergencyLocalPaths = paths),
               )
             else
               const Text(
@@ -1593,7 +1606,8 @@ class _SettingsSectionState extends State<SettingsSection> {
                         child: const Text('Add New Festival'),
                       ),
                       OutlinedButton(
-                        onPressed: _busy ||
+                        onPressed:
+                            _busy ||
                                 !widget.dropboxConnected ||
                                 !FestivalSetupService.canExportToMasterFolder(
                                   widget.workspace.copyWith(
@@ -1605,7 +1619,8 @@ class _SettingsSectionState extends State<SettingsSection> {
                         child: const Text('Export festival setup…'),
                       ),
                       OutlinedButton(
-                        onPressed: _busy ||
+                        onPressed:
+                            _busy ||
                                 widget.workspace.festivalName.trim().isEmpty
                             ? null
                             : _updateFestivalFromSetupLink,
@@ -1636,484 +1651,490 @@ class _SettingsSectionState extends State<SettingsSection> {
               child: TextField(controller: _name),
             ),
             if (!emergencyMode) ...[
-            FormRow(
-              label: 'Dropbox connection',
-              requiredField: true,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.dropboxConnected
-                        ? 'Connected${widget.dropboxLabel.isEmpty ? '' : ': ${widget.dropboxLabel}'}'
-                        : 'Not connected — required to save lineup, schedule, and descriptions.',
-                    style: const TextStyle(color: AppColors.heading),
-                  ),
-                  const SizedBox(height: 10),
-                  CenteredWhenWrapped(
-                    spacing: 8,
-                    children: [
-                      if (widget.dropboxConnected)
-                        OutlinedButton(
-                          onPressed: widget.onDisconnectDropbox,
-                          child: const Text('Disconnect'),
-                        )
-                      else
-                        FilledButton(
-                          onPressed: widget.dropboxConnecting
-                              ? null
-                              : widget.onConnectDropbox,
-                          child: Text(
-                            widget.dropboxConnecting
-                                ? 'Connecting…'
-                                : 'Connect Dropbox',
-                          ),
-                        ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            FormRow(
-              label: 'Testing link',
-              requiredField: true,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TextField(
-                    controller: _testing,
-                    maxLines: 2,
-                    decoration: const InputDecoration(
-                      hintText:
-                          'https://www.dropbox.com/.../testingPointer.txt?raw=1',
-                    ),
-                  ),
-                  const HintText(
-                    'Dropbox pointer file for Testing. From your app developer, '
-                    'or create one and send them the link. Used for artists / schedule / descriptions.',
-                  ),
-                  const HintText(shareUrlNormalizationHint),
-                ],
-              ),
-            ),
-            FormRow(
-              label: 'Production link',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TextField(controller: _production, maxLines: 2),
-                  const HintText(
-                    'Dropbox pointer file for Production (what most attendees see). '
-                    'Also used for venues / dates / days / event types on Load. '
-                    'Your app developer may ask for this link.',
-                  ),
-                  const HintText(shareUrlNormalizationHint),
-                ],
-              ),
-            ),
-            FormRow(
-              label: 'Alert folder',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TextField(
-                    controller: _alertFolder,
-                    maxLines: 2,
-                    decoration: InputDecoration(
-                      hintText:
-                          'https://www.dropbox.com/scl/fo/…/${FestivalCreateService.sanitizeFolderSegment(_name.text.isEmpty ? 'Festival' : _name.text)}_Alert_Files?rlkey=…&raw=1',
-                    ),
-                  ),
-                  const HintText(
-                    'Dropbox folder for band-add and custom push `.pending` files. '
-                    'New festivals get /{Festival name}_Alert_Files at Dropbox root. '
-                    'Save requires write access when set. Update '
-                    'message_queue.config.yaml dropbox_dir to the matching local sync path.',
-                  ),
-                  const HintText(shareUrlNormalizationHint),
-                  if (widget.dropboxConnected &&
-                      _alertFolder.text.trim().isEmpty) ...[
-                    const SizedBox(height: 8),
-                    OutlinedButton(
-                      onPressed: _busy ? null : _createAlertFolder,
-                      child: const Text('Create alert folder on Dropbox'),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            FormRow(
-              label: 'Reports folder',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TextField(
-                    controller: _reportsFolder,
-                    maxLines: 2,
-                    decoration: const InputDecoration(
-                      hintText:
-                          'https://www.dropbox.com/scl/fo/…/70K_Reports?rlkey=…&raw=1',
-                    ),
-                  ),
-                  const HintText(
-                    'Dropbox folder where generated HTML stats reports are stored '
-                    '(e.g. ~/Dropbox/70K_Reports). Write access to this folder '
-                    'controls who sees the Reports section — it is not used to '
-                    'edit report files from the admin app.',
-                  ),
-                  const HintText(shareUrlNormalizationHint),
-                ],
-              ),
-            ),
-            UrlImagePreview(
-              controller: _festivalLogo,
-              padding: const EdgeInsets.only(bottom: 8),
-            ),
-            FormRow(
-              label: 'Festival logo',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TextField(
-                    controller: _festivalLogo,
-                    maxLines: 2,
-                    decoration: const InputDecoration(
-                      hintText:
-                          'https://www.dropbox.com/.../festival-logo.png?raw=1',
-                    ),
-                  ),
-                  const HintText(
-                    'Optional Dropbox (or other) image link used only in PDF '
-                    'and HTML schedule exports, where it replaces the festival '
-                    'name at the top of each page. Prefer a PNG or JPEG. '
-                    '$shareUrlNormalizationHint',
-                  ),
-                ],
-              ),
-            ),
-            ],
-            if (!emergencyMode) ...[
-            FormRow(
-              label: 'Data files',
-              onLabelTap: _onDataFilesLabelTap,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _ReadonlyLine('Artists', widget.workspace.bandListUrl),
-                  _ReadonlyLine('Schedule', widget.workspace.scheduleUrl),
-                  _ReadonlyLine(
-                    'Description map',
-                    widget.workspace.descriptionMapUrl,
-                  ),
-                  if (widget.workspace.eventYear.isNotEmpty)
-                    _ReadonlyLine('Event year', widget.workspace.eventYear),
-                  if (widget.workspace.reportsFolderUrl.trim().isNotEmpty)
-                    _StatusLine(
-                      'Stats reports',
-                      widget.workspace.reportUrl.isNotEmpty
-                          ? 'End-user report loaded — open Reports in the sidebar'
-                          : 'Not found yet — Load festival data',
-                    ),
-                  if (widget.workspace.hasDataSourceYearOverride)
-                    _ReadonlyLine(
-                      'Data source',
-                      'Archived ${widget.workspace.dataSourceYearOverride} (demo)',
-                    ),
-                  if (_showDemoYearControls ||
-                      widget.workspace.hasDataSourceYearOverride) ...[
-                    const SizedBox(height: 10),
-                    Text(
-                      'Demo data year',
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            color: AppColors.label,
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                    const SizedBox(height: 6),
-                    PortalStringDropdown(
-                      value: widget.workspace.hasDataSourceYearOverride
-                          ? widget.workspace.dataSourceYearOverride
-                          : '',
-                      items: DropdownOptions.withEmpty([
-                        ..._demoYears,
-                        if (widget.workspace.hasDataSourceYearOverride &&
-                            !_demoYears.contains(
-                              widget.workspace.dataSourceYearOverride,
-                            ))
-                          widget.workspace.dataSourceYearOverride,
-                      ]),
-                      enabled: !_busy && !_loadingDemoYears,
-                      emptyLabel: 'Current (${widget.workspace.eventYear.isEmpty ? 'live' : widget.workspace.eventYear})',
-                      onChanged: _busy || _loadingDemoYears
-                          ? null
-                          : _setDemoDataYear,
-                      decoration: InputDecoration(
-                        hintText: _loadingDemoYears
-                            ? 'Loading years…'
-                            : 'Current (live Testing)',
-                      ),
-                    ),
-                    const HintText(
-                      'Temporary local override for demos / testing. Uses archived '
-                      'year sections from the Testing pointer only (not Production). '
-                      'Does not change Dropbox pointer files. Prefer Current when '
-                      'finished. Publish stays disabled while an archived year is '
-                      'selected.',
-                    ),
-                    if (_demoYears.isEmpty && !_loadingDemoYears)
-                      TextButton(
-                        onPressed: _busy ? null : _ensureDemoYearsLoaded,
-                        child: const Text('Load available years'),
-                      ),
-                  ],
-                  if (widget.dropboxConnected && _canEditPointers) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      'Testing vs Production files',
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            color: AppColors.label,
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                    const SizedBox(height: 4),
-                    if (_shareStatus?.scheduleShared == true)
-                      const StatusBanner(
-                        text:
-                            'Schedule Testing and Production point at the same file. '
-                            'That is not supported — use a separate Testing schedule.',
-                        isError: true,
-                      ),
-                    Text(
-                      _shareStatus == null
-                          ? 'Load festival data to detect whether artists / schedule / '
-                              'description map are shared with Production.'
-                          : 'Artists: ${_shareStatus!.artistsShared ? 'shared (live)' : 'separate Testing file'} · '
-                              'Schedule: ${_shareStatus!.scheduleShared ? 'SHARED (fix)' : 'separate'} · '
-                              'Descriptions: ${_shareStatus!.mapShared ? 'shared (live)' : 'separate Testing file'}',
-                      style: const TextStyle(
-                        color: AppColors.muted,
-                        fontSize: 12,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    CenteredWhenWrapped(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        if (_shareStatus?.artistsShared != true)
-                          OutlinedButton(
-                            onPressed: _busy
-                                ? null
-                                : () => _shareChannelWithProduction(
-                                      artists: true,
-                                      map: false,
-                                    ),
-                            child: const Text('Share artists with Production'),
-                          ),
-                        if (_shareStatus?.artistsShared == true)
-                          OutlinedButton(
-                            onPressed: _busy
-                                ? null
-                                : () => _unshareChannelFromProduction(
-                                      artists: true,
-                                      map: false,
-                                    ),
-                            child: const Text('Use separate Testing artists'),
-                          ),
-                        if (_shareStatus?.mapShared != true)
-                          OutlinedButton(
-                            onPressed: _busy
-                                ? null
-                                : () => _shareChannelWithProduction(
-                                      artists: false,
-                                      map: true,
-                                    ),
-                            child: const Text('Share description map with Production'),
-                          ),
-                        if (_shareStatus?.mapShared == true)
-                          OutlinedButton(
-                            onPressed: _busy
-                                ? null
-                                : () => _unshareChannelFromProduction(
-                                      artists: false,
-                                      map: true,
-                                    ),
-                            child: const Text('Use separate Testing map'),
-                          ),
-                        TextButton(
-                          onPressed: _busy
-                              ? null
-                              : () => _refreshShareStatus(_draft()),
-                          child: const Text('Refresh share status'),
-                        ),
-                      ],
-                    ),
-                    const HintText(
-                      'Artists may intentionally share one Dropbox file with Production '
-                      '(e.g. automated promoter feed — small live edits are OK). '
-                      'Description map is optional either way. Schedule must stay separate. '
-                      'Requires Testing link write access.',
-                    ),
-                    const SizedBox(height: 8),
-                    OutlinedButton(
-                      onPressed: _busy ? null : _addNewYear,
-                      child: const Text('Add new year…'),
-                    ),
-                    const HintText(
-                      'Archives Current on the Testing link only and creates '
-                      'empty artists / schedule / map files. Production is unchanged '
-                      'until you Publish to Production.',
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            FormRow(
-              label: 'File access',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CheckboxListTile(
-                    contentPadding: EdgeInsets.zero,
-                    dense: true,
-                    controlAffinity: ListTileControlAffinity.leading,
-                    title: const Text('Artists'),
-                    subtitle: Text(
-                      widget.workspace.bandListUrl.trim().isEmpty
-                          ? 'No artists URL yet'
-                          : (_canEditBands
-                                ? 'Write access — Add / Edit / Delete enabled'
-                                : 'No write access — view only (Add / Edit / Delete disabled)'),
-                      style: const TextStyle(
-                        color: AppColors.muted,
-                        fontSize: 12,
-                      ),
-                    ),
-                    value: _canEditBands,
-                    onChanged: _busy
-                        ? null
-                        : (v) => setState(() => _canEditBands = v ?? false),
-                  ),
-                  CheckboxListTile(
-                    contentPadding: EdgeInsets.zero,
-                    dense: true,
-                    controlAffinity: ListTileControlAffinity.leading,
-                    title: const Text('Schedule'),
-                    subtitle: Text(
-                      widget.workspace.scheduleUrl.trim().isEmpty
-                          ? 'No schedule URL yet'
-                          : (_canEditSchedule
-                                ? 'Write access — Add / Edit / Delete enabled'
-                                : 'No write access — view only (Add / Edit / Delete disabled)'),
-                      style: const TextStyle(
-                        color: AppColors.muted,
-                        fontSize: 12,
-                      ),
-                    ),
-                    value: _canEditSchedule,
-                    onChanged: _busy
-                        ? null
-                        : (v) => setState(() => _canEditSchedule = v ?? false),
-                  ),
-                  CheckboxListTile(
-                    contentPadding: EdgeInsets.zero,
-                    dense: true,
-                    controlAffinity: ListTileControlAffinity.leading,
-                    title: const Text('Descriptions'),
-                    subtitle: Text(
-                      widget.workspace.descriptionMapUrl.trim().isEmpty
-                          ? 'No description map URL yet'
-                          : (_canEditDescriptions
-                                ? 'Write access — Descriptions section shown'
-                                : 'No write access — Descriptions section hidden'),
-                      style: const TextStyle(
-                        color: AppColors.muted,
-                        fontSize: 12,
-                      ),
-                    ),
-                    value: _canEditDescriptions,
-                    onChanged: _busy
-                        ? null
-                        : (v) =>
-                              setState(() => _canEditDescriptions = v ?? false),
-                  ),
-                  CheckboxListTile(
-                    contentPadding: EdgeInsets.zero,
-                    dense: true,
-                    controlAffinity: ListTileControlAffinity.leading,
-                    title: const Text('Reports'),
-                    subtitle: Text(
-                      widget.workspace.reportsFolderUrl.trim().isEmpty
-                          ? 'No reports folder yet'
-                          : (_canViewReports
-                                ? 'Write access — Reports section shown'
-                                : 'No write access — Reports section hidden'),
-                      style: const TextStyle(
-                        color: AppColors.muted,
-                        fontSize: 12,
-                      ),
-                    ),
-                    value: _canViewReports,
-                    onChanged: _busy
-                        ? null
-                        : (v) =>
-                              setState(() => _canViewReports = v ?? false),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4, bottom: 4),
-                    child: Text(
-                      widget.workspace.testingPointerUrl.trim().isEmpty
-                          ? 'Links: no Testing link yet'
-                          : (_canEditPointers
-                                ? 'Testing link: write access — Add new year available'
-                                : 'Testing link: no write access — Add new year hidden'),
-                      style: const TextStyle(
-                        color: AppColors.muted,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                  const HintText(
-                    'Detected from Dropbox when you Load festival data or Refresh. '
-                    'Uncheck to hide a section; check to show it even if detection is wrong.',
-                  ),
-                  const SizedBox(height: 8),
-                  OutlinedButton(
-                    onPressed: _busy ? null : _refreshAccess,
-                    child: const Text('Refresh file access'),
-                  ),
-                ],
-              ),
-            ),
-            if (widget.dropboxConnected &&
-                _manageableFolderAccessKinds().isNotEmpty)
               FormRow(
-                label: 'Folder access',
+                label: 'Dropbox connection',
+                requiredField: true,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const HintText(
-                      'Grant Dropbox folder access so collaborators can edit only '
-                      'master (pointer) files, artists, schedule, descriptions, '
-                      'the alert monitoring folder, or the reports folder. Master '
-                      'access is the most restricted — use it for year transitions '
-                      'and pointer control.',
+                    Text(
+                      widget.dropboxConnected
+                          ? 'Connected${widget.dropboxLabel.isEmpty ? '' : ': ${widget.dropboxLabel}'}'
+                          : 'Not connected — required to save lineup, schedule, and descriptions.',
+                      style: const TextStyle(color: AppColors.heading),
                     ),
-                    const SizedBox(height: 8),
-                    ..._manageableFolderAccessKinds().map(
-                      (kind) => _FolderAccessControls(
-                        kind: kind,
-                        folderPath: _folderAccessService.folderPathFor(
-                          widget.workspace,
-                          kind,
-                        ),
-                        busy: _busy,
-                        onGrant: () => _grantFolderAccess(kind),
-                        onViewMembers: () => _viewFolderMembers(kind),
-                      ),
+                    const SizedBox(height: 10),
+                    CenteredWhenWrapped(
+                      spacing: 8,
+                      children: [
+                        if (widget.dropboxConnected)
+                          OutlinedButton(
+                            onPressed: widget.onDisconnectDropbox,
+                            child: const Text('Disconnect'),
+                          )
+                        else
+                          FilledButton(
+                            onPressed: widget.dropboxConnecting
+                                ? null
+                                : widget.onConnectDropbox,
+                            child: Text(
+                              widget.dropboxConnecting
+                                  ? 'Connecting…'
+                                  : 'Connect Dropbox',
+                            ),
+                          ),
+                      ],
                     ),
                   ],
                 ),
               ),
+              FormRow(
+                label: 'Testing link',
+                requiredField: true,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: _testing,
+                      maxLines: 2,
+                      decoration: const InputDecoration(
+                        hintText:
+                            'https://www.dropbox.com/.../testingPointer.txt?raw=1',
+                      ),
+                    ),
+                    const HintText(
+                      'Dropbox pointer file for Testing. From your app developer, '
+                      'or create one and send them the link. Used for artists / schedule / descriptions.',
+                    ),
+                    const HintText(shareUrlNormalizationHint),
+                  ],
+                ),
+              ),
+              FormRow(
+                label: 'Production link',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(controller: _production, maxLines: 2),
+                    const HintText(
+                      'Dropbox pointer file for Production (what most attendees see). '
+                      'Also used for venues / dates / days / event types on Load. '
+                      'Your app developer may ask for this link.',
+                    ),
+                    const HintText(shareUrlNormalizationHint),
+                  ],
+                ),
+              ),
+              FormRow(
+                label: 'Alert folder',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: _alertFolder,
+                      maxLines: 2,
+                      decoration: InputDecoration(
+                        hintText:
+                            'https://www.dropbox.com/scl/fo/…/${FestivalCreateService.sanitizeFolderSegment(_name.text.isEmpty ? 'Festival' : _name.text)}_Alert_Files?rlkey=…&raw=1',
+                      ),
+                    ),
+                    const HintText(
+                      'Dropbox folder for band-add and custom push `.pending` files. '
+                      'New festivals get /{Festival name}_Alert_Files at Dropbox root. '
+                      'Save requires write access when set. Update '
+                      'message_queue.config.yaml dropbox_dir to the matching local sync path.',
+                    ),
+                    const HintText(shareUrlNormalizationHint),
+                    if (widget.dropboxConnected &&
+                        _alertFolder.text.trim().isEmpty) ...[
+                      const SizedBox(height: 8),
+                      OutlinedButton(
+                        onPressed: _busy ? null : _createAlertFolder,
+                        child: const Text('Create alert folder on Dropbox'),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              FormRow(
+                label: 'Reports folder',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: _reportsFolder,
+                      maxLines: 2,
+                      decoration: const InputDecoration(
+                        hintText:
+                            'https://www.dropbox.com/scl/fo/…/70K_Reports?rlkey=…&raw=1',
+                      ),
+                    ),
+                    const HintText(
+                      'Dropbox folder where generated HTML stats reports are stored '
+                      '(e.g. ~/Dropbox/70K_Reports). Write access to this folder '
+                      'controls who sees the Reports section — it is not used to '
+                      'edit report files from the admin app.',
+                    ),
+                    const HintText(shareUrlNormalizationHint),
+                  ],
+                ),
+              ),
+              UrlImagePreview(
+                controller: _festivalLogo,
+                padding: const EdgeInsets.only(bottom: 8),
+              ),
+              FormRow(
+                label: 'Festival logo',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: _festivalLogo,
+                      maxLines: 2,
+                      decoration: const InputDecoration(
+                        hintText:
+                            'https://www.dropbox.com/.../festival-logo.png?raw=1',
+                      ),
+                    ),
+                    const HintText(
+                      'Optional Dropbox (or other) image link used only in PDF '
+                      'and HTML schedule exports, where it replaces the festival '
+                      'name at the top of each page. Prefer a PNG or JPEG. '
+                      '$shareUrlNormalizationHint',
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            if (!emergencyMode) ...[
+              FormRow(
+                label: 'Data files',
+                onLabelTap: _onDataFilesLabelTap,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _ReadonlyLine('Artists', widget.workspace.bandListUrl),
+                    _ReadonlyLine('Schedule', widget.workspace.scheduleUrl),
+                    _ReadonlyLine(
+                      'Description map',
+                      widget.workspace.descriptionMapUrl,
+                    ),
+                    if (widget.workspace.eventYear.isNotEmpty)
+                      _ReadonlyLine('Event year', widget.workspace.eventYear),
+                    if (widget.workspace.reportsFolderUrl.trim().isNotEmpty)
+                      _StatusLine(
+                        'Stats reports',
+                        widget.workspace.reportUrl.isNotEmpty
+                            ? 'End-user report loaded — open Reports in the sidebar'
+                            : 'Not found yet — Load festival data',
+                      ),
+                    if (widget.workspace.hasDataSourceYearOverride)
+                      _ReadonlyLine(
+                        'Data source',
+                        'Archived ${widget.workspace.dataSourceYearOverride} (demo)',
+                      ),
+                    if (_showDemoYearControls ||
+                        widget.workspace.hasDataSourceYearOverride) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        'Demo data year',
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: AppColors.label,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      PortalStringDropdown(
+                        value: widget.workspace.hasDataSourceYearOverride
+                            ? widget.workspace.dataSourceYearOverride
+                            : '',
+                        items: DropdownOptions.withEmpty([
+                          ..._demoYears,
+                          if (widget.workspace.hasDataSourceYearOverride &&
+                              !_demoYears.contains(
+                                widget.workspace.dataSourceYearOverride,
+                              ))
+                            widget.workspace.dataSourceYearOverride,
+                        ]),
+                        enabled: !_busy && !_loadingDemoYears,
+                        emptyLabel:
+                            'Current (${widget.workspace.eventYear.isEmpty ? 'live' : widget.workspace.eventYear})',
+                        onChanged: _busy || _loadingDemoYears
+                            ? null
+                            : _setDemoDataYear,
+                        decoration: InputDecoration(
+                          hintText: _loadingDemoYears
+                              ? 'Loading years…'
+                              : 'Current (live Testing)',
+                        ),
+                      ),
+                      const HintText(
+                        'Temporary local override for demos / testing. Uses archived '
+                        'year sections from the Testing pointer only (not Production). '
+                        'Does not change Dropbox pointer files. Prefer Current when '
+                        'finished. Publish stays disabled while an archived year is '
+                        'selected.',
+                      ),
+                      if (_demoYears.isEmpty && !_loadingDemoYears)
+                        TextButton(
+                          onPressed: _busy ? null : _ensureDemoYearsLoaded,
+                          child: const Text('Load available years'),
+                        ),
+                    ],
+                    if (widget.dropboxConnected && _canEditPointers) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        'Testing vs Production files',
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: AppColors.label,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      if (_shareStatus?.scheduleShared == true)
+                        const StatusBanner(
+                          text:
+                              'Schedule Testing and Production point at the same file. '
+                              'That is not supported — use a separate Testing schedule.',
+                          isError: true,
+                        ),
+                      Text(
+                        _shareStatus == null
+                            ? 'Load festival data to detect whether artists / schedule / '
+                                  'description map are shared with Production.'
+                            : 'Artists: ${_shareStatus!.artistsShared ? 'shared (live)' : 'separate Testing file'} · '
+                                  'Schedule: ${_shareStatus!.scheduleShared ? 'SHARED (fix)' : 'separate'} · '
+                                  'Descriptions: ${_shareStatus!.mapShared ? 'shared (live)' : 'separate Testing file'}',
+                        style: const TextStyle(
+                          color: AppColors.muted,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      CenteredWhenWrapped(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          if (_shareStatus?.artistsShared != true)
+                            OutlinedButton(
+                              onPressed: _busy
+                                  ? null
+                                  : () => _shareChannelWithProduction(
+                                      artists: true,
+                                      map: false,
+                                    ),
+                              child: const Text(
+                                'Share artists with Production',
+                              ),
+                            ),
+                          if (_shareStatus?.artistsShared == true)
+                            OutlinedButton(
+                              onPressed: _busy
+                                  ? null
+                                  : () => _unshareChannelFromProduction(
+                                      artists: true,
+                                      map: false,
+                                    ),
+                              child: const Text('Use separate Testing artists'),
+                            ),
+                          if (_shareStatus?.mapShared != true)
+                            OutlinedButton(
+                              onPressed: _busy
+                                  ? null
+                                  : () => _shareChannelWithProduction(
+                                      artists: false,
+                                      map: true,
+                                    ),
+                              child: const Text(
+                                'Share description map with Production',
+                              ),
+                            ),
+                          if (_shareStatus?.mapShared == true)
+                            OutlinedButton(
+                              onPressed: _busy
+                                  ? null
+                                  : () => _unshareChannelFromProduction(
+                                      artists: false,
+                                      map: true,
+                                    ),
+                              child: const Text('Use separate Testing map'),
+                            ),
+                          TextButton(
+                            onPressed: _busy
+                                ? null
+                                : () => _refreshShareStatus(_draft()),
+                            child: const Text('Refresh share status'),
+                          ),
+                        ],
+                      ),
+                      const HintText(
+                        'Artists may intentionally share one Dropbox file with Production '
+                        '(e.g. automated promoter feed — small live edits are OK). '
+                        'Description map is optional either way. Schedule must stay separate. '
+                        'Requires Testing link write access.',
+                      ),
+                      const SizedBox(height: 8),
+                      OutlinedButton(
+                        onPressed: _busy ? null : _addNewYear,
+                        child: const Text('Add new year…'),
+                      ),
+                      const HintText(
+                        'Archives Current on the Testing link only and creates '
+                        'empty artists / schedule / map files. Production is unchanged '
+                        'until you Publish to Production.',
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              FormRow(
+                label: 'File access',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      title: const Text('Artists'),
+                      subtitle: Text(
+                        widget.workspace.bandListUrl.trim().isEmpty
+                            ? 'No artists URL yet'
+                            : (_canEditBands
+                                  ? 'Write access — Add / Edit / Delete enabled'
+                                  : 'No write access — view only (Add / Edit / Delete disabled)'),
+                        style: const TextStyle(
+                          color: AppColors.muted,
+                          fontSize: 12,
+                        ),
+                      ),
+                      value: _canEditBands,
+                      onChanged: _busy
+                          ? null
+                          : (v) => setState(() => _canEditBands = v ?? false),
+                    ),
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      title: const Text('Schedule'),
+                      subtitle: Text(
+                        widget.workspace.scheduleUrl.trim().isEmpty
+                            ? 'No schedule URL yet'
+                            : (_canEditSchedule
+                                  ? 'Write access — Add / Edit / Delete enabled'
+                                  : 'No write access — view only (Add / Edit / Delete disabled)'),
+                        style: const TextStyle(
+                          color: AppColors.muted,
+                          fontSize: 12,
+                        ),
+                      ),
+                      value: _canEditSchedule,
+                      onChanged: _busy
+                          ? null
+                          : (v) =>
+                                setState(() => _canEditSchedule = v ?? false),
+                    ),
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      title: const Text('Descriptions'),
+                      subtitle: Text(
+                        widget.workspace.descriptionMapUrl.trim().isEmpty
+                            ? 'No description map URL yet'
+                            : (_canEditDescriptions
+                                  ? 'Write access — Descriptions section shown'
+                                  : 'No write access — Descriptions section hidden'),
+                        style: const TextStyle(
+                          color: AppColors.muted,
+                          fontSize: 12,
+                        ),
+                      ),
+                      value: _canEditDescriptions,
+                      onChanged: _busy
+                          ? null
+                          : (v) => setState(
+                              () => _canEditDescriptions = v ?? false,
+                            ),
+                    ),
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      title: const Text('Reports'),
+                      subtitle: Text(
+                        widget.workspace.reportsFolderUrl.trim().isEmpty
+                            ? 'No reports folder yet'
+                            : (_canViewReports
+                                  ? 'Write access — Reports section shown'
+                                  : 'No write access — Reports section hidden'),
+                        style: const TextStyle(
+                          color: AppColors.muted,
+                          fontSize: 12,
+                        ),
+                      ),
+                      value: _canViewReports,
+                      onChanged: _busy
+                          ? null
+                          : (v) => setState(() => _canViewReports = v ?? false),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4, bottom: 4),
+                      child: Text(
+                        widget.workspace.testingPointerUrl.trim().isEmpty
+                            ? 'Links: no Testing link yet'
+                            : (_canEditPointers
+                                  ? 'Testing link: write access — Add new year available'
+                                  : 'Testing link: no write access — Add new year hidden'),
+                        style: const TextStyle(
+                          color: AppColors.muted,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                    const HintText(
+                      'Detected from Dropbox when you Load festival data or Refresh. '
+                      'Uncheck to hide a section; check to show it even if detection is wrong.',
+                    ),
+                    const SizedBox(height: 8),
+                    OutlinedButton(
+                      onPressed: _busy ? null : _refreshAccess,
+                      child: const Text('Refresh file access'),
+                    ),
+                  ],
+                ),
+              ),
+              if (widget.dropboxConnected &&
+                  _manageableFolderAccessKinds().isNotEmpty)
+                FormRow(
+                  label: 'Folder access',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const HintText(
+                        'Grant Dropbox folder access so collaborators can edit only '
+                        'master (pointer) files, artists, schedule, descriptions, '
+                        'the alert monitoring folder, or the reports folder. Master '
+                        'access is the most restricted — use it for year transitions '
+                        'and pointer control.',
+                      ),
+                      const SizedBox(height: 8),
+                      ..._manageableFolderAccessKinds().map(
+                        (kind) => _FolderAccessControls(
+                          kind: kind,
+                          folderPath: _folderAccessService.folderPathFor(
+                            widget.workspace,
+                            kind,
+                          ),
+                          busy: _busy,
+                          onGrant: () => _grantFolderAccess(kind),
+                          onViewMembers: () => _viewFolderMembers(kind),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
             ],
             FormRow(
               label: 'Lineup options',
@@ -2210,6 +2231,28 @@ class _SettingsSectionState extends State<SettingsSection> {
                 ],
               ),
             ),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              visualDensity: VisualDensity.compact,
+              controlAffinity: ListTileControlAffinity.leading,
+              value: _umcApiEnabled,
+              onChanged: _busy
+                  ? null
+                  : (value) => setState(() => _umcApiEnabled = value ?? false),
+              title: const Text(
+                'UMC API support',
+                style: TextStyle(color: AppColors.muted, fontSize: 13),
+              ),
+            ),
+            if (_umcApiEnabled)
+              TextField(
+                controller: _umcScheduleApiUrl,
+                decoration: const InputDecoration(
+                  hintText: 'Schedule JSON URL',
+                  isDense: true,
+                ),
+              ),
             const SizedBox(height: 8),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -2222,7 +2265,9 @@ class _SettingsSectionState extends State<SettingsSection> {
                       if (!emergencyMode)
                         OutlinedButton(
                           onPressed: _busy ? null : _loadFromPointer,
-                          child: Text(_busy ? 'Working…' : 'Load festival data'),
+                          child: Text(
+                            _busy ? 'Working…' : 'Load festival data',
+                          ),
                         ),
                       FilledButton(
                         onPressed: _canSaveConfiguration ? _save : null,
@@ -3236,9 +3281,7 @@ class _AddNewYearDialogState extends State<_AddNewYearDialog> {
                   style: TextStyle(color: AppColors.muted, fontSize: 12),
                 ),
               ),
-              const HintText(
-                'Schedule always gets a separate Testing file.',
-              ),
+              const HintText('Schedule always gets a separate Testing file.'),
               const SizedBox(height: 12),
               Text(
                 'Files to create:\n${files.map((f) => '• $f').join('\n')}',

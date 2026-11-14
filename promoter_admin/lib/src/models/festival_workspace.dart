@@ -48,6 +48,8 @@ class FestivalWorkspace {
     this.ownsAlertFilesFolder = false,
     this.ownsReportFilesFolder = false,
     this.ownsMasterFilesFolder = false,
+    this.umcApiEnabled = false,
+    this.umcScheduleApiUrl = '',
   });
 
   /// Stable id within the local multi-festival registry.
@@ -154,6 +156,13 @@ class FestivalWorkspace {
   final bool ownsReportFilesFolder;
   final bool ownsMasterFilesFolder;
 
+  /// Local-only switch for the 70K UMC schedule JSON import. Off by default
+  /// and omitted from festival setup exports.
+  final bool umcApiEnabled;
+
+  /// UMC artists/schedule JSON URL. Stored on this machine only.
+  final String umcScheduleApiUrl;
+
   bool get hasSplitAccessFolders =>
       artistFilesFolderPath.trim().isNotEmpty ||
       scheduleFilesFolderPath.trim().isNotEmpty ||
@@ -188,7 +197,8 @@ class FestivalWorkspace {
       canEditBands || canEditSchedule || canEditDescriptions;
 
   /// True when Artists / Schedule / Descriptions are pointed at an archived year.
-  bool get hasDataSourceYearOverride => dataSourceYearOverride.trim().isNotEmpty;
+  bool get hasDataSourceYearOverride =>
+      dataSourceYearOverride.trim().isNotEmpty;
 
   /// Show the Alerts (custom push) section when an alert folder is configured and
   /// either:
@@ -226,7 +236,8 @@ class FestivalWorkspace {
     var merged = refreshed;
     final liveYear = reportDiscoveryEventYear.trim();
     final refreshedYear = refreshed.eventYear.trim();
-    final cacheStillApplies = liveYear.isNotEmpty &&
+    final cacheStillApplies =
+        liveYear.isNotEmpty &&
         (refreshedYear.isEmpty || liveYear == refreshedYear);
     if (cacheStillApplies) {
       if (reportUrlFull.trim().isNotEmpty) {
@@ -312,6 +323,8 @@ class FestivalWorkspace {
     bool? ownsAlertFilesFolder,
     bool? ownsReportFilesFolder,
     bool? ownsMasterFilesFolder,
+    bool? umcApiEnabled,
+    String? umcScheduleApiUrl,
   }) {
     return FestivalWorkspace(
       id: id ?? this.id,
@@ -371,6 +384,8 @@ class FestivalWorkspace {
           ownsReportFilesFolder ?? this.ownsReportFilesFolder,
       ownsMasterFilesFolder:
           ownsMasterFilesFolder ?? this.ownsMasterFilesFolder,
+      umcApiEnabled: umcApiEnabled ?? this.umcApiEnabled,
+      umcScheduleApiUrl: umcScheduleApiUrl ?? this.umcScheduleApiUrl,
     );
   }
 
@@ -412,6 +427,8 @@ class FestivalWorkspace {
     'alertFilesFolderPath': alertFilesFolderPath,
     'reportFilesFolderPath': reportFilesFolderPath,
     'masterFilesFolderPath': masterFilesFolderPath,
+    'umcApiEnabled': umcApiEnabled ? '1' : '0',
+    'umcScheduleApiUrl': umcScheduleApiUrl,
   };
 
   static bool _boolPref(
@@ -476,6 +493,8 @@ class FestivalWorkspace {
       alertFilesFolderPath: map['alertFilesFolderPath'] ?? '',
       reportFilesFolderPath: map['reportFilesFolderPath'] ?? '',
       masterFilesFolderPath: map['masterFilesFolderPath'] ?? '',
+      umcApiEnabled: _boolPref(map, 'umcApiEnabled', fallback: false),
+      umcScheduleApiUrl: (map['umcScheduleApiUrl'] ?? '').trim(),
     );
   }
 }

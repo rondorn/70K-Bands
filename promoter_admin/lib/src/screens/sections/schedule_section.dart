@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:promoter_admin/src/models/festival_workspace.dart';
 import 'package:promoter_admin/src/services/day_date_alignment.dart';
 import 'package:promoter_admin/src/services/description_map_service.dart';
+import 'package:promoter_admin/src/services/emergency_local_mode_support.dart';
 import 'package:promoter_admin/src/services/dropbox_api.dart';
 import 'package:promoter_admin/src/services/http_fetch.dart';
 import 'package:promoter_admin/src/services/lineup_service.dart';
@@ -13,6 +14,7 @@ import 'package:promoter_admin/src/services/schedule_qr/schedule_qr_poster_pdf.d
 import 'package:promoter_admin/src/services/schedule_service.dart';
 import 'package:promoter_admin/src/services/schedule_staging.dart';
 import 'package:promoter_admin/src/services/schedule_validation.dart';
+import 'package:promoter_admin/src/services/umc_schedule_import.dart';
 import 'package:promoter_admin/src/theme/app_theme.dart';
 import 'package:promoter_admin/src/widgets/admin_list_filter_field.dart';
 import 'package:promoter_admin/src/widgets/admin_table_cells.dart';
@@ -25,6 +27,7 @@ import 'package:promoter_admin/src/widgets/export_schedule_dialog.dart';
 import 'package:promoter_admin/src/widgets/layout_breakpoints.dart';
 import 'package:promoter_admin/src/widgets/portal_dropdown.dart';
 import 'package:promoter_admin/src/widgets/schedule_running_order_preview.dart';
+import 'package:promoter_admin/src/widgets/umc_schedule_import_dialog.dart';
 import 'package:promoter_admin/src/widgets/url_image_preview.dart';
 
 class ScheduleSection extends StatefulWidget {
@@ -85,6 +88,11 @@ class _ScheduleSectionState extends State<ScheduleSection> {
 
   bool get _isEditing => _editingIndex != null;
   bool get _canEdit => widget.workspace.canEditSchedule;
+
+  bool get _umcImportAvailable =>
+      _canEdit &&
+      widget.workspace.umcApiEnabled &&
+      widget.workspace.umcScheduleApiUrl.trim().isNotEmpty;
 
   String? _band;
   String? _type;
@@ -287,8 +295,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
             widget.workspace,
             forceRefresh: true,
           );
-          bands =
-              lineup.map((b) => b.name).where((n) => n.isNotEmpty).toList();
+          bands = lineup.map((b) => b.name).where((n) => n.isNotEmpty).toList();
         } catch (_) {}
 
         await _applyLoadedSchedule(
@@ -313,8 +320,9 @@ class _ScheduleSectionState extends State<ScheduleSection> {
       var bands = <String>[];
       var refreshLineup = false;
       try {
-        final lineupSoft =
-            await widget.lineupService.loadSoft(widget.workspace);
+        final lineupSoft = await widget.lineupService.loadSoft(
+          widget.workspace,
+        );
         refreshLineup = lineupSoft.shouldRefreshInBackground;
         bands = lineupSoft.bands
             .map((b) => b.name)
@@ -398,16 +406,20 @@ class _ScheduleSectionState extends State<ScheduleSection> {
     var nextBands = bands;
     try {
       if (refreshSchedule) {
-        final refreshed =
-            await widget.scheduleService.refreshInBackground(widget.workspace);
+        final refreshed = await widget.scheduleService.refreshInBackground(
+          widget.workspace,
+        );
         if (refreshed != null) nextEvents = refreshed;
       }
       if (refreshLineup) {
-        final refreshed =
-            await widget.lineupService.refreshInBackground(widget.workspace);
+        final refreshed = await widget.lineupService.refreshInBackground(
+          widget.workspace,
+        );
         if (refreshed != null) {
-          nextBands =
-              refreshed.map((b) => b.name).where((n) => n.isNotEmpty).toList();
+          nextBands = refreshed
+              .map((b) => b.name)
+              .where((n) => n.isNotEmpty)
+              .toList();
         }
       }
       if (!mounted) return;
@@ -688,7 +700,10 @@ class _ScheduleSectionState extends State<ScheduleSection> {
       } else {
         updated.add(toSave);
       }
-      final saved = await widget.scheduleService.save(widget.workspace, updated);
+      final saved = await widget.scheduleService.save(
+        widget.workspace,
+        updated,
+      );
       final savedIndex = _indexOfMergeEvent(saved, toSave);
       final handoffLink =
           descriptionBody.isNotEmpty &&
@@ -768,8 +783,9 @@ class _ScheduleSectionState extends State<ScheduleSection> {
         _band = DropdownOptions.empty;
         _notes.text = e.band.trim();
         final imageRaw = e.imageUrl.trim();
-        _imageUrl.text =
-            imageRaw.isEmpty || imageRaw == ' ' ? '' : displayShareUrl(imageRaw);
+        _imageUrl.text = imageRaw.isEmpty || imageRaw == ' '
+            ? ''
+            : displayShareUrl(imageRaw);
         _descriptionText.clear();
       } else {
         _band = DropdownOptions.pick(e.band, DropdownOptions.withEmpty(bands));
@@ -813,21 +829,26 @@ class _ScheduleSectionState extends State<ScheduleSection> {
       _error = null;
     });
     try {
-      final editingEvent = (_editingIndex != null &&
+      final editingEvent =
+          (_editingIndex != null &&
               _editingIndex! >= 0 &&
               _editingIndex! < _events.length)
           ? _events[_editingIndex!]
           : null;
       final updated = List<ScheduleEvent>.from(_events)..removeAt(index);
-      final saved = await widget.scheduleService.save(widget.workspace, updated);
+      final saved = await widget.scheduleService.save(
+        widget.workspace,
+        updated,
+      );
       setState(() {
         _events = saved;
         _committing = false;
         _message = 'Removed “${e.band}” from Testing schedule.';
         if (_lastSavedEvent != null) {
           final last = _lastSavedEvent!;
-          final lastKey =
-              ScheduleStagingCoordinator.mergeEventKeyFromRow(last.asRow());
+          final lastKey = ScheduleStagingCoordinator.mergeEventKeyFromRow(
+            last.asRow(),
+          );
           final lastIdx = saved.indexWhere(
             (event) =>
                 ScheduleStagingCoordinator.mergeEventKeyFromRow(
@@ -922,6 +943,64 @@ class _ScheduleSectionState extends State<ScheduleSection> {
     );
   }
 
+  Future<void> _importFromUmc() async {
+    if (!_umcImportAvailable || _committing) return;
+    if (!widget.dropboxConnected && !widget.workspace.usesEmergencyLocalMode) {
+      await widget.onConnectDropbox();
+      return;
+    }
+    final url = widget.workspace.umcScheduleApiUrl.trim();
+    setState(() {
+      _committing = true;
+      _error = null;
+      _message = null;
+    });
+    late final UmcImportPlan plan;
+    try {
+      final body = await fetchUmcScheduleJson(url);
+      plan = planUmcScheduleImport(jsonText: body, local: _events);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _committing = false;
+        _error = 'UMC import failed: $e';
+      });
+      return;
+    }
+    if (!mounted) return;
+    setState(() => _committing = false);
+    final apply = await showUmcScheduleImportDialog(
+      context: context,
+      plan: plan,
+    );
+    if (!apply || !mounted) return;
+
+    setState(() {
+      _committing = true;
+      _error = null;
+    });
+    try {
+      final next = applyUmcImportPlan(_events, plan);
+      final saved = await widget.scheduleService.save(widget.workspace, next);
+      if (!mounted) return;
+      setState(() {
+        _events = saved;
+        _committing = false;
+        _editingIndex = null;
+        _message =
+            'UMC import added ${plan.adds.length} and removed ${plan.deletes.length}.';
+      });
+      await _refreshOutstanding();
+      widget.onTestingDataChanged?.call();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _committing = false;
+        _error = 'UMC import failed: $e';
+      });
+    }
+  }
+
   Widget _syncStatusBar() {
     final sync = widget.scheduleService.syncStatus;
     if (!sync.shouldShowBanner) {
@@ -937,9 +1016,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                 ? null
                 : () async {
                     try {
-                      await widget.scheduleService.flushSync(
-                        widget.workspace,
-                      );
+                      await widget.scheduleService.flushSync(widget.workspace);
                       widget.onTestingDataChanged?.call();
                     } catch (e) {
                       if (!mounted) return;
@@ -967,10 +1044,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(child: banner),
-                if (action != null) ...[
-                  const SizedBox(width: 8),
-                  action,
-                ],
+                if (action != null) ...[const SizedBox(width: 8), action],
               ],
             ),
     );
@@ -1057,11 +1131,29 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                     const SizedBox(width: 12),
                     Flexible(
                       fit: FlexFit.loose,
-                      child: OutlinedButton.icon(
-                        onPressed:
-                            _events.isEmpty ? null : () => _openExportDialog(),
-                        icon: const Icon(Icons.ios_share_outlined, size: 18),
-                        label: const Text('Export…'),
+                      child: CenteredWhenWrapped(
+                        spacing: 8,
+                        children: [
+                          if (_umcImportAvailable)
+                            OutlinedButton.icon(
+                              onPressed: _committing ? null : _importFromUmc,
+                              icon: const Icon(
+                                Icons.download_outlined,
+                                size: 18,
+                              ),
+                              label: const Text('UMC import'),
+                            ),
+                          OutlinedButton.icon(
+                            onPressed: _events.isEmpty
+                                ? null
+                                : () => _openExportDialog(),
+                            icon: const Icon(
+                              Icons.ios_share_outlined,
+                              size: 18,
+                            ),
+                            label: const Text('Export…'),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -1090,13 +1182,13 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                           style: TextStyle(color: AppColors.muted),
                         )
                       : order.isEmpty
-                          ? const Text(
-                              'No events match that filter.',
-                              style: TextStyle(color: AppColors.muted),
-                            )
+                      ? const Text(
+                          'No events match that filter.',
+                          style: TextStyle(color: AppColors.muted),
+                        )
                       : isCompactLayout(context)
-                          ? _buildCompactScheduleList(order)
-                          : LayoutBuilder(
+                      ? _buildCompactScheduleList(order)
+                      : LayoutBuilder(
                           builder: (context, constraints) {
                             return SingleChildScrollView(
                               scrollDirection: Axis.horizontal,
@@ -1106,165 +1198,178 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                                 ),
                                 child: SingleChildScrollView(
                                   child: DataTable(
-                              columnSpacing: 14,
-                              horizontalMargin: 8,
-                              headingRowHeight: 40,
-                              dataRowMinHeight: 40,
-                              dataRowMaxHeight: adminTableRowHeight,
-                              dividerThickness: 1,
-                              border: TableBorder(
-                                horizontalInside: BorderSide(
-                                  color: AppColors.panelBorder.withValues(
-                                    alpha: 0.85,
-                                  ),
-                                ),
-                                verticalInside: BorderSide(
-                                  color: AppColors.panelBorder.withValues(
-                                    alpha: 0.55,
-                                  ),
-                                ),
-                              ),
-                              headingRowColor: WidgetStateProperty.all(
-                                const Color(0xFF222222),
-                              ),
-                              columns: [
-                                DataColumn(
-                                  columnWidth: adminTableIntrinsicColumn,
-                                  label: Text('Sync'),
-                                ),
-                                DataColumn(
-                                  columnWidth: adminTableWideFlexColumn,
-                                  label: Text('Band'),
-                                ),
-                                DataColumn(
-                                  columnWidth: adminTableWideFlexColumn,
-                                  label: Text('Location'),
-                                ),
-                                DataColumn(
-                                  columnWidth: adminTableIntrinsicColumn,
-                                  label: Text('Date'),
-                                ),
-                                DataColumn(
-                                  columnWidth: adminTableIntrinsicColumn,
-                                  label: Text('Day'),
-                                ),
-                                DataColumn(
-                                  columnWidth: adminTableIntrinsicColumn,
-                                  label: Text('Start'),
-                                ),
-                                DataColumn(
-                                  columnWidth: adminTableIntrinsicColumn,
-                                  label: Text('End'),
-                                ),
-                                DataColumn(
-                                  columnWidth: adminTableIntrinsicColumn,
-                                  label: Text('Type'),
-                                ),
-                                DataColumn(
-                                  columnWidth: adminTableActionsColumn,
-                                  label: adminTableActionsHeading(),
-                                ),
-                              ],
-                              rows: [
-                                for (final i in order)
-                                  DataRow(
-                                    color: WidgetStateProperty.resolveWith((_) {
-                                      if (!highlightSync) return null;
-                                      if (_isOutstanding(_events[i])) {
-                                        return const Color(0xFF33280F);
-                                      }
-                                      if (_wasJustSynced(_events[i])) {
-                                        return const Color(0xFF1A2E1A);
-                                      }
-                                      return null;
-                                    }),
-                                    cells: [
-                                      DataCell(_syncChipFor(_events[i])),
-                                      DataCell(
-                                        adminTableText(_events[i].band),
-                                      ),
-                                      DataCell(
-                                        adminTableText(_events[i].location),
-                                      ),
-                                      DataCell(
-                                        adminTableText(
-                                          _events[i].date,
-                                          maxWidth: 88,
+                                    columnSpacing: 14,
+                                    horizontalMargin: 8,
+                                    headingRowHeight: 40,
+                                    dataRowMinHeight: 40,
+                                    dataRowMaxHeight: adminTableRowHeight,
+                                    dividerThickness: 1,
+                                    border: TableBorder(
+                                      horizontalInside: BorderSide(
+                                        color: AppColors.panelBorder.withValues(
+                                          alpha: 0.85,
                                         ),
                                       ),
-                                      DataCell(
-                                        adminTableText(
-                                          _events[i].day,
-                                          maxWidth: 72,
+                                      verticalInside: BorderSide(
+                                        color: AppColors.panelBorder.withValues(
+                                          alpha: 0.55,
                                         ),
                                       ),
-                                      DataCell(
-                                        adminTableText(
-                                          _events[i].startTime,
-                                          maxWidth: 64,
-                                        ),
+                                    ),
+                                    headingRowColor: WidgetStateProperty.all(
+                                      const Color(0xFF222222),
+                                    ),
+                                    columns: [
+                                      DataColumn(
+                                        columnWidth: adminTableIntrinsicColumn,
+                                        label: Text('Sync'),
                                       ),
-                                      DataCell(
-                                        adminTableText(
-                                          _events[i].endTime,
-                                          maxWidth: 64,
-                                        ),
+                                      DataColumn(
+                                        columnWidth: adminTableWideFlexColumn,
+                                        label: Text('Band'),
                                       ),
-                                      DataCell(
-                                        adminTableText(
-                                          _events[i].type,
-                                          maxWidth: 100,
-                                        ),
+                                      DataColumn(
+                                        columnWidth: adminTableWideFlexColumn,
+                                        label: Text('Location'),
                                       ),
-                                      DataCell(
-                                        adminTableActionsCell([
-                                          OutlinedButton(
-                                            style: OutlinedButton.styleFrom(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 12,
-                                                    vertical: 8,
-                                                  ),
-                                              minimumSize: Size.zero,
-                                              tapTargetSize:
-                                                  MaterialTapTargetSize
-                                                      .shrinkWrap,
-                                            ),
-                                            onPressed:
-                                                !_canEdit || _committing
-                                                ? null
-                                                : () => _startEdit(i),
-                                            child: const Text('Edit'),
-                                          ),
-                                          OutlinedButton(
-                                            style: OutlinedButton.styleFrom(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 12,
-                                                    vertical: 8,
-                                                  ),
-                                              minimumSize: Size.zero,
-                                              tapTargetSize:
-                                                  MaterialTapTargetSize
-                                                      .shrinkWrap,
-                                            ),
-                                            onPressed:
-                                                !_canEdit || _committing
-                                                ? null
-                                                : () => _deleteEvent(i),
-                                            child: const Text('Delete'),
-                                          ),
-                                        ]),
+                                      DataColumn(
+                                        columnWidth: adminTableIntrinsicColumn,
+                                        label: Text('Date'),
+                                      ),
+                                      DataColumn(
+                                        columnWidth: adminTableIntrinsicColumn,
+                                        label: Text('Day'),
+                                      ),
+                                      DataColumn(
+                                        columnWidth: adminTableIntrinsicColumn,
+                                        label: Text('Start'),
+                                      ),
+                                      DataColumn(
+                                        columnWidth: adminTableIntrinsicColumn,
+                                        label: Text('End'),
+                                      ),
+                                      DataColumn(
+                                        columnWidth: adminTableIntrinsicColumn,
+                                        label: Text('Type'),
+                                      ),
+                                      DataColumn(
+                                        columnWidth: adminTableActionsColumn,
+                                        label: adminTableActionsHeading(),
                                       ),
                                     ],
+                                    rows: [
+                                      for (final i in order)
+                                        DataRow(
+                                          color:
+                                              WidgetStateProperty.resolveWith((
+                                                _,
+                                              ) {
+                                                if (!highlightSync) return null;
+                                                if (_isOutstanding(
+                                                  _events[i],
+                                                )) {
+                                                  return const Color(
+                                                    0xFF33280F,
+                                                  );
+                                                }
+                                                if (_wasJustSynced(
+                                                  _events[i],
+                                                )) {
+                                                  return const Color(
+                                                    0xFF1A2E1A,
+                                                  );
+                                                }
+                                                return null;
+                                              }),
+                                          cells: [
+                                            DataCell(_syncChipFor(_events[i])),
+                                            DataCell(
+                                              adminTableText(_events[i].band),
+                                            ),
+                                            DataCell(
+                                              adminTableText(
+                                                _events[i].location,
+                                              ),
+                                            ),
+                                            DataCell(
+                                              adminTableText(
+                                                _events[i].date,
+                                                maxWidth: 88,
+                                              ),
+                                            ),
+                                            DataCell(
+                                              adminTableText(
+                                                _events[i].day,
+                                                maxWidth: 72,
+                                              ),
+                                            ),
+                                            DataCell(
+                                              adminTableText(
+                                                _events[i].startTime,
+                                                maxWidth: 64,
+                                              ),
+                                            ),
+                                            DataCell(
+                                              adminTableText(
+                                                _events[i].endTime,
+                                                maxWidth: 64,
+                                              ),
+                                            ),
+                                            DataCell(
+                                              adminTableText(
+                                                _events[i].type,
+                                                maxWidth: 100,
+                                              ),
+                                            ),
+                                            DataCell(
+                                              adminTableActionsCell([
+                                                OutlinedButton(
+                                                  style: OutlinedButton.styleFrom(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 12,
+                                                          vertical: 8,
+                                                        ),
+                                                    minimumSize: Size.zero,
+                                                    tapTargetSize:
+                                                        MaterialTapTargetSize
+                                                            .shrinkWrap,
+                                                  ),
+                                                  onPressed:
+                                                      !_canEdit || _committing
+                                                      ? null
+                                                      : () => _startEdit(i),
+                                                  child: const Text('Edit'),
+                                                ),
+                                                OutlinedButton(
+                                                  style: OutlinedButton.styleFrom(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 12,
+                                                          vertical: 8,
+                                                        ),
+                                                    minimumSize: Size.zero,
+                                                    tapTargetSize:
+                                                        MaterialTapTargetSize
+                                                            .shrinkWrap,
+                                                  ),
+                                                  onPressed:
+                                                      !_canEdit || _committing
+                                                      ? null
+                                                      : () => _deleteEvent(i),
+                                                  child: const Text('Delete'),
+                                                ),
+                                              ]),
+                                            ),
+                                          ],
+                                        ),
+                                    ],
                                   ),
-                              ],
-                            ),
-                          ),
+                                ),
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
                 ),
                 SectionRefreshFooter(
                   label: filtering
@@ -1291,13 +1396,16 @@ class _ScheduleSectionState extends State<ScheduleSection> {
             actions: [
               OutlinedButton(
                 style: actionStyle,
-                onPressed: !_canEdit || _committing ? null : () => _startEdit(i),
+                onPressed: !_canEdit || _committing
+                    ? null
+                    : () => _startEdit(i),
                 child: const Text('Edit'),
               ),
               OutlinedButton(
                 style: actionStyle,
-                onPressed:
-                    !_canEdit || _committing ? null : () => _deleteEvent(i),
+                onPressed: !_canEdit || _committing
+                    ? null
+                    : () => _deleteEvent(i),
                 child: const Text('Delete'),
               ),
             ],
@@ -1378,8 +1486,8 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                           style: TextStyle(color: AppColors.muted),
                         )
                       : isCompactLayout(context)
-                          ? _buildCompactStatsList(bands, typeCols, stats)
-                          : LayoutBuilder(
+                      ? _buildCompactStatsList(bands, typeCols, stats)
+                      : LayoutBuilder(
                           builder: (context, constraints) {
                             return SingleChildScrollView(
                               scrollDirection: Axis.horizontal,
@@ -1389,67 +1497,72 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                                 ),
                                 child: SingleChildScrollView(
                                   child: DataTable(
-                              columnSpacing: 18,
-                              horizontalMargin: 8,
-                              headingRowHeight: 40,
-                              dataRowMinHeight: 36,
-                              dataRowMaxHeight: adminTableRowHeight,
-                              dividerThickness: 1,
-                              border: TableBorder(
-                                horizontalInside: BorderSide(
-                                  color: AppColors.panelBorder.withValues(
-                                    alpha: 0.85,
-                                  ),
-                                ),
-                                verticalInside: BorderSide(
-                                  color: AppColors.panelBorder.withValues(
-                                    alpha: 0.55,
-                                  ),
-                                ),
-                              ),
-                              headingRowColor: WidgetStateProperty.all(
-                                const Color(0xFF222222),
-                              ),
-                              columns: [
-                                DataColumn(
-                                  columnWidth: adminTableWideFlexColumn,
-                                  label: Text('Band'),
-                                ),
-                                for (final t in typeCols)
-                                  DataColumn(
-                                    columnWidth: adminTableIntrinsicColumn,
-                                    label: Text(t),
-                                  ),
-                              ],
-                              rows: [
-                                for (final band in bands)
-                                  DataRow(
-                                    cells: [
-                                      DataCell(adminTableText(band)),
+                                    columnSpacing: 18,
+                                    horizontalMargin: 8,
+                                    headingRowHeight: 40,
+                                    dataRowMinHeight: 36,
+                                    dataRowMaxHeight: adminTableRowHeight,
+                                    dividerThickness: 1,
+                                    border: TableBorder(
+                                      horizontalInside: BorderSide(
+                                        color: AppColors.panelBorder.withValues(
+                                          alpha: 0.85,
+                                        ),
+                                      ),
+                                      verticalInside: BorderSide(
+                                        color: AppColors.panelBorder.withValues(
+                                          alpha: 0.55,
+                                        ),
+                                      ),
+                                    ),
+                                    headingRowColor: WidgetStateProperty.all(
+                                      const Color(0xFF222222),
+                                    ),
+                                    columns: [
+                                      DataColumn(
+                                        columnWidth: adminTableWideFlexColumn,
+                                        label: Text('Band'),
+                                      ),
                                       for (final t in typeCols)
-                                        DataCell(
-                                          Text(
-                                            '${stats[band]?[t] ?? 0}',
-                                            style: TextStyle(
-                                              color: (stats[band]?[t] ?? 0) == 0
-                                                  ? AppColors.muted
-                                                  : AppColors.heading,
-                                              fontWeight:
-                                                  (stats[band]?[t] ?? 0) > 0
-                                                  ? FontWeight.w600
-                                                  : FontWeight.w400,
-                                            ),
-                                          ),
+                                        DataColumn(
+                                          columnWidth:
+                                              adminTableIntrinsicColumn,
+                                          label: Text(t),
+                                        ),
+                                    ],
+                                    rows: [
+                                      for (final band in bands)
+                                        DataRow(
+                                          cells: [
+                                            DataCell(adminTableText(band)),
+                                            for (final t in typeCols)
+                                              DataCell(
+                                                Text(
+                                                  '${stats[band]?[t] ?? 0}',
+                                                  style: TextStyle(
+                                                    color:
+                                                        (stats[band]?[t] ??
+                                                                0) ==
+                                                            0
+                                                        ? AppColors.muted
+                                                        : AppColors.heading,
+                                                    fontWeight:
+                                                        (stats[band]?[t] ?? 0) >
+                                                            0
+                                                        ? FontWeight.w600
+                                                        : FontWeight.w400,
+                                                  ),
+                                                ),
+                                              ),
+                                          ],
                                         ),
                                     ],
                                   ),
-                              ],
-                            ),
-                          ),
+                                ),
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
                 ),
                 SectionRefreshFooter(
                   label: '${_events.length} event(s) — Refresh',
@@ -1748,10 +1861,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
             if (!_isNonBand)
               FormRow(
                 label: 'Notes',
-                child: TextField(
-                  controller: _notes,
-                  maxLines: 2,
-                ),
+                child: TextField(controller: _notes, maxLines: 2),
               ),
             FormRow(
               label: 'Verify bypass',
