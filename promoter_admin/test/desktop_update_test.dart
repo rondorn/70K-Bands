@@ -83,6 +83,21 @@ void main() {
       current: DesktopAppVersion.parse('1.0.28a', '1'),
     );
     expect(lettered?.assetName, 'omf-admin-macos-1.0.28b_1.zip');
+    final windowsLetter = desktopUpdateOfferFromReleaseJson(
+      '''
+{
+  "assets": [
+    {
+      "name": "omf-admin-windows-1.0.28k_1.zip",
+      "browser_download_url": "https://example.com/k.zip"
+    }
+  ]
+}
+''',
+      windows: true,
+      current: DesktopAppVersion.parse('1.0.28-j', '1'),
+    );
+    expect(windowsLetter?.assetName, 'omf-admin-windows-1.0.28k_1.zip');
     expect(mac.downloadUrl, 'https://example.com/new-mac.zip');
 
     final windows = desktopUpdateOfferFromReleaseJson(

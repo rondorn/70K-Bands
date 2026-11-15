@@ -168,6 +168,15 @@ Future<DesktopUpdateOffer?> lookupDesktopUpdate({
   final uri = Uri.parse(
     'https://api.github.com/repos/$desktopUpdateRepo/releases/tags/$tag',
   );
+  if (client == null && Platform.isWindows) {
+    final body = await _windowsReleaseBody(uri);
+    if (body == null) return null;
+    return desktopUpdateOfferFromReleaseJson(
+      body,
+      windows: true,
+      current: info,
+    );
+  }
   final httpClient = client ?? http.Client();
   final closeClient = client == null;
   try {
@@ -191,6 +200,79 @@ Future<DesktopUpdateOffer?> lookupDesktopUpdate({
   } finally {
     if (closeClient) httpClient.close();
   }
+}
+
+/// Windows Dart TLS does not use the certificate store the browser uses.
+/// PowerShell does, so the update check follows the same trust as that browser.
+Future<String?> _windowsReleaseBody(Uri uri) async {
+  final file = File(
+    '${Directory.systemTemp.path}${Platform.pathSeparator}omf-release-$pid.json',
+  );
+  if (await file.exists()) await file.delete();
+  final saved = await _windowsSaveUrl(
+    uri.toString(),
+    file.path,
+    timeoutSeconds: 25,
+  );
+  if (saved.exitCode == 404) return null;
+  if (saved.exitCode != 0 || !await file.exists()) {
+    final detail = saved.error.isEmpty ? 'code ${saved.exitCode}' : saved.error;
+    throw StateError('Could not check GitHub for an update. $detail');
+  }
+  final body = (await file.readAsString()).trim();
+  if (body.isEmpty) {
+    throw StateError('Could not check GitHub for an update.');
+  }
+  return body.startsWith('\uFEFF') ? body.substring(1) : body;
+}
+
+class _WindowsUrlSave {
+  const _WindowsUrlSave(this.exitCode, this.error);
+
+  final int exitCode;
+  final String error;
+}
+
+Future<_WindowsUrlSave> _windowsSaveUrl(
+  String url,
+  String outPath, {
+  required int timeoutSeconds,
+}) async {
+  final script = File(
+    '${Directory.systemTemp.path}${Platform.pathSeparator}omf-fetch-$pid.ps1',
+  );
+  final quotedUrl = url.replaceAll("'", "''");
+  final quotedOut = outPath.replaceAll("'", "''");
+  await script.writeAsString('''
+\$ProgressPreference = 'SilentlyContinue'
+\$protocols = [Net.SecurityProtocolType]::Tls12
+if ([enum]::GetNames([Net.SecurityProtocolType]) -contains 'Tls13') {
+  \$protocols = \$protocols -bor [Net.SecurityProtocolType]::Tls13
+}
+[Net.ServicePointManager]::SecurityProtocol = \$protocols
+\$headers = @{ Accept = 'application/vnd.github+json'; 'User-Agent' = '$_userAgent' }
+try {
+  Invoke-WebRequest -UseBasicParsing -TimeoutSec $timeoutSeconds -Headers \$headers -Uri '$quotedUrl' -OutFile '$quotedOut'
+  exit 0
+} catch {
+  \$response = \$_.Exception.Response
+  if (\$null -ne \$response) {
+    [Console]::Error.WriteLine(\$_.Exception.Message)
+    exit [int]\$response.StatusCode
+  }
+  [Console]::Error.WriteLine(\$_.Exception.Message)
+  exit 1
+}
+''');
+  final result = await Process.run('powershell', [
+    '-NoProfile',
+    '-NonInteractive',
+    '-ExecutionPolicy',
+    'Bypass',
+    '-File',
+    script.path,
+  ]);
+  return _WindowsUrlSave(result.exitCode, '${result.stderr}'.trim());
 }
 
 Future<DesktopAppVersion> _currentVersion() async {
@@ -432,6 +514,16 @@ Future<void> _download(
   void Function(double? progress)? onProgress,
   bool Function()? isCancelled,
 }) async {
+  if (Platform.isWindows) {
+    final saved = await _windowsSaveUrl(url, dest.path, timeoutSeconds: 180);
+    final size = await dest.exists() ? await dest.length() : 0;
+    if (saved.exitCode == 0 && size > 0) {
+      onProgress?.call(1);
+      return;
+    }
+    final detail = saved.error.isEmpty ? 'code ${saved.exitCode}' : saved.error;
+    throw StateError('Download failed. $detail');
+  }
   final client = http.Client();
   IOSink? sink;
   try {
@@ -523,15 +615,24 @@ Future<void> _runUpdatePrompt(BuildContext context) async {
     return;
   }
   unawaited(_removeMacInstallLeftovers());
-  final offer = await lookupDesktopUpdate();
+  final DesktopUpdateOffer? offer;
+  try {
+    offer = await lookupDesktopUpdate();
+  } catch (e) {
+    if (context.mounted) {
+      await _showUpdateError(context, e, title: 'Update check failed');
+    }
+    return;
+  }
   if (offer == null || !context.mounted) return;
+  final ready = offer;
   final accepted = await showDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(
       backgroundColor: AppColors.panel,
       title: const Text('Update available'),
       content: Text(
-        'Version ${offer.version.label} of ${AppBrand.name} is ready to install.',
+        'Version ${ready.version.label} of ${AppBrand.name} is ready to install.',
       ),
       actions: [
         TextButton(
@@ -585,7 +686,7 @@ Future<void> _runUpdatePrompt(BuildContext context) async {
   PreparedDesktopUpdate prepared;
   try {
     prepared = await prepareDesktopUpdate(
-      offer,
+      ready,
       onProgress: (value) => progress.value = value,
       isCancelled: () => cancelled.value,
     );
@@ -617,7 +718,7 @@ Future<void> _runUpdatePrompt(BuildContext context) async {
       backgroundColor: AppColors.panel,
       title: const Text('Update ready'),
       content: Text(
-        'Relaunch ${AppBrand.name} to finish installing version ${offer.version.label}.',
+        'Relaunch ${AppBrand.name} to finish installing version ${ready.version.label}.',
       ),
       actions: [
         TextButton(
@@ -710,13 +811,21 @@ Future<void> _finishMacDragInstall(
   await quitMacApp();
 }
 
-Future<void> _showUpdateError(BuildContext context, Object error) {
-  final message = error is StateError ? error.message : '$error';
+Future<void> _showUpdateError(
+  BuildContext context,
+  Object error, {
+  String title = 'Update failed',
+}) {
+  var message = error is StateError ? error.message : '$error';
+  message = message.replaceAll(RegExp(r'\s+'), ' ').trim();
+  if (message.length > 400) {
+    message = '${message.substring(0, 400)}…';
+  }
   return showDialog<void>(
     context: context,
     builder: (context) => AlertDialog(
       backgroundColor: AppColors.panel,
-      title: const Text('Update failed'),
+      title: Text(title),
       content: Text(message),
       actions: [
         FilledButton(
