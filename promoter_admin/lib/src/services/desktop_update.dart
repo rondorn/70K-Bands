@@ -439,7 +439,7 @@ Future<void> quitMacApp() async {
   exit(0);
 }
 
-/// Quit this process and let a helper swap in [update], then relaunch.
+/// Quit this process after the new Windows files are in place, then open them.
 Future<void> relaunchIntoDesktopUpdate(PreparedDesktopUpdate update) async {
   if (Platform.isWindows) {
     if (!await _directoryIsWritable(update.installPath)) {
@@ -448,14 +448,15 @@ Future<void> relaunchIntoDesktopUpdate(PreparedDesktopUpdate update) async {
         'Move the app to a folder you can write to and try again.',
       );
     }
-    final script = File('${Directory.systemTemp.path}/omf-update-$pid.ps1');
-    await script.writeAsString(_windowsHelperScript());
-    await Process.start('powershell', [
+    final script = File(
+      '${Directory.systemTemp.path}${Platform.pathSeparator}omf-update-$pid.ps1',
+    );
+    await script.writeAsString(windowsInstallHelperScript());
+    final result = await Process.run('powershell', [
       '-NoProfile',
+      '-NonInteractive',
       '-ExecutionPolicy',
       'Bypass',
-      '-WindowStyle',
-      'Hidden',
       '-File',
       script.path,
       '-WaitPid',
@@ -464,26 +465,91 @@ Future<void> relaunchIntoDesktopUpdate(PreparedDesktopUpdate update) async {
       update.payloadPath,
       '-Dest',
       update.installPath,
-    ], mode: ProcessStartMode.detached);
+    ]);
+    if (result.exitCode != 0) {
+      final detail = '${result.stderr}'.trim();
+      throw StateError(detail.isEmpty ? 'The update did not install.' : detail);
+    }
     exit(0);
   }
 
   throw StateError('This Mac update is installed from Finder.');
 }
 
-String _windowsHelperScript() => r'''
+/// Moves the running files aside, copies the new tree in, then starts it.
+///
+/// Windows lets a running exe be renamed, so the swap happens before this
+/// process exits. Copy-Item onto the live folder fails and leaves the old app.
+String windowsInstallHelperScript() => r'''
 param(
   [int]$WaitPid,
   [string]$Source,
   [string]$Dest
 )
 $ErrorActionPreference = 'Stop'
-while (Get-Process -Id $WaitPid -ErrorAction SilentlyContinue) {
-  Start-Sleep -Milliseconds 400
+$log = Join-Path $env:TEMP 'omf-update-last.log'
+function Log($message) {
+  Add-Content -LiteralPath $log -Value ("{0} {1}" -f (Get-Date -Format o), $message)
 }
-Start-Sleep -Milliseconds 600
-Copy-Item -Path (Join-Path $Source '*') -Destination $Dest -Recurse -Force
-Start-Process -FilePath (Join-Path $Dest 'promoter_admin.exe') -WorkingDirectory $Dest
+$backup = Join-Path $env:TEMP "omf-previous-$WaitPid"
+if (Test-Path -LiteralPath $backup) {
+  Remove-Item -LiteralPath $backup -Recurse -Force
+}
+New-Item -ItemType Directory -Path $backup | Out-Null
+
+function Move-Aside($from, $to) {
+  New-Item -ItemType Directory -Force -Path $to | Out-Null
+  Get-ChildItem -LiteralPath $from -Force | ForEach-Object {
+    $target = Join-Path $to $_.Name
+    if ($_.PSIsContainer) {
+      Move-Aside $_.FullName $target
+      if (Test-Path -LiteralPath $_.FullName) {
+        Remove-Item -LiteralPath $_.FullName -Recurse -Force -ErrorAction SilentlyContinue
+      }
+    } else {
+      $moved = $false
+      for ($i = 0; $i -lt 20 -and -not $moved; $i++) {
+        try {
+          Move-Item -LiteralPath $_.FullName -Destination $target -Force -ErrorAction Stop
+          $moved = $true
+        } catch {
+          Start-Sleep -Milliseconds 300
+        }
+      }
+      if (-not $moved) { throw "Could not move $($_.Name)" }
+    }
+  }
+}
+
+function Restore-Backup {
+  if (-not (Test-Path -LiteralPath $backup)) { return }
+  Get-ChildItem -LiteralPath $Dest -Force -ErrorAction SilentlyContinue | ForEach-Object {
+    Remove-Item -LiteralPath $_.FullName -Recurse -Force -ErrorAction SilentlyContinue
+  }
+  Move-Aside $backup $Dest
+}
+
+try {
+  Log "move $Dest aside"
+  Move-Aside $Dest $backup
+  Log "copy $Source"
+  & robocopy $Source $Dest /E /R:5 /W:1 /NFL /NDL /NJH /NJS /NP
+  $code = $LASTEXITCODE
+  if ($code -ge 8) { throw "Could not copy the update (robocopy $code)." }
+  $exe = Join-Path $Dest 'promoter_admin.exe'
+  if (-not (Test-Path -LiteralPath $exe)) {
+    throw 'The update did not contain promoter_admin.exe.'
+  }
+  Log "start $exe"
+  Start-Process -FilePath $exe -WorkingDirectory $Dest
+  Log 'started'
+  exit 0
+} catch {
+  Log "failed: $($_.Exception.Message)"
+  try { Restore-Backup } catch { Log "restore failed: $($_.Exception.Message)" }
+  [Console]::Error.WriteLine($_.Exception.Message)
+  exit 1
+}
 ''';
 
 Future<void> _removeMacInstallLeftovers() async {
@@ -749,9 +815,7 @@ Future<void> _runUpdatePrompt(BuildContext context) async {
             children: [
               LinearProgressIndicator(color: AppColors.accent),
               SizedBox(height: 16),
-              Text(
-                'The app will quit and install the update. macOS may ask for your password. The new version then opens.',
-              ),
+              Text('The new version will open, then this copy will close.'),
             ],
           ),
         );

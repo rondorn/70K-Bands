@@ -98,6 +98,11 @@ void main() {
       current: DesktopAppVersion.parse('1.0.28-j', '1'),
     );
     expect(windowsLetter?.assetName, 'omf-admin-windows-1.0.28k_1.zip');
+    final helper = windowsInstallHelperScript();
+    expect(helper, contains('robocopy'));
+    expect(helper, contains('Move-Item'));
+    expect(helper, contains('promoter_admin.exe'));
+    expect(helper, contains('Restore-Backup'));
     expect(mac.downloadUrl, 'https://example.com/new-mac.zip');
 
     final windows = desktopUpdateOfferFromReleaseJson(
