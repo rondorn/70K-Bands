@@ -319,12 +319,12 @@ TRANSLATIONS = {
 def band_display_cap(announced_band_count: int) -> int:
     """
     Cap visible band rankings in steps of 5 (max 20), based on announced
-    lineup size. Fewer than 10 announced bands show nothing — too small a
-    lineup to rank without highlighting least favorites.
+    lineup size. Top 5 starts at 7 announced bands, so a small lineup still
+    has a ranking without listing almost every band. Below that, show nothing.
     """
-    if announced_band_count < 10:
+    if announced_band_count < 7:
         return 0
-    return min(20, (announced_band_count // 10) * 5)
+    return min(20, max(5, (announced_band_count // 10) * 5))
 
 
 def load_valid_bands_from_lineup(source: str = '70K_Bands') -> set[str]:
