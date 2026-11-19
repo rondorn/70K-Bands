@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:promoter_admin/src/models/attendee_schedule_prompt.dart';
 import 'package:promoter_admin/src/models/festival_workspace.dart';
 import 'package:promoter_admin/src/services/day_date_alignment.dart';
 import 'package:promoter_admin/src/services/description_map_service.dart';
@@ -88,6 +89,12 @@ class _ScheduleSectionState extends State<ScheduleSection> {
 
   bool get _isEditing => _editingIndex != null;
   bool get _canEdit => widget.workspace.canEditSchedule;
+
+  AttendeeSchedulePrompt? _attendeePrompt;
+  bool _attendeePromptBusy = false;
+  bool _attendeePromptReadFailed = false;
+  int _attendeePromptLoadEpoch = 0;
+  int _attendeePromptWriteEpoch = 0;
 
   bool get _umcImportAvailable =>
       _canEdit &&
@@ -188,6 +195,18 @@ class _ScheduleSectionState extends State<ScheduleSection> {
     super.initState();
     widget.scheduleService.addSyncListener(_onSyncStatus);
     _load();
+    unawaited(_loadAttendeePrompt());
+  }
+
+  @override
+  void didUpdateWidget(ScheduleSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.workspace.testingPointerUrl !=
+            widget.workspace.testingPointerUrl ||
+        oldWidget.workspace.emergencyLocalMode !=
+            widget.workspace.emergencyLocalMode) {
+      unawaited(_loadAttendeePrompt());
+    }
   }
 
   @override
@@ -1092,6 +1111,148 @@ class _ScheduleSectionState extends State<ScheduleSection> {
     );
   }
 
+  bool get _attendeePromptEnabled =>
+      _attendeePrompt != null &&
+      widget.workspace.canEditPointers &&
+      !_attendeePromptBusy &&
+      widget.dropboxConnected &&
+      !widget.workspace.usesEmergencyLocalMode &&
+      widget.workspace.testingPointerUrl.trim().isNotEmpty;
+
+  String get _attendeePromptHint {
+    if (widget.workspace.usesEmergencyLocalMode) {
+      return 'Unavailable in local file mode.';
+    }
+    if (widget.workspace.testingPointerUrl.trim().isEmpty) {
+      return 'Set a Testing link in Settings to change the attendee prompt.';
+    }
+    if (_attendeePrompt == null && !_attendeePromptReadFailed) {
+      return 'Reading the Testing pointer…';
+    }
+    if (_attendeePromptReadFailed) {
+      return 'Could not read the Testing pointer.';
+    }
+    if (!widget.dropboxConnected) {
+      return 'Connect Dropbox in Settings to change the attendee prompt.';
+    }
+    if (!widget.workspace.canEditPointers) {
+      return 'No write access to the Testing pointer.';
+    }
+    return AttendeeSchedulePrompt.hint;
+  }
+
+  Future<void> _loadAttendeePrompt() async {
+    final loadEpoch = ++_attendeePromptLoadEpoch;
+    final writeEpoch = _attendeePromptWriteEpoch;
+    final url = widget.workspace.testingPointerUrl.trim();
+    if (url.isEmpty || widget.workspace.usesEmergencyLocalMode) {
+      if (!mounted || loadEpoch != _attendeePromptLoadEpoch) return;
+      if (writeEpoch != _attendeePromptWriteEpoch) return;
+      setState(() {
+        _attendeePromptReadFailed = false;
+        if (url.isEmpty) _attendeePrompt = null;
+      });
+      return;
+    }
+
+    try {
+      final pointer = await widget.lineupService.pointerService.fetchPointer(
+        url,
+      );
+      if (!mounted || loadEpoch != _attendeePromptLoadEpoch) return;
+      if (writeEpoch != _attendeePromptWriteEpoch) return;
+      setState(() {
+        _attendeePrompt = AttendeeSchedulePrompt.fromPointer(pointer);
+        _attendeePromptReadFailed = false;
+      });
+    } catch (_) {
+      if (!mounted || loadEpoch != _attendeePromptLoadEpoch) return;
+      if (writeEpoch != _attendeePromptWriteEpoch) return;
+      setState(() => _attendeePromptReadFailed = true);
+    }
+  }
+
+  Future<void> _setAttendeePrompt(AttendeeSchedulePrompt next) async {
+    if (_attendeePromptBusy || next == _attendeePrompt) return;
+    if (!widget.workspace.canEditPointers ||
+        !widget.dropboxConnected ||
+        widget.workspace.usesEmergencyLocalMode) {
+      return;
+    }
+    final url = normalizeDropboxUrl(widget.workspace.testingPointerUrl.trim());
+    if (url.isEmpty) return;
+
+    final previous = _attendeePrompt;
+    final writeEpoch = ++_attendeePromptWriteEpoch;
+    setState(() {
+      _attendeePrompt = next;
+      _attendeePromptBusy = true;
+      _error = null;
+    });
+    try {
+      final text = await fetchUrlText(url, forceRefresh: true);
+      final rewritten = next.applyToPointerText(text);
+      if (rewritten != text) {
+        await widget.dropboxApi.uploadTextInPlace(url, rewritten);
+      }
+      if (!mounted || writeEpoch != _attendeePromptWriteEpoch) return;
+      setState(() {
+        _message =
+            'Saved on the Testing pointer. Publish to Production when attendees should see it.';
+      });
+      widget.onTestingDataChanged?.call();
+    } catch (e) {
+      if (!mounted || writeEpoch != _attendeePromptWriteEpoch) return;
+      setState(() {
+        _attendeePrompt = previous;
+        _error = 'Could not update the attendee schedule prompt: $e';
+      });
+    } finally {
+      if (mounted && writeEpoch == _attendeePromptWriteEpoch) {
+        setState(() => _attendeePromptBusy = false);
+      }
+    }
+  }
+
+  Widget _attendeePromptButton() {
+    final enabled = _attendeePromptEnabled;
+    final label = _attendeePrompt?.label ?? 'Attendee prompt';
+    return Tooltip(
+      message: _attendeePromptHint,
+      child: AbsorbPointer(
+        absorbing: !enabled,
+        child: MenuAnchor(
+          alignmentOffset: const Offset(0, 4),
+          menuChildren: [
+            for (final option in AttendeeSchedulePrompt.values)
+              MenuItemButton(
+                onPressed: () => unawaited(_setAttendeePrompt(option)),
+                leadingIcon: option == _attendeePrompt
+                    ? const Icon(Icons.check, size: 18)
+                    : const SizedBox(width: 18),
+                child: Text(option.label),
+              ),
+          ],
+          builder: (context, controller, child) {
+            return OutlinedButton.icon(
+              onPressed: !enabled
+                  ? null
+                  : () {
+                      if (controller.isOpen) {
+                        controller.close();
+                      } else {
+                        controller.open();
+                      }
+                    },
+              icon: const Icon(Icons.campaign_outlined, size: 18),
+              label: Text(label),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
   Widget _buildView() {
     final order = _eventsDisplayOrder;
     final filtering = _filter.text.trim().isNotEmpty;
@@ -1143,6 +1304,7 @@ class _ScheduleSectionState extends State<ScheduleSection> {
                               ),
                               label: const Text('UMC import'),
                             ),
+                          _attendeePromptButton(),
                           OutlinedButton.icon(
                             onPressed: _events.isEmpty
                                 ? null

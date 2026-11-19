@@ -35,6 +35,25 @@ void main() {
     expect(status.detail, contains('artists'));
   });
 
+  test('readyToPublish when only the attendee prompt differs', () {
+    final diff = PromoteDiff(
+      attendeePromptDiffer: true,
+      changeDetailLines: const [
+        'Attendee schedule prompt: Prompt: Off → Prompt: new schedule',
+      ],
+    );
+    final status = PublishStatusSnapshot.fromCheckResult(
+      workspace: _workspace(),
+      dropboxConnected: true,
+      diff: diff,
+      csvSyncPendingLabels: const [],
+      errorMessage: null,
+    );
+    expect(status.kind, PublishStatusKind.readyToPublish);
+    expect(status.canPublish, isTrue);
+    expect(status.detail, contains('Attendee schedule prompt'));
+  });
+
   test('upToDate when nothing differs', () {
     final status = PublishStatusSnapshot.fromCheckResult(
       workspace: _workspace(),

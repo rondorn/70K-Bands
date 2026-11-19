@@ -1239,6 +1239,13 @@ public class staticVariables {
      * @param keyValue The original key value (should be "reportUrl").
      * @return The language-specific key (e.g., "reportUrl-en", "reportUrl-es").
      */
+    /**
+     * Pointer key for the stats report in the device language, such as {@code reportUrl-en}.
+     */
+    public static String reportUrlPointerKey() {
+        return getLanguageSpecificKey("reportUrl");
+    }
+
     private static String getLanguageSpecificKey(String keyValue) {
         // Get the user's preferred language
         String userLanguage = Locale.getDefault().getLanguage();

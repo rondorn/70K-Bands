@@ -31,10 +31,7 @@ void main() {
       PromoteService.isTestingCsvPath('/Fest/lineup_2027_test.csv'),
       isTrue,
     );
-    expect(
-      PromoteService.isTestingCsvPath('/Fest/lineup_2027.csv'),
-      isFalse,
-    );
+    expect(PromoteService.isTestingCsvPath('/Fest/lineup_2027.csv'), isFalse);
   });
 
   test('sameShareUrl ignores trivial Dropbox url noise via normalize', () {
@@ -54,28 +51,38 @@ void main() {
     );
   });
 
-  test('productionPathFromTestingPath never equals a prior-year production path', () {
-    const testing2027 = '/Fest/mmf-artistFile-2027_test.csv';
-    const archived2026 = '/Fest/mmf-artistFile-2026.csv';
-    final dest2027 = PromoteService.productionPathFromTestingPath(testing2027);
-    expect(dest2027, '/Fest/mmf-artistFile-2027.csv');
-    expect(dest2027, isNot(archived2026));
-  });
+  test(
+    'productionPathFromTestingPath never equals a prior-year production path',
+    () {
+      const testing2027 = '/Fest/mmf-artistFile-2027_test.csv';
+      const archived2026 = '/Fest/mmf-artistFile-2026.csv';
+      final dest2027 = PromoteService.productionPathFromTestingPath(
+        testing2027,
+      );
+      expect(dest2027, '/Fest/mmf-artistFile-2027.csv');
+      expect(dest2027, isNot(archived2026));
+    },
+  );
 
-  test('PromoteDiff year-roll summary mentions leaving prior year files alone', () {
-    final roll = PromoteDiff(
-      testingYear: '2027',
-      productionYear: '2026',
-      messages: [
-        'Data is written only to 2027 production files; '
-            '2026 production files are left unchanged.',
-      ],
-    );
-    expect(
-      roll.summaryLines.any((l) => l.contains('2026 production files are left unchanged')),
-      isTrue,
-    );
-  });
+  test(
+    'PromoteDiff year-roll summary mentions leaving prior year files alone',
+    () {
+      final roll = PromoteDiff(
+        testingYear: '2027',
+        productionYear: '2026',
+        messages: [
+          'Data is written only to 2027 production files; '
+              '2026 production files are left unchanged.',
+        ],
+      );
+      expect(
+        roll.summaryLines.any(
+          (l) => l.contains('2026 production files are left unchanged'),
+        ),
+        isTrue,
+      );
+    },
+  );
 
   test('PromoteDiff.hasPublishableChanges is true for year roll', () {
     expect(
@@ -88,25 +95,22 @@ void main() {
   });
 
   test('PromoteDiff.hasPublishableChanges follows content-differ flags', () {
-    expect(
-      PromoteDiff(bandsContentDiffer: true).hasPublishableChanges,
-      isTrue,
-    );
+    expect(PromoteDiff(bandsContentDiffer: true).hasPublishableChanges, isTrue);
     expect(
       PromoteDiff(eventsContentDiffer: true).hasPublishableChanges,
       isTrue,
     );
+    expect(PromoteDiff(mapContentDiffer: true).hasPublishableChanges, isTrue);
+    expect(PromoteDiff().hasPublishableChanges, isFalse);
     expect(
-      PromoteDiff(mapContentDiffer: true).hasPublishableChanges,
+      PromoteDiff(attendeePromptDiffer: true).hasPublishableChanges,
       isTrue,
     );
-    expect(PromoteDiff().hasPublishableChanges, isFalse);
   });
 
   test('addedBandsFromCsv returns names only in testing', () {
     const production = 'bandName,country\nAlpha,US\nBeta,DE\n';
-    const testing =
-        'bandName,country\nAlpha,US\nBeta,DE\nGamma,SE\ndelta,NO\n';
+    const testing = 'bandName,country\nAlpha,US\nBeta,DE\nGamma,SE\ndelta,NO\n';
     expect(
       PromoteService.addedBandsFromCsv(
         testingCsv: testing,
@@ -139,9 +143,7 @@ void main() {
 
   test('customAlertPendingFileName uses datetime stamp', () {
     expect(
-      PromoteService.customAlertPendingFileName(
-        DateTime(2026, 7, 14, 9, 1, 2),
-      ),
+      PromoteService.customAlertPendingFileName(DateTime(2026, 7, 14, 9, 1, 2)),
       'customAlert-2026-07-14-09-01-02.pending',
     );
   });

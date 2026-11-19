@@ -1,3 +1,4 @@
+import 'package:promoter_admin/src/models/attendee_schedule_prompt.dart';
 import 'package:promoter_admin/src/models/festival_workspace.dart';
 import 'package:promoter_admin/src/models/pointer_file.dart';
 import 'package:promoter_admin/src/services/csv_util.dart';
@@ -40,10 +41,11 @@ class PromoteDiff {
     this.bandsContentDiffer = false,
     this.eventsContentDiffer = false,
     this.mapContentDiffer = false,
+    this.attendeePromptDiffer = false,
     List<String>? changeDetailLines,
     List<String>? messages,
-  })  : changeDetailLines = changeDetailLines ?? <String>[],
-        messages = messages ?? <String>[];
+  }) : changeDetailLines = changeDetailLines ?? <String>[],
+       messages = messages ?? <String>[];
 
   int bandsTesting;
   int bandsProduction;
@@ -67,6 +69,9 @@ class PromoteDiff {
   /// True when Testing description map CSV text differs from the Production target.
   bool mapContentDiffer;
 
+  /// True when the Testing attendee-schedule prompt differs from Production.
+  bool attendeePromptDiffer;
+
   /// Plain-language summary of adds/removes/edits (may be non-empty when row counts match).
   final List<String> changeDetailLines;
 
@@ -81,7 +86,10 @@ class PromoteDiff {
   /// True when Publish would change Production (year-roll or CSV content differs).
   bool get hasPublishableChanges {
     if (isYearRoll) return true;
-    return bandsContentDiffer || eventsContentDiffer || mapContentDiffer;
+    return bandsContentDiffer ||
+        eventsContentDiffer ||
+        mapContentDiffer ||
+        attendeePromptDiffer;
   }
 
   List<String> get summaryLines {
@@ -107,10 +115,7 @@ class PromoteDiff {
 }
 
 class PromoteService {
-  PromoteService({
-    required this.pointerService,
-    required this.dropboxApi,
-  });
+  PromoteService({required this.pointerService, required this.dropboxApi});
 
   final PointerService pointerService;
   final DropboxApi dropboxApi;
@@ -193,8 +198,14 @@ class PromoteService {
     }
   }
 
-  Future<Map<String, String>> _currentUrls(String pointerUrl, {bool forceRefresh = false}) async {
-    final pointer = await pointerService.fetchPointer(pointerUrl, forceRefresh: forceRefresh);
+  Future<Map<String, String>> _currentUrls(
+    String pointerUrl, {
+    bool forceRefresh = false,
+  }) async {
+    final pointer = await pointerService.fetchPointer(
+      pointerUrl,
+      forceRefresh: forceRefresh,
+    );
     final current = pointer.current;
     if (current.isEmpty) {
       throw StateError('Pointer has no Current section: $pointerUrl');
@@ -204,10 +215,14 @@ class PromoteService {
       'schedule_url': (current['scheduleUrl'] ?? '').trim(),
       'description_map_url': (current['descriptionMap'] ?? '').trim(),
       'event_year': (current['eventYear'] ?? '').trim(),
+      'auto_schedule_flag': (current['AutoScheduleFlag'] ?? '').trim(),
+      'auto_schedule_repeat': (current['AutoScheduleFlagRepeat'] ?? '').trim(),
     };
   }
 
-  Future<String> _productionShareUrlForTestingUrl(String testingShareUrl) async {
+  Future<String> _productionShareUrlForTestingUrl(
+    String testingShareUrl,
+  ) async {
     final testPath = await dropboxApi.resolveApiPath(testingShareUrl);
     final prodPath = productionPathFromTestingPath(testPath);
     return dropboxApi.shareUrlForPath(prodPath);
@@ -296,9 +311,7 @@ class PromoteService {
   }) {
     final testing = PointerService.parseLineupCsv(testingCsv);
     final production = PointerService.parseLineupCsv(productionCsv);
-    final prodKeys = {
-      for (final b in production) b.name.toLowerCase(),
-    };
+    final prodKeys = {for (final b in production) b.name.toLowerCase()};
     final added = <String>[];
     for (final b in testing) {
       if (!prodKeys.contains(b.name.toLowerCase())) {
@@ -311,7 +324,9 @@ class PromoteService {
 
   static String _bandFingerprint(BandRow band) {
     final keys = band.fields.keys.toList()..sort();
-    return keys.map((k) => '$k=${(band.fields[k] ?? '').trim()}').join('\u001f');
+    return keys
+        .map((k) => '$k=${(band.fields[k] ?? '').trim()}')
+        .join('\u001f');
   }
 
   static List<String> bandChangeDetailLines({
@@ -320,13 +335,11 @@ class PromoteService {
     int maxNames = 8,
   }) {
     final testing = PointerService.parseLineupCsvPreservingOrder(testingCsv);
-    final production = PointerService.parseLineupCsvPreservingOrder(productionCsv);
-    final prodByName = {
-      for (final b in production) b.name.toLowerCase(): b,
-    };
-    final testByName = {
-      for (final b in testing) b.name.toLowerCase(): b,
-    };
+    final production = PointerService.parseLineupCsvPreservingOrder(
+      productionCsv,
+    );
+    final prodByName = {for (final b in production) b.name.toLowerCase(): b};
+    final testByName = {for (final b in testing) b.name.toLowerCase(): b};
 
     final added = <String>[];
     final removed = <String>[];
@@ -384,11 +397,11 @@ class PromoteService {
     final production = ScheduleService.parseEvents(productionCsv);
 
     String keyOf(ScheduleEvent e) => ScheduleStagingCoordinator.eventKey(
-          band: e.band,
-          location: e.location,
-          date: e.date,
-          startTime: e.startTime,
-        );
+      band: e.band,
+      location: e.location,
+      date: e.date,
+      startTime: e.startTime,
+    );
 
     String fingerprint(ScheduleEvent e) =>
         ScheduleStagingCoordinator.eventFingerprintFromCsvRow(e.asRow());
@@ -437,10 +450,10 @@ class PromoteService {
 
     String bandOf(Map<String, String> row) => (row['Band'] ?? '').trim();
     String fingerprint(Map<String, String> row) => [
-          bandOf(row).toLowerCase(),
-          (row['URL'] ?? '').trim(),
-          (row['Date'] ?? '').trim(),
-        ].join('\u001f');
+      bandOf(row).toLowerCase(),
+      (row['URL'] ?? '').trim(),
+      (row['Date'] ?? '').trim(),
+    ].join('\u001f');
 
     final prodByBand = <String, Map<String, String>>{};
     for (final row in productionRows) {
@@ -532,9 +545,7 @@ class PromoteService {
       final shown = names.take(maxNames).toList();
       final tail = names.length - shown.length;
       final suffix = tail > 0 ? ' (and $tail more)' : '';
-      lines.add(
-        '$label — ${names.length} $verb: ${shown.join('; ')}$suffix',
-      );
+      lines.add('$label — ${names.length} $verb: ${shown.join('; ')}$suffix');
     }
 
     addGroup('added in Testing', added);
@@ -547,8 +558,9 @@ class PromoteService {
     required String festivalName,
     required List<String> bands,
   }) {
-    final label =
-        festivalName.trim().isEmpty ? 'the festival' : festivalName.trim();
+    final label = festivalName.trim().isEmpty
+        ? 'the festival'
+        : festivalName.trim();
     final buffer = StringBuffer(
       'The following bands have just been added to $label!\n',
     );
@@ -599,7 +611,8 @@ class PromoteService {
     final prodUrls = pointerPair[1];
     final testingYear = testUrls['event_year'] ?? '';
     final productionYear = prodUrls['event_year'] ?? '';
-    final yearRoll = testingYear.isNotEmpty &&
+    final yearRoll =
+        testingYear.isNotEmpty &&
         productionYear.isNotEmpty &&
         testingYear != productionYear;
 
@@ -707,7 +720,8 @@ class PromoteService {
     } else {
       diff.bandsTesting = countCsvRows(bands.testing!);
       diff.bandsProduction = countCsvRows(bands.production!);
-      diff.bandsContentDiffer = !diff.artistsShared &&
+      diff.bandsContentDiffer =
+          !diff.artistsShared &&
           !bandsCsvEquivalent(
             testingCsv: bands.testing!,
             productionCsv: bands.production!,
@@ -740,7 +754,8 @@ class PromoteService {
     } else {
       diff.eventsTesting = countCsvRows(schedule.testing!);
       diff.eventsProduction = countCsvRows(schedule.production!);
-      diff.eventsContentDiffer = !diff.scheduleShared &&
+      diff.eventsContentDiffer =
+          !diff.scheduleShared &&
           !scheduleCsvEquivalent(
             testingCsv: schedule.testing!,
             productionCsv: schedule.production!,
@@ -763,7 +778,8 @@ class PromoteService {
     } else {
       diff.mapRowsTesting = countCsvRows(map.testing!);
       diff.mapRowsProduction = countCsvRows(map.production!);
-      diff.mapContentDiffer = !diff.mapShared &&
+      diff.mapContentDiffer =
+          !diff.mapShared &&
           !mapCsvEquivalent(
             testingCsv: map.testing!,
             productionCsv: map.production!,
@@ -776,6 +792,21 @@ class PromoteService {
           ),
         );
       }
+    }
+
+    final testingPrompt = AttendeeSchedulePrompt.fromFlagValues(
+      testUrls['auto_schedule_flag'],
+      testUrls['auto_schedule_repeat'],
+    );
+    final productionPrompt = AttendeeSchedulePrompt.fromFlagValues(
+      prodUrls['auto_schedule_flag'],
+      prodUrls['auto_schedule_repeat'],
+    );
+    diff.attendeePromptDiffer = testingPrompt != productionPrompt;
+    if (diff.attendeePromptDiffer && includeChangeDetails) {
+      diff.changeDetailLines.add(
+        'Attendee schedule prompt: ${productionPrompt.label} → ${testingPrompt.label}',
+      );
     }
 
     if (!diff.hasPublishableChanges && !diff.scheduleShared) {
@@ -813,7 +844,9 @@ class PromoteService {
   /// - Rewrites the production pointer (archive Current → old year, point
   ///   Current at the new-year production files)
   ///
-  /// Same-year promote leaves the pointer alone and writes to Current URLs.
+  /// Same-year promote copies the attendee schedule prompt onto the production
+  /// pointer when Testing and Production disagree, and writes data files to
+  /// Current URLs.
   ///
   /// Only promotes files the workspace can edit (bands / schedule / map).
   Future<PromoteDiff> promote(FestivalWorkspace workspace) async {
@@ -839,7 +872,8 @@ class PromoteService {
     final prodUrls = pointerPair[1];
     final testingYear = (testUrls['event_year'] ?? '').trim();
     final productionYear = (prodUrls['event_year'] ?? '').trim();
-    final yearRoll = testingYear.isNotEmpty &&
+    final yearRoll =
+        testingYear.isNotEmpty &&
         productionYear.isNotEmpty &&
         testingYear != productionYear;
 
@@ -854,11 +888,7 @@ class PromoteService {
     final diff = await preview(workspace);
 
     final jobs = <({String key, String label, bool enabled})>[
-      (
-        key: 'band_list_url',
-        label: 'lineup',
-        enabled: workspace.canEditBands,
-      ),
+      (key: 'band_list_url', label: 'lineup', enabled: workspace.canEditBands),
       (
         key: 'schedule_url',
         label: 'schedule',
@@ -886,7 +916,9 @@ class PromoteService {
       final dest = destUrls[job.key] ?? '';
       final archivedProd = (prodUrls[job.key] ?? '').trim();
       if (src.isEmpty || dest.isEmpty) {
-        throw StateError('Cannot promote ${job.label}: missing URL on pointer.');
+        throw StateError(
+          'Cannot promote ${job.label}: missing URL on pointer.',
+        );
       }
       if (await sameDataFile(src, dest)) {
         if (job.key == 'schedule_url') {
@@ -929,7 +961,7 @@ class PromoteService {
         diff.messages.add(
           yearRoll
               ? 'Wrote testing ${job.label} → $testingYear production file '
-                  '(left $productionYear file unchanged).'
+                    '(left $productionYear file unchanged).'
               : 'Updated production ${job.label} in place.',
         );
       } catch (e) {
@@ -937,7 +969,7 @@ class PromoteService {
       }
     }
 
-    if (!anyEnabled) {
+    if (!anyEnabled && !diff.attendeePromptDiffer) {
       throw StateError(
         'No writable data files to promote. Check File access in Settings.',
       );
@@ -966,7 +998,7 @@ class PromoteService {
         );
       }
       final productionText = await fetchUrlText(productionUrl);
-      final rewritten = FestivalYearService.rewritePointerText(
+      var rewritten = FestivalYearService.rewritePointerText(
         pointerText: productionText,
         oldYear: productionYear,
         newYear: testingYear,
@@ -974,14 +1006,54 @@ class PromoteService {
         scheduleUrl: scheduleUrl,
         descriptionMapUrl: mapUrl,
       );
+      if (diff.attendeePromptDiffer) {
+        rewritten = _productionPointerWithTestingPrompt(
+          productionPointerText: rewritten,
+          testUrls: testUrls,
+        );
+      }
       await dropboxApi.uploadTextInPlace(productionUrl, rewritten);
       diff.messages.add(
         'Updated production pointer: archived $productionYear (files unchanged), '
         'Current is now $testingYear.',
       );
+      if (diff.attendeePromptDiffer) {
+        diff.messages.add(_attendeePromptPublishedMessage(testUrls));
+      }
+    } else if (diff.attendeePromptDiffer) {
+      final productionText = await fetchUrlText(
+        productionUrl,
+        forceRefresh: true,
+      );
+      final rewritten = _productionPointerWithTestingPrompt(
+        productionPointerText: productionText,
+        testUrls: testUrls,
+      );
+      if (rewritten != productionText) {
+        await dropboxApi.uploadTextInPlace(productionUrl, rewritten);
+      }
+      diff.messages.add(_attendeePromptPublishedMessage(testUrls));
     }
 
     return diff;
+  }
+
+  static String _productionPointerWithTestingPrompt({
+    required String productionPointerText,
+    required Map<String, String> testUrls,
+  }) {
+    return AttendeeSchedulePrompt.fromFlagValues(
+      testUrls['auto_schedule_flag'],
+      testUrls['auto_schedule_repeat'],
+    ).applyToPointerText(productionPointerText);
+  }
+
+  static String _attendeePromptPublishedMessage(Map<String, String> testUrls) {
+    final prompt = AttendeeSchedulePrompt.fromFlagValues(
+      testUrls['auto_schedule_flag'],
+      testUrls['auto_schedule_repeat'],
+    );
+    return 'Updated production attendee schedule prompt to ${prompt.label}.';
   }
 
   Future<void> _enqueueBandAnnouncement(
@@ -1027,5 +1099,6 @@ class PromoteService {
   }
 
   /// Resolve Current URLs from a pointer (exposed for tests / diagnostics).
-  Future<PointerFile> fetchPointer(String url) => pointerService.fetchPointer(url);
+  Future<PointerFile> fetchPointer(String url) =>
+      pointerService.fetchPointer(url);
 }

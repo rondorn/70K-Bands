@@ -356,20 +356,25 @@ public class WebViewActivity extends Activity {
             File cachedFile = new File(cachedFilePath);
             
             if (cachedFile.exists()) {
-                Log.d("WebViewActivity", "Loading stats page with cached content immediately");
                 String cachedContent = readCachedFileContent(cachedFilePath);
-                
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        webView.loadDataWithBaseURL(null, cachedContent, "text/html", "UTF-8", null);
-                        webView.setVisibility(View.VISIBLE);
-                        waitingMessage.setVisibility(View.GONE);
-                    }
-                });
-                
-                // Refresh in background; keep showing cache if download fails
-                downloadFreshStatsInBackground(true);
+                if (isUnavailableStatsPage(cachedContent)) {
+                    Log.d("WebViewActivity", "Cached stats page is the unavailable placeholder, downloading the report");
+                    downloadFreshStatsInBackground(false);
+                } else {
+                    Log.d("WebViewActivity", "Loading stats page with cached content immediately");
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            webView.loadDataWithBaseURL(null, cachedContent, "text/html", "UTF-8", null);
+                            webView.setVisibility(View.VISIBLE);
+                            waitingMessage.setVisibility(View.GONE);
+                        }
+                    });
+
+                    // Refresh in background; keep showing cache if download fails
+                    downloadFreshStatsInBackground(true);
+                }
             } else {
                 Log.d("WebViewActivity", "No cached stats page, downloading fresh content");
                 downloadFreshStatsInBackground(false);
@@ -425,15 +430,18 @@ public class WebViewActivity extends Activity {
     /**
      * Gets the report URL independently without using shared resources.
      */
+    /**
+     * The base {@code reportUrl} pointer entry is the "not available" page.
+     * The real report is the language entry, such as {@code reportUrl-en}, which is what iOS loads.
+     */
     private String getReportUrlIndependent() {
         try {
-            // Try cached pointer data first
-            String cachedUrl = staticVariables.getCachedPointerData("reportUrl");
-            if (!cachedUrl.isEmpty()) {
+            String cachedUrl = staticVariables.getPointerUrlData("reportUrl");
+            if (cachedUrl != null && !cachedUrl.isEmpty()) {
+                Log.d("WebViewActivity", "Stats URL from pointer cache: " + cachedUrl);
                 return cachedUrl;
             }
-            
-            // If no cached URL, make independent network call
+
             String pointerUrl = null;
             String customPointerUrl = staticVariables.preferences.getCustomPointerUrl();
             if (customPointerUrl != null && !customPointerUrl.trim().isEmpty()) {
@@ -444,13 +452,12 @@ public class WebViewActivity extends Activity {
                     pointerUrl = staticVariables.getDefaultUrlTest();
                 }
             }
-            
-            // Make independent HTTP call
+
             URL url = new URL(pointerUrl);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             HttpConnectionHelper.applyTimeouts(connection);
             connection.setRequestMethod("GET");
-            
+
             BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
             StringBuilder response = new StringBuilder();
             String line;
@@ -459,20 +466,50 @@ public class WebViewActivity extends Activity {
             }
             reader.close();
             connection.disconnect();
-            
-            // Parse response for reportUrl
-            String[] lines = response.toString().split("\n");
-            for (String line2 : lines) {
-                if (line2.startsWith("reportUrl=")) {
-                    return line2.substring("reportUrl=".length()).trim();
+
+            String yearIndex = staticVariables.getYearPreferenceIndex();
+            String languageKey = staticVariables.reportUrlPointerKey();
+            String languageUrl = "";
+            String fallbackUrl = "";
+            for (String record : response.toString().split("\n")) {
+                String[] parts = record.split("::", 3);
+                if (parts.length < 3) {
+                    continue;
+                }
+                String section = parts[0].trim();
+                if (!yearIndex.equals(section) && !"Default".equals(section)) {
+                    continue;
+                }
+                String key = parts[1].trim();
+                String value = parts[2].trim();
+                if (languageKey.equals(key) && languageUrl.isEmpty()) {
+                    languageUrl = value;
+                } else if ("reportUrl".equals(key) && fallbackUrl.isEmpty()) {
+                    fallbackUrl = value;
                 }
             }
-            
+            if (!languageUrl.isEmpty()) {
+                Log.d("WebViewActivity", "Stats URL from pointer " + languageKey + ": " + languageUrl);
+                return languageUrl;
+            }
+            if (!fallbackUrl.isEmpty()) {
+                Log.d("WebViewActivity", "Stats URL fallback reportUrl: " + fallbackUrl);
+                return fallbackUrl;
+            }
             return null;
         } catch (Exception e) {
             Log.e("WebViewActivity", "Error getting report URL: " + e.getMessage());
             return null;
         }
+    }
+
+    private boolean isUnavailableStatsPage(String html) {
+        if (html == null) {
+            return false;
+        }
+        String lower = html.toLowerCase();
+        return lower.contains("stats data for that year is not available")
+                || lower.contains("stats_unavailable");
     }
     
     /**
