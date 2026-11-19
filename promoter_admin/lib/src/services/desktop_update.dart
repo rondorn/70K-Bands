@@ -14,38 +14,28 @@ const _userAgent = 'OpenMetalFestAdmin';
 const macAppBundleName = 'Open Metal Fest Admin.app';
 const macApplicationsDestination = '/Applications/$macAppBundleName';
 
-/// Installed or published app version (`1.0.28a` + build `1`).
+/// Installed or published app version (`1.0.29` + build `1`).
 ///
-/// A trailing letter is an iteration of the same numeric version:
-/// `1.0.28` < `1.0.28a` < `1.0.28b`. `1.0.28-a` is the same version as
-/// `1.0.28a`.
+/// `1.0.28` < `1.0.29`, and a higher build number is newer at the same name.
 class DesktopAppVersion implements Comparable<DesktopAppVersion> {
-  const DesktopAppVersion(this.parts, this.letter, this.build);
+  const DesktopAppVersion(this.parts, this.build);
 
   final List<int> parts;
-
-  /// 0 is no letter. 1 is `a`, 2 is `b`, and so on.
-  final int letter;
   final int build;
 
-  static final _name = RegExp(r'^(\d+(?:\.\d+)*)-?([a-z])?$');
+  static final _name = RegExp(r'^(\d+(?:\.\d+)*)$');
 
   factory DesktopAppVersion.parse(String name, [String build = '0']) {
-    final match = _name.firstMatch(name.trim().toLowerCase());
+    final match = _name.firstMatch(name.trim());
     final pieces = match == null
         ? const <int>[0]
         : match.group(1)!.split('.').map((part) => int.parse(part)).toList();
-    final letterChar = match?.group(2);
-    final letter = letterChar == null ? 0 : letterChar.codeUnitAt(0) - 96;
-    return DesktopAppVersion(pieces, letter, int.tryParse(build.trim()) ?? 0);
+    return DesktopAppVersion(pieces, int.tryParse(build.trim()) ?? 0);
   }
 
   int part(int index) => index < parts.length ? parts[index] : 0;
 
-  String get label {
-    final suffix = letter == 0 ? '' : String.fromCharCode(96 + letter);
-    return '${parts.join('.')}$suffix ($build)';
-  }
+  String get label => '${parts.join('.')} ($build)';
 
   @override
   int compareTo(DesktopAppVersion other) {
@@ -56,8 +46,6 @@ class DesktopAppVersion implements Comparable<DesktopAppVersion> {
       final delta = part(i) - other.part(i);
       if (delta != 0) return delta;
     }
-    final letterDelta = letter - other.letter;
-    if (letterDelta != 0) return letterDelta;
     return build - other.build;
   }
 
@@ -134,8 +122,8 @@ DesktopUpdateOffer? desktopUpdateOfferFromReleaseJson(
   if (assets is! List) return null;
 
   final pattern = windows
-      ? RegExp(r'^omf-admin-windows-(\d+(?:\.\d+)*(?:-?[a-zA-Z])?)_(\d+)\.zip$')
-      : RegExp(r'^omf-admin-macos-(\d+(?:\.\d+)*(?:-?[a-zA-Z])?)_(\d+)\.zip$');
+      ? RegExp(r'^omf-admin-windows-(\d+(?:\.\d+)*)_(\d+)\.zip$')
+      : RegExp(r'^omf-admin-macos-(\d+(?:\.\d+)*)_(\d+)\.zip$');
 
   DesktopUpdateOffer? best;
   for (final asset in assets) {

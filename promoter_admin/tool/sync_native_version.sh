@@ -38,12 +38,22 @@ read_pubspec_version() {
   ver=$(echo "$line" | sed 's/version:[[:space:]]*//')
   WANT_NAME=${ver%+*}
   WANT_NUMBER=${ver#*+}
-  # Flutter writes a pre-release as 1.0.28-a. The app and zip use 1.0.28a.
-  WANT_NAME=$(printf '%s' "$WANT_NAME" | sed -E 's/-([a-zA-Z])$/\1/')
   if [ -z "$WANT_NAME" ] || [ -z "$WANT_NUMBER" ] || [ "$WANT_NAME" = "$ver" ]; then
-    echo "error: pubspec.yaml version must be name+number (e.g. 1.0.4+16), got: $line" >&2
+    echo "error: pubspec.yaml version must be name+number (e.g. 1.0.29+1), got: $line" >&2
     exit 1
   fi
+  case "$WANT_NAME" in
+    *[!0-9.]*)
+      echo "error: version name must be numbers and dots (e.g. 1.0.29), got: $WANT_NAME" >&2
+      exit 1
+      ;;
+  esac
+  case "$WANT_NUMBER" in
+    *[!0-9]*)
+      echo "error: build number must be an integer, got: $WANT_NUMBER" >&2
+      exit 1
+      ;;
+  esac
 }
 
 read_app_version() {
