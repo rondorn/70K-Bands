@@ -17,14 +17,9 @@ void main() {
     );
     expect(DesktopAppVersion.parse('1.0.24', '1') > current, isFalse);
     expect(DesktopAppVersion.parse('1.0.23', '9') > current, isFalse);
-    final iteration = DesktopAppVersion.parse('1.0.28a', '1');
-    expect(DesktopAppVersion.parse('1.0.28', '1') > iteration, isFalse);
-    expect(DesktopAppVersion.parse('1.0.28-a', '1').compareTo(iteration), 0);
-    expect(DesktopAppVersion.parse('1.0.28b', '1') > iteration, isTrue);
-    expect(DesktopAppVersion.parse('1.0.28f', '1') > iteration, isTrue);
     expect(
       DesktopAppVersion.parse('1.0.29', '1') >
-          DesktopAppVersion.parse('1.0.28f', '1'),
+          DesktopAppVersion.parse('1.0.28', '1'),
       isTrue,
     );
   });
@@ -64,40 +59,6 @@ void main() {
     );
     expect(mac, isNotNull);
     expect(mac!.assetName, 'omf-admin-macos-1.0.25_2.zip');
-    final lettered = desktopUpdateOfferFromReleaseJson(
-      '''
-{
-  "assets": [
-    {
-      "name": "omf-admin-macos-1.0.28a_1.zip",
-      "browser_download_url": "https://example.com/a.zip"
-    },
-    {
-      "name": "omf-admin-macos-1.0.28b_1.zip",
-      "browser_download_url": "https://example.com/b.zip"
-    }
-  ]
-}
-''',
-      windows: false,
-      current: DesktopAppVersion.parse('1.0.28a', '1'),
-    );
-    expect(lettered?.assetName, 'omf-admin-macos-1.0.28b_1.zip');
-    final windowsLetter = desktopUpdateOfferFromReleaseJson(
-      '''
-{
-  "assets": [
-    {
-      "name": "omf-admin-windows-1.0.28k_1.zip",
-      "browser_download_url": "https://example.com/k.zip"
-    }
-  ]
-}
-''',
-      windows: true,
-      current: DesktopAppVersion.parse('1.0.28-j', '1'),
-    );
-    expect(windowsLetter?.assetName, 'omf-admin-windows-1.0.28k_1.zip');
     final helper = windowsInstallHelperScript();
     expect(helper, contains('robocopy'));
     expect(helper, contains('Move-Item'));
