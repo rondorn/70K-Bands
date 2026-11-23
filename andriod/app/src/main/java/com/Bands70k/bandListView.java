@@ -156,6 +156,35 @@ public class bandListView extends ArrayAdapter<bandListItem> {
         bandInfoList.clear();
         super.clear();
     }
+
+    /**
+     * Removes every row for {@code bandName} without clearing the whole adapter.
+     * Keeps scroll stable for remaining rows (membership change only).
+     * @return number of rows removed
+     */
+    public int removeItemsForBand(String bandName) {
+        if (bandName == null || bandName.isEmpty() || bandInfoList.isEmpty()) {
+            return 0;
+        }
+
+        List<bandListItem> toRemove = new ArrayList<>();
+        for (bandListItem item : bandInfoList) {
+            if (item != null && bandName.equals(item.getBandName())) {
+                toRemove.add(item);
+            }
+        }
+        if (toRemove.isEmpty()) {
+            return 0;
+        }
+
+        setNotifyOnChange(false);
+        for (bandListItem item : toRemove) {
+            bandInfoList.remove(item);
+            super.remove(item);
+        }
+        notifyDataSetChanged();
+        return toRemove.size();
+    }
     
     /**
      * FLASHING FIX: Replace all items in the adapter at once

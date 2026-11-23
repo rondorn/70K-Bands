@@ -1707,21 +1707,27 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 listState = bandNamesList.onSaveInstanceState();
 
                 Log.d("setupOnSwipeListener", "Index of " + index + " working on band = " + bandName + " and timeindex of " + String.valueOf(timeIndex));
+                boolean rankChanged = false;
+                boolean attendedChanged = false;
                 switch (index) {
                     case 0:
                         rankStore.saveBandRanking(bandName, mustSeeIcon);
+                        rankChanged = true;
                         break;
 
                     case 1:
                         rankStore.saveBandRanking(bandName, mightSeeIcon);
+                        rankChanged = true;
                         break;
 
                     case 2:
                         rankStore.saveBandRanking(bandName, wontSeeIcon);
+                        rankChanged = true;
                         break;
 
                     case 3:
                         rankStore.saveBandRanking(bandName, unknownIcon);
+                        rankChanged = true;
                         break;
 
                     case 4:
@@ -1744,6 +1750,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                             if (staticVariables.attendedHandler == null) staticVariables.attendedHandler = new showsAttended();
                             String status = staticVariables.attendedHandler.addShowsAttended(bandName, location, rawStartTime, eventType, scheduleDay);
                             message = staticVariables.attendedHandler.setShowsAttendedStatus(status);
+                            attendedChanged = true;
                         } else {
                             message = getString(R.string.no_event_associated);
                         }
@@ -1751,9 +1758,18 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                         break;
                 }
 
-                // SWIPE MENU FIX: Save position before refresh, it will be restored automatically
-                saveScrollPosition();
-                refreshData();
+                // Status/attendance edits: update rows in place. Full rebuild only when filters
+                // remove membership (handled inside applyRankChangeInPlace) or will-attend mode.
+                if (rankChanged) {
+                    applyRankChangeInPlace(bandName);
+                } else if (attendedChanged) {
+                    if (staticVariables.preferences.getShowWillAttend()) {
+                        saveScrollPosition();
+                        refreshData();
+                    } else {
+                        applyAttendedIconInPlace(position, bandName, timeIndex);
+                    }
+                }
 
                 return false;
             }
@@ -5042,7 +5058,11 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 currentAttended = handler.getShowAttendedStatus(bandName, location, startTime, eventType, String.valueOf(eventYear), scheduleDayFromDatabase);
             }
         }
-        final Runnable onRefresh = listPosition >= 0 ? new Runnable() { @Override public void run() { saveScrollPosition(); refreshData(); } } : null;
+        final Runnable onRefresh = listPosition >= 0 ? new Runnable() {
+            @Override public void run() {
+                applyLocalEditInPlace(bandName, listPosition, location, rawStartTime, eventType, scheduleDayFromDatabase);
+            }
+        } : null;
         ignoreNextListClickUntilMenuDismissed = true;
         LongPressMenuHelper.show(this, bandName, currentAttended, location, rawStartTime, eventType, scheduleDayFromDatabase, onRefresh, new Runnable() {
             @Override public void run() { ignoreNextListClickUntilMenuDismissed = false; }
@@ -5150,6 +5170,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
     /**
      * Reload list after band details closes so Must/Might/Wont (and related) changes appear immediately.
+     * Prefer in-place icon updates — avoid full rebuild / scroll jump when membership is unchanged.
      */
     private void handleReturnFromDetailsScreen() {
         returningFromDetailsScreen = true;
@@ -5160,10 +5181,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         }
 
         rankStore.getBandRankings();
-
-        saveScrollPosition();
-        refreshData();
         refreshRankIconsInList();
+        pruneBandsHiddenByRankFilters();
+        refreshAttendedIconsInList();
 
         staticVariables.listPosition = 0;
 
@@ -5171,6 +5191,416 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             Log.d("ListPosition", "Downloads still running, restoring progress indicator");
             ForegroundDownloadManager.setCurrentActivity(showBands.this);
         }
+    }
+
+    /**
+     * Notify the live list activity that a band's Must/Might/Wont ranking changed.
+     * Used by details (especially tablet split) so the left list icon updates immediately.
+     */
+    public static void notifyActiveListOfRankChange(String bandName) {
+        final showBands instance = activeInstance;
+        if (instance == null || bandName == null || bandName.isEmpty()) {
+            return;
+        }
+        instance.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                instance.applyRankChangeInPlace(bandName);
+            }
+        });
+    }
+
+    /**
+     * After Must/Might/Wont/Unknown: update icons in place. Only remove rows when the new
+     * rank is filtered out. Does not clear/rebuild the adapter (avoids scroll-to-top flicker).
+     */
+    void applyRankChangeInPlace(String bandName) {
+        if (adapter == null || bandName == null || bandName.isEmpty()) {
+            return;
+        }
+
+        if (!isBandVisibleUnderCurrentRankFilters(bandName)) {
+            removeBandRowsFromList(bandName);
+            Log.d("ListRefresh", "Rank change removed filtered-out band from list: " + bandName);
+            return;
+        }
+
+        int newRankImg = rankStore.getRankImageForBand(bandName);
+        boolean anyChanged = false;
+        for (int i = 0; i < adapter.getCount(); i++) {
+            try {
+                bandListItem item = adapter.getItem(i);
+                if (item == null || !bandName.equals(item.getBandName())) {
+                    continue;
+                }
+                if (item.getRankImg() != newRankImg) {
+                    item.setRankImg(newRankImg);
+                    anyChanged = true;
+                }
+            } catch (Exception e) {
+                Log.w("ListRefresh", "Error applying rank in place at " + i, e);
+            }
+        }
+
+        if (anyChanged) {
+            // Update only currently bound row views — notifyDataSetChanged jumps ListView to top
+            // on tablet split / SwipeMenuListView.
+            updateVisibleRankIconsForBand(bandName, newRankImg);
+            Log.d("ListRefresh", "Rank icons updated on visible rows (no notify): " + bandName);
+        }
+    }
+
+    /**
+     * Paint Must/Might/Wont icons on currently visible rows for {@code bandName} without
+     * calling {@code notifyDataSetChanged} (which resets scroll on this ListView).
+     * Adapter data must already have the new {@code rankImg}.
+     */
+    private void updateVisibleRankIconsForBand(String bandName, int newRankImg) {
+        if (bandNamesList == null || adapter == null || bandName == null) {
+            return;
+        }
+        int first = bandNamesList.getFirstVisiblePosition();
+        int childCount = bandNamesList.getChildCount();
+        for (int i = 0; i < childCount; i++) {
+            int position = first + i;
+            if (position < 0 || position >= adapter.getCount()) {
+                continue;
+            }
+            bandListItem item = adapter.getItem(position);
+            if (item == null || !bandName.equals(item.getBandName())) {
+                continue;
+            }
+            View row = bandNamesList.getChildAt(i);
+            if (row == null) {
+                continue;
+            }
+            applyRankImgToRowView(row, item, newRankImg);
+        }
+    }
+
+    private void applyRankImgToRowView(View row, bandListItem item, int newRankImg) {
+        ImageView rankImage = row.findViewById(R.id.rankingInCell);
+        ImageView rankingIconInDayArea = row.findViewById(R.id.rankingIconInDayArea);
+        boolean scheduleRow = item.getLocation() != null;
+
+        if (scheduleRow) {
+            if (rankingIconInDayArea != null) {
+                rankingIconInDayArea.setVisibility(View.INVISIBLE);
+            }
+            if (rankImage == null) {
+                return;
+            }
+            if (newRankImg == 0 || newRankImg == 50000000) {
+                rankImage.setImageResource(0);
+                rankImage.setVisibility(View.INVISIBLE);
+            } else {
+                rankImage.setImageResource(newRankImg);
+                rankImage.setVisibility(View.VISIBLE);
+            }
+        } else {
+            if (rankImage != null) {
+                rankImage.setVisibility(View.INVISIBLE);
+            }
+            if (rankingIconInDayArea == null) {
+                return;
+            }
+            if (newRankImg != 0) {
+                rankingIconInDayArea.setImageResource(newRankImg);
+                rankingIconInDayArea.setVisibility(View.VISIBLE);
+            } else {
+                rankingIconInDayArea.setImageResource(0);
+                rankingIconInDayArea.setVisibility(View.INVISIBLE);
+            }
+        }
+    }
+
+    /**
+     * Long-press menu finished an edit: update rank/attended icons in place when possible.
+     */
+    private void applyLocalEditInPlace(String bandName, int listPosition,
+                                       String location, String rawStartTime,
+                                       String eventType, String scheduleDay) {
+        if (bandName == null || bandName.isEmpty()) {
+            return;
+        }
+
+        // Will-attend filter owns membership; a full rebuild stays safest there.
+        if (staticVariables.preferences.getShowWillAttend()) {
+            saveScrollPosition();
+            refreshData();
+            return;
+        }
+
+        applyRankChangeInPlace(bandName);
+
+        // Prefer the long-press event context when present; otherwise use the row's slot.
+        if (listPosition >= 0 && adapter != null && listPosition < adapter.getCount()) {
+            Long timeIndex = null;
+            bandListItem rowItem = adapter.getItem(listPosition);
+            if (rowItem != null && rowItem.getScheduleSlotTimeIndex() != null
+                    && rowItem.getScheduleSlotTimeIndex() > 0) {
+                timeIndex = rowItem.getScheduleSlotTimeIndex();
+            }
+            if (location != null && rawStartTime != null && eventType != null
+                    && rowItem != null) {
+                try {
+                    if (staticVariables.attendedHandler == null) {
+                        staticVariables.attendedHandler = new showsAttended();
+                    }
+                    String eventYearStr = String.valueOf(staticVariables.eventYear);
+                    String attendedStatus = staticVariables.attendedHandler.getShowAttendedIcon(
+                            bandName, location, rawStartTime, eventType, eventYearStr, scheduleDay);
+                    int attendedImg = iconResolve.getAttendedIcon(attendedStatus);
+                    if (rowItem.getAttendedImage() != attendedImg) {
+                        rowItem.setAttendedImage(attendedImg);
+                        notifyListAdapterInPlace("attended-longpress:" + bandName);
+                    }
+                } catch (Exception e) {
+                    Log.w("ListRefresh", "Long-press attended in-place update failed", e);
+                    applyAttendedIconInPlace(listPosition, bandName, timeIndex);
+                }
+            } else {
+                applyAttendedIconInPlace(listPosition, bandName, timeIndex);
+            }
+        }
+    }
+
+    private void applyAttendedIconInPlace(int position, String bandName, Long timeIndex) {
+        if (adapter == null || position < 0 || position >= adapter.getCount()) {
+            return;
+        }
+        try {
+            bandListItem item = adapter.getItem(position);
+            if (item == null) {
+                return;
+            }
+            if (bandName != null && item.getBandName() != null
+                    && !bandName.equals(item.getBandName())) {
+                return;
+            }
+
+            Long slot = timeIndex;
+            if (slot == null || slot == 0) {
+                slot = item.getScheduleSlotTimeIndex();
+            }
+            if (slot == null || slot == 0 || BandInfo.scheduleRecords == null
+                    || BandInfo.scheduleRecords.get(item.getBandName()) == null) {
+                return;
+            }
+            scheduleHandler evt = BandInfo.scheduleRecords.get(item.getBandName()).scheduleByTime.get(slot);
+            if (evt == null) {
+                return;
+            }
+            if (staticVariables.attendedHandler == null) {
+                staticVariables.attendedHandler = new showsAttended();
+            }
+            String eventYearStr = String.valueOf(staticVariables.eventYear);
+            String attendedStatus = staticVariables.attendedHandler.getShowAttendedIcon(
+                    item.getBandName(),
+                    evt.getShowLocation(),
+                    evt.getStartTimeString(),
+                    evt.getShowType(),
+                    eventYearStr,
+                    evt.getShowDay());
+            int attendedImg = iconResolve.getAttendedIcon(attendedStatus);
+            if (item.getAttendedImage() != attendedImg) {
+                item.setAttendedImage(attendedImg);
+                notifyListAdapterInPlace("attended-in-place:" + item.getBandName());
+            }
+        } catch (Exception e) {
+            Log.w("ListRefresh", "Error updating attended icon in place", e);
+        }
+    }
+
+    private void refreshAttendedIconsInList() {
+        if (adapter == null || BandInfo.scheduleRecords == null) {
+            return;
+        }
+        if (staticVariables.attendedHandler == null) {
+            staticVariables.attendedHandler = new showsAttended();
+        }
+        String eventYearStr = String.valueOf(staticVariables.eventYear);
+        boolean anyChanged = false;
+        for (int i = 0; i < adapter.getCount(); i++) {
+            try {
+                bandListItem item = adapter.getItem(i);
+                if (item == null || item.getBandName() == null) {
+                    continue;
+                }
+                Long slot = item.getScheduleSlotTimeIndex();
+                if (slot == null || slot == 0) {
+                    continue;
+                }
+                if (BandInfo.scheduleRecords.get(item.getBandName()) == null) {
+                    continue;
+                }
+                scheduleHandler evt = BandInfo.scheduleRecords.get(item.getBandName()).scheduleByTime.get(slot);
+                if (evt == null) {
+                    continue;
+                }
+                String attendedStatus = staticVariables.attendedHandler.getShowAttendedIcon(
+                        item.getBandName(),
+                        evt.getShowLocation(),
+                        evt.getStartTimeString(),
+                        evt.getShowType(),
+                        eventYearStr,
+                        evt.getShowDay());
+                int attendedImg = iconResolve.getAttendedIcon(attendedStatus);
+                if (item.getAttendedImage() != attendedImg) {
+                    item.setAttendedImage(attendedImg);
+                    anyChanged = true;
+                }
+            } catch (Exception e) {
+                Log.w("ListRefresh", "Error refreshing attended icon at " + i, e);
+            }
+        }
+        if (anyChanged) {
+            notifyListAdapterInPlace("attended-icons");
+        }
+    }
+
+    /**
+     * True when the band's current rank should still appear under Must/Might/Wont/Unknown filters.
+     * Will-attend mode does not use rank for membership.
+     */
+    private static boolean isBandVisibleUnderCurrentRankFilters(String bandName) {
+        if (staticVariables.preferences != null && staticVariables.preferences.getShowWillAttend()) {
+            return true;
+        }
+        String bandRank = rankStore.getRankForBand(bandName);
+        if (bandRank.equals(staticVariables.mustSeeIcon)) {
+            return staticVariables.preferences.getShowMust();
+        }
+        if (bandRank.equals(staticVariables.mightSeeIcon)) {
+            return staticVariables.preferences.getShowMight();
+        }
+        if (bandRank.equals(staticVariables.wontSeeIcon)) {
+            return staticVariables.preferences.getShowWont();
+        }
+        return staticVariables.preferences.getShowUnknown();
+    }
+
+    private void pruneBandsHiddenByRankFilters() {
+        if (adapter == null || staticVariables.preferences == null
+                || staticVariables.preferences.getShowWillAttend()) {
+            return;
+        }
+        java.util.LinkedHashSet<String> candidates = new java.util.LinkedHashSet<>();
+        for (int i = 0; i < adapter.getCount(); i++) {
+            bandListItem item = adapter.getItem(i);
+            if (item != null && item.getBandName() != null && !item.getBandName().isEmpty()) {
+                candidates.add(item.getBandName());
+            }
+        }
+        for (String bandName : candidates) {
+            if (!isBandVisibleUnderCurrentRankFilters(bandName)) {
+                removeBandRowsFromList(bandName);
+            }
+        }
+    }
+
+    private void removeBandRowsFromList(String bandName) {
+        if (adapter == null || bandName == null || bandName.isEmpty()) {
+            return;
+        }
+
+        int first = 0;
+        int offset = 0;
+        if (bandNamesList != null) {
+            first = Math.max(0, bandNamesList.getFirstVisiblePosition());
+            View topChild = bandNamesList.getChildAt(0);
+            offset = topChild == null ? 0 : topChild.getTop();
+            rememberListScroll();
+        }
+
+        int removed = adapter.removeItemsForBand(bandName);
+        if (removed <= 0) {
+            return;
+        }
+
+        removeBandEntriesFromIndexList(
+                listHandler != null ? listHandler.bandNamesIndex : null, bandName);
+        removeBandEntriesFromIndexList(scheduleSortedBandNames, bandName);
+
+        Log.d("ListRefresh", "Removed " + removed + " row(s) for filtered band " + bandName);
+        if (bandNamesList != null) {
+            if (first >= adapter.getCount()) {
+                first = Math.max(0, adapter.getCount() - 1);
+                offset = 0;
+            }
+            final int restorePos = first;
+            final int restoreOffset = offset;
+            bandNamesList.setSelectionFromTop(restorePos, restoreOffset);
+            bandNamesList.post(new Runnable() {
+                @Override
+                public void run() {
+                    if (bandNamesList == null || adapter == null) {
+                        return;
+                    }
+                    if (listAnchorValid) {
+                        restoreListAnchor("rank-filter-remove");
+                    } else if (restorePos < adapter.getCount()) {
+                        bandNamesList.setSelectionFromTop(restorePos, restoreOffset);
+                    }
+                }
+            });
+        }
+    }
+
+    private void removeBandEntriesFromIndexList(List<String> indexList, String bandName) {
+        if (indexList == null || indexList.isEmpty()) {
+            return;
+        }
+        for (int i = indexList.size() - 1; i >= 0; i--) {
+            String entry = indexList.get(i);
+            if (entry == null) {
+                continue;
+            }
+            String indexBand = getBandNameFromIndex(entry);
+            if (bandName.equals(indexBand) || bandName.equals(entry)) {
+                indexList.remove(i);
+            }
+        }
+    }
+
+    private void notifyListAdapterInPlace(String reason) {
+        if (adapter == null || bandNamesList == null) {
+            return;
+        }
+        // SwipeMenuListView often resets to top on notifyDataSetChanged — pin scroll first.
+        int first = Math.max(0, bandNamesList.getFirstVisiblePosition());
+        View topChild = bandNamesList.getChildAt(0);
+        int offset = topChild == null ? 0 : topChild.getTop();
+        rememberListScroll();
+
+        if (bandNamesList.getAdapter() != adapter) {
+            bandNamesList.setAdapter(adapter);
+        } else {
+            adapter.notifyDataSetChanged();
+        }
+
+        if (first >= adapter.getCount()) {
+            first = Math.max(0, adapter.getCount() - 1);
+            offset = 0;
+        }
+        final int restorePos = first;
+        final int restoreOffset = offset;
+        bandNamesList.setSelectionFromTop(restorePos, restoreOffset);
+        bandNamesList.post(new Runnable() {
+            @Override
+            public void run() {
+                if (bandNamesList == null || adapter == null) {
+                    return;
+                }
+                if (listAnchorValid) {
+                    restoreListAnchor(reason);
+                } else if (restorePos < adapter.getCount()) {
+                    bandNamesList.setSelectionFromTop(restorePos, restoreOffset);
+                }
+            }
+        });
+        Log.d("ListRefresh", "In-place list update with scroll pin: " + reason
+                + " pos=" + restorePos + " offset=" + restoreOffset);
     }
 
     /**
@@ -5184,6 +5614,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         String waitingMsg = getString(R.string.waiting_for_data);
         String filterMsg = getString(R.string.data_filter_issue);
         boolean anyChanged = false;
+        java.util.LinkedHashSet<String> changedBands = new java.util.LinkedHashSet<>();
 
         for (int i = 0; i < adapter.getCount(); i++) {
             try {
@@ -5200,20 +5631,18 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 if (item.getRankImg() != newRankImg) {
                     item.setRankImg(newRankImg);
                     anyChanged = true;
+                    changedBands.add(bandName);
                 }
             } catch (Exception e) {
                 Log.w("ListRefresh", "Error refreshing rank icon at position " + i, e);
             }
         }
 
-        if (anyChanged && bandNamesList != null) {
-            if (bandNamesList.getAdapter() != adapter) {
-                bandNamesList.setAdapter(adapter);
-            } else {
-                adapter.notifyDataSetChanged();
+        if (anyChanged) {
+            for (String bandName : changedBands) {
+                updateVisibleRankIconsForBand(bandName, rankStore.getRankImageForBand(bandName));
             }
-            bandNamesList.invalidateViews();
-            Log.d("ListRefresh", "Updated rank icons in list after details return");
+            Log.d("ListRefresh", "Updated rank icons on visible rows (no notify)");
         }
     }
 

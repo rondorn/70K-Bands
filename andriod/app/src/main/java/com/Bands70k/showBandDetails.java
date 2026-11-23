@@ -2265,10 +2265,14 @@ public class showBandDetails extends Activity {
      */
     private void handleRankingClick(String rankingKey) {
         // Save the ranking
-        rankStore.saveBandRanking(BandInfo.getSelectedBand(), resolveValue(rankingKey));
+        String bandName = BandInfo.getSelectedBand();
+        rankStore.saveBandRanking(bandName, resolveValue(rankingKey));
         
         // Update the button states immediately without restarting activity
         setupRankingButtons();
+
+        // Tablet split (and phone list under details): update left-list icons in place now
+        showBands.notifyActiveListOfRankChange(bandName);
     }
     
     /**

@@ -1,5 +1,8 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
+import org.gradle.buildconfiguration.tasks.UpdateDaemonJvm
+import org.gradle.jvm.toolchain.JavaLanguageVersion
+
 buildscript {
     repositories {
         google()
@@ -17,4 +20,10 @@ buildscript {
 
 repositories {
     google()
+}
+
+// AGP 8.9 requires JDK 17+. Keep Daemon criteria in sync via:
+//   ./gradlew updateDaemonJvm
+tasks.named('updateDaemonJvm', UpdateDaemonJvm) {
+    languageVersion = JavaLanguageVersion.of(17)
 }
