@@ -1171,6 +1171,9 @@ public class staticVariables {
                 }
             }
         }
+        List<String> orderedYears = EventYearOrder.newestFirst(eventYearArray);
+        eventYearArray.clear();
+        eventYearArray.addAll(orderedYears);
         return downloadUrls;
     }
 

@@ -1,5 +1,7 @@
 package com.Bands70k;
 
+import android.content.res.Configuration;
+
 /**
  * Layout rules for phones, tablets, and foldables.
  *
@@ -180,5 +182,18 @@ public final class SplitViewLayoutPolicy {
      */
     public static boolean shouldOfferManualScheduleCalendarToggle(boolean isLargeFormFactor) {
         return isLargeFormFactor;
+    }
+
+    /**
+     * Recreate the list only when orientation actually changes.
+     * Activity Embedding resizes the list pane when a detail opens; that is the same
+     * orientation and must not rebuild the list (it would jump back to the top).
+     */
+    public static boolean shouldRecreateListOnConfiguration(int previousOrientation, int newOrientation) {
+        if (previousOrientation == Configuration.ORIENTATION_UNDEFINED
+                || newOrientation == Configuration.ORIENTATION_UNDEFINED) {
+            return false;
+        }
+        return previousOrientation != newOrientation;
     }
 }

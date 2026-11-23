@@ -107,6 +107,10 @@ platform :android do
 
       package_name = app["package_name"]
       aab_path = aab_path_for(app)
+      mapping_path = File.join(
+        @android_project_root,
+        "app/build/outputs/mapping/#{app['flavor']}Release/mapping.txt"
+      )
 
       unless File.exist?(aab_path)
         UI.user_error!(
@@ -124,7 +128,7 @@ platform :android do
       )
 
       begin
-        upload_to_play_store(
+        upload_options = {
           package_name: package_name,
           track: track,
           rollout: rollout,
@@ -132,7 +136,11 @@ platform :android do
           skip_upload_images: true,
           skip_upload_screenshots: true,
           json_key: @play_json_key
-        )
+        }
+        # R8 renames release code. Play needs this file to decode crash stacks.
+        upload_options[:mapping] = mapping_path if File.exist?(mapping_path)
+
+        upload_to_play_store(upload_options)
         puts "✓ #{app['name']} → #{track}"
       rescue => e
         UI.error("✗ #{app['name']} failed: #{e.message}")

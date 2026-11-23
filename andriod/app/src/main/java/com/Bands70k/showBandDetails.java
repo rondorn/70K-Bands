@@ -154,6 +154,7 @@ public class showBandDetails extends Activity {
      * After the first onResume, we clear the flag so returning from background still refreshes.
      */
     private boolean suppressProgressiveLoadOnNextResume = false;
+    private int lastAppliedOrientation = Configuration.ORIENTATION_UNDEFINED;
 
     /** Image: one background download attempt per band per details visit. */
     private final Set<String> backgroundImageDownloadAttempted = new HashSet<>();
@@ -180,6 +181,7 @@ public class showBandDetails extends Activity {
         setTheme(R.style.AppTheme);
 
         super.onCreate(savedInstanceState);
+        lastAppliedOrientation = getResources().getConfiguration().orientation;
         
         // Update activity reference for progress indicator if downloads are running
         ForegroundDownloadManager.setCurrentActivity(this);
@@ -1037,6 +1039,9 @@ public class showBandDetails extends Activity {
 
         Log.d("RotationChange", "'" + orientation + "'");
 
+        int previousOrientation = lastAppliedOrientation;
+        lastAppliedOrientation = newConfig.orientation;
+
         if (inLink) {
             // If we're in WebView mode during rotation, exit back to details
             Log.d("WebView", "Configuration changed while in WebView, exiting to details");
@@ -1044,8 +1049,14 @@ public class showBandDetails extends Activity {
             return;
         }
 
-        // Always recreate so detail layout matches cold-launch in the new orientation.
-        // (Keeping the instance across Activity Embedding resize left portrait broken.)
+        if (!SplitViewLayoutPolicy.shouldRecreateListOnConfiguration(previousOrientation, newConfig.orientation)) {
+            // Pane resize from the list|detail split. Recreating here collapses the
+            // split and sends the list back to the top.
+            Log.d("RotationChange", "same orientation — keeping detail instance");
+            return;
+        }
+
+        // Recreate so detail layout matches cold-launch in the new orientation.
         ListDetailSplitManager.refreshSplitAfterConfigurationChange(this);
         recreate();
     }

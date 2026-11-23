@@ -350,9 +350,9 @@ public class preferenceLayout  extends Activity {
         //popup menu
         final PopupMenu popupMenu = new PopupMenu(this, eventYearButton);
 
-        //add menu items in popup menu
+        // Current, then numeric years newest to oldest. Pointer file order is not reliable.
         int arrayCounter = 0;
-        for (String eventYear : eventYearArray) {
+        for (String eventYear : EventYearOrder.newestFirst(eventYearArray)) {
             String eventYearTemp = eventYear.toLowerCase();
             if (eventYearTemp.equals("current")){
                 eventYearTemp = localCurrentEventYear;

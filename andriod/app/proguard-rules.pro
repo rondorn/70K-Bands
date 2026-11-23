@@ -9,6 +9,15 @@
 
 # Add any project specific keep options here:
 
+# Keep line numbers so Play can turn obfuscated stack traces back into
+# source lines when mapping.txt is uploaded with the release.
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
+
+# ShowBandsLandscapeCoordinator loads this by name. The manifest already
+# keeps the class; this rule makes that dependency explicit.
+-keep class com.Bands70k.landscape.LandscapeScheduleActivity
+
 # If your project uses WebView with JS, uncomment the following
 # and specify the fully qualified class name to the JavaScript interface
 # class:

@@ -148,6 +148,19 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
 
     /** Set when launching band details; cleared after list refresh on return. */
     private boolean openedDetailsScreen = false;
+
+    /**
+     * True when a row tap is replacing the detail pane that is already open.
+     * That finish/relaunch must not rebuild the list.
+     */
+    private boolean replacingEmbeddedDetails = false;
+
+    /** Last user scroll position. Embedding resizes must not move the list. */
+    private int listAnchorPosition = -1;
+    private int listAnchorOffset = 0;
+    private boolean listAnchorValid = false;
+    private boolean applyingListAnchor = false;
+    private int lastAppliedOrientation = Configuration.ORIENTATION_UNDEFINED;
     
     // Flag to track when we're returning from landscape schedule activity (to prevent state restoration from overwriting scroll)
     boolean returningFromLandscapeSchedule = false;
@@ -268,6 +281,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         StartupTracker.markStep(getApplicationContext(), "showBands:onCreate:setContentView2");
 
         DeviceSizeManager.getInstance(this).updateDeviceSize();
+        lastAppliedOrientation = getResources().getConfiguration().orientation;
         
         // Initialize data timestamp preferences for change detection
         dataTimestampPrefs = getSharedPreferences(PREFS_DATA_TIMESTAMPS, MODE_PRIVATE);
@@ -511,6 +525,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 + " listW=" + bandNamesList.getWidth()
                 + " listH=" + bandNamesList.getHeight());
         try {
+            int first = Math.max(0, bandNamesList.getFirstVisiblePosition());
+            View topChild = bandNamesList.getChildAt(0);
+            int offset = topChild == null ? 0 : topChild.getTop();
             bandNamesList.setVisibility(View.VISIBLE);
             if (bandNamesList.getAdapter() != adapter) {
                 bandNamesList.setAdapter(adapter);
@@ -519,17 +536,64 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             }
             bandNamesList.invalidateViews();
             bandNamesList.requestLayout();
-            int first = Math.max(0, bandNamesList.getFirstVisiblePosition());
             if (first >= adapter.getCount()) {
                 first = 0;
+                offset = 0;
             }
-            bandNamesList.setSelectionFromTop(first, 0);
+            if (listAnchorValid) {
+                restoreListAnchor(reason);
+            } else {
+                bandNamesList.setSelectionFromTop(first, offset);
+            }
             if (bandNamesPullRefresh != null) {
                 bandNamesPullRefresh.requestLayout();
             }
         } catch (Exception e) {
             Log.w("BlankListFix", "forceListViewDisplayRefresh failed (" + reason + ")", e);
         }
+    }
+
+    /** Remember the list position the user scrolled to. Ignored while we are restoring it. */
+    private void rememberListScroll() {
+        if (applyingListAnchor || bandNamesList == null) {
+            return;
+        }
+        View child = bandNamesList.getChildAt(0);
+        int first = bandNamesList.getFirstVisiblePosition();
+        if (child == null && first == 0 && bandNamesList.getChildCount() == 0) {
+            return;
+        }
+        listAnchorPosition = first;
+        listAnchorOffset = child == null ? 0 : child.getTop();
+        listAnchorValid = true;
+    }
+
+    /** Put the list back where the user left it after a split-pane resize or detail open. */
+    private void restoreListAnchor(String reason) {
+        if (!listAnchorValid || bandNamesList == null || adapter == null) {
+            return;
+        }
+        if (listAnchorPosition < 0 || listAnchorPosition >= adapter.getCount()) {
+            return;
+        }
+        final int position = listAnchorPosition;
+        final int offset = listAnchorOffset;
+        applyingListAnchor = true;
+        bandNamesList.setSelectionFromTop(position, offset);
+        bandNamesList.post(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    if (bandNamesList != null && adapter != null && position < adapter.getCount()) {
+                        bandNamesList.setSelectionFromTop(position, offset);
+                    }
+                } finally {
+                    applyingListAnchor = false;
+                }
+            }
+        });
+        Log.d("ScrollPosition", "Restored list anchor (" + reason + ") position="
+                + position + " offset=" + offset);
     }
     
     /**
@@ -759,13 +823,14 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         DeviceSizeManager.getInstance(this).updateFromActivity(this);
         landscapeSchedule.updateCalendarButtonVisibility();
 
-        // Large form-factor (tablet / open fold): calendar↔list via icon, never orientation.
-        // recreate() so layout is measured for the new window — same path as cold-launch
-        // in that orientation. Relayout-only leaves a broken ListView after embedding resize
-        // (landscape → portrait looked terrible while portrait launch looked fine).
+        // Large form-factor: recreate only when orientation changes. Embedding resizes
+        // this pane when a detail opens, and recreating then jumps the list to the top.
         boolean isTablet = landscapeSchedule.isSplitViewCapable();
         if (isTablet) {
-            ListDetailSplitManager.refreshSplitAfterConfigurationChange(this);
+            int previousOrientation = lastAppliedOrientation;
+            lastAppliedOrientation = newConfig.orientation;
+            boolean orientationChanged = SplitViewLayoutPolicy.shouldRecreateListOnConfiguration(
+                    previousOrientation, newConfig.orientation);
             // Embedding often fires config changes during the first CSV load. Recreating then
             // leaves the new instance stuck on "Waiting for data..." because the async
             // completion still targets the destroyed instance and loadingBands blocks resume.
@@ -775,8 +840,17 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 forceListViewDisplayRefresh("config-during-load");
                 return;
             }
-            Log.d("LANDSCAPE_SCHEDULE", "onConfigurationChanged - Large form-factor, recreating for clean split layout");
-            recreate();
+            if (orientationChanged) {
+                // Rotate only. Opening a detail resizes this pane without changing orientation,
+                // and recreating then throws the list back to the top.
+                ListDetailSplitManager.refreshSplitAfterConfigurationChange(this);
+                Log.d("LANDSCAPE_SCHEDULE", "onConfigurationChanged - orientation changed, recreating list");
+                recreate();
+                return;
+            }
+            Log.d("LANDSCAPE_SCHEDULE", "onConfigurationChanged - same orientation, keeping list position");
+            setSearchBarWidth();
+            restoreListAnchor("config-same-orientation");
             return;
         }
         
@@ -1532,6 +1606,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                     currentScrollState = scrollState;
                     if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_IDLE) {
                         lastScrollTime = System.currentTimeMillis();
+                        rememberListScroll();
                         // Update current viewing day when scroll stops to track which day is visible
                         // BUT: Don't update if we're returning from landscape schedule - we'll set it explicitly
                         if (!returningFromLandscapeSchedule) {
@@ -1546,6 +1621,9 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 public void onScroll(AbsListView view, int firstVisibleItem,
                                      int visibleItemCount, int totalItemCount) {
 
+                    if (currentScrollState != AbsListView.OnScrollListener.SCROLL_STATE_IDLE) {
+                        rememberListScroll();
+                    }
                     // ERRATIC JUMPING FIX: Only update position during normal user scrolling
                     // Don't interfere when returning from details screen or during restoration
                     if (firstVisibleItem > 0 && !returningFromDetailsScreen) {
@@ -2510,8 +2588,15 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                     adapter.notifyDataSetChanged();
                 }
             } else if (requestCode == REQUEST_CODE_BAND_DETAILS) {
-                Log.d("ListRefresh", "Returned from band details — refreshing list for priority/attendance changes");
-                handleReturnFromDetailsScreen();
+                if (replacingEmbeddedDetails && ListDetailSplitManager.shouldUseSplitView(this)) {
+                    replacingEmbeddedDetails = false;
+                    Log.d("ListRefresh", "Split detail replaced — leaving list scroll alone");
+                    refreshRankIconsInList();
+                    restoreListAnchor("detail-replaced");
+                } else {
+                    Log.d("ListRefresh", "Returned from band details — refreshing list for priority/attendance changes");
+                    handleReturnFromDetailsScreen();
+                }
             } else if (requestCode == REQUEST_CODE_PREFERENCES) {
                 Log.d("YearChange", "Returned from preferences");
                 if (staticVariables.refreshActivated) {
@@ -4994,6 +5079,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         getWindow().getDecorView().findViewById(android.R.id.content).invalidate();
 
         BandInfo.setSelectedBand(selectedBand);
+
+        rememberListScroll();
         
         // LIST POSITION FIX: Save the current list position before launching details screen
         staticVariables.listPosition = position;
@@ -5007,11 +5094,22 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         showDetails.putExtra("alwaysShowFullDetails", largeOrSplit);
         // Reuse detail Activity when tapping another row while embedded side-by-side.
         showDetails.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        Log.d("NAVIGATION_DEBUG", "🚀 Starting showBandDetails (split="
-                + ListDetailSplitManager.shouldUseSplitView(this) + ")");
+        boolean split = largeOrSplit || ListDetailSplitManager.shouldUseSplitView(this);
+        Log.d("NAVIGATION_DEBUG", "🚀 Starting showBandDetails (split=" + split + ")");
         ForegroundDownloadManager.setCurrentActivity(showBands.this);
+        if (split && openedDetailsScreen) {
+            replacingEmbeddedDetails = true;
+        }
         openedDetailsScreen = true;
         startActivityForResult(showDetails, REQUEST_CODE_BAND_DETAILS);
+        if (bandNamesList != null) {
+            bandNamesList.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    restoreListAnchor("details-open");
+                }
+            }, 600);
+        }
         Log.d("NAVIGATION_DEBUG", "🚀 showBandDetails activity started");
     }
 

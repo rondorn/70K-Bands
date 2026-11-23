@@ -15,8 +15,8 @@ android {
         targetSdkVersion 36
         // versionCode must fit in a signed 32-bit int.
         //noinspection HighAppVersionCode
-        versionCode 2026111802
-        versionName "2026111802"
+        versionCode 2026112102
+        versionName "2026112101"
         android.compileOptions.incremental = false
         multiDexEnabled false
     }
@@ -66,7 +66,12 @@ android {
             debuggable true
         }
         release {
-            minifyEnabled false
+            // R8 shrinking, optimization, and obfuscation. Play's DEX scores
+            // require this. Resource shrinking stays off: festival icons and
+            // strings are loaded with Resources.getIdentifier, so the shrinker
+            // would treat them as unused and delete them.
+            minifyEnabled true
+            shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.debug
         }

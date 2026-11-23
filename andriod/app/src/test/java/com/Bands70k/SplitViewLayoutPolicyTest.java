@@ -1,5 +1,7 @@
 package com.Bands70k;
 
+import android.content.res.Configuration;
+
 import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;
@@ -74,6 +76,24 @@ public class SplitViewLayoutPolicyTest {
         assertFalse(SplitViewLayoutPolicy.isTabletClass(719));
         assertTrue(SplitViewLayoutPolicy.isTabletClass(720));
         assertTrue(SplitViewLayoutPolicy.isTabletClass(834));
+    }
+
+    @Test
+    public void sameOrientationDoesNotRecreateList() {
+        assertFalse(SplitViewLayoutPolicy.shouldRecreateListOnConfiguration(
+                Configuration.ORIENTATION_UNDEFINED, Configuration.ORIENTATION_LANDSCAPE));
+        assertFalse(SplitViewLayoutPolicy.shouldRecreateListOnConfiguration(
+                Configuration.ORIENTATION_LANDSCAPE, Configuration.ORIENTATION_LANDSCAPE));
+        assertFalse(SplitViewLayoutPolicy.shouldRecreateListOnConfiguration(
+                Configuration.ORIENTATION_PORTRAIT, Configuration.ORIENTATION_PORTRAIT));
+    }
+
+    @Test
+    public void orientationChangeRecreatesList() {
+        assertTrue(SplitViewLayoutPolicy.shouldRecreateListOnConfiguration(
+                Configuration.ORIENTATION_PORTRAIT, Configuration.ORIENTATION_LANDSCAPE));
+        assertTrue(SplitViewLayoutPolicy.shouldRecreateListOnConfiguration(
+                Configuration.ORIENTATION_LANDSCAPE, Configuration.ORIENTATION_PORTRAIT));
     }
 
     @Test
