@@ -45,6 +45,8 @@ public class LandscapeScheduleActivity extends Activity {
     private boolean initialIsSplitViewCapable; // Store initial value for reference
     private GestureDetector swipeGestureDetector;
     private BroadcastReceiver refreshScheduleReceiver;
+    /** Set when opening band details; cleared after onResume refreshes icons. */
+    private boolean awaitingReturnFromBandDetails = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,6 +102,7 @@ public class LandscapeScheduleActivity extends Activity {
                 intent.putExtra("BandName", bandName);
                 intent.putExtra("showCustomBackButton", true);
                 intent.putExtra("showAllDetailsInDetails", currentIsSplitViewCapable);
+                awaitingReturnFromBandDetails = true;
                 startActivityForResult(intent, REQUEST_CODE_BAND_DETAILS);
             }
         });
@@ -113,8 +116,9 @@ public class LandscapeScheduleActivity extends Activity {
             @Override
             public void onReceive(Context context, Intent intent) {
                 if (scheduleView != null && ACTION_REFRESH_LANDSCAPE_SCHEDULE.equals(intent.getAction())) {
-                    Log.d(TAG, "RefreshLandscapeSchedule received - reloading schedule data");
-                    scheduleView.refreshScheduleData();
+                    Log.d(TAG, "RefreshLandscapeSchedule received - refreshing priority/attendance");
+                    // Prefer icon refresh (keeps day); full reload only when membership may change.
+                    scheduleView.refreshPriorityAndAttendanceIcons();
                 }
             }
         };
@@ -161,12 +165,27 @@ public class LandscapeScheduleActivity extends Activity {
         super.onActivityResult(requestCode, resultCode, data);
         
         if (requestCode == REQUEST_CODE_BAND_DETAILS) {
-            // Detail screen was closed, refresh data if needed
+            // Always refresh icons after details — do not require bandName extra
+            // (system back / up nav may return without extras on some devices).
             String bandName = data != null ? data.getStringExtra("bandName") : null;
-            if (bandName != null) {
-                Log.d(TAG, "Returned from detail screen for band: " + bandName);
-                scheduleView.refreshEventData(bandName);
+            Log.d(TAG, "Returned from detail screen for band: " + bandName
+                    + " resultCode=" + resultCode);
+            if (scheduleView != null) {
+                scheduleView.refreshPriorityAndAttendanceIcons();
             }
+            awaitingReturnFromBandDetails = false;
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Safety net: if details closed without a reliable onActivityResult payload,
+        // still refresh Must/Might/Wont + attendance icons when we become visible again.
+        if (awaitingReturnFromBandDetails && scheduleView != null) {
+            Log.d(TAG, "onResume after band details — refreshing priority/attendance icons");
+            scheduleView.refreshPriorityAndAttendanceIcons();
+            awaitingReturnFromBandDetails = false;
         }
     }
     

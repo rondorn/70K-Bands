@@ -706,6 +706,27 @@ public class LandscapeScheduleView extends LinearLayout {
         loadScheduleData(null);
     }
 
+    /**
+     * Re-read Must/Might/Wont + attendance from stores and rebuild the visible day.
+     * Prefer this when returning from band details — cheaper than a full CSV reload,
+     * and rebinds {@link #attendedHandle} in case it was captured before the shared
+     * static handler existed.
+     */
+    public void refreshPriorityAndAttendanceIcons() {
+        if (staticVariables.attendedHandler != null) {
+            attendedHandle = staticVariables.attendedHandler;
+        }
+        if (staticVariables.preferences != null && staticVariables.preferences.getShowWillAttend()) {
+            // Attendance can change which events belong in the calendar — full rebuild.
+            loadScheduleData(null);
+            return;
+        }
+        refreshAttendedStatusesForAllDays();
+        refreshPrioritiesForAllDays();
+        updateDisplay();
+        Log.d(TAG, "Refreshed priority/attendance icons on calendar after details return");
+    }
+
     private void loadScheduleData() {
         loadScheduleData(null);
     }
@@ -1322,18 +1343,39 @@ public class LandscapeScheduleView extends LinearLayout {
         if (days.isEmpty() || currentDayIndex < 0 || currentDayIndex >= days.size()) {
             return;
         }
-        
-        DayScheduleData currentDay = days.get(currentDayIndex);
+        refreshAttendedStatusesForDay(days.get(currentDayIndex));
+    }
+
+    private void refreshAttendedStatusesForAllDays() {
+        if (days == null) {
+            return;
+        }
+        for (DayScheduleData day : days) {
+            refreshAttendedStatusesForDay(day);
+        }
+    }
+
+    private void refreshAttendedStatusesForDay(DayScheduleData day) {
+        if (day == null || day.venues == null) {
+            return;
+        }
         if (staticVariables.eventYear == 0) {
             staticVariables.ensureEventYearIsSet();
         }
+        if (staticVariables.attendedHandler != null) {
+            attendedHandle = staticVariables.attendedHandler;
+        }
         String eventYear = String.valueOf(staticVariables.eventYear);
-        
-        for (VenueColumn venue : currentDay.venues) {
+
+        for (VenueColumn venue : day.venues) {
             for (ScheduleBlock event : venue.events) {
-                // Refresh the attended status from the current data
+                String bandName = event.bandName;
+                if (isCombinedEventName(bandName)) {
+                    String[] parts = getCombinedEventBandParts(bandName);
+                    if (parts != null) bandName = parts[0].trim();
+                }
                 String updatedStatus = attendedHandle.getShowAttendedStatus(
-                    event.bandName,
+                    bandName,
                     event.location,
                     event.startTimeString,
                     event.eventType != null ? event.eventType : "Performance",
@@ -1353,8 +1395,23 @@ public class LandscapeScheduleView extends LinearLayout {
         if (days.isEmpty() || currentDayIndex < 0 || currentDayIndex >= days.size()) {
             return;
         }
-        DayScheduleData currentDay = days.get(currentDayIndex);
-        for (VenueColumn venue : currentDay.venues) {
+        refreshPrioritiesForDay(days.get(currentDayIndex));
+    }
+
+    private void refreshPrioritiesForAllDays() {
+        if (days == null) {
+            return;
+        }
+        for (DayScheduleData day : days) {
+            refreshPrioritiesForDay(day);
+        }
+    }
+
+    private void refreshPrioritiesForDay(DayScheduleData day) {
+        if (day == null || day.venues == null) {
+            return;
+        }
+        for (VenueColumn venue : day.venues) {
             for (ScheduleBlock event : venue.events) {
                 String bandName = event.bandName;
                 if (isCombinedEventName(bandName)) {
@@ -2883,7 +2940,8 @@ public class LandscapeScheduleView extends LinearLayout {
     }
     
     public void refreshEventData(String bandName) {
-        loadScheduleData();
+        // Icon/membership refresh from details — keep day position, re-read stores.
+        refreshPriorityAndAttendanceIcons();
     }
     
     /**

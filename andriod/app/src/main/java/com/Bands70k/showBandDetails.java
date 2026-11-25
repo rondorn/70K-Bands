@@ -2273,6 +2273,8 @@ public class showBandDetails extends Activity {
 
         // Tablet split (and phone list under details): update left-list icons in place now
         showBands.notifyActiveListOfRankChange(bandName);
+        // Calendar (landscape schedule) under/behind details: refresh priority icons
+        notifyLandscapeScheduleOfIconChange();
     }
     
     /**
@@ -3336,7 +3338,25 @@ public class showBandDetails extends Activity {
 
             // IMAGE PRESERVATION FIX: Only refresh schedule section, not entire content
             setupScheduleSection(); // This will update attendance icons without affecting the image
+
+            // Folder/split: update left-list attendance icon immediately (same as Must/Might/Wont)
+            showBands.notifyActiveListOfAttendedChange(BandInfo.getSelectedBand());
+            // Calendar (landscape schedule) under/behind details: refresh attendance icons
+            notifyLandscapeScheduleOfIconChange();
+
             clickedOnEvent = false; // Reset flag for targeted refresh
+        }
+    }
+
+    /** Ask LandscapeScheduleActivity to re-read priority/attendance from stores. */
+    private void notifyLandscapeScheduleOfIconChange() {
+        try {
+            Intent intent = new Intent("RefreshLandscapeSchedule");
+            androidx.localbroadcastmanager.content.LocalBroadcastManager
+                    .getInstance(this)
+                    .sendBroadcast(intent);
+        } catch (Exception e) {
+            Log.w("BandDetails", "Failed to notify landscape schedule of icon change", e);
         }
     }
     
@@ -3854,19 +3874,29 @@ public class showBandDetails extends Activity {
         Log.d("WebView", "Standard back navigation to bands list");
         // Removed unnecessary 70ms sleep - modern Android handles activity transitions properly
         
-        // If launched from landscape schedule, return bandName so it can refresh
-        if (showCustomBackButton) {
-            Intent resultIntent = new Intent();
+        // Always return bandName so calendar/list parents can refresh icons after Must/Might/Wont
+        // or attendance edits (even when not launched via the landscape custom-back path).
+        Intent resultIntent = new Intent();
+        if (bandName != null) {
             resultIntent.putExtra("bandName", bandName);
-            setResult(RESULT_OK, resultIntent);
-            Log.d("BandDetails", "Returning to landscape schedule with bandName: " + bandName);
-        } else {
-            setResult(RESULT_OK, null);
         }
+        setResult(RESULT_OK, resultIntent);
+        Log.d("BandDetails", "Returning with bandName: " + bandName
+                + " (fromLandscape=" + showCustomBackButton + ")");
         
         // LIST POSITION FIX: Use simple finish() to return to existing parent activity
         // This preserves the list position instead of creating a new activity instance
         finish();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(android.view.MenuItem item) {
+        // ActionBar up/home from calendar → same path as system back (setResult + finish)
+        if (item != null && item.getItemId() == android.R.id.home) {
+            onBackPressed();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
     
     @Override

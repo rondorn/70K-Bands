@@ -1,6 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.percentlayout.widget.PercentRelativeLayout
+<!--
+  Schedule/band list row. Icon + time cluster is constrained to the left of the
+  Day column (same chain as iOS), so icons stay next to the time on all widths.
 
+  Three dedicated icon slots (left → right), always reserved like iOS,
+  locked to the bottom row (with end time / location) so the band name
+  on the top row can extend further toward the time column:
+    1. eventTypeInCell   – event type
+    2. rankingInCell     – Must / Might / Won't
+    3. attendedInCell    – attendance
+  Missing icons use INVISIBLE (not GONE) so positions stay stable.
+-->
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -9,227 +20,26 @@
     android:background="#FF000000"
     android:id="@+id/Cell">
 
-    <!-- Band Name (no schedule view) -->
-    <TextView
-        android:id="@+id/bandNameInCellNoSchedule"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true"
-        android:layout_marginStart="8dp"
-        android:layout_marginLeft="8dp"
-        android:layout_marginTop="15dp"
-        android:height="42dp"
-        android:autoSizeMaxTextSize="30sp"
-        android:autoSizeMinTextSize="10sp"
-        android:autoSizeStepGranularity="2sp"
-        android:autoSizeTextType="uniform"
-        android:ellipsize="end"
-        android:gravity="left"
-        android:inputType="none"
-        android:maxLines="1"
-        android:text="Band Name"
-        android:textColor="#FFFFFF"
-        android:textStyle="bold"
-        android:visibility="invisible"
-        android:width="285dp" />
-
-    <ImageView
-        android:id="@+id/rankingInCellnoSchedule"
-        android:layout_width="35dp"
-        android:layout_height="35dp"
-        android:width="35dp"
-        android:height="35dp"
-        android:layout_marginLeft="330dp"
-        android:layout_marginTop="19dp"
-        android:background="#FF000000"
-        android:src="@drawable/icon_going_yes"
-        android:visibility="invisible" />
-
-    <!-- Band Name (with schedule) -->
-    <TextView
-        android:id="@+id/bandNameInCell"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
-        android:layout_marginTop="8dp"
-        android:height="30dp"
-        android:text="Band Name"
-        android:autoSizeMaxTextSize="20sp"
-        android:autoSizeMinTextSize="7sp"
-        android:autoSizeStepGranularity="2sp"
-        android:autoSizeTextType="uniform"
-        android:ellipsize="end"
-        android:gravity="left"
-        android:inputType="none"
-        android:maxLines="1"
-        android:textStyle="bold"
-        android:textColor="#FFFFFF"
-        app:layout_widthPercent="60%"
-        android:layout_alignParentLeft="true"
-        android:layout_marginLeft="4dp" />
-
-    <!-- Location Color Bar - Fixed position -->
-    <TextView
-        android:id="@+id/locationColorInCell"
-        android:layout_width="5dp"
-        android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
-        android:layout_marginStart="0dp"
-        android:layout_marginTop="38dp"
-        android:height="28dp"
-        android:background="#FFC4AC00"
-        android:text=""
-        android:layout_alignParentLeft="true"
-        android:layout_marginLeft="0dp" />
-
-    <!-- Location - Fixed position -->
-    <TextView
-        android:id="@+id/locationInCell"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
-        android:layout_marginTop="38dp"
-        android:height="28dp"
-        android:autoSizeMaxTextSize="16sp"
-        android:autoSizeMinTextSize="8sp"
-        android:autoSizeStepGranularity="1sp"
-        android:autoSizeTextType="uniform"
-        android:text="Location"
-        android:textColor="#D3D3D3"
-        android:width="145dp"
-        android:layout_alignParentLeft="true"
-        android:layout_marginLeft="6dp"
-        android:gravity="center_vertical"
-        android:maxLines="1"
-        android:ellipsize="end" />
-
-    <!-- Event Type Icon - Fixed position -->
-    <ImageView
-        android:id="@+id/eventTypeInCell"
-        android:layout_width="18dp"
-        android:layout_height="21dp"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
-        android:layout_marginTop="38dp"
-        android:contentDescription="The Event Type Icon"
-        android:scaleType="fitCenter"
-        android:src="@drawable/icon_all_star_jam"
-        android:layout_alignParentLeft="true"
-        android:layout_marginLeft="155dp" />
-
-    <!-- Ranking Icon - Fixed position -->
-    <ImageView
-        android:id="@+id/rankingInCell"
-        android:layout_width="18dp"
-        android:layout_height="21dp"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
-        android:layout_marginTop="38dp"
-        android:background="#FF000000"
-        android:scaleType="fitCenter"
-        android:src="@drawable/icon_going_yes"
-        android:layout_alignParentLeft="true"
-        android:layout_marginLeft="178dp" />
-
-    <!-- Attended Icon - Fixed position -->
-    <ImageView
-        android:id="@+id/attendedInCell"
-        android:layout_width="21dp"
-        android:layout_height="21dp"
-        android:layout_alignParentStart="true"
-        android:layout_marginTop="38dp"
-        android:background="#FF000000"
-        android:scaleType="fitCenter"
-        android:src="@drawable/icon_seen"
-        android:layout_alignParentLeft="true"
-        android:layout_marginLeft="201dp" />
-
-    <!-- Start Time - Fixed position, wider width, right-aligned -->
-    <TextView
-        android:id="@+id/startTimeInCell"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
-        android:layout_marginTop="8dp"
-        android:height="30dp"
-        android:autoSizeMaxTextSize="18sp"
-        android:autoSizeMinTextSize="10sp"
-        android:autoSizeStepGranularity="2sp"
-        android:autoSizeTextType="uniform"
-        android:ellipsize="end"
-        android:gravity="right"
-        android:inputType="none"
-        android:maxLines="1"
-        android:text="startTime"
-        android:textAlignment="gravity"
-        android:textColor="#FFFFFF"
-        android:textStyle="bold"
-        app:layout_widthPercent="28%"
-        android:layout_alignParentLeft="true"
-        android:layout_marginLeft="230dp" />
-
-    <!-- End Time - Fixed position, wider width, right-aligned -->
-    <TextView
-        android:id="@+id/endTimeInCell"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
-        android:layout_marginTop="38dp"
-        android:height="28dp"
-        android:autoSizeMaxTextSize="16sp"
-        android:autoSizeMinTextSize="9sp"
-        android:autoSizeStepGranularity="1sp"
-        android:autoSizeTextType="uniform"
-        android:ellipsize="end"
-        android:gravity="right"
-        android:inputType="none"
-        android:maxLines="1"
-        android:text="endTime"
-        android:textAlignment="gravity"
-        android:textColor="#5d5d5d"
-        android:textStyle="bold"
-        app:layout_widthPercent="28%"
-        android:layout_alignParentLeft="true"
-        android:layout_marginLeft="230dp" />
-
-    <!-- Day Label - Fixed position -->
+    <!-- Day Label - right edge -->
     <TextView
         android:id="@+id/dayLabelInCell"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_marginTop="0dp"
-        android:height="21dp"
-        android:width="50dp"
+        android:layout_width="50dp"
+        android:layout_height="21dp"
         android:gravity="center"
-        android:textAlignment="gravity"
         android:text="@string/Day"
         android:textColor="#ffffff"
         android:background="#838383"
         android:textSize="11sp"
-        android:layout_alignParentRight="true"
-        android:layout_marginLeft="315dp" />
+        android:maxLines="1"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Day Number - Fixed position -->
+    <!-- Day Number - right edge under day label -->
     <TextView
         android:id="@+id/dayInCell"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentTop="true"
-        android:layout_marginTop="21dp"
-        android:height="44dp"
-        android:width="50dp"
+        android:layout_width="50dp"
+        android:layout_height="0dp"
         android:gravity="center"
-        android:layout_gravity="center_vertical|end"
-        android:textAlignment="gravity"
         android:text="2/28"
         android:textColor="#ffffff"
         android:textStyle="bold"
@@ -238,39 +48,221 @@
         android:autoSizeMinTextSize="8sp"
         android:autoSizeStepGranularity="1sp"
         android:autoSizeTextType="uniform"
-        android:inputType="none"
         android:maxLines="1"
         android:ellipsize="end"
-        android:layout_marginLeft="315dp"
-        android:layout_alignParentRight="true" />
+        app:layout_constraintTop_toBottomOf="@id/dayLabelInCell"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@id/dayLabelInCell"
+        app:layout_constraintEnd_toEndOf="@id/dayLabelInCell" />
 
-    <!-- Ranking Icon in Day Area -->
+    <!-- Start Time - immediately left of Day column -->
+    <TextView
+        android:id="@+id/startTimeInCell"
+        android:layout_width="wrap_content"
+        android:layout_height="30dp"
+        android:minWidth="60dp"
+        android:layout_marginEnd="2dp"
+        android:autoSizeMaxTextSize="18sp"
+        android:autoSizeMinTextSize="10sp"
+        android:autoSizeStepGranularity="2sp"
+        android:autoSizeTextType="uniform"
+        android:ellipsize="end"
+        android:gravity="center_vertical|end"
+        android:maxLines="1"
+        android:text="startTime"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/endTimeInCell"
+        app:layout_constraintEnd_toStartOf="@id/dayLabelInCell"
+        app:layout_constraintVertical_chainStyle="packed"
+        android:layout_marginTop="4dp" />
+
+    <!-- End Time - same column as start time -->
+    <TextView
+        android:id="@+id/endTimeInCell"
+        android:layout_width="0dp"
+        android:layout_height="28dp"
+        android:layout_marginBottom="4dp"
+        android:autoSizeMaxTextSize="16sp"
+        android:autoSizeMinTextSize="9sp"
+        android:autoSizeStepGranularity="1sp"
+        android:autoSizeTextType="uniform"
+        android:ellipsize="end"
+        android:gravity="center_vertical|end"
+        android:maxLines="1"
+        android:text="endTime"
+        android:textColor="#5d5d5d"
+        android:textStyle="bold"
+        app:layout_constraintTop_toBottomOf="@id/startTimeInCell"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@id/startTimeInCell"
+        app:layout_constraintEnd_toEndOf="@id/startTimeInCell" />
+
+    <!-- Attended Icon - bottom row only (with end time / location), like iOS -->
+    <ImageView
+        android:id="@+id/attendedInCell"
+        android:layout_width="21dp"
+        android:layout_height="21dp"
+        android:layout_marginEnd="6dp"
+        android:background="#FF000000"
+        android:contentDescription="Attended status"
+        android:scaleType="fitCenter"
+        android:src="@drawable/icon_seen"
+        app:layout_constraintEnd_toStartOf="@id/startTimeInCell"
+        app:layout_constraintTop_toTopOf="@id/endTimeInCell"
+        app:layout_constraintBottom_toBottomOf="@id/endTimeInCell" />
+
+    <!-- Ranking Icon - left of attended -->
+    <ImageView
+        android:id="@+id/rankingInCell"
+        android:layout_width="18dp"
+        android:layout_height="21dp"
+        android:layout_marginEnd="3dp"
+        android:background="#FF000000"
+        android:contentDescription="Priority ranking"
+        android:scaleType="fitCenter"
+        android:src="@drawable/icon_going_yes"
+        app:layout_constraintEnd_toStartOf="@id/attendedInCell"
+        app:layout_constraintTop_toTopOf="@id/attendedInCell"
+        app:layout_constraintBottom_toBottomOf="@id/attendedInCell" />
+
+    <!-- Event Type Icon - left of ranking (leftmost reserved slot) -->
+    <ImageView
+        android:id="@+id/eventTypeInCell"
+        android:layout_width="18dp"
+        android:layout_height="21dp"
+        android:layout_marginEnd="3dp"
+        android:contentDescription="The Event Type Icon"
+        android:scaleType="fitCenter"
+        android:src="@drawable/icon_all_star_jam"
+        app:layout_constraintEnd_toStartOf="@id/rankingInCell"
+        app:layout_constraintTop_toTopOf="@id/attendedInCell"
+        app:layout_constraintBottom_toBottomOf="@id/attendedInCell" />
+
+    <!-- Fixed left edge of the 3 reserved icon slots (EventType / Rank / Attendance) -->
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/iconClusterStart"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:barrierDirection="start"
+        app:constraint_referenced_ids="eventTypeInCell" />
+
+    <!-- Band Name (with schedule) - top row extends to time so long names
+         can use space above the bottom-row icon slots (matches iOS). -->
+    <TextView
+        android:id="@+id/bandNameInCell"
+        android:layout_width="0dp"
+        android:layout_height="30dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginTop="4dp"
+        android:text="Band Name"
+        android:autoSizeMaxTextSize="20sp"
+        android:autoSizeMinTextSize="7sp"
+        android:autoSizeStepGranularity="2sp"
+        android:autoSizeTextType="uniform"
+        android:ellipsize="end"
+        android:gravity="center_vertical|start"
+        android:maxLines="1"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/startTimeInCell" />
+
+    <!-- Location Color Bar -->
+    <TextView
+        android:id="@+id/locationColorInCell"
+        android:layout_width="5dp"
+        android:layout_height="28dp"
+        android:background="#FFC4AC00"
+        android:text=""
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/locationInCell"
+        app:layout_constraintBottom_toBottomOf="@id/locationInCell" />
+
+    <!-- Location - flexible up to icon cluster -->
+    <TextView
+        android:id="@+id/locationInCell"
+        android:layout_width="0dp"
+        android:layout_height="28dp"
+        android:layout_marginStart="1dp"
+        android:layout_marginEnd="6dp"
+        android:layout_marginBottom="4dp"
+        android:autoSizeMaxTextSize="16sp"
+        android:autoSizeMinTextSize="8sp"
+        android:autoSizeStepGranularity="1sp"
+        android:autoSizeTextType="uniform"
+        android:text="Location"
+        android:textColor="#D3D3D3"
+        android:gravity="center_vertical"
+        android:maxLines="1"
+        android:ellipsize="end"
+        app:layout_constraintStart_toEndOf="@id/locationColorInCell"
+        app:layout_constraintEnd_toStartOf="@id/iconClusterStart"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/bandNameInCell" />
+
+    <!-- Band Name (no schedule view) -->
+    <TextView
+        android:id="@+id/bandNameInCellNoSchedule"
+        android:layout_width="0dp"
+        android:layout_height="42dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:autoSizeMaxTextSize="30sp"
+        android:autoSizeMinTextSize="10sp"
+        android:autoSizeStepGranularity="2sp"
+        android:autoSizeTextType="uniform"
+        android:ellipsize="end"
+        android:gravity="center_vertical|start"
+        android:maxLines="1"
+        android:text="Band Name"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        android:visibility="invisible"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/rankingInCellnoSchedule"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <ImageView
+        android:id="@+id/rankingInCellnoSchedule"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:layout_marginEnd="8dp"
+        android:background="#FF000000"
+        android:contentDescription="Priority ranking"
+        android:src="@drawable/icon_going_yes"
+        android:visibility="invisible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <!-- Ranking Icon in Day Area (bands-only view) -->
     <ImageView
         android:id="@+id/rankingIconInDayArea"
         android:layout_width="40dp"
         android:layout_height="40dp"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentTop="true"
-        android:layout_marginTop="25dp"
-        android:layout_marginRight="5dp"
+        android:layout_marginEnd="5dp"
         android:scaleType="fitCenter"
         android:src="@drawable/icon_going_yes"
         android:visibility="invisible"
-        android:layout_alignParentRight="true" />
+        android:contentDescription="Priority ranking"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
-    <!-- Bottom Spacer -->
+    <!-- Bottom Spacer (separator strip used by adapter) -->
     <TextView
         android:id="@+id/bottomSpacer"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:height="2dp"
-        android:width="44dp"
-        android:layout_marginTop="68dp"
-        android:gravity="center"
-        android:textAlignment="gravity"
+        android:layout_width="0dp"
+        android:layout_height="2dp"
         android:background="#838383"
-        android:inputType="none"
-        android:ellipsize="end"
-        android:text="" />
+        android:text=""
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/dayLabelInCell"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
-</androidx.percentlayout.widget.PercentRelativeLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

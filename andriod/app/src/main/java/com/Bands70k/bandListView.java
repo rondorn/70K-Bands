@@ -451,6 +451,9 @@ public class bandListView extends ArrayAdapter<bandListItem> {
             // Hide ranking icon in day area for schedule view
             viewHolder.rankingIconInDayArea.setVisibility(View.INVISIBLE);
 
+            // Match iOS: each icon has a dedicated reserved slot. Use INVISIBLE
+            // (not GONE) so EventType / Must-Might-Wont / Attendance stay aligned
+            // whether the drawable is shown or not.
             if (bandData.getRankImg() == 0){
                 viewHolder.rankImage.setVisibility(View.INVISIBLE);
             } else {
@@ -458,11 +461,11 @@ public class bandListView extends ArrayAdapter<bandListItem> {
                 // Log.d("bandListView", "ranking image is " + bandData.getRankImg());
                 if (bandData.getRankImg() != 50000000) {
                     viewHolder.rankImage.setImageResource(bandData.getRankImg());
+                    viewHolder.rankImage.setVisibility(View.VISIBLE);
                 } else {
                     viewHolder.rankImage.setImageResource(0);
+                    viewHolder.rankImage.setVisibility(View.INVISIBLE);
                 }
-
-                viewHolder.rankImage.setVisibility(View.VISIBLE);
             }
 
             if (bandData.getEventTypeImage() == 0){

@@ -5211,6 +5211,24 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
     }
 
     /**
+     * Notify the live list that attendance changed for a band (details schedule tap).
+     * Mirrors {@link #notifyActiveListOfRankChange} so the left list eye icon updates
+     * immediately in folder/split view without waiting for a full refresh.
+     */
+    public static void notifyActiveListOfAttendedChange(String bandName) {
+        final showBands instance = activeInstance;
+        if (instance == null || bandName == null || bandName.isEmpty()) {
+            return;
+        }
+        instance.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                instance.applyAttendedChangeInPlace(bandName);
+            }
+        });
+    }
+
+    /**
      * After Must/Might/Wont/Unknown: update icons in place. Only remove rows when the new
      * rank is filtered out. Does not clear/rebuild the adapter (avoids scroll-to-top flicker).
      */
@@ -5353,8 +5371,8 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                     int attendedImg = iconResolve.getAttendedIcon(attendedStatus);
                     if (rowItem.getAttendedImage() != attendedImg) {
                         rowItem.setAttendedImage(attendedImg);
-                        notifyListAdapterInPlace("attended-longpress:" + bandName);
                     }
+                    applyAttendedIconInPlace(listPosition, bandName, timeIndex);
                 } catch (Exception e) {
                     Log.w("ListRefresh", "Long-press attended in-place update failed", e);
                     applyAttendedIconInPlace(listPosition, bandName, timeIndex);
@@ -5362,6 +5380,31 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             } else {
                 applyAttendedIconInPlace(listPosition, bandName, timeIndex);
             }
+        }
+    }
+
+    /**
+     * After attendance toggle from details (or any band-scoped change): recompute attended
+     * icons for that band and paint visible rows — same approach as Must/Might/Wont so
+     * folder/split left list updates without notifyDataSetChanged scroll jumps.
+     */
+    void applyAttendedChangeInPlace(String bandName) {
+        if (adapter == null || bandName == null || bandName.isEmpty()) {
+            return;
+        }
+
+        if (staticVariables.preferences != null && staticVariables.preferences.getShowWillAttend()) {
+            saveScrollPosition();
+            refreshData();
+            return;
+        }
+
+        boolean anyChanged = updateAttendedImagesForBandInAdapter(bandName);
+        // Always paint visible rows — ImageView may be stale even if data matched after a
+        // previous silent miss (e.g. details tap before list rebind).
+        updateVisibleAttendedIconsForBand(bandName);
+        if (anyChanged) {
+            Log.d("ListRefresh", "Attended icons updated on visible rows (no notify): " + bandName);
         }
     }
 
@@ -5383,32 +5426,121 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             if (slot == null || slot == 0) {
                 slot = item.getScheduleSlotTimeIndex();
             }
-            if (slot == null || slot == 0 || BandInfo.scheduleRecords == null
-                    || BandInfo.scheduleRecords.get(item.getBandName()) == null) {
-                return;
-            }
-            scheduleHandler evt = BandInfo.scheduleRecords.get(item.getBandName()).scheduleByTime.get(slot);
-            if (evt == null) {
-                return;
-            }
-            if (staticVariables.attendedHandler == null) {
-                staticVariables.attendedHandler = new showsAttended();
-            }
-            String eventYearStr = String.valueOf(staticVariables.eventYear);
-            String attendedStatus = staticVariables.attendedHandler.getShowAttendedIcon(
-                    item.getBandName(),
-                    evt.getShowLocation(),
-                    evt.getStartTimeString(),
-                    evt.getShowType(),
-                    eventYearStr,
-                    evt.getShowDay());
-            int attendedImg = iconResolve.getAttendedIcon(attendedStatus);
+            int attendedImg = resolveAttendedImageForItem(item, slot);
             if (item.getAttendedImage() != attendedImg) {
                 item.setAttendedImage(attendedImg);
-                notifyListAdapterInPlace("attended-in-place:" + item.getBandName());
+            }
+            // Paint the bound row directly (avoid notifyDataSetChanged scroll reset).
+            if (bandNamesList != null) {
+                int first = bandNamesList.getFirstVisiblePosition();
+                int childIndex = position - first;
+                if (childIndex >= 0 && childIndex < bandNamesList.getChildCount()) {
+                    View row = bandNamesList.getChildAt(childIndex);
+                    if (row != null) {
+                        applyAttendedImgToRowView(row, attendedImg);
+                    }
+                }
             }
         } catch (Exception e) {
             Log.w("ListRefresh", "Error updating attended icon in place", e);
+        }
+    }
+
+    /**
+     * Recompute {@link bandListItem#setAttendedImage} for every adapter row of {@code bandName}.
+     * @return true if any item's image id changed
+     */
+    private boolean updateAttendedImagesForBandInAdapter(String bandName) {
+        if (adapter == null || bandName == null) {
+            return false;
+        }
+        boolean anyChanged = false;
+        for (int i = 0; i < adapter.getCount(); i++) {
+            try {
+                bandListItem item = adapter.getItem(i);
+                if (item == null || !bandName.equals(item.getBandName())) {
+                    continue;
+                }
+                int attendedImg = resolveAttendedImageForItem(item, item.getScheduleSlotTimeIndex());
+                if (item.getAttendedImage() != attendedImg) {
+                    item.setAttendedImage(attendedImg);
+                    anyChanged = true;
+                }
+            } catch (Exception e) {
+                Log.w("ListRefresh", "Error applying attended in place at " + i, e);
+            }
+        }
+        return anyChanged;
+    }
+
+    private int resolveAttendedImageForItem(bandListItem item, Long timeIndex) {
+        if (item == null || item.getBandName() == null || item.getLocation() == null) {
+            return 0;
+        }
+        Long slot = timeIndex;
+        if (slot == null || slot == 0) {
+            slot = item.getScheduleSlotTimeIndex();
+        }
+        if (slot == null || slot == 0 || BandInfo.scheduleRecords == null
+                || BandInfo.scheduleRecords.get(item.getBandName()) == null) {
+            return 0;
+        }
+        scheduleHandler evt = BandInfo.scheduleRecords.get(item.getBandName()).scheduleByTime.get(slot);
+        if (evt == null) {
+            return 0;
+        }
+        if (staticVariables.attendedHandler == null) {
+            staticVariables.attendedHandler = new showsAttended();
+        }
+        String eventYearStr = String.valueOf(staticVariables.eventYear);
+        String attendedStatus = staticVariables.attendedHandler.getShowAttendedIcon(
+                item.getBandName(),
+                evt.getShowLocation(),
+                evt.getStartTimeString(),
+                evt.getShowType(),
+                eventYearStr,
+                evt.getShowDay());
+        return iconResolve.getAttendedIcon(attendedStatus);
+    }
+
+    /**
+     * Paint attendance icons on currently visible rows for {@code bandName} without
+     * {@code notifyDataSetChanged} (which resets scroll on this ListView).
+     */
+    private void updateVisibleAttendedIconsForBand(String bandName) {
+        if (bandNamesList == null || adapter == null || bandName == null) {
+            return;
+        }
+        int first = bandNamesList.getFirstVisiblePosition();
+        int childCount = bandNamesList.getChildCount();
+        for (int i = 0; i < childCount; i++) {
+            int position = first + i;
+            if (position < 0 || position >= adapter.getCount()) {
+                continue;
+            }
+            bandListItem item = adapter.getItem(position);
+            if (item == null || !bandName.equals(item.getBandName())) {
+                continue;
+            }
+            View row = bandNamesList.getChildAt(i);
+            if (row == null) {
+                continue;
+            }
+            applyAttendedImgToRowView(row, item.getAttendedImage());
+        }
+    }
+
+    private void applyAttendedImgToRowView(View row, int attendedImg) {
+        ImageView attendedImage = row.findViewById(R.id.attendedInCell);
+        if (attendedImage == null) {
+            return;
+        }
+        if (attendedImg == 0) {
+            attendedImage.setImageResource(0);
+            attendedImage.setVisibility(View.INVISIBLE);
+        } else {
+            attendedImage.setImageResource(attendedImg);
+            attendedImage.setVisibility(View.VISIBLE);
         }
     }
 
@@ -5419,7 +5551,6 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         if (staticVariables.attendedHandler == null) {
             staticVariables.attendedHandler = new showsAttended();
         }
-        String eventYearStr = String.valueOf(staticVariables.eventYear);
         boolean anyChanged = false;
         for (int i = 0; i < adapter.getCount(); i++) {
             try {
@@ -5427,25 +5558,7 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 if (item == null || item.getBandName() == null) {
                     continue;
                 }
-                Long slot = item.getScheduleSlotTimeIndex();
-                if (slot == null || slot == 0) {
-                    continue;
-                }
-                if (BandInfo.scheduleRecords.get(item.getBandName()) == null) {
-                    continue;
-                }
-                scheduleHandler evt = BandInfo.scheduleRecords.get(item.getBandName()).scheduleByTime.get(slot);
-                if (evt == null) {
-                    continue;
-                }
-                String attendedStatus = staticVariables.attendedHandler.getShowAttendedIcon(
-                        item.getBandName(),
-                        evt.getShowLocation(),
-                        evt.getStartTimeString(),
-                        evt.getShowType(),
-                        eventYearStr,
-                        evt.getShowDay());
-                int attendedImg = iconResolve.getAttendedIcon(attendedStatus);
+                int attendedImg = resolveAttendedImageForItem(item, item.getScheduleSlotTimeIndex());
                 if (item.getAttendedImage() != attendedImg) {
                     item.setAttendedImage(attendedImg);
                     anyChanged = true;
@@ -5455,7 +5568,28 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
             }
         }
         if (anyChanged) {
-            notifyListAdapterInPlace("attended-icons");
+            // Prefer painting visible rows; fall back to notify only if list isn't laid out yet.
+            if (bandNamesList != null && bandNamesList.getChildCount() > 0) {
+                int first = bandNamesList.getFirstVisiblePosition();
+                int childCount = bandNamesList.getChildCount();
+                for (int i = 0; i < childCount; i++) {
+                    int position = first + i;
+                    if (position < 0 || position >= adapter.getCount()) {
+                        continue;
+                    }
+                    bandListItem item = adapter.getItem(position);
+                    if (item == null) {
+                        continue;
+                    }
+                    View row = bandNamesList.getChildAt(i);
+                    if (row != null) {
+                        applyAttendedImgToRowView(row, item.getAttendedImage());
+                    }
+                }
+                Log.d("ListRefresh", "Attended icons refreshed on visible rows (no notify)");
+            } else {
+                notifyListAdapterInPlace("attended-icons");
+            }
         }
     }
 
