@@ -991,22 +991,40 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         styleListSearchView(searchCriteriaObject);
     }
 
-    /** Dark capsule search field, matching the iOS list header SearchBar. */
+    /**
+     * Dark capsule search field, matching the iOS list header SearchBar.
+     * Capsule background lives on {@code searchCriteriaCapsule}; this clears
+     * AppCompat SearchView internals so the default plate 9-patch cannot leave
+     * gray crescent artifacts on the left/right ends.
+     */
     private void styleListSearchView(SearchView searchView) {
-        searchView.setBackgroundResource(R.drawable.search_bar_capsule);
-        View plate = searchView.findViewById(androidx.appcompat.R.id.search_plate);
-        if (plate != null) {
-            plate.setBackgroundColor(Color.TRANSPARENT);
+        searchView.setBackgroundColor(Color.TRANSPARENT);
+        searchView.setBackground(null);
+
+        // Clear every stock SearchView chrome layer that can still paint end-caps.
+        int[] chromeIds = new int[] {
+                androidx.appcompat.R.id.search_plate,
+                androidx.appcompat.R.id.search_edit_frame,
+                androidx.appcompat.R.id.submit_area,
+                androidx.appcompat.R.id.search_bar
+        };
+        for (int id : chromeIds) {
+            View chrome = searchView.findViewById(id);
+            if (chrome != null) {
+                chrome.setBackground(null);
+            }
         }
+
         View mag = searchView.findViewById(androidx.appcompat.R.id.search_mag_icon);
         if (mag != null) {
+            mag.setBackground(null);
             mag.setPadding(0, 0, 0, 0);
         }
         TextView edit = searchView.findViewById(androidx.appcompat.R.id.search_src_text);
         if (edit != null) {
             edit.setTextColor(Color.WHITE);
             edit.setHintTextColor(Color.LTGRAY);
-            edit.setBackgroundColor(Color.TRANSPARENT);
+            edit.setBackground(null);
             edit.setPadding(0, 0, 8, 0);
         }
     }
