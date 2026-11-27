@@ -10,12 +10,16 @@
 #   ./release_full_automation.sh -70k -mdf        # exclude MMF while Play setup pending
 #   ./release_full_automation.sh --serial         # build/upload one at a time
 #
-# This script:
-# 1. Builds AAB files for selected app flavors (parallel by default)
-# 2. Uploads to Google Play Console (serial — Play API / fastlane are not parallel-safe)
-# 3. Writes en-US (default listing) changelog only — same as manual production
-# 4. Updates metadata
-# 5. Submits for review (or leaves as draft)
+# Flow (same idea as iOS ios_release_submit.sh):
+#   1. Ask every question up front (version, notes, track, rollout, Proceed)
+#   2. After Proceed, runs unattended — walk away; come back when done
+#      (or if a build/upload failed — see ./build/release-logs/)
+#
+# After Proceed this script:
+#   • Updates version in app/build.gradle
+#   • Builds AAB files for selected flavors (parallel by default)
+#   • Writes en-US Play changelog
+#   • Uploads to Google Play (serial — Play API / fastlane are not parallel-safe)
 
 set -e
 
@@ -236,7 +240,15 @@ if [ -f "$PREV_VALUES_FILE" ]; then
 fi
 
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BLUE}Step 1: Version Information${NC}"
+echo -e "${BLUE}Confirmations (all prompts before build / upload)${NC}"
+echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+echo "Answer everything below now. After the final Proceed, the script updates"
+echo "Gradle, builds AABs, and uploads to Play with no further prompts — safe to walk away."
+echo ""
+
+echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BLUE}Version Information${NC}"
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
@@ -281,7 +293,7 @@ echo -e "${BLUE}Will use version: ${VERSION_NAME} (code ${VERSION_CODE})${NC}"
 echo ""
 
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BLUE}Step 2: What's New${NC}"
+echo -e "${BLUE}What's New${NC}"
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
@@ -314,7 +326,7 @@ echo -e "${GREEN}✓ Release notes captured${NC}"
 echo ""
 
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BLUE}Step 3: Release Track${NC}"
+echo -e "${BLUE}Release Track${NC}"
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 echo "Release tracks:"
@@ -345,7 +357,34 @@ fi
 
 echo ""
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BLUE}Step 4: Updating Build Configuration${NC}"
+echo -e "${BLUE}Summary${NC}"
+echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+echo -e "${BLUE}Version Name:${NC}      $VERSION_NAME"
+echo -e "${BLUE}Version Code:${NC}      $VERSION_CODE"
+echo -e "${BLUE}Apps:${NC}              $SELECTED_APPS"
+echo -e "${BLUE}Track:${NC}             $RELEASE_TRACK"
+echo -e "${BLUE}Rollout:${NC}           $(echo "$ROLLOUT_PERCENTAGE * 100" | bc)%"
+echo -e "${BLUE}Parallel builds:${NC} $PARALLEL"
+echo -e "${BLUE}Release notes:${NC}"
+echo "$RELEASE_NOTES"
+echo ""
+echo "Next (unattended): update Gradle → build AABs → upload to Play ($RELEASE_TRACK)"
+echo "  Build logs: $LOG_DIR/"
+echo ""
+read -r -p "Proceed? (y/n): " CONFIRM
+
+if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
+    echo -e "${YELLOW}Cancelled${NC}"
+    exit 0
+fi
+
+echo ""
+echo -e "${GREEN}✓ Proceeding unattended — safe to walk away${NC}"
+echo ""
+
+echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BLUE}Updating Build Configuration${NC}"
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
@@ -367,9 +406,8 @@ fi
 echo -e "${GREEN}✓ Build configuration updated${NC}"
 echo ""
 
-echo ""
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BLUE}Step 5: Building Apps${NC}"
+echo -e "${BLUE}Building Apps${NC}"
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
@@ -395,9 +433,8 @@ else
 fi
 echo ""
 
-echo ""
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BLUE}Step 6: Release notes (default Play language)${NC}"
+echo -e "${BLUE}Release notes (default Play language)${NC}"
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
@@ -407,35 +444,7 @@ echo -e "${GREEN}✓ release_notes.json ready${NC}"
 echo ""
 
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BLUE}Release Summary${NC}"
-echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo ""
-echo -e "${BLUE}Version Name:${NC}      $VERSION_NAME"
-echo -e "${BLUE}Version Code:${NC}      $VERSION_CODE"
-echo -e "${BLUE}Apps:${NC}              $SELECTED_APPS"
-echo -e "${BLUE}Track:${NC}             $RELEASE_TRACK"
-echo -e "${BLUE}Rollout:${NC}           $(echo "$ROLLOUT_PERCENTAGE * 100" | bc)%"
-echo -e "${BLUE}Parallel builds:${NC} $PARALLEL"
-echo -e "${BLUE}Release notes:${NC}"
-echo "$RELEASE_NOTES"
-echo ""
-echo "This script will now:"
-echo "  • Upload AAB files to Google Play Console"
-echo "  • Write Play changelog for en-US only (default listing language)"
-echo "  • Set to $RELEASE_TRACK track"
-echo ""
-echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo ""
-read -r -p "Proceed? (y/n): " CONFIRM
-
-if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
-    echo -e "${YELLOW}Cancelled${NC}"
-    exit 0
-fi
-
-echo ""
-echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BLUE}Step 7: Uploading to Google Play Console${NC}"
+echo -e "${BLUE}Uploading to Google Play Console${NC}"
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
