@@ -23,6 +23,8 @@ public struct BandData: Codable, Equatable, Hashable {
     let genre: String?
     let noteworthy: String?
     let priorYears: String?
+    /// Artist CSV Day field (`;`-separated tokens such as `Pre;Day 1`). Nil/empty when absent.
+    let day: String?
     
     public init(
         bandName: String,
@@ -36,7 +38,8 @@ public struct BandData: Codable, Equatable, Hashable {
         country: String? = nil,
         genre: String? = nil,
         noteworthy: String? = nil,
-        priorYears: String? = nil
+        priorYears: String? = nil,
+        day: String? = nil
     ) {
         self.bandName = bandName
         self.eventYear = eventYear
@@ -50,6 +53,7 @@ public struct BandData: Codable, Equatable, Hashable {
         self.genre = genre
         self.noteworthy = noteworthy
         self.priorYears = priorYears
+        self.day = day
     }
 }
 

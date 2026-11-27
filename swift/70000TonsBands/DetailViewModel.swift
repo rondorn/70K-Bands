@@ -88,6 +88,8 @@ class DetailViewModel: ObservableObject {
     @Published var genre: String = ""
     @Published var lastOnCruise: String = ""
     @Published var noteWorthy: String = ""
+    /// Artist Day for details; empty when the band has schedule events (schedule rows show day).
+    @Published var day: String = ""
     
     // Links
     @Published var officialUrl: String = ""
@@ -1547,8 +1549,28 @@ class DetailViewModel: ObservableObject {
         genre = bandNameHandle.getBandGenre(bandName)
         lastOnCruise = bandNameHandle.getPriorYears(bandName)
         noteWorthy = bandNameHandle.getBandNoteWorthy(bandName)
+        refreshArtistDayDisplay()
         
-        print("DEBUG: loadBandDetails() for '\(bandName)' - country: '\(country)', genre: '\(genre)', lastOnCruise: '\(lastOnCruise)', noteWorthy: '\(noteWorthy)'")
+        print("DEBUG: loadBandDetails() for '\(bandName)' - country: '\(country)', genre: '\(genre)', lastOnCruise: '\(lastOnCruise)', noteWorthy: '\(noteWorthy)', day: '\(day)'")
+    }
+
+    /// Show artist Day only when this band has no schedule rows for the year.
+    private func refreshArtistDayDisplay() {
+        if bandHasScheduleEvents(bandName) {
+            day = ""
+            return
+        }
+        day = displayDayString(bandNameHandle.getBandDay(bandName))
+    }
+
+    private func bandHasScheduleEvents(_ name: String) -> Bool {
+        if schedule.cacheLoaded {
+            let cached = schedule.getBandSortedSchedulingData()
+            if let bandSchedule = cached[name], !bandSchedule.isEmpty {
+                return true
+            }
+        }
+        return !DataManager.shared.fetchEventsForBand(name, forYear: eventYear).isEmpty
     }
     
     private func loadBandLinks() {
@@ -1678,6 +1700,8 @@ class DetailViewModel: ObservableObject {
         
         // Update UI directly (we're already on main thread)
         scheduleEvents = newScheduleEvents
+        // Hide artist Day once schedule rows exist for this band.
+        refreshArtistDayDisplay()
     }
     
     private func loadNotes(generation: Int) {

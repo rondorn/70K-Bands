@@ -82,6 +82,8 @@ public class OtherFilterHandler {
                  java.util.List<String> venuesInUse = staticVariables.getVenueNamesInUseForList();
                  staticVariables.preferences.setVenueFilters(venuesInUse, true);
 
+                 staticVariables.preferences.setDayFilters(DayFilterHelper.getDayNamesInUseForList(), true);
+
                 staticVariables.preferences.setShowWillAttend(false);
                 // Hide Expired Events is a preference, not a filter — preserve it
 

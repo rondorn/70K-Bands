@@ -146,7 +146,7 @@ If saves suddenly fail or the app says you’re not connected, try **Disconnect*
 
 ### Browse
 
-See the Testing lineup (band, country, genre, noteworthy). Use **Refresh** if someone else changed Dropbox data.
+See the Testing lineup (band, country, genre, day, noteworthy). Use **Refresh** if someone else changed Dropbox data.
 
 ![Artists — Testing lineup](./images/artists-list.png)
 
@@ -159,7 +159,7 @@ See the Testing lineup (band, country, genre, noteworthy). Use **Refresh** if so
 3. If fields fill in automatically, **check that it’s the right band**.
 4. If the app shows Metal Archives or MusicBrainz **links** (several possible matches), **open those links**, research which act is correct, paste the correct page URL into the **Metal Archives** or **MusicBrainz** field, then click **Discover** again.
 5. If you get **no usable results**, ask the band for details or do public research and fill the form yourself.
-6. Review every field. You may **edit, replace, clear, or add** any detail whenever you think it needs fixing (name, links, country, genre, noteworthy, and so on). Discover is a starting point, not the final word.
+6. Review every field. You may **edit, replace, clear, or add** any detail whenever you think it needs fixing (name, links, country, genre, day, noteworthy, and so on). Discover is a starting point, not the final word.
 7. Optional — at the **bottom** of the form, check **Add description** and write the band blurb. If Settings → **File access** shows **write** on **Descriptions**, the text is saved for fans when you **Save to Testing**. If not, the app saves your text and shows a **link to copy** — send it to whoever maintains the description list.
 8. **Save to Testing**.
 
@@ -176,7 +176,7 @@ Discover will not guess when several bands share a name — that’s why step 4 
 
 #### Descriptions while you add or edit a band
 
-Scroll to the **bottom** of the add/edit form — after **Prior years**, before **Save**. You don’t have to open **Descriptions** unless you prefer that screen.
+Scroll to the **bottom** of the add/edit form — after **Day**, before **Save**. You don’t have to open **Descriptions** unless you prefer that screen.
 
 
 | Situation                             | What to do                                                                                                                                                                                                                             |

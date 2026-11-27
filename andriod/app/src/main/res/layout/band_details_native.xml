@@ -224,6 +224,33 @@
 
                 </LinearLayout>
 
+                <!-- Artist Day (only when band has no schedule events) -->
+                <LinearLayout
+                    android:id="@+id/day_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="2dp"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="120dp"
+                        android:layout_height="wrap_content"
+                        android:text="@string/Day"
+                        android:textColor="#CCCCCC"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/day_value"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textColor="#CCCCCC"
+                        android:textSize="14sp" />
+
+                </LinearLayout>
+
                 <!-- Last On Cruise -->
                 <LinearLayout
                     android:id="@+id/last_cruise_row"

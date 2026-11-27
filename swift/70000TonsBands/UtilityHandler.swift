@@ -217,6 +217,20 @@ private func regionUsesDayBeforeMonthForListDayLabel() -> Bool {
     return dayBeforeMonth
 }
 
+/// Split artist/schedule Day values on `;`, trim, drop empties (`Day 1;Day 2;` → `["Day 1", "Day 2"]`).
+func parseDayTokens(_ raw: String?) -> [String] {
+    guard let raw = raw, !raw.isEmpty else { return [] }
+    return raw
+        .split(separator: ";", omittingEmptySubsequences: false)
+        .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+        .filter { !$0.isEmpty }
+}
+
+/// Display form for artist Day on details: tokens joined by comma+space (`Day 1, Day 2`).
+func displayDayString(_ raw: String?) -> String {
+    parseDayTokens(raw).joined(separator: ", ")
+}
+
 /// Text for schedule **Day** label: **main list** `dayView` (tag 10) and **band detail** schedule row day cell. **Input is only that label string** (e.g. `1/26`; `Day 1` → stripped to `1` by callers). If it matches `digit(s)/digit(s)` and the region’s `Md` order is day-first, returns `day/month`; otherwise returns the same string unchanged. No other fields are read.
 func dayListLabelTextForRegion(_ displayedDayText: String) -> String {
     let t = displayedDayText.trimmingCharacters(in: .whitespacesAndNewlines)

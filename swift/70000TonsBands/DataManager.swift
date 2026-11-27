@@ -18,7 +18,7 @@ protocol DataManagerProtocol {
     func fetchBands() -> [BandData]
     func fetchBand(byName name: String, eventYear year: Int) -> BandData?
     /// Only band list import (full artist CSV) should pass lineIndex; schedule/event import must not. Pass nil to leave lineIndex unchanged or set to nil.
-    func createOrUpdateBand(name: String, eventYear: Int, officialSite: String?, imageUrl: String?, youtube: String?, metalArchives: String?, wikipedia: String?, country: String?, genre: String?, noteworthy: String?, priorYears: String?, lineIndex: Int?) -> BandData
+    func createOrUpdateBand(name: String, eventYear: Int, officialSite: String?, imageUrl: String?, youtube: String?, metalArchives: String?, wikipedia: String?, country: String?, genre: String?, noteworthy: String?, priorYears: String?, day: String?, lineIndex: Int?) -> BandData
     func createBandIfNotExists(name: String, eventYear: Int) -> Bool
     func deleteBand(name: String, eventYear: Int)
     /// Band names in canonical (artist CSV) order for QR encode/decode. lineIndex only; no fallback.

@@ -88,6 +88,9 @@ public class FilterButtonHandler  {
                             // Reset all location filters
                             java.util.List<String> venuesInUse = staticVariables.getVenueNamesInUseForList();
                             staticVariables.preferences.setVenueFilters(venuesInUse, true);
+
+                            // Reset Day filters
+                            staticVariables.preferences.setDayFilters(DayFilterHelper.getDayNamesInUseForList(), true);
                             
                             staticVariables.preferences.setShowWillAttend(false);
                             // Hide Expired Events is a preference, not a filter — preserve it

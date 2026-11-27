@@ -14,6 +14,10 @@ private var venueFilterSettings: [String: Bool] = [:]
 // Thread-safe access queue for venue settings
 private let venueSettingsQueue = DispatchQueue(label: "com.70kbands.venueSettings", attributes: .concurrent)
 
+// MARK: - Dynamic Day Filtering System (artist Day + schedule Day)
+private var dayFilterSettings: [String: Bool] = [:]
+private let daySettingsQueue = DispatchQueue(label: "com.70kbands.daySettings", attributes: .concurrent)
+
 // Thread-safe queue for readFiltersFile operations
 private let filtersFileQueue = DispatchQueue(label: "com.70kbands.filtersFile", qos: .userInitiated)
 
@@ -28,6 +32,42 @@ func getShowVenueEvents(venueName: String) -> Bool {
 func setShowVenueEvents(venueName: String, show: Bool) {
     venueSettingsQueue.async(flags: .barrier) {
         venueFilterSettings[venueName.lowercased()] = show
+    }
+}
+
+/// Day filter toggle — default ON when unset (entries visible until a day is deselected).
+func getShowDayEvents(dayName: String) -> Bool {
+    return daySettingsQueue.sync {
+        return dayFilterSettings[dayName.lowercased(), default: true]
+    }
+}
+
+func setShowDayEvents(dayName: String, show: Bool) {
+    daySettingsQueue.async(flags: .barrier) {
+        dayFilterSettings[dayName.lowercased()] = show
+    }
+}
+
+func getAllDayFilterStates() -> [String: Bool] {
+    return daySettingsQueue.sync {
+        return dayFilterSettings
+    }
+}
+
+func resetAllDayFiltersToShown() {
+    daySettingsQueue.async(flags: .barrier) {
+        for key in dayFilterSettings.keys {
+            dayFilterSettings[key] = true
+        }
+    }
+}
+
+/// Set day filter state for a specific list of day labels. Sync so refresh after clear sees updated state.
+func setDayFilters(dayNames: [String], show: Bool) {
+    daySettingsQueue.sync(flags: .barrier) {
+        for name in dayNames {
+            dayFilterSettings[name.lowercased()] = show
+        }
     }
 }
 
@@ -467,6 +507,11 @@ func writeFiltersFile(){
         for (venueName, showState) in dynamicVenueSettings {
             prefsString += "venue_\(venueName.lowercased()):" + boolToString(showState) + ";"
         }
+        // Save dynamic day settings
+        let dynamicDaySettings = getAllDayFilterStates()
+        for (dayName, showState) in dynamicDaySettings {
+            prefsString += "day_\(dayName.lowercased()):" + boolToString(showState) + ";"
+        }
         prefsString += "showUnofficalEvents:" + boolToString(getShowUnofficalEvents()) + ";"
         prefsString += "showSpecialEvents:" + boolToString(getShowSpecialEvents()) + ";"
         prefsString += "showMeetAndGreetEvents:" + boolToString(getShowMeetAndGreetEvents()) + ";"
@@ -651,11 +696,15 @@ private func readFiltersFileInternal(){
                 setScheduleUrl(valueArray[1])
                 
                 default:
-                    // Handle dynamic venue settings
+                    // Handle dynamic venue / day settings
                     if valueArray[0].hasPrefix("venue_") {
                         let venueName = String(valueArray[0].dropFirst(6)) // Remove "venue_" prefix
                         setShowVenueEvents(venueName: venueName, show: stringToBool(valueArray[1]))
                         print("🏟️ [VENUE_SETTINGS] Loaded venue '\(venueName)' = \(stringToBool(valueArray[1]))")
+                    } else if valueArray[0].hasPrefix("day_") {
+                        let dayName = String(valueArray[0].dropFirst(4)) // Remove "day_" prefix
+                        setShowDayEvents(dayName: dayName, show: stringToBool(valueArray[1]))
+                        print("📅 [DAY_SETTINGS] Loaded day '\(dayName)' = \(stringToBool(valueArray[1]))")
                     } else {
                         print("⚠️ [SETTINGS_DEBUG] Unknown setting key: \(valueArray[0])")
                     }

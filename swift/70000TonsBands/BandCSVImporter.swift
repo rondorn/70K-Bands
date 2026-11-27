@@ -208,6 +208,7 @@ extension BandCSVImporter {
         bandDict["genre"] = band.genre
         bandDict["noteworthy"] = band.noteworthy
         bandDict["priorYears"] = band.priorYears
+        bandDict["day"] = band.day
         
         return bandDict
     }
@@ -241,7 +242,7 @@ extension BandCSVImporter {
         // CRITICAL: lineIndex is ONLY set in this path (full band list import). Schedule/event import must never change it.
         var bandsInCSV = Set<String>()
         // lineIndex = 0-based row order in this band file only; count varies by year.
-        var bandsToInsert: [(name: String, eventYear: Int, officialSite: String?, imageUrl: String?, youtube: String?, metalArchives: String?, wikipedia: String?, country: String?, genre: String?, noteworthy: String?, priorYears: String?, lineIndex: Int?)] = []
+        var bandsToInsert: [(name: String, eventYear: Int, officialSite: String?, imageUrl: String?, youtube: String?, metalArchives: String?, wikipedia: String?, country: String?, genre: String?, noteworthy: String?, priorYears: String?, day: String?, lineIndex: Int?)] = []
         var lineIndexCounter = 0  // 0, 1, 2, ... = exact order of rows in the artist CSV (count varies by year; must match band file order for QR)
         
         for (index, lineData) in csvData.rows.enumerated() {
@@ -259,6 +260,9 @@ extension BandCSVImporter {
                 country: lineData["country"]
             )
 
+            // Accept Title Case `Day` (matches schedule header) or camelCase `day`.
+            let dayRaw = lineData["Day"] ?? lineData["day"]
+
             bandsToInsert.append((
                 name: bandName,
                 eventYear: eventYear,
@@ -271,6 +275,7 @@ extension BandCSVImporter {
                 genre: lineData["genre"],
                 noteworthy: lineData["noteworthy"],
                 priorYears: lineData["priorYears"],
+                day: dayRaw,
                 lineIndex: lineIndexCounter
             ))
             lineIndexCounter += 1
@@ -309,6 +314,7 @@ extension BandCSVImporter {
                     genre: bandData.genre,
                     noteworthy: bandData.noteworthy,
                     priorYears: bandData.priorYears,
+                    day: bandData.day,
                     lineIndex: bandData.lineIndex
                 )
             }

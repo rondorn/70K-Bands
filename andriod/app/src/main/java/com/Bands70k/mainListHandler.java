@@ -538,6 +538,14 @@ public class mainListHandler {
     }
 
     /**
+     * Whether a band-only (no schedule row) entry passes ranking + Day filters.
+     * Used by bands-only list mode for iOS parity.
+     */
+    public boolean bandPassesBandOnlyFilters(String bandName) {
+        return applyFilters(bandName, null);
+    }
+
+    /**
      * Applies all filters to a band at a given time index.
      * @param bandName The band name.
      * @param timeIndex The time index.
@@ -566,7 +574,12 @@ public class mainListHandler {
             // This is the path for "Current" view when bands have no events
             boolean rankingResult = checkFiltering(bandName);
             if (rankingResult == true) {
-                status = true;
+                if (DayFilterHelper.bandPassesDayFilter(bandName)) {
+                    status = true;
+                } else {
+                    status = false;
+                    filterTraceDropReason = "day_band_only";
+                }
             } else {
                 status = false;
                 filterTraceDropReason = "rank_band_only";
@@ -590,7 +603,12 @@ public class mainListHandler {
                     Log.d("FILTER_DEBUG", "🔍 Venue: '" + venue + "', venue result: " + venueResult);
 
                     if (venueResult == true) {
-                        status = true;
+                        scheduleHandler event = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex);
+                        if (DayFilterHelper.eventPassesDayFilter(event)) {
+                            status = true;
+                        } else {
+                            filterTraceDropReason = "day=" + (event != null ? event.getShowDay() : "null");
+                        }
                     } else {
                         filterTraceDropReason = "venue location=" + venue;
                     }
@@ -845,9 +863,11 @@ public class mainListHandler {
         if (allVenueStates.values().contains(Boolean.FALSE)) {
             venueFiltersDefault = false;
         }
+
+        boolean dayFiltersDefault = !DayFilterHelper.isAnyDayFilterActive();
         
         // Return true if ANY filter is active (not in default state)
-        return !(statusFiltersDefault && eventTypeFiltersDefault && venueFiltersDefault);
+        return !(statusFiltersDefault && eventTypeFiltersDefault && venueFiltersDefault && dayFiltersDefault);
     }
     
     /**
@@ -923,14 +943,15 @@ public class mainListHandler {
         
         // Apply the same logic as applyFilters() but for expired events
         if (timeIndex == null) {
-            // For bands with no schedule, just check ranking filters
-            return checkFiltering(bandName);
+            // For bands with no schedule, ranking + day filters
+            return checkFiltering(bandName) && DayFilterHelper.bandPassesDayFilter(bandName);
         } else {
-            // For scheduled events, check ranking, event type, and venue filters
+            // For scheduled events, check ranking, event type, venue, and day filters
             if (checkFiltering(bandName)) {
-                if (filterByEventType(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowType())) {
-                    if (filterByVenue(BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex).getShowLocation())) {
-                        return true;
+                scheduleHandler event = BandInfo.scheduleRecords.get(bandName).scheduleByTime.get(timeIndex);
+                if (filterByEventType(event.getShowType())) {
+                    if (filterByVenue(event.getShowLocation())) {
+                        return DayFilterHelper.eventPassesDayFilter(event);
                     }
                 }
             }

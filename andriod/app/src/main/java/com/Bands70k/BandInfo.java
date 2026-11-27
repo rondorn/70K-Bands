@@ -531,6 +531,30 @@ public class BandInfo {
     }
 
     /**
+     * Artist CSV Day field (`;`-separated tokens such as {@code Pre;Day 1}).
+     * @param bandName The name of the band.
+     * @return Raw day string, or empty if absent.
+     */
+    public static String getBandDay(String bandName) {
+        String day = getBandDetailsData(bandName, "day");
+        if (day != null && !day.trim().isEmpty()) {
+            return day.trim();
+        }
+        return "";
+    }
+
+    /**
+     * True when this band has at least one schedule event row for the loaded schedule.
+     */
+    public static boolean bandHasScheduleEvents(String bandName) {
+        if (scheduleRecords == null || bandName == null) {
+            return false;
+        }
+        scheduleTimeTracker tracker = scheduleRecords.get(bandName);
+        return tracker != null && tracker.scheduleByTime != null && !tracker.scheduleByTime.isEmpty();
+    }
+
+    /**
      * Gets the prior years for a band.
      * @param bandName The name of the band.
      * @return The prior years as a string or blank if not available.
@@ -719,28 +743,61 @@ public class BandInfo {
             if (file.exists()) {
                 BufferedReader br = new BufferedReader(new FileReader(file));
                 String line;
+                Map<String, Integer> headerIndex = null;
 
                 while ((line = br.readLine()) != null) {
                     try {
-                        String[] RowData = line.split(",");
-                        Map<String, String> bandDetails = new HashMap<String, String>();
-
-                        bandDetails = addToBandDetails("officalSite", RowData, 1, bandDetails);
-                        bandDetails = addToBandDetails("imageUrl", RowData, 2, bandDetails);
-                        bandDetails = addToBandDetails("youtube", RowData, 3, bandDetails);
-                        bandDetails = addToBandDetails("metalArchives", RowData, 4, bandDetails);
-                        bandDetails = addToBandDetails("wikipedia", RowData, 5, bandDetails);
-
-                        bandDetails = addToBandDetails("country", RowData, 6, bandDetails);
-                        bandDetails = addToBandDetails("genre", RowData, 7, bandDetails);
-                        bandDetails = addToBandDetails("note", RowData, 8, bandDetails);
-                        bandDetails = addToBandDetails("priorYears", RowData, 9, bandDetails);
-                        bandDetails = addToBandDetails("city", RowData, 10, bandDetails);
-                        bandDetails = addToBandDetails("state", RowData, 11, bandDetails);
-                        if (!RowData[0].contains("bandName")) {
-                            bandData.put(RowData[0], bandDetails);
-                            bandNames.add(RowData[0]);
+                        String[] RowData = line.split(",", -1);
+                        if (RowData.length == 0 || RowData[0] == null) {
+                            continue;
                         }
+                        if (RowData[0].contains("bandName")) {
+                            headerIndex = new HashMap<String, Integer>();
+                            for (int i = 0; i < RowData.length; i++) {
+                                String h = RowData[i] != null ? RowData[i].trim().toLowerCase(java.util.Locale.ROOT) : "";
+                                if (!h.isEmpty()) {
+                                    headerIndex.put(h, i);
+                                }
+                            }
+                            continue;
+                        }
+
+                        Map<String, String> bandDetails = new HashMap<String, String>();
+                        if (headerIndex != null) {
+                            putFromHeader(bandDetails, "officalSite", headerIndex, RowData, "officalsite");
+                            putFromHeader(bandDetails, "imageUrl", headerIndex, RowData, "imageurl");
+                            putFromHeader(bandDetails, "youtube", headerIndex, RowData, "youtube");
+                            putFromHeader(bandDetails, "metalArchives", headerIndex, RowData, "metalarchives");
+                            putFromHeader(bandDetails, "wikipedia", headerIndex, RowData, "wikipedia");
+                            putFromHeader(bandDetails, "country", headerIndex, RowData, "country");
+                            putFromHeader(bandDetails, "genre", headerIndex, RowData, "genre");
+                            // Admin/iOS use noteworthy; Android stores as note.
+                            if (headerIndex.containsKey("note")) {
+                                putFromHeader(bandDetails, "note", headerIndex, RowData, "note");
+                            } else {
+                                putFromHeader(bandDetails, "note", headerIndex, RowData, "noteworthy");
+                            }
+                            putFromHeader(bandDetails, "priorYears", headerIndex, RowData, "prioryears");
+                            putFromHeader(bandDetails, "city", headerIndex, RowData, "city");
+                            putFromHeader(bandDetails, "state", headerIndex, RowData, "state");
+                            putFromHeader(bandDetails, "day", headerIndex, RowData, "day");
+                        } else {
+                            bandDetails = addToBandDetails("officalSite", RowData, 1, bandDetails);
+                            bandDetails = addToBandDetails("imageUrl", RowData, 2, bandDetails);
+                            bandDetails = addToBandDetails("youtube", RowData, 3, bandDetails);
+                            bandDetails = addToBandDetails("metalArchives", RowData, 4, bandDetails);
+                            bandDetails = addToBandDetails("wikipedia", RowData, 5, bandDetails);
+                            bandDetails = addToBandDetails("country", RowData, 6, bandDetails);
+                            bandDetails = addToBandDetails("genre", RowData, 7, bandDetails);
+                            bandDetails = addToBandDetails("note", RowData, 8, bandDetails);
+                            bandDetails = addToBandDetails("priorYears", RowData, 9, bandDetails);
+                            bandDetails = addToBandDetails("city", RowData, 10, bandDetails);
+                            bandDetails = addToBandDetails("state", RowData, 11, bandDetails);
+                            // Positional Day after state when present (legacy files without header).
+                            bandDetails = addToBandDetails("day", RowData, 12, bandDetails);
+                        }
+                        bandData.put(RowData[0], bandDetails);
+                        bandNames.add(RowData[0]);
                     } catch (Exception error) {
                         Log.d("error", "Encountered an unknown error" + error.getMessage());
                     }
@@ -756,6 +813,16 @@ public class BandInfo {
         Log.d("BandInfo", "Parsed band CSV: " + bandNames.size() + " bands");
 
         return bandNames;
+    }
+
+    private void putFromHeader(Map<String, String> bandDetails, String storeKey,
+                               Map<String, Integer> headerIndex, String[] rowData, String headerKey) {
+        Integer idx = headerIndex.get(headerKey);
+        if (idx != null && idx >= 0 && idx < rowData.length && rowData[idx] != null) {
+            bandDetails.put(storeKey, rowData[idx]);
+        } else {
+            bandDetails.put(storeKey, "");
+        }
     }
 
 

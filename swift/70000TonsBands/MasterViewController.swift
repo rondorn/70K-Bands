@@ -3621,6 +3621,9 @@ class MasterViewController: UITableViewController, UISplitViewControllerDelegate
             guard let name = venueNameToCheck else { return false }
             return getShowVenueEvents(venueName: name)
         }
+
+        // 2b. Day filtering
+        filteredEvents = filteredEvents.filter { eventPassesDayFilter($0) }
         
         // 3. Expiration filtering
         if getHideExpireScheduleData() {

@@ -206,6 +206,10 @@ class LandscapeScheduleViewModel: ObservableObject {
         }
         
         print("🔍 [LANDSCAPE_FILTER] After venue filtering: \(filteredEvents.count) events")
+
+        // 2b. DAY FILTERS (schedule Day on event; empty day always passes)
+        filteredEvents = filteredEvents.filter { eventPassesDayFilter($0) }
+        print("🔍 [LANDSCAPE_FILTER] After day filtering: \(filteredEvents.count) events")
         
         // 3. PRIORITY/BAND RANKING FILTERS
         filteredEvents = filteredEvents.filter { event in

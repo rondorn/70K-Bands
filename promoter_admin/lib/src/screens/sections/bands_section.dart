@@ -88,6 +88,7 @@ class _BandsSectionState extends State<BandsSection> {
   final _genre = TextEditingController();
   final _noteworthy = TextEditingController();
   final _priorYears = TextEditingController();
+  final _day = TextEditingController();
   final _description = TextEditingController();
   final _filter = TextEditingController();
 
@@ -104,6 +105,7 @@ class _BandsSectionState extends State<BandsSection> {
           _bands[i].country,
           _bands[i].genre,
           _bands[i].noteworthy,
+          _bands[i].day,
         ]))
           i,
     ];
@@ -155,6 +157,7 @@ class _BandsSectionState extends State<BandsSection> {
     _genre.dispose();
     _noteworthy.dispose();
     _priorYears.dispose();
+    _day.dispose();
     _description.dispose();
     _filter.dispose();
     super.dispose();
@@ -175,6 +178,7 @@ class _BandsSectionState extends State<BandsSection> {
     _genre.clear();
     _noteworthy.clear();
     _priorYears.clear();
+    _day.clear();
     _description.clear();
     _discoverStatus = null;
     _discoverWarnings = null;
@@ -197,6 +201,7 @@ class _BandsSectionState extends State<BandsSection> {
     _genre.text = band.genre;
     _noteworthy.text = (band.fields['noteworthy'] ?? '').trim();
     _priorYears.text = (band.fields['priorYears'] ?? '').trim();
+    _day.text = band.day;
     _discoverStatus = null;
     _discoverWarnings = null;
     _discoverPickListUrl = null;
@@ -397,6 +402,7 @@ class _BandsSectionState extends State<BandsSection> {
           ? ' '
           : _noteworthy.text.trim(),
       'priorYears': _priorYears.text.trim(),
+      'Day': _day.text.trim(),
     };
     if (_useCityState) {
       fields['city'] = _city.text.trim();
@@ -872,6 +878,10 @@ class _BandsSectionState extends State<BandsSection> {
                                         label: Text('Genre'),
                                       ),
                                       DataColumn(
+                                        columnWidth: adminTableFlexColumn,
+                                        label: Text('Day'),
+                                      ),
+                                      DataColumn(
                                         columnWidth: adminTableWideFlexColumn,
                                         label: Text('Noteworthy'),
                                       ),
@@ -892,6 +902,9 @@ class _BandsSectionState extends State<BandsSection> {
                                             ),
                                             DataCell(
                                               adminTableText(_bands[i].genre),
+                                            ),
+                                            DataCell(
+                                              adminTableText(_bands[i].day),
                                             ),
                                             DataCell(
                                               adminTableText(
@@ -1262,6 +1275,18 @@ class _BandsSectionState extends State<BandsSection> {
             FormRow(
               label: 'Prior years',
               child: TextField(controller: _priorYears),
+            ),
+            FormRow(
+              label: 'Day',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(controller: _day),
+                  const HintText(
+                    'Optional. e.g. Pre, Day 1, Day 2. Multiple days: Pre;Day 1',
+                  ),
+                ],
+              ),
             ),
             _buildDescriptionSection(),
             const SizedBox(height: 8),

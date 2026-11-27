@@ -508,4 +508,7 @@ class BandRow {
   String get genre => (fields['genre'] ?? '').trim();
   String get country => (fields['country'] ?? '').trim();
   String get noteworthy => (fields['noteworthy'] ?? '').trim();
+  /// Artist Day (`Pre`, `Day 1`, or `;`-separated). Accepts Title Case or lowercase key.
+  String get day =>
+      (fields['Day'] ?? fields['day'] ?? '').trim();
 }

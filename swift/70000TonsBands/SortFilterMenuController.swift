@@ -69,3 +69,127 @@ func getVenueNamesInUseForList() -> [String] {
 func venueDisplayName(for venueName: String) -> String {
     venueName.components(separatedBy: " (").first?.trimmingCharacters(in: .whitespaces) ?? venueName
 }
+
+/// Days filter bucket for bands/events with no Day value. Shown only when other Day labels exist and at least one record has no day.
+let dayFilterUnknownLabel = "Unknown"
+
+/// Whether a schedule event counts as expired for Day filter discovery / matching (10‑min buffer).
+func isEventExpiredForDayFilter(_ event: EventData) -> Bool {
+    let currentTime = Date().timeIntervalSinceReferenceDate
+    var endTimeIndex = event.endTimeIndex
+    if event.timeIndex > endTimeIndex {
+        endTimeIndex += 86400
+    }
+    return endTimeIndex + 600 <= currentTime
+}
+
+private func dayNumberFromFilterLabel(_ label: String) -> Int? {
+    let t = label.trimmingCharacters(in: .whitespacesAndNewlines)
+    if t.lowercased().hasPrefix("day ") {
+        return Int(t.dropFirst(4).trimmingCharacters(in: .whitespacesAndNewlines))
+    }
+    return nil
+}
+
+func isDayFilterUnknownLabel(_ label: String) -> Bool {
+    label.trimmingCharacters(in: .whitespacesAndNewlines)
+        .caseInsensitiveCompare(dayFilterUnknownLabel) == .orderedSame
+}
+
+/// Stable order: Pre first, then Day N numeric, then alpha, Unknown last.
+func sortDayFilterLabels(_ labels: [String]) -> [String] {
+    labels.sorted { a, b in
+        let aUnknown = isDayFilterUnknownLabel(a)
+        let bUnknown = isDayFilterUnknownLabel(b)
+        if aUnknown != bUnknown { return !aUnknown && bUnknown }
+        let aLower = a.lowercased()
+        let bLower = b.lowercased()
+        let aPre = aLower == "pre" || aLower.hasPrefix("pre ") || aLower.hasPrefix("pre-")
+        let bPre = bLower == "pre" || bLower.hasPrefix("pre ") || bLower.hasPrefix("pre-")
+        if aPre != bPre { return aPre && !bPre }
+        let aNum = dayNumberFromFilterLabel(a)
+        let bNum = dayNumberFromFilterLabel(b)
+        if let an = aNum, let bn = bNum { return an < bn }
+        if aNum != nil { return true }
+        if bNum != nil { return false }
+        return a.localizedCaseInsensitiveCompare(b) == .orderedAscending
+    }
+}
+
+/// Day labels for the Days filter section: schedule event days (respecting Hide Expired) union artist Day tokens for bands with no schedule.
+/// Appends Unknown when other day labels exist and at least one record has no Day.
+func getDayNamesInUseForList() -> [String] {
+    var days = Set<String>()
+    var hasUnknownDayRecords = false
+    let hideExpired = getHideExpireScheduleData()
+    let allEvents = DataManager.shared.fetchEvents(forYear: eventYear)
+    var bandsWithSchedule = Set<String>()
+
+    for event in allEvents {
+        bandsWithSchedule.insert(event.bandName)
+        if hideExpired && isEventExpiredForDayFilter(event) {
+            continue
+        }
+        if let raw = event.day?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty {
+            days.insert(raw)
+        } else {
+            hasUnknownDayRecords = true
+        }
+    }
+
+    let bands = DataManager.shared.fetchBands(forYear: eventYear).filter { $0.lineIndex != nil }
+    for band in bands {
+        if bandsWithSchedule.contains(band.bandName) {
+            continue
+        }
+        let tokens = parseDayTokens(band.day)
+        if tokens.isEmpty {
+            hasUnknownDayRecords = true
+        } else {
+            for token in tokens {
+                days.insert(token)
+            }
+        }
+    }
+
+    var result = sortDayFilterLabels(Array(days))
+    if !result.isEmpty && hasUnknownDayRecords {
+        result.append(dayFilterUnknownLabel)
+    }
+    return result
+}
+
+/// Whether a band-only row passes the Days filter (per-record: schedule days if present, else artist Day tokens).
+/// Missing Day is gated by the Unknown toggle (default on).
+func bandPassesDayFilter(bandName: String, artistDay: String?) -> Bool {
+    let events = DataManager.shared.fetchEventsForBand(bandName, forYear: eventYear)
+    let hideExpired = getHideExpireScheduleData()
+
+    if !events.isEmpty {
+        let relevantEvents = events.filter { !hideExpired || !isEventExpiredForDayFilter($0) }
+        // Schedule owned this band, but Hide Expired left nothing — treat as Unknown day.
+        if relevantEvents.isEmpty {
+            return getShowDayEvents(dayName: dayFilterUnknownLabel)
+        }
+        return relevantEvents.contains { event in
+            guard let d = event.day?.trimmingCharacters(in: .whitespacesAndNewlines), !d.isEmpty else {
+                return getShowDayEvents(dayName: dayFilterUnknownLabel)
+            }
+            return getShowDayEvents(dayName: d)
+        }
+    }
+
+    let tokens = parseDayTokens(artistDay)
+    if tokens.isEmpty {
+        return getShowDayEvents(dayName: dayFilterUnknownLabel)
+    }
+    return tokens.contains { getShowDayEvents(dayName: $0) }
+}
+
+/// Whether a schedule event row passes the Days filter. Missing Day uses the Unknown toggle.
+func eventPassesDayFilter(_ event: EventData) -> Bool {
+    guard let d = event.day?.trimmingCharacters(in: .whitespacesAndNewlines), !d.isEmpty else {
+        return getShowDayEvents(dayName: dayFilterUnknownLabel)
+    }
+    return getShowDayEvents(dayName: d)
+}

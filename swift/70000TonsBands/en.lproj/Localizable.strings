@@ -189,6 +189,7 @@
 "Band Ranking Filters" = "Band Ranking Filters"; //menu header
 "Sorting Options" = "Sorting Options"; //menu header
 "Event Type Filters" = "Event Type Filters"; //menu header
+"Days" = "Days"; //menu header (artist Day + schedule Day filters)
 "Location Filters" = "Location Filters"; //menu header
 "All venues hidden" = "All venues hidden";
 "TapFilterToShowVenues" = "Tap the filter icon above to show venues again.";

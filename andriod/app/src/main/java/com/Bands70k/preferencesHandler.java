@@ -601,6 +601,59 @@ public class preferencesHandler {
         }
     }
 
+    /**
+     * Day filter toggle — default ON when unset (entries visible until a day is deselected).
+     * Keys stored as {@code day_<normalized>} in SharedPreferences (iOS {@code day_*} parity).
+     */
+    public Boolean getShowDayEvents(String dayName) {
+        if (dayName == null || dayName.trim().isEmpty()) {
+            return true;
+        }
+        if (staticVariables.context == null) {
+            return true;
+        }
+        android.content.SharedPreferences dayPrefs = staticVariables.context.getSharedPreferences(
+                "custom_day_prefs", android.content.Context.MODE_PRIVATE);
+        return dayPrefs.getBoolean("day_" + dayName.trim().toLowerCase(java.util.Locale.ROOT), true);
+    }
+
+    public void setShowDayEvents(String dayName, Boolean show) {
+        if (dayName == null || dayName.trim().isEmpty() || staticVariables.context == null) {
+            return;
+        }
+        android.content.SharedPreferences dayPrefs = staticVariables.context.getSharedPreferences(
+                "custom_day_prefs", android.content.Context.MODE_PRIVATE);
+        android.content.SharedPreferences.Editor editor = dayPrefs.edit();
+        editor.putBoolean("day_" + dayName.trim().toLowerCase(java.util.Locale.ROOT), show);
+        editor.apply();
+    }
+
+    /** Reset Day filter toggles for the given labels (e.g. Clear All Filters). */
+    public void setDayFilters(java.util.List<String> dayNames, boolean show) {
+        if (dayNames == null) {
+            return;
+        }
+        for (String name : dayNames) {
+            setShowDayEvents(name, show);
+        }
+    }
+
+    public java.util.Map<String, Boolean> getAllDayFilterStates() {
+        java.util.Map<String, Boolean> map = new java.util.HashMap<>();
+        if (staticVariables.context == null) {
+            return map;
+        }
+        android.content.SharedPreferences dayPrefs = staticVariables.context.getSharedPreferences(
+                "custom_day_prefs", android.content.Context.MODE_PRIVATE);
+        for (String key : dayPrefs.getAll().keySet()) {
+            if (key.startsWith("day_")) {
+                String dayName = key.substring(4);
+                map.put(dayName, dayPrefs.getBoolean(key, true));
+            }
+        }
+        return map;
+    }
+
     public void setSortByTime(Boolean value) {
         sortByTime = value;
     }

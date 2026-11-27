@@ -706,6 +706,9 @@ struct DetailView: View {
             if !viewModel.genre.isEmpty {
                 DetailRow(label: NSLocalizedString("genre", comment: "Genre"), value: viewModel.genre)
             }
+            if !viewModel.day.isEmpty {
+                DetailRow(label: NSLocalizedString("Day", comment: "Day"), value: viewModel.day)
+            }
             if !viewModel.lastOnCruise.isEmpty {
                 DetailRow(label: NSLocalizedString("Last On Cruise", comment: "Last On Cruise"), value: viewModel.lastOnCruise)
             }
@@ -725,6 +728,9 @@ struct DetailView: View {
             }
             if !viewModel.genre.isEmpty {
                 DetailRow(label: NSLocalizedString("genre", comment: "Genre"), value: viewModel.genre)
+            }
+            if !viewModel.day.isEmpty {
+                DetailRow(label: NSLocalizedString("Day", comment: "Day"), value: viewModel.day)
             }
             if !viewModel.lastOnCruise.isEmpty {
                 DetailRow(label: NSLocalizedString("Last On Cruise", comment: "Last On Cruise"), value: viewModel.lastOnCruise)

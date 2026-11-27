@@ -3343,6 +3343,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                         && !bandName.toUpperCase(Locale.US).contains(searchQuery.toUpperCase(Locale.US))) {
                     continue;
                 }
+                // Ranking + Day filters (same as schedule band-only path / iOS)
+                if (listHandler != null && !listHandler.bandPassesBandOnlyFilters(bandName)) {
+                    continue;
+                }
                 bandListItem bandItem = new bandListItem(bandName);
                 bandItem.setRankImg(rankStore.getRankImageForBand(bandName));
                 newItems.add(bandItem);
@@ -3352,13 +3356,13 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
                 counter++;
             }
 
-            if (counter == 0 && filterBySearch && !bandNames.isEmpty()) {
+            if (counter == 0 && !bandNames.isEmpty()) {
                 String filterIssueMessage = getResources().getString(R.string.data_filter_issue);
                 bandListItem bandItem = new bandListItem(filterIssueMessage);
                 newItems.add(bandItem);
                 newBandNamesIndex.add(filterIssueMessage);
                 newScheduleSortedBandNames.add(filterIssueMessage);
-                Log.d("searchCriteria", "Bands-only search: no matches, showing filter issue message");
+                Log.d("searchCriteria", "Bands-only: no matches after search/filters, showing filter issue message");
             }
 
             Log.d("VIEW_MODE_DEBUG", "🎵 displayBandDataWithoutSchedule: Built " + counter + " items in new list");
@@ -4312,6 +4316,10 @@ public class showBands extends Activity implements MediaPlayer.OnPreparedListene
         filterState.append("|unofficial:").append(staticVariables.preferences.getShowUnofficalEvents());
         filterState.append("|sortByTime:").append(staticVariables.preferences.getSortByTime());
         filterState.append("|scheduleView:").append(staticVariables.preferences.getShowScheduleView());
+        for (String dayName : DayFilterHelper.getDayNamesInUseForList()) {
+            filterState.append("|day_").append(dayName.toLowerCase(java.util.Locale.ROOT))
+                    .append(":").append(staticVariables.preferences.getShowDayEvents(dayName));
+        }
         
         return filterState.toString();
     }

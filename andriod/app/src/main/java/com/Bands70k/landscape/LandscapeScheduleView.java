@@ -21,6 +21,7 @@ import android.widget.Switch;
 import android.widget.TextView;
 import com.Bands70k.BandInfo;
 import com.Bands70k.CommonFilterMenuBuilder;
+import com.Bands70k.DayFilterHelper;
 import com.Bands70k.EventTypeConfig;
 import com.Bands70k.FestivalConfig;
 import com.Bands70k.FilterButtonHandler;
@@ -1085,6 +1086,10 @@ public class LandscapeScheduleView extends LinearLayout {
                         break;
                     }
                 }
+            }
+
+            if (!hasActiveFilters && DayFilterHelper.isAnyDayFilterActive()) {
+                hasActiveFilters = true;
             }
             
             // iOS-style: icon + "Filters" text always visible; badge only when filters hide records
@@ -2655,6 +2660,7 @@ public class LandscapeScheduleView extends LinearLayout {
                             ? venueNamesForFilterMenu
                             : staticVariables.getVenueNamesInUseForList();
                     staticVariables.preferences.setVenueFilters(venueNames, true);
+                    staticVariables.preferences.setDayFilters(DayFilterHelper.getDayNamesInUseForList(), true);
                     staticVariables.preferences.setShowWillAttend(false); // Turn off Show Flagged Events Only
                     // Hide Expired Events is a preference, not a filter — preserve it
                     staticVariables.preferences.saveData();
@@ -2775,6 +2781,11 @@ public class LandscapeScheduleView extends LinearLayout {
         
         // Venue filter
         if (block.location != null && !staticVariables.preferences.getShowVenueEvents(block.location)) {
+            return false;
+        }
+
+        // Day filter (schedule Day on this event; empty → Unknown toggle)
+        if (!DayFilterHelper.eventDayPassesFilter(block.day)) {
             return false;
         }
         

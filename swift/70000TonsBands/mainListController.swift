@@ -259,6 +259,11 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
         if let name = venueNameToCheck, !getShowVenueEvents(venueName: name) {
             return false
         }
+
+        // 2b. Day filter (schedule Day on this event row)
+        if !eventPassesDayFilter(event) {
+            return false
+        }
         
     // 3. Expiration filter - CALCULATE AT FILTER TIME, NOT IMPORT TIME
     // This ensures that if the user changes timezones, events are still shown at the correct local times
@@ -551,6 +556,10 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
             if priority == 2 && !getMightSeeOn() { return nil }  
             if priority == 3 && !getWontSeeOn() { return nil }
             if priority == 0 && !getUnknownSeeOn() { return nil }
+
+            if !bandPassesDayFilter(bandName: bandName, artistDay: band.day) {
+                return nil
+            }
             
             return bandName
         }
@@ -652,6 +661,10 @@ func getFilteredScheduleData(sortedBy: String, priorityManager: SQLitePriorityMa
                 if priority == 2 && !getMightSeeOn() { continue }
                 if priority == 3 && !getWontSeeOn() { continue }
                 if priority == 0 && !getUnknownSeeOn() { continue }
+
+                if !bandPassesDayFilter(bandName: bandName, artistDay: band.day) {
+                    continue
+                }
                 
                 allBandNames.append(bandName)
             }

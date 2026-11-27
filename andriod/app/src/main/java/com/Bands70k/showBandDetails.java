@@ -109,8 +109,8 @@ public class showBandDetails extends Activity {
     private TextView userNotesText;
     private TextView linksLabel;
     private ImageView websiteLink, metalArchivesLink, wikipediaLink, youtubeLink;
-    private TextView countryValue, genreValue, lastCruiseValue, csvNoteworthyValue, noteValue;
-    private LinearLayout countryRow, genreRow, lastCruiseRow, csvNoteworthyRow, noteRow;
+    private TextView countryValue, genreValue, dayValue, lastCruiseValue, csvNoteworthyValue, noteValue;
+    private LinearLayout countryRow, genreRow, dayRow, lastCruiseRow, csvNoteworthyRow, noteRow;
     private Button unknownButton, mustButton, mightButton, wontButton;
     
     // WebView navigation text buttons
@@ -1355,11 +1355,13 @@ public class showBandDetails extends Activity {
         // Extra data views
         countryValue = findViewById(R.id.country_value);
         genreValue = findViewById(R.id.genre_value);
+        dayValue = findViewById(R.id.day_value);
         lastCruiseValue = findViewById(R.id.last_cruise_value);
         csvNoteworthyValue = findViewById(R.id.csv_noteworthy_value);
         noteValue = findViewById(R.id.note_value);
         countryRow = findViewById(R.id.country_row);
         genreRow = findViewById(R.id.genre_row);
+        dayRow = findViewById(R.id.day_row);
         lastCruiseRow = findViewById(R.id.last_cruise_row);
         csvNoteworthyRow = findViewById(R.id.csv_noteworthy_row);
         noteRow = findViewById(R.id.note_row);
@@ -1418,11 +1420,13 @@ public class showBandDetails extends Activity {
         // Extra data views
         countryValue = findViewById(R.id.country_value);
         genreValue = findViewById(R.id.genre_value);
+        dayValue = findViewById(R.id.day_value);
         lastCruiseValue = findViewById(R.id.last_cruise_value);
         csvNoteworthyValue = findViewById(R.id.csv_noteworthy_value);
         noteValue = findViewById(R.id.note_value);
         countryRow = findViewById(R.id.country_row);
         genreRow = findViewById(R.id.genre_row);
+        dayRow = findViewById(R.id.day_row);
         lastCruiseRow = findViewById(R.id.last_cruise_row);
         csvNoteworthyRow = findViewById(R.id.csv_noteworthy_row);
         noteRow = findViewById(R.id.note_row);
@@ -3597,6 +3601,17 @@ public class showBandDetails extends Activity {
             hasExtraData = true;
         } else {
             genreRow.setVisibility(View.GONE);
+        }
+
+        // Artist Day — only when this band has no schedule events (schedule rows already show day)
+        String artistDayDisplay = DayFilterHelper.displayDayString(BandInfo.getBandDay(bandName));
+        if (!BandInfo.bandHasScheduleEvents(bandName) && !artistDayDisplay.isEmpty()
+                && dayRow != null && dayValue != null) {
+            dayValue.setText(artistDayDisplay);
+            dayRow.setVisibility(View.VISIBLE);
+            hasExtraData = true;
+        } else if (dayRow != null) {
+            dayRow.setVisibility(View.GONE);
         }
         
         // Last on cruise

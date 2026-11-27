@@ -108,6 +108,8 @@ open class bandNamesHandler {
                         value = bandData.noteworthy ?? ""
                     case "priorYears":
                         value = bandData.priorYears ?? ""
+                    case "day":
+                        value = bandData.day ?? ""
                     default:
                         value = ""
                     }
@@ -240,6 +242,9 @@ open class bandNamesHandler {
                 }
                 if let priorYears = band.priorYears, !priorYears.isEmpty {
                     bandData["priorYears"] = priorYears
+                }
+                if let day = band.day, !day.isEmpty {
+                    bandData["bandDay"] = day
                 }
                 
                 self.bandNames[bandName] = bandData
@@ -1077,6 +1082,41 @@ open class bandNamesHandler {
             }
         }
         
+        return result
+    }
+
+    /// Returns the artist CSV Day field for a band (`;`-separated raw), or empty if none.
+    func getBandDay(_ band: String) -> String {
+        var result = ""
+        staticBandName.sync {
+            result = self.bandNames[band]?["bandDay"] ?? ""
+        }
+
+        if result.isEmpty {
+            if MasterViewController.isYearChangeInProgress {
+                queueBandLookupForAfterYearChange(bandName: band, field: "day") { day in
+                    if !day.isEmpty {
+                        staticBandName.sync {
+                            if self.bandNames[band] == nil {
+                                self.bandNames[band] = [:]
+                            }
+                            self.bandNames[band]?["bandDay"] = day
+                        }
+                    }
+                }
+            } else if let bandData = dataManager.fetchBand(byName: band, eventYear: eventYear) {
+                result = bandData.day ?? ""
+                if !result.isEmpty {
+                    staticBandName.sync {
+                        if self.bandNames[band] == nil {
+                            self.bandNames[band] = [:]
+                        }
+                        self.bandNames[band]?["bandDay"] = result
+                    }
+                }
+            }
+        }
+
         return result
     }
 

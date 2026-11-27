@@ -71,6 +71,8 @@ class LineupService {
     'genre',
     'noteworthy',
     'priorYears',
+    // Title Case to match schedule Day / iOS BandCSVImporter (also accepts lowercase day).
+    'Day',
   ];
 
   /// CSV columns for the lineup file; includes city/state when enabled.

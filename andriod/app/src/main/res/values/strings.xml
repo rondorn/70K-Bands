@@ -188,6 +188,7 @@
     <string name="clear_filters">Clear Filters</string>
     <!-- menu choice -->
     <string name="band_ranking_filters">Band Ranking Filters</string>
+    <string name="days_filters">Days</string>
     <!-- menu header -->
     <string name="show_only_flagged_as_attended">My Events Only</string>
     

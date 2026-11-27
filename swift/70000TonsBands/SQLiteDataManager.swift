@@ -21,7 +21,7 @@ class SQLiteDataManager: DataManagerProtocol {
     private var readOnlyDb: Connection?
     
     // Database version for schema migrations
-    private let currentSchemaVersion = 9  // v9: bands.lineIndex for canonical order (offline QR)
+    private let currentSchemaVersion = 10  // v10: bands.day (artist CSV Day field)
     private let schemaVersionKey = "SQLiteSchemaVersion"
     
     // Table definitions
@@ -44,6 +44,8 @@ class SQLiteDataManager: DataManagerProtocol {
     private let genre = Expression<String?>("genre")
     private let noteworthy = Expression<String?>("noteworthy")
     private let priorYears = Expression<String?>("priorYears")
+    /// Artist CSV Day (`;`-separated). Named bandDay to avoid clashing with events.day Expression.
+    private let bandDay = Expression<String?>("day")
     /// 0-based position in source artist CSV; used for canonical band order when bandFile.txt is missing (offline).
     private let lineIndex = Expression<Int?>("lineIndex")
     
@@ -182,6 +184,10 @@ class SQLiteDataManager: DataManagerProtocol {
             if storedVersion == 8 {
                 try? db.execute("ALTER TABLE bands ADD COLUMN lineIndex INTEGER")
             }
+            // v9 -> v10: artist Day field on bands.
+            if storedVersion == 9 || storedVersion == 8 {
+                try? db.execute("ALTER TABLE bands ADD COLUMN day TEXT")
+            }
             // Major schema bumps: drop and recreate (only when needed in future).
             // user_priorities / user_attendances are owned by SQLitePriorityManager / SQLiteAttendanceManager,
             // which may already have created them this launch; dropping them here (e.g. on a fresh install,
@@ -217,6 +223,7 @@ class SQLiteDataManager: DataManagerProtocol {
             t.column(genre)
             t.column(noteworthy)
             t.column(priorYears)
+            t.column(bandDay)
             t.column(lineIndex)
             t.unique(bandName, eventYear)
         })
@@ -285,7 +292,8 @@ class SQLiteDataManager: DataManagerProtocol {
                     country: row[country],
                     genre: row[genre],
                     noteworthy: row[noteworthy],
-                    priorYears: row[priorYears]
+                    priorYears: row[priorYears],
+                    day: row[bandDay]
                 )
                 bands.append(band)
             }
@@ -314,7 +322,8 @@ class SQLiteDataManager: DataManagerProtocol {
                     country: row[country],
                     genre: row[genre],
                     noteworthy: row[noteworthy],
-                    priorYears: row[priorYears]
+                    priorYears: row[priorYears],
+                    day: row[bandDay]
                 )
                 bands.append(band)
             }
@@ -344,7 +353,8 @@ class SQLiteDataManager: DataManagerProtocol {
                     country: row[country],
                     genre: row[genre],
                     noteworthy: row[noteworthy],
-                    priorYears: row[priorYears]
+                    priorYears: row[priorYears],
+                    day: row[bandDay]
                 )
                 return band
             }
@@ -385,7 +395,7 @@ class SQLiteDataManager: DataManagerProtocol {
     }
     
     /// lineIndex: only set when called from full band list import (BandCSVImporter); pass nil for schedule/event paths so existing lineIndex is not overwritten.
-    func createOrUpdateBand(name: String, eventYear year: Int, officialSite: String?, imageUrl: String?, youtube: String?, metalArchives: String?, wikipedia: String?, country: String?, genre: String?, noteworthy: String?, priorYears: String?, lineIndex lineIndexParam: Int? = nil) -> BandData {
+    func createOrUpdateBand(name: String, eventYear year: Int, officialSite: String?, imageUrl: String?, youtube: String?, metalArchives: String?, wikipedia: String?, country: String?, genre: String?, noteworthy: String?, priorYears: String?, day: String? = nil, lineIndex lineIndexParam: Int? = nil) -> BandData {
         guard let db = db else {
             fatalError("Database not initialized")
         }
@@ -433,6 +443,7 @@ class SQLiteDataManager: DataManagerProtocol {
                 self.genre <- genre,
                 self.noteworthy <- noteworthy,
                 self.priorYears <- priorYears,
+                self.bandDay <- day,
                 self.lineIndex <- lineIndexParam
             )
             try db.run(insert)
@@ -453,7 +464,8 @@ class SQLiteDataManager: DataManagerProtocol {
             country: country,
             genre: genre,
             noteworthy: noteworthy,
-            priorYears: priorYears
+            priorYears: priorYears,
+            day: day
         )
     }
     
@@ -487,6 +499,7 @@ class SQLiteDataManager: DataManagerProtocol {
                 self.genre <- nil,
                 self.noteworthy <- nil,
                 self.priorYears <- nil,
+                self.bandDay <- nil,
                 self.lineIndex <- nil
             )
             try db.run(insert)
@@ -508,7 +521,7 @@ class SQLiteDataManager: DataManagerProtocol {
     /// Batch insert/update bands within a single transaction. lineIndex = 0-based row order from the full band list CSV only (count varies by year). Only this path and createOrUpdateBand(..., lineIndex:) set lineIndex; schedule/event import must never set it.
     /// Retries on "database is locked" so band list import can succeed when other threads hold the DB briefly.
     /// - Returns: true if the batch wrote successfully; false if DB was nil, locked after retries, or another error. Caller must not run delete/clear when false (leave existing records alone).
-    func batchCreateOrUpdateBands(_ bands: [(name: String, eventYear: Int, officialSite: String?, imageUrl: String?, youtube: String?, metalArchives: String?, wikipedia: String?, country: String?, genre: String?, noteworthy: String?, priorYears: String?, lineIndex: Int?)]) -> Bool {
+    func batchCreateOrUpdateBands(_ bands: [(name: String, eventYear: Int, officialSite: String?, imageUrl: String?, youtube: String?, metalArchives: String?, wikipedia: String?, country: String?, genre: String?, noteworthy: String?, priorYears: String?, day: String?, lineIndex: Int?)]) -> Bool {
         // Prevent concurrent batch inserts
         batchInsertLock.lock()
         defer { batchInsertLock.unlock() }
@@ -559,6 +572,7 @@ class SQLiteDataManager: DataManagerProtocol {
                             self.genre <- bandData.genre,
                             self.noteworthy <- bandData.noteworthy,
                             self.priorYears <- bandData.priorYears,
+                            self.bandDay <- bandData.day,
                             self.lineIndex <- bandData.lineIndex
                         )
                         try db.run(insert)

@@ -132,7 +132,7 @@ public class CommonFilterMenuBuilder {
         boolean showRichEventSections = showEventSections && !onlyUnofficialSchedule;
         boolean showUnofficialOnlyEventSection = showEventSections && onlyUnofficialSchedule;
         if (menuType == MenuType.PORTRAIT) {
-            // Portrait order: Hide Expired -> Sort By Name -> Show Flagged -> Band Rankings -> Event Types -> Locations
+            // Portrait order: Hide Expired -> Sort By Name -> Show Flagged -> Band Rankings -> Days -> Event Types -> Locations
             // When every event is Cruiser Organized / Unofficial: only Hide Expired (if any past), band rankings, and unofficial toggle.
             buildShowExpiredEventsSection(context, filterList, allFilterSwitches, expiredSwitchRef, isFlaggedFilterEnabled, wrapperCallbacks, eventSectionsContainerRef, unofficialOnlySectionRef, onlyUnofficialSchedule);
             LinearLayout eventSectionsContainer = new LinearLayout(context);
@@ -143,6 +143,7 @@ public class CommonFilterMenuBuilder {
             filterList.addView(eventSectionsContainer);
             eventSectionsContainerRef[0] = eventSectionsContainer;
             buildBandRankingSection(context, filterList, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
+            buildDaysFilterSection(context, filterList, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
             LinearLayout eventSectionsContainer2 = new LinearLayout(context);
             eventSectionsContainer2.setOrientation(LinearLayout.VERTICAL);
             eventSectionsContainer2.setVisibility(showRichEventSections ? View.VISIBLE : View.GONE);
@@ -167,6 +168,7 @@ public class CommonFilterMenuBuilder {
             if (hasRankedBands(context)) {
                 buildBandRankingSection(context, filterList, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
             }
+            buildDaysFilterSection(context, filterList, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
             if (showRichEventSections) {
                 buildEventTypeSection(context, filterList, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
                 buildLocationSection(context, filterList, allVenueNames, allFilterSwitches, isFlaggedFilterEnabled, wrapperCallbacks);
@@ -608,6 +610,65 @@ public class CommonFilterMenuBuilder {
         parent.addView(row);
     }
     
+    private static void buildDaysFilterSection(Context context, LinearLayout parent, List<Switch> allSwitches,
+                                               boolean isFlaggedEnabled, FilterMenuCallbacks callbacks) {
+        final List<String> dayNames = DayFilterHelper.getDayNamesInUseForList();
+        if (dayNames == null || dayNames.isEmpty()) {
+            return;
+        }
+        int horizontalPadding = dpToPx(context, 16);
+
+        TextView header = new TextView(context);
+        header.setText(context.getString(R.string.days_filters));
+        header.setTextSize(13);
+        header.setTypeface(null, android.graphics.Typeface.BOLD);
+        header.setTextColor(Color.parseColor("#FF8E8E93"));
+        header.setPadding(horizontalPadding, dpToPx(context, 16), horizontalPadding, dpToPx(context, 8));
+        parent.addView(header);
+
+        for (final String dayName : dayNames) {
+            boolean isDayEnabled = staticVariables.preferences.getShowDayEvents(dayName);
+            LinearLayout row = new LinearLayout(context);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(dpToPx(context, 16), dpToPx(context, 12), dpToPx(context, 16), dpToPx(context, 12));
+            row.setBackgroundColor(Color.TRANSPARENT);
+
+            ImageView dayIcon = new ImageView(context);
+            dayIcon.setImageDrawable(AppCompatResources.getDrawable(context, R.drawable.icon_sort_time));
+            LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dpToPx(context, 24), dpToPx(context, 24));
+            iconParams.setMargins(0, 0, dpToPx(context, 12), 0);
+            dayIcon.setLayoutParams(iconParams);
+
+            TextView nameText = new TextView(context);
+            String displayName = DayFilterHelper.isUnknownLabel(dayName)
+                    ? context.getString(R.string.unknown)
+                    : dayName;
+            nameText.setText(displayName);
+            nameText.setTextSize(17);
+            nameText.setTextColor(Color.WHITE);
+            nameText.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+
+            Switch sw = new Switch(context);
+            sw.setChecked(isDayEnabled);
+            sw.setEnabled(!isFlaggedEnabled);
+            allSwitches.add(sw);
+            sw.setOnCheckedChangeListener(new android.widget.CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(android.widget.CompoundButton buttonView, boolean isChecked) {
+                    staticVariables.preferences.setShowDayEvents(dayName, isChecked);
+                    staticVariables.preferences.saveData();
+                    callbacks.onFilterChanged();
+                }
+            });
+
+            row.addView(dayIcon);
+            row.addView(nameText);
+            row.addView(sw);
+            parent.addView(row);
+        }
+    }
+
     private static void buildLocationSection(Context context, LinearLayout parent, List<String> venueNames,
                                            List<Switch> allSwitches, boolean isFlaggedEnabled, FilterMenuCallbacks callbacks) {
         if (venueNames == null || venueNames.isEmpty()) {

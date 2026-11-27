@@ -177,6 +177,12 @@ struct CommonFilterSheetView: View {
             return getVenueNamesInUseForList()
         }
     }
+
+    /// Day filter labels (schedule + artist Day). Recomputes when filterChangeTrigger bumps (e.g. Hide Expired).
+    private var days: [String] {
+        _ = filterChangeTrigger
+        return getDayNamesInUseForList()
+    }
     
     // KISS: Consistent darker grey color for entire menu
     private let menuBackgroundColor = Color(uiColor: UIColor(white: 0.2, alpha: 1.0))
@@ -284,7 +290,7 @@ struct CommonFilterSheetView: View {
     
     /// Single canonical order for both portrait and landscape.
     /// Portrait shows all applicable sections; landscape omits Hide Expired and Sort By Name.
-    /// Order: AI Schedule (when enabled) -> Hide Expired -> Sort By Name -> Show Flagged -> Band Rankings -> Event Type -> Locations
+    /// Order: Hide Expired -> Sort By Name -> Show Flagged -> Band Rankings -> Days -> Event Type -> Locations
     @ViewBuilder
     private var unifiedFilterSections: some View {
         let dayLabel = dayData?.dayLabel ?? ""
@@ -307,6 +313,11 @@ struct CommonFilterSheetView: View {
         // 4. Band Ranking Filters (mandatory in list view only; calendar only when ranked bands exist to avoid empty menu)
         if menuOrder == .portrait || hasRankedBands(forDay: dayLabel) {
             bandRankingSection
+        }
+
+        // 4b. Days Filters (artist Day + schedule Day labels)
+        if !days.isEmpty {
+            daysSection
         }
         
         // 5. Event Type Filters
@@ -567,6 +578,42 @@ struct CommonFilterSheetView: View {
     }
     
     @ViewBuilder
+    private var daysSection: some View {
+        Section(header: sectionHeader(NSLocalizedString("Days", comment: ""))) {
+            ForEach(days, id: \.self) { dayName in
+                dayRow(dayName: dayName)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func dayRow(dayName: String) -> some View {
+        let displayName = isDayFilterUnknownLabel(dayName)
+            ? NSLocalizedString("Unknown", comment: "Day filter for bands/events with no Day")
+            : dayName
+        HStack(spacing: 12) {
+            Image(uiImage: UIImage(named: scheduleIconSort) ?? UIImage())
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 24, height: 24)
+            Toggle(displayName, isOn: Binding(
+                get: { getShowDayEvents(dayName: dayName) },
+                set: { newValue in
+                    setShowDayEvents(dayName: dayName, show: newValue)
+                    writeFiltersFile()
+                    clearButtonActive = hasAnyFiltersSet()
+                    NotificationCenter.default.post(name: Notification.Name("VenueFiltersDidChange"), object: nil)
+                }
+            ))
+            .disabled(isFlaggedFilterEnabled)
+            .id("\(filterChangeTrigger)-\(isFlaggedFilterEnabled)-\(dayName)")
+        }
+        .listRowBackground(menuBackgroundColor)
+        .foregroundColor(.white)
+        .listRowInsets(EdgeInsets(top: 2, leading: 16, bottom: menuOrder == .portrait ? 0 : 2, trailing: 16))
+    }
+
+    @ViewBuilder
     private var locationSection: some View {
         Section(header: sectionHeader(NSLocalizedString("Location Filters", comment: ""))) {
             ForEach(venues, id: \.self) { venueName in
@@ -605,6 +652,7 @@ struct CommonFilterSheetView: View {
     
     private func clearAllFilters() {
         setVenueFilters(venueNames: getVenueNamesInUseForList(), show: true)
+        setDayFilters(dayNames: getDayNamesInUseForList(), show: true)
         setShowOnlyWillAttened(false)
         showFlaggedOnly = false
         setShowMeetAndGreetEvents(true)
@@ -642,6 +690,11 @@ struct CommonFilterSheetView: View {
         if !getShowMeetAndGreetEvents() || !getShowSpecialEvents() || !getShowClinicEvents() || !getShowUnofficalEvents() { return true }
         // Note: Hide Expired Events is exempt from filter clearing, so don't count it here
         // if getHideExpireScheduleData() { return true }
+        for dayName in days {
+            if !getShowDayEvents(dayName: dayName) {
+                return true
+            }
+        }
         if let viewModel = viewModel {
             if viewModel.hasHiddenVenues { return true }
         } else {
