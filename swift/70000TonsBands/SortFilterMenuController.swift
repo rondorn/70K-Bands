@@ -96,22 +96,132 @@ func isDayFilterUnknownLabel(_ label: String) -> Bool {
         .caseInsensitiveCompare(dayFilterUnknownLabel) == .orderedSame
 }
 
-/// Stable order: Pre first, then Day N numeric, then alpha, Unknown last.
+private func isDayFilterNamedPreLabel(_ label: String) -> Bool {
+    let lower = label.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    return lower == "pre" || lower.hasPrefix("pre ") || lower.hasPrefix("pre-")
+}
+
+private func isDayFilterNamedPostLabel(_ label: String) -> Bool {
+    let lower = label.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    return lower == "post" || lower.hasPrefix("post ") || lower.hasPrefix("post-")
+}
+
+/// Parse filter labels like `1/27` / `01/27` into a date (year = eventYear).
+private func parseDayFilterDateLabel(_ label: String) -> Date? {
+    let trimmed = label.trimmingCharacters(in: .whitespacesAndNewlines)
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    let formats = ["M/d", "MM/dd", "M/dd", "MM/d"]
+    let calendar = Calendar.current
+    let year = eventYear > 0 ? eventYear : calendar.component(.year, from: Date())
+    for format in formats {
+        formatter.dateFormat = format
+        guard let partial = formatter.date(from: trimmed) else { continue }
+        var components = calendar.dateComponents([.month, .day], from: partial)
+        components.year = year
+        if let full = calendar.date(from: components) {
+            return full
+        }
+    }
+    return nil
+}
+
+/// Date-like labels: no gap → all Pre. Gap of ≥2 calendar days between sorted dates →
+/// earlier cluster Pre, later cluster(s) Post.
+private func classifyDateFilterLabelsAsPreOrPost(_ labels: [String]) -> [String: Bool] {
+    // true = Pre side, false = Post side
+    struct DatedLabel {
+        let label: String
+        let date: Date
+    }
+    var dated: [DatedLabel] = []
+    for label in labels {
+        if isDayFilterNamedPreLabel(label) || isDayFilterNamedPostLabel(label) || isDayFilterUnknownLabel(label) {
+            continue
+        }
+        if dayNumberFromFilterLabel(label) != nil {
+            continue
+        }
+        if let date = parseDayFilterDateLabel(label) {
+            dated.append(DatedLabel(label: label, date: date))
+        }
+    }
+    guard !dated.isEmpty else { return [:] }
+    dated.sort { $0.date < $1.date }
+
+    let calendar = Calendar.current
+    var splitIndex: Int? = nil
+    for i in 1..<dated.count {
+        let diff = calendar.dateComponents([.day], from: dated[i - 1].date, to: dated[i].date).day ?? 0
+        if diff >= 2 {
+            splitIndex = i
+            break
+        }
+    }
+
+    var result: [String: Bool] = [:]
+    if let split = splitIndex {
+        for i in 0..<dated.count {
+            result[dated[i].label] = i < split
+        }
+    } else {
+        for item in dated {
+            result[item.label] = true // no gap → all Pre
+        }
+    }
+    return result
+}
+
+private enum DayFilterSortBucket: Int {
+    case namedPre = 0
+    case datePre = 1
+    case dayN = 2
+    case other = 3
+    case datePost = 4
+    case namedPost = 5
+    case unknown = 6
+}
+
+/// Order: named Pre → date Pre → Day N → other → date Post → named Post → Unknown.
 func sortDayFilterLabels(_ labels: [String]) -> [String] {
-    labels.sorted { a, b in
-        let aUnknown = isDayFilterUnknownLabel(a)
-        let bUnknown = isDayFilterUnknownLabel(b)
-        if aUnknown != bUnknown { return !aUnknown && bUnknown }
-        let aLower = a.lowercased()
-        let bLower = b.lowercased()
-        let aPre = aLower == "pre" || aLower.hasPrefix("pre ") || aLower.hasPrefix("pre-")
-        let bPre = bLower == "pre" || bLower.hasPrefix("pre ") || bLower.hasPrefix("pre-")
-        if aPre != bPre { return aPre && !bPre }
-        let aNum = dayNumberFromFilterLabel(a)
-        let bNum = dayNumberFromFilterLabel(b)
-        if let an = aNum, let bn = bNum { return an < bn }
-        if aNum != nil { return true }
-        if bNum != nil { return false }
+    let dateSide = classifyDateFilterLabelsAsPreOrPost(labels)
+    let dateByLabel: [String: Date] = {
+        var map: [String: Date] = [:]
+        for label in labels {
+            if let d = parseDayFilterDateLabel(label) {
+                map[label] = d
+            }
+        }
+        return map
+    }()
+
+    func bucket(for label: String) -> DayFilterSortBucket {
+        if isDayFilterUnknownLabel(label) { return .unknown }
+        if isDayFilterNamedPreLabel(label) { return .namedPre }
+        if isDayFilterNamedPostLabel(label) { return .namedPost }
+        if dayNumberFromFilterLabel(label) != nil { return .dayN }
+        if let isPre = dateSide[label] {
+            return isPre ? .datePre : .datePost
+        }
+        return .other
+    }
+
+    return labels.sorted { a, b in
+        let ba = bucket(for: a)
+        let bb = bucket(for: b)
+        if ba != bb { return ba.rawValue < bb.rawValue }
+        switch ba {
+        case .dayN:
+            let an = dayNumberFromFilterLabel(a) ?? 0
+            let bn = dayNumberFromFilterLabel(b) ?? 0
+            if an != bn { return an < bn }
+        case .datePre, .datePost:
+            if let da = dateByLabel[a], let db = dateByLabel[b], da != db {
+                return da < db
+            }
+        default:
+            break
+        }
         return a.localizedCaseInsensitiveCompare(b) == .orderedAscending
     }
 }

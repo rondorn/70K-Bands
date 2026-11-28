@@ -1,13 +1,19 @@
 package com.Bands70k;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -55,6 +61,109 @@ public final class DayFilterHelper {
     public static boolean isUnknownLabel(String label) {
         return label != null
                 && label.trim().equalsIgnoreCase(UNKNOWN_LABEL);
+    }
+
+    private static boolean isNamedPreLabel(String label) {
+        if (label == null) return false;
+        String lower = label.trim().toLowerCase(Locale.ROOT);
+        return lower.equals("pre") || lower.startsWith("pre ") || lower.startsWith("pre-");
+    }
+
+    private static boolean isNamedPostLabel(String label) {
+        if (label == null) return false;
+        String lower = label.trim().toLowerCase(Locale.ROOT);
+        return lower.equals("post") || lower.startsWith("post ") || lower.startsWith("post-");
+    }
+
+    /** Parse filter labels like {@code 1/27} / {@code 01/27} (year = eventYear). */
+    private static Date parseDayFilterDateLabel(String label) {
+        if (label == null) return null;
+        String trimmed = label.trim();
+        String[] formats = {"M/d", "MM/dd", "M/dd", "MM/d"};
+        int year = (staticVariables.eventYear != null && staticVariables.eventYear > 0)
+                ? staticVariables.eventYear
+                : Calendar.getInstance().get(Calendar.YEAR);
+        for (String format : formats) {
+            SimpleDateFormat sdf = new SimpleDateFormat(format, Locale.US);
+            sdf.setLenient(false);
+            try {
+                Date partial = sdf.parse(trimmed);
+                if (partial == null) continue;
+                Calendar cal = Calendar.getInstance();
+                cal.setTime(partial);
+                cal.set(Calendar.YEAR, year);
+                // Normalize to midnight for day-diff math
+                cal.set(Calendar.HOUR_OF_DAY, 0);
+                cal.set(Calendar.MINUTE, 0);
+                cal.set(Calendar.SECOND, 0);
+                cal.set(Calendar.MILLISECOND, 0);
+                return cal.getTime();
+            } catch (ParseException ignored) {
+                // try next format
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Date-like labels: no gap → all Pre. Gap of ≥2 calendar days between sorted dates →
+     * earlier cluster Pre, later cluster(s) Post.
+     *
+     * @return map label → true (Pre) / false (Post)
+     */
+    private static Map<String, Boolean> classifyDateFilterLabelsAsPreOrPost(List<String> labels) {
+        class DatedLabel {
+            final String label;
+            final Date date;
+            DatedLabel(String label, Date date) {
+                this.label = label;
+                this.date = date;
+            }
+        }
+        List<DatedLabel> dated = new ArrayList<>();
+        for (String label : labels) {
+            if (isNamedPreLabel(label) || isNamedPostLabel(label) || isUnknownLabel(label)) {
+                continue;
+            }
+            if (dayNumber(label) != null) {
+                continue;
+            }
+            Date date = parseDayFilterDateLabel(label);
+            if (date != null) {
+                dated.add(new DatedLabel(label, date));
+            }
+        }
+        Map<String, Boolean> result = new HashMap<>();
+        if (dated.isEmpty()) {
+            return result;
+        }
+        Collections.sort(dated, new Comparator<DatedLabel>() {
+            @Override
+            public int compare(DatedLabel a, DatedLabel b) {
+                return a.date.compareTo(b.date);
+            }
+        });
+
+        Integer splitIndex = null;
+        for (int i = 1; i < dated.size(); i++) {
+            long diffMs = dated.get(i).date.getTime() - dated.get(i - 1).date.getTime();
+            long diffDays = TimeUnit.MILLISECONDS.toDays(diffMs);
+            if (diffDays >= 2) {
+                splitIndex = i;
+                break;
+            }
+        }
+
+        if (splitIndex != null) {
+            for (int i = 0; i < dated.size(); i++) {
+                result.put(dated.get(i).label, i < splitIndex);
+            }
+        } else {
+            for (DatedLabel item : dated) {
+                result.put(item.label, true); // no gap → all Pre
+            }
+        }
+        return result;
     }
 
     /** Whether a schedule event is expired for Day filter discovery / matching (10‑min buffer). */
@@ -124,34 +233,57 @@ public final class DayFilterHelper {
         return result;
     }
 
-    /** Pre first, Day N numeric, alpha, Unknown last. */
+    /**
+     * Order: named Pre → date Pre → Day N → other → date Post → named Post → Unknown.
+     */
     public static List<String> sortDayFilterLabels(List<String> labels) {
+        final Map<String, Boolean> dateSide = classifyDateFilterLabelsAsPreOrPost(labels);
+        final Map<String, Date> dateByLabel = new HashMap<>();
+        for (String label : labels) {
+            Date d = parseDayFilterDateLabel(label);
+            if (d != null) {
+                dateByLabel.put(label, d);
+            }
+        }
+
         Collections.sort(labels, new Comparator<String>() {
             @Override
             public int compare(String a, String b) {
-                boolean aUnknown = isUnknownLabel(a);
-                boolean bUnknown = isUnknownLabel(b);
-                if (aUnknown != bUnknown) {
-                    return aUnknown ? 1 : -1;
+                int ba = bucket(a, dateSide);
+                int bb = bucket(b, dateSide);
+                if (ba != bb) {
+                    return Integer.compare(ba, bb);
                 }
-                String aLower = a.toLowerCase(Locale.ROOT);
-                String bLower = b.toLowerCase(Locale.ROOT);
-                boolean aPre = aLower.equals("pre") || aLower.startsWith("pre ") || aLower.startsWith("pre-");
-                boolean bPre = bLower.equals("pre") || bLower.startsWith("pre ") || bLower.startsWith("pre-");
-                if (aPre != bPre) {
-                    return aPre ? -1 : 1;
+                if (ba == 2) { // Day N
+                    Integer an = dayNumber(a);
+                    Integer bn = dayNumber(b);
+                    if (an != null && bn != null && !an.equals(bn)) {
+                        return an.compareTo(bn);
+                    }
                 }
-                Integer aNum = dayNumber(a);
-                Integer bNum = dayNumber(b);
-                if (aNum != null && bNum != null) {
-                    return aNum.compareTo(bNum);
+                if (ba == 1 || ba == 4) { // date Pre / date Post
+                    Date da = dateByLabel.get(a);
+                    Date db = dateByLabel.get(b);
+                    if (da != null && db != null && !da.equals(db)) {
+                        return da.compareTo(db);
+                    }
                 }
-                if (aNum != null) return -1;
-                if (bNum != null) return 1;
                 return a.compareToIgnoreCase(b);
             }
         });
         return labels;
+    }
+
+    /** 0 namedPre, 1 datePre, 2 dayN, 3 other, 4 datePost, 5 namedPost, 6 unknown */
+    private static int bucket(String label, Map<String, Boolean> dateSide) {
+        if (isUnknownLabel(label)) return 6;
+        if (isNamedPreLabel(label)) return 0;
+        if (isNamedPostLabel(label)) return 5;
+        if (dayNumber(label) != null) return 2;
+        if (dateSide.containsKey(label)) {
+            return Boolean.TRUE.equals(dateSide.get(label)) ? 1 : 4;
+        }
+        return 3;
     }
 
     private static Integer dayNumber(String label) {
